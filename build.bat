@@ -1,15 +1,22 @@
 @echo off
+
+set VCVARSALL="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
+set PLATFORM=x64
+set SRC_FILE=src\main.cpp
+set OBJ_DIR=src\obj
+set BIN_DIR=src\bin
+set EXE_FILENAME=terrain.exe
+
 echo Initializing environment...
-set vcvarsall="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
-call %vcvarsall% x64
+call %VCVARSALL% %PLATFORM%
 
 echo Cleaning...
-if exist src\obj (rmdir /s /q src\obj)
-mkdir src\obj
-if exist src\bin (rmdir /s /q src\bin)
-mkdir src\bin
+if exist %OBJ_DIR% (rmdir /s /q %OBJ_DIR%)
+mkdir %OBJ_DIR%
+if exist %BIN_DIR% (rmdir /s /q %BIN_DIR%)
+mkdir %BIN_DIR%
 
 echo Compiling...
-cl /EHsc src\main.cpp /Fosrc/obj/ /link /out:src\bin\terrain.exe
+cl /EHsc %SRC_FILE% /Fo%OBJ_DIR%/ /link /out:%BIN_DIR%\%EXE_FILENAME%
 
 echo Done.
