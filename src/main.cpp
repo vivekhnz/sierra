@@ -2,6 +2,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#include "GlfwManager.h"
+
 void onFrameBufferResized(GLFWwindow *window, int width, int height)
 {
     glViewport(0, 0, width, height);
@@ -50,13 +52,6 @@ int run(int width, int height)
 
 int main()
 {
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-    int exitCode = run(800, 600);
-
-    glfwTerminate();
-    return exitCode;
+    GlfwManager glfw;
+    return run(800, 600);
 }
