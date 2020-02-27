@@ -5,6 +5,8 @@ class GlfwManager
 {
 public:
     GlfwManager();
+    GlfwManager(const GlfwManager &that) = delete;
+    GlfwManager &operator=(const GlfwManager &that) = delete;
     ~GlfwManager();
 };
 
