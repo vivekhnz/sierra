@@ -4,6 +4,7 @@
             "name": "Win32",
             "includePath": [
                 "${workspaceFolder}/src/**",
+                "${workspaceFolder}/deps",
                 "${workspaceFolder}/deps/nuget/glfw.3.3.2/build/native/include"
             ],
             "defines": [
