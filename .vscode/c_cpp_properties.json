@@ -3,8 +3,8 @@
         {
             "name": "Win32",
             "includePath": [
-                "${workspaceFolder}/**",
-                "${workspaceFolder}/src/packages/glfw.3.3.2/build/native/include"
+                "${workspaceFolder}/src/**",
+                "${workspaceFolder}/deps/nuget/glfw.3.3.2/build/native/include"
             ],
             "defines": [
                 "_DEBUG",

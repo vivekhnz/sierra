@@ -1,2 +1,2 @@
 @echo off
-src\bin\terrain.exe
+bin\terrain.exe
