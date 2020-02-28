@@ -24,12 +24,12 @@ Window::Window(const GlfwManager &glfw, int width, int height, const char *title
     });
 }
 
-bool Window::isRequestingClose()
+bool Window::isRequestingClose() const
 {
     return glfwWindowShouldClose(window);
 }
 
-bool Window::isKeyPressed(int key)
+bool Window::isKeyPressed(int key) const
 {
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
@@ -38,6 +38,11 @@ void Window::refresh()
 {
     glfwSwapBuffers(window);
     glfwPollEvents();
+}
+
+void Window::close()
+{
+    glfwSetWindowShouldClose(window, true);
 }
 
 Window::~Window()

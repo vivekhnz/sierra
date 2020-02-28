@@ -2,6 +2,7 @@
 
 #include "GlfwManager.hpp"
 #include "Window.hpp"
+#include "Scene.hpp"
 
 int main()
 {
@@ -9,12 +10,12 @@ int main()
     {
         GlfwManager glfw;
         Window window(glfw, 800, 600, "Terrain");
+        Scene scene(window);
 
         while (!window.isRequestingClose() && !window.isKeyPressed(GLFW_KEY_ESCAPE))
         {
-            glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
-            glClear(GL_COLOR_BUFFER_BIT);
-
+            scene.update();
+            scene.draw();
             window.refresh();
         }
 
