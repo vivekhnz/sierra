@@ -3,16 +3,19 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "GlfwManager.hpp"
 
 class Window
 {
     GLFWwindow *window;
 
 public:
-    Window(int width, int height, const char *title);
+    Window(const GlfwManager &glfw, int width, int height, const char *title);
     Window(const Window &that) = delete;
     Window &operator=(const Window &that) = delete;
-    void run();
+    bool isRequestingClose();
+    bool isKeyPressed(int key);
+    void refresh();
     ~Window();
 };
 

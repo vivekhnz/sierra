@@ -1,4 +1,4 @@
-#include "GlfwManager.h"
+#include "GlfwManager.hpp"
 
 #include <iostream>
 #include <GLFW/glfw3.h>

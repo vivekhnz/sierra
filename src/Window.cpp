@@ -1,15 +1,10 @@
-#include "Window.h"
+#include "Window.hpp"
 
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
-void onFrameBufferResized(GLFWwindow *window, int width, int height)
-{
-    glViewport(0, 0, width, height);
-}
-
-Window::Window(int width, int height, const char *title)
+Window::Window(const GlfwManager &glfw, int width, int height, const char *title)
 {
     window = glfwCreateWindow(width, height, title, NULL, NULL);
     if (window == NULL)
@@ -24,35 +19,28 @@ Window::Window(int width, int height, const char *title)
     }
 
     glViewport(0, 0, width, height);
-    glfwSetFramebufferSizeCallback(window, onFrameBufferResized);
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
+        glViewport(0, 0, width, height);
+    });
 }
 
-void processInput(GLFWwindow *window)
+bool Window::isRequestingClose()
 {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-    {
-        glfwSetWindowShouldClose(window, true);
-    }
+    return glfwWindowShouldClose(window);
 }
 
-void Window::run()
+bool Window::isKeyPressed(int key)
 {
-    while (!glfwWindowShouldClose(window))
-    {
-        processInput(window);
+    return glfwGetKey(window, key) == GLFW_PRESS;
+}
 
-        glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        glfwSwapBuffers(window);
-        glfwPollEvents();
-    }
+void Window::refresh()
+{
+    glfwSwapBuffers(window);
+    glfwPollEvents();
 }
 
 Window::~Window()
 {
-    if (window != NULL)
-    {
-        glfwDestroyWindow(window);
-    }
+    glfwDestroyWindow(window);
 }
