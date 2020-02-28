@@ -12,7 +12,7 @@ int main()
         Window window(glfw, 800, 600, "Terrain");
         Scene scene(window);
 
-        while (!window.isRequestingClose() && !window.isKeyPressed(GLFW_KEY_ESCAPE))
+        while (!window.isRequestingClose())
         {
             scene.update();
             scene.draw();
