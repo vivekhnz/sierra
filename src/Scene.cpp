@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Shader.hpp"
 #include "BindBuffer.hpp"
+#include "BindVertexArray.hpp"
 
 Scene::Scene(Window &window)
     : window(window), vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW)
@@ -40,13 +41,12 @@ void main()
     vertexBuffer.fill(sizeof(vertices), vertices);
 
     // configure VAO
-    glBindVertexArray(vertexArray.getId());
     {
-        BindBuffer bind(GL_ARRAY_BUFFER, vertexBuffer);
+        BindVertexArray bindVa(vertexArray);
+        BindBuffer bindBuf(GL_ARRAY_BUFFER, vertexBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
     }
-    glBindVertexArray(0);
 }
 
 void Scene::update()
@@ -64,9 +64,10 @@ void Scene::draw()
 
     // draw triangle
     shaderProgram.use();
-    glBindVertexArray(vertexArray.getId());
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-    glBindVertexArray(0);
+    {
+        BindVertexArray bindVa(vertexArray);
+        glDrawArrays(GL_TRIANGLES, 0, 3);
+    }
 }
 
 Scene::~Scene()
