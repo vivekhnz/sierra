@@ -3,6 +3,7 @@
 
 #include <glad/glad.h>
 #include "VertexArray.hpp"
+#include "Buffer.hpp"
 
 class BindVertexArray
 {
@@ -12,6 +13,9 @@ public:
     BindVertexArray &operator=(const BindVertexArray &that) = delete;
     BindVertexArray(BindVertexArray &&) = delete;
     BindVertexArray &operator=(BindVertexArray &&) = delete;
+
+    void bindElementBuffer(const Buffer &elementBuffer);
+
     ~BindVertexArray();
 };
 

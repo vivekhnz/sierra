@@ -6,7 +6,9 @@
 #include "BindVertexArray.hpp"
 
 Scene::Scene(Window &window)
-    : window(window), vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW)
+    : window(window),
+      vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
+      elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW)
 {
     Shader vertexShader(GL_VERTEX_SHADER, R"(
 #version 330 core
@@ -34,16 +36,25 @@ void main()
 
     // setup vertex buffer
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left
-        0.5f, -0.5f, 0.0f,  // right
-        0.0f, 0.5f, 0.0f    // top
+        0.5f, 0.5f, 0.0f,   // top right
+        0.5f, -0.5f, 0.0f,  // bottom right
+        -0.5f, -0.5f, 0.0f, // bottom left
+        -0.5f, 0.5f, 0.0f   // top left
     };
     vertexBuffer.fill(sizeof(vertices), vertices);
+
+    // setup element buffer
+    unsigned int indices[] = {
+        0, 1, 3, // first triangle
+        1, 2, 3  // second triangle
+    };
+    elementBuffer.fill(sizeof(indices), indices);
 
     // configure VAO
     {
         BindVertexArray bindVa(vertexArray);
-        BindBuffer bindBuf(GL_ARRAY_BUFFER, vertexBuffer);
+        BindBuffer bindVbo(GL_ARRAY_BUFFER, vertexBuffer);
+        bindVa.bindElementBuffer(elementBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
     }
@@ -66,7 +77,7 @@ void Scene::draw()
     shaderProgram.use();
     {
         BindVertexArray bindVa(vertexArray);
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 }
 

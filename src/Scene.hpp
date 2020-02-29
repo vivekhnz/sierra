@@ -11,6 +11,7 @@ class Scene
     Window &window;
     ShaderProgram shaderProgram;
     Buffer vertexBuffer;
+    Buffer elementBuffer;
     VertexArray vertexArray;
 
 public:
