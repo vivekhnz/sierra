@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include "Shader.hpp"
+#include "ShaderLink.hpp"
 
 Scene::Scene(Window &window) : window(window)
 {
@@ -24,14 +25,9 @@ void main()
     fragmentShader.compile();
 
     // link shaders
-    int success;
-    char infoLog[512];
-
-    glAttachShader(shaderProgram.getId(), vertexShader.getId());
-    glAttachShader(shaderProgram.getId(), fragmentShader.getId());
+    ShaderLink linkVertexShader(shaderProgram, vertexShader);
+    ShaderLink linkFragmentShader(shaderProgram, fragmentShader);
     shaderProgram.link();
-    glDetachShader(shaderProgram.getId(), vertexShader.getId());
-    glDetachShader(shaderProgram.getId(), fragmentShader.getId());
 
     // setup vertices
     float vertices[] = {
