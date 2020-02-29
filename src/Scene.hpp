@@ -2,13 +2,14 @@
 #define SCENE_HPP
 
 #include "Window.hpp"
+#include "ShaderProgram.hpp"
 
 class Scene
 {
     Window &window;
+    ShaderProgram shaderProgram;
     unsigned int VBO;
     unsigned int VAO;
-    int shaderProgram;
 
 public:
     Scene(Window &window);

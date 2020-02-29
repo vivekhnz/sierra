@@ -12,7 +12,7 @@ void main()
 {
     gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
 })");
-    vertexShader.ensureShaderCompiled();
+    vertexShader.compile();
 
     Shader fragmentShader(GL_FRAGMENT_SHADER, R"(
 #version 330 core
@@ -21,24 +21,17 @@ void main()
 {
     FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
 })");
-    fragmentShader.ensureShaderCompiled();
+    fragmentShader.compile();
 
     // link shaders
     int success;
     char infoLog[512];
 
-    shaderProgram = glCreateProgram();
-    glAttachShader(shaderProgram, vertexShader.getId());
-    glAttachShader(shaderProgram, fragmentShader.getId());
-    glLinkProgram(shaderProgram);
-    glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success)
-    {
-        glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
-    }
-    glDetachShader(shaderProgram, vertexShader.getId());
-    glDetachShader(shaderProgram, fragmentShader.getId());
+    glAttachShader(shaderProgram.getId(), vertexShader.getId());
+    glAttachShader(shaderProgram.getId(), fragmentShader.getId());
+    shaderProgram.link();
+    glDetachShader(shaderProgram.getId(), vertexShader.getId());
+    glDetachShader(shaderProgram.getId(), fragmentShader.getId());
 
     // setup vertices
     float vertices[] = {
@@ -73,7 +66,7 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw triangle
-    glUseProgram(shaderProgram);
+    glUseProgram(shaderProgram.getId());
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
@@ -82,5 +75,4 @@ Scene::~Scene()
 {
     glDeleteVertexArrays(1, &VAO);
     glDeleteBuffers(1, &VBO);
-    glDeleteProgram(shaderProgram);
 }

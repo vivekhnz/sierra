@@ -12,7 +12,7 @@ public:
     Shader(const Shader &that) = delete;
     Shader &operator=(const Shader &that) = delete;
     int getId() const;
-    void ensureShaderCompiled();
+    void compile();
     ~Shader();
 };
 

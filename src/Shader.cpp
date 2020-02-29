@@ -13,7 +13,7 @@ int Shader::getId() const
     return id;
 }
 
-void Shader::ensureShaderCompiled()
+void Shader::compile()
 {
     glCompileShader(id);
     int success;
