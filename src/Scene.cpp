@@ -4,7 +4,8 @@
 #include "Shader.hpp"
 #include "BindBuffer.hpp"
 
-Scene::Scene(Window &window) : window(window)
+Scene::Scene(Window &window)
+    : window(window), vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW)
 {
     Shader vertexShader(GL_VERTEX_SHADER, R"(
 #version 330 core
@@ -36,17 +37,13 @@ void main()
         0.5f, -0.5f, 0.0f,  // right
         0.0f, 0.5f, 0.0f    // top
     };
-    glGenBuffers(1, &VBO);
-    {
-        BindBuffer bind(GL_ARRAY_BUFFER, VBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    }
+    vertexBuffer.fill(sizeof(vertices), vertices);
 
     // configure VAO
     glGenVertexArrays(1, &VAO);
     glBindVertexArray(VAO);
     {
-        BindBuffer bind(GL_ARRAY_BUFFER, VBO);
+        BindBuffer bind(GL_ARRAY_BUFFER, vertexBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
     }
@@ -76,5 +73,4 @@ void Scene::draw()
 Scene::~Scene()
 {
     glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
 }

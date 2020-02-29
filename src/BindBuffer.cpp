@@ -1,8 +1,8 @@
 #include "BindBuffer.hpp"
 
-BindBuffer::BindBuffer(GLenum bufferType, unsigned int bufferId) : bufferType(bufferType)
+BindBuffer::BindBuffer(GLenum bufferType, const Buffer &buffer) : bufferType(bufferType)
 {
-    glBindBuffer(bufferType, bufferId);
+    glBindBuffer(bufferType, buffer.getId());
 }
 
 BindBuffer::~BindBuffer()

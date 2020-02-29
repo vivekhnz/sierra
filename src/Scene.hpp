@@ -3,12 +3,13 @@
 
 #include "Window.hpp"
 #include "ShaderProgram.hpp"
+#include "Buffer.hpp"
 
 class Scene
 {
     Window &window;
     ShaderProgram shaderProgram;
-    unsigned int VBO;
+    Buffer vertexBuffer;
     unsigned int VAO;
 
 public:
