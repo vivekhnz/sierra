@@ -40,8 +40,7 @@ void main()
     vertexBuffer.fill(sizeof(vertices), vertices);
 
     // configure VAO
-    glGenVertexArrays(1, &VAO);
-    glBindVertexArray(VAO);
+    glBindVertexArray(vertexArray.getId());
     {
         BindBuffer bind(GL_ARRAY_BUFFER, vertexBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
@@ -65,12 +64,11 @@ void Scene::draw()
 
     // draw triangle
     shaderProgram.use();
-    glBindVertexArray(VAO);
+    glBindVertexArray(vertexArray.getId());
     glDrawArrays(GL_TRIANGLES, 0, 3);
     glBindVertexArray(0);
 }
 
 Scene::~Scene()
 {
-    glDeleteVertexArrays(1, &VAO);
 }

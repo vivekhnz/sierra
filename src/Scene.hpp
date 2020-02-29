@@ -4,13 +4,14 @@
 #include "Window.hpp"
 #include "ShaderProgram.hpp"
 #include "Buffer.hpp"
+#include "VertexArray.hpp"
 
 class Scene
 {
     Window &window;
     ShaderProgram shaderProgram;
     Buffer vertexBuffer;
-    unsigned int VAO;
+    VertexArray vertexArray;
 
 public:
     Scene(Window &window);
