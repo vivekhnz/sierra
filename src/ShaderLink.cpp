@@ -3,12 +3,22 @@
 #include <iostream>
 
 ShaderLink::ShaderLink(const ShaderProgram &program, const Shader &shader)
-    : program(program), shader(shader)
+    : programId(program.getId()), shaderId(shader.getId())
 {
-    glAttachShader(program.getId(), shader.getId());
+    glAttachShader(programId, shaderId);
+}
+
+ShaderLink::ShaderLink(ShaderLink &&other)
+    : programId(other.programId), shaderId(other.shaderId)
+{
+    other.programId = NULL;
+    other.shaderId = NULL;
 }
 
 ShaderLink::~ShaderLink()
 {
-    glDetachShader(program.getId(), shader.getId());
+    if (programId != NULL && shaderId != NULL)
+    {
+        glDetachShader(programId, shaderId);
+    }
 }

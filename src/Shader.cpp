@@ -8,6 +8,11 @@ Shader::Shader(GLenum shaderType, const char *src)
     glShaderSource(id, 1, &src, NULL);
 }
 
+Shader::Shader(Shader &&other) : id(other.id)
+{
+    other.id = NULL;
+}
+
 int Shader::getId() const
 {
     return id;
@@ -15,6 +20,11 @@ int Shader::getId() const
 
 void Shader::compile()
 {
+    if (id == NULL)
+    {
+        throw std::runtime_error("Shader not initialized.");
+    }
+
     glCompileShader(id);
     int success;
     glGetShaderiv(id, GL_COMPILE_STATUS, &success);
@@ -28,5 +38,8 @@ void Shader::compile()
 
 Shader::~Shader()
 {
-    glDeleteShader(id);
+    if (id != NULL)
+    {
+        glDeleteShader(id);
+    }
 }

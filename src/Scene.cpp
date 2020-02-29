@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include "Shader.hpp"
-#include "ShaderLink.hpp"
 
 Scene::Scene(Window &window) : window(window)
 {
@@ -25,9 +24,10 @@ void main()
     fragmentShader.compile();
 
     // link shaders
-    ShaderLink linkVertexShader(shaderProgram, vertexShader);
-    ShaderLink linkFragmentShader(shaderProgram, fragmentShader);
-    shaderProgram.link();
+    std::vector<Shader> shaders;
+    shaders.push_back(std::move(vertexShader));
+    shaders.push_back(std::move(fragmentShader));
+    shaderProgram.link(shaders);
 
     // setup vertices
     float vertices[] = {
@@ -62,7 +62,7 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // draw triangle
-    glUseProgram(shaderProgram.getId());
+    shaderProgram.use();
     glBindVertexArray(VAO);
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }

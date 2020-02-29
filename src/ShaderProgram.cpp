@@ -1,6 +1,7 @@
 #include "ShaderProgram.hpp"
 
 #include <iostream>
+#include "ShaderLink.hpp"
 
 ShaderProgram::ShaderProgram()
 {
@@ -12,8 +13,14 @@ int ShaderProgram::getId() const
     return id;
 }
 
-void ShaderProgram::link()
+void ShaderProgram::link(const std::vector<Shader> &shaders)
 {
+    std::vector<ShaderLink> attachShaders;
+    for (auto &&shader : shaders)
+    {
+        attachShaders.push_back(ShaderLink(*this, shader));
+    }
+
     glLinkProgram(id);
     int success;
     glGetProgramiv(id, GL_LINK_STATUS, &success);
@@ -23,6 +30,11 @@ void ShaderProgram::link()
         glGetProgramInfoLog(id, 512, NULL, infoLog);
         throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
     }
+}
+
+void ShaderProgram::use()
+{
+    glUseProgram(id);
 }
 
 ShaderProgram::~ShaderProgram()

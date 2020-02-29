@@ -2,6 +2,8 @@
 #define SHADERPROGRAM_HPP
 
 #include <glad/glad.h>
+#include <vector>
+#include "Shader.hpp"
 
 class ShaderProgram
 {
@@ -11,8 +13,13 @@ public:
     ShaderProgram();
     ShaderProgram(const ShaderProgram &that) = delete;
     ShaderProgram &operator=(const ShaderProgram &that) = delete;
+    ShaderProgram(ShaderProgram &&) = delete;
+    ShaderProgram &operator=(ShaderProgram &&) = delete;
+
     int getId() const;
-    void link();
+    void link(const std::vector<Shader> &shaders);
+    void use();
+
     ~ShaderProgram();
 };
 

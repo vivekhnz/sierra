@@ -7,13 +7,15 @@
 
 class ShaderLink
 {
-    const ShaderProgram &program;
-    const Shader &shader;
+    int programId;
+    int shaderId;
 
 public:
     ShaderLink(const ShaderProgram &program, const Shader &shader);
     ShaderLink(const ShaderLink &that) = delete;
     ShaderLink &operator=(const ShaderLink &that) = delete;
+    ShaderLink(ShaderLink &&other);
+    ShaderLink &operator=(ShaderLink &&) = delete;
     ~ShaderLink();
 };
 
