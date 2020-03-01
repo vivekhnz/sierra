@@ -3,7 +3,7 @@
 set VCVARSALL="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
 set PLATFORM=x64
 
-set SRC_FILES_LIB=src\lib\glad.c
+set SRC_FILES_LIB=deps\glad\glad.c
 set SRC_FILES_GRAPHICS=src\Graphics\GlfwManager.cpp src\Graphics\Window.cpp src\Graphics\Shader.cpp src\Graphics\ShaderProgram.cpp src\Graphics\AttachShader.cpp src\Graphics\BindBuffer.cpp src\Graphics\Buffer.cpp src\Graphics\VertexArray.cpp src\Graphics\BindVertexArray.cpp src\Graphics\ShaderManager.cpp
 set SRC_FILES_IO=src\IO\OpenFile.cpp
 set SRC_FILES_APP=src\main.cpp src\Scene.cpp
@@ -33,6 +33,6 @@ echo Building...
 cl /MD /EHsc %SRC_FILES% /Fo%OBJ_DIR%/ %INCLUDES% /link /out:%BIN_DIR%\%EXE_FILENAME% /LIBPATH:%LIB_PATH% %LIBS%
 
 echo Copying data to output directory...
-robocopy data bin/data /NJH /NJS /NS /NC /NDL /NFL
+robocopy data bin\data /NJH /NJS /NS /NC /NDL /NFL
 
 echo Done.
