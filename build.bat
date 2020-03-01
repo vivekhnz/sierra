@@ -11,7 +11,7 @@ set SRC_FILES=%SRC_FILES_LIB% %SRC_FILES_GRAPHICS% %SRC_FILES_IO% %SRC_FILES_APP
 
 set INCLUDES=/I deps /I deps\nuget\glfw.3.3.2\build\native\include
 set LIB_PATH=deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64
-set LIBS=glfw3.lib user32.lib gdi32.lib shell32.lib
+set LIBS=glfw3.lib user32.lib gdi32.lib shell32.lib kernel32.lib
 
 set OBJ_DIR=obj
 set BIN_DIR=bin
