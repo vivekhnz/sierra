@@ -14,20 +14,8 @@ Scene::Scene(Window &window)
     // load shaders
     ShaderManager shaderManager;
     std::vector<Shader> shaders;
-    shaders.push_back(shaderManager.loadVertexShaderFromSource(R"(
-#version 330 core
-layout (location = 0) in vec3 pos;
-void main()
-{
-    gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
-})"));
-    shaders.push_back(shaderManager.loadFragmentShaderFromSource(R"(
-#version 330 core
-out vec4 FragColor;
-void main()
-{
-    FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-})"));
+    shaders.push_back(shaderManager.loadVertexShaderFromFile("src/data/vertex_shader.glsl"));
+    shaders.push_back(shaderManager.loadFragmentShaderFromFile("src/data/fragment_shader.glsl"));
     shaderProgram.link(shaders);
 
     // setup vertex buffer

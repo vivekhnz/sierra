@@ -1,24 +1,38 @@
 #include "ShaderManager.hpp"
 
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 ShaderManager::ShaderManager()
 {
 }
 
-Shader ShaderManager::loadFromSource(GLenum shaderType, const char *source)
+Shader ShaderManager::loadFromFile(GLenum shaderType, const char *filePath)
 {
-    Shader shader(shaderType, source);
+    // read shader source
+    std::ifstream fileStream;
+    fileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+    fileStream.open(filePath);
+    std::stringstream stringStream;
+    stringStream << fileStream.rdbuf();
+    fileStream.close();
+    std::string src = stringStream.str();
+
+    // compile shader
+    Shader shader(shaderType, src.c_str());
     shader.compile();
     return shader;
 }
 
-Shader ShaderManager::loadVertexShaderFromSource(const char *source)
+Shader ShaderManager::loadVertexShaderFromFile(const char *filePath)
 {
-    return loadFromSource(GL_VERTEX_SHADER, source);
+    return loadFromFile(GL_VERTEX_SHADER, filePath);
 }
 
-Shader ShaderManager::loadFragmentShaderFromSource(const char *source)
+Shader ShaderManager::loadFragmentShaderFromFile(const char *filePath)
 {
-    return loadFromSource(GL_FRAGMENT_SHADER, source);
+    return loadFromFile(GL_FRAGMENT_SHADER, filePath);
 }
 
 ShaderManager::~ShaderManager()
