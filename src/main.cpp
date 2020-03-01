@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "GlfwManager.hpp"
-#include "Window.hpp"
+#include "Graphics/GlfwManager.hpp"
+#include "Graphics/Window.hpp"
 #include "Scene.hpp"
 
 int main()

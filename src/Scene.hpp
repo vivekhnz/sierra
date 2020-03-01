@@ -1,10 +1,10 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
-#include "Window.hpp"
-#include "ShaderProgram.hpp"
-#include "Buffer.hpp"
-#include "VertexArray.hpp"
+#include "Graphics/Window.hpp"
+#include "Graphics/ShaderProgram.hpp"
+#include "Graphics/Buffer.hpp"
+#include "Graphics/VertexArray.hpp"
 
 class Scene
 {

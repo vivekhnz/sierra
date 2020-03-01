@@ -1,7 +1,7 @@
 #include "ShaderProgram.hpp"
 
 #include <iostream>
-#include "ShaderLink.hpp"
+#include "AttachShader.hpp"
 
 ShaderProgram::ShaderProgram()
 {
@@ -15,10 +15,10 @@ int ShaderProgram::getId() const
 
 void ShaderProgram::link(const std::vector<Shader> &shaders)
 {
-    std::vector<ShaderLink> attachShaders;
+    std::vector<AttachShader> attachShaders;
     for (auto &&shader : shaders)
     {
-        attachShaders.push_back(ShaderLink(*this, shader));
+        attachShaders.push_back(AttachShader(*this, shader));
     }
 
     glLinkProgram(id);

@@ -1,21 +1,21 @@
-#include "ShaderLink.hpp"
+#include "AttachShader.hpp"
 
 #include <iostream>
 
-ShaderLink::ShaderLink(const ShaderProgram &program, const Shader &shader)
+AttachShader::AttachShader(const ShaderProgram &program, const Shader &shader)
     : programId(program.getId()), shaderId(shader.getId())
 {
     glAttachShader(programId, shaderId);
 }
 
-ShaderLink::ShaderLink(ShaderLink &&other)
+AttachShader::AttachShader(AttachShader &&other)
     : programId(other.programId), shaderId(other.shaderId)
 {
     other.programId = NULL;
     other.shaderId = NULL;
 }
 
-ShaderLink::~ShaderLink()
+AttachShader::~AttachShader()
 {
     if (programId != NULL && shaderId != NULL)
     {

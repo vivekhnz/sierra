@@ -1,9 +1,9 @@
 #include "Scene.hpp"
 
 #include <iostream>
-#include "Shader.hpp"
-#include "BindBuffer.hpp"
-#include "BindVertexArray.hpp"
+#include "Graphics/Shader.hpp"
+#include "Graphics/BindBuffer.hpp"
+#include "Graphics/BindVertexArray.hpp"
 
 Scene::Scene(Window &window)
     : window(window),
@@ -73,7 +73,7 @@ void Scene::draw()
     glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // draw triangle
+    // draw rectangle
     shaderProgram.use();
     {
         BindVertexArray bindVa(vertexArray);

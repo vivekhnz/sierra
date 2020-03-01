@@ -3,7 +3,10 @@
 set VCVARSALL="C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat"
 set PLATFORM=x64
 
-set SRC_FILES=src\lib\glad.c src\main.cpp src\GlfwManager.cpp src\Window.cpp src\Scene.cpp src\Shader.cpp src\ShaderProgram.cpp src\ShaderLink.cpp src\BindBuffer.cpp src\Buffer.cpp src\VertexArray.cpp src\BindVertexArray.cpp
+set SRC_FILES_LIB=src\lib\glad.c
+set SRC_FILES_GRAPHICS=src\Graphics\GlfwManager.cpp src\Graphics\Window.cpp src\Graphics\Shader.cpp src\Graphics\ShaderProgram.cpp src\Graphics\AttachShader.cpp src\Graphics\BindBuffer.cpp src\Graphics\Buffer.cpp src\Graphics\VertexArray.cpp src\Graphics\BindVertexArray.cpp
+set SRC_FILES_APP=src\main.cpp src\Scene.cpp
+set SRC_FILES=%SRC_FILES_LIB% %SRC_FILES_GRAPHICS% %SRC_FILES_APP%
 
 set INCLUDES=/I deps /I deps\nuget\glfw.3.3.2\build\native\include
 set LIB_PATH=deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64
