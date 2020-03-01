@@ -14,8 +14,8 @@ Scene::Scene(Window &window)
     // load shaders
     ShaderManager shaderManager;
     std::vector<Shader> shaders;
-    shaders.push_back(shaderManager.loadVertexShaderFromFile("src/data/vertex_shader.glsl"));
-    shaders.push_back(shaderManager.loadFragmentShaderFromFile("src/data/fragment_shader.glsl"));
+    shaders.push_back(shaderManager.loadVertexShaderFromFile("data/vertex_shader.glsl"));
+    shaders.push_back(shaderManager.loadFragmentShaderFromFile("data/fragment_shader.glsl"));
     shaderProgram.link(shaders);
 
     // setup vertex buffer

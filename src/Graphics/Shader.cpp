@@ -2,10 +2,11 @@
 
 #include <iostream>
 
-Shader::Shader(GLenum shaderType, const char *src)
+Shader::Shader(GLenum shaderType, std::string src)
 {
     id = glCreateShader(shaderType);
-    glShaderSource(id, 1, &src, NULL);
+    const char *src_c = src.c_str();
+    glShaderSource(id, 1, &src_c, NULL);
 }
 
 Shader::Shader(Shader &&other) : id(other.id)

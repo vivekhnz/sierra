@@ -5,7 +5,7 @@
 
 class ShaderManager
 {
-    Shader loadFromFile(GLenum shaderType, const char *filePath);
+    Shader loadFromFile(GLenum shaderType, std::string filePath);
 
 public:
     ShaderManager();
@@ -14,8 +14,8 @@ public:
     ShaderManager(ShaderManager &&) = delete;
     ShaderManager &operator=(ShaderManager &&) = delete;
 
-    Shader loadVertexShaderFromFile(const char *filePath);
-    Shader loadFragmentShaderFromFile(const char *filePath);
+    Shader loadVertexShaderFromFile(std::string filePath);
+    Shader loadFragmentShaderFromFile(std::string filePath);
 
     ~ShaderManager();
 };
