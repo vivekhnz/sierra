@@ -1,5 +1,5 @@
-#ifndef BINDBUFFER_HPP
-#define BINDBUFFER_HPP
+#ifndef GRAPHICS_BINDBUFFER_HPP
+#define GRAPHICS_BINDBUFFER_HPP
 
 #include <glad/glad.h>
 #include "Buffer.hpp"

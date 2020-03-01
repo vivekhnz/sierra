@@ -1,6 +1,7 @@
 #include "Scene.hpp"
 
 #include <iostream>
+#include "Graphics/ShaderManager.hpp"
 #include "Graphics/Shader.hpp"
 #include "Graphics/BindBuffer.hpp"
 #include "Graphics/BindVertexArray.hpp"
@@ -10,28 +11,23 @@ Scene::Scene(Window &window)
       vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
       elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW)
 {
-    Shader vertexShader(GL_VERTEX_SHADER, R"(
+    // load shaders
+    ShaderManager shaderManager;
+    std::vector<Shader> shaders;
+    shaders.push_back(shaderManager.loadVertexShaderFromSource(R"(
 #version 330 core
 layout (location = 0) in vec3 pos;
 void main()
 {
     gl_Position = vec4(pos.x, pos.y, pos.z, 1.0);
-})");
-    vertexShader.compile();
-
-    Shader fragmentShader(GL_FRAGMENT_SHADER, R"(
+})"));
+    shaders.push_back(shaderManager.loadFragmentShaderFromSource(R"(
 #version 330 core
 out vec4 FragColor;
 void main()
 {
     FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);
-})");
-    fragmentShader.compile();
-
-    // link shaders
-    std::vector<Shader> shaders;
-    shaders.push_back(std::move(vertexShader));
-    shaders.push_back(std::move(fragmentShader));
+})"));
     shaderProgram.link(shaders);
 
     // setup vertex buffer

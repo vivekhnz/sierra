@@ -1,5 +1,5 @@
-#ifndef VERTEXARRAY_HPP
-#define VERTEXARRAY_HPP
+#ifndef GRAPHICS_VERTEXARRAY_HPP
+#define GRAPHICS_VERTEXARRAY_HPP
 
 #include <glad/glad.h>
 

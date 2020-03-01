@@ -1,5 +1,5 @@
-#ifndef BINDVERTEXARRAY_HPP
-#define BINDVERTEXARRAY_HPP
+#ifndef GRAPHICS_BINDVERTEXARRAY_HPP
+#define GRAPHICS_BINDVERTEXARRAY_HPP
 
 #include <glad/glad.h>
 #include "VertexArray.hpp"

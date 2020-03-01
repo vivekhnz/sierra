@@ -1,5 +1,5 @@
-#ifndef WINDOW_HPP
-#define WINDOW_HPP
+#ifndef GRAPHICS_WINDOW_HPP
+#define GRAPHICS_WINDOW_HPP
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

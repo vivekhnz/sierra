@@ -1,5 +1,5 @@
-#ifndef GLFWMANAGER_HPP
-#define GLFWMANAGER_HPP
+#ifndef GRAPHICS_GLFWMANAGER_HPP
+#define GRAPHICS_GLFWMANAGER_HPP
 
 class GlfwManager
 {

@@ -1,5 +1,5 @@
-#ifndef BUFFER_HPP
-#define BUFFER_HPP
+#ifndef GRAPHICS_BUFFER_HPP
+#define GRAPHICS_BUFFER_HPP
 
 #include <glad/glad.h>
 
