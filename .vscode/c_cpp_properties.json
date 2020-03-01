@@ -5,7 +5,8 @@
             "includePath": [
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/deps",
-                "${workspaceFolder}/deps/nuget/glfw.3.3.2/build/native/include"
+                "${workspaceFolder}/deps/nuget/glfw.3.3.2/build/native/include",
+                "${workspaceFolder}/deps/nuget/glm.0.9.9.700/build/native/include"
             ],
             "defines": [
                 "_DEBUG",

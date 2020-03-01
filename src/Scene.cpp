@@ -1,6 +1,9 @@
 #include "Scene.hpp"
 
 #include <iostream>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "Graphics/ShaderManager.hpp"
 #include "Graphics/Shader.hpp"
 #include "Graphics/BindBuffer.hpp"
@@ -57,7 +60,16 @@ void Scene::draw()
     glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT);
 
-    // draw rectangle
+    // setup transformation matrix
+    auto [windowWidth, windowHeight] = window.getSize();
+    const float aspectRatio = (float)windowWidth / (float)windowHeight;
+    const float fov = 45.0f;
+    glm::mat4 transform = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);
+    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, -5.0f));
+    unsigned int transformLoc = glGetUniformLocation(shaderProgram.getId(), "transform");
+    glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
+
+    // draw quad
     shaderProgram.use();
     {
         BindVertexArray bindVa(vertexArray);

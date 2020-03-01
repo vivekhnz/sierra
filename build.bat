@@ -9,7 +9,7 @@ set SRC_FILES_IO=src\IO\OpenFile.cpp
 set SRC_FILES_APP=src\main.cpp src\Scene.cpp
 set SRC_FILES=%SRC_FILES_LIB% %SRC_FILES_GRAPHICS% %SRC_FILES_IO% %SRC_FILES_APP%
 
-set INCLUDES=/I deps /I deps\nuget\glfw.3.3.2\build\native\include
+set INCLUDES=/I deps /I deps\nuget\glfw.3.3.2\build\native\include /I deps\nuget\glm.0.9.9.700\build\native\include
 set LIB_PATH=deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64
 set LIBS=glfw3.lib user32.lib gdi32.lib shell32.lib kernel32.lib
 
@@ -30,7 +30,7 @@ echo Restore packages...
 nuget restore deps\packages.config
 
 echo Building...
-cl /MD /EHsc %SRC_FILES% /Fo%OBJ_DIR%/ %INCLUDES% /link /out:%BIN_DIR%\%EXE_FILENAME% /LIBPATH:%LIB_PATH% %LIBS%
+cl /MD /MP /EHsc /std:c++17 %SRC_FILES% /Fo%OBJ_DIR%/ %INCLUDES% /link /out:%BIN_DIR%\%EXE_FILENAME% /LIBPATH:%LIB_PATH% %LIBS%
 
 echo Copying data to output directory...
 robocopy data bin\data /NJH /NJS /NS /NC /NDL /NFL

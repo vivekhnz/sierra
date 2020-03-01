@@ -34,6 +34,13 @@ bool Window::isKeyPressed(int key) const
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
+std::tuple<int, int> Window::getSize() const
+{
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    return std::make_tuple(width, height);
+}
+
 void Window::refresh()
 {
     glfwSwapBuffers(window);

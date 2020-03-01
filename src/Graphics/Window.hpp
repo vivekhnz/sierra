@@ -1,6 +1,7 @@
 #ifndef GRAPHICS_WINDOW_HPP
 #define GRAPHICS_WINDOW_HPP
 
+#include <tuple>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "GlfwManager.hpp"
@@ -18,6 +19,7 @@ public:
 
     bool isRequestingClose() const;
     bool isKeyPressed(int key) const;
+    std::tuple<int, int> getSize() const;
     void refresh();
     void close();
 
