@@ -32,4 +32,7 @@ nuget restore deps\packages.config
 echo Building...
 cl /MD /EHsc %SRC_FILES% /Fo%OBJ_DIR%/ %INCLUDES% /link /out:%BIN_DIR%\%EXE_FILENAME% /LIBPATH:%LIB_PATH% %LIBS%
 
+echo Copying data to output directory...
+robocopy data bin/data /NJH /NJS /NS /NC /NDL /NFL
+
 echo Done.
