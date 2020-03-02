@@ -64,8 +64,9 @@ void Scene::draw()
     auto [windowWidth, windowHeight] = window.getSize();
     const float aspectRatio = (float)windowWidth / (float)windowHeight;
     const float fov = 45.0f;
-    glm::mat4 transform = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);
-    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, -5.0f));
+    glm::mat4 transform = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);  // projection
+    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, -3.0f));                   // view
+    transform = glm::rotate(transform, glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // model
     unsigned int transformLoc = glGetUniformLocation(shaderProgram.getId(), "transform");
     glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 
