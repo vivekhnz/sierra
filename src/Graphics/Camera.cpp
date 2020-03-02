@@ -7,11 +7,10 @@ Camera::Camera(const Window &window)
 {
 }
 
-glm::vec3 Camera::getPosition()
+glm::vec3 Camera::getPosition() const
 {
     return position;
 }
-
 void Camera::setPosition(glm::vec3 newPos)
 {
     position = newPos;

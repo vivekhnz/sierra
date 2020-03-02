@@ -19,7 +19,7 @@ public:
     Camera(Camera &&) = delete;
     Camera &operator=(Camera &&) = delete;
 
-    glm::vec3 getPosition();
+    glm::vec3 getPosition() const;
     void setPosition(glm::vec3 newPos);
     glm::mat4 getMatrix() const;
 

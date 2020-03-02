@@ -9,7 +9,7 @@ int main()
     try
     {
         GlfwManager glfw;
-        Window window(glfw, 800, 600, "Terrain");
+        Window window(glfw, 1280, 720, "Terrain");
         Scene scene(window);
 
         while (!window.isRequestingClose())
