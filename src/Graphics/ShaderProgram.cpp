@@ -1,6 +1,7 @@
 #include "ShaderProgram.hpp"
 
 #include <iostream>
+#include <glm/gtc/type_ptr.hpp>
 #include "AttachShader.hpp"
 
 ShaderProgram::ShaderProgram()
@@ -35,6 +36,12 @@ void ShaderProgram::link(const std::vector<Shader> &shaders)
 void ShaderProgram::use()
 {
     glUseProgram(id);
+}
+
+void ShaderProgram::setMat4(std::string uniformName, bool transpose, glm::mat4 matrix)
+{
+    unsigned int uniformLoc = glGetUniformLocation(id, uniformName.c_str());
+    glUniformMatrix4fv(uniformLoc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
 }
 
 ShaderProgram::~ShaderProgram()

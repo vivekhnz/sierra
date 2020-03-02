@@ -2,6 +2,7 @@
 #define GRAPHICS_SHADERPROGRAM_HPP
 
 #include <glad/glad.h>
+#include <glm/glm.hpp>
 #include <vector>
 #include "Shader.hpp"
 
@@ -19,6 +20,7 @@ public:
     int getId() const;
     void link(const std::vector<Shader> &shaders);
     void use();
+    void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
 
     ~ShaderProgram();
 };
