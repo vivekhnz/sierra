@@ -1,6 +1,5 @@
 #include "Scene.hpp"
 
-#include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include "Graphics/ShaderManager.hpp"
@@ -11,7 +10,8 @@
 Scene::Scene(Window &window)
     : window(window),
       vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
-      elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW)
+      elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),
+      camera(window)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -44,6 +44,9 @@ Scene::Scene(Window &window)
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
     }
+
+    // setup camera
+    camera.setPosition(glm::vec3(0.0f, 0.0f, -3.0f));
 }
 
 void Scene::update()
@@ -60,12 +63,8 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT);
 
     // setup transformation matrix
-    auto [windowWidth, windowHeight] = window.getSize();
-    const float aspectRatio = (float)windowWidth / (float)windowHeight;
-    const float fov = 45.0f;
-    glm::mat4 transform = glm::perspective(glm::radians(fov), aspectRatio, 0.1f, 100.0f);  // projection
-    transform = glm::translate(transform, glm::vec3(0.0f, 0.0f, -3.0f));                   // view
-    transform = glm::rotate(transform, glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f)); // model
+    glm::mat4 transform = glm::rotate(
+        camera.getMatrix(), glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     shaderProgram.setMat4("transform", false, transform);
 
     // draw quad

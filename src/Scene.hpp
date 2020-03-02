@@ -5,6 +5,7 @@
 #include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Buffer.hpp"
 #include "Graphics/VertexArray.hpp"
+#include "Graphics/Camera.hpp"
 
 class Scene
 {
@@ -13,6 +14,7 @@ class Scene
     Buffer vertexBuffer;
     Buffer elementBuffer;
     VertexArray vertexArray;
+    Camera camera;
 
 public:
     Scene(Window &window);
