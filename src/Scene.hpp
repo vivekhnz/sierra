@@ -15,6 +15,7 @@ class Scene
     Buffer elementBuffer;
     VertexArray vertexArray;
     Camera camera;
+    int elementCount;
 
 public:
     Scene(Window &window);
