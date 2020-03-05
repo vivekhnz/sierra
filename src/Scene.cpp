@@ -32,8 +32,8 @@ Scene::Scene(Window &window)
         {
             int i = ((y * gridSize) + x) * 3;
             vertices[i] = (x * spacing) + offset;
-            vertices[i + 1] = (y * spacing) + offset;
-            vertices[i + 2] = 0.0f;
+            vertices[i + 1] = 0.0f;
+            vertices[i + 2] = (y * spacing) + offset;
         }
     }
     vertexBuffer.fill(vertices.size() * sizeof(float), vertices.data());
@@ -69,7 +69,8 @@ Scene::Scene(Window &window)
     }
 
     // setup camera
-    camera.setPosition(glm::vec3(0.0f, 0.0f, -18.0f));
+    camera.setPosition(glm::vec3(0.0f, 10.0f, 13.0f));
+    camera.setRotation(glm::vec3(0.0f, glm::radians(37.0f), 0.0f));
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -87,9 +88,7 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // setup transformation matrix
-    glm::mat4 transform = glm::rotate(
-        camera.getMatrix(), glm::radians(-50.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    shaderProgram.setMat4("transform", false, transform);
+    shaderProgram.setMat4("transform", false, camera.getMatrix());
 
     // draw quad
     shaderProgram.use();

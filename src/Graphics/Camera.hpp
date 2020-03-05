@@ -11,6 +11,7 @@ class Camera
     float far;
     float fov;
     glm::vec3 position;
+    glm::vec3 rotation;
 
 public:
     Camera(const Window &window);
@@ -21,6 +22,8 @@ public:
 
     glm::vec3 getPosition() const;
     void setPosition(glm::vec3 newPos);
+    glm::vec3 getRotation() const;
+    void setRotation(glm::vec3 newRot);
     glm::mat4 getMatrix() const;
 
     ~Camera();
