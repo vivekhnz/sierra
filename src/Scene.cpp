@@ -24,19 +24,29 @@ Scene::Scene(Window &window)
     // setup vertex buffer
     int gridSize = 64;
     float spacing = 0.2f;
+    float terrainHeight = 3.0f;
+    float PI = glm::pi<float>();
     std::vector<float> vertices(gridSize * gridSize * 3);
     float offset = (gridSize - 1) * spacing * -0.5f;
     for (int y = 0; y < gridSize; y++)
     {
+        float yNorm = (float)y / (float)(gridSize - 1);
         for (int x = 0; x < gridSize; x++)
         {
+            float xNorm = (float)x / (float)(gridSize - 1);
+
             int i = ((y * gridSize) + x) * 3;
             vertices[i] = (x * spacing) + offset;
-            vertices[i + 1] = 0.0f;
+            vertices[i + 1] = sin(pow(xNorm, 2) * PI) * sin(yNorm * PI) * terrainHeight;
             vertices[i + 2] = (y * spacing) + offset;
         }
     }
     vertexBuffer.fill(vertices.size() * sizeof(float), vertices.data());
+
+    // configure shader
+    shaderProgram.setFloat("maxHeight", terrainHeight);
+    shaderProgram.setVector3("lowColor", glm::vec3(0.3f, 0.3f, 0.3f));
+    shaderProgram.setVector3("highColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
     // setup element buffer
     std::vector<unsigned int> indices(2 * (gridSize * gridSize - 2));

@@ -21,6 +21,8 @@ public:
     void link(const std::vector<Shader> &shaders);
     void use();
     void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
+    void setFloat(std::string uniformName, float value);
+    void setVector3(std::string uniformName, glm::vec3 value);
 
     ~ShaderProgram();
 };
