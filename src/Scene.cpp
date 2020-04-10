@@ -8,11 +8,7 @@
 #include "Graphics/BindBuffer.hpp"
 #include "Graphics/BindVertexArray.hpp"
 
-Scene::Scene(Window &window)
-    : window(window),
-      vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
-      elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),
-      camera(window)
+Scene::Scene(Window &window) : window(window), camera(window)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -41,12 +37,6 @@ Scene::Scene(Window &window)
             vertices[i + 2] = (y * spacing) + offset;
         }
     }
-    vertexBuffer.fill(vertices.size() * sizeof(float), vertices.data());
-
-    // configure shader
-    shaderProgram.setFloat("maxHeight", terrainHeight);
-    shaderProgram.setVector3("lowColor", glm::vec3(0.3f, 0.3f, 0.3f));
-    shaderProgram.setVector3("highColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
     // setup element buffer
     std::vector<unsigned int> indices(2 * (gridSize * gridSize - 2));
@@ -66,17 +56,12 @@ Scene::Scene(Window &window)
             indices[startIndex + (gridSize * 2) + 1] = startVertex + gridSize;
         }
     }
-    elementBuffer.fill(indices.size() * sizeof(unsigned int), indices.data());
-    elementCount = indices.size();
+    mesh.initialize(vertices, indices);
 
-    // configure VAO
-    {
-        BindVertexArray bindVa(vertexArray);
-        BindBuffer bindVbo(GL_ARRAY_BUFFER, vertexBuffer);
-        bindVa.bindElementBuffer(elementBuffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-    }
+    // configure shader
+    shaderProgram.setFloat("maxHeight", terrainHeight);
+    shaderProgram.setVector3("lowColor", glm::vec3(0.3f, 0.3f, 0.3f));
+    shaderProgram.setVector3("highColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 10.0f, 13.0f));
@@ -100,12 +85,9 @@ void Scene::draw()
     // setup transformation matrix
     shaderProgram.setMat4("transform", false, camera.getMatrix());
 
-    // draw quad
+    // draw terrain
     shaderProgram.use();
-    {
-        BindVertexArray bindVa(vertexArray);
-        glDrawElements(GL_TRIANGLE_STRIP, elementCount, GL_UNSIGNED_INT, 0);
-    }
+    mesh.draw();
 }
 
 Scene::~Scene()

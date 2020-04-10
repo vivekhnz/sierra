@@ -6,16 +6,14 @@
 #include "Graphics/Buffer.hpp"
 #include "Graphics/VertexArray.hpp"
 #include "Graphics/Camera.hpp"
+#include "Graphics/Mesh.hpp"
 
 class Scene
 {
     Window &window;
     ShaderProgram shaderProgram;
-    Buffer vertexBuffer;
-    Buffer elementBuffer;
-    VertexArray vertexArray;
     Camera camera;
-    int elementCount;
+    Mesh mesh;
 
 public:
     Scene(Window &window);
