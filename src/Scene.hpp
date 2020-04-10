@@ -14,6 +14,8 @@ class Scene
     ShaderProgram shaderProgram;
     Camera camera;
     Mesh mesh;
+    float orbitAngle;
+    float orbitDistance;
 
 public:
     Scene(Window &window);

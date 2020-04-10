@@ -9,7 +9,7 @@
 #include "Graphics/BindBuffer.hpp"
 #include "Graphics/BindVertexArray.hpp"
 
-Scene::Scene(Window &window) : window(window), camera(window)
+Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.0f)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -69,8 +69,8 @@ Scene::Scene(Window &window) : window(window), camera(window)
     shaderProgram.setVector3("highColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
     // setup camera
-    camera.setPosition(glm::vec3(0.0f, 10.0f, 13.0f));
-    camera.setRotation(glm::vec3(0.0f, glm::radians(37.0f), 0.0f));
+    camera.setPosition(glm::vec3(0.0f, 10.0f, orbitDistance));
+    camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
     glEnable(GL_DEPTH_TEST);
 }
 
@@ -80,6 +80,34 @@ void Scene::update()
     {
         window.close();
     }
+    glm::vec3 pos = camera.getPosition();
+    if (window.isKeyPressed(GLFW_KEY_A))
+    {
+        orbitAngle += glm::radians(0.3f);
+    }
+    if (window.isKeyPressed(GLFW_KEY_D))
+    {
+        orbitAngle -= glm::radians(0.3f);
+    }
+    if (window.isKeyPressed(GLFW_KEY_W))
+    {
+        orbitDistance -= 0.1f;
+    }
+    if (window.isKeyPressed(GLFW_KEY_S))
+    {
+        orbitDistance += 0.1f;
+    }
+    if (window.isKeyPressed(GLFW_KEY_UP))
+    {
+        pos.y += 0.1f;
+    }
+    if (window.isKeyPressed(GLFW_KEY_DOWN))
+    {
+        pos.y -= 0.1f;
+    }
+    pos.x = sin(-orbitAngle) * orbitDistance;
+    pos.z = cos(-orbitAngle) * orbitDistance;
+    camera.setPosition(pos);
 }
 
 void Scene::draw()
