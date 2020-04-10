@@ -76,6 +76,10 @@ Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.
 
 void Scene::update()
 {
+    float currentTime = window.getTime();
+    float deltaTime = currentTime - prevFrameTime;
+    prevFrameTime = currentTime;
+
     if (window.isKeyPressed(GLFW_KEY_ESCAPE))
     {
         window.close();
@@ -83,27 +87,27 @@ void Scene::update()
     glm::vec3 pos = camera.getPosition();
     if (window.isKeyPressed(GLFW_KEY_A))
     {
-        orbitAngle += glm::radians(0.3f);
+        orbitAngle += glm::radians(30.0f * deltaTime);
     }
     if (window.isKeyPressed(GLFW_KEY_D))
     {
-        orbitAngle -= glm::radians(0.3f);
+        orbitAngle -= glm::radians(30.0f * deltaTime);
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        orbitDistance -= 0.1f;
+        orbitDistance -= 10.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        orbitDistance += 0.1f;
+        orbitDistance += 10.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_UP))
     {
-        pos.y += 0.1f;
+        pos.y += 15.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_DOWN))
     {
-        pos.y -= 0.1f;
+        pos.y -= 15.0f * deltaTime;
     }
     pos.x = sin(-orbitAngle) * orbitDistance;
     pos.z = cos(-orbitAngle) * orbitDistance;

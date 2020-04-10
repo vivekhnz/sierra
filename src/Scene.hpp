@@ -16,6 +16,7 @@ class Scene
     Mesh mesh;
     float orbitAngle;
     float orbitDistance;
+    float prevFrameTime;
 
 public:
     Scene(Window &window);

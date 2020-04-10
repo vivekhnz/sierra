@@ -21,6 +21,7 @@ public:
     bool isKeyPressed(int key) const;
     std::tuple<int, int> getSize() const;
     void refresh();
+    float getTime() const;
     void close();
 
     ~Window();

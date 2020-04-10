@@ -47,6 +47,11 @@ void Window::refresh()
     glfwPollEvents();
 }
 
+float Window::getTime() const
+{
+    return (float)glfwGetTime();
+}
+
 void Window::close()
 {
     glfwSetWindowShouldClose(window, true);
