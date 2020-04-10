@@ -3,6 +3,7 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <stb/stb_image.h>
 #include "Graphics/ShaderManager.hpp"
 #include "Graphics/Shader.hpp"
 #include "Graphics/BindBuffer.hpp"
@@ -17,50 +18,54 @@ Scene::Scene(Window &window) : window(window), camera(window)
     shaders.push_back(shaderManager.loadFragmentShaderFromFile("data/fragment_shader.glsl"));
     shaderProgram.link(shaders);
 
-    // setup vertex buffer
-    int gridSize = 64;
+    // load heightmap
+    int columnCount, rowCount, channelCount;
+    unsigned char *data = stbi_load("data/heightmap.bmp", &columnCount, &rowCount, &channelCount, 0);
+
+    // build vertices
     float spacing = 0.2f;
     float terrainHeight = 3.0f;
     float PI = glm::pi<float>();
-    std::vector<float> vertices(gridSize * gridSize * 3);
-    float offset = (gridSize - 1) * spacing * -0.5f;
-    for (int y = 0; y < gridSize; y++)
+    std::vector<float> vertices(columnCount * rowCount * 3);
+    float offsetX = (columnCount - 1) * spacing * -0.5f;
+    float offsetY = (rowCount - 1) * spacing * -0.5f;
+    for (int y = 0; y < rowCount; y++)
     {
-        float yNorm = (float)y / (float)(gridSize - 1);
-        for (int x = 0; x < gridSize; x++)
+        float yNorm = (float)y / (float)(rowCount - 1);
+        for (int x = 0; x < columnCount; x++)
         {
-            float xNorm = (float)x / (float)(gridSize - 1);
+            float xNorm = (float)x / (float)(columnCount - 1);
 
-            int i = ((y * gridSize) + x) * 3;
-            vertices[i] = (x * spacing) + offset;
-            vertices[i + 1] = sin(pow(xNorm, 2) * PI) * sin(yNorm * PI) * terrainHeight;
-            vertices[i + 2] = (y * spacing) + offset;
+            int i = ((y * columnCount) + x) * 3;
+            vertices[i] = (x * spacing) + offsetX;
+            vertices[i + 1] = ((float)data[((y * columnCount) + x) * channelCount] / 255.0f) * terrainHeight;
+            vertices[i + 2] = (y * spacing) + offsetY;
         }
     }
 
-    // setup element buffer
-    std::vector<unsigned int> indices(2 * (gridSize * gridSize - 2));
-    for (int y = 0; y < gridSize - 1; y++)
+    // build indices
+    std::vector<unsigned int> indices(((rowCount - 1) * ((columnCount + 1) * 2)) - 2);
+    for (int y = 0; y < rowCount - 1; y++)
     {
-        int startIndex = ((gridSize + 1) * 2) * y;
-        int startVertex = gridSize * y;
+        int startIndex = ((columnCount + 1) * 2) * y;
+        int startVertex = columnCount * y;
 
-        for (int x = 0; x < gridSize; x++)
+        for (int x = 0; x < columnCount; x++)
         {
             indices[startIndex + (x * 2)] = startVertex + x;
-            indices[startIndex + (x * 2) + 1] = startVertex + gridSize + x;
+            indices[startIndex + (x * 2) + 1] = startVertex + columnCount + x;
         }
-        if (y < gridSize - 2)
+        if (y < rowCount - 2)
         {
-            indices[startIndex + (gridSize * 2)] = startVertex + gridSize + 2;
-            indices[startIndex + (gridSize * 2) + 1] = startVertex + gridSize;
+            indices[startIndex + (columnCount * 2)] = startVertex + (columnCount * 2) - 1;
+            indices[startIndex + (columnCount * 2) + 1] = startVertex + columnCount;
         }
     }
     mesh.initialize(vertices, indices);
 
     // configure shader
     shaderProgram.setFloat("maxHeight", terrainHeight);
-    shaderProgram.setVector3("lowColor", glm::vec3(0.3f, 0.3f, 0.3f));
+    shaderProgram.setVector3("lowColor", glm::vec3(0.0f, 0.0f, 0.0f));
     shaderProgram.setVector3("highColor", glm::vec3(1.0f, 1.0f, 1.0f));
 
     // setup camera
