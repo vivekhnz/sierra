@@ -17,6 +17,7 @@ class Scene
     float orbitAngle;
     float orbitDistance;
     float prevFrameTime;
+    unsigned int heightmapTextureId;
 
 public:
     Scene(Window &window);

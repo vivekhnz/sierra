@@ -50,6 +50,12 @@ void ShaderProgram::setFloat(std::string uniformName, float value)
     glProgramUniform1f(id, loc, value);
 }
 
+void ShaderProgram::setVector2(std::string uniformName, glm::vec2 value)
+{
+    unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+    glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
+}
+
 void ShaderProgram::setVector3(std::string uniformName, glm::vec3 value)
 {
     unsigned int loc = glGetUniformLocation(id, uniformName.c_str());

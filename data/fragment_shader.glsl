@@ -1,13 +1,10 @@
 #version 410 core
 
-uniform vec3 lowColor;
-uniform vec3 highColor;
-
-in float height;
+in vec3 normal;
 
 out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(mix(lowColor, highColor, height), 1.0f);
+    FragColor = vec4((normal.xyz * 0.5f) + 0.5f, 1.0f);
 }

@@ -7,7 +7,7 @@ class Image
 {
     int width;
     int height;
-    int channelCount;
+    int channels;
     unsigned char *data;
 
 public:
@@ -17,9 +17,10 @@ public:
     Image(Image &&other) = delete;
     Image &operator=(Image &&other) = delete;
 
-    int getWidth();
-    int getHeight();
-    unsigned char getValue(int x, int y, int channel);
+    int getWidth() const;
+    int getHeight() const;
+    unsigned char *getData() const;
+    unsigned char getValue(int x, int y, int channel) const;
 
     ~Image();
 };

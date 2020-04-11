@@ -4,22 +4,25 @@
 
 Image::Image(std::string path)
 {
-    data = stbi_load(path.c_str(), &width, &height, &channelCount, 0);
+    data = stbi_load(path.c_str(), &width, &height, &channels, 0);
 }
 
-int Image::getWidth()
+int Image::getWidth() const
 {
     return width;
 }
-
-int Image::getHeight()
+int Image::getHeight() const
 {
     return height;
 }
-
-unsigned char Image::getValue(int x, int y, int channel)
+unsigned char *Image::getData() const
 {
-    return data[(((y * width) + x) * channelCount) + channel];
+    return data;
+}
+
+unsigned char Image::getValue(int x, int y, int channel) const
+{
+    return data[(((y * width) + x) * channels) + channel];
 }
 
 Image::~Image()
