@@ -3,11 +3,11 @@
 #include <iostream>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <stb/stb_image.h>
 #include "Graphics/ShaderManager.hpp"
 #include "Graphics/Shader.hpp"
 #include "Graphics/BindBuffer.hpp"
 #include "Graphics/BindVertexArray.hpp"
+#include "Graphics/Image.hpp"
 
 Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.0f)
 {
@@ -19,26 +19,23 @@ Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.
     shaderProgram.link(shaders);
 
     // load heightmap
-    int columnCount, rowCount, channelCount;
-    unsigned char *data = stbi_load("data/heightmap.bmp", &columnCount, &rowCount, &channelCount, 0);
+    Image heightmap("data/heightmap.bmp");
+    int columnCount = heightmap.getWidth();
+    int rowCount = heightmap.getHeight();
 
     // build vertices
     float spacing = 0.2f;
     float terrainHeight = 3.0f;
-    float PI = glm::pi<float>();
     std::vector<float> vertices(columnCount * rowCount * 3);
     float offsetX = (columnCount - 1) * spacing * -0.5f;
     float offsetY = (rowCount - 1) * spacing * -0.5f;
     for (int y = 0; y < rowCount; y++)
     {
-        float yNorm = (float)y / (float)(rowCount - 1);
         for (int x = 0; x < columnCount; x++)
         {
-            float xNorm = (float)x / (float)(columnCount - 1);
-
             int i = ((y * columnCount) + x) * 3;
             vertices[i] = (x * spacing) + offsetX;
-            vertices[i + 1] = ((float)data[((y * columnCount) + x) * channelCount] / 255.0f) * terrainHeight;
+            vertices[i + 1] = ((float)heightmap.getValue(x, y, 0) / 255.0f) * terrainHeight;
             vertices[i + 2] = (y * spacing) + offsetY;
         }
     }
