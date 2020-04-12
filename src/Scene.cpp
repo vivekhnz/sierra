@@ -11,7 +11,8 @@
 
 Scene::Scene(Window &window)
     : window(window), camera(window), orbitDistance(13.0f),
-      heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR)
+      heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
+      terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -29,17 +30,19 @@ Scene::Scene(Window &window)
     // build vertices
     float spacing = 0.2f;
     float terrainHeight = 3.0f;
-    std::vector<float> vertices(columnCount * rowCount * 3);
+    std::vector<float> vertices(columnCount * rowCount * 5);
     float offsetX = (columnCount - 1) * spacing * -0.5f;
     float offsetY = (rowCount - 1) * spacing * -0.5f;
     for (int y = 0; y < rowCount; y++)
     {
         for (int x = 0; x < columnCount; x++)
         {
-            int i = ((y * columnCount) + x) * 3;
+            int i = ((y * columnCount) + x) * 5;
             vertices[i] = (x * spacing) + offsetX;
             vertices[i + 1] = ((float)heightmap.getValue(x, y, 0) / 255.0f) * terrainHeight;
             vertices[i + 2] = (y * spacing) + offsetY;
+            vertices[i + 3] = (x % 2) + 0.25f;
+            vertices[i + 4] = (y % 2) + 0.25f;
         }
     }
 
@@ -65,11 +68,16 @@ Scene::Scene(Window &window)
 
     // configure shader
     shaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
+    shaderProgram.setInt("heightmapTexture", 0);
+    shaderProgram.setInt("terrainTexture", 1);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 10.0f, orbitDistance));
     camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
     glEnable(GL_DEPTH_TEST);
+
+    // load terrain texture
+    terrainTexture.initialize(Image("data/checkerboard.bmp"));
 }
 
 void Scene::update()
@@ -121,7 +129,10 @@ void Scene::draw()
     shaderProgram.setMat4("transform", false, camera.getMatrix());
 
     // draw terrain
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, heightmapTexture.getId());
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, terrainTexture.getId());
     shaderProgram.use();
     mesh.draw();
 }

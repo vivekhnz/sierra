@@ -16,6 +16,7 @@ class Scene
     Camera camera;
     Mesh mesh;
     Texture heightmapTexture;
+    Texture terrainTexture;
     float orbitAngle;
     float orbitDistance;
     float prevFrameTime;

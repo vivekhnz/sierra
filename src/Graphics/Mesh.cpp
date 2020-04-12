@@ -22,8 +22,10 @@ void Mesh::initialize(const std::vector<float> &vertices, const std::vector<unsi
         BindVertexArray bindVa(vertexArray);
         BindBuffer bindVbo(GL_ARRAY_BUFFER, vertexBuffer);
         bindVa.bindElementBuffer(elementBuffer);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void *)0);
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
+        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
     }
 
     elementCount = indices.size();

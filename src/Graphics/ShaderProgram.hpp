@@ -22,6 +22,7 @@ public:
     void use();
     void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
     void setFloat(std::string uniformName, float value);
+    void setInt(std::string uniformName, int value);
     void setVector2(std::string uniformName, glm::vec2 value);
     void setVector3(std::string uniformName, glm::vec3 value);
 
