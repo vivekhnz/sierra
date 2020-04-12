@@ -8,11 +8,6 @@ Texture::Texture(int wrapMode, int filterMode)
 {
 }
 
-unsigned int Texture::getId() const
-{
-    return id;
-}
-
 void Texture::initialize(Image &image)
 {
     glGenTextures(1, &id);
@@ -24,6 +19,12 @@ void Texture::initialize(Image &image)
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.getWidth(), image.getHeight(), 0, GL_RGB,
                  GL_UNSIGNED_BYTE, image.getData());
     glGenerateMipmap(GL_TEXTURE_2D);
+}
+
+void Texture::bind(int slot)
+{
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, id);
 }
 
 Texture::~Texture()

@@ -129,10 +129,8 @@ void Scene::draw()
     shaderProgram.setMat4("transform", false, camera.getMatrix());
 
     // draw terrain
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, heightmapTexture.getId());
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, terrainTexture.getId());
+    heightmapTexture.bind(0);
+    terrainTexture.bind(1);
     shaderProgram.use();
     mesh.draw();
 }

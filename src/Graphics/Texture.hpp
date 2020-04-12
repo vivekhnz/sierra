@@ -16,8 +16,8 @@ public:
     Texture(Texture &&other) = delete;
     Texture &operator=(Texture &&other) = delete;
 
-    unsigned int getId() const;
     void initialize(Image &image);
+    void bind(int slot);
 
     ~Texture();
 };
