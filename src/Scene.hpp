@@ -7,6 +7,7 @@
 #include "Graphics/VertexArray.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Mesh.hpp"
+#include "Graphics/Texture.hpp"
 
 class Scene
 {
@@ -14,10 +15,10 @@ class Scene
     ShaderProgram shaderProgram;
     Camera camera;
     Mesh mesh;
+    Texture heightmapTexture;
     float orbitAngle;
     float orbitDistance;
     float prevFrameTime;
-    unsigned int heightmapTextureId;
 
 public:
     Scene(Window &window);

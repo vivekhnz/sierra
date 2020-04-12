@@ -9,7 +9,9 @@
 #include "Graphics/BindVertexArray.hpp"
 #include "Graphics/Image.hpp"
 
-Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.0f)
+Scene::Scene(Window &window)
+    : window(window), camera(window), orbitDistance(13.0f),
+      heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -20,6 +22,7 @@ Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.
 
     // load heightmap
     Image heightmap("data/heightmap.bmp");
+    heightmapTexture.initialize(heightmap);
     int columnCount = heightmap.getWidth();
     int rowCount = heightmap.getHeight();
 
@@ -67,16 +70,6 @@ Scene::Scene(Window &window) : window(window), camera(window), orbitDistance(13.
     camera.setPosition(glm::vec3(0.0f, 10.0f, orbitDistance));
     camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
     glEnable(GL_DEPTH_TEST);
-
-    // setup heightmap texture
-    glGenTextures(1, &heightmapTextureId);
-    glBindTexture(GL_TEXTURE_2D, heightmapTextureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_MIRRORED_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, columnCount, rowCount, 0, GL_RGB, GL_UNSIGNED_BYTE, heightmap.getData());
-    glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 void Scene::update()
@@ -128,12 +121,11 @@ void Scene::draw()
     shaderProgram.setMat4("transform", false, camera.getMatrix());
 
     // draw terrain
-    glBindTexture(GL_TEXTURE_2D, heightmapTextureId);
+    glBindTexture(GL_TEXTURE_2D, heightmapTexture.getId());
     shaderProgram.use();
     mesh.draw();
 }
 
 Scene::~Scene()
 {
-    glDeleteTextures(1, &heightmapTextureId);
 }
