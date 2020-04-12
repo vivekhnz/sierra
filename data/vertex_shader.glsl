@@ -16,5 +16,5 @@ void main()
     float hR = texture(heightmapTexture, vec2(texcoord.x + unitSize.x, texcoord.y)).x;
     float hD = texture(heightmapTexture, vec2(texcoord.x, texcoord.y - unitSize.y)).x;
     float hU = texture(heightmapTexture, vec2(texcoord.x, texcoord.y + unitSize.y)).x;
-    normal = vec3(hR - hL, hD - hU, 0.0f);
+    normal = normalize(vec3(hR - hL, unitSize.x, hD - hU));
 }
