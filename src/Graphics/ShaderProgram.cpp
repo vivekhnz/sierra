@@ -56,6 +56,11 @@ void ShaderProgram::setInt(std::string uniformName, int value)
     glProgramUniform1i(id, loc, value);
 }
 
+void ShaderProgram::setBool(std::string uniformName, bool value)
+{
+    setInt(uniformName, value ? 1 : 0);
+}
+
 void ShaderProgram::setVector2(std::string uniformName, glm::vec2 value)
 {
     unsigned int loc = glGetUniformLocation(id, uniformName.c_str());

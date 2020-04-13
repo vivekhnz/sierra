@@ -70,6 +70,9 @@ Scene::Scene(Window &window)
     shaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
     shaderProgram.setInt("heightmapTexture", 0);
     shaderProgram.setInt("terrainTexture", 1);
+    shaderProgram.setBool("isLightingEnabled", true);
+    shaderProgram.setBool("isTextureEnabled", true);
+    shaderProgram.setBool("isNormalDisplayEnabled", true);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 10.0f, orbitDistance));
