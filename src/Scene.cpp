@@ -12,7 +12,9 @@
 Scene::Scene(Window &window)
     : window(window), camera(window), orbitDistance(13.0f),
       heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
-      terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER)
+      terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
+      isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(true),
+      wasLKeyDown(false), wasTKeyDown(false), wasNKeyDown(false)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -70,9 +72,9 @@ Scene::Scene(Window &window)
     shaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
     shaderProgram.setInt("heightmapTexture", 0);
     shaderProgram.setInt("terrainTexture", 1);
-    shaderProgram.setBool("isLightingEnabled", true);
-    shaderProgram.setBool("isTextureEnabled", true);
-    shaderProgram.setBool("isNormalDisplayEnabled", true);
+    shaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+    shaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+    shaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 10.0f, orbitDistance));
@@ -85,14 +87,15 @@ Scene::Scene(Window &window)
 
 void Scene::update()
 {
-    float currentTime = window.getTime();
-    float deltaTime = currentTime - prevFrameTime;
-    prevFrameTime = currentTime;
-
     if (window.isKeyPressed(GLFW_KEY_ESCAPE))
     {
         window.close();
     }
+
+    float currentTime = window.getTime();
+    float deltaTime = currentTime - prevFrameTime;
+    prevFrameTime = currentTime;
+
     glm::vec3 pos = camera.getPosition();
     if (window.isKeyPressed(GLFW_KEY_A))
     {
@@ -121,6 +124,28 @@ void Scene::update()
     pos.x = sin(-orbitAngle) * orbitDistance;
     pos.z = cos(-orbitAngle) * orbitDistance;
     camera.setPosition(pos);
+
+    bool isLKeyDown = window.isKeyPressed(GLFW_KEY_L);
+    bool isTKeyDown = window.isKeyPressed(GLFW_KEY_T);
+    bool isNKeyDown = window.isKeyPressed(GLFW_KEY_N);
+    if (isLKeyDown && !wasLKeyDown)
+    {
+        isLightingEnabled = !isLightingEnabled;
+        shaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+    }
+    if (isTKeyDown && !wasTKeyDown)
+    {
+        isTextureEnabled = !isTextureEnabled;
+        shaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+    }
+    if (isNKeyDown && !wasNKeyDown)
+    {
+        isNormalDisplayEnabled = !isNormalDisplayEnabled;
+        shaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+    }
+    wasLKeyDown = isLKeyDown;
+    wasTKeyDown = isTKeyDown;
+    wasNKeyDown = isNKeyDown;
 }
 
 void Scene::draw()

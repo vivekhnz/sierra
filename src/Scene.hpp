@@ -17,9 +17,18 @@ class Scene
     Mesh mesh;
     Texture heightmapTexture;
     Texture terrainTexture;
+
     float orbitAngle;
     float orbitDistance;
     float prevFrameTime;
+
+    bool isLightingEnabled;
+    bool isTextureEnabled;
+    bool isNormalDisplayEnabled;
+
+    bool wasLKeyDown;
+    bool wasTKeyDown;
+    bool wasNKeyDown;
 
 public:
     Scene(Window &window);
