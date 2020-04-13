@@ -1,20 +1,13 @@
 #include "Scene.hpp"
 
-#include <iostream>
-#include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
 #include "Graphics/ShaderManager.hpp"
-#include "Graphics/Shader.hpp"
-#include "Graphics/BindBuffer.hpp"
-#include "Graphics/BindVertexArray.hpp"
-#include "Graphics/Image.hpp"
 
 Scene::Scene(Window &window)
     : window(window), camera(window), orbitDistance(13.0f),
       heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
       terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
       isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(true),
-      wasLKeyDown(false), wasTKeyDown(false), wasNKeyDown(false)
+      input(window)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -83,10 +76,16 @@ Scene::Scene(Window &window)
 
     // load terrain texture
     terrainTexture.initialize(Image("data/checkerboard.bmp"));
+
+    // configure input
+    input.listenForKey(GLFW_KEY_L);
+    input.listenForKey(GLFW_KEY_T);
+    input.listenForKey(GLFW_KEY_N);
 }
 
 void Scene::update()
 {
+    input.update();
     if (window.isKeyPressed(GLFW_KEY_ESCAPE))
     {
         window.close();
@@ -125,27 +124,21 @@ void Scene::update()
     pos.z = cos(-orbitAngle) * orbitDistance;
     camera.setPosition(pos);
 
-    bool isLKeyDown = window.isKeyPressed(GLFW_KEY_L);
-    bool isTKeyDown = window.isKeyPressed(GLFW_KEY_T);
-    bool isNKeyDown = window.isKeyPressed(GLFW_KEY_N);
-    if (isLKeyDown && !wasLKeyDown)
+    if (input.isNewKeyPress(GLFW_KEY_L))
     {
         isLightingEnabled = !isLightingEnabled;
         shaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     }
-    if (isTKeyDown && !wasTKeyDown)
+    if (input.isNewKeyPress(GLFW_KEY_T))
     {
         isTextureEnabled = !isTextureEnabled;
         shaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     }
-    if (isNKeyDown && !wasNKeyDown)
+    if (input.isNewKeyPress(GLFW_KEY_N))
     {
         isNormalDisplayEnabled = !isNormalDisplayEnabled;
         shaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
     }
-    wasLKeyDown = isLKeyDown;
-    wasTKeyDown = isTKeyDown;
-    wasNKeyDown = isNKeyDown;
 }
 
 void Scene::draw()

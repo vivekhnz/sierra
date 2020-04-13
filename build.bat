@@ -5,7 +5,7 @@ set PLATFORM=x64
 
 set SRC_FILES_LIB=deps\glad\glad.c deps\stb\stb_image.c
 set SRC_FILES_GRAPHICS=src\Graphics\GlfwManager.cpp src\Graphics\Window.cpp src\Graphics\Shader.cpp src\Graphics\ShaderProgram.cpp src\Graphics\AttachShader.cpp src\Graphics\BindBuffer.cpp src\Graphics\Buffer.cpp src\Graphics\VertexArray.cpp src\Graphics\BindVertexArray.cpp src\Graphics\ShaderManager.cpp src\Graphics\Camera.cpp src\Graphics\Mesh.cpp src\Graphics\Image.cpp src\Graphics\Texture.cpp
-set SRC_FILES_IO=src\IO\OpenFile.cpp
+set SRC_FILES_IO=src\IO\OpenFile.cpp src\IO\InputManager.cpp
 set SRC_FILES_APP=src\main.cpp src\Scene.cpp
 set SRC_FILES=%SRC_FILES_LIB% %SRC_FILES_GRAPHICS% %SRC_FILES_IO% %SRC_FILES_APP%
 

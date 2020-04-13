@@ -3,11 +3,10 @@
 
 #include "Graphics/Window.hpp"
 #include "Graphics/ShaderProgram.hpp"
-#include "Graphics/Buffer.hpp"
-#include "Graphics/VertexArray.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Mesh.hpp"
 #include "Graphics/Texture.hpp"
+#include "IO/InputManager.hpp"
 
 class Scene
 {
@@ -17,6 +16,7 @@ class Scene
     Mesh mesh;
     Texture heightmapTexture;
     Texture terrainTexture;
+    InputManager input;
 
     float orbitAngle;
     float orbitDistance;
@@ -25,10 +25,6 @@ class Scene
     bool isLightingEnabled;
     bool isTextureEnabled;
     bool isNormalDisplayEnabled;
-
-    bool wasLKeyDown;
-    bool wasTKeyDown;
-    bool wasNKeyDown;
 
 public:
     Scene(Window &window);
