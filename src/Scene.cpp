@@ -3,10 +3,10 @@
 #include "Graphics/ShaderManager.hpp"
 
 Scene::Scene(Window &window)
-    : window(window), camera(window), orbitDistance(13.0f),
+    : window(window), camera(window), orbitDistance(1800.0f),
       heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
       terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
-      isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(true),
+      isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
       input(window)
 {
     // load shaders
@@ -23,8 +23,8 @@ Scene::Scene(Window &window)
     int rowCount = heightmap.getHeight();
 
     // build vertices
-    float spacing = 0.2f;
-    float terrainHeight = 3.0f;
+    float spacing = 1.0f;
+    float terrainHeight = 400.0f;
     std::vector<float> vertices(columnCount * rowCount * 5);
     float offsetX = (columnCount - 1) * spacing * -0.5f;
     float offsetY = (rowCount - 1) * spacing * -0.5f;
@@ -70,7 +70,7 @@ Scene::Scene(Window &window)
     shaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
 
     // setup camera
-    camera.setPosition(glm::vec3(0.0f, 10.0f, orbitDistance));
+    camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
     camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
     glEnable(GL_DEPTH_TEST);
 
@@ -106,19 +106,19 @@ void Scene::update()
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        orbitDistance -= 10.0f * deltaTime;
+        orbitDistance -= 400.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        orbitDistance += 10.0f * deltaTime;
+        orbitDistance += 400.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_UP))
     {
-        pos.y += 15.0f * deltaTime;
+        pos.y += 600.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_DOWN))
     {
-        pos.y -= 15.0f * deltaTime;
+        pos.y -= 600.0f * deltaTime;
     }
     pos.x = sin(-orbitAngle) * orbitDistance;
     pos.z = cos(-orbitAngle) * orbitDistance;
