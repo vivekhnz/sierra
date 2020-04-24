@@ -19,12 +19,14 @@ Scene::Scene(Window &window)
     // load heightmap
     Image heightmap("data/heightmap.bmp");
     heightmapTexture.initialize(heightmap);
-    int columnCount = heightmap.getWidth();
-    int rowCount = heightmap.getHeight();
+    int downresFactor = 1;
+    int columnCount = heightmap.getWidth() / downresFactor;
+    int rowCount = heightmap.getHeight() / downresFactor;
 
     // build vertices
-    float spacing = 1.0f;
     float terrainHeight = 400.0f;
+    float uvScale = 0.1f * downresFactor;
+    float spacing = 1.0f * downresFactor;
     std::vector<float> vertices(columnCount * rowCount * 5);
     float offsetX = (columnCount - 1) * spacing * -0.5f;
     float offsetY = (rowCount - 1) * spacing * -0.5f;
@@ -34,10 +36,10 @@ Scene::Scene(Window &window)
         {
             int i = ((y * columnCount) + x) * 5;
             vertices[i] = (x * spacing) + offsetX;
-            vertices[i + 1] = ((float)heightmap.getValue(x, y, 0) / 255.0f) * terrainHeight;
+            vertices[i + 1] = ((float)heightmap.getValue(x * downresFactor, y * downresFactor, 0) / 255.0f) * terrainHeight;
             vertices[i + 2] = (y * spacing) + offsetY;
-            vertices[i + 3] = (x % 2) + 0.25f;
-            vertices[i + 4] = (y % 2) + 0.25f;
+            vertices[i + 3] = (x * uvScale);
+            vertices[i + 4] = (y * uvScale);
         }
     }
 
