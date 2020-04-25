@@ -118,6 +118,9 @@ Scene::Scene(Window &window)
     terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeTessShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
+    wireframeTessShaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
+    wireframeTessShaderProgram.setInt("heightmapTexture", 0);
+    wireframeTessShaderProgram.setFloat("terrainHeight", terrainHeight);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
