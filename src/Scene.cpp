@@ -40,7 +40,7 @@ Scene::Scene(Window &window)
     // load heightmap
     Image heightmap("data/heightmap.bmp");
     heightmapTexture.initialize(heightmap);
-    int downresFactor = 1;
+    int downresFactor = 8;
     int columnCount = heightmap.getWidth() / downresFactor;
     int rowCount = heightmap.getHeight() / downresFactor;
 
@@ -84,45 +84,28 @@ Scene::Scene(Window &window)
     }
     mesh.initialize(vertices, indices);
 
-    std::vector<float> tessVertices(2 * 2 * 5);
+    std::vector<unsigned int> tessIndices((rowCount - 1) * (columnCount - 1) * 6);
 
-    tessVertices[0] = offsetX;
-    tessVertices[1] = 0.0f;
-    tessVertices[2] = offsetY;
-    tessVertices[3] = 0.0f;
-    tessVertices[4] = 0.0f;
+    for (int y = 0; y < rowCount - 1; y++)
+    {
+        for (int x = 0; x < columnCount - 1; x++)
+        {
+            int vertIndex = (y * columnCount) + x;
+            int elemIndex = ((y * (columnCount - 1)) + x) * 6;
+            tessIndices[elemIndex] = vertIndex;
+            tessIndices[elemIndex + 1] = vertIndex + columnCount;
+            tessIndices[elemIndex + 2] = vertIndex + 1;
+            tessIndices[elemIndex + 3] = vertIndex + 1;
+            tessIndices[elemIndex + 4] = vertIndex + columnCount;
+            tessIndices[elemIndex + 5] = vertIndex + columnCount + 1;
+        }
+    }
 
-    tessVertices[5] = offsetX + (spacing * columnCount);
-    tessVertices[6] = 0.0f;
-    tessVertices[7] = offsetY;
-    tessVertices[8] = 1.0f;
-    tessVertices[9] = 0.0f;
-
-    tessVertices[10] = offsetX + (spacing * columnCount);
-    tessVertices[11] = 0.0f;
-    tessVertices[12] = offsetY + (spacing * rowCount);
-    tessVertices[13] = 1.0f;
-    tessVertices[14] = 1.0f;
-
-    tessVertices[15] = offsetX;
-    tessVertices[16] = 0.0f;
-    tessVertices[17] = offsetY + (spacing * rowCount);
-    tessVertices[18] = 0.0f;
-    tessVertices[19] = 1.0f;
-
-    std::vector<unsigned int> tessIndices(6);
-
-    tessIndices[0] = 0;
-    tessIndices[1] = 3;
-    tessIndices[2] = 1;
-    tessIndices[3] = 1;
-    tessIndices[4] = 3;
-    tessIndices[5] = 2;
-
-    tessMesh.initialize(tessVertices, tessIndices);
+    tessMesh.initialize(vertices, tessIndices);
+    float tessFactor = 3;
     glPatchParameteri(GL_PATCH_VERTICES, 3);
-    float outerTessLevels[] = {8, 8, 8, 8};
-    float innerTessLevels[] = {8, 8};
+    float outerTessLevels[] = {tessFactor, tessFactor, tessFactor, tessFactor};
+    float innerTessLevels[] = {tessFactor, tessFactor};
     glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL, outerTessLevels);
     glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL, innerTessLevels);
 
