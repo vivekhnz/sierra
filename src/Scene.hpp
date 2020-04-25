@@ -13,6 +13,7 @@ class Scene
     Window &window;
     ShaderProgram terrainShaderProgram;
     ShaderProgram wireframeShaderProgram;
+    ShaderProgram wireframeTessShaderProgram;
     Camera camera;
     Mesh mesh;
     Mesh tessMesh;

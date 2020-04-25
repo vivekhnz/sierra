@@ -15,6 +15,7 @@ public:
     ShaderManager &operator=(ShaderManager &&) = delete;
 
     Shader loadVertexShaderFromFile(std::string filePath);
+    Shader loadTessEvalShaderFromFile(std::string filePath);
     Shader loadFragmentShaderFromFile(std::string filePath);
 
     ~ShaderManager();
