@@ -15,6 +15,7 @@ class Scene
     ShaderProgram wireframeShaderProgram;
     Camera camera;
     Mesh mesh;
+    Mesh tessMesh;
     Texture heightmapTexture;
     Texture terrainTexture;
     InputManager input;
@@ -27,6 +28,7 @@ class Scene
     bool isTextureEnabled;
     bool isNormalDisplayEnabled;
     bool isWireframeMode;
+    bool isTessellationEnabled;
 
 public:
     Scene(Window &window);

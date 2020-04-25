@@ -4,10 +4,10 @@
 #include "BindVertexArray.hpp"
 #include "BindBuffer.hpp"
 
-Mesh::Mesh()
+Mesh::Mesh(GLenum primitiveType)
     : vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
       elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),
-      isInitialized(false)
+      isInitialized(false), primitiveType(primitiveType)
 {
 }
 
@@ -39,7 +39,7 @@ void Mesh::draw()
         throw std::runtime_error("Mesh not initialized.");
     }
     BindVertexArray bindVa(vertexArray);
-    glDrawElements(GL_TRIANGLE_STRIP, elementCount, GL_UNSIGNED_INT, 0);
+    glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
 }
 
 Mesh::~Mesh()

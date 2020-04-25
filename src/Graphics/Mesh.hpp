@@ -12,9 +12,10 @@ class Mesh
     Buffer elementBuffer;
     VertexArray vertexArray;
     int elementCount;
+    GLenum primitiveType;
 
 public:
-    Mesh();
+    Mesh(GLenum primitiveType);
     Mesh(const Mesh &that) = delete;
     Mesh &operator=(const Mesh &that) = delete;
     Mesh(Mesh &&) = delete;

@@ -4,10 +4,11 @@
 
 Scene::Scene(Window &window)
     : window(window), camera(window), orbitDistance(1800.0f),
+      mesh(GL_TRIANGLE_STRIP), tessMesh(GL_TRIANGLES),
       heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
       terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
       isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
-      isWireframeMode(false),
+      isWireframeMode(false), isTessellationEnabled(false),
       input(window)
 {
     // load shaders
@@ -73,6 +74,43 @@ Scene::Scene(Window &window)
         }
     }
     mesh.initialize(vertices, indices);
+
+    std::vector<float> tessVertices(2 * 2 * 5);
+
+    tessVertices[0] = offsetX;
+    tessVertices[1] = 0.0f;
+    tessVertices[2] = offsetY;
+    tessVertices[3] = 0.0f;
+    tessVertices[4] = 0.0f;
+
+    tessVertices[5] = offsetX + (spacing * columnCount);
+    tessVertices[6] = 0.0f;
+    tessVertices[7] = offsetY;
+    tessVertices[8] = 1.0f;
+    tessVertices[9] = 0.0f;
+
+    tessVertices[10] = offsetX + (spacing * columnCount);
+    tessVertices[11] = 0.0f;
+    tessVertices[12] = offsetY + (spacing * rowCount);
+    tessVertices[13] = 1.0f;
+    tessVertices[14] = 1.0f;
+
+    tessVertices[15] = offsetX;
+    tessVertices[16] = 0.0f;
+    tessVertices[17] = offsetY + (spacing * rowCount);
+    tessVertices[18] = 0.0f;
+    tessVertices[19] = 1.0f;
+
+    std::vector<unsigned int> tessIndices(6);
+
+    tessIndices[0] = 0;
+    tessIndices[1] = 3;
+    tessIndices[2] = 1;
+    tessIndices[3] = 1;
+    tessIndices[4] = 3;
+    tessIndices[5] = 2;
+
+    tessMesh.initialize(tessVertices, tessIndices);
 
     // configure shaders
     terrainShaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
@@ -159,6 +197,10 @@ void Scene::update()
         isWireframeMode = !isWireframeMode;
         glPolygonMode(GL_FRONT_AND_BACK, isWireframeMode ? GL_LINE : GL_FILL);
     }
+    if (input.isNewKeyPress(GLFW_KEY_X))
+    {
+        isTessellationEnabled = !isTessellationEnabled;
+    }
 }
 
 void Scene::draw()
@@ -175,7 +217,7 @@ void Scene::draw()
     terrainTexture.bind(1);
 
     (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
-    mesh.draw();
+    (isTessellationEnabled ? tessMesh : mesh).draw();
 }
 
 Scene::~Scene()
