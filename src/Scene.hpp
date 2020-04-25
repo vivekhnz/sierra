@@ -11,7 +11,8 @@
 class Scene
 {
     Window &window;
-    ShaderProgram shaderProgram;
+    ShaderProgram terrainShaderProgram;
+    ShaderProgram wireframeShaderProgram;
     Camera camera;
     Mesh mesh;
     Texture heightmapTexture;
@@ -25,6 +26,7 @@ class Scene
     bool isLightingEnabled;
     bool isTextureEnabled;
     bool isNormalDisplayEnabled;
+    bool isWireframeMode;
 
 public:
     Scene(Window &window);

@@ -7,14 +7,25 @@ Scene::Scene(Window &window)
       heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
       terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
       isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
+      isWireframeMode(false),
       input(window)
 {
     // load shaders
     ShaderManager shaderManager;
-    std::vector<Shader> shaders;
-    shaders.push_back(shaderManager.loadVertexShaderFromFile("data/vertex_shader.glsl"));
-    shaders.push_back(shaderManager.loadFragmentShaderFromFile("data/fragment_shader.glsl"));
-    shaderProgram.link(shaders);
+
+    std::vector<Shader> terrainShaders;
+    terrainShaders.push_back(
+        shaderManager.loadVertexShaderFromFile("data/terrain_vertex_shader.glsl"));
+    terrainShaders.push_back(
+        shaderManager.loadFragmentShaderFromFile("data/terrain_fragment_shader.glsl"));
+    terrainShaderProgram.link(terrainShaders);
+
+    std::vector<Shader> wireframeShaders;
+    wireframeShaders.push_back(
+        shaderManager.loadVertexShaderFromFile("data/wireframe_vertex_shader.glsl"));
+    wireframeShaders.push_back(
+        shaderManager.loadFragmentShaderFromFile("data/wireframe_fragment_shader.glsl"));
+    wireframeShaderProgram.link(wireframeShaders);
 
     // load heightmap
     Image heightmap("data/heightmap.bmp");
@@ -38,8 +49,8 @@ Scene::Scene(Window &window)
             vertices[i] = (x * spacing) + offsetX;
             vertices[i + 1] = ((float)heightmap.getValue(x * downresFactor, y * downresFactor, 0) / 255.0f) * terrainHeight;
             vertices[i + 2] = (y * spacing) + offsetY;
-            vertices[i + 3] = (x * uvScale);
-            vertices[i + 4] = (y * uvScale);
+            vertices[i + 3] = x * uvScale;
+            vertices[i + 4] = y * uvScale;
         }
     }
 
@@ -63,18 +74,20 @@ Scene::Scene(Window &window)
     }
     mesh.initialize(vertices, indices);
 
-    // configure shader
-    shaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
-    shaderProgram.setInt("heightmapTexture", 0);
-    shaderProgram.setInt("terrainTexture", 1);
-    shaderProgram.setBool("isLightingEnabled", isLightingEnabled);
-    shaderProgram.setBool("isTextureEnabled", isTextureEnabled);
-    shaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+    // configure shaders
+    terrainShaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
+    terrainShaderProgram.setInt("heightmapTexture", 0);
+    terrainShaderProgram.setInt("terrainTexture", 1);
+    terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+    terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+    terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+    wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
     camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 
     // load terrain texture
     terrainTexture.initialize(Image("data/checkerboard.bmp"));
@@ -129,17 +142,22 @@ void Scene::update()
     if (input.isNewKeyPress(GLFW_KEY_L))
     {
         isLightingEnabled = !isLightingEnabled;
-        shaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     }
     if (input.isNewKeyPress(GLFW_KEY_T))
     {
         isTextureEnabled = !isTextureEnabled;
-        shaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     }
     if (input.isNewKeyPress(GLFW_KEY_N))
     {
         isNormalDisplayEnabled = !isNormalDisplayEnabled;
-        shaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+        terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+    }
+    if (input.isNewKeyPress(GLFW_KEY_Z))
+    {
+        isWireframeMode = !isWireframeMode;
+        glPolygonMode(GL_FRONT_AND_BACK, isWireframeMode ? GL_LINE : GL_FILL);
     }
 }
 
@@ -149,12 +167,14 @@ void Scene::draw()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // setup transformation matrix
-    shaderProgram.setMat4("transform", false, camera.getMatrix());
+    terrainShaderProgram.setMat4("transform", false, camera.getMatrix());
+    wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
 
     // draw terrain
     heightmapTexture.bind(0);
     terrainTexture.bind(1);
-    shaderProgram.use();
+
+    (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
     mesh.draw();
 }
 
