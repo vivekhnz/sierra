@@ -12,6 +12,7 @@ class Scene
 {
     Window &window;
     ShaderProgram terrainShaderProgram;
+    ShaderProgram terrainTessShaderProgram;
     ShaderProgram wireframeShaderProgram;
     ShaderProgram wireframeTessShaderProgram;
     Camera camera;

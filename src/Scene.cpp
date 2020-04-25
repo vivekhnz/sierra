@@ -21,6 +21,15 @@ Scene::Scene(Window &window)
         shaderManager.loadFragmentShaderFromFile("data/terrain_fragment_shader.glsl"));
     terrainShaderProgram.link(terrainShaders);
 
+    std::vector<Shader> terrainTessShaders;
+    terrainTessShaders.push_back(
+        shaderManager.loadVertexShaderFromFile("data/terrain_tessellated_vertex_shader.glsl"));
+    terrainTessShaders.push_back(
+        shaderManager.loadTessEvalShaderFromFile("data/terrain_tessellated_tess_eval_shader.glsl"));
+    terrainTessShaders.push_back(
+        shaderManager.loadFragmentShaderFromFile("data/terrain_fragment_shader.glsl"));
+    terrainTessShaderProgram.link(terrainTessShaders);
+
     std::vector<Shader> wireframeShaders;
     wireframeShaders.push_back(
         shaderManager.loadVertexShaderFromFile("data/wireframe_vertex_shader.glsl"));
@@ -40,7 +49,7 @@ Scene::Scene(Window &window)
     // load heightmap
     Image heightmap("data/heightmap.bmp");
     heightmapTexture.initialize(heightmap);
-    int downresFactor = 8;
+    int downresFactor = 16;
     int columnCount = heightmap.getWidth() / downresFactor;
     int rowCount = heightmap.getHeight() / downresFactor;
 
@@ -102,7 +111,7 @@ Scene::Scene(Window &window)
     }
 
     tessMesh.initialize(vertices, tessIndices);
-    float tessFactor = 3;
+    float tessFactor = 5;
     glPatchParameteri(GL_PATCH_VERTICES, 3);
     float outerTessLevels[] = {tessFactor, tessFactor, tessFactor, tessFactor};
     float innerTessLevels[] = {tessFactor, tessFactor};
@@ -116,6 +125,13 @@ Scene::Scene(Window &window)
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+    terrainTessShaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
+    terrainTessShaderProgram.setInt("heightmapTexture", 0);
+    terrainTessShaderProgram.setFloat("terrainHeight", terrainHeight);
+    terrainTessShaderProgram.setInt("terrainTexture", 1);
+    terrainTessShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+    terrainTessShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+    terrainTessShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeTessShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeTessShaderProgram.setVector2("unitSize", glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount)));
@@ -182,16 +198,19 @@ void Scene::update()
     {
         isLightingEnabled = !isLightingEnabled;
         terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+        terrainTessShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     }
     if (input.isNewKeyPress(GLFW_KEY_T))
     {
         isTextureEnabled = !isTextureEnabled;
         terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+        terrainTessShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     }
     if (input.isNewKeyPress(GLFW_KEY_N))
     {
         isNormalDisplayEnabled = !isNormalDisplayEnabled;
         terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+        terrainTessShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
     }
     if (input.isNewKeyPress(GLFW_KEY_Z))
     {
@@ -211,6 +230,7 @@ void Scene::draw()
 
     // setup transformation matrix
     terrainShaderProgram.setMat4("transform", false, camera.getMatrix());
+    terrainTessShaderProgram.setMat4("transform", false, camera.getMatrix());
     wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
     wireframeTessShaderProgram.setMat4("transform", false, camera.getMatrix());
 
@@ -220,7 +240,7 @@ void Scene::draw()
 
     (isWireframeMode
          ? (isTessellationEnabled ? wireframeTessShaderProgram : wireframeShaderProgram)
-         : terrainShaderProgram)
+         : (isTessellationEnabled ? terrainTessShaderProgram : terrainShaderProgram))
         .use();
     (isTessellationEnabled ? tessMesh : mesh).draw();
 }
