@@ -27,6 +27,8 @@ Scene::Scene(Window &window)
     wireframeShaders.push_back(
         shaderManager.loadVertexShaderFromFile("data/wireframe_vertex_shader.glsl"));
     wireframeShaders.push_back(
+        shaderManager.loadTessControlShaderFromFile("data/wireframe_tess_ctrl_shader.glsl"));
+    wireframeShaders.push_back(
         shaderManager.loadTessEvalShaderFromFile("data/wireframe_tess_eval_shader.glsl"));
     wireframeShaders.push_back(
         shaderManager.loadFragmentShaderFromFile("data/wireframe_fragment_shader.glsl"));
@@ -94,6 +96,7 @@ Scene::Scene(Window &window)
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
+    wireframeShaderProgram.setFloat("tessellationLevel", tessellationLevel);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
@@ -209,6 +212,7 @@ void Scene::updateTessellationLevel(float tessFactor)
     float innerTessLevels[] = {tessFactor, tessFactor};
     glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL, outerTessLevels);
     glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL, innerTessLevels);
+    wireframeShaderProgram.setFloat("tessellationLevel", tessellationLevel);
 }
 
 Scene::~Scene()
