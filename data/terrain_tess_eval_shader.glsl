@@ -3,12 +3,12 @@ layout(triangles, equal_spacing, ccw) in;
 
 in vec3 worldPos[];
 in vec2 heightmapUV[];
-in vec2 texcoordIn[];
 
 uniform mat4 transform;
 uniform sampler2D heightmapTexture;
 uniform float terrainHeight;
-uniform vec2 unitSize;
+uniform vec2 normalSampleOffset;
+uniform vec2 textureScale;
 
 out vec3 normal;
 out vec2 texcoord;
@@ -29,11 +29,10 @@ void main()
     pos.y = texture(heightmapTexture, hUV).x * terrainHeight;
     gl_Position = transform * vec4(pos, 1.0f);
 
-    vec2 neighbourOffset = unitSize * 10.0f;
-    float hL = texture(heightmapTexture, vec2(hUV.x - neighbourOffset.x, hUV.y)).x;
-    float hR = texture(heightmapTexture, vec2(hUV.x + neighbourOffset.x, hUV.y)).x;
-    float hD = texture(heightmapTexture, vec2(hUV.x, hUV.y - neighbourOffset.y)).x;
-    float hU = texture(heightmapTexture, vec2(hUV.x, hUV.y + neighbourOffset.y)).x;
-    normal = normalize(vec3(hR - hL, neighbourOffset.x, hD - hU));
-    texcoord = hUV * 150.0f;
+    float hL = texture(heightmapTexture, vec2(hUV.x - normalSampleOffset.x, hUV.y)).x;
+    float hR = texture(heightmapTexture, vec2(hUV.x + normalSampleOffset.x, hUV.y)).x;
+    float hD = texture(heightmapTexture, vec2(hUV.x, hUV.y - normalSampleOffset.y)).x;
+    float hU = texture(heightmapTexture, vec2(hUV.x, hUV.y + normalSampleOffset.y)).x;
+    normal = normalize(vec3(hR - hL, normalSampleOffset.x, hD - hU));
+    texcoord = hUV * textureScale;
 }

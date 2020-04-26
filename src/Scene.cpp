@@ -41,11 +41,11 @@ Scene::Scene(Window &window)
 
     // build vertices
     float terrainHeight = 400.0f;
-    float uvScale = 0.1f * downresFactor;
     float spacing = 1.0f * downresFactor;
     std::vector<float> vertices(columnCount * rowCount * 5);
     float offsetX = (columnCount - 1) * spacing * -0.5f;
     float offsetY = (rowCount - 1) * spacing * -0.5f;
+    auto uvSize = glm::vec2(1.0f / (columnCount - 1), 1.0f / (rowCount - 1));
     for (int y = 0; y < rowCount; y++)
     {
         for (int x = 0; x < columnCount; x++)
@@ -54,8 +54,8 @@ Scene::Scene(Window &window)
             vertices[i] = (x * spacing) + offsetX;
             vertices[i + 1] = ((float)heightmap.getValue(x * downresFactor, y * downresFactor, 0) / 255.0f) * terrainHeight;
             vertices[i + 2] = (y * spacing) + offsetY;
-            vertices[i + 3] = x * uvScale;
-            vertices[i + 4] = y * uvScale;
+            vertices[i + 3] = uvSize.x * x;
+            vertices[i + 4] = uvSize.y * y;
         }
     }
 
@@ -82,8 +82,9 @@ Scene::Scene(Window &window)
     updateTessellationLevel(tessellationLevel);
 
     // configure shaders
-    auto unitSize = glm::vec2(1.0f / (spacing * columnCount), 1.0f / (spacing * rowCount));
-    terrainShaderProgram.setVector2("unitSize", unitSize);
+    terrainShaderProgram.setVector2("normalSampleOffset",
+        glm::vec2(10.0f / (spacing * columnCount), 10.0f / (spacing * rowCount)));
+    terrainShaderProgram.setVector2("textureScale", glm::vec2(150.0f, 150.0f));
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setInt("heightmapTexture", 0);
     terrainShaderProgram.setInt("terrainTexture", 1);
@@ -91,7 +92,6 @@ Scene::Scene(Window &window)
     terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
-    wireframeShaderProgram.setVector2("unitSize", unitSize);
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
 
