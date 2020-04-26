@@ -22,11 +22,14 @@ class Scene
     float orbitAngle;
     float orbitDistance;
     float prevFrameTime;
+    float tessellationLevel;
 
     bool isLightingEnabled;
     bool isTextureEnabled;
     bool isNormalDisplayEnabled;
     bool isWireframeMode;
+
+    void updateTessellationLevel(float tessFactor);
 
 public:
     Scene(Window &window);
