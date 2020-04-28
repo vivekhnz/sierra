@@ -96,7 +96,7 @@ Scene::Scene(Window &window)
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
-    wireframeShaderProgram.setFloat("tessellationLevel", tessellationLevel);
+    wireframeShaderProgram.setFloat("targetTriangleSize", 0.05f);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
