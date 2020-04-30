@@ -8,8 +8,6 @@ uniform mat4 transform;
 uniform sampler2D heightmapTexture;
 uniform float terrainHeight;
 
-layout(location = 0) out vec3 out_color;
-
 vec3 lerp3D(vec3 a, vec3 b, vec3 c)
 {
     return (a * gl_TessCoord.x) + (b * gl_TessCoord.y) + (c * gl_TessCoord.z);

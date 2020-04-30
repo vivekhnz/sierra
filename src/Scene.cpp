@@ -8,7 +8,7 @@ Scene::Scene(Window &window)
       heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
       terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
       isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
-      isWireframeMode(false), tessellationLevel(10.0f),
+      isWireframeMode(false),
       input(window)
 {
     // load shaders
@@ -17,6 +17,8 @@ Scene::Scene(Window &window)
     std::vector<Shader> terrainShaders;
     terrainShaders.push_back(
         shaderManager.loadVertexShaderFromFile("data/terrain_vertex_shader.glsl"));
+    terrainShaders.push_back(
+        shaderManager.loadTessControlShaderFromFile("data/terrain_tess_ctrl_shader.glsl"));
     terrainShaders.push_back(
         shaderManager.loadTessEvalShaderFromFile("data/terrain_tess_eval_shader.glsl"));
     terrainShaders.push_back(
@@ -37,7 +39,7 @@ Scene::Scene(Window &window)
     // load heightmap
     Image heightmap("data/heightmap.bmp");
     heightmapTexture.initialize(heightmap);
-    int downresFactor = 64;
+    int downresFactor = 16;
     int columnCount = heightmap.getWidth() / downresFactor;
     int rowCount = heightmap.getHeight() / downresFactor;
 
@@ -79,15 +81,13 @@ Scene::Scene(Window &window)
     }
     mesh.initialize(vertices, indices);
 
-    // configure tessellation
-    glPatchParameteri(GL_PATCH_VERTICES, 3);
-    updateTessellationLevel(tessellationLevel);
-
     // configure shaders
+    float targetTriangleSize = 0.1f;
     terrainShaderProgram.setVector2("normalSampleOffset",
         glm::vec2(10.0f / (spacing * columnCount), 10.0f / (spacing * rowCount)));
     terrainShaderProgram.setVector2("textureScale", glm::vec2(150.0f, 150.0f));
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
+    terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     terrainShaderProgram.setInt("heightmapTexture", 0);
     terrainShaderProgram.setInt("terrainTexture", 1);
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
@@ -96,7 +96,8 @@ Scene::Scene(Window &window)
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
-    wireframeShaderProgram.setFloat("targetTriangleSize", 0.05f);
+    wireframeShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
+    glPatchParameteri(GL_PATCH_VERTICES, 3);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
@@ -112,8 +113,6 @@ Scene::Scene(Window &window)
     input.listenForKey(GLFW_KEY_T);
     input.listenForKey(GLFW_KEY_N);
     input.listenForKey(GLFW_KEY_Z);
-    input.listenForKey(GLFW_KEY_MINUS);
-    input.listenForKey(GLFW_KEY_EQUAL);
 }
 
 void Scene::update()
@@ -177,16 +176,6 @@ void Scene::update()
         isWireframeMode = !isWireframeMode;
         glPolygonMode(GL_FRONT_AND_BACK, isWireframeMode ? GL_LINE : GL_FILL);
     }
-    if (input.isNewKeyPress(GLFW_KEY_MINUS) && tessellationLevel > 1)
-    {
-        tessellationLevel--;
-        updateTessellationLevel(tessellationLevel);
-    }
-    if (input.isNewKeyPress(GLFW_KEY_EQUAL))
-    {
-        tessellationLevel++;
-        updateTessellationLevel(tessellationLevel);
-    }
 }
 
 void Scene::draw()
@@ -204,15 +193,6 @@ void Scene::draw()
 
     (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
     mesh.draw();
-}
-
-void Scene::updateTessellationLevel(float tessFactor)
-{
-    float outerTessLevels[] = {tessFactor, tessFactor, tessFactor, tessFactor};
-    float innerTessLevels[] = {tessFactor, tessFactor};
-    glPatchParameterfv(GL_PATCH_DEFAULT_OUTER_LEVEL, outerTessLevels);
-    glPatchParameterfv(GL_PATCH_DEFAULT_INNER_LEVEL, innerTessLevels);
-    wireframeShaderProgram.setFloat("tessellationLevel", tessellationLevel);
 }
 
 Scene::~Scene()

@@ -1,8 +1,8 @@
 #version 410 core
-layout(triangles, equal_spacing, ccw) in;
+layout(triangles, fractional_even_spacing, ccw) in;
 
-in vec3 worldPos[];
-in vec2 heightmapUV[];
+layout(location = 0) in vec3 worldPos[];
+layout(location = 1) in vec2 heightmapUV[];
 
 uniform mat4 transform;
 uniform sampler2D heightmapTexture;
@@ -10,8 +10,8 @@ uniform float terrainHeight;
 uniform vec2 normalSampleOffset;
 uniform vec2 textureScale;
 
-out vec3 normal;
-out vec2 texcoord;
+layout(location = 0) out vec3 normal;
+layout(location = 1) out vec2 texcoord;
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c)
 {
