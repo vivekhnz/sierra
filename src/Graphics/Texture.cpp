@@ -3,8 +3,8 @@
 #include <iostream>
 #include <glad/glad.h>
 
-Texture::Texture(int wrapMode, int filterMode)
-    : id(NULL), wrapMode(wrapMode), filterMode(filterMode)
+Texture::Texture(int wrapMode, int filterMode) :
+    id(NULL), wrapMode(wrapMode), filterMode(filterMode)
 {
 }
 
@@ -17,7 +17,7 @@ void Texture::initialize(Image &image)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.getWidth(), image.getHeight(), 0, GL_RGB,
-                 GL_UNSIGNED_BYTE, image.getData());
+        GL_UNSIGNED_BYTE, image.getData());
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 

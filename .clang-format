@@ -6,7 +6,7 @@ AlignOperands: false
 AllowAllArgumentsOnNextLine: true
 AllowShortIfStatementsOnASingleLine: false
 AllowShortFunctionsOnASingleLine: false
-BinPackArguments: false
+BinPackArguments: true
 BinPackParameters: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom

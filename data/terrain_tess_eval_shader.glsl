@@ -33,6 +33,6 @@ void main()
     float hR = texture(heightmapTexture, vec2(hUV.x + normalSampleOffset.x, hUV.y)).x;
     float hD = texture(heightmapTexture, vec2(hUV.x, hUV.y - normalSampleOffset.y)).x;
     float hU = texture(heightmapTexture, vec2(hUV.x, hUV.y + normalSampleOffset.y)).x;
-    normal = normalize(vec3(hR - hL, normalSampleOffset.x, hD - hU));
+    normal = normalize(vec3(hR - hL, 1.0f, hD - hU));
     texcoord = hUV * textureScale;
 }
