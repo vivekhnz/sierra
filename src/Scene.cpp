@@ -63,19 +63,17 @@ Scene::Scene(Window &window) :
     }
 
     // build indices
-    std::vector<unsigned int> indices((rowCount - 1) * (columnCount - 1) * 6);
+    std::vector<unsigned int> indices((rowCount - 1) * (columnCount - 1) * 4);
     for (int y = 0; y < rowCount - 1; y++)
     {
         for (int x = 0; x < columnCount - 1; x++)
         {
             int vertIndex = (y * columnCount) + x;
-            int elemIndex = ((y * (columnCount - 1)) + x) * 6;
+            int elemIndex = ((y * (columnCount - 1)) + x) * 4;
             indices[elemIndex] = vertIndex;
             indices[elemIndex + 1] = vertIndex + columnCount;
-            indices[elemIndex + 2] = vertIndex + 1;
+            indices[elemIndex + 2] = vertIndex + columnCount + 1;
             indices[elemIndex + 3] = vertIndex + 1;
-            indices[elemIndex + 4] = vertIndex + columnCount;
-            indices[elemIndex + 5] = vertIndex + columnCount + 1;
         }
     }
     mesh.initialize(vertices, indices);
@@ -96,7 +94,7 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
     wireframeShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
-    glPatchParameteri(GL_PATCH_VERTICES, 3);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
