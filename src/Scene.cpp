@@ -2,14 +2,12 @@
 
 #include "Graphics/ShaderManager.hpp"
 
-Scene::Scene(Window &window)
-    : window(window), camera(window), orbitDistance(1800.0f),
-      mesh(GL_PATCHES),
-      heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
-      terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER),
-      isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
-      isWireframeMode(false),
-      input(window)
+Scene::Scene(Window &window) :
+    window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
+    heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
+    terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER), isLightingEnabled(true),
+    isTextureEnabled(true), isNormalDisplayEnabled(false), isWireframeMode(false),
+    input(window)
 {
     // load shaders
     ShaderManager shaderManager;
@@ -39,27 +37,28 @@ Scene::Scene(Window &window)
     // load heightmap
     Image heightmap("data/heightmap.bmp");
     heightmapTexture.initialize(heightmap);
-    int downresFactor = 16;
-    int columnCount = heightmap.getWidth() / downresFactor;
-    int rowCount = heightmap.getHeight() / downresFactor;
+    int columnCount = 64;
+    int rowCount = 64;
+    float patchSize = 16.0f;
 
     // build vertices
-    float terrainHeight = 400.0f;
-    float spacing = 1.0f * downresFactor;
+    float terrainHeight = 128.0f;
     std::vector<float> vertices(columnCount * rowCount * 5);
-    float offsetX = (columnCount - 1) * spacing * -0.5f;
-    float offsetY = (rowCount - 1) * spacing * -0.5f;
+    float offsetX = (columnCount - 1) * patchSize * -0.5f;
+    float offsetY = (rowCount - 1) * patchSize * -0.5f;
     auto uvSize = glm::vec2(1.0f / (columnCount - 1), 1.0f / (rowCount - 1));
     for (int y = 0; y < rowCount; y++)
     {
         for (int x = 0; x < columnCount; x++)
         {
             int i = ((y * columnCount) + x) * 5;
-            vertices[i] = (x * spacing) + offsetX;
-            vertices[i + 1] = ((float)heightmap.getValue(x * downresFactor, y * downresFactor, 0) / 255.0f) * terrainHeight;
-            vertices[i + 2] = (y * spacing) + offsetY;
+            vertices[i] = (x * patchSize) + offsetX;
+            vertices[i + 2] = (y * patchSize) + offsetY;
             vertices[i + 3] = uvSize.x * x;
             vertices[i + 4] = uvSize.y * y;
+            vertices[i + 1] =
+                (heightmap.getValue(vertices[i + 3], vertices[i + 4], 0) / 255.0f)
+                * terrainHeight;
         }
     }
 
@@ -82,9 +81,9 @@ Scene::Scene(Window &window)
     mesh.initialize(vertices, indices);
 
     // configure shaders
-    float targetTriangleSize = 0.1f;
+    float targetTriangleSize = 0.02f;
     terrainShaderProgram.setVector2("normalSampleOffset",
-        glm::vec2(10.0f / (spacing * columnCount), 10.0f / (spacing * rowCount)));
+        glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
     terrainShaderProgram.setVector2("textureScale", glm::vec2(150.0f, 150.0f));
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
@@ -100,7 +99,7 @@ Scene::Scene(Window &window)
     glPatchParameteri(GL_PATCH_VERTICES, 3);
 
     // setup camera
-    camera.setPosition(glm::vec3(0.0f, 700.0f, orbitDistance));
+    camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
     camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
