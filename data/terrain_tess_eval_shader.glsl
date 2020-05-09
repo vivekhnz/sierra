@@ -4,8 +4,12 @@ layout(quads, fractional_even_spacing, cw) in;
 layout(location = 0) in vec3 in_worldPos[];
 layout(location = 1) in vec2 in_heightmapUV[];
 
+patch in vec4 in_edgeMips;
+patch in vec4 in_cornerMips;
+
 uniform mat4 transform;
 uniform sampler2D heightmapTexture;
+uniform sampler2D terrainTexture;
 uniform float terrainHeight;
 uniform vec2 normalSampleOffset;
 uniform vec2 textureScale;
@@ -21,18 +25,42 @@ vec2 lerp2D(vec2 a, vec2 b, vec2 c, vec2 d)
 {
     return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
 }
+float lerp1D(float a, float b, float c, float d)
+{
+    return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
+}
+float height(vec2 uv, float mip)
+{
+    return mix(
+        textureLod(heightmapTexture, uv, floor(mip)).x,
+        textureLod(heightmapTexture, uv, ceil(mip)).x,
+        fract(mip));
+}
 
 void main()
 {
+    float centerMip = lerp1D(in_edgeMips.x, in_edgeMips.y, in_edgeMips.z, in_edgeMips.w);
+    float mipValues[9] = float[9]
+    (
+        in_cornerMips.x, in_edgeMips.y, in_cornerMips.w,
+        in_edgeMips.x, centerMip, in_edgeMips.z,
+        in_cornerMips.y, in_edgeMips.w, in_cornerMips.z
+    );
+    float mipIndex = int(
+        floor(gl_TessCoord.x) + ceil(gl_TessCoord.x)) +
+        ((floor(gl_TessCoord.y) + ceil(gl_TessCoord.y)) * 3
+    );
+    float mip = mipValues[int(mipIndex)];
+
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
-    pos.y = texture(heightmapTexture, hUV).x * terrainHeight;
+    pos.y = height(hUV, mip) * terrainHeight;
     gl_Position = transform * vec4(pos, 1.0f);
 
-    float hL = texture(heightmapTexture, vec2(hUV.x - normalSampleOffset.x, hUV.y)).x;
-    float hR = texture(heightmapTexture, vec2(hUV.x + normalSampleOffset.x, hUV.y)).x;
-    float hD = texture(heightmapTexture, vec2(hUV.x, hUV.y - normalSampleOffset.y)).x;
-    float hU = texture(heightmapTexture, vec2(hUV.x, hUV.y + normalSampleOffset.y)).x;
+    float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y), mip);
+    float hR = height(vec2(hUV.x + normalSampleOffset.x, hUV.y), mip);
+    float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y), mip);
+    float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y), mip);
     normal = normalize(vec3(hR - hL, 0.1f, hD - hU));
     texcoord = hUV * textureScale;
 }

@@ -4,11 +4,17 @@
 
 Scene::Scene(Window &window) :
     window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
-    heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR),
-    terrainTexture(GL_REPEAT, GL_CLAMP_TO_BORDER), isLightingEnabled(true),
+    heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+    terrainTexture(GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR), isLightingEnabled(true),
     isTextureEnabled(true), isNormalDisplayEnabled(false), isWireframeMode(false),
     input(window)
 {
+    // setup camera
+    camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
+    camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
     // load shaders
     ShaderManager shaderManager;
 
@@ -85,6 +91,9 @@ Scene::Scene(Window &window) :
     terrainShaderProgram.setVector2("textureScale", glm::vec2(150.0f, 150.0f));
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
+    terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
+    terrainShaderProgram.setVector2(
+        "heightmapSize", glm::vec2(heightmap.getWidth(), heightmap.getHeight()));
     terrainShaderProgram.setInt("heightmapTexture", 0);
     terrainShaderProgram.setInt("terrainTexture", 1);
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
@@ -94,13 +103,10 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
     wireframeShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
+    wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
+    wireframeShaderProgram.setVector2(
+        "heightmapSize", glm::vec2(heightmap.getWidth(), heightmap.getHeight()));
     glPatchParameteri(GL_PATCH_VERTICES, 4);
-
-    // setup camera
-    camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
-    camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
 
     // load terrain texture
     terrainTexture.initialize(Image("data/checkerboard.bmp"));
@@ -135,19 +141,19 @@ void Scene::update()
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        orbitDistance -= 400.0f * deltaTime;
+        orbitDistance -= 100.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        orbitDistance += 400.0f * deltaTime;
+        orbitDistance += 100.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_UP))
     {
-        pos.y += 600.0f * deltaTime;
+        pos.y += 150.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_DOWN))
     {
-        pos.y -= 600.0f * deltaTime;
+        pos.y -= 150.0f * deltaTime;
     }
     pos.x = sin(-orbitAngle) * orbitDistance;
     pos.z = cos(-orbitAngle) * orbitDistance;
@@ -177,12 +183,14 @@ void Scene::update()
 
 void Scene::draw()
 {
-    glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
+    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // setup transformation matrix
     terrainShaderProgram.setMat4("transform", false, camera.getMatrix());
+    terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
     wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
+    wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
 
     // draw terrain
     heightmapTexture.bind(0);
