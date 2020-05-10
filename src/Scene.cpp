@@ -89,7 +89,7 @@ Scene::Scene(Window &window) :
     float targetTriangleSize = 0.02f;
     terrainShaderProgram.setVector2("normalSampleOffset",
         glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
-    terrainShaderProgram.setVector2("textureScale", glm::vec2(150.0f, 150.0f));
+    terrainShaderProgram.setVector2("textureScale", glm::vec2(30.0f, 30.0f));
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
@@ -108,7 +108,7 @@ Scene::Scene(Window &window) :
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain texture
-    terrainTexture.initialize(Image("data/checkerboard.bmp", false), GL_RGB, GL_RGB,
+    terrainTexture.initialize(Image("data/ground_albedo.bmp", false), GL_RGB, GL_RGB,
         GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     // configure input

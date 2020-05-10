@@ -50,7 +50,7 @@ void main()
         floor(gl_TessCoord.x) + ceil(gl_TessCoord.x)) +
         ((floor(gl_TessCoord.y) + ceil(gl_TessCoord.y)) * 3
     );
-    float mip = mipValues[int(mipIndex)];
+    float mip = max(mipValues[int(mipIndex)], 1.0f);
 
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
