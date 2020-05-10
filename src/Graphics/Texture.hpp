@@ -6,17 +6,20 @@
 class Texture
 {
     unsigned int id;
-    int wrapMode;
-    int filterMode;
 
 public:
-    Texture(int wrapMode, int filterMode);
+    Texture();
     Texture(const Texture &that) = delete;
     Texture &operator=(const Texture &that) = delete;
     Texture(Texture &&other) = delete;
     Texture &operator=(Texture &&other) = delete;
 
-    void initialize(Image &image);
+    void initialize(const Image &image,
+        int internalFormat,
+        int format,
+        int type,
+        int wrapMode,
+        int filterMode);
     void bind(int slot);
 
     ~Texture();

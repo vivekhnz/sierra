@@ -1,14 +1,13 @@
 #include "Texture.hpp"
 
-#include <iostream>
 #include <glad/glad.h>
 
-Texture::Texture(int wrapMode, int filterMode) :
-    id(NULL), wrapMode(wrapMode), filterMode(filterMode)
+Texture::Texture() : id(NULL)
 {
 }
 
-void Texture::initialize(Image &image)
+void Texture::initialize(
+    const Image &image, int internalFormat, int format, int type, int wrapMode, int filterMode)
 {
     glGenTextures(1, &id);
     glBindTexture(GL_TEXTURE_2D, id);
@@ -16,8 +15,8 @@ void Texture::initialize(Image &image)
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, image.getWidth(), image.getHeight(), 0, GL_RGB,
-        GL_UNSIGNED_BYTE, image.getData());
+    glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.getWidth(), image.getHeight(), 0,
+        format, type, image.getData());
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 

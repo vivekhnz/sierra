@@ -8,10 +8,10 @@ class Image
     int width;
     int height;
     int channels;
-    unsigned char *data;
+    void *data;
 
 public:
-    Image(std::string path);
+    Image(std::string path, bool is16Bit);
     Image(const Image &that) = delete;
     Image &operator=(const Image &that) = delete;
     Image(Image &&other) = delete;
@@ -19,8 +19,9 @@ public:
 
     int getWidth() const;
     int getHeight() const;
-    unsigned char *getData() const;
-    unsigned char getValue(int x, int y, int channel) const;
+    void *getData() const;
+    unsigned char getValue8(int x, int y, int channel) const;
+    unsigned short getValue16(int x, int y, int channel) const;
 
     ~Image();
 };

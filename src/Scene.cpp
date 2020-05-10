@@ -4,10 +4,8 @@
 
 Scene::Scene(Window &window) :
     window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
-    heightmapTexture(GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-    terrainTexture(GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR), isLightingEnabled(true),
-    isTextureEnabled(true), isNormalDisplayEnabled(false), isWireframeMode(false),
-    input(window)
+    isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
+    isWireframeMode(false), input(window)
 {
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
@@ -41,14 +39,15 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.link(wireframeShaders);
 
     // load heightmap
-    Image heightmap("data/heightmap.bmp");
-    heightmapTexture.initialize(heightmap);
+    Image heightmap("data/heightmap.tga", true);
+    heightmapTexture.initialize(heightmap, GL_R16, GL_RED, GL_UNSIGNED_SHORT,
+        GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     int columnCount = 64;
     int rowCount = 64;
     float patchSize = 16.0f;
 
     // build vertices
-    float terrainHeight = 128.0f;
+    float terrainHeight = 200.0f;
     std::vector<float> vertices(columnCount * rowCount * 5);
     float offsetX = (columnCount - 1) * patchSize * -0.5f;
     float offsetY = (rowCount - 1) * patchSize * -0.5f;
@@ -66,7 +65,7 @@ Scene::Scene(Window &window) :
 
             int tx = (x / (float)columnCount) * heightmapSize.x;
             int ty = (y / (float)rowCount) * heightmapSize.y;
-            vertices[i + 1] = (heightmap.getValue(tx, ty, 0) / 255.0f) * terrainHeight;
+            vertices[i + 1] = (heightmap.getValue16(tx, ty, 0) / 65535.0f) * terrainHeight;
         }
     }
 
@@ -109,7 +108,8 @@ Scene::Scene(Window &window) :
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain texture
-    terrainTexture.initialize(Image("data/checkerboard.bmp"));
+    terrainTexture.initialize(Image("data/checkerboard.bmp", false), GL_RGB, GL_RGB,
+        GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     // configure input
     input.listenForKey(GLFW_KEY_L);
