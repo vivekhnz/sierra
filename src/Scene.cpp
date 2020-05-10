@@ -53,6 +53,7 @@ Scene::Scene(Window &window) :
     float offsetX = (columnCount - 1) * patchSize * -0.5f;
     float offsetY = (rowCount - 1) * patchSize * -0.5f;
     auto uvSize = glm::vec2(1.0f / (columnCount - 1), 1.0f / (rowCount - 1));
+    auto heightmapSize = glm::vec2(heightmap.getWidth(), heightmap.getHeight());
     for (int y = 0; y < rowCount; y++)
     {
         for (int x = 0; x < columnCount; x++)
@@ -62,9 +63,10 @@ Scene::Scene(Window &window) :
             vertices[i + 2] = (y * patchSize) + offsetY;
             vertices[i + 3] = uvSize.x * x;
             vertices[i + 4] = uvSize.y * y;
-            vertices[i + 1] =
-                (heightmap.getValue(vertices[i + 3], vertices[i + 4], 0) / 255.0f)
-                * terrainHeight;
+
+            int tx = (x / (float)columnCount) * heightmapSize.x;
+            int ty = (y / (float)rowCount) * heightmapSize.y;
+            vertices[i + 1] = (heightmap.getValue(tx, ty, 0) / 255.0f) * terrainHeight;
         }
     }
 
@@ -92,8 +94,7 @@ Scene::Scene(Window &window) :
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
-    terrainShaderProgram.setVector2(
-        "heightmapSize", glm::vec2(heightmap.getWidth(), heightmap.getHeight()));
+    terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
     terrainShaderProgram.setInt("heightmapTexture", 0);
     terrainShaderProgram.setInt("terrainTexture", 1);
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
@@ -104,8 +105,7 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
     wireframeShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
-    wireframeShaderProgram.setVector2(
-        "heightmapSize", glm::vec2(heightmap.getWidth(), heightmap.getHeight()));
+    wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain texture
@@ -183,7 +183,7 @@ void Scene::update()
 
 void Scene::draw()
 {
-    glClearColor(1.0f, 0.0f, 1.0f, 1.0f);
+    glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // setup transformation matrix

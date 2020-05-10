@@ -12,7 +12,7 @@ BreakBeforeBinaryOperators: NonAssignment
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel: true
-  AfterClass: false
+  AfterClass: true
   AfterControlStatement: true
   AfterEnum: true
   AfterFunction: true
