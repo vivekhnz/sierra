@@ -16,7 +16,8 @@ class Scene
     Camera camera;
     Mesh mesh;
     Texture heightmapTexture;
-    Texture terrainTexture;
+    Texture terrainAlbedoTexture;
+    Texture terrainNormalTexture;
     InputManager input;
 
     float orbitAngle;
@@ -25,7 +26,7 @@ class Scene
 
     bool isLightingEnabled;
     bool isTextureEnabled;
-    bool isNormalDisplayEnabled;
+    bool isNormalMapEnabled;
     bool isWireframeMode;
 
 public:

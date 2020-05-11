@@ -4,7 +4,7 @@
 
 Scene::Scene(Window &window) :
     window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
-    isLightingEnabled(true), isTextureEnabled(true), isNormalDisplayEnabled(false),
+    isLightingEnabled(true), isTextureEnabled(true), isNormalMapEnabled(true),
     isWireframeMode(false), input(window)
 {
     // setup camera
@@ -95,10 +95,11 @@ Scene::Scene(Window &window) :
     terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
     terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
     terrainShaderProgram.setInt("heightmapTexture", 0);
-    terrainShaderProgram.setInt("terrainTexture", 1);
+    terrainShaderProgram.setInt("albedoTexture", 1);
+    terrainShaderProgram.setInt("normalTexture", 2);
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
-    terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+    terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
@@ -107,8 +108,10 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-    // load terrain texture
-    terrainTexture.initialize(Image("data/ground_albedo.bmp", false), GL_RGB, GL_RGB,
+    // load terrain textures
+    terrainAlbedoTexture.initialize(Image("data/ground_albedo.bmp", false), GL_RGB, GL_RGB,
+        GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    terrainNormalTexture.initialize(Image("data/ground_normal.bmp", false), GL_RGB, GL_RGB,
         GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     // configure input
@@ -171,8 +174,8 @@ void Scene::update()
     }
     if (input.isNewKeyPress(GLFW_KEY_N))
     {
-        isNormalDisplayEnabled = !isNormalDisplayEnabled;
-        terrainShaderProgram.setBool("isNormalDisplayEnabled", isNormalDisplayEnabled);
+        isNormalMapEnabled = !isNormalMapEnabled;
+        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
     }
     if (input.isNewKeyPress(GLFW_KEY_Z))
     {
@@ -194,7 +197,8 @@ void Scene::draw()
 
     // draw terrain
     heightmapTexture.bind(0);
-    terrainTexture.bind(1);
+    terrainAlbedoTexture.bind(1);
+    terrainNormalTexture.bind(2);
 
     (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
     mesh.draw();
