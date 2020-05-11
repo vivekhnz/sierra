@@ -9,7 +9,10 @@ patch in vec4 in_cornerMips;
 
 uniform mat4 transform;
 uniform sampler2D heightmapTexture;
+uniform sampler2D displacementTexture;
 uniform float terrainHeight;
+uniform vec2 textureScale;
+uniform bool isDisplacementMapEnabled;
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -25,10 +28,14 @@ float lerp1D(float a, float b, float c, float d)
 }
 float height(vec2 uv, float mip)
 {
-    return mix(
+    float baseHeight = mix(
         textureLod(heightmapTexture, uv, floor(mip)).x,
         textureLod(heightmapTexture, uv, ceil(mip)).x,
         fract(mip));
+    float displacement =
+        ((texture(displacementTexture, uv * textureScale).r * 2.0f) - 1.0f)
+        * (isDisplacementMapEnabled ? 0.0125f : 0.0f);
+    return baseHeight + displacement;
 }
 
 void main()

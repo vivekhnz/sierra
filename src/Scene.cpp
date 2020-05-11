@@ -5,7 +5,7 @@
 Scene::Scene(Window &window) :
     window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
     isLightingEnabled(true), isTextureEnabled(true), isNormalMapEnabled(true),
-    isWireframeMode(false), input(window)
+    isDisplacementMapEnabled(true), isWireframeMode(false), input(window)
 {
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
@@ -87,9 +87,10 @@ Scene::Scene(Window &window) :
 
     // configure shaders
     float targetTriangleSize = 0.02f;
+    auto textureScale = glm::vec2(30.0f, 30.0f);
     terrainShaderProgram.setVector2("normalSampleOffset",
         glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
-    terrainShaderProgram.setVector2("textureScale", glm::vec2(30.0f, 30.0f));
+    terrainShaderProgram.setVector2("textureScale", textureScale);
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
@@ -97,15 +98,20 @@ Scene::Scene(Window &window) :
     terrainShaderProgram.setInt("heightmapTexture", 0);
     terrainShaderProgram.setInt("albedoTexture", 1);
     terrainShaderProgram.setInt("normalTexture", 2);
+    terrainShaderProgram.setInt("displacementTexture", 3);
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
+    terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeShaderProgram.setInt("heightmapTexture", 0);
+    wireframeShaderProgram.setInt("displacementTexture", 3);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
     wireframeShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
+    wireframeShaderProgram.setVector2("textureScale", textureScale);
     wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
     wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
+    wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain textures
@@ -113,11 +119,14 @@ Scene::Scene(Window &window) :
         GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     terrainNormalTexture.initialize(Image("data/ground_normal.bmp", false), GL_RGB, GL_RGB,
         GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    terrainDisplacementTexture.initialize(Image("data/ground_displacement.tga", true), GL_R16,
+        GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     // configure input
     input.listenForKey(GLFW_KEY_L);
     input.listenForKey(GLFW_KEY_T);
     input.listenForKey(GLFW_KEY_N);
+    input.listenForKey(GLFW_KEY_B);
     input.listenForKey(GLFW_KEY_Z);
 }
 
@@ -177,6 +186,12 @@ void Scene::update()
         isNormalMapEnabled = !isNormalMapEnabled;
         terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
     }
+    if (input.isNewKeyPress(GLFW_KEY_B))
+    {
+        isDisplacementMapEnabled = !isDisplacementMapEnabled;
+        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+    }
     if (input.isNewKeyPress(GLFW_KEY_Z))
     {
         isWireframeMode = !isWireframeMode;
@@ -199,6 +214,7 @@ void Scene::draw()
     heightmapTexture.bind(0);
     terrainAlbedoTexture.bind(1);
     terrainNormalTexture.bind(2);
+    terrainDisplacementTexture.bind(3);
 
     (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
     mesh.draw();

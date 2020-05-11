@@ -18,6 +18,7 @@ class Scene
     Texture heightmapTexture;
     Texture terrainAlbedoTexture;
     Texture terrainNormalTexture;
+    Texture terrainDisplacementTexture;
     InputManager input;
 
     float orbitAngle;
@@ -27,6 +28,7 @@ class Scene
     bool isLightingEnabled;
     bool isTextureEnabled;
     bool isNormalMapEnabled;
+    bool isDisplacementMapEnabled;
     bool isWireframeMode;
 
 public:
