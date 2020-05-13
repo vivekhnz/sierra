@@ -30,14 +30,18 @@ float lerp1D(float a, float b, float c, float d)
 {
     return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
 }
+float textureCLod(sampler2D texture, vec2 uv, float mip)
+{
+    return mix(
+        textureLod(texture, uv, floor(mip)).x,
+        textureLod(texture, uv, ceil(mip)).x,
+        fract(mip));
+}
 float height(vec2 uv, float mip)
 {
-    float baseHeight = mix(
-        textureLod(heightmapTexture, uv, floor(mip)).x,
-        textureLod(heightmapTexture, uv, ceil(mip)).x,
-        fract(mip));
+    float baseHeight = textureCLod(heightmapTexture, uv, max(mip, 2.0f));
     float displacement =
-        ((texture(displacementTexture, uv * textureScale).r * 2.0f) - 1.0f)
+        ((textureCLod(displacementTexture, uv * textureScale, mip * 2.5f) * 2.0f) - 1.0f)
         * (isDisplacementMapEnabled ? 0.0125f : 0.0f);
     return baseHeight + displacement;
 }
@@ -55,7 +59,7 @@ void main()
         floor(gl_TessCoord.x) + ceil(gl_TessCoord.x)) +
         ((floor(gl_TessCoord.y) + ceil(gl_TessCoord.y)) * 3
     );
-    float mip = max(mipValues[int(mipIndex)], 2.0f);
+    float mip = max(mipValues[int(mipIndex)], 0.0f);
 
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
