@@ -4,8 +4,9 @@
 
 Scene::Scene(Window &window) :
     window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
-    isLightingEnabled(true), isTextureEnabled(true), isNormalMapEnabled(true),
-    isDisplacementMapEnabled(true), isWireframeMode(false), input(window)
+    tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
+    isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
+    isWireframeMode(false), input(window)
 {
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
@@ -37,6 +38,11 @@ Scene::Scene(Window &window) :
     wireframeShaders.push_back(
         shaderManager.loadFragmentShaderFromFile("data/wireframe_fragment_shader.glsl"));
     wireframeShaderProgram.link(wireframeShaders);
+
+    std::vector<Shader> calcTessLevelShaders;
+    calcTessLevelShaders.push_back(shaderManager.loadComputeShaderFromFile(
+        "data/terrain_calc_tess_levels_comp_shader.glsl"));
+    calcTessLevelsShaderProgram.link(calcTessLevelShaders);
 
     // load heightmap
     Image heightmap("data/heightmap.tga", true);
@@ -84,15 +90,14 @@ Scene::Scene(Window &window) :
         }
     }
     mesh.initialize(vertices, indices);
+    meshEdgeCount = (2 * (rowCount * columnCount)) - rowCount - columnCount;
 
     // configure shaders
-    float targetTriangleSize = 0.02f;
     auto textureScale = glm::vec2(30.0f, 30.0f);
     terrainShaderProgram.setVector2("normalSampleOffset",
         glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
     terrainShaderProgram.setVector2("textureScale", textureScale);
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
-    terrainShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
     terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
     terrainShaderProgram.setInt("heightmapTexture", 0);
@@ -107,11 +112,13 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setInt("displacementTexture", 3);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
-    wireframeShaderProgram.setFloat("targetTriangleSize", targetTriangleSize);
     wireframeShaderProgram.setVector2("textureScale", textureScale);
     wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
     wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
     wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+    calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rowCount * (columnCount - 1));
+    calcTessLevelsShaderProgram.setInt("columnCount", columnCount);
+    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.02f);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain textures
@@ -121,6 +128,10 @@ Scene::Scene(Window &window) :
         GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     terrainDisplacementTexture.initialize(Image("data/ground_displacement.tga", true), GL_R16,
         GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
+    // create buffer to store vertex edge data
+    std::vector<glm::vec4> vertEdgeData(vertices.size() * 2);
+    tessellationLevelBuffer.fill(vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
 
     // configure input
     input.listenForKey(GLFW_KEY_L);
@@ -209,6 +220,14 @@ void Scene::draw()
     terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
     wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
     wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
+    calcTessLevelsShaderProgram.setMat4("transform", false, camera.getMatrix());
+
+    // calculate tessellation levels
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.getVertexBufferId());
+    calcTessLevelsShaderProgram.use();
+    glDispatchCompute(meshEdgeCount, 1, 1);
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
     // draw terrain
     heightmapTexture.bind(0);

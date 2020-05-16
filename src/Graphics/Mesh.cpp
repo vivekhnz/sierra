@@ -4,14 +4,20 @@
 #include "BindVertexArray.hpp"
 #include "BindBuffer.hpp"
 
-Mesh::Mesh(GLenum primitiveType)
-    : vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
-      elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW),
-      isInitialized(false), primitiveType(primitiveType)
+Mesh::Mesh(GLenum primitiveType) :
+    vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
+    elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW), isInitialized(false),
+    primitiveType(primitiveType)
 {
 }
 
-void Mesh::initialize(const std::vector<float> &vertices, const std::vector<unsigned int> &indices)
+unsigned int Mesh::getVertexBufferId() const
+{
+    return vertexBuffer.getId();
+}
+
+void Mesh::initialize(
+    const std::vector<float> &vertices, const std::vector<unsigned int> &indices)
 {
     // fill buffers
     vertexBuffer.fill(vertices.size() * sizeof(float), vertices.data());
@@ -24,7 +30,8 @@ void Mesh::initialize(const std::vector<float> &vertices, const std::vector<unsi
         bindVa.bindElementBuffer(elementBuffer);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
         glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+        glVertexAttribPointer(
+            1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
         glEnableVertexAttribArray(1);
     }
 

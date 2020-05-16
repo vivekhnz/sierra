@@ -21,7 +21,10 @@ public:
     Mesh(Mesh &&) = delete;
     Mesh &operator=(Mesh &&) = delete;
 
-    void initialize(const std::vector<float> &vertices, const std::vector<unsigned int> &indices);
+    unsigned int getVertexBufferId() const;
+
+    void initialize(
+        const std::vector<float> &vertices, const std::vector<unsigned int> &indices);
     void draw();
 
     ~Mesh();

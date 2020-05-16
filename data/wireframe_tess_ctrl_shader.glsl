@@ -1,13 +1,22 @@
-#version 410 core
+#version 430 core
 layout(vertices = 4) out;
 
-layout(location = 0) in vec3 in_worldPos[];
-layout(location = 1) in vec2 in_heightmapUV[];
+layout(location = 0) in int in_id[];
+layout(location = 1) in vec3 in_worldPos[];
+layout(location = 2) in vec2 in_heightmapUV[];
 
-uniform mat4 transform;
-uniform float targetTriangleSize;
 uniform vec3 cameraPos;
 uniform vec2 heightmapSize;
+
+struct VertexEdgeData
+{
+    vec4 tessLevels;
+    vec4 uvLengths;
+};
+layout(std430, binding = 0) buffer tessellationLevelBuffer
+{
+    VertexEdgeData vertEdgeData[];
+};
 
 layout(location = 0) out vec3 out_worldPos[];
 layout(location = 1) out vec2 out_heightmapUV[];
@@ -15,37 +24,16 @@ layout(location = 1) out vec2 out_heightmapUV[];
 patch out vec4 out_edgeMips;
 patch out vec4 out_cornerMips;
 
-vec3 worldToScreen(vec3 p)
+float calcCornerMips(VertexEdgeData vertEdge)
 {
-    vec4 clipPos = transform * vec4(p, 1.0f);
-    return clipPos.xyz / clipPos.w;
-}
-
-vec4 calcScreenSpaceEdgeLengths(vec3 a, vec3 b, vec3 c, vec3 d)
-{
-    vec3 pAB1 = (a + b) * 0.5f;
-    vec3 pAB2 = pAB1 + vec3(0.0f, distance(a, b), 0.0f);
-
-    vec3 pAD1 = (a + d) * 0.5f;
-    vec3 pAD2 = pAD1 + vec3(0.0f, distance(a, d), 0.0f);
-
-    vec3 pCD1 = (c + d) * 0.5f;
-    vec3 pCD2 = pCD1 + vec3(0.0f, distance(c, d), 0.0f);
-
-    vec3 pBC1 = (b + c) * 0.5f;
-    vec3 pBC2 = pBC1 + vec3(0.0f, distance(b, c), 0.0f);
-
-    return vec4(
-        distance(worldToScreen(pAB1), worldToScreen(pAB2)),
-        distance(worldToScreen(pAD1), worldToScreen(pAD2)),
-        distance(worldToScreen(pCD1), worldToScreen(pCD2)),
-        distance(worldToScreen(pBC1), worldToScreen(pBC2)));
-}
-
-float calcCornerMip(vec3 pos)
-{
-    float d = distance(pos, cameraPos);
-    return max(1.36269f * log(0.0465256f * d), 0);
+    float T = max(
+        max(vertEdge.tessLevels.x, vertEdge.tessLevels.y),
+        max(vertEdge.tessLevels.z, vertEdge.tessLevels.w));
+    vec4 scaledLengths = step(vertEdge.tessLevels / T, vec4(1.0f)) * vertEdge.uvLengths;
+    float L = max(
+        max(scaledLengths.x, scaledLengths.y),
+        max(scaledLengths.z, scaledLengths.w));
+    return log2(L * length(heightmapSize) / T) + 1;
 }
 
 void main()
@@ -53,26 +41,28 @@ void main()
     out_worldPos[gl_InvocationID] = in_worldPos[gl_InvocationID];
     out_heightmapUV[gl_InvocationID] = in_heightmapUV[gl_InvocationID];
     
-    vec4 edgeLengths = calcScreenSpaceEdgeLengths(
-        out_worldPos[0], out_worldPos[1], out_worldPos[2], out_worldPos[3]);
-    vec4 tessLevels = edgeLengths / targetTriangleSize;
-    
     if (gl_InvocationID == 0)
     {
-        gl_TessLevelOuter[0] = tessLevels.x; // AB
-        gl_TessLevelOuter[1] = tessLevels.y; // AD
-        gl_TessLevelOuter[2] = tessLevels.z; // CD
-        gl_TessLevelOuter[3] = tessLevels.w; // BC
-        gl_TessLevelInner[0] = max(tessLevels.y, tessLevels.w);
-        gl_TessLevelInner[1] = max(tessLevels.x, tessLevels.z);
-
+        VertexEdgeData aEdges = vertEdgeData[in_id[0]];
+        VertexEdgeData bEdges = vertEdgeData[in_id[1]];
+        VertexEdgeData cEdges = vertEdgeData[in_id[2]];
+        VertexEdgeData dEdges = vertEdgeData[in_id[3]];
+        float heightmapLength = length(heightmapSize);
+        
+        gl_TessLevelOuter[0] = aEdges.tessLevels.y; // AB
+        gl_TessLevelOuter[1] = aEdges.tessLevels.x; // AD
+        gl_TessLevelOuter[2] = cEdges.tessLevels.w; // CD
+        gl_TessLevelOuter[3] = cEdges.tessLevels.z; // BC
+        gl_TessLevelInner[0] = max(aEdges.tessLevels.x, cEdges.tessLevels.z);
+        gl_TessLevelInner[1] = max(aEdges.tessLevels.y, cEdges.tessLevels.w);
+        
         out_edgeMips = vec4(
-            log2(length((in_heightmapUV[0] - in_heightmapUV[1]) * heightmapSize / tessLevels.x)) + 1,
-            log2(length((in_heightmapUV[0] - in_heightmapUV[3]) * heightmapSize / tessLevels.y)) + 1,
-            log2(length((in_heightmapUV[2] - in_heightmapUV[3]) * heightmapSize / tessLevels.z)) + 1,
-            log2(length((in_heightmapUV[1] - in_heightmapUV[2]) * heightmapSize / tessLevels.w)) + 1);
+            log2(aEdges.uvLengths.y * heightmapLength / aEdges.tessLevels.y) + 1,
+            log2(aEdges.uvLengths.x * heightmapLength / aEdges.tessLevels.x) + 1,
+            log2(cEdges.uvLengths.w * heightmapLength / cEdges.tessLevels.w) + 1,
+            log2(cEdges.uvLengths.z * heightmapLength / cEdges.tessLevels.z) + 1);
         out_cornerMips = vec4(
-            calcCornerMip(in_worldPos[0]), calcCornerMip(in_worldPos[1]),
-            calcCornerMip(in_worldPos[2]), calcCornerMip(in_worldPos[3]));
+            calcCornerMips(aEdges), calcCornerMips(bEdges),
+            calcCornerMips(cEdges), calcCornerMips(dEdges));
     }
 }

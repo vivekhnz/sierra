@@ -1,4 +1,4 @@
-#version 410 core
+#version 430 core
 layout(quads, fractional_even_spacing, cw) in;
 
 layout(location = 0) in vec3 in_worldPos[];

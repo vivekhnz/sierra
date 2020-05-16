@@ -13,17 +13,20 @@ class Scene
     Window &window;
     ShaderProgram terrainShaderProgram;
     ShaderProgram wireframeShaderProgram;
+    ShaderProgram calcTessLevelsShaderProgram;
     Camera camera;
     Mesh mesh;
     Texture heightmapTexture;
     Texture terrainAlbedoTexture;
     Texture terrainNormalTexture;
     Texture terrainDisplacementTexture;
+    Buffer tessellationLevelBuffer;
     InputManager input;
 
     float orbitAngle;
     float orbitDistance;
     float prevFrameTime;
+    int meshEdgeCount;
 
     bool isLightingEnabled;
     bool isTextureEnabled;

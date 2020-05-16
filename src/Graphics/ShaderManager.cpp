@@ -22,20 +22,21 @@ Shader ShaderManager::loadVertexShaderFromFile(std::string filePath)
 {
     return loadFromFile(GL_VERTEX_SHADER, filePath);
 }
-
 Shader ShaderManager::loadTessControlShaderFromFile(std::string filePath)
 {
     return loadFromFile(GL_TESS_CONTROL_SHADER, filePath);
 }
-
 Shader ShaderManager::loadTessEvalShaderFromFile(std::string filePath)
 {
     return loadFromFile(GL_TESS_EVALUATION_SHADER, filePath);
 }
-
 Shader ShaderManager::loadFragmentShaderFromFile(std::string filePath)
 {
     return loadFromFile(GL_FRAGMENT_SHADER, filePath);
+}
+Shader ShaderManager::loadComputeShaderFromFile(std::string filePath)
+{
+    return loadFromFile(GL_COMPUTE_SHADER, filePath);
 }
 
 ShaderManager::~ShaderManager()

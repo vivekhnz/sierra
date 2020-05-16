@@ -18,6 +18,7 @@ public:
     Shader loadTessControlShaderFromFile(std::string filePath);
     Shader loadTessEvalShaderFromFile(std::string filePath);
     Shader loadFragmentShaderFromFile(std::string filePath);
+    Shader loadComputeShaderFromFile(std::string filePath);
 
     ~ShaderManager();
 };
