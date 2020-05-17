@@ -5,7 +5,6 @@ layout(location = 0) in int in_id[];
 layout(location = 1) in vec3 in_worldPos[];
 layout(location = 2) in vec2 in_heightmapUV[];
 
-uniform vec3 cameraPos;
 uniform vec2 heightmapSize;
 
 struct VertexEdgeData
@@ -34,6 +33,18 @@ float calcCornerMips(VertexEdgeData vertEdge)
         max(scaledLengths.x, scaledLengths.y),
         max(scaledLengths.z, scaledLengths.w));
     return log2(L * length(heightmapSize) / T) + 1;
+}
+
+float calcCornerMips2(VertexEdgeData vertEdge)
+{
+    float T = max(
+        max(vertEdge.tessLevels.x, vertEdge.tessLevels.y),
+        max(vertEdge.tessLevels.z, vertEdge.tessLevels.w));
+    vec4 scaledLengths = step(vertEdge.tessLevels / T, vec4(1.0f)) * vertEdge.uvLengths;
+    float L = max(
+        max(scaledLengths.x, scaledLengths.y),
+        max(scaledLengths.z, scaledLengths.w));
+    return log2(L * length(heightmapSize) * 30.0f / T) + 1;
 }
 
 void main()

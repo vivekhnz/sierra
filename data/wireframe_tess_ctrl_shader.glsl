@@ -5,7 +5,6 @@ layout(location = 0) in int in_id[];
 layout(location = 1) in vec3 in_worldPos[];
 layout(location = 2) in vec2 in_heightmapUV[];
 
-uniform vec3 cameraPos;
 uniform vec2 heightmapSize;
 
 struct VertexEdgeData

@@ -98,7 +98,6 @@ Scene::Scene(Window &window) :
         glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
     terrainShaderProgram.setVector2("textureScale", textureScale);
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
-    terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
     terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
     terrainShaderProgram.setInt("heightmapTexture", 0);
     terrainShaderProgram.setInt("albedoTexture", 1);
@@ -113,12 +112,11 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setInt("displacementTexture", 3);
     wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
     wireframeShaderProgram.setVector2("textureScale", textureScale);
-    wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
     wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
     wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
     calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rowCount * (columnCount - 1));
     calcTessLevelsShaderProgram.setInt("columnCount", columnCount);
-    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.02f);
+    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain textures
@@ -217,9 +215,7 @@ void Scene::draw()
 
     // setup transformation matrix
     terrainShaderProgram.setMat4("transform", false, camera.getMatrix());
-    terrainShaderProgram.setVector3("cameraPos", camera.getPosition());
     wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
-    wireframeShaderProgram.setVector3("cameraPos", camera.getPosition());
     calcTessLevelsShaderProgram.setMat4("transform", false, camera.getMatrix());
 
     // calculate tessellation levels
