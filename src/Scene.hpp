@@ -21,6 +21,7 @@ class Scene
     Texture terrainNormalTexture;
     Texture terrainDisplacementTexture;
     Texture terrainAOTexture;
+    Texture terrainRoughnessTexture;
     Buffer tessellationLevelBuffer;
     InputManager input;
 
@@ -34,6 +35,7 @@ class Scene
     bool isNormalMapEnabled;
     bool isDisplacementMapEnabled;
     bool isAOMapEnabled;
+    bool isRoughnessMapEnabled;
     bool isWireframeMode;
 
 public:

@@ -6,7 +6,7 @@ Scene::Scene(Window &window) :
     window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
-    isAOMapEnabled(true), isWireframeMode(false), input(window)
+    isAOMapEnabled(true), isRoughnessMapEnabled(true), isWireframeMode(false), input(window)
 {
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
@@ -104,11 +104,13 @@ Scene::Scene(Window &window) :
     terrainShaderProgram.setInt("normalTexture", 2);
     terrainShaderProgram.setInt("displacementTexture", 3);
     terrainShaderProgram.setInt("aoTexture", 4);
+    terrainShaderProgram.setInt("roughnessTexture", 5);
     terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
     terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
     terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
     terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
     terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
+    terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
     wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
     wireframeShaderProgram.setInt("heightmapTexture", 0);
     wireframeShaderProgram.setInt("displacementTexture", 3);
@@ -130,6 +132,8 @@ Scene::Scene(Window &window) :
         GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     terrainAOTexture.initialize(Image("data/ground_ao.tga", false), GL_R8, GL_RED,
         GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    terrainRoughnessTexture.initialize(Image("data/ground_roughness.tga", false), GL_R8,
+        GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     // create buffer to store vertex edge data
     std::vector<glm::vec4> vertEdgeData(vertices.size() * 2);
@@ -141,6 +145,7 @@ Scene::Scene(Window &window) :
     input.listenForKey(GLFW_KEY_N);
     input.listenForKey(GLFW_KEY_B);
     input.listenForKey(GLFW_KEY_O);
+    input.listenForKey(GLFW_KEY_R);
     input.listenForKey(GLFW_KEY_Z);
 }
 
@@ -211,6 +216,11 @@ void Scene::update()
         isAOMapEnabled = !isAOMapEnabled;
         terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
     }
+    if (input.isNewKeyPress(GLFW_KEY_R))
+    {
+        isRoughnessMapEnabled = !isRoughnessMapEnabled;
+        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
+    }
     if (input.isNewKeyPress(GLFW_KEY_Z))
     {
         isWireframeMode = !isWireframeMode;
@@ -241,6 +251,7 @@ void Scene::draw()
     terrainNormalTexture.bind(2);
     terrainDisplacementTexture.bind(3);
     terrainAOTexture.bind(4);
+    terrainRoughnessTexture.bind(5);
 
     (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
     mesh.draw();
