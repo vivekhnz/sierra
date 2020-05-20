@@ -11,6 +11,7 @@ uniform bool isTextureEnabled;
 uniform bool isNormalMapEnabled;
 uniform bool isAOMapEnabled;
 uniform bool isRoughnessMapEnabled;
+uniform vec3 lightDir;
 
 out vec4 FragColor;
 
@@ -22,7 +23,6 @@ void main()
         : vec3(0.0f);
     vec3 normal = normalize(vertexNormal - (texNormal * 0.5f));
     normal = isRoughnessMapEnabled ? normalize(normal - vec3(0, roughness * 0.8f, 0)) : normal;
-    vec3 lightDir = vec3(0.7f, 0.3f, 0.2f);
     float ambientLight = 0.2f;
     float nDotL = dot(normal, lightDir);
     float lightingCol = isLightingEnabled ? max(nDotL, ambientLight) : 1.0f;

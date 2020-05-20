@@ -2,9 +2,9 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera(const Window &window)
-    : window(window), near(0.1f), far(10000.0f), fov(glm::pi<float>() / 4.0f),
-      up(glm::vec3(0.0f, 1.0f, 0.0f))
+Camera::Camera(const Window &window) :
+    window(window), near(0.1f), far(10000.0f), fov(glm::pi<float>() / 4.0f),
+    up(glm::vec3(0.0f, 1.0f, 0.0f))
 {
 }
 

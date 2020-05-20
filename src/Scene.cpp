@@ -3,7 +3,8 @@
 #include "Graphics/ShaderManager.hpp"
 
 Scene::Scene(Window &window) :
-    window(window), camera(window), orbitDistance(900.0f), mesh(GL_PATCHES),
+    window(window), camera(window), orbitAngle(0.0f), orbitDistance(900.0f), lightAngle(7.5f),
+    prevFrameTime(0), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
     isAOMapEnabled(true), isRoughnessMapEnabled(true), isWireframeMode(false), input(window)
@@ -226,6 +227,15 @@ void Scene::update()
         isWireframeMode = !isWireframeMode;
         glPolygonMode(GL_FRONT_AND_BACK, isWireframeMode ? GL_LINE : GL_FILL);
     }
+
+    if (window.isKeyPressed(GLFW_KEY_LEFT))
+    {
+        lightAngle += deltaTime;
+    }
+    else if (window.isKeyPressed(GLFW_KEY_RIGHT))
+    {
+        lightAngle -= deltaTime;
+    }
 }
 
 void Scene::draw()
@@ -237,6 +247,8 @@ void Scene::draw()
     terrainShaderProgram.setMat4("transform", false, camera.getMatrix());
     wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
     calcTessLevelsShaderProgram.setMat4("transform", false, camera.getMatrix());
+    terrainShaderProgram.setVector3(
+        "lightDir", glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle))));
 
     // calculate tessellation levels
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());

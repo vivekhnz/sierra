@@ -27,6 +27,7 @@ class Scene
 
     float orbitAngle;
     float orbitDistance;
+    float lightAngle;
     float prevFrameTime;
     int meshEdgeCount;
 

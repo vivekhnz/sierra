@@ -41,7 +41,8 @@ void ShaderProgram::use()
 void ShaderProgram::setMat4(std::string uniformName, bool transpose, glm::mat4 matrix)
 {
     unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
-    glProgramUniformMatrix4fv(id, loc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
+    glProgramUniformMatrix4fv(
+        id, loc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
 }
 
 void ShaderProgram::setFloat(std::string uniformName, float value)
