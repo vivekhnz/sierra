@@ -43,7 +43,7 @@ float height(vec2 uv, float mip)
     float scaledMip = mip + log2(textureScale.x);
     float displacement =
         ((textureCLod(displacementTexture, uv * textureScale, scaledMip) * 2.0f) - 1.0f)
-        * (isDisplacementMapEnabled ? 0.0125f : 0.0f);
+        * (isDisplacementMapEnabled ? 0.002f : 0.0f);
     return baseHeight + displacement;
 }
 

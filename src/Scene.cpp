@@ -7,7 +7,7 @@ Scene::Scene(Window &window) :
     prevFrameTime(0), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
-    isAOMapEnabled(true), isRoughnessMapEnabled(true), isWireframeMode(false), input(window)
+    isAOMapEnabled(true), isRoughnessMapEnabled(false), isWireframeMode(false), input(window)
 {
     // setup camera
     camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
@@ -49,9 +49,9 @@ Scene::Scene(Window &window) :
     Image heightmap("data/heightmap.tga", true);
     heightmapTexture.initialize(heightmap, GL_R16, GL_RED, GL_UNSIGNED_SHORT,
         GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    int columnCount = 64;
-    int rowCount = 64;
-    float patchSize = 16.0f;
+    int columnCount = 256;
+    int rowCount = 256;
+    float patchSize = 4.0f;
 
     // build vertices
     float terrainHeight = 200.0f;
@@ -94,7 +94,7 @@ Scene::Scene(Window &window) :
     meshEdgeCount = (2 * (rowCount * columnCount)) - rowCount - columnCount;
 
     // configure shaders
-    auto textureScale = glm::vec2(30.0f, 30.0f);
+    auto textureScale = glm::vec2(24.0f, 24.0f);
     terrainShaderProgram.setVector2("normalSampleOffset",
         glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
     terrainShaderProgram.setVector2("textureScale", textureScale);
@@ -121,7 +121,7 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
     calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rowCount * (columnCount - 1));
     calcTessLevelsShaderProgram.setInt("columnCount", columnCount);
-    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
+    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.01f);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain textures
