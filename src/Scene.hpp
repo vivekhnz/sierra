@@ -14,7 +14,8 @@ class Scene
     ShaderProgram terrainShaderProgram;
     ShaderProgram wireframeShaderProgram;
     ShaderProgram calcTessLevelsShaderProgram;
-    Camera camera;
+    Camera floatingCamera;
+    Camera playerCamera;
     Mesh mesh;
     Texture heightmapTexture;
     Texture terrainAlbedoTexture;
@@ -31,6 +32,11 @@ class Scene
     float prevFrameTime;
     int meshEdgeCount;
 
+    std::vector<float> terrainHeights;
+    int terrainColumns;
+    int terrainRows;
+    float terrainPatchSize;
+
     bool isLightingEnabled;
     bool isTextureEnabled;
     bool isNormalMapEnabled;
@@ -38,6 +44,11 @@ class Scene
     bool isAOMapEnabled;
     bool isRoughnessMapEnabled;
     bool isWireframeMode;
+    bool isFloatingCameraMode;
+
+    void updateFloatingCamera(float deltaTime);
+    void updatePlayerCamera(float deltaTime);
+    float getTerrainHeight(float x, float z);
 
 public:
     Scene(Window &window);

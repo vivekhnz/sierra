@@ -1,20 +1,16 @@
 #include "Scene.hpp"
 
+#include <algorithm>
 #include "Graphics/ShaderManager.hpp"
 
 Scene::Scene(Window &window) :
-    window(window), camera(window), orbitAngle(0.0f), orbitDistance(900.0f), lightAngle(7.5f),
-    prevFrameTime(0), mesh(GL_PATCHES),
+    window(window), floatingCamera(window), playerCamera(window), orbitAngle(0.0f),
+    orbitDistance(900.0f), lightAngle(7.5f), prevFrameTime(0), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
-    isAOMapEnabled(true), isRoughnessMapEnabled(false), isWireframeMode(false), input(window)
+    isAOMapEnabled(true), isRoughnessMapEnabled(false), isWireframeMode(false),
+    isFloatingCameraMode(false), input(window)
 {
-    // setup camera
-    camera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
-    camera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
-
     // load shaders
     ShaderManager shaderManager;
 
@@ -49,54 +45,60 @@ Scene::Scene(Window &window) :
     Image heightmap("data/heightmap.tga", true);
     heightmapTexture.initialize(heightmap, GL_R16, GL_RED, GL_UNSIGNED_SHORT,
         GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    int columnCount = 256;
-    int rowCount = 256;
-    float patchSize = 4.0f;
+    terrainColumns = 256;
+    terrainRows = 256;
+    terrainPatchSize = 4.0f;
 
     // build vertices
     float terrainHeight = 200.0f;
-    std::vector<float> vertices(columnCount * rowCount * 5);
-    float offsetX = (columnCount - 1) * patchSize * -0.5f;
-    float offsetY = (rowCount - 1) * patchSize * -0.5f;
-    auto uvSize = glm::vec2(1.0f / (columnCount - 1), 1.0f / (rowCount - 1));
+    std::vector<float> vertices(terrainColumns * terrainRows * 5);
+    float offsetX = (terrainColumns - 1) * terrainPatchSize * -0.5f;
+    float offsetY = (terrainRows - 1) * terrainPatchSize * -0.5f;
+    auto uvSize = glm::vec2(1.0f / (terrainColumns - 1), 1.0f / (terrainRows - 1));
     auto heightmapSize = glm::vec2(heightmap.getWidth(), heightmap.getHeight());
-    for (int y = 0; y < rowCount; y++)
+    terrainHeights.resize(terrainColumns * terrainRows);
+    for (int y = 0; y < terrainRows; y++)
     {
-        for (int x = 0; x < columnCount; x++)
+        for (int x = 0; x < terrainColumns; x++)
         {
-            int i = ((y * columnCount) + x) * 5;
-            vertices[i] = (x * patchSize) + offsetX;
-            vertices[i + 2] = (y * patchSize) + offsetY;
+            int patchIndex = (y * terrainColumns) + x;
+            int i = patchIndex * 5;
+            vertices[i] = (x * terrainPatchSize) + offsetX;
+            vertices[i + 2] = (y * terrainPatchSize) + offsetY;
             vertices[i + 3] = uvSize.x * x;
             vertices[i + 4] = uvSize.y * y;
 
-            int tx = (x / (float)columnCount) * heightmapSize.x;
-            int ty = (y / (float)rowCount) * heightmapSize.y;
-            vertices[i + 1] = (heightmap.getValue16(tx, ty, 0) / 65535.0f) * terrainHeight;
+            int tx = (x / (float)terrainColumns) * heightmapSize.x;
+            int ty = (y / (float)terrainRows) * heightmapSize.y;
+            float height = (heightmap.getValue16(tx, ty, 0) / 65535.0f) * terrainHeight;
+            vertices[i + 1] = height;
+
+            terrainHeights[patchIndex] = height;
         }
     }
 
     // build indices
-    std::vector<unsigned int> indices((rowCount - 1) * (columnCount - 1) * 4);
-    for (int y = 0; y < rowCount - 1; y++)
+    std::vector<unsigned int> indices((terrainRows - 1) * (terrainColumns - 1) * 4);
+    for (int y = 0; y < terrainRows - 1; y++)
     {
-        for (int x = 0; x < columnCount - 1; x++)
+        for (int x = 0; x < terrainColumns - 1; x++)
         {
-            int vertIndex = (y * columnCount) + x;
-            int elemIndex = ((y * (columnCount - 1)) + x) * 4;
+            int vertIndex = (y * terrainColumns) + x;
+            int elemIndex = ((y * (terrainColumns - 1)) + x) * 4;
             indices[elemIndex] = vertIndex;
-            indices[elemIndex + 1] = vertIndex + columnCount;
-            indices[elemIndex + 2] = vertIndex + columnCount + 1;
+            indices[elemIndex + 1] = vertIndex + terrainColumns;
+            indices[elemIndex + 2] = vertIndex + terrainColumns + 1;
             indices[elemIndex + 3] = vertIndex + 1;
         }
     }
     mesh.initialize(vertices, indices);
-    meshEdgeCount = (2 * (rowCount * columnCount)) - rowCount - columnCount;
+    meshEdgeCount = (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
 
     // configure shaders
     auto textureScale = glm::vec2(24.0f, 24.0f);
     terrainShaderProgram.setVector2("normalSampleOffset",
-        glm::vec2(10.0f / (patchSize * columnCount), 10.0f / (patchSize * rowCount)));
+        glm::vec2(10.0f / (terrainPatchSize * terrainColumns),
+            10.0f / (terrainPatchSize * terrainRows)));
     terrainShaderProgram.setVector2("textureScale", textureScale);
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
@@ -119,9 +121,10 @@ Scene::Scene(Window &window) :
     wireframeShaderProgram.setVector2("textureScale", textureScale);
     wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
     wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-    calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rowCount * (columnCount - 1));
-    calcTessLevelsShaderProgram.setInt("columnCount", columnCount);
-    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.01f);
+    calcTessLevelsShaderProgram.setInt(
+        "horizontalEdgeCount", terrainRows * (terrainColumns - 1));
+    calcTessLevelsShaderProgram.setInt("columnCount", terrainColumns);
+    calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // load terrain textures
@@ -140,6 +143,18 @@ Scene::Scene(Window &window) :
     std::vector<glm::vec4> vertEdgeData(vertices.size() * 2);
     tessellationLevelBuffer.fill(vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
 
+    // setup camera
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
+
+    floatingCamera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
+    floatingCamera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
+
+    auto playerPos = glm::vec3(0.0f, 0.0f, terrainPatchSize * terrainRows * 0.4f);
+    playerPos.y = getTerrainHeight(playerPos.x, playerPos.z) + 8.0f;
+    playerCamera.setPosition(playerPos);
+    playerCamera.lookAt(playerPos + glm::vec3(0.0f, 0.0f, -1.0f));
+
     // configure input
     input.listenForKey(GLFW_KEY_L);
     input.listenForKey(GLFW_KEY_T);
@@ -148,6 +163,7 @@ Scene::Scene(Window &window) :
     input.listenForKey(GLFW_KEY_O);
     input.listenForKey(GLFW_KEY_R);
     input.listenForKey(GLFW_KEY_Z);
+    input.listenForKey(GLFW_KEY_C);
 }
 
 void Scene::update()
@@ -162,34 +178,18 @@ void Scene::update()
     float deltaTime = currentTime - prevFrameTime;
     prevFrameTime = currentTime;
 
-    glm::vec3 pos = camera.getPosition();
-    if (window.isKeyPressed(GLFW_KEY_A))
+    if (input.isNewKeyPress(GLFW_KEY_C))
     {
-        orbitAngle += glm::radians(30.0f * deltaTime);
+        isFloatingCameraMode = !isFloatingCameraMode;
     }
-    if (window.isKeyPressed(GLFW_KEY_D))
+    if (isFloatingCameraMode)
     {
-        orbitAngle -= glm::radians(30.0f * deltaTime);
+        updateFloatingCamera(deltaTime);
     }
-    if (window.isKeyPressed(GLFW_KEY_W))
+    else
     {
-        orbitDistance -= 100.0f * deltaTime;
+        updatePlayerCamera(deltaTime);
     }
-    if (window.isKeyPressed(GLFW_KEY_S))
-    {
-        orbitDistance += 100.0f * deltaTime;
-    }
-    if (window.isKeyPressed(GLFW_KEY_UP))
-    {
-        pos.y += 150.0f * deltaTime;
-    }
-    if (window.isKeyPressed(GLFW_KEY_DOWN))
-    {
-        pos.y -= 150.0f * deltaTime;
-    }
-    pos.x = sin(-orbitAngle) * orbitDistance;
-    pos.z = cos(-orbitAngle) * orbitDistance;
-    camera.setPosition(pos);
 
     if (input.isNewKeyPress(GLFW_KEY_L))
     {
@@ -227,6 +227,38 @@ void Scene::update()
         isWireframeMode = !isWireframeMode;
         glPolygonMode(GL_FRONT_AND_BACK, isWireframeMode ? GL_LINE : GL_FILL);
     }
+}
+
+void Scene::updateFloatingCamera(float deltaTime)
+{
+    glm::vec3 pos = floatingCamera.getPosition();
+    if (window.isKeyPressed(GLFW_KEY_A))
+    {
+        orbitAngle += glm::radians(30.0f * deltaTime);
+    }
+    if (window.isKeyPressed(GLFW_KEY_D))
+    {
+        orbitAngle -= glm::radians(30.0f * deltaTime);
+    }
+    if (window.isKeyPressed(GLFW_KEY_W))
+    {
+        orbitDistance -= 100.0f * deltaTime;
+    }
+    if (window.isKeyPressed(GLFW_KEY_S))
+    {
+        orbitDistance += 100.0f * deltaTime;
+    }
+    if (window.isKeyPressed(GLFW_KEY_UP))
+    {
+        pos.y += 150.0f * deltaTime;
+    }
+    if (window.isKeyPressed(GLFW_KEY_DOWN))
+    {
+        pos.y -= 150.0f * deltaTime;
+    }
+    pos.x = sin(-orbitAngle) * orbitDistance;
+    pos.z = cos(-orbitAngle) * orbitDistance;
+    floatingCamera.setPosition(pos);
 
     if (window.isKeyPressed(GLFW_KEY_LEFT))
     {
@@ -238,15 +270,43 @@ void Scene::update()
     }
 }
 
+void Scene::updatePlayerCamera(float deltaTime)
+{
+    glm::vec3 pos = playerCamera.getPosition();
+
+    if (window.isKeyPressed(GLFW_KEY_A))
+    {
+        pos.x -= 50.0f * deltaTime;
+    }
+    if (window.isKeyPressed(GLFW_KEY_D))
+    {
+        pos.x += 50.0f * deltaTime;
+    }
+    if (window.isKeyPressed(GLFW_KEY_W))
+    {
+        pos.z -= 50.0f * deltaTime;
+    }
+    if (window.isKeyPressed(GLFW_KEY_S))
+    {
+        pos.z += 50.0f * deltaTime;
+    }
+    float targetHeight = getTerrainHeight(pos.x, pos.z) + 8.0f;
+    pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
+
+    playerCamera.setPosition(pos);
+    playerCamera.lookAt(pos + glm::vec3(0.0f, 0.0f, -1.0f));
+}
+
 void Scene::draw()
 {
     glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // setup transformation matrix
-    terrainShaderProgram.setMat4("transform", false, camera.getMatrix());
-    wireframeShaderProgram.setMat4("transform", false, camera.getMatrix());
-    calcTessLevelsShaderProgram.setMat4("transform", false, camera.getMatrix());
+    Camera &activeCamera = isFloatingCameraMode ? floatingCamera : playerCamera;
+    terrainShaderProgram.setMat4("transform", false, activeCamera.getMatrix());
+    wireframeShaderProgram.setMat4("transform", false, activeCamera.getMatrix());
+    calcTessLevelsShaderProgram.setMat4("transform", false, activeCamera.getMatrix());
     terrainShaderProgram.setVector3(
         "lightDir", glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle))));
 
@@ -267,6 +327,16 @@ void Scene::draw()
 
     (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
     mesh.draw();
+}
+
+float Scene::getTerrainHeight(float x, float z)
+{
+    float rx = x + (terrainColumns * terrainPatchSize * 0.5f);
+    float rz = z + (terrainRows * terrainPatchSize * 0.5f);
+    int px = std::min(std::max((int)floor(rx / terrainPatchSize), 0), terrainColumns - 1);
+    int pz = std::min(std::max((int)floor(rz / terrainPatchSize), 0), terrainRows - 1);
+    int i = (pz * terrainColumns) + px;
+    return terrainHeights[i];
 }
 
 Scene::~Scene()
