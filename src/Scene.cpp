@@ -95,7 +95,7 @@ Scene::Scene(Window &window) :
     meshEdgeCount = (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
 
     // configure shaders
-    auto textureScale = glm::vec2(24.0f, 24.0f);
+    auto textureScale = glm::vec2(48.0f, 48.0f);
     terrainShaderProgram.setVector2("normalSampleOffset",
         glm::vec2(10.0f / (terrainPatchSize * terrainColumns),
             10.0f / (terrainPatchSize * terrainRows)));
@@ -276,19 +276,19 @@ void Scene::updatePlayerCamera(float deltaTime)
 
     if (window.isKeyPressed(GLFW_KEY_A))
     {
-        pos.x -= 50.0f * deltaTime;
+        pos.x -= 30.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_D))
     {
-        pos.x += 50.0f * deltaTime;
+        pos.x += 30.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        pos.z -= 50.0f * deltaTime;
+        pos.z -= 30.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        pos.z += 50.0f * deltaTime;
+        pos.z += 30.0f * deltaTime;
     }
     float targetHeight = getTerrainHeight(pos.x, pos.z) + 8.0f;
     pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
@@ -329,13 +329,43 @@ void Scene::draw()
     mesh.draw();
 }
 
+float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
+{
+    float det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    float l1 = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (y - c.z)) / det;
+    float l2 = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (y - c.z)) / det;
+    float l3 = 1.0f - l1 - l2;
+    return (l1 * a.y) + (l2 * b.y) + (l3 * c.y);
+}
+
 float Scene::getTerrainHeight(float x, float z)
 {
-    float rx = x + (terrainColumns * terrainPatchSize * 0.5f);
-    float rz = z + (terrainRows * terrainPatchSize * 0.5f);
-    int px = std::min(std::max((int)floor(rx / terrainPatchSize), 0), terrainColumns - 1);
-    int pz = std::min(std::max((int)floor(rz / terrainPatchSize), 0), terrainRows - 1);
-    int i = (pz * terrainColumns) + px;
+    float relativeX = x + (terrainColumns * terrainPatchSize * 0.5f);
+    float relativeZ = z + (terrainRows * terrainPatchSize * 0.5f);
+    float normalizedX = relativeX / terrainPatchSize;
+    float normalizedZ = relativeZ / terrainPatchSize;
+    int patchX = (int)floor(normalizedX);
+    int patchZ = (int)floor(normalizedZ);
+    float deltaX = normalizedX - patchX;
+    float deltaZ = normalizedZ - patchZ;
+
+    float topLeft = getTerrainPatchHeight(patchX, patchZ);
+    float topRight = getTerrainPatchHeight(patchX + 1, patchZ);
+    float bottomLeft = getTerrainPatchHeight(patchX, patchZ + 1);
+    float bottomRight = getTerrainPatchHeight(patchX + 1, patchZ + 1);
+
+    return deltaX <= 1.0f - deltaZ
+        ? barycentric(glm::vec3(0.0f, topLeft, 0.0f), glm::vec3(1.0f, topRight, 0.0f),
+            glm::vec3(0.0f, bottomLeft, 1.0f), deltaX, deltaZ)
+        : barycentric(glm::vec3(1.0f, topRight, 0.0f), glm::vec3(1.0f, bottomRight, 1.0f),
+            glm::vec3(0.0f, bottomLeft, 1.0f), deltaX, deltaZ);
+}
+
+float Scene::getTerrainPatchHeight(int x, int z)
+{
+    int clampedX = std::min(std::max(x, 0), terrainColumns - 1);
+    int clampedZ = std::min(std::max(z, 0), terrainRows - 1);
+    int i = (clampedZ * terrainColumns) + clampedX;
     return terrainHeights[i];
 }
 

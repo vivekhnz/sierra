@@ -48,7 +48,8 @@ class Scene
 
     void updateFloatingCamera(float deltaTime);
     void updatePlayerCamera(float deltaTime);
-    float getTerrainHeight(float x, float z);
+    float getTerrainHeight(float worldX, float worldZ);
+    float getTerrainPatchHeight(int x, int z);
 
 public:
     Scene(Window &window);
