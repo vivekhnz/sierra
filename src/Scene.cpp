@@ -5,7 +5,7 @@
 
 Scene::Scene(Window &window) :
     window(window), floatingCamera(window), playerCamera(window), orbitAngle(0.0f),
-    orbitDistance(900.0f), lightAngle(7.5f), prevFrameTime(0), mesh(GL_PATCHES),
+    orbitDistance(112.5f), lightAngle(7.5f), prevFrameTime(0), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
     isAOMapEnabled(true), isRoughnessMapEnabled(false), isWireframeMode(false),
@@ -47,10 +47,10 @@ Scene::Scene(Window &window) :
         GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     terrainColumns = 256;
     terrainRows = 256;
-    terrainPatchSize = 4.0f;
+    terrainPatchSize = 0.5f;
 
     // build vertices
-    float terrainHeight = 200.0f;
+    float terrainHeight = 25.0f;
     std::vector<float> vertices(terrainColumns * terrainRows * 5);
     float offsetX = (terrainColumns - 1) * terrainPatchSize * -0.5f;
     float offsetY = (terrainRows - 1) * terrainPatchSize * -0.5f;
@@ -97,8 +97,8 @@ Scene::Scene(Window &window) :
     // configure shaders
     auto textureScale = glm::vec2(48.0f, 48.0f);
     terrainShaderProgram.setVector2("normalSampleOffset",
-        glm::vec2(10.0f / (terrainPatchSize * terrainColumns),
-            10.0f / (terrainPatchSize * terrainRows)));
+        glm::vec2(1.0f / (terrainPatchSize * terrainColumns),
+            1.0f / (terrainPatchSize * terrainRows)));
     terrainShaderProgram.setVector2("textureScale", textureScale);
     terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
     terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
@@ -147,7 +147,7 @@ Scene::Scene(Window &window) :
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    floatingCamera.setPosition(glm::vec3(0.0f, 300.0f, orbitDistance));
+    floatingCamera.setPosition(glm::vec3(0.0f, 37.5f, orbitDistance));
     floatingCamera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
 
     auto playerPos = glm::vec3(0.0f, 0.0f, terrainPatchSize * terrainRows * 0.4f);
@@ -242,19 +242,19 @@ void Scene::updateFloatingCamera(float deltaTime)
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        orbitDistance -= 100.0f * deltaTime;
+        orbitDistance -= 12.5f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        orbitDistance += 100.0f * deltaTime;
+        orbitDistance += 12.5f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_UP))
     {
-        pos.y += 150.0f * deltaTime;
+        pos.y += 20.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_DOWN))
     {
-        pos.y -= 150.0f * deltaTime;
+        pos.y -= 20.0f * deltaTime;
     }
     pos.x = sin(-orbitAngle) * orbitDistance;
     pos.z = cos(-orbitAngle) * orbitDistance;
@@ -276,21 +276,21 @@ void Scene::updatePlayerCamera(float deltaTime)
 
     if (window.isKeyPressed(GLFW_KEY_A))
     {
-        pos.x -= 30.0f * deltaTime;
+        pos.x -= 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_D))
     {
-        pos.x += 30.0f * deltaTime;
+        pos.x += 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        pos.z -= 30.0f * deltaTime;
+        pos.z -= 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        pos.z += 30.0f * deltaTime;
+        pos.z += 4.0f * deltaTime;
     }
-    float targetHeight = getTerrainHeight(pos.x, pos.z) + 8.0f;
+    float targetHeight = getTerrainHeight(pos.x, pos.z) + 1.75f;
     pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
     playerCamera.setPosition(pos);
