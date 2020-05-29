@@ -31,6 +31,7 @@ class Scene
     float lightAngle;
     float prevFrameTime;
     int meshEdgeCount;
+    glm::vec3 playerLookDir;
 
     std::vector<float> terrainHeights;
     int terrainColumns;

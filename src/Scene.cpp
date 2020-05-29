@@ -5,7 +5,8 @@
 
 Scene::Scene(Window &window) :
     window(window), floatingCamera(window), playerCamera(window), orbitAngle(0.0f),
-    orbitDistance(112.5f), lightAngle(7.5f), prevFrameTime(0), mesh(GL_PATCHES),
+    orbitDistance(112.5f), lightAngle(7.5f), prevFrameTime(0),
+    playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
     isAOMapEnabled(true), isRoughnessMapEnabled(false), isWireframeMode(false),
@@ -151,9 +152,9 @@ Scene::Scene(Window &window) :
     floatingCamera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
 
     auto playerPos = glm::vec3(0.0f, 0.0f, terrainPatchSize * terrainRows * 0.4f);
-    playerPos.y = getTerrainHeight(playerPos.x, playerPos.z) + 8.0f;
+    playerPos.y = getTerrainHeight(playerPos.x, playerPos.z) + 1.75f;
     playerCamera.setPosition(playerPos);
-    playerCamera.lookAt(playerPos + glm::vec3(0.0f, 0.0f, -1.0f));
+    playerCamera.lookAt(playerPos + playerLookDir);
 
     // configure input
     input.listenForKey(GLFW_KEY_L);
@@ -273,28 +274,29 @@ void Scene::updateFloatingCamera(float deltaTime)
 void Scene::updatePlayerCamera(float deltaTime)
 {
     glm::vec3 pos = playerCamera.getPosition();
+    glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
     if (window.isKeyPressed(GLFW_KEY_A))
     {
-        pos.x -= 4.0f * deltaTime;
+        pos -= glm::cross(playerLookDir, up) * 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_D))
     {
-        pos.x += 4.0f * deltaTime;
+        pos += glm::cross(playerLookDir, up) * 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        pos.z -= 4.0f * deltaTime;
+        pos += playerLookDir * 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        pos.z += 4.0f * deltaTime;
+        pos -= playerLookDir * 4.0f * deltaTime;
     }
     float targetHeight = getTerrainHeight(pos.x, pos.z) + 1.75f;
     pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
     playerCamera.setPosition(pos);
-    playerCamera.lookAt(pos + glm::vec3(0.0f, 0.0f, -1.0f));
+    playerCamera.lookAt(pos + playerLookDir);
 }
 
 void Scene::draw()
