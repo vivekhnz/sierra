@@ -19,9 +19,20 @@ Window::Window(const GlfwManager &glfw, int width, int height, const char *title
     }
 
     glViewport(0, 0, width, height);
-    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-        glViewport(0, 0, width, height);
-    });
+    glfwSetFramebufferSizeCallback(window,
+        [](GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); });
+}
+
+std::tuple<int, int> Window::getSize() const
+{
+    int width, height;
+    glfwGetWindowSize(window, &width, &height);
+    return std::make_tuple(width, height);
+}
+
+float Window::getTime() const
+{
+    return (float)glfwGetTime();
 }
 
 bool Window::isRequestingClose() const
@@ -34,22 +45,21 @@ bool Window::isKeyPressed(int key) const
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
-std::tuple<int, int> Window::getSize() const
+void Window::addMouseMoveHandler(GLFWcursorposfun handler)
 {
-    int width, height;
-    glfwGetWindowSize(window, &width, &height);
-    return std::make_tuple(width, height);
+    glfwSetCursorPosCallback(window, handler);
+}
+
+void Window::setMouseCaptureMode(bool shouldCaptureMouse)
+{
+    glfwSetInputMode(
+        window, GLFW_CURSOR, shouldCaptureMouse ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
 }
 
 void Window::refresh()
 {
     glfwSwapBuffers(window);
     glfwPollEvents();
-}
-
-float Window::getTime() const
-{
-    return (float)glfwGetTime();
 }
 
 void Window::close()

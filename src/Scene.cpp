@@ -3,6 +3,13 @@
 #include <algorithm>
 #include "Graphics/ShaderManager.hpp"
 
+bool isFirstMouseInput;
+double prevMouseX;
+double prevMouseY;
+float yaw;
+float pitch;
+void onMouseMove(GLFWwindow *window, double x, double y);
+
 Scene::Scene(Window &window) :
     window(window), floatingCamera(window), playerCamera(window), orbitAngle(0.0f),
     orbitDistance(112.5f), lightAngle(7.5f), prevFrameTime(0),
@@ -165,6 +172,9 @@ Scene::Scene(Window &window) :
     input.listenForKey(GLFW_KEY_R);
     input.listenForKey(GLFW_KEY_Z);
     input.listenForKey(GLFW_KEY_C);
+
+    window.addMouseMoveHandler(onMouseMove);
+    window.setMouseCaptureMode(true);
 }
 
 void Scene::update()
@@ -182,6 +192,7 @@ void Scene::update()
     if (input.isNewKeyPress(GLFW_KEY_C))
     {
         isFloatingCameraMode = !isFloatingCameraMode;
+        window.setMouseCaptureMode(!isFloatingCameraMode);
     }
     if (isFloatingCameraMode)
     {
@@ -190,6 +201,15 @@ void Scene::update()
     else
     {
         updatePlayerCamera(deltaTime);
+    }
+
+    if (window.isKeyPressed(GLFW_KEY_LEFT))
+    {
+        lightAngle += deltaTime;
+    }
+    else if (window.isKeyPressed(GLFW_KEY_RIGHT))
+    {
+        lightAngle -= deltaTime;
     }
 
     if (input.isNewKeyPress(GLFW_KEY_L))
@@ -260,37 +280,36 @@ void Scene::updateFloatingCamera(float deltaTime)
     pos.x = sin(-orbitAngle) * orbitDistance;
     pos.z = cos(-orbitAngle) * orbitDistance;
     floatingCamera.setPosition(pos);
-
-    if (window.isKeyPressed(GLFW_KEY_LEFT))
-    {
-        lightAngle += deltaTime;
-    }
-    else if (window.isKeyPressed(GLFW_KEY_RIGHT))
-    {
-        lightAngle -= deltaTime;
-    }
 }
 
 void Scene::updatePlayerCamera(float deltaTime)
 {
+    playerLookDir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
+    playerLookDir.y = sin(glm::radians(pitch));
+    playerLookDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
+    playerLookDir = glm::normalize(playerLookDir);
+
     glm::vec3 pos = playerCamera.getPosition();
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
+    glm::vec3 playerMoveDir(cos(glm::radians(yaw)), 0.0f, sin(glm::radians(yaw)));
+    playerMoveDir = glm::normalize(playerMoveDir);
+
     if (window.isKeyPressed(GLFW_KEY_A))
     {
-        pos -= glm::cross(playerLookDir, up) * 4.0f * deltaTime;
+        pos -= glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_D))
     {
-        pos += glm::cross(playerLookDir, up) * 4.0f * deltaTime;
+        pos += glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
-        pos += playerLookDir * 4.0f * deltaTime;
+        pos += playerMoveDir * 4.0f * deltaTime;
     }
     if (window.isKeyPressed(GLFW_KEY_S))
     {
-        pos -= playerLookDir * 4.0f * deltaTime;
+        pos -= playerMoveDir * 4.0f * deltaTime;
     }
     float targetHeight = getTerrainHeight(pos.x, pos.z) + 1.75f;
     pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
@@ -369,6 +388,31 @@ float Scene::getTerrainPatchHeight(int x, int z)
     int clampedZ = std::min(std::max(z, 0), terrainRows - 1);
     int i = (clampedZ * terrainColumns) + clampedX;
     return terrainHeights[i];
+}
+
+void onMouseMove(GLFWwindow *window, double x, double y)
+{
+    if (isFirstMouseInput)
+    {
+        prevMouseX = x;
+        prevMouseY = y;
+        isFirstMouseInput = false;
+        return;
+    }
+
+    float xOffset = x - prevMouseX;
+    float yOffset = prevMouseY - y;
+    prevMouseX = x;
+    prevMouseY = y;
+
+    float sensitivity = 0.05f;
+    xOffset *= sensitivity;
+    yOffset *= sensitivity;
+
+    yaw += xOffset;
+    pitch += yOffset;
+
+    pitch = std::clamp(pitch, -89.0f, 89.0f);
 }
 
 Scene::~Scene()

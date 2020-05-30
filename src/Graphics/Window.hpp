@@ -17,11 +17,13 @@ public:
     Window(Window &&) = delete;
     Window &operator=(Window &&) = delete;
 
+    std::tuple<int, int> getSize() const;
+    float getTime() const;
     bool isRequestingClose() const;
     bool isKeyPressed(int key) const;
-    std::tuple<int, int> getSize() const;
+    void addMouseMoveHandler(GLFWcursorposfun handler);
+    void setMouseCaptureMode(bool shouldCaptureMouse);
     void refresh();
-    float getTime() const;
     void close();
 
     ~Window();
