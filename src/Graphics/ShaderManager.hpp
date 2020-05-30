@@ -5,7 +5,7 @@
 
 class ShaderManager
 {
-    Shader loadFromFile(GLenum shaderType, std::string filePath);
+    Shader loadFromFile(GLenum shaderType, std::string filePath) const;
 
 public:
     ShaderManager();
@@ -14,11 +14,11 @@ public:
     ShaderManager(ShaderManager &&) = delete;
     ShaderManager &operator=(ShaderManager &&) = delete;
 
-    Shader loadVertexShaderFromFile(std::string filePath);
-    Shader loadTessControlShaderFromFile(std::string filePath);
-    Shader loadTessEvalShaderFromFile(std::string filePath);
-    Shader loadFragmentShaderFromFile(std::string filePath);
-    Shader loadComputeShaderFromFile(std::string filePath);
+    Shader loadVertexShaderFromFile(std::string filePath) const;
+    Shader loadTessControlShaderFromFile(std::string filePath) const;
+    Shader loadTessEvalShaderFromFile(std::string filePath) const;
+    Shader loadFragmentShaderFromFile(std::string filePath) const;
+    Shader loadComputeShaderFromFile(std::string filePath) const;
 
     ~ShaderManager();
 };

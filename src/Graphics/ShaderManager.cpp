@@ -6,7 +6,7 @@ ShaderManager::ShaderManager()
 {
 }
 
-Shader ShaderManager::loadFromFile(GLenum shaderType, std::string filePath)
+Shader ShaderManager::loadFromFile(GLenum shaderType, std::string filePath) const
 {
     // read shader source
     OpenFile openFile(filePath);
@@ -18,23 +18,23 @@ Shader ShaderManager::loadFromFile(GLenum shaderType, std::string filePath)
     return shader;
 }
 
-Shader ShaderManager::loadVertexShaderFromFile(std::string filePath)
+Shader ShaderManager::loadVertexShaderFromFile(std::string filePath) const
 {
     return loadFromFile(GL_VERTEX_SHADER, filePath);
 }
-Shader ShaderManager::loadTessControlShaderFromFile(std::string filePath)
+Shader ShaderManager::loadTessControlShaderFromFile(std::string filePath) const
 {
     return loadFromFile(GL_TESS_CONTROL_SHADER, filePath);
 }
-Shader ShaderManager::loadTessEvalShaderFromFile(std::string filePath)
+Shader ShaderManager::loadTessEvalShaderFromFile(std::string filePath) const
 {
     return loadFromFile(GL_TESS_EVALUATION_SHADER, filePath);
 }
-Shader ShaderManager::loadFragmentShaderFromFile(std::string filePath)
+Shader ShaderManager::loadFragmentShaderFromFile(std::string filePath) const
 {
     return loadFromFile(GL_FRAGMENT_SHADER, filePath);
 }
-Shader ShaderManager::loadComputeShaderFromFile(std::string filePath)
+Shader ShaderManager::loadComputeShaderFromFile(std::string filePath) const
 {
     return loadFromFile(GL_COMPUTE_SHADER, filePath);
 }
