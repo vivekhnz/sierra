@@ -19,6 +19,12 @@ void InputManager::listenForKey(int key)
     keyState[key] = std::make_tuple(false, false);
 }
 
+void InputManager::mapCommand(int key, std::function<void()> command)
+{
+    listenForKey(key);
+    keyCommands[key] = command;
+}
+
 void InputManager::addMouseMoveHandler(std::function<void(float, float)> handler)
 {
     onMouseMoveHandler = handler;
@@ -35,8 +41,15 @@ void InputManager::update()
     while (iterator != keyState.end())
     {
         auto key = iterator->first;
-        auto [_, prevState] = iterator->second;
-        keyState[key] = std::make_tuple(prevState, window.isKeyPressed(key));
+        auto [_, wasPressed] = iterator->second;
+        auto isPressed = window.isKeyPressed(key);
+        keyState[key] = std::make_tuple(wasPressed, isPressed);
+
+        if (isPressed && !wasPressed && keyCommands.count(key) > 0)
+        {
+            keyCommands.at(key)();
+        }
+
         iterator++;
     }
 }

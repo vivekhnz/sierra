@@ -9,6 +9,7 @@ class InputManager
 {
     Window &window;
     std::map<int, std::tuple<bool, bool>> keyState;
+    std::map<int, std::function<void()>> keyCommands;
     std::function<void(float, float)> onMouseMoveHandler;
     bool isFirstMouseInput;
     double prevMouseX;
@@ -26,6 +27,7 @@ public:
     bool isNewKeyPress(int key);
 
     void listenForKey(int key);
+    void mapCommand(int key, std::function<void()> command);
     void addMouseMoveHandler(std::function<void(float, float)> handler);
     void setMouseCaptureMode(bool shouldCaptureMouse);
     void update();

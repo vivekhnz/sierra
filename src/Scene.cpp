@@ -25,14 +25,14 @@ Scene::Scene(Window &window) :
     playerCamera.lookAt(playerPos + playerLookDir);
 
     // configure input
-    input.listenForKey(GLFW_KEY_L);
-    input.listenForKey(GLFW_KEY_T);
-    input.listenForKey(GLFW_KEY_N);
-    input.listenForKey(GLFW_KEY_B);
-    input.listenForKey(GLFW_KEY_O);
-    input.listenForKey(GLFW_KEY_R);
-    input.listenForKey(GLFW_KEY_Z);
-    input.listenForKey(GLFW_KEY_C);
+    input.mapCommand(GLFW_KEY_L, std::bind(&Terrain::toggleLighting, &terrain));
+    input.mapCommand(GLFW_KEY_T, std::bind(&Terrain::toggleAlbedoMap, &terrain));
+    input.mapCommand(GLFW_KEY_N, std::bind(&Terrain::toggleNormalMap, &terrain));
+    input.mapCommand(GLFW_KEY_B, std::bind(&Terrain::toggleDisplacementMap, &terrain));
+    input.mapCommand(GLFW_KEY_O, std::bind(&Terrain::toggleAmbientOcclusionMap, &terrain));
+    input.mapCommand(GLFW_KEY_R, std::bind(&Terrain::toggleRoughnessMap, &terrain));
+    input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
+    input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
 
     input.addMouseMoveHandler(
         std::bind(&Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
@@ -51,11 +51,6 @@ void Scene::update()
     float deltaTime = currentTime - prevFrameTime;
     prevFrameTime = currentTime;
 
-    if (input.isNewKeyPress(GLFW_KEY_C))
-    {
-        isFloatingCameraMode = !isFloatingCameraMode;
-        window.setMouseCaptureMode(!isFloatingCameraMode);
-    }
     if (isFloatingCameraMode)
     {
         updateFloatingCamera(deltaTime);
@@ -73,35 +68,12 @@ void Scene::update()
     {
         lightAngle -= deltaTime;
     }
+}
 
-    if (input.isNewKeyPress(GLFW_KEY_L))
-    {
-        terrain.toggleLighting();
-    }
-    if (input.isNewKeyPress(GLFW_KEY_T))
-    {
-        terrain.toggleAlbedoMap();
-    }
-    if (input.isNewKeyPress(GLFW_KEY_N))
-    {
-        terrain.toggleNormalMap();
-    }
-    if (input.isNewKeyPress(GLFW_KEY_B))
-    {
-        terrain.toggleDisplacementMap();
-    }
-    if (input.isNewKeyPress(GLFW_KEY_O))
-    {
-        terrain.toggleAmbientOcclusionMap();
-    }
-    if (input.isNewKeyPress(GLFW_KEY_R))
-    {
-        terrain.toggleRoughnessMap();
-    }
-    if (input.isNewKeyPress(GLFW_KEY_Z))
-    {
-        terrain.toggleWireframeMode();
-    }
+void Scene::toggleCameraMode()
+{
+    isFloatingCameraMode = !isFloatingCameraMode;
+    window.setMouseCaptureMode(!isFloatingCameraMode);
 }
 
 void Scene::updateFloatingCamera(float deltaTime)

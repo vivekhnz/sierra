@@ -27,6 +27,7 @@ class Scene
     float playerCameraPitch;
     bool isFloatingCameraMode;
 
+    void toggleCameraMode();
     void updateFloatingCamera(float deltaTime);
     void updatePlayerCamera(float deltaTime);
     void onMouseMove(float xOffset, float yOffset);
