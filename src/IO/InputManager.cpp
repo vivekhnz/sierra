@@ -2,13 +2,31 @@
 
 #include <iostream>
 
-InputManager::InputManager(Window &window) : window(window)
+InputManager::InputManager(Window &window) : window(window), onMouseMoveHandler(NULL)
 {
+    window.addMouseMoveHandler(std::bind(
+        &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
+}
+
+bool InputManager::isNewKeyPress(int key)
+{
+    auto [prevState, currentState] = keyState[key];
+    return currentState && !prevState;
 }
 
 void InputManager::listenForKey(int key)
 {
     keyState[key] = std::make_tuple(false, false);
+}
+
+void InputManager::addMouseMoveHandler(std::function<void(float, float)> handler)
+{
+    onMouseMoveHandler = handler;
+}
+
+void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
+{
+    window.setMouseCaptureMode(shouldCaptureMouse);
 }
 
 void InputManager::update()
@@ -23,10 +41,25 @@ void InputManager::update()
     }
 }
 
-bool InputManager::isNewKeyPress(int key)
+void InputManager::onMouseMove(double x, double y)
 {
-    auto [prevState, currentState] = keyState[key];
-    return currentState && !prevState;
+    if (isFirstMouseInput)
+    {
+        prevMouseX = x;
+        prevMouseY = y;
+        isFirstMouseInput = false;
+        return;
+    }
+
+    float xOffset = x - prevMouseX;
+    float yOffset = prevMouseY - y;
+    prevMouseX = x;
+    prevMouseY = y;
+
+    if (onMouseMoveHandler != NULL)
+    {
+        onMouseMoveHandler(xOffset, yOffset);
+    }
 }
 
 InputManager::~InputManager()

@@ -2,12 +2,19 @@
 #define IO_INPUTMANAGER_HPP
 
 #include <map>
+#include <functional>
 #include "../Graphics/Window.hpp"
 
 class InputManager
 {
     Window &window;
     std::map<int, std::tuple<bool, bool>> keyState;
+    std::function<void(float, float)> onMouseMoveHandler;
+    bool isFirstMouseInput;
+    double prevMouseX;
+    double prevMouseY;
+
+    void onMouseMove(double x, double y);
 
 public:
     InputManager(Window &window);
@@ -16,9 +23,12 @@ public:
     InputManager(InputManager &&) = delete;
     InputManager &operator=(InputManager &&) = delete;
 
-    void listenForKey(int key);
-    void update();
     bool isNewKeyPress(int key);
+
+    void listenForKey(int key);
+    void addMouseMoveHandler(std::function<void(float, float)> handler);
+    void setMouseCaptureMode(bool shouldCaptureMouse);
+    void update();
 
     ~InputManager();
 };

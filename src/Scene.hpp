@@ -31,7 +31,10 @@ class Scene
     float lightAngle;
     float prevFrameTime;
     int meshEdgeCount;
+
     glm::vec3 playerLookDir;
+    float playerCameraYaw;
+    float playerCameraPitch;
 
     std::vector<float> terrainHeights;
     int terrainColumns;
@@ -49,6 +52,7 @@ class Scene
 
     void updateFloatingCamera(float deltaTime);
     void updatePlayerCamera(float deltaTime);
+    void onMouseMove(float xOffset, float yOffset);
     float getTerrainHeight(float worldX, float worldZ);
     float getTerrainPatchHeight(int x, int z);
 

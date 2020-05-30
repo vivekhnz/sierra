@@ -2,6 +2,7 @@
 #define GRAPHICS_WINDOW_HPP
 
 #include <tuple>
+#include <functional>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "GlfwManager.hpp"
@@ -21,7 +22,8 @@ public:
     float getTime() const;
     bool isRequestingClose() const;
     bool isKeyPressed(int key) const;
-    void addMouseMoveHandler(GLFWcursorposfun handler);
+
+    void addMouseMoveHandler(std::function<void(double, double)> handler);
     void setMouseCaptureMode(bool shouldCaptureMouse);
     void refresh();
     void close();

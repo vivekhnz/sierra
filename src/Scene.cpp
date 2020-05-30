@@ -3,17 +3,11 @@
 #include <algorithm>
 #include "Graphics/ShaderManager.hpp"
 
-bool isFirstMouseInput;
-double prevMouseX;
-double prevMouseY;
-float yaw;
-float pitch;
-void onMouseMove(GLFWwindow *window, double x, double y);
-
 Scene::Scene(Window &window) :
     window(window), floatingCamera(window), playerCamera(window), orbitAngle(0.0f),
     orbitDistance(112.5f), lightAngle(7.5f), prevFrameTime(0),
-    playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), mesh(GL_PATCHES),
+    playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
+    playerCameraPitch(0.0f), mesh(GL_PATCHES),
     tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY), isLightingEnabled(true),
     isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
     isAOMapEnabled(true), isRoughnessMapEnabled(false), isWireframeMode(false),
@@ -173,8 +167,9 @@ Scene::Scene(Window &window) :
     input.listenForKey(GLFW_KEY_Z);
     input.listenForKey(GLFW_KEY_C);
 
-    window.addMouseMoveHandler(onMouseMove);
-    window.setMouseCaptureMode(true);
+    input.addMouseMoveHandler(
+        std::bind(&Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
+    input.setMouseCaptureMode(true);
 }
 
 void Scene::update()
@@ -284,16 +279,14 @@ void Scene::updateFloatingCamera(float deltaTime)
 
 void Scene::updatePlayerCamera(float deltaTime)
 {
-    playerLookDir.x = cos(glm::radians(yaw)) * cos(glm::radians(pitch));
-    playerLookDir.y = sin(glm::radians(pitch));
-    playerLookDir.z = sin(glm::radians(yaw)) * cos(glm::radians(pitch));
-    playerLookDir = glm::normalize(playerLookDir);
+    float yaw = glm::radians(playerCameraYaw);
+    float pitch = glm::radians(playerCameraPitch);
+
+    glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
+    playerLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
     glm::vec3 pos = playerCamera.getPosition();
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-    glm::vec3 playerMoveDir(cos(glm::radians(yaw)), 0.0f, sin(glm::radians(yaw)));
-    playerMoveDir = glm::normalize(playerMoveDir);
 
     if (window.isKeyPressed(GLFW_KEY_A))
     {
@@ -316,6 +309,13 @@ void Scene::updatePlayerCamera(float deltaTime)
 
     playerCamera.setPosition(pos);
     playerCamera.lookAt(pos + playerLookDir);
+}
+
+void Scene::onMouseMove(float xOffset, float yOffset)
+{
+    float sensitivity = 0.05f;
+    playerCameraYaw += xOffset * sensitivity;
+    playerCameraPitch = std::clamp(playerCameraPitch + (yOffset * sensitivity), -89.0f, 89.0f);
 }
 
 void Scene::draw()
@@ -388,31 +388,6 @@ float Scene::getTerrainPatchHeight(int x, int z)
     int clampedZ = std::min(std::max(z, 0), terrainRows - 1);
     int i = (clampedZ * terrainColumns) + clampedX;
     return terrainHeights[i];
-}
-
-void onMouseMove(GLFWwindow *window, double x, double y)
-{
-    if (isFirstMouseInput)
-    {
-        prevMouseX = x;
-        prevMouseY = y;
-        isFirstMouseInput = false;
-        return;
-    }
-
-    float xOffset = x - prevMouseX;
-    float yOffset = prevMouseY - y;
-    prevMouseX = x;
-    prevMouseY = y;
-
-    float sensitivity = 0.05f;
-    xOffset *= sensitivity;
-    yOffset *= sensitivity;
-
-    yaw += xOffset;
-    pitch += yOffset;
-
-    pitch = std::clamp(pitch, -89.0f, 89.0f);
 }
 
 Scene::~Scene()

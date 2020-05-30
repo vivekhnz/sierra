@@ -4,6 +4,8 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+std::function<void(double, double)> onMouseMoveHandler = NULL;
+
 Window::Window(const GlfwManager &glfw, int width, int height, const char *title)
 {
     window = glfwCreateWindow(width, height, title, NULL, NULL);
@@ -21,6 +23,12 @@ Window::Window(const GlfwManager &glfw, int width, int height, const char *title
     glViewport(0, 0, width, height);
     glfwSetFramebufferSizeCallback(window,
         [](GLFWwindow *window, int width, int height) { glViewport(0, 0, width, height); });
+    glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
+        if (onMouseMoveHandler != NULL)
+        {
+            onMouseMoveHandler(x, y);
+        }
+    });
 }
 
 std::tuple<int, int> Window::getSize() const
@@ -45,9 +53,9 @@ bool Window::isKeyPressed(int key) const
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
-void Window::addMouseMoveHandler(GLFWcursorposfun handler)
+void Window::addMouseMoveHandler(std::function<void(double, double)> handler)
 {
-    glfwSetCursorPosCallback(window, handler);
+    onMouseMoveHandler = handler;
 }
 
 void Window::setMouseCaptureMode(bool shouldCaptureMouse)
