@@ -13,22 +13,25 @@ class Scene
 {
     Window &window;
     Terrain terrain;
-    Camera floatingCamera;
+    Camera orbitCamera;
     Camera playerCamera;
     InputManager input;
 
-    float orbitAngle;
-    float orbitDistance;
     float lightAngle;
     float prevFrameTime;
+    bool isOrbitCameraMode;
+
+    float orbitAngle;
+    float orbitDistance;
+    glm::vec3 orbitLookAt;
+    bool wasManipulatingCamera;
 
     glm::vec3 playerLookDir;
     float playerCameraYaw;
     float playerCameraPitch;
-    bool isFloatingCameraMode;
 
     void toggleCameraMode();
-    void updateFloatingCamera(float deltaTime);
+    void updateOrbitCamera(float deltaTime);
     void updatePlayerCamera(float deltaTime);
     void onMouseMove(float xOffset, float yOffset);
 

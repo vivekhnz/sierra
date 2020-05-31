@@ -53,6 +53,11 @@ bool Window::isKeyPressed(int key) const
     return glfwGetKey(window, key) == GLFW_PRESS;
 }
 
+bool Window::isMouseButtonPressed(int button) const
+{
+    return glfwGetMouseButton(window, button) == GLFW_PRESS;
+}
+
 void Window::addMouseMoveHandler(std::function<void(double, double)> handler)
 {
     onMouseMoveHandler = handler;

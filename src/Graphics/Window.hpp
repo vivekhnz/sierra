@@ -22,6 +22,7 @@ public:
     float getTime() const;
     bool isRequestingClose() const;
     bool isKeyPressed(int key) const;
+    bool isMouseButtonPressed(int button) const;
 
     void addMouseMoveHandler(std::function<void(double, double)> handler);
     void setMouseCaptureMode(bool shouldCaptureMouse);

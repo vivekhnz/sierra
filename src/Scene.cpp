@@ -4,10 +4,11 @@
 #include "Graphics/ShaderManager.hpp"
 
 Scene::Scene(Window &window) :
-    window(window), floatingCamera(window), playerCamera(window), orbitAngle(0.0f),
-    orbitDistance(112.5f), lightAngle(7.5f), prevFrameTime(0),
+    window(window), orbitCamera(window), playerCamera(window), lightAngle(7.5f),
+    prevFrameTime(0), isOrbitCameraMode(false), orbitAngle(0.0f), orbitDistance(112.5f),
+    orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
     playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
-    playerCameraPitch(0.0f), isFloatingCameraMode(false), input(window)
+    playerCameraPitch(0.0f), input(window)
 {
     ShaderManager shaderManager;
     terrain.initialize(shaderManager);
@@ -16,8 +17,8 @@ Scene::Scene(Window &window) :
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
 
-    floatingCamera.setPosition(glm::vec3(0.0f, 37.5f, orbitDistance));
-    floatingCamera.lookAt(glm::vec3(0.0f, 0.0f, 0.0f));
+    orbitCamera.setPosition(glm::vec3(0.0f, 37.5f, orbitDistance));
+    orbitCamera.lookAt(orbitLookAt);
 
     auto playerPos = glm::vec3(0.0f, 0.0f, 50.0f);
     playerPos.y = terrain.getTerrainHeight(playerPos.x, playerPos.z) + 1.75f;
@@ -51,9 +52,9 @@ void Scene::update()
     float deltaTime = currentTime - prevFrameTime;
     prevFrameTime = currentTime;
 
-    if (isFloatingCameraMode)
+    if (isOrbitCameraMode)
     {
-        updateFloatingCamera(deltaTime);
+        updateOrbitCamera(deltaTime);
     }
     else
     {
@@ -72,13 +73,13 @@ void Scene::update()
 
 void Scene::toggleCameraMode()
 {
-    isFloatingCameraMode = !isFloatingCameraMode;
-    window.setMouseCaptureMode(!isFloatingCameraMode);
+    isOrbitCameraMode = !isOrbitCameraMode;
+    window.setMouseCaptureMode(!isOrbitCameraMode);
 }
 
-void Scene::updateFloatingCamera(float deltaTime)
+void Scene::updateOrbitCamera(float deltaTime)
 {
-    glm::vec3 pos = floatingCamera.getPosition();
+    glm::vec3 pos = orbitCamera.getPosition();
     if (window.isKeyPressed(GLFW_KEY_A))
     {
         orbitAngle += glm::radians(30.0f * deltaTime);
@@ -95,17 +96,20 @@ void Scene::updateFloatingCamera(float deltaTime)
     {
         orbitDistance += 12.5f * deltaTime;
     }
-    if (window.isKeyPressed(GLFW_KEY_UP))
+    orbitCamera.setPosition(glm::vec3(orbitLookAt.x + (sin(-orbitAngle) * orbitDistance),
+        orbitLookAt.y + 37.5f, orbitLookAt.z + (cos(-orbitAngle) * orbitDistance)));
+    orbitCamera.lookAt(orbitLookAt);
+
+    bool isManipulatingCamera = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
+    if (isManipulatingCamera && !wasManipulatingCamera)
     {
-        pos.y += 20.0f * deltaTime;
+        window.setMouseCaptureMode(true);
     }
-    if (window.isKeyPressed(GLFW_KEY_DOWN))
+    else if (!isManipulatingCamera && wasManipulatingCamera)
     {
-        pos.y -= 20.0f * deltaTime;
+        window.setMouseCaptureMode(false);
     }
-    pos.x = sin(-orbitAngle) * orbitDistance;
-    pos.z = cos(-orbitAngle) * orbitDistance;
-    floatingCamera.setPosition(pos);
+    wasManipulatingCamera = isManipulatingCamera;
 }
 
 void Scene::updatePlayerCamera(float deltaTime)
@@ -144,9 +148,24 @@ void Scene::updatePlayerCamera(float deltaTime)
 
 void Scene::onMouseMove(float xOffset, float yOffset)
 {
-    float sensitivity = 0.05f;
-    playerCameraYaw += xOffset * sensitivity;
-    playerCameraPitch = std::clamp(playerCameraPitch + (yOffset * sensitivity), -89.0f, 89.0f);
+    if (isOrbitCameraMode)
+    {
+        if (window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
+        {
+            auto orbitLookDir = glm::normalize(orbitLookAt - orbitCamera.getPosition());
+            glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(orbitLookDir, -xDir);
+            glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
+            orbitLookAt += pan * 0.02f;
+        }
+    }
+    else
+    {
+        float sensitivity = 0.05f;
+        playerCameraYaw += xOffset * sensitivity;
+        playerCameraPitch =
+            std::clamp(playerCameraPitch + (yOffset * sensitivity), -89.0f, 89.0f);
+    }
 }
 
 void Scene::draw()
@@ -154,7 +173,7 @@ void Scene::draw()
     glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    Camera &activeCamera = isFloatingCameraMode ? floatingCamera : playerCamera;
+    Camera &activeCamera = isOrbitCameraMode ? orbitCamera : playerCamera;
     auto transform = activeCamera.getMatrix();
     auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
 
