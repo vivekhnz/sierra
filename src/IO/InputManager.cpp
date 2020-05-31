@@ -6,6 +6,8 @@ InputManager::InputManager(Window &window) : window(window), onMouseMoveHandler(
 {
     window.addMouseMoveHandler(std::bind(
         &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
+    window.addMouseScrollHandler(std::bind(
+        &InputManager::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 bool InputManager::isNewKeyPress(int key)
@@ -28,6 +30,11 @@ void InputManager::mapCommand(int key, std::function<void()> command)
 void InputManager::addMouseMoveHandler(std::function<void(float, float)> handler)
 {
     onMouseMoveHandler = handler;
+}
+
+void InputManager::addMouseScrollHandler(std::function<void(float, float)> handler)
+{
+    onMouseScrollHandler = handler;
 }
 
 void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
@@ -72,6 +79,14 @@ void InputManager::onMouseMove(double x, double y)
     if (onMouseMoveHandler != NULL)
     {
         onMouseMoveHandler(xOffset, yOffset);
+    }
+}
+
+void InputManager::onMouseScroll(double xOffset, double yOffset)
+{
+    if (onMouseScrollHandler != NULL)
+    {
+        onMouseScrollHandler((float)xOffset, (float)yOffset);
     }
 }
 

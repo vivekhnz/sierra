@@ -37,6 +37,8 @@ Scene::Scene(Window &window) :
 
     input.addMouseMoveHandler(
         std::bind(&Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
+    input.addMouseScrollHandler(
+        std::bind(&Scene::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
     input.setMouseCaptureMode(true);
 }
 
@@ -79,21 +81,13 @@ void Scene::toggleCameraMode()
 
 void Scene::updateOrbitCamera(float deltaTime)
 {
-    glm::vec3 pos = orbitCamera.getPosition();
-    if (window.isKeyPressed(GLFW_KEY_W))
-    {
-        orbitDistance -= 12.5f * deltaTime;
-    }
-    if (window.isKeyPressed(GLFW_KEY_S))
-    {
-        orbitDistance += 12.5f * deltaTime;
-    }
     float yaw = glm::radians(orbitYAngle);
     float pitch = glm::radians(orbitXAngle);
     auto orbitLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
     orbitCamera.setPosition(orbitLookAt + (orbitLookDir * orbitDistance));
     orbitCamera.lookAt(orbitLookAt);
 
+    // capture mouse if camera is being manipulated
     bool isManipulatingCamera = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
         || window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     if (isManipulatingCamera && !wasManipulatingCamera)
@@ -147,15 +141,16 @@ void Scene::onMouseMove(float xOffset, float yOffset)
     {
         if (window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
+            float sensitivity = std::clamp(orbitDistance * 0.0003f, 0.001f, 0.08f);
             auto orbitLookDir = glm::normalize(orbitLookAt - orbitCamera.getPosition());
             glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(orbitLookDir, -xDir);
             glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
-            orbitLookAt += pan * 0.03f;
+            orbitLookAt += pan * sensitivity;
         }
         if (window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         {
-            float sensitivity = 0.05f;
+            float sensitivity = std::clamp(orbitDistance * 0.0007f, 0.01f, 0.05f);
             orbitYAngle += xOffset * sensitivity;
             orbitXAngle -= yOffset * sensitivity;
         }
@@ -166,6 +161,21 @@ void Scene::onMouseMove(float xOffset, float yOffset)
         playerCameraYaw += xOffset * sensitivity;
         playerCameraPitch =
             std::clamp(playerCameraPitch + (yOffset * sensitivity), -89.0f, 89.0f);
+    }
+}
+
+void Scene::onMouseScroll(float xOffset, float yOffset)
+{
+    if (isOrbitCameraMode)
+    {
+        if (yOffset > 0.0f)
+        {
+            orbitDistance *= 0.95f;
+        }
+        else
+        {
+            orbitDistance /= 0.95f;
+        }
     }
 }
 

@@ -5,6 +5,7 @@
 #include <GLFW/glfw3.h>
 
 std::function<void(double, double)> onMouseMoveHandler = NULL;
+std::function<void(double, double)> onMouseScrollHandler = NULL;
 
 Window::Window(const GlfwManager &glfw, int width, int height, const char *title)
 {
@@ -27,6 +28,12 @@ Window::Window(const GlfwManager &glfw, int width, int height, const char *title
         if (onMouseMoveHandler != NULL)
         {
             onMouseMoveHandler(x, y);
+        }
+    });
+    glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
+        if (onMouseScrollHandler != NULL)
+        {
+            onMouseScrollHandler(xOffset, yOffset);
         }
     });
 }
@@ -61,6 +68,11 @@ bool Window::isMouseButtonPressed(int button) const
 void Window::addMouseMoveHandler(std::function<void(double, double)> handler)
 {
     onMouseMoveHandler = handler;
+}
+
+void Window::addMouseScrollHandler(std::function<void(double, double)> handler)
+{
+    onMouseScrollHandler = handler;
 }
 
 void Window::setMouseCaptureMode(bool shouldCaptureMouse)

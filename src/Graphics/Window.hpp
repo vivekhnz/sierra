@@ -25,6 +25,7 @@ public:
     bool isMouseButtonPressed(int button) const;
 
     void addMouseMoveHandler(std::function<void(double, double)> handler);
+    void addMouseScrollHandler(std::function<void(double, double)> handler);
     void setMouseCaptureMode(bool shouldCaptureMouse);
     void refresh();
     void close();

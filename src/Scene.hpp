@@ -32,6 +32,7 @@ class Scene
     void updateOrbitCamera(float deltaTime);
     void updatePlayerCamera(float deltaTime);
     void onMouseMove(float xOffset, float yOffset);
+    void onMouseScroll(float xOffset, float yOffset);
 
 public:
     Scene(Window &window);
