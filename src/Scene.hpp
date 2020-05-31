@@ -2,10 +2,7 @@
 #define SCENE_HPP
 
 #include "Graphics/Window.hpp"
-#include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Camera.hpp"
-#include "Graphics/Mesh.hpp"
-#include "Graphics/Texture.hpp"
 #include "IO/InputManager.hpp"
 #include "Terrain.hpp"
 
@@ -21,7 +18,8 @@ class Scene
     float prevFrameTime;
     bool isOrbitCameraMode;
 
-    float orbitAngle;
+    float orbitYAngle;
+    float orbitXAngle;
     float orbitDistance;
     glm::vec3 orbitLookAt;
     bool wasManipulatingCamera;

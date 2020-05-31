@@ -5,8 +5,8 @@
 
 Scene::Scene(Window &window) :
     window(window), orbitCamera(window), playerCamera(window), lightAngle(7.5f),
-    prevFrameTime(0), isOrbitCameraMode(false), orbitAngle(0.0f), orbitDistance(112.5f),
-    orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
+    prevFrameTime(0), isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f),
+    orbitDistance(112.5f), orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
     playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
     playerCameraPitch(0.0f), input(window)
 {
@@ -80,14 +80,6 @@ void Scene::toggleCameraMode()
 void Scene::updateOrbitCamera(float deltaTime)
 {
     glm::vec3 pos = orbitCamera.getPosition();
-    if (window.isKeyPressed(GLFW_KEY_A))
-    {
-        orbitAngle += glm::radians(30.0f * deltaTime);
-    }
-    if (window.isKeyPressed(GLFW_KEY_D))
-    {
-        orbitAngle -= glm::radians(30.0f * deltaTime);
-    }
     if (window.isKeyPressed(GLFW_KEY_W))
     {
         orbitDistance -= 12.5f * deltaTime;
@@ -96,11 +88,14 @@ void Scene::updateOrbitCamera(float deltaTime)
     {
         orbitDistance += 12.5f * deltaTime;
     }
-    orbitCamera.setPosition(glm::vec3(orbitLookAt.x + (sin(-orbitAngle) * orbitDistance),
-        orbitLookAt.y + 37.5f, orbitLookAt.z + (cos(-orbitAngle) * orbitDistance)));
+    float yaw = glm::radians(orbitYAngle);
+    float pitch = glm::radians(orbitXAngle);
+    auto orbitLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
+    orbitCamera.setPosition(orbitLookAt + (orbitLookDir * orbitDistance));
     orbitCamera.lookAt(orbitLookAt);
 
-    bool isManipulatingCamera = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
+    bool isManipulatingCamera = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
+        || window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     if (isManipulatingCamera && !wasManipulatingCamera)
     {
         window.setMouseCaptureMode(true);
@@ -156,7 +151,13 @@ void Scene::onMouseMove(float xOffset, float yOffset)
             glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(orbitLookDir, -xDir);
             glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
-            orbitLookAt += pan * 0.02f;
+            orbitLookAt += pan * 0.03f;
+        }
+        if (window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+        {
+            float sensitivity = 0.05f;
+            orbitYAngle += xOffset * sensitivity;
+            orbitXAngle -= yOffset * sensitivity;
         }
     }
     else
