@@ -1,5 +1,7 @@
 */obj
 */bin
-*/deps/nuget
+deps/nuget
 
 .vscode/settings.json
+.vs
+*.vcxproj.user
