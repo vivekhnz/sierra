@@ -16,6 +16,7 @@ set LIBS=glfw3.lib user32.lib gdi32.lib shell32.lib kernel32.lib
 set OBJ_DIR=obj
 set BIN_DIR=bin
 set EXE_FILENAME=terrain.exe
+set DLL_FILENAME=terrain.dll
 
 echo Initializing environment...
 call %VCVARSALL% %PLATFORM%
@@ -30,7 +31,9 @@ echo Restore packages...
 nuget restore deps\packages.config
 
 echo Building...
-cl /MD /MP /EHsc /std:c++17 %SRC_FILES% /Fo%OBJ_DIR%/ %INCLUDES% /link /out:%BIN_DIR%\%EXE_FILENAME% /LIBPATH:%LIB_PATH% %LIBS%
+SET COMPILE_CMD=cl /MD /MP /EHsc /std:c++17 %SRC_FILES% /Fo%OBJ_DIR%/ %INCLUDES% /link /LIBPATH:%LIB_PATH% %LIBS%
+%COMPILE_CMD% /out:%BIN_DIR%\%DLL_FILENAME%
+%COMPILE_CMD% /out:%BIN_DIR%\%EXE_FILENAME%
 
 echo Copying data to output directory...
 robocopy data bin\data /NJH /NJS /NS /NC /NDL /NFL
