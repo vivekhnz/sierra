@@ -6,7 +6,7 @@
 
 namespace Path
 {
-std::string getAbsolutePath(std::string relativePath)
+static std::string getAbsolutePath(std::string relativePath)
 {
     // get path to current assembly
     CHAR exePath[MAX_PATH];

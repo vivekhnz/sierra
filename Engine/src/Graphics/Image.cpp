@@ -1,11 +1,13 @@
 #include "Image.hpp"
 
 #include <stb/stb_image.h>
+#include "..\IO\Path.hpp"
 
 Image::Image(std::string path, bool is16Bit)
 {
-    data = is16Bit ? (void *)stbi_load_16(path.c_str(), &width, &height, &channels, 0)
-                   : (void *)stbi_load(path.c_str(), &width, &height, &channels, 0);
+    auto absolutePath = Path::getAbsolutePath(path);
+    data = is16Bit ? (void *)stbi_load_16(absolutePath.c_str(), &width, &height, &channels, 0)
+                   : (void *)stbi_load(absolutePath.c_str(), &width, &height, &channels, 0);
 }
 
 int Image::getWidth() const
