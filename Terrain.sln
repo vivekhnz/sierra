@@ -9,8 +9,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain.Engine", "Engine\Te
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{97E73929-0841-4914-A0F8-AC8F7A629214}"
 	ProjectSection(SolutionItems) = preProject
+		.clang-format = .clang-format
 		NuGet.config = NuGet.config
 	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain.Engine.Interop", "Engine.Interop\Terrain.Engine.Interop.vcxproj", "{29BFE0D0-933E-403B-A573-8F1CA164124E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,6 +47,16 @@ Global
 		{DE081990-04F4-4989-8342-E330796EAAC1}.Release|x64.Build.0 = Release|x64
 		{DE081990-04F4-4989-8342-E330796EAAC1}.Release|x86.ActiveCfg = Release|Win32
 		{DE081990-04F4-4989-8342-E330796EAAC1}.Release|x86.Build.0 = Release|Win32
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|Any CPU.ActiveCfg = Debug|Win32
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x64.ActiveCfg = Debug|x64
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x64.Build.0 = Debug|x64
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x86.ActiveCfg = Debug|Win32
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x86.Build.0 = Debug|Win32
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|Any CPU.ActiveCfg = Release|Win32
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x64.ActiveCfg = Release|x64
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x64.Build.0 = Release|x64
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x86.ActiveCfg = Release|Win32
+		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -2,7 +2,9 @@
 
 #include <iostream>
 
-InputManager::InputManager(Window &window) : window(window), onMouseMoveHandler(NULL)
+InputManager::InputManager(Window &window) :
+    window(window), onMouseMoveHandler(NULL), isFirstMouseInput(true), prevMouseX(0),
+    prevMouseY(0)
 {
     window.addMouseMoveHandler(std::bind(
         &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));

@@ -23,6 +23,9 @@ namespace Editor
         public MainWindow()
         {
             InitializeComponent();
+
+            var interop = new Terrain.Engine.Interop.EngineInterop();
+            tbValue.Text = $"Value: {interop.GetValue()}";
         }
     }
 }
