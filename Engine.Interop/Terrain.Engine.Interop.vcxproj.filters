@@ -12,9 +12,15 @@
     <ClCompile Include="src\EngineInterop.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Viewport.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\EngineInterop.h">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Viewport.h">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

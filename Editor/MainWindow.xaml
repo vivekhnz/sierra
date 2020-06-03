@@ -4,9 +4,19 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Editor"
+        xmlns:interop="clr-namespace:Terrain.Engine.Interop;assembly=Terrain.Engine.Interop"
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800">
     <Grid>
-        <TextBlock x:Name="tbValue" Text="Hello" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="24" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*" />
+            <RowDefinition Height="48" />
+        </Grid.RowDefinitions>
+        <interop:Viewport />
+        <TextBlock x:Name="tbValue"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   FontSize="24"
+                   Grid.Row="1" />
     </Grid>
 </Window>

@@ -142,9 +142,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>robocopy $(ProjectDir)data $(TargetDir)data /NJH /NJS /NS /NC /NDL /NFL</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -164,9 +161,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>robocopy $(ProjectDir)data $(TargetDir)data /NJH /NJS /NS /NC /NDL /NFL</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -182,9 +176,6 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>robocopy $(ProjectDir)data $(TargetDir)data /NJH /NJS /NS /NC /NDL /NFL</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -204,10 +195,14 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
-    <PostBuildEvent>
-      <Command>robocopy $(ProjectDir)data $(TargetDir)data /NJH /NJS /NS /NC /NDL /NFL</Command>
-    </PostBuildEvent>
   </ItemDefinitionGroup>
+  <Target Name="CopyDataFiles" AfterTargets="AfterBuild">
+    <ItemGroup>
+        <DataFiles Include="$(ProjectDir)data\**"/>
+    </ItemGroup>
+    <Message Text="Copying data files..." Importance="high" />
+    <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
+  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\deps\nuget\glfw.3.3.2\build\native\glfw.targets" Condition="Exists('..\deps\nuget\glfw.3.3.2\build\native\glfw.targets')" />
