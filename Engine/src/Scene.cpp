@@ -45,7 +45,7 @@ Scene::Scene(Window &window) :
 void Scene::update()
 {
     input.update();
-    if (window.isKeyPressed(GLFW_KEY_ESCAPE))
+    if (input.isKeyPressed(GLFW_KEY_ESCAPE))
     {
         window.close();
     }
@@ -63,11 +63,11 @@ void Scene::update()
         updatePlayerCamera(deltaTime);
     }
 
-    if (window.isKeyPressed(GLFW_KEY_LEFT))
+    if (input.isKeyPressed(GLFW_KEY_LEFT))
     {
         lightAngle += deltaTime;
     }
-    else if (window.isKeyPressed(GLFW_KEY_RIGHT))
+    else if (input.isKeyPressed(GLFW_KEY_RIGHT))
     {
         lightAngle -= deltaTime;
     }
@@ -76,7 +76,7 @@ void Scene::update()
 void Scene::toggleCameraMode()
 {
     isOrbitCameraMode = !isOrbitCameraMode;
-    window.setMouseCaptureMode(!isOrbitCameraMode);
+    input.setMouseCaptureMode(!isOrbitCameraMode);
 }
 
 void Scene::updateOrbitCamera(float deltaTime)
@@ -88,15 +88,15 @@ void Scene::updateOrbitCamera(float deltaTime)
     orbitCamera.lookAt(orbitLookAt);
 
     // capture mouse if camera is being manipulated
-    bool isManipulatingCamera = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
-        || window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+    bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
+        || input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     if (isManipulatingCamera && !wasManipulatingCamera)
     {
-        window.setMouseCaptureMode(true);
+        input.setMouseCaptureMode(true);
     }
     else if (!isManipulatingCamera && wasManipulatingCamera)
     {
-        window.setMouseCaptureMode(false);
+        input.setMouseCaptureMode(false);
     }
     wasManipulatingCamera = isManipulatingCamera;
 }
@@ -112,19 +112,19 @@ void Scene::updatePlayerCamera(float deltaTime)
     glm::vec3 pos = playerCamera.getPosition();
     glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-    if (window.isKeyPressed(GLFW_KEY_A))
+    if (input.isKeyPressed(GLFW_KEY_A))
     {
         pos -= glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
     }
-    if (window.isKeyPressed(GLFW_KEY_D))
+    if (input.isKeyPressed(GLFW_KEY_D))
     {
         pos += glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
     }
-    if (window.isKeyPressed(GLFW_KEY_W))
+    if (input.isKeyPressed(GLFW_KEY_W))
     {
         pos += playerMoveDir * 4.0f * deltaTime;
     }
-    if (window.isKeyPressed(GLFW_KEY_S))
+    if (input.isKeyPressed(GLFW_KEY_S))
     {
         pos -= playerMoveDir * 4.0f * deltaTime;
     }
@@ -139,7 +139,7 @@ void Scene::onMouseMove(float xOffset, float yOffset)
 {
     if (isOrbitCameraMode)
     {
-        if (window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
+        if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
             float sensitivity = std::clamp(orbitDistance * 0.0003f, 0.001f, 0.08f);
             auto orbitLookDir = glm::normalize(orbitLookAt - orbitCamera.getPosition());
@@ -148,7 +148,7 @@ void Scene::onMouseMove(float xOffset, float yOffset)
             glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
             orbitLookAt += pan * sensitivity;
         }
-        if (window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+        if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         {
             float sensitivity = std::clamp(orbitDistance * 0.0007f, 0.01f, 0.05f);
             orbitYAngle += xOffset * sensitivity;

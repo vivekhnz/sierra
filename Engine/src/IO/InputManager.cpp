@@ -18,6 +18,16 @@ bool InputManager::isNewKeyPress(int key)
     return currentState && !prevState;
 }
 
+bool InputManager::isKeyPressed(int key) const
+{
+    return window.isKeyPressed(key);
+}
+
+bool InputManager::isMouseButtonPressed(int button) const
+{
+    return window.isMouseButtonPressed(button);
+}
+
 void InputManager::listenForKey(int key)
 {
     keyState[key] = std::make_tuple(false, false);

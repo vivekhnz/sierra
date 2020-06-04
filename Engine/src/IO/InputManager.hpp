@@ -28,6 +28,8 @@ public:
     InputManager &operator=(InputManager &&) = delete;
 
     bool isNewKeyPress(int key);
+    bool isKeyPressed(int key) const;
+    bool isMouseButtonPressed(int button) const;
 
     void listenForKey(int key);
     void mapCommand(int key, std::function<void()> command);
