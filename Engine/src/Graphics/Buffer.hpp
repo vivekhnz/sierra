@@ -1,9 +1,10 @@
 #ifndef GRAPHICS_BUFFER_HPP
 #define GRAPHICS_BUFFER_HPP
 
+#include "..\Common.hpp"
 #include <glad/glad.h>
 
-class Buffer
+class EXPORT Buffer
 {
     GLenum type;
     GLenum usage;

@@ -58,9 +58,6 @@
     <ClCompile Include="src\IO\OpenFile.cpp">
       <Filter>src\IO</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Scene.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -124,6 +121,9 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Terrain.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Common.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

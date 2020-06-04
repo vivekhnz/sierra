@@ -1,9 +1,10 @@
 #ifndef IO_OPENFILE_HPP
 #define IO_OPENFILE_HPP
 
+#include "..\Common.hpp"
 #include <fstream>
 
-class OpenFile
+class EXPORT OpenFile
 {
     std::ifstream fileStream;
 

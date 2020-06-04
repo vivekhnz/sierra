@@ -1,8 +1,8 @@
 #include <iostream>
 
-#include "Graphics/GlfwManager.hpp"
-#include "Graphics/Window.hpp"
-#include "Scene.hpp"
+#include "../../Engine/src/Graphics/GlfwManager.hpp"
+#include "../../Engine/src/Graphics/Window.hpp"
+#include "../../Engine/src/Scene.hpp"
 
 int main()
 {

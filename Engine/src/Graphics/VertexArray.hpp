@@ -1,9 +1,10 @@
 #ifndef GRAPHICS_VERTEXARRAY_HPP
 #define GRAPHICS_VERTEXARRAY_HPP
 
+#include "..\Common.hpp"
 #include <glad/glad.h>
 
-class VertexArray
+class EXPORT VertexArray
 {
     unsigned int id;
 

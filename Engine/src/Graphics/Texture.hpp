@@ -1,9 +1,10 @@
 #ifndef GRAPHICS_TEXTURE_HPP
 #define GRAPHICS_TEXTURE_HPP
 
+#include "..\Common.hpp"
 #include "Image.hpp"
 
-class Texture
+class EXPORT Texture
 {
     unsigned int id;
 

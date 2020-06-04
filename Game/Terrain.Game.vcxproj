@@ -18,64 +18,16 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="..\deps\glad\glad.c" />
-    <ClCompile Include="..\deps\stb\stb_image.c" />
-    <ClCompile Include="src\Graphics\AttachShader.cpp" />
-    <ClCompile Include="src\Graphics\BindBuffer.cpp" />
-    <ClCompile Include="src\Graphics\BindVertexArray.cpp" />
-    <ClCompile Include="src\Graphics\Buffer.cpp" />
-    <ClCompile Include="src\Graphics\Camera.cpp" />
-    <ClCompile Include="src\Graphics\GlfwManager.cpp" />
-    <ClCompile Include="src\Graphics\Image.cpp" />
-    <ClCompile Include="src\Graphics\Mesh.cpp" />
-    <ClCompile Include="src\Graphics\Shader.cpp" />
-    <ClCompile Include="src\Graphics\ShaderManager.cpp" />
-    <ClCompile Include="src\Graphics\ShaderProgram.cpp" />
-    <ClCompile Include="src\Graphics\Texture.cpp" />
-    <ClCompile Include="src\Graphics\VertexArray.cpp" />
-    <ClCompile Include="src\Graphics\Window.cpp" />
-    <ClCompile Include="src\IO\InputManager.cpp" />
-    <ClCompile Include="src\IO\OpenFile.cpp" />
-    <ClCompile Include="src\Scene.cpp" />
-    <ClCompile Include="src\Terrain.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\Common.hpp" />
-    <ClInclude Include="src\Graphics\AttachShader.hpp" />
-    <ClInclude Include="src\Graphics\BindBuffer.hpp" />
-    <ClInclude Include="src\Graphics\BindVertexArray.hpp" />
-    <ClInclude Include="src\Graphics\Buffer.hpp" />
-    <ClInclude Include="src\Graphics\Camera.hpp" />
-    <ClInclude Include="src\Graphics\GlfwManager.hpp" />
-    <ClInclude Include="src\Graphics\Image.hpp" />
-    <ClInclude Include="src\Graphics\Mesh.hpp" />
-    <ClInclude Include="src\Graphics\Shader.hpp" />
-    <ClInclude Include="src\Graphics\ShaderManager.hpp" />
-    <ClInclude Include="src\Graphics\ShaderProgram.hpp" />
-    <ClInclude Include="src\Graphics\Texture.hpp" />
-    <ClInclude Include="src\Graphics\VertexArray.hpp" />
-    <ClInclude Include="src\Graphics\Window.hpp" />
-    <ClInclude Include="src\IO\InputManager.hpp" />
-    <ClInclude Include="src\IO\OpenFile.hpp" />
-    <ClInclude Include="src\IO\Path.hpp" />
-    <ClInclude Include="src\Scene.hpp" />
-    <ClInclude Include="src\Terrain.hpp" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{de081990-04f4-4989-8342-e330796eaac1}</ProjectGuid>
-    <RootNamespace>Terrain.Engine</RootNamespace>
+    <ProjectGuid>{5c732a0f-f75a-4213-a3e7-70dcdfe05f3f}</ProjectGuid>
+    <RootNamespace>TerrainGame</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
-    <ProjectName>Terrain.Engine</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup>
-    <ConfigurationType>DynamicLibrary</ConfigurationType>
+    <ConfigurationType>Application</ConfigurationType>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <UseDebugLibraries>false</UseDebugLibraries>
@@ -103,12 +55,12 @@
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -120,7 +72,6 @@
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -128,6 +79,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -137,12 +89,12 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -154,7 +106,6 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -162,25 +113,33 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <Target Name="CopyDataFiles" AfterTargets="AfterBuild">
+  <ItemGroup>
+    <ClCompile Include="src\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">
+      <Project>{de081990-04f4-4989-8342-e330796eaac1}</Project>
+      <LinkLibraryDependencies>true</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemGroup>
+  <Target Name="CopyDependencies" AfterTargets="AfterBuild">
+    <PropertyGroup>
+      <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
+    </PropertyGroup>
     <ItemGroup>
-      <DataFiles Include="$(ProjectDir)data\**" />
+      <DependencyFiles Include="$(EngineOutDir)\Terrain.Engine.*" />
+      <DependencyFiles Include="$(EngineOutDir)\glfw3.dll" />
+      <DataFiles Include="$(EngineOutDir)data\**" />
     </ItemGroup>
+    <Message Text="Copying dependencies..." Importance="high" />
+    <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)%(RecursiveDir)" />
     <Message Text="Copying data files..." Importance="high" />
     <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
   </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\deps\nuget\glfw.3.3.2\build\native\glfw.targets" Condition="Exists('..\deps\nuget\glfw.3.3.2\build\native\glfw.targets')" />
-    <Import Project="..\deps\nuget\glm.0.9.9.700\build\native\glm.targets" Condition="Exists('..\deps\nuget\glm.0.9.9.700\build\native\glm.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\deps\nuget\glfw.3.3.2\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\deps\nuget\glfw.3.3.2\build\native\glfw.targets'))" />
-    <Error Condition="!Exists('..\deps\nuget\glm.0.9.9.700\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\deps\nuget\glm.0.9.9.700\build\native\glm.targets'))" />
-  </Target>
 </Project>

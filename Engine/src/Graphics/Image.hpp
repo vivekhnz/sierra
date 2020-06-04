@@ -1,9 +1,10 @@
 #ifndef GRAPHICS_IMAGE_HPP
 #define GRAPHICS_IMAGE_HPP
 
+#include "..\Common.hpp"
 #include <string>
 
-class Image
+class EXPORT Image
 {
     int width;
     int height;

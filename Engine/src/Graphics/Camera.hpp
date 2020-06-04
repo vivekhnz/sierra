@@ -1,10 +1,11 @@
 #ifndef GRAPHICS_CAMERA_HPP
 #define GRAPHICS_CAMERA_HPP
 
+#include "..\Common.hpp"
 #include <glm/glm.hpp>
 #include "Window.hpp"
 
-class Camera
+class EXPORT Camera
 {
     const Window &window;
     float near;

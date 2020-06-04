@@ -1,12 +1,13 @@
 #ifndef SCENE_HPP
 #define SCENE_HPP
 
+#include "Common.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/Camera.hpp"
 #include "IO/InputManager.hpp"
 #include "Terrain.hpp"
 
-class Scene
+class EXPORT Scene
 {
     Window &window;
     Terrain terrain;

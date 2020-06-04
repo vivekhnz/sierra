@@ -1,11 +1,12 @@
 #ifndef IO_INPUTMANAGER_HPP
 #define IO_INPUTMANAGER_HPP
 
+#include "..\Common.hpp"
 #include <map>
 #include <functional>
 #include "../Graphics/Window.hpp"
 
-class InputManager
+class EXPORT InputManager
 {
     Window &window;
     std::map<int, std::tuple<bool, bool>> keyState;

@@ -1,9 +1,10 @@
 #ifndef GRAPHICS_SHADERMANAGER_HPP
 #define GRAPHICS_SHADERMANAGER_HPP
 
+#include "..\Common.hpp"
 #include "Shader.hpp"
 
-class ShaderManager
+class EXPORT ShaderManager
 {
     Shader loadFromFile(GLenum shaderType, std::string filePath) const;
 

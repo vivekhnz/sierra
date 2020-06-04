@@ -1,11 +1,12 @@
 #ifndef GRAPHICS_BINDVERTEXARRAY_HPP
 #define GRAPHICS_BINDVERTEXARRAY_HPP
 
+#include "..\Common.hpp"
 #include <glad/glad.h>
 #include "VertexArray.hpp"
 #include "Buffer.hpp"
 
-class BindVertexArray
+class EXPORT BindVertexArray
 {
 public:
     BindVertexArray(const VertexArray &vertexArray);

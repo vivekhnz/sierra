@@ -1,10 +1,11 @@
 #ifndef GRAPHICS_SHADER_HPP
 #define GRAPHICS_SHADER_HPP
 
+#include "..\Common.hpp"
 #include <glad/glad.h>
 #include <string>
 
-class Shader
+class EXPORT Shader
 {
     int id;
 

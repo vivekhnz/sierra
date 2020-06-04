@@ -1,13 +1,14 @@
 #ifndef GRAPHICS_WINDOW_HPP
 #define GRAPHICS_WINDOW_HPP
 
+#include "..\Common.hpp"
 #include <tuple>
 #include <functional>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "GlfwManager.hpp"
 
-class Window
+class EXPORT Window
 {
     GLFWwindow *window;
 

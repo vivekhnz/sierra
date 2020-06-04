@@ -1,12 +1,13 @@
 #ifndef TERRAIN_HPP
 #define TERRAIN_HPP
 
+#include "Common.hpp"
 #include "Graphics\Mesh.hpp"
 #include "Graphics\ShaderProgram.hpp"
 #include "Graphics\Texture.hpp"
 #include "Graphics\ShaderManager.hpp"
 
-class Terrain
+class EXPORT Terrain
 {
     int columns;
     int rows;
