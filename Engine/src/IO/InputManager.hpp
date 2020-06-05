@@ -1,14 +1,14 @@
 #ifndef IO_INPUTMANAGER_HPP
 #define IO_INPUTMANAGER_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <map>
 #include <functional>
-#include "../Graphics/Window.hpp"
+#include "../EngineContext.hpp"
 
 class EXPORT InputManager
 {
-    Window &window;
+    EngineContext &ctx;
     std::map<int, std::tuple<bool, bool>> keyState;
     std::map<int, std::function<void()>> keyCommands;
     std::function<void(float, float)> onMouseMoveHandler;
@@ -21,7 +21,7 @@ class EXPORT InputManager
     void onMouseScroll(double xOffset, double yOffset);
 
 public:
-    InputManager(Window &window);
+    InputManager(EngineContext &ctx);
     InputManager(const InputManager &that) = delete;
     InputManager &operator=(const InputManager &that) = delete;
     InputManager(InputManager &&) = delete;

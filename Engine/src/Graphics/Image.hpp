@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_IMAGE_HPP
 #define GRAPHICS_IMAGE_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <string>
 
 class EXPORT Image

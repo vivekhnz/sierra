@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_MESH_HPP
 #define GRAPHICS_MESH_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <vector>
 #include "Buffer.hpp"
 #include "VertexArray.hpp"

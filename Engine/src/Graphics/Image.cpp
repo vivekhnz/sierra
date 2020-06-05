@@ -1,7 +1,7 @@
 #include "Image.hpp"
 
 #include <stb/stb_image.h>
-#include "..\IO\Path.hpp"
+#include "../IO/Path.hpp"
 
 Image::Image(std::string path, bool is16Bit)
 {

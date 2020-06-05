@@ -2,10 +2,10 @@
 #define TERRAIN_HPP
 
 #include "Common.hpp"
-#include "Graphics\Mesh.hpp"
-#include "Graphics\ShaderProgram.hpp"
-#include "Graphics\Texture.hpp"
-#include "Graphics\ShaderManager.hpp"
+#include "Graphics/Mesh.hpp"
+#include "Graphics/ShaderProgram.hpp"
+#include "Graphics/Texture.hpp"
+#include "Graphics/ShaderManager.hpp"
 
 class EXPORT Terrain
 {

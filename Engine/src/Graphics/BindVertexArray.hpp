@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_BINDVERTEXARRAY_HPP
 #define GRAPHICS_BINDVERTEXARRAY_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 #include "VertexArray.hpp"
 #include "Buffer.hpp"

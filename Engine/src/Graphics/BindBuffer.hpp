@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_BINDBUFFER_HPP
 #define GRAPHICS_BINDBUFFER_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 #include "Buffer.hpp"
 

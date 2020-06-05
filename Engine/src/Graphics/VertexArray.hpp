@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_VERTEXARRAY_HPP
 #define GRAPHICS_VERTEXARRAY_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 
 class EXPORT VertexArray

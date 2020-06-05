@@ -1,7 +1,7 @@
 #ifndef IO_OPENFILE_HPP
 #define IO_OPENFILE_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <fstream>
 
 class EXPORT OpenFile

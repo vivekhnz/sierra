@@ -64,6 +64,9 @@
     <ClCompile Include="src\Terrain.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\WindowEngineContext.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -124,6 +127,12 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Common.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\WindowEngineContext.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EngineContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

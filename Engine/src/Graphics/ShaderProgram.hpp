@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_SHADERPROGRAM_HPP
 #define GRAPHICS_SHADERPROGRAM_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <vector>

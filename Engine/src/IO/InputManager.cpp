@@ -2,13 +2,12 @@
 
 #include <iostream>
 
-InputManager::InputManager(Window &window) :
-    window(window), onMouseMoveHandler(NULL), isFirstMouseInput(true), prevMouseX(0),
-    prevMouseY(0)
+InputManager::InputManager(EngineContext &ctx) :
+    ctx(ctx), onMouseMoveHandler(NULL), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0)
 {
-    window.addMouseMoveHandler(std::bind(
+    ctx.addMouseMoveHandler(std::bind(
         &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
-    window.addMouseScrollHandler(std::bind(
+    ctx.addMouseScrollHandler(std::bind(
         &InputManager::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
 }
 
@@ -20,12 +19,12 @@ bool InputManager::isNewKeyPress(int key)
 
 bool InputManager::isKeyPressed(int key) const
 {
-    return window.isKeyPressed(key);
+    return ctx.isKeyPressed(key);
 }
 
 bool InputManager::isMouseButtonPressed(int button) const
 {
-    return window.isMouseButtonPressed(button);
+    return ctx.isMouseButtonPressed(button);
 }
 
 void InputManager::listenForKey(int key)
@@ -51,7 +50,7 @@ void InputManager::addMouseScrollHandler(std::function<void(float, float)> handl
 
 void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
 {
-    window.setMouseCaptureMode(shouldCaptureMouse);
+    ctx.setMouseCaptureMode(shouldCaptureMouse);
 }
 
 void InputManager::update()
@@ -61,7 +60,7 @@ void InputManager::update()
     {
         auto key = iterator->first;
         auto [_, wasPressed] = iterator->second;
-        auto isPressed = window.isKeyPressed(key);
+        auto isPressed = ctx.isKeyPressed(key);
         keyState[key] = std::make_tuple(wasPressed, isPressed);
 
         if (isPressed && !wasPressed && keyCommands.count(key) > 0)

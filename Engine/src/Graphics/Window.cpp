@@ -45,11 +45,6 @@ std::tuple<int, int> Window::getSize() const
     return std::make_tuple(width, height);
 }
 
-float Window::getTime() const
-{
-    return (float)glfwGetTime();
-}
-
 bool Window::isRequestingClose() const
 {
     return glfwWindowShouldClose(window);

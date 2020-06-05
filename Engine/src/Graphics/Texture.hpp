@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_TEXTURE_HPP
 #define GRAPHICS_TEXTURE_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include "Image.hpp"
 
 class EXPORT Texture

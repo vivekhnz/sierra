@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_ATTACHSHADER_HPP
 #define GRAPHICS_ATTACHSHADER_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 #include "ShaderProgram.hpp"
 #include "Shader.hpp"

@@ -2,6 +2,7 @@
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
+#include "../../Engine/src/WindowEngineContext.hpp"
 #include "../../Engine/src/Scene.hpp"
 
 int main()
@@ -10,7 +11,8 @@ int main()
     {
         GlfwManager glfw;
         Window window(glfw, 1280, 720, "Terrain");
-        Scene scene(window);
+        WindowEngineContext ctx(window);
+        Scene scene(ctx);
 
         while (!window.isRequestingClose())
         {

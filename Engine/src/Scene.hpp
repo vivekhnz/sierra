@@ -5,11 +5,12 @@
 #include "Graphics/Window.hpp"
 #include "Graphics/Camera.hpp"
 #include "IO/InputManager.hpp"
+#include "EngineContext.hpp"
 #include "Terrain.hpp"
 
 class EXPORT Scene
 {
-    Window &window;
+    EngineContext &ctx;
     Terrain terrain;
     Camera orbitCamera;
     Camera playerCamera;
@@ -36,7 +37,7 @@ class EXPORT Scene
     void onMouseScroll(float xOffset, float yOffset);
 
 public:
-    Scene(Window &window);
+    Scene(EngineContext &ctx);
     Scene(const Scene &that) = delete;
     Scene &operator=(const Scene &that) = delete;
     Scene(Scene &&) = delete;

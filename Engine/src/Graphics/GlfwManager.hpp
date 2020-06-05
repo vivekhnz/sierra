@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_GLFWMANAGER_HPP
 #define GRAPHICS_GLFWMANAGER_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 
 class EXPORT GlfwManager
 {

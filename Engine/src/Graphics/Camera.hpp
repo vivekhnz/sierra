@@ -1,13 +1,13 @@
 #ifndef GRAPHICS_CAMERA_HPP
 #define GRAPHICS_CAMERA_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glm/glm.hpp>
-#include "Window.hpp"
+#include "../EngineContext.hpp"
 
 class EXPORT Camera
 {
-    const Window &window;
+    const EngineContext &ctx;
     float near;
     float far;
     float fov;
@@ -16,7 +16,7 @@ class EXPORT Camera
     glm::vec3 up;
 
 public:
-    Camera(const Window &window);
+    Camera(const EngineContext &ctx);
     Camera(const Camera &that) = delete;
     Camera &operator=(const Camera &that) = delete;
     Camera(Camera &&) = delete;

@@ -3,12 +3,12 @@
 #include <algorithm>
 #include "Graphics/ShaderManager.hpp"
 
-Scene::Scene(Window &window) :
-    window(window), orbitCamera(window), playerCamera(window), lightAngle(7.5f),
-    prevFrameTime(0), isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f),
-    orbitDistance(112.5f), orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
+Scene::Scene(EngineContext &ctx) :
+    ctx(ctx), orbitCamera(ctx), playerCamera(ctx), lightAngle(7.5f), prevFrameTime(0),
+    isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f), orbitDistance(112.5f),
+    orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
     playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
-    playerCameraPitch(0.0f), input(window)
+    playerCameraPitch(0.0f), input(ctx)
 {
     ShaderManager shaderManager;
     terrain.initialize(shaderManager);
@@ -47,10 +47,10 @@ void Scene::update()
     input.update();
     if (input.isKeyPressed(GLFW_KEY_ESCAPE))
     {
-        window.close();
+        ctx.exit();
     }
 
-    float currentTime = window.getTime();
+    float currentTime = ctx.getCurrentTime();
     float deltaTime = currentTime - prevFrameTime;
     prevFrameTime = currentTime;
 

@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_WINDOW_HPP
 #define GRAPHICS_WINDOW_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <tuple>
 #include <functional>
 #include <glad/glad.h>
@@ -20,7 +20,6 @@ public:
     Window &operator=(Window &&) = delete;
 
     std::tuple<int, int> getSize() const;
-    float getTime() const;
     bool isRequestingClose() const;
     bool isKeyPressed(int key) const;
     bool isMouseButtonPressed(int button) const;

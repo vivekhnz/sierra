@@ -2,8 +2,8 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 
-Camera::Camera(const Window &window) :
-    window(window), near(0.1f), far(10000.0f), fov(glm::pi<float>() / 4.0f),
+Camera::Camera(const EngineContext &ctx) :
+    ctx(ctx), near(0.1f), far(10000.0f), fov(glm::pi<float>() / 4.0f),
     up(glm::vec3(0.0f, 1.0f, 0.0f))
 {
 }
@@ -24,8 +24,8 @@ void Camera::lookAt(glm::vec3 lookAtPos)
 
 glm::mat4 Camera::getMatrix() const
 {
-    auto [windowWidth, windowHeight] = window.getSize();
-    const float aspectRatio = (float)windowWidth / (float)windowHeight;
+    auto [width, height] = ctx.getViewportSize();
+    const float aspectRatio = (float)width / (float)height;
     return glm::perspective(fov, aspectRatio, near, far) * glm::lookAt(position, target, up);
 }
 

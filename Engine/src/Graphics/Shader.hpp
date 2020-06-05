@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_SHADER_HPP
 #define GRAPHICS_SHADER_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 #include <string>
 

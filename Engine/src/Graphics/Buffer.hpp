@@ -1,7 +1,7 @@
 #ifndef GRAPHICS_BUFFER_HPP
 #define GRAPHICS_BUFFER_HPP
 
-#include "..\Common.hpp"
+#include "../Common.hpp"
 #include <glad/glad.h>
 
 class EXPORT Buffer
