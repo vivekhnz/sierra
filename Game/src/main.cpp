@@ -10,7 +10,7 @@ int main()
     try
     {
         Terrain::Engine::Graphics::GlfwManager glfw;
-        Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain");
+        Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         Terrain::Engine::WindowEngineContext ctx(window);
         Terrain::Engine::Scene scene(ctx);
 

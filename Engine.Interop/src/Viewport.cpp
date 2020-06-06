@@ -13,9 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         isInDesignMode = System::ComponentModel::DesignerProperties::GetIsInDesignMode(this);
         if (isInDesignMode)
         {
-            auto border = gcnew Border();
-            border->Background = gcnew SolidColorBrush(Colors::CornflowerBlue);
-            AddChild(border);
+            this->Background = gcnew SolidColorBrush(Colors::CornflowerBlue);
             return;
         }
 
@@ -71,7 +69,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnTick(Object ^ sender, EventArgs ^ e)
     {
-        if (!isInitialized)
+        if (!isInitialized || bitmap == nullptr)
             return;
 
         scene->update();

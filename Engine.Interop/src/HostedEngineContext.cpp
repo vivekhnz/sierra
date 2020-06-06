@@ -4,7 +4,7 @@
 
 namespace Terrain { namespace Engine { namespace Interop {
     HostedEngineContext::HostedEngineContext(char *imgBuffer) :
-        imgBuffer(imgBuffer), window(glfw, 1280, 720, "Terrain")
+        imgBuffer(imgBuffer), window(glfw, 1280, 720, "Terrain", true)
     {
         startTime = System::DateTime::Now;
     }

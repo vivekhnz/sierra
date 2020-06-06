@@ -8,8 +8,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
     std::function<void(double, double)> onMouseMoveHandler = NULL;
     std::function<void(double, double)> onMouseScrollHandler = NULL;
 
-    Window::Window(const GlfwManager &glfw, int width, int height, const char *title)
+    Window::Window(
+        const GlfwManager &glfw, int width, int height, const char *title, bool isHidden)
     {
+        glfwWindowHint(GLFW_VISIBLE, !isHidden);
         window = glfwCreateWindow(width, height, title, NULL, NULL);
         if (window == NULL)
         {

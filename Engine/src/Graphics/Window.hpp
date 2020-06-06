@@ -14,7 +14,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         GLFWwindow *window;
 
     public:
-        Window(const GlfwManager &glfw, int width, int height, const char *title);
+        Window(
+            const GlfwManager &glfw, int width, int height, const char *title, bool isHidden);
         Window(const Window &that) = delete;
         Window &operator=(const Window &that) = delete;
         Window(Window &&) = delete;
