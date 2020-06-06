@@ -8,7 +8,15 @@
         mc:Ignorable="d"
         Title="MainWindow" Height="450" Width="800"
         Closing="Window_Closing">
-    <Grid>
-        <interop:Viewport x:Name="viewport" />
+    <Grid Background="#333">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+        <interop:Viewport x:Name="viewport" Margin="4" />
     </Grid>
 </Window>

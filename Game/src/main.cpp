@@ -18,7 +18,7 @@ int main()
         {
             scene.update();
             scene.draw();
-            window.refresh();
+            ctx.render();
         }
 
         return 0;

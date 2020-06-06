@@ -3,21 +3,33 @@
 #include <iostream>
 
 using namespace System;
+using namespace System::Windows;
 using namespace System::Windows::Controls;
 using namespace System::Windows::Media;
 
 namespace Terrain { namespace Engine { namespace Interop {
-    Viewport::Viewport()
+    Viewport::Viewport() : isInitialized(false)
     {
-        auto border = gcnew Border();
-        border->Background = gcnew SolidColorBrush(Colors::LimeGreen);
-        AddChild(border);
+        isInDesignMode = System::ComponentModel::DesignerProperties::GetIsInDesignMode(this);
+        if (isInDesignMode)
+        {
+            auto border = gcnew Border();
+            border->Background = gcnew SolidColorBrush(Colors::CornflowerBlue);
+            AddChild(border);
+            return;
+        }
+
+        bitmap = gcnew WriteableBitmap(1280, 720, 96, 96, PixelFormats::Pbgra32, nullptr);
+        image = gcnew Image();
+        image->Source = bitmap;
+        image->RenderTransformOrigin = Point(0.5, 0.5);
+        image->RenderTransform = gcnew ScaleTransform(1.0, -1.0);
+        image->Stretch = Stretch::UniformToFill;
+        AddChild(image);
 
         try
         {
-            glfw = new Graphics::GlfwManager();
-            window = new Graphics::Window(*glfw, 1280, 720, "Terrain");
-            ctx = new WindowEngineContext(*window);
+            ctx = new HostedEngineContext((char *)bitmap->BackBuffer.ToPointer());
             scene = new Scene(*ctx);
 
             renderTimer = gcnew DispatcherTimer(DispatcherPriority::Send);
@@ -28,24 +40,57 @@ namespace Terrain { namespace Engine { namespace Interop {
         catch (const std::runtime_error &e)
         {
             std::cerr << e.what() << std::endl;
-            ((SolidColorBrush ^) border->Background)->Color = Colors::Red;
         }
         catch (...)
         {
             std::cerr << "Unhandled exception thrown." << std::endl;
-            ((SolidColorBrush ^) border->Background)->Color = Colors::Red;
         }
+
+        isInitialized = true;
+    }
+
+    void Viewport::OnRenderSizeChanged(SizeChangedInfo ^ info)
+    {
+        if (!isInitialized)
+            return;
+
+        int width = (int)Math::Max(info->NewSize.Width, 128.0);
+        int height = (int)Math::Max(info->NewSize.Height, 128.0);
+
+        bitmap = gcnew WriteableBitmap(width, height, 96, 96, PixelFormats::Pbgra32, nullptr);
+        ctx->setBuffer((char *)bitmap->BackBuffer.ToPointer());
+        ctx->setViewportSize(width, height);
+
+        ctx->render();
+        bitmap->Lock();
+        bitmap->AddDirtyRect(Int32Rect(0, 0, width, height));
+        bitmap->Unlock();
+
+        image->Source = bitmap;
     }
 
     void Viewport::OnTick(Object ^ sender, EventArgs ^ e)
     {
+        if (!isInitialized)
+            return;
+
         scene->update();
         scene->draw();
-        window->refresh();
+        ctx->render();
+
+        auto [width, height] = ctx->getViewportSize();
+        bitmap->Lock();
+        bitmap->AddDirtyRect(Int32Rect(0, 0, width, height));
+        bitmap->Unlock();
     }
 
     Viewport::~Viewport()
     {
+        if (!isInitialized)
+            return;
+
+        isInitialized = false;
+
         renderTimer->Stop();
 
         delete scene;
@@ -53,11 +98,5 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         delete ctx;
         ctx = NULL;
-
-        delete window;
-        window = NULL;
-
-        delete glfw;
-        glfw = NULL;
     }
 }}}

@@ -29,6 +29,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void refresh();
+        void readPixels(char *buffer);
+        void setSize(int width, int height);
         void close();
 
         ~Window();

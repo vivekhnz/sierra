@@ -84,6 +84,19 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glfwPollEvents();
     }
 
+    void Window::readPixels(char *buffer)
+    {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+        glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
+    }
+
+    void Window::setSize(int width, int height)
+    {
+        glfwSetWindowSize(window, width, height);
+        glViewport(0, 0, width, height);
+    }
+
     void Window::close()
     {
         glfwSetWindowShouldClose(window, true);

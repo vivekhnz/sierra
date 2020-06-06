@@ -43,7 +43,12 @@ namespace Terrain { namespace Engine {
         window.setMouseCaptureMode(shouldCaptureMouse);
     }
 
-    void WindowEngineContext::exit() const
+    void WindowEngineContext::render()
+    {
+        window.refresh();
+    }
+
+    void WindowEngineContext::exit()
     {
         window.close();
     }
