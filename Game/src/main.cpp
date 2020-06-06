@@ -9,10 +9,10 @@ int main()
 {
     try
     {
-        GlfwManager glfw;
-        Window window(glfw, 1280, 720, "Terrain");
-        WindowEngineContext ctx(window);
-        Scene scene(ctx);
+        Terrain::Engine::Graphics::GlfwManager glfw;
+        Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain");
+        Terrain::Engine::WindowEngineContext ctx(window);
+        Terrain::Engine::Scene scene(ctx);
 
         while (!window.isRequestingClose())
         {

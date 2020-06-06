@@ -1,19 +1,29 @@
 #pragma once
 
-using namespace System::Windows::Controls;
+#include "../../Engine/src/Graphics/GlfwManager.hpp"
+#include "../../Engine/src/Graphics/Window.hpp"
+#include "../../Engine/src/WindowEngineContext.hpp"
+#include "../../Engine/src/Scene.hpp"
 
-namespace Terrain
-{
-    namespace Engine
+using namespace System;
+using namespace System::Windows::Controls;
+using namespace System::Windows::Threading;
+
+namespace Terrain { namespace Engine { namespace Interop {
+public
+    ref class Viewport : System::Windows::Controls::UserControl
     {
-        namespace Interop
-        {
-        public
-            ref class Viewport : System::Windows::Controls::UserControl
-            {
-            public:
-                Viewport();
-            };
-        }
-    }
-}
+        Graphics::GlfwManager *glfw;
+        Graphics::Window *window;
+        WindowEngineContext *ctx;
+        Scene *scene;
+
+        DispatcherTimer ^ renderTimer;
+
+        void OnTick(Object ^ sender, EventArgs ^ e);
+
+    public:
+        Viewport();
+        ~Viewport();
+    };
+}}}

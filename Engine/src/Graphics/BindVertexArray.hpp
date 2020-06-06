@@ -6,18 +6,20 @@
 #include "VertexArray.hpp"
 #include "Buffer.hpp"
 
-class EXPORT BindVertexArray
-{
-public:
-    BindVertexArray(const VertexArray &vertexArray);
-    BindVertexArray(const BindVertexArray &that) = delete;
-    BindVertexArray &operator=(const BindVertexArray &that) = delete;
-    BindVertexArray(BindVertexArray &&) = delete;
-    BindVertexArray &operator=(BindVertexArray &&) = delete;
+namespace Terrain { namespace Engine { namespace Graphics {
+    class EXPORT BindVertexArray
+    {
+    public:
+        BindVertexArray(const VertexArray &vertexArray);
+        BindVertexArray(const BindVertexArray &that) = delete;
+        BindVertexArray &operator=(const BindVertexArray &that) = delete;
+        BindVertexArray(BindVertexArray &&) = delete;
+        BindVertexArray &operator=(BindVertexArray &&) = delete;
 
-    void bindElementBuffer(const Buffer &elementBuffer);
+        void bindElementBuffer(const Buffer &elementBuffer);
 
-    ~BindVertexArray();
-};
+        ~BindVertexArray();
+    };
+}}}
 
 #endif

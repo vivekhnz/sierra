@@ -7,57 +7,59 @@
 #include "Graphics/Texture.hpp"
 #include "Graphics/ShaderManager.hpp"
 
-class EXPORT Terrain
-{
-    int columns;
-    int rows;
-    float patchSize;
-    std::vector<float> patchHeights;
-    int meshEdgeCount;
+namespace Terrain { namespace Engine {
+    class EXPORT Terrain
+    {
+        int columns;
+        int rows;
+        float patchSize;
+        std::vector<float> patchHeights;
+        int meshEdgeCount;
 
-    Mesh mesh;
-    Texture heightmapTexture;
-    Texture albedoTexture;
-    Texture normalTexture;
-    Texture displacementTexture;
-    Texture aoTexture;
-    Texture roughnessTexture;
-    Buffer tessellationLevelBuffer;
-    ShaderProgram terrainShaderProgram;
-    ShaderProgram wireframeShaderProgram;
-    ShaderProgram calcTessLevelsShaderProgram;
+        Graphics::Mesh mesh;
+        Graphics::Texture heightmapTexture;
+        Graphics::Texture albedoTexture;
+        Graphics::Texture normalTexture;
+        Graphics::Texture displacementTexture;
+        Graphics::Texture aoTexture;
+        Graphics::Texture roughnessTexture;
+        Graphics::Buffer tessellationLevelBuffer;
+        Graphics::ShaderProgram terrainShaderProgram;
+        Graphics::ShaderProgram wireframeShaderProgram;
+        Graphics::ShaderProgram calcTessLevelsShaderProgram;
 
-    bool isLightingEnabled;
-    bool isTextureEnabled;
-    bool isNormalMapEnabled;
-    bool isDisplacementMapEnabled;
-    bool isAOMapEnabled;
-    bool isRoughnessMapEnabled;
-    bool isWireframeMode;
+        bool isLightingEnabled;
+        bool isTextureEnabled;
+        bool isNormalMapEnabled;
+        bool isDisplacementMapEnabled;
+        bool isAOMapEnabled;
+        bool isRoughnessMapEnabled;
+        bool isWireframeMode;
 
-    float getTerrainPatchHeight(int x, int z) const;
+        float getTerrainPatchHeight(int x, int z) const;
 
-public:
-    Terrain();
-    Terrain(const Terrain &that) = delete;
-    Terrain &operator=(const Terrain &that) = delete;
-    Terrain(Terrain &&) = delete;
-    Terrain &operator=(Terrain &&) = delete;
+    public:
+        Terrain();
+        Terrain(const Terrain &that) = delete;
+        Terrain &operator=(const Terrain &that) = delete;
+        Terrain(Terrain &&) = delete;
+        Terrain &operator=(Terrain &&) = delete;
 
-    float getTerrainHeight(float worldX, float worldZ) const;
+        float getTerrainHeight(float worldX, float worldZ) const;
 
-    void initialize(const ShaderManager &shaderManager);
-    void draw(glm::mat4 transform, glm::vec3 lightDir);
+        void initialize(const Graphics::ShaderManager &shaderManager);
+        void draw(glm::mat4 transform, glm::vec3 lightDir);
 
-    void toggleLighting();
-    void toggleAlbedoMap();
-    void toggleNormalMap();
-    void toggleDisplacementMap();
-    void toggleAmbientOcclusionMap();
-    void toggleRoughnessMap();
-    void toggleWireframeMode();
+        void toggleLighting();
+        void toggleAlbedoMap();
+        void toggleNormalMap();
+        void toggleDisplacementMap();
+        void toggleAmbientOcclusionMap();
+        void toggleRoughnessMap();
+        void toggleWireframeMode();
 
-    ~Terrain();
-};
+        ~Terrain();
+    };
+}}
 
 #endif

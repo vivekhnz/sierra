@@ -16,7 +16,7 @@ BraceWrapping:
   AfterControlStatement: true
   AfterEnum: true
   AfterFunction: true
-  AfterNamespace: true
+  AfterNamespace: false
   AfterStruct: true
   AfterUnion: true
   AfterExternBlock: true
@@ -34,4 +34,5 @@ IndentWidth: 4
 SortIncludes: false
 TabWidth: 4
 FixNamespaceComments: false
+CompactNamespaces: true
 NamespaceIndentation: All

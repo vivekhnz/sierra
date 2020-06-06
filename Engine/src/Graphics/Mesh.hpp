@@ -6,29 +6,31 @@
 #include "Buffer.hpp"
 #include "VertexArray.hpp"
 
-class EXPORT Mesh
-{
-    bool isInitialized;
-    Buffer vertexBuffer;
-    Buffer elementBuffer;
-    VertexArray vertexArray;
-    int elementCount;
-    GLenum primitiveType;
+namespace Terrain { namespace Engine { namespace Graphics {
+    class EXPORT Mesh
+    {
+        bool isInitialized;
+        Buffer vertexBuffer;
+        Buffer elementBuffer;
+        VertexArray vertexArray;
+        int elementCount;
+        GLenum primitiveType;
 
-public:
-    Mesh(GLenum primitiveType);
-    Mesh(const Mesh &that) = delete;
-    Mesh &operator=(const Mesh &that) = delete;
-    Mesh(Mesh &&) = delete;
-    Mesh &operator=(Mesh &&) = delete;
+    public:
+        Mesh(GLenum primitiveType);
+        Mesh(const Mesh &that) = delete;
+        Mesh &operator=(const Mesh &that) = delete;
+        Mesh(Mesh &&) = delete;
+        Mesh &operator=(Mesh &&) = delete;
 
-    unsigned int getVertexBufferId() const;
+        unsigned int getVertexBufferId() const;
 
-    void initialize(
-        const std::vector<float> &vertices, const std::vector<unsigned int> &indices);
-    void draw();
+        void initialize(
+            const std::vector<float> &vertices, const std::vector<unsigned int> &indices);
+        void draw();
 
-    ~Mesh();
-};
+        ~Mesh();
+    };
+}}}
 
 #endif

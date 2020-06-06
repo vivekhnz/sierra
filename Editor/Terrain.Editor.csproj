@@ -10,5 +10,20 @@
   <ItemGroup>
     <ProjectReference Include="..\Engine.Interop\Terrain.Engine.Interop.vcxproj" />
   </ItemGroup>
+  
+  <Target Name="CopyDependencies" AfterTargets="AfterBuild">
+    <PropertyGroup>
+      <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
+    </PropertyGroup>
+    <ItemGroup>
+      <DependencyFiles Include="$(EngineOutDir)\Terrain.Engine.*" />
+      <DependencyFiles Include="$(EngineOutDir)\glfw3.dll" />
+      <DataFiles Include="$(EngineOutDir)data\**" />
+    </ItemGroup>
+    <Message Text="Copying dependencies..." Importance="high" />
+    <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)%(RecursiveDir)" />
+    <Message Text="Copying data files..." Importance="high" />
+    <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
+  </Target>
 
 </Project>

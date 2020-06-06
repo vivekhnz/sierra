@@ -2,105 +2,108 @@
 
 #include <iostream>
 
-InputManager::InputManager(EngineContext &ctx) :
-    ctx(ctx), onMouseMoveHandler(NULL), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0)
-{
-    ctx.addMouseMoveHandler(std::bind(
-        &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
-    ctx.addMouseScrollHandler(std::bind(
-        &InputManager::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
-}
-
-bool InputManager::isNewKeyPress(int key)
-{
-    auto [prevState, currentState] = keyState[key];
-    return currentState && !prevState;
-}
-
-bool InputManager::isKeyPressed(int key) const
-{
-    return ctx.isKeyPressed(key);
-}
-
-bool InputManager::isMouseButtonPressed(int button) const
-{
-    return ctx.isMouseButtonPressed(button);
-}
-
-void InputManager::listenForKey(int key)
-{
-    keyState[key] = std::make_tuple(false, false);
-}
-
-void InputManager::mapCommand(int key, std::function<void()> command)
-{
-    listenForKey(key);
-    keyCommands[key] = command;
-}
-
-void InputManager::addMouseMoveHandler(std::function<void(float, float)> handler)
-{
-    onMouseMoveHandler = handler;
-}
-
-void InputManager::addMouseScrollHandler(std::function<void(float, float)> handler)
-{
-    onMouseScrollHandler = handler;
-}
-
-void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
-{
-    ctx.setMouseCaptureMode(shouldCaptureMouse);
-}
-
-void InputManager::update()
-{
-    auto iterator = keyState.begin();
-    while (iterator != keyState.end())
+namespace Terrain { namespace Engine { namespace IO {
+    InputManager::InputManager(EngineContext &ctx) :
+        ctx(ctx), onMouseMoveHandler(NULL), isFirstMouseInput(true), prevMouseX(0),
+        prevMouseY(0)
     {
-        auto key = iterator->first;
-        auto [_, wasPressed] = iterator->second;
-        auto isPressed = ctx.isKeyPressed(key);
-        keyState[key] = std::make_tuple(wasPressed, isPressed);
+        ctx.addMouseMoveHandler(std::bind(
+            &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
+        ctx.addMouseScrollHandler(std::bind(
+            &InputManager::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
+    }
 
-        if (isPressed && !wasPressed && keyCommands.count(key) > 0)
+    bool InputManager::isNewKeyPress(int key)
+    {
+        auto [prevState, currentState] = keyState[key];
+        return currentState && !prevState;
+    }
+
+    bool InputManager::isKeyPressed(int key) const
+    {
+        return ctx.isKeyPressed(key);
+    }
+
+    bool InputManager::isMouseButtonPressed(int button) const
+    {
+        return ctx.isMouseButtonPressed(button);
+    }
+
+    void InputManager::listenForKey(int key)
+    {
+        keyState[key] = std::make_tuple(false, false);
+    }
+
+    void InputManager::mapCommand(int key, std::function<void()> command)
+    {
+        listenForKey(key);
+        keyCommands[key] = command;
+    }
+
+    void InputManager::addMouseMoveHandler(std::function<void(float, float)> handler)
+    {
+        onMouseMoveHandler = handler;
+    }
+
+    void InputManager::addMouseScrollHandler(std::function<void(float, float)> handler)
+    {
+        onMouseScrollHandler = handler;
+    }
+
+    void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
+    {
+        ctx.setMouseCaptureMode(shouldCaptureMouse);
+    }
+
+    void InputManager::update()
+    {
+        auto iterator = keyState.begin();
+        while (iterator != keyState.end())
         {
-            keyCommands.at(key)();
+            auto key = iterator->first;
+            auto [_, wasPressed] = iterator->second;
+            auto isPressed = ctx.isKeyPressed(key);
+            keyState[key] = std::make_tuple(wasPressed, isPressed);
+
+            if (isPressed && !wasPressed && keyCommands.count(key) > 0)
+            {
+                keyCommands.at(key)();
+            }
+
+            iterator++;
+        }
+    }
+
+    void InputManager::onMouseMove(double x, double y)
+    {
+        if (isFirstMouseInput)
+        {
+            prevMouseX = x;
+            prevMouseY = y;
+            isFirstMouseInput = false;
+            return;
         }
 
-        iterator++;
-    }
-}
-
-void InputManager::onMouseMove(double x, double y)
-{
-    if (isFirstMouseInput)
-    {
+        float xOffset = x - prevMouseX;
+        float yOffset = prevMouseY - y;
         prevMouseX = x;
         prevMouseY = y;
-        isFirstMouseInput = false;
-        return;
+
+        if (onMouseMoveHandler != NULL)
+        {
+            onMouseMoveHandler(xOffset, yOffset);
+        }
     }
 
-    float xOffset = x - prevMouseX;
-    float yOffset = prevMouseY - y;
-    prevMouseX = x;
-    prevMouseY = y;
-
-    if (onMouseMoveHandler != NULL)
+    void InputManager::onMouseScroll(double xOffset, double yOffset)
     {
-        onMouseMoveHandler(xOffset, yOffset);
+        if (onMouseScrollHandler != NULL)
+        {
+            onMouseScrollHandler((float)xOffset, (float)yOffset);
+        }
     }
-}
 
-void InputManager::onMouseScroll(double xOffset, double yOffset)
-{
-    if (onMouseScrollHandler != NULL)
+    InputManager::~InputManager()
     {
-        onMouseScrollHandler((float)xOffset, (float)yOffset);
     }
-}
-
-InputManager::~InputManager()
-{
-}
+}}}

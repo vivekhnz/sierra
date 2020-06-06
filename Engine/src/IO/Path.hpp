@@ -5,8 +5,7 @@
 #include <string>
 #include <windows.h>
 
-namespace Path
-{
+namespace Terrain { namespace Engine { namespace IO { namespace Path {
     static std::string getAbsolutePath(std::string relativePath)
     {
         // get path to current assembly
@@ -16,6 +15,6 @@ namespace Path
         // build absolute path
         return std::string(exePath) + "/../" + relativePath;
     }
-} // namespace Path
+}}}}
 
 #endif

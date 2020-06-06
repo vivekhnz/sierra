@@ -4,20 +4,22 @@
 #include "../Common.hpp"
 #include <fstream>
 
-class EXPORT OpenFile
-{
-    std::ifstream fileStream;
+namespace Terrain { namespace Engine { namespace IO {
+    class EXPORT OpenFile
+    {
+        std::ifstream fileStream;
 
-public:
-    OpenFile(std::string path);
-    OpenFile(const OpenFile &that) = delete;
-    OpenFile &operator=(const OpenFile &that) = delete;
-    OpenFile(OpenFile &&) = delete;
-    OpenFile &operator=(OpenFile &&) = delete;
+    public:
+        OpenFile(std::string path);
+        OpenFile(const OpenFile &that) = delete;
+        OpenFile &operator=(const OpenFile &that) = delete;
+        OpenFile(OpenFile &&) = delete;
+        OpenFile &operator=(OpenFile &&) = delete;
 
-    std::string readAllText();
+        std::string readAllText();
 
-    ~OpenFile();
-};
+        ~OpenFile();
+    };
+}}}
 
 #endif

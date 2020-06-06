@@ -7,28 +7,30 @@
 #include <vector>
 #include "Shader.hpp"
 
-class EXPORT ShaderProgram
-{
-    int id;
+namespace Terrain { namespace Engine { namespace Graphics {
+    class EXPORT ShaderProgram
+    {
+        int id;
 
-public:
-    ShaderProgram();
-    ShaderProgram(const ShaderProgram &that) = delete;
-    ShaderProgram &operator=(const ShaderProgram &that) = delete;
-    ShaderProgram(ShaderProgram &&) = delete;
-    ShaderProgram &operator=(ShaderProgram &&) = delete;
+    public:
+        ShaderProgram();
+        ShaderProgram(const ShaderProgram &that) = delete;
+        ShaderProgram &operator=(const ShaderProgram &that) = delete;
+        ShaderProgram(ShaderProgram &&) = delete;
+        ShaderProgram &operator=(ShaderProgram &&) = delete;
 
-    int getId() const;
-    void link(const std::vector<Shader> &shaders);
-    void use();
-    void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
-    void setFloat(std::string uniformName, float value);
-    void setInt(std::string uniformName, int value);
-    void setBool(std::string uniformName, bool value);
-    void setVector2(std::string uniformName, glm::vec2 value);
-    void setVector3(std::string uniformName, glm::vec3 value);
+        int getId() const;
+        void link(const std::vector<Shader> &shaders);
+        void use();
+        void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
+        void setFloat(std::string uniformName, float value);
+        void setInt(std::string uniformName, int value);
+        void setBool(std::string uniformName, bool value);
+        void setVector2(std::string uniformName, glm::vec2 value);
+        void setVector3(std::string uniformName, glm::vec3 value);
 
-    ~ShaderProgram();
-};
+        ~ShaderProgram();
+    };
+}}}
 
 #endif

@@ -6,18 +6,20 @@
 #include "ShaderProgram.hpp"
 #include "Shader.hpp"
 
-class EXPORT AttachShader
-{
-    int programId;
-    int shaderId;
+namespace Terrain { namespace Engine { namespace Graphics {
+    class EXPORT AttachShader
+    {
+        int programId;
+        int shaderId;
 
-public:
-    AttachShader(const ShaderProgram &program, const Shader &shader);
-    AttachShader(const AttachShader &that) = delete;
-    AttachShader &operator=(const AttachShader &that) = delete;
-    AttachShader(AttachShader &&other);
-    AttachShader &operator=(AttachShader &&) = delete;
-    ~AttachShader();
-};
+    public:
+        AttachShader(const ShaderProgram &program, const Shader &shader);
+        AttachShader(const AttachShader &that) = delete;
+        AttachShader &operator=(const AttachShader &that) = delete;
+        AttachShader(AttachShader &&other);
+        AttachShader &operator=(AttachShader &&) = delete;
+        ~AttachShader();
+    };
+}}}
 
 #endif

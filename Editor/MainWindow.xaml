@@ -6,17 +6,9 @@
         xmlns:local="clr-namespace:Editor"
         xmlns:interop="clr-namespace:Terrain.Engine.Interop;assembly=Terrain.Engine.Interop"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800"
+        Closing="Window_Closing">
     <Grid>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="48" />
-        </Grid.RowDefinitions>
-        <interop:Viewport />
-        <TextBlock x:Name="tbValue"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   FontSize="24"
-                   Grid.Row="1" />
+        <interop:Viewport x:Name="viewport" />
     </Grid>
 </Window>

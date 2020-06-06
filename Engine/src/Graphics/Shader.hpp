@@ -5,21 +5,23 @@
 #include <glad/glad.h>
 #include <string>
 
-class EXPORT Shader
-{
-    int id;
+namespace Terrain { namespace Engine { namespace Graphics {
+    class EXPORT Shader
+    {
+        int id;
 
-public:
-    Shader(GLenum shaderType, std::string src);
-    Shader(const Shader &that) = delete;
-    Shader &operator=(const Shader &that) = delete;
-    Shader(Shader &&other);
-    Shader &operator=(Shader &&other) = delete;
+    public:
+        Shader(GLenum shaderType, std::string src);
+        Shader(const Shader &that) = delete;
+        Shader &operator=(const Shader &that) = delete;
+        Shader(Shader &&other);
+        Shader &operator=(Shader &&other) = delete;
 
-    int getId() const;
-    void compile();
+        int getId() const;
+        void compile();
 
-    ~Shader();
-};
+        ~Shader();
+    };
+}}}
 
 #endif
