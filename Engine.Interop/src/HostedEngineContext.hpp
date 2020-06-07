@@ -49,6 +49,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         void setIsMouseInBounds(bool value);
         void onMouseMove(double x, double y);
         void onMouseScroll(double x, double y);
+        bool isInMouseCaptureMode() const;
 
         ~HostedEngineContext();
     };

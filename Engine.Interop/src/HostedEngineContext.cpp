@@ -70,7 +70,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         {
             isFirstCapturedMouseInput = true;
         }
-        Mouse::OverrideCursor = shouldCaptureMouse ? Cursors::None : Cursors::Arrow;
     }
 
     void HostedEngineContext::render(
@@ -131,10 +130,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void HostedEngineContext::setIsMouseInBounds(bool value)
     {
         isMouseInBounds = value;
-        if (!value)
-        {
-            isMouseCaptured = false;
-        }
     }
 
     void HostedEngineContext::onMouseMove(double x, double y)
@@ -151,6 +146,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         {
             onMouseScrollHandler(x, y);
         }
+    }
+
+    bool HostedEngineContext::isInMouseCaptureMode() const
+    {
+        return isMouseInBounds && isMouseCaptured;
     }
 
     HostedEngineContext::~HostedEngineContext()

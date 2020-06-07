@@ -66,9 +66,11 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnTick(Object ^ sender, EventArgs ^ e)
     {
-        if (!isInitialized || bitmap == nullptr)
+        if (!isInitialized || bitmap == nullptr || ctx == nullptr)
             return;
         UpdateImage();
+
+        this->Cursor = ctx->isInMouseCaptureMode() ? Cursors::None : Cursors::Arrow;
     }
 
     void Viewport::UpdateImage()
