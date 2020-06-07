@@ -29,6 +29,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         {
             ctx = new HostedEngineContext((char *)bitmap->BackBuffer.ToPointer());
             scene = new Scene(*ctx);
+            scene->toggleCameraMode();
 
             renderTimer = gcnew DispatcherTimer(DispatcherPriority::Send);
             renderTimer->Interval = TimeSpan::FromMilliseconds(1);
@@ -59,11 +60,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         ctx->setBuffer((char *)bitmap->BackBuffer.ToPointer());
         ctx->setViewportSize(width, height);
 
-        ctx->render();
-        bitmap->Lock();
-        bitmap->AddDirtyRect(Int32Rect(0, 0, width, height));
-        bitmap->Unlock();
-
+        UpdateImage();
         image->Source = bitmap;
     }
 
@@ -71,15 +68,29 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         if (!isInitialized || bitmap == nullptr)
             return;
+        UpdateImage();
+    }
 
+    void Viewport::UpdateImage()
+    {
         scene->update();
         scene->draw();
         ctx->render();
 
-        auto [width, height] = ctx->getViewportSize();
         bitmap->Lock();
-        bitmap->AddDirtyRect(Int32Rect(0, 0, width, height));
+        bitmap->AddDirtyRect(Int32Rect(0, 0, bitmap->PixelWidth, bitmap->PixelHeight));
         bitmap->Unlock();
+    }
+
+    void Viewport::OnMouseMove(MouseEventArgs ^ args)
+    {
+        auto pos = args->GetPosition(nullptr);
+        ctx->onMouseMove(pos.X, pos.Y);
+    }
+
+    void Viewport::OnMouseWheel(MouseWheelEventArgs ^ args)
+    {
+        ctx->onMouseScroll(0, args->Delta);
     }
 
     Viewport::~Viewport()
@@ -88,7 +99,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             return;
 
         isInitialized = false;
-
         renderTimer->Stop();
 
         delete scene;

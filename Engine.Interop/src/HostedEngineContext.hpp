@@ -12,6 +12,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         System::DateTime startTime;
 
         char *imgBuffer;
+        std::function<void(double, double)> onMouseMoveHandler;
+        std::function<void(double, double)> onMouseScrollHandler;
 
     public:
         HostedEngineContext(char *imgBuffer);
@@ -33,6 +35,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         void setViewportSize(int width, int height);
         void setBuffer(char *buffer);
+        void onMouseMove(double x, double y);
+        void onMouseScroll(double x, double y);
 
         ~HostedEngineContext();
     };

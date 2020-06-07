@@ -8,6 +8,7 @@
 using namespace System;
 using namespace System::Windows;
 using namespace System::Windows::Controls;
+using namespace System::Windows::Input;
 using namespace System::Windows::Media::Imaging;
 using namespace System::Windows::Threading;
 
@@ -26,11 +27,14 @@ public
         bool isInDesignMode;
 
         void OnTick(Object ^ sender, EventArgs ^ e);
+        void UpdateImage();
 
     public:
         Viewport();
         ~Viewport();
 
         void OnRenderSizeChanged(SizeChangedInfo ^ info) override;
+        void OnMouseMove(MouseEventArgs ^ args) override;
+        void OnMouseWheel(MouseWheelEventArgs ^ args) override;
     };
 }}}

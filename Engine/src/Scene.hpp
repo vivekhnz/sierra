@@ -31,7 +31,6 @@ namespace Terrain { namespace Engine {
         float playerCameraYaw;
         float playerCameraPitch;
 
-        void toggleCameraMode();
         void updateOrbitCamera(float deltaTime);
         void updatePlayerCamera(float deltaTime);
         void onMouseMove(float xOffset, float yOffset);
@@ -46,6 +45,7 @@ namespace Terrain { namespace Engine {
 
         void update();
         void draw();
+        void toggleCameraMode();
 
         ~Scene();
     };

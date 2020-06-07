@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:Editor"
         xmlns:interop="clr-namespace:Terrain.Engine.Interop;assembly=Terrain.Engine.Interop"
         mc:Ignorable="d"
-        Title="MainWindow" Width="1280" Height="720"
+        Title="Terrain Editor" Width="1280" Height="720"
         Closing="Window_Closing">
     <Grid Background="#333">
         <Grid.ColumnDefinitions>
@@ -17,6 +17,6 @@
             <RowDefinition Height="3*" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <interop:Viewport x:Name="viewport" Margin="4" />
+        <interop:Viewport x:Name="viewport" />
     </Grid>
 </Window>
