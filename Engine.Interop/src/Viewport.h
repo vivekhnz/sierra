@@ -34,7 +34,8 @@ public
         ~Viewport();
 
         void OnRenderSizeChanged(SizeChangedInfo ^ info) override;
-        void OnMouseMove(MouseEventArgs ^ args) override;
+        void OnMouseEnter(MouseEventArgs ^ args) override;
+        void OnMouseLeave(MouseEventArgs ^ args) override;
         void OnMouseWheel(MouseWheelEventArgs ^ args) override;
     };
 }}}

@@ -75,17 +75,22 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         scene->update();
         scene->draw();
-        ctx->render();
+
+        ctx->render(this->PointToScreen(Point(0, 0)), Mouse::GetPosition(this));
 
         bitmap->Lock();
         bitmap->AddDirtyRect(Int32Rect(0, 0, bitmap->PixelWidth, bitmap->PixelHeight));
         bitmap->Unlock();
     }
 
-    void Viewport::OnMouseMove(MouseEventArgs ^ args)
+    void Viewport::OnMouseEnter(MouseEventArgs ^ args)
     {
-        auto pos = args->GetPosition(nullptr);
-        ctx->onMouseMove(pos.X, pos.Y);
+        ctx->setIsMouseInBounds(true);
+    }
+
+    void Viewport::OnMouseLeave(MouseEventArgs ^ args)
+    {
+        ctx->setIsMouseInBounds(false);
     }
 
     void Viewport::OnMouseWheel(MouseWheelEventArgs ^ args)

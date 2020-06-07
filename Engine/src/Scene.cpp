@@ -146,7 +146,7 @@ namespace Terrain { namespace Engine {
                 float sensitivity = std::clamp(orbitDistance * 0.0003f, 0.001f, 0.08f);
                 auto orbitLookDir = glm::normalize(orbitLookAt - orbitCamera.getPosition());
                 glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
-                glm::vec3 yDir = cross(orbitLookDir, -xDir);
+                glm::vec3 yDir = cross(orbitLookDir, xDir);
                 glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
                 orbitLookAt += pan * sensitivity;
             }
@@ -154,7 +154,7 @@ namespace Terrain { namespace Engine {
             {
                 float sensitivity = std::clamp(orbitDistance * 0.0007f, 0.01f, 0.05f);
                 orbitYAngle += xOffset * sensitivity;
-                orbitXAngle -= yOffset * sensitivity;
+                orbitXAngle += yOffset * sensitivity;
             }
         }
         else
@@ -162,7 +162,7 @@ namespace Terrain { namespace Engine {
             float sensitivity = 0.05f;
             playerCameraYaw += xOffset * sensitivity;
             playerCameraPitch =
-                std::clamp(playerCameraPitch + (yOffset * sensitivity), -89.0f, 89.0f);
+                std::clamp(playerCameraPitch - (yOffset * sensitivity), -89.0f, 89.0f);
         }
     }
 

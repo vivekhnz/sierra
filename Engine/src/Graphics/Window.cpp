@@ -7,6 +7,9 @@
 namespace Terrain { namespace Engine { namespace Graphics {
     std::function<void(double, double)> onMouseMoveHandler = NULL;
     std::function<void(double, double)> onMouseScrollHandler = NULL;
+    bool isFirstMouseInput = true;
+    double prevMouseX = 0;
+    double prevMouseY = 0;
 
     Window::Window(
         const GlfwManager &glfw, int width, int height, const char *title, bool isHidden)
@@ -29,9 +32,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glViewport(0, 0, width, height);
         });
         glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
+            if (isFirstMouseInput)
+            {
+                prevMouseX = x;
+                prevMouseY = y;
+                isFirstMouseInput = false;
+                return;
+            }
+
+            float xOffset = x - prevMouseX;
+            float yOffset = y - prevMouseY;
+            prevMouseX = x;
+            prevMouseY = y;
+
             if (onMouseMoveHandler != NULL)
             {
-                onMouseMoveHandler(x, y);
+                onMouseMoveHandler(xOffset, yOffset);
             }
         });
         glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {

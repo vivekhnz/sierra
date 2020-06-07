@@ -76,22 +76,9 @@ namespace Terrain { namespace Engine { namespace IO {
 
     void InputManager::onMouseMove(double x, double y)
     {
-        if (isFirstMouseInput)
-        {
-            prevMouseX = x;
-            prevMouseY = y;
-            isFirstMouseInput = false;
-            return;
-        }
-
-        float xOffset = x - prevMouseX;
-        float yOffset = prevMouseY - y;
-        prevMouseX = x;
-        prevMouseY = y;
-
         if (onMouseMoveHandler != NULL)
         {
-            onMouseMoveHandler(xOffset, yOffset);
+            onMouseMoveHandler(x, y);
         }
     }
 

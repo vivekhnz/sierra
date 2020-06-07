@@ -17,7 +17,6 @@ namespace Terrain { namespace Engine {
         virtual void addMouseMoveHandler(std::function<void(double, double)> handler) = 0;
         virtual void addMouseScrollHandler(std::function<void(double, double)> handler) = 0;
         virtual void setMouseCaptureMode(bool shouldCaptureMouse) = 0;
-        virtual void render() = 0;
         virtual void exit() = 0;
     };
 }}
