@@ -35,6 +35,8 @@ namespace Terrain { namespace Engine {
         input.mapCommand(GLFW_KEY_R, std::bind(&Terrain::toggleRoughnessMap, &terrain));
         input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
         input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
+        input.mapCommand(
+            GLFW_KEY_H, std::bind(&Terrain::loadHeightmap, &terrain, "data/heightmap2.tga"));
 
         input.addMouseMoveHandler(std::bind(
             &Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));

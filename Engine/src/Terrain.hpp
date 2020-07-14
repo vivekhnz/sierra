@@ -15,6 +15,7 @@ namespace Terrain { namespace Engine {
         float patchSize;
         std::vector<float> patchHeights;
         int meshEdgeCount;
+        float terrainHeight;
 
         Graphics::Mesh mesh;
         Graphics::Texture heightmapTexture;
@@ -48,6 +49,7 @@ namespace Terrain { namespace Engine {
         float getTerrainHeight(float worldX, float worldZ) const;
 
         void initialize(const Graphics::ShaderManager &shaderManager);
+        void loadHeightmap(std::string path);
         void draw(glm::mat4 transform, glm::vec3 lightDir);
 
         void toggleLighting();

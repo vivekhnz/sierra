@@ -6,7 +6,7 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain() :
         columns(256), rows(256), patchSize(0.5f), mesh(GL_PATCHES),
-        meshEdgeCount((2 * (rows * columns)) - rows - columns),
+        meshEdgeCount((2 * (rows * columns)) - rows - columns), terrainHeight(25.0f),
         tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY),
         isLightingEnabled(true), isTextureEnabled(true), isNormalMapEnabled(true),
         isDisplacementMapEnabled(true), isAOMapEnabled(true), isRoughnessMapEnabled(false),
@@ -44,13 +44,58 @@ namespace Terrain { namespace Engine {
             "data/terrain_calc_tess_levels_comp_shader.glsl"));
         calcTessLevelsShaderProgram.link(calcTessLevelShaders);
 
+        loadHeightmap("data/heightmap.tga");
+
+        // load terrain textures
+        albedoTexture.initialize(Graphics::Image("data/ground_albedo.bmp", false), GL_RGB,
+            GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        normalTexture.initialize(Graphics::Image("data/ground_normal.bmp", false), GL_RGB,
+            GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        displacementTexture.initialize(Graphics::Image("data/ground_displacement.tga", true),
+            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        aoTexture.initialize(Graphics::Image("data/ground_ao.tga", false), GL_R8, GL_RED,
+            GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        roughnessTexture.initialize(Graphics::Image("data/ground_roughness.tga", false), GL_R8,
+            GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
+        // configure shaders
+        auto textureScale = glm::vec2(48.0f, 48.0f);
+        terrainShaderProgram.setVector2("normalSampleOffset",
+            glm::vec2(1.0f / (patchSize * columns), 1.0f / (patchSize * rows)));
+        terrainShaderProgram.setVector2("textureScale", textureScale);
+        terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
+        terrainShaderProgram.setInt("heightmapTexture", 0);
+        terrainShaderProgram.setInt("albedoTexture", 1);
+        terrainShaderProgram.setInt("normalTexture", 2);
+        terrainShaderProgram.setInt("displacementTexture", 3);
+        terrainShaderProgram.setInt("aoTexture", 4);
+        terrainShaderProgram.setInt("roughnessTexture", 5);
+        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
+        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+        terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
+        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
+        wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
+        wireframeShaderProgram.setInt("heightmapTexture", 0);
+        wireframeShaderProgram.setInt("displacementTexture", 3);
+        wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
+        wireframeShaderProgram.setVector2("textureScale", textureScale);
+        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+        calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
+        calcTessLevelsShaderProgram.setInt("columnCount", columns);
+        calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
+    }
+
+    void Terrain::loadHeightmap(std::string path)
+    {
         // load heightmap
-        Graphics::Image heightmap("data/heightmap.tga", true);
+        Graphics::Image heightmap(path, true);
         heightmapTexture.initialize(heightmap, GL_R16, GL_RED, GL_UNSIGNED_SHORT,
             GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         // build vertices
-        float terrainHeight = 25.0f;
         std::vector<float> vertices(columns * rows * 5);
         float offsetX = (columns - 1) * patchSize * -0.5f;
         float offsetY = (rows - 1) * patchSize * -0.5f;
@@ -98,48 +143,9 @@ namespace Terrain { namespace Engine {
         tessellationLevelBuffer.fill(
             vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
 
-        // load terrain textures
-        albedoTexture.initialize(Graphics::Image("data/ground_albedo.bmp", false), GL_RGB,
-            GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        normalTexture.initialize(Graphics::Image("data/ground_normal.bmp", false), GL_RGB,
-            GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        displacementTexture.initialize(Graphics::Image("data/ground_displacement.tga", true),
-            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        aoTexture.initialize(Graphics::Image("data/ground_ao.tga", false), GL_R8, GL_RED,
-            GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        roughnessTexture.initialize(Graphics::Image("data/ground_roughness.tga", false), GL_R8,
-            GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-
         // configure shaders
-        auto textureScale = glm::vec2(48.0f, 48.0f);
-        terrainShaderProgram.setVector2("normalSampleOffset",
-            glm::vec2(1.0f / (patchSize * columns), 1.0f / (patchSize * rows)));
-        terrainShaderProgram.setVector2("textureScale", textureScale);
-        terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
         terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
-        terrainShaderProgram.setInt("heightmapTexture", 0);
-        terrainShaderProgram.setInt("albedoTexture", 1);
-        terrainShaderProgram.setInt("normalTexture", 2);
-        terrainShaderProgram.setInt("displacementTexture", 3);
-        terrainShaderProgram.setInt("aoTexture", 4);
-        terrainShaderProgram.setInt("roughnessTexture", 5);
-        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
-        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
-        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
-        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-        terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
-        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
-        wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
-        wireframeShaderProgram.setInt("heightmapTexture", 0);
-        wireframeShaderProgram.setInt("displacementTexture", 3);
-        wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
-        wireframeShaderProgram.setVector2("textureScale", textureScale);
         wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
-        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-        calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
-        calcTessLevelsShaderProgram.setInt("columnCount", columns);
-        calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
-        glPatchParameteri(GL_PATCH_VERTICES, 4);
     }
 
     float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
