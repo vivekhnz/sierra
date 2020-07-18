@@ -167,13 +167,16 @@
       <AdditionalLibraryDirectories>$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\lib\static\v142\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
-  <Target Name="CopyDataFiles" AfterTargets="AfterBuild">
-    <ItemGroup>
-      <DataFiles Include="$(ProjectDir)data\**" />
-    </ItemGroup>
+  
+  <ItemGroup>
+    <DataFiles Include="$(ProjectDir)data\**" />
+    <UpToDateCheckInput Include="@(DataFiles)" />
+  </ItemGroup>
+  <Target Name="CopyDataFiles" AfterTargets="AfterBuild" Inputs="@(DataFiles)" Outputs="@(DataFiles->'$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)')">
     <Message Text="Copying data files..." Importance="high" />
     <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
   </Target>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
     <Import Project="..\deps\nuget\glfw.3.3.2\build\native\glfw.targets" Condition="Exists('..\deps\nuget\glfw.3.3.2\build\native\glfw.targets')" />

@@ -120,20 +120,20 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
   </ItemGroup>
-  <Target Name="CopyDependencies" AfterTargets="AfterBuild">
-    <PropertyGroup>
-      <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
-    </PropertyGroup>
-    <ItemGroup>
-      <DependencyFiles Include="$(EngineOutDir)\Terrain.Engine.*" />
-      <DependencyFiles Include="$(EngineOutDir)\glfw3.dll" />
-      <DataFiles Include="$(EngineOutDir)data\**" />
-    </ItemGroup>
+  
+  <PropertyGroup>
+    <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
+  </PropertyGroup>
+  <ItemGroup>
+    <DependencyFiles Include="$(EngineOutDir)\Terrain.Engine.*" />
+    <DependencyFiles Include="$(EngineOutDir)\glfw3.dll" />
+    <UpToDateCheckInput Include="@(DependencyFiles)" />
+  </ItemGroup>
+  <Target Name="CopyDependencies" AfterTargets="AfterBuild" Inputs="@(DependencyFiles)" Outputs="@(DependencyFiles->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')">
     <Message Text="Copying dependencies..." Importance="high" />
-    <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)%(RecursiveDir)" />
-    <Message Text="Copying data files..." Importance="high" />
-    <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
+    <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)\%(RecursiveDir)" />
   </Target>
+
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
