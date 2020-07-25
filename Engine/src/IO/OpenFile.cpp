@@ -7,7 +7,7 @@ namespace Terrain { namespace Engine { namespace IO {
     OpenFile::OpenFile(std::string path)
     {
         fileStream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-        fileStream.open(Path::getAbsolutePath(path));
+        fileStream.open(path);
     }
 
     std::string OpenFile::readAllText()

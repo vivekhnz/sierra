@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include "Graphics/ShaderManager.hpp"
+#include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx) :
@@ -35,8 +36,9 @@ namespace Terrain { namespace Engine {
         input.mapCommand(GLFW_KEY_R, std::bind(&Terrain::toggleRoughnessMap, &terrain));
         input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
         input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
-        input.mapCommand(
-            GLFW_KEY_H, std::bind(&Terrain::loadHeightmap, &terrain, "data/heightmap2.tga"));
+        input.mapCommand(GLFW_KEY_H,
+            std::bind(&Terrain::loadHeightmap, &terrain,
+                IO::Path::getAbsolutePath("data/heightmap2.tga")));
 
         input.addMouseMoveHandler(std::bind(
             &Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));

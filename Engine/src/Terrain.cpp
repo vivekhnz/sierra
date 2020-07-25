@@ -2,6 +2,7 @@
 
 #include <glm/glm.hpp>
 #include <algorithm>
+#include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
     Terrain::Terrain() :
@@ -18,45 +19,50 @@ namespace Terrain { namespace Engine {
     {
         // load shaders
         std::vector<Graphics::Shader> terrainShaders;
-        terrainShaders.push_back(
-            shaderManager.loadVertexShaderFromFile("data/terrain_vertex_shader.glsl"));
-        terrainShaders.push_back(
-            shaderManager.loadTessControlShaderFromFile("data/terrain_tess_ctrl_shader.glsl"));
-        terrainShaders.push_back(
-            shaderManager.loadTessEvalShaderFromFile("data/terrain_tess_eval_shader.glsl"));
-        terrainShaders.push_back(
-            shaderManager.loadFragmentShaderFromFile("data/terrain_fragment_shader.glsl"));
+        terrainShaders.push_back(shaderManager.loadVertexShaderFromFile(
+            IO::Path::getAbsolutePath("data/terrain_vertex_shader.glsl")));
+        terrainShaders.push_back(shaderManager.loadTessControlShaderFromFile(
+            IO::Path::getAbsolutePath("data/terrain_tess_ctrl_shader.glsl")));
+        terrainShaders.push_back(shaderManager.loadTessEvalShaderFromFile(
+            IO::Path::getAbsolutePath("data/terrain_tess_eval_shader.glsl")));
+        terrainShaders.push_back(shaderManager.loadFragmentShaderFromFile(
+            IO::Path::getAbsolutePath("data/terrain_fragment_shader.glsl")));
         terrainShaderProgram.link(terrainShaders);
 
         std::vector<Graphics::Shader> wireframeShaders;
-        wireframeShaders.push_back(
-            shaderManager.loadVertexShaderFromFile("data/wireframe_vertex_shader.glsl"));
+        wireframeShaders.push_back(shaderManager.loadVertexShaderFromFile(
+            IO::Path::getAbsolutePath("data/wireframe_vertex_shader.glsl")));
         wireframeShaders.push_back(shaderManager.loadTessControlShaderFromFile(
-            "data/wireframe_tess_ctrl_shader.glsl"));
-        wireframeShaders.push_back(
-            shaderManager.loadTessEvalShaderFromFile("data/wireframe_tess_eval_shader.glsl"));
-        wireframeShaders.push_back(
-            shaderManager.loadFragmentShaderFromFile("data/wireframe_fragment_shader.glsl"));
+            IO::Path::getAbsolutePath("data/wireframe_tess_ctrl_shader.glsl")));
+        wireframeShaders.push_back(shaderManager.loadTessEvalShaderFromFile(
+            IO::Path::getAbsolutePath("data/wireframe_tess_eval_shader.glsl")));
+        wireframeShaders.push_back(shaderManager.loadFragmentShaderFromFile(
+            IO::Path::getAbsolutePath("data/wireframe_fragment_shader.glsl")));
         wireframeShaderProgram.link(wireframeShaders);
 
         std::vector<Graphics::Shader> calcTessLevelShaders;
         calcTessLevelShaders.push_back(shaderManager.loadComputeShaderFromFile(
-            "data/terrain_calc_tess_levels_comp_shader.glsl"));
+            IO::Path::getAbsolutePath("data/terrain_calc_tess_levels_comp_shader.glsl")));
         calcTessLevelsShaderProgram.link(calcTessLevelShaders);
 
-        loadHeightmap("data/heightmap.tga");
+        loadHeightmap(IO::Path::getAbsolutePath("data/heightmap.tga"));
 
         // load terrain textures
-        albedoTexture.initialize(Graphics::Image("data/ground_albedo.bmp", false), GL_RGB,
-            GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        normalTexture.initialize(Graphics::Image("data/ground_normal.bmp", false), GL_RGB,
-            GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        displacementTexture.initialize(Graphics::Image("data/ground_displacement.tga", true),
+        albedoTexture.initialize(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false),
+            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        normalTexture.initialize(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false),
+            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        displacementTexture.initialize(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true),
             GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        aoTexture.initialize(Graphics::Image("data/ground_ao.tga", false), GL_R8, GL_RED,
-            GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        roughnessTexture.initialize(Graphics::Image("data/ground_roughness.tga", false), GL_R8,
+        aoTexture.initialize(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false), GL_R8,
             GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        roughnessTexture.initialize(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false),
+            GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);
@@ -182,8 +188,8 @@ namespace Terrain { namespace Engine {
 
     float Terrain::getTerrainPatchHeight(int x, int z) const
     {
-        int clampedX = std::min(std::max(x, 0), columns - 1);
-        int clampedZ = std::min(std::max(z, 0), rows - 1);
+        int clampedX = (std::min)((std::max)(x, 0), columns - 1);
+        int clampedZ = (std::min)((std::max)(z, 0), rows - 1);
         int i = (clampedZ * columns) + clampedX;
         return patchHeights[i];
     }
