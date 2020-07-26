@@ -32,10 +32,10 @@ public
         static void OnTick(Object ^ sender, EventArgs ^ e);
         static void OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args);
 
-    public:
-        static property HostedEngineViewContext *FocusedViewContext
+        // internal members
+        internal : static property HostedEngineViewContext *FocusedViewContext
         {
-        public:
+        internal:
             HostedEngineViewContext *get()
             {
                 return focusedViewCtx;
@@ -44,14 +44,13 @@ public
 
         static property HostedEngineViewContext *HoveredViewContext
         {
-        public:
+        internal:
             HostedEngineViewContext *get()
             {
                 return hoveredViewCtx;
             }
         }
 
-        static void InitializeEngine();
         static HostedEngineViewContext *CreateView(
             char *imgBuffer, RenderCallbackUnmanaged renderCallback);
         static void DetachView(HostedEngineViewContext *vctx);
@@ -60,6 +59,8 @@ public
         static void SetViewContextFocusState(HostedEngineViewContext *vctx, bool hasFocus);
         static void SetViewContextHoverState(HostedEngineViewContext *vctx, bool isHovered);
 
+    public:
+        static void InitializeEngine();
         static void Shutdown();
     };
 }}}
