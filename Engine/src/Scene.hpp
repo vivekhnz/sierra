@@ -44,6 +44,8 @@ namespace Terrain { namespace Engine {
         Scene(Scene &&) = delete;
         Scene &operator=(Scene &&) = delete;
 
+        Terrain &getTerrain();
+
         void update();
         void draw(EngineViewContext &vctx);
         void toggleCameraMode();

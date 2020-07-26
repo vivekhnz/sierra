@@ -14,9 +14,15 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="3*" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
-        <interop:Viewport x:Name="viewport" />
+        <Menu Grid.ColumnSpan="2" Padding="0 4">
+            <MenuItem Header="File">
+                <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
+            </MenuItem>
+        </Menu>
+        <interop:Viewport x:Name="viewport" Grid.Row="1" />
     </Grid>
 </Window>

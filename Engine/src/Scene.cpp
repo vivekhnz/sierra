@@ -47,6 +47,11 @@ namespace Terrain { namespace Engine {
         input.setMouseCaptureMode(true);
     }
 
+    Terrain &Scene::getTerrain()
+    {
+        return terrain;
+    }
+
     void Scene::update()
     {
         input.update();

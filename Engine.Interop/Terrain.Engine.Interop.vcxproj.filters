@@ -4,6 +4,9 @@
     <Filter Include="src">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Proxy">
+      <UniqueIdentifier>{f1e3b91c-89b3-41d9-a59c-920660a056c1}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssemblyInfo.cpp">
@@ -21,6 +24,9 @@
     <ClCompile Include="src\EngineInterop.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Proxy\TerrainProxy.cpp">
+      <Filter>src\Proxy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Viewport.h">
@@ -34,6 +40,12 @@
     </ClInclude>
     <ClInclude Include="src\EngineInterop.hpp">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Proxy\SceneProxy.hpp">
+      <Filter>src\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Proxy\TerrainProxy.hpp">
+      <Filter>src\Proxy</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -3,6 +3,7 @@
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "HostedEngineViewContext.hpp"
 #include "Viewport.h"
+#include "Proxy/SceneProxy.hpp"
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -24,6 +25,7 @@ public
 
         static bool isSceneInitialized = false;
         static Scene *scene;
+        static Proxy::SceneProxy ^ sceneProxy;
 
         static HostedEngineViewContext *focusedViewCtx = nullptr;
         static HostedEngineViewContext *hoveredViewCtx = nullptr;
@@ -60,6 +62,15 @@ public
         static void SetViewContextHoverState(HostedEngineViewContext *vctx, bool isHovered);
 
     public:
+        static property Proxy::SceneProxy^ Scene
+        {
+        public:
+            Proxy::SceneProxy^ get()
+            {
+                return sceneProxy;
+            }
+        }
+
         static void InitializeEngine();
         static void Shutdown();
     };
