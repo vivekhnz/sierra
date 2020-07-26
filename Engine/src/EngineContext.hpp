@@ -2,7 +2,6 @@
 #define ENGINECONTEXT_HPP
 
 #include "Common.hpp"
-#include <tuple>
 #include <functional>
 
 namespace Terrain { namespace Engine {
@@ -10,7 +9,6 @@ namespace Terrain { namespace Engine {
     {
     public:
         virtual float getCurrentTime() const = 0;
-        virtual std::tuple<int, int> getViewportSize() const = 0;
         virtual bool isKeyPressed(int key) const = 0;
         virtual bool isMouseButtonPressed(int button) const = 0;
 

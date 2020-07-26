@@ -3,8 +3,8 @@
 #include <glm/gtc/matrix_transform.hpp>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Camera::Camera(const EngineContext &ctx) :
-        ctx(ctx), near(0.1f), far(10000.0f), fov(glm::pi<float>() / 4.0f),
+    Camera::Camera() :
+        nearPlane(0.1f), farPlane(10000.0f), fov(glm::pi<float>() / 4.0f),
         up(glm::vec3(0.0f, 1.0f, 0.0f))
     {
     }
@@ -23,11 +23,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         target = lookAtPos;
     }
 
-    glm::mat4 Camera::getMatrix() const
+    glm::mat4 Camera::getMatrix(const EngineViewContext &vctx) const
     {
-        auto [width, height] = ctx.getViewportSize();
+        auto [width, height] = vctx.getViewportSize();
         const float aspectRatio = (float)width / (float)height;
-        return glm::perspective(fov, aspectRatio, near, far)
+        return glm::perspective(fov, aspectRatio, nearPlane, farPlane)
             * glm::lookAt(position, target, up);
     }
 

@@ -54,7 +54,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;GLFW_INCLUDE_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -68,7 +68,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>_DEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;GLFW_INCLUDE_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -82,7 +82,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>WIN32;NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;GLFW_INCLUDE_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -96,7 +96,7 @@
       <PrecompiledHeader>NotUsing</PrecompiledHeader>
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <WarningLevel>Level3</WarningLevel>
-      <PreprocessorDefinitions>NDEBUG;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;GLFW_INCLUDE_NONE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\include;$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\include;$(SolutionDir)deps;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
@@ -106,12 +106,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\HostedEngineContext.hpp" />
+    <ClInclude Include="src\EngineInterop.hpp" />
+    <ClInclude Include="src\EditorEngineContext.hpp" />
+    <ClInclude Include="src\HostedEngineViewContext.hpp" />
     <ClInclude Include="src\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\EngineInterop.cpp" />
     <ClCompile Include="src\AssemblyInfo.cpp" />
-    <ClCompile Include="src\HostedEngineContext.cpp" />
+    <ClCompile Include="src\EditorEngineContext.cpp" />
+    <ClCompile Include="src\HostedEngineViewContext.cpp" />
     <ClCompile Include="src\Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -120,7 +124,6 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
   </ItemGroup>
-  
   <PropertyGroup>
     <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
   </PropertyGroup>
@@ -133,7 +136,6 @@
     <Message Text="Copying dependencies..." Importance="high" />
     <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)\%(RecursiveDir)" />
   </Target>
-
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

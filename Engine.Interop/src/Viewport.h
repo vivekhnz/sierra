@@ -3,12 +3,14 @@
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/Scene.hpp"
-#include "HostedEngineContext.hpp"
+#include "EditorEngineContext.hpp"
+#include "HostedEngineViewContext.hpp"
 
 using namespace System;
 using namespace System::Windows;
 using namespace System::Windows::Controls;
 using namespace System::Windows::Input;
+using namespace System::Windows::Media;
 using namespace System::Windows::Media::Imaging;
 using namespace System::Windows::Threading;
 
@@ -16,17 +18,22 @@ namespace Terrain { namespace Engine { namespace Interop {
 public
     ref class Viewport : UserControl
     {
-        HostedEngineContext *ctx;
-        Scene *scene;
+        delegate void RenderCallbackManaged();
 
+        HostedEngineViewContext *vctx;
+
+        Grid ^ layoutRoot;
         Image ^ image;
         WriteableBitmap ^ bitmap;
-        DispatcherTimer ^ renderTimer;
+        Border ^ focusBorder;
+        Border ^ hoverBorder;
 
         bool isInitialized;
         bool isInDesignMode;
+        SolidColorBrush ^ unfocusedBrush;
+        SolidColorBrush ^ focusedBrush;
+        RenderCallbackManaged ^ onRenderCallback;
 
-        void OnTick(Object ^ sender, EventArgs ^ e);
         void UpdateImage();
 
     public:
@@ -36,6 +43,8 @@ public
         void OnRenderSizeChanged(SizeChangedInfo ^ info) override;
         void OnMouseEnter(MouseEventArgs ^ args) override;
         void OnMouseLeave(MouseEventArgs ^ args) override;
-        void OnMouseWheel(MouseWheelEventArgs ^ args) override;
+        void OnMouseDown(MouseButtonEventArgs ^ args) override;
+        void OnGotFocus(RoutedEventArgs ^ args) override;
+        void OnLostFocus(RoutedEventArgs ^ args) override;
     };
 }}}

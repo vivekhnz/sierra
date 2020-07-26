@@ -2,8 +2,9 @@
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
-#include "../../Engine/src/WindowEngineContext.hpp"
+#include "../../Engine/src/WindowEngineViewContext.hpp"
 #include "../../Engine/src/Scene.hpp"
+#include "GameEngineContext.hpp"
 
 int main()
 {
@@ -11,14 +12,17 @@ int main()
     {
         Terrain::Engine::Graphics::GlfwManager glfw;
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
-        Terrain::Engine::WindowEngineContext ctx(window);
+        window.makePrimary();
+        Terrain::Engine::WindowEngineViewContext vctx(window);
+        GameEngineContext ctx(glfw, vctx);
         Terrain::Engine::Scene scene(ctx);
 
         while (!window.isRequestingClose())
         {
             scene.update();
-            scene.draw();
-            ctx.render();
+            scene.draw(vctx);
+            vctx.render();
+            glfw.processEvents();
         }
 
         return 0;

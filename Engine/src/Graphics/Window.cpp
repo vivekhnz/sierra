@@ -3,6 +3,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include <windows.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     std::function<void(double, double)> onMouseMoveHandler = NULL;
@@ -12,50 +13,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
     double prevMouseY = 0;
 
     Window::Window(
-        const GlfwManager &glfw, int width, int height, const char *title, bool isHidden)
+        GlfwManager &glfw, int width, int height, const char *title, bool isHidden) :
+        glfw(glfw)
     {
         glfwWindowHint(GLFW_VISIBLE, !isHidden);
+
         window = glfwCreateWindow(width, height, title, NULL, NULL);
         if (window == NULL)
         {
             throw std::runtime_error("Failed to create GLFW window");
         }
-        glfwMakeContextCurrent(window);
-
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-        {
-            throw std::runtime_error("Failed to initialize GLAD");
-        }
-
-        glViewport(0, 0, width, height);
-        glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-            glViewport(0, 0, width, height);
-        });
-        glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
-            if (isFirstMouseInput)
-            {
-                prevMouseX = x;
-                prevMouseY = y;
-                isFirstMouseInput = false;
-                return;
-            }
-
-            float xOffset = x - prevMouseX;
-            float yOffset = y - prevMouseY;
-            prevMouseX = x;
-            prevMouseY = y;
-
-            if (onMouseMoveHandler != NULL)
-            {
-                onMouseMoveHandler(xOffset, yOffset);
-            }
-        });
-        glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
-            if (onMouseScrollHandler != NULL)
-            {
-                onMouseScrollHandler(xOffset, yOffset);
-            }
-        });
     }
 
     std::tuple<int, int> Window::getSize() const
@@ -99,7 +66,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void Window::refresh()
     {
         glfwSwapBuffers(window);
-        glfwPollEvents();
     }
 
     void Window::readPixels(char *buffer)
@@ -112,6 +78,58 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void Window::setSize(int width, int height)
     {
         glfwSetWindowSize(window, width, height);
+        glViewport(0, 0, width, height);
+    }
+
+    void Window::makePrimary()
+    {
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
+
+        glfwMakeContextCurrent(window);
+        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+        {
+            throw std::runtime_error("Failed to initialize GLAD");
+        }
+        glViewport(0, 0, width, height);
+        glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
+            glViewport(0, 0, width, height);
+        });
+        glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
+            if (isFirstMouseInput)
+            {
+                prevMouseX = x;
+                prevMouseY = y;
+                isFirstMouseInput = false;
+                return;
+            }
+
+            float xOffset = x - prevMouseX;
+            float yOffset = y - prevMouseY;
+            prevMouseX = x;
+            prevMouseY = y;
+
+            if (onMouseMoveHandler != NULL)
+            {
+                onMouseMoveHandler(xOffset, yOffset);
+            }
+        });
+        glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
+            if (onMouseScrollHandler != NULL)
+            {
+                onMouseScrollHandler(xOffset, yOffset);
+            }
+        });
+
+        glfw.setPrimaryWindow(*window);
+    }
+
+    void Window::makeCurrent()
+    {
+        glfw.setCurrentWindow(*window);
+
+        int width, height;
+        glfwGetWindowSize(window, &width, &height);
         glViewport(0, 0, width, height);
     }
 

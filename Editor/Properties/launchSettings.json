@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Terrain.Editor": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

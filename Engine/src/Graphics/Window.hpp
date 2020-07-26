@@ -4,18 +4,17 @@
 #include "../Common.hpp"
 #include <tuple>
 #include <functional>
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include "GlfwManager.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Window
     {
+        GlfwManager &glfw;
         GLFWwindow *window;
 
     public:
-        Window(
-            const GlfwManager &glfw, int width, int height, const char *title, bool isHidden);
+        Window(GlfwManager &glfw, int width, int height, const char *title, bool isHidden);
         Window(const Window &that) = delete;
         Window &operator=(const Window &that) = delete;
         Window(Window &&) = delete;
@@ -32,6 +31,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void refresh();
         void readPixels(char *buffer);
         void setSize(int width, int height);
+        void makePrimary();
+        void makeCurrent();
         void close();
 
         ~Window();

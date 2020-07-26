@@ -6,6 +6,7 @@
 #include "Graphics/Camera.hpp"
 #include "IO/InputManager.hpp"
 #include "EngineContext.hpp"
+#include "EngineViewContext.hpp"
 #include "Terrain.hpp"
 
 namespace Terrain { namespace Engine {
@@ -44,7 +45,7 @@ namespace Terrain { namespace Engine {
         Scene &operator=(Scene &&) = delete;
 
         void update();
-        void draw();
+        void draw(EngineViewContext &vctx);
         void toggleCameraMode();
 
         ~Scene();

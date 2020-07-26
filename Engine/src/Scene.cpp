@@ -6,9 +6,9 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx) :
-        ctx(ctx), orbitCamera(ctx), playerCamera(ctx), lightAngle(7.5f), prevFrameTime(0),
-        isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f),
-        orbitDistance(112.5f), orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
+        ctx(ctx), lightAngle(7.5f), prevFrameTime(0), isOrbitCameraMode(false),
+        orbitYAngle(90.0f), orbitXAngle(15.0f), orbitDistance(112.5f),
+        orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
         playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
         playerCameraPitch(0.0f), input(ctx)
     {
@@ -185,13 +185,13 @@ namespace Terrain { namespace Engine {
         }
     }
 
-    void Scene::draw()
+    void Scene::draw(EngineViewContext &vctx)
     {
         glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         auto &activeCamera = isOrbitCameraMode ? orbitCamera : playerCamera;
-        auto transform = activeCamera.getMatrix();
+        auto transform = activeCamera.getMatrix(vctx);
         auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
 
         terrain.draw(transform, lightDir);

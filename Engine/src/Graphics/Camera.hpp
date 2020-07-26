@@ -3,21 +3,20 @@
 
 #include "../Common.hpp"
 #include <glm/glm.hpp>
-#include "../EngineContext.hpp"
+#include "../EngineViewContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Camera
     {
-        const EngineContext &ctx;
-        float near;
-        float far;
+        float nearPlane;
+        float farPlane;
         float fov;
         glm::vec3 position;
         glm::vec3 target;
         glm::vec3 up;
 
     public:
-        Camera(const EngineContext &ctx);
+        Camera();
         Camera(const Camera &that) = delete;
         Camera &operator=(const Camera &that) = delete;
         Camera(Camera &&) = delete;
@@ -26,7 +25,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glm::vec3 getPosition() const;
         void setPosition(glm::vec3 newPos);
         void lookAt(glm::vec3 lookAtPos);
-        glm::mat4 getMatrix() const;
+        glm::mat4 getMatrix(const EngineViewContext &vctx) const;
 
         ~Camera();
     };
