@@ -9,19 +9,30 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
         unsigned int id;
 
-    public:
-        Texture();
-        Texture(const Texture &that) = delete;
-        Texture &operator=(const Texture &that) = delete;
-        Texture(Texture &&other) = delete;
-        Texture &operator=(Texture &&other) = delete;
+        int internalFormat;
+        int format;
+        int type;
 
-        void initialize(const Image &image,
+        int width;
+        int height;
+
+    public:
+        Texture(int width,
+            int height,
             int internalFormat,
             int format,
             int type,
             int wrapMode,
             int filterMode);
+        Texture(const Texture &that) = delete;
+        Texture &operator=(const Texture &that) = delete;
+        Texture(Texture &&other) = delete;
+        Texture &operator=(Texture &&other) = delete;
+
+        int getWidth() const;
+        int getHeight() const;
+
+        void load(const void *pixels);
         void bind(int slot);
 
         ~Texture();

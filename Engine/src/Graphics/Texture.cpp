@@ -3,16 +3,15 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Texture::Texture() : id(NULL)
-    {
-    }
-
-    void Texture::initialize(const Image &image,
+    Texture::Texture(int width,
+        int height,
         int internalFormat,
         int format,
         int type,
         int wrapMode,
-        int filterMode)
+        int filterMode) :
+        width(width),
+        height(height), internalFormat(internalFormat), format(format), type(type)
     {
         glGenTextures(1, &id);
         glBindTexture(GL_TEXTURE_2D, id);
@@ -20,8 +19,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, image.getWidth(), image.getHeight(), 0,
-            format, type, image.getData());
+    }
+
+    int Texture::getWidth() const
+    {
+        return width;
+    }
+
+    int Texture::getHeight() const
+    {
+        return height;
+    }
+
+    void Texture::load(const void *pixels)
+    {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
@@ -33,9 +46,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     Texture::~Texture()
     {
-        if (id != NULL)
-        {
-            glDeleteTextures(1, &id);
-        }
+        glDeleteTextures(1, &id);
     }
 }}}

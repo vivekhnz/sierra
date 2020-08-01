@@ -6,8 +6,25 @@
 
 namespace Terrain { namespace Engine {
     Terrain::Terrain() :
-        columns(256), rows(256), patchSize(0.5f), mesh(GL_PATCHES),
-        meshEdgeCount((2 * (rows * columns)) - rows - columns), terrainHeight(25.0f),
+        columns(256), rows(256), patchSize(0.5f), patchHeights(columns * rows),
+        mesh(GL_PATCHES), meshEdgeCount((2 * (rows * columns)) - rows - columns),
+        terrainHeight(25.0f), heightmapTexture(2048,
+                                  2048,
+                                  GL_R16,
+                                  GL_RED,
+                                  GL_UNSIGNED_SHORT,
+                                  GL_MIRRORED_REPEAT,
+                                  GL_LINEAR_MIPMAP_LINEAR),
+        albedoTexture(
+            2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+        normalTexture(
+            2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+        displacementTexture(
+            2048, 2048, GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+        aoTexture(
+            2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+        roughnessTexture(
+            2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY),
         isLightingEnabled(true), isTextureEnabled(true), isNormalMapEnabled(true),
         isDisplacementMapEnabled(true), isAOMapEnabled(true), isRoughnessMapEnabled(false),
@@ -45,68 +62,13 @@ namespace Terrain { namespace Engine {
             IO::Path::getAbsolutePath("data/terrain_calc_tess_levels_comp_shader.glsl")));
         calcTessLevelsShaderProgram.link(calcTessLevelShaders);
 
-        loadHeightmap(IO::Path::getAbsolutePath("data/heightmap.tga"));
-
-        // load terrain textures
-        albedoTexture.initialize(
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false),
-            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        normalTexture.initialize(
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false),
-            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        displacementTexture.initialize(
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true),
-            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        aoTexture.initialize(
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false), GL_R8,
-            GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        roughnessTexture.initialize(
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false),
-            GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-
-        // configure shaders
-        auto textureScale = glm::vec2(48.0f, 48.0f);
-        terrainShaderProgram.setVector2("normalSampleOffset",
-            glm::vec2(1.0f / (patchSize * columns), 1.0f / (patchSize * rows)));
-        terrainShaderProgram.setVector2("textureScale", textureScale);
-        terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
-        terrainShaderProgram.setInt("heightmapTexture", 0);
-        terrainShaderProgram.setInt("albedoTexture", 1);
-        terrainShaderProgram.setInt("normalTexture", 2);
-        terrainShaderProgram.setInt("displacementTexture", 3);
-        terrainShaderProgram.setInt("aoTexture", 4);
-        terrainShaderProgram.setInt("roughnessTexture", 5);
-        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
-        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
-        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
-        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-        terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
-        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
-        wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
-        wireframeShaderProgram.setInt("heightmapTexture", 0);
-        wireframeShaderProgram.setInt("displacementTexture", 3);
-        wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
-        wireframeShaderProgram.setVector2("textureScale", textureScale);
-        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-        calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
-        calcTessLevelsShaderProgram.setInt("columnCount", columns);
-        calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
-        glPatchParameteri(GL_PATCH_VERTICES, 4);
-    }
-
-    void Terrain::loadHeightmap(std::string path)
-    {
-        // load heightmap
-        Graphics::Image heightmap(path, true);
-        heightmapTexture.initialize(heightmap, GL_R16, GL_RED, GL_UNSIGNED_SHORT,
-            GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-
         // build vertices
         std::vector<float> vertices(columns * rows * 5);
         float offsetX = (columns - 1) * patchSize * -0.5f;
         float offsetY = (rows - 1) * patchSize * -0.5f;
         auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
-        auto heightmapSize = glm::vec2(heightmap.getWidth(), heightmap.getHeight());
+        auto heightmapSize =
+            glm::vec2(heightmapTexture.getWidth(), heightmapTexture.getHeight());
         patchHeights.resize(columns * rows);
         for (int y = 0; y < rows; y++)
         {
@@ -115,16 +77,10 @@ namespace Terrain { namespace Engine {
                 int patchIndex = (y * columns) + x;
                 int i = patchIndex * 5;
                 vertices[i] = (x * patchSize) + offsetX;
+                vertices[i + 1] = 0.0f;
                 vertices[i + 2] = (y * patchSize) + offsetY;
                 vertices[i + 3] = uvSize.x * x;
                 vertices[i + 4] = uvSize.y * y;
-
-                int tx = (x / (float)columns) * heightmapSize.x;
-                int ty = (y / (float)rows) * heightmapSize.y;
-                float height = (heightmap.getValue16(tx, ty, 0) / 65535.0f) * terrainHeight;
-                vertices[i + 1] = height;
-
-                patchHeights[patchIndex] = height;
             }
         }
 
@@ -149,9 +105,91 @@ namespace Terrain { namespace Engine {
         tessellationLevelBuffer.fill(
             vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
 
+        // load terrain textures
+        albedoTexture.load(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false)
+                .getData());
+        normalTexture.load(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false)
+                .getData());
+        displacementTexture.load(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true)
+                .getData());
+        aoTexture.load(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false).getData());
+        roughnessTexture.load(
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false)
+                .getData());
+
         // configure shaders
+        auto textureScale = glm::vec2(48.0f, 48.0f);
         terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
+        terrainShaderProgram.setVector2("normalSampleOffset",
+            glm::vec2(1.0f / (patchSize * columns), 1.0f / (patchSize * rows)));
+        terrainShaderProgram.setVector2("textureScale", textureScale);
+        terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
+        terrainShaderProgram.setInt("heightmapTexture", 0);
+        terrainShaderProgram.setInt("albedoTexture", 1);
+        terrainShaderProgram.setInt("normalTexture", 2);
+        terrainShaderProgram.setInt("displacementTexture", 3);
+        terrainShaderProgram.setInt("aoTexture", 4);
+        terrainShaderProgram.setInt("roughnessTexture", 5);
+        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
+        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
+        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
+        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+        terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
+        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
         wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
+        wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
+        wireframeShaderProgram.setInt("heightmapTexture", 0);
+        wireframeShaderProgram.setInt("displacementTexture", 3);
+        wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
+        wireframeShaderProgram.setVector2("textureScale", textureScale);
+        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
+        calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
+        calcTessLevelsShaderProgram.setInt("columnCount", columns);
+        calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
+    }
+
+    void Terrain::loadHeightmap(std::string path)
+    {
+        Graphics::Image heightmap(path, true);
+        auto pixels = heightmap.getData();
+        heightmapTexture.load(pixels);
+
+        // update mesh vertices and collider heights
+        std::vector<float> vertices(columns * rows * 5);
+        float offsetX = (columns - 1) * patchSize * -0.5f;
+        float offsetY = (rows - 1) * patchSize * -0.5f;
+        auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
+        auto heightmapSize =
+            glm::ivec2(heightmapTexture.getWidth(), heightmapTexture.getHeight());
+        float heightScalar = terrainHeight / 65535.0f;
+        for (int y = 0; y < rows; y++)
+        {
+            for (int x = 0; x < columns; x++)
+            {
+                int patchIndex = (y * columns) + x;
+                int i = patchIndex * 5;
+                int tx = (x / (float)columns) * heightmapSize.x;
+                int ty = (y / (float)rows) * heightmapSize.y;
+
+                float height =
+                    static_cast<unsigned short *>(pixels)[(ty * heightmapSize.x) + tx]
+                    * heightScalar;
+
+                vertices[i] = (x * patchSize) + offsetX;
+                vertices[i + 1] = height;
+                vertices[i + 2] = (y * patchSize) + offsetY;
+                vertices[i + 3] = uvSize.x * x;
+                vertices[i + 4] = uvSize.y * y;
+
+                patchHeights[patchIndex] = height;
+            }
+        }
+        mesh.setVertices(vertices);
     }
 
     float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)

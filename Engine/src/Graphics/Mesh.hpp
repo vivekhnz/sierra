@@ -27,6 +27,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         void initialize(
             const std::vector<float> &vertices, const std::vector<unsigned int> &indices);
+        void setVertices(const std::vector<float> &vertices);
         void draw();
 
         ~Mesh();

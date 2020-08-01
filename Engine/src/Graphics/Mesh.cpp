@@ -8,7 +8,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     Mesh::Mesh(GLenum primitiveType) :
         vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
         elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW), isInitialized(false),
-        primitiveType(primitiveType)
+        elementCount(0), primitiveType(primitiveType)
     {
     }
 
@@ -38,6 +38,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         elementCount = indices.size();
         isInitialized = true;
+    }
+
+    void Mesh::setVertices(const std::vector<float> &vertices)
+    {
+        vertexBuffer.fill(vertices.size() * sizeof(float), vertices.data());
     }
 
     void Mesh::draw()

@@ -4,6 +4,7 @@
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/WindowEngineViewContext.hpp"
 #include "../../Engine/src/Scene.hpp"
+#include "../../Engine/src/IO/Path.hpp"
 #include "GameEngineContext.hpp"
 
 int main()
@@ -16,6 +17,8 @@ int main()
         Terrain::Engine::WindowEngineViewContext vctx(window);
         GameEngineContext ctx(glfw, vctx);
         Terrain::Engine::Scene scene(ctx);
+        scene.getTerrain().loadHeightmap(
+            Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"));
 
         while (!window.isRequestingClose())
         {
