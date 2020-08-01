@@ -31,7 +31,7 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                EngineInterop.Scene.Terrain.LoadHeightmap(ofd.FileName);
+                EngineInterop.Scene.Terrain.LoadHeightmapFromFile(ofd.FileName);
             }
         }
     }

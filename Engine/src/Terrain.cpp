@@ -153,11 +153,14 @@ namespace Terrain { namespace Engine {
         glPatchParameteri(GL_PATCH_VERTICES, 4);
     }
 
-    void Terrain::loadHeightmap(std::string path)
+    void Terrain::loadHeightmapFromFile(std::string path)
     {
-        Graphics::Image heightmap(path, true);
-        auto pixels = heightmap.getData();
-        heightmapTexture.load(pixels);
+        loadHeightmap(Graphics::Image(path, true).getData());
+    }
+
+    void Terrain::loadHeightmap(void *data)
+    {
+        heightmapTexture.load(data);
 
         // update mesh vertices and collider heights
         std::vector<float> vertices(columns * rows * 5);
@@ -167,6 +170,7 @@ namespace Terrain { namespace Engine {
         auto heightmapSize =
             glm::ivec2(heightmapTexture.getWidth(), heightmapTexture.getHeight());
         float heightScalar = terrainHeight / 65535.0f;
+        auto pixels = static_cast<unsigned short *>(data);
         for (int y = 0; y < rows; y++)
         {
             for (int x = 0; x < columns; x++)
@@ -176,9 +180,7 @@ namespace Terrain { namespace Engine {
                 int tx = (x / (float)columns) * heightmapSize.x;
                 int ty = (y / (float)rows) * heightmapSize.y;
 
-                float height =
-                    static_cast<unsigned short *>(pixels)[(ty * heightmapSize.x) + tx]
-                    * heightScalar;
+                float height = pixels[(ty * heightmapSize.x) + tx] * heightScalar;
 
                 vertices[i] = (x * patchSize) + offsetX;
                 vertices[i + 1] = height;

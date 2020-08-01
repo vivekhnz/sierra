@@ -14,6 +14,6 @@ public
         {
         }
 
-        void LoadHeightmap(System::String ^ path);
+        void LoadHeightmapFromFile(System::String ^ path);
     };
 }}}}

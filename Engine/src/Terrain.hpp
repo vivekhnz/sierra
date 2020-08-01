@@ -49,7 +49,8 @@ namespace Terrain { namespace Engine {
         float getTerrainHeight(float worldX, float worldZ) const;
 
         void initialize(const Graphics::ShaderManager &shaderManager);
-        void loadHeightmap(std::string path);
+        void loadHeightmapFromFile(std::string path);
+        void loadHeightmap(void *data);
         void draw(glm::mat4 transform, glm::vec3 lightDir);
 
         void toggleLighting();

@@ -5,8 +5,8 @@
 #include <msclr\marshal_cppstd.h>
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Proxy {
-    void TerrainProxy::LoadHeightmap(System::String ^ path)
+    void TerrainProxy::LoadHeightmapFromFile(System::String ^ path)
     {
-        engineObj.loadHeightmap(msclr::interop::marshal_as<std::string>(path));
+        engineObj.loadHeightmapFromFile(msclr::interop::marshal_as<std::string>(path));
     }
 }}}}
