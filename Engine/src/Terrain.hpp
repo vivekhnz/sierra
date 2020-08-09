@@ -18,7 +18,7 @@ namespace Terrain { namespace Engine {
         float terrainHeight;
 
         Graphics::Mesh mesh;
-        Graphics::Texture heightmapTexture;
+        Graphics::Texture &heightmapTexture;
         Graphics::Texture albedoTexture;
         Graphics::Texture normalTexture;
         Graphics::Texture displacementTexture;
@@ -40,7 +40,7 @@ namespace Terrain { namespace Engine {
         float getTerrainPatchHeight(int x, int z) const;
 
     public:
-        Terrain();
+        Terrain(Graphics::Texture &heightmapTexture);
         Terrain(const Terrain &that) = delete;
         Terrain &operator=(const Terrain &that) = delete;
         Terrain(Terrain &&) = delete;
@@ -50,7 +50,7 @@ namespace Terrain { namespace Engine {
 
         void initialize(const Graphics::ShaderManager &shaderManager);
         void loadHeightmapFromFile(std::string path);
-        void loadHeightmap(void *data);
+        void loadHeightmap(const void *data);
         void draw(glm::mat4 transform, glm::vec3 lightDir);
 
         void toggleLighting();

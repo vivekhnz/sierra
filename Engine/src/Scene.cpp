@@ -3,6 +3,8 @@
 #include <algorithm>
 #include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
+#include "Graphics/BindVertexArray.hpp"
+#include <glm/gtc/matrix_transform.hpp>
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx) :
@@ -10,7 +12,14 @@ namespace Terrain { namespace Engine {
         orbitYAngle(90.0f), orbitXAngle(15.0f), orbitDistance(112.5f),
         orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
         playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
-        playerCameraPitch(0.0f), input(ctx)
+        playerCameraPitch(0.0f), input(ctx), heightmapTexture(2048,
+                                                 2048,
+                                                 GL_R16,
+                                                 GL_RED,
+                                                 GL_UNSIGNED_SHORT,
+                                                 GL_MIRRORED_REPEAT,
+                                                 GL_LINEAR_MIPMAP_LINEAR),
+        quadMesh(GL_TRIANGLES), terrain(heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
@@ -37,15 +46,59 @@ namespace Terrain { namespace Engine {
         input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
         input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
         input.mapCommand(GLFW_KEY_H,
-            std::bind(&Terrain::loadHeightmap, &terrain,
-                Graphics::Image(IO::Path::getAbsolutePath("data/heightmap2.tga"), true)
-                    .getData()));
+            std::bind(&Terrain::loadHeightmapFromFile, &terrain,
+                IO::Path::getAbsolutePath("data/heightmap2.tga")));
 
         input.addMouseMoveHandler(std::bind(
             &Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
         input.addMouseScrollHandler(std::bind(
             &Scene::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
         input.setMouseCaptureMode(true);
+
+        // setup heightmap quad
+        std::vector<float> quadVertices(20);
+
+        quadVertices[0] = 0.0f;
+        quadVertices[1] = 0.0f;
+        quadVertices[2] = 0.0f;
+        quadVertices[3] = 0.0f;
+        quadVertices[4] = 0.0f;
+
+        quadVertices[5] = 1.0f;
+        quadVertices[6] = 0.0f;
+        quadVertices[7] = 0.0f;
+        quadVertices[8] = 1.0f;
+        quadVertices[9] = 0.0f;
+
+        quadVertices[10] = 1.0f;
+        quadVertices[11] = 1.0f;
+        quadVertices[12] = 0.0f;
+        quadVertices[13] = 1.0f;
+        quadVertices[14] = 1.0f;
+
+        quadVertices[15] = 0.0f;
+        quadVertices[16] = 1.0f;
+        quadVertices[17] = 0.0f;
+        quadVertices[18] = 0.0f;
+        quadVertices[19] = 1.0f;
+
+        std::vector<unsigned int> quadIndices(6);
+        quadIndices[0] = 0;
+        quadIndices[1] = 2;
+        quadIndices[2] = 1;
+        quadIndices[3] = 0;
+        quadIndices[4] = 3;
+        quadIndices[5] = 2;
+
+        quadMesh.initialize(quadVertices, quadIndices);
+
+        std::vector<Graphics::Shader> quadShaders;
+        quadShaders.push_back(shaderManager.loadVertexShaderFromFile(
+            IO::Path::getAbsolutePath("data/texture_vertex_shader.glsl")));
+        quadShaders.push_back(shaderManager.loadFragmentShaderFromFile(
+            IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
+        quadShaderProgram.link(quadShaders);
+        quadShaderProgram.setInt("imageTexture", 0);
     }
 
     Terrain &Scene::getTerrain()
@@ -191,6 +244,20 @@ namespace Terrain { namespace Engine {
         }
     }
 
+    glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)
+    {
+        auto [viewportWidth, viewportHeight] = vctx.getViewportSize();
+
+        auto transform = glm::scale(glm::identity<glm::mat4>(),
+            glm::vec3(
+                2.0f * w / (float)viewportWidth, -2.0f * h / (float)viewportHeight, 1.0f));
+        transform = glm::translate(transform,
+            glm::vec3((x - (0.5f * viewportWidth)) / (float)w,
+                (y - (0.5f * viewportHeight)) / (float)h, 0.0f));
+
+        return transform;
+    }
+
     void Scene::draw(EngineViewContext &vctx)
     {
         glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
@@ -201,6 +268,12 @@ namespace Terrain { namespace Engine {
         auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
 
         terrain.draw(transform, lightDir);
+
+        heightmapTexture.bind(0);
+        quadShaderProgram.setMat4(
+            "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
+        quadShaderProgram.use();
+        quadMesh.draw();
     }
 
     Scene::~Scene()

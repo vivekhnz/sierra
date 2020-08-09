@@ -4,6 +4,7 @@
 #include "Common.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/Camera.hpp"
+#include "Graphics/Mesh.hpp"
 #include "IO/InputManager.hpp"
 #include "EngineContext.hpp"
 #include "EngineViewContext.hpp"
@@ -18,6 +19,8 @@ namespace Terrain { namespace Engine {
         Graphics::Camera playerCamera;
         IO::InputManager input;
 
+        Graphics::Texture heightmapTexture;
+
         float lightAngle;
         float prevFrameTime;
         bool isOrbitCameraMode;
@@ -31,6 +34,9 @@ namespace Terrain { namespace Engine {
         glm::vec3 playerLookDir;
         float playerCameraYaw;
         float playerCameraPitch;
+
+        Graphics::Mesh quadMesh;
+        Graphics::ShaderProgram quadShaderProgram;
 
         void updateOrbitCamera(float deltaTime);
         void updatePlayerCamera(float deltaTime);
