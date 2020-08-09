@@ -67,6 +67,9 @@
     <ClCompile Include="src\WindowEngineViewContext.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\MeshRenderer.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -137,6 +140,12 @@
     </ClInclude>
     <ClInclude Include="src\WindowEngineViewContext.hpp">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\MeshRenderer.hpp">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\MeshData.hpp">
+      <Filter>src\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

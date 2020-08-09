@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine {
                                                  GL_UNSIGNED_SHORT,
                                                  GL_MIRRORED_REPEAT,
                                                  GL_LINEAR_MIPMAP_LINEAR),
-        quadMesh(GL_TRIANGLES), terrain(heightmapTexture)
+        quadMesh(GL_TRIANGLES, meshRenderer), terrain(heightmapTexture, meshRenderer)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
@@ -273,7 +273,7 @@ namespace Terrain { namespace Engine {
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
         quadShaderProgram.use();
-        quadMesh.draw();
+        meshRenderer.renderMesh(quadMesh.getData());
     }
 
     Scene::~Scene()

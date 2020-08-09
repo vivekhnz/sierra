@@ -40,7 +40,7 @@ namespace Terrain { namespace Engine {
         float getTerrainPatchHeight(int x, int z) const;
 
     public:
-        Terrain(Graphics::Texture &heightmapTexture);
+        Terrain(Graphics::Texture &heightmapTexture, Graphics::MeshRenderer &meshRenderer);
         Terrain(const Terrain &that) = delete;
         Terrain &operator=(const Terrain &that) = delete;
         Terrain(Terrain &&) = delete;

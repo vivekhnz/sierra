@@ -5,6 +5,7 @@
 #include "Graphics/Window.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Mesh.hpp"
+#include "Graphics/MeshRenderer.hpp"
 #include "IO/InputManager.hpp"
 #include "EngineContext.hpp"
 #include "EngineViewContext.hpp"
@@ -37,6 +38,8 @@ namespace Terrain { namespace Engine {
 
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
+
+        Graphics::MeshRenderer meshRenderer;
 
         void updateOrbitCamera(float deltaTime);
         void updatePlayerCamera(float deltaTime);

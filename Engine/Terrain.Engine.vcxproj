@@ -32,6 +32,7 @@
     <ClCompile Include="src\Graphics\GlfwManager.cpp" />
     <ClCompile Include="src\Graphics\Image.cpp" />
     <ClCompile Include="src\Graphics\Mesh.cpp" />
+    <ClCompile Include="src\Graphics\MeshRenderer.cpp" />
     <ClCompile Include="src\Graphics\Shader.cpp" />
     <ClCompile Include="src\Graphics\ShaderManager.cpp" />
     <ClCompile Include="src\Graphics\ShaderProgram.cpp" />
@@ -56,6 +57,8 @@
     <ClInclude Include="src\Graphics\GlfwManager.hpp" />
     <ClInclude Include="src\Graphics\Image.hpp" />
     <ClInclude Include="src\Graphics\Mesh.hpp" />
+    <ClInclude Include="src\Graphics\MeshData.hpp" />
+    <ClInclude Include="src\Graphics\MeshRenderer.hpp" />
     <ClInclude Include="src\Graphics\Shader.hpp" />
     <ClInclude Include="src\Graphics\ShaderManager.hpp" />
     <ClInclude Include="src\Graphics\ShaderProgram.hpp" />

@@ -5,9 +5,11 @@
 #include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
-    Terrain::Terrain(Graphics::Texture &heightmapTexture) :
-        columns(256), rows(256), patchSize(0.5f), patchHeights(columns * rows),
-        mesh(GL_PATCHES), meshEdgeCount((2 * (rows * columns)) - rows - columns),
+    Terrain::Terrain(
+        Graphics::Texture &heightmapTexture, Graphics::MeshRenderer &meshRenderer) :
+        columns(256),
+        rows(256), patchSize(0.5f), patchHeights(columns * rows),
+        mesh(GL_PATCHES, meshRenderer), meshEdgeCount((2 * (rows * columns)) - rows - columns),
         terrainHeight(25.0f), heightmapTexture(heightmapTexture),
         albedoTexture(
             2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),

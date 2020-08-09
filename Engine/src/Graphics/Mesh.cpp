@@ -5,16 +5,24 @@
 #include "BindBuffer.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Mesh::Mesh(GLenum primitiveType) :
+    Mesh::Mesh(GLenum primitiveType, MeshRenderer &renderer) :
         vertexBuffer(GL_ARRAY_BUFFER, GL_STATIC_DRAW),
         elementBuffer(GL_ELEMENT_ARRAY_BUFFER, GL_STATIC_DRAW), isInitialized(false),
-        elementCount(0), primitiveType(primitiveType)
+        renderer(renderer)
     {
+        meshData.vertexArrayId = vertexArray.getId();
+        meshData.elementCount = 0;
+        meshData.primitiveType = primitiveType;
     }
 
     unsigned int Mesh::getVertexBufferId() const
     {
         return vertexBuffer.getId();
+    }
+
+    const MeshData &Mesh::getData() const
+    {
+        return meshData;
     }
 
     void Mesh::initialize(
@@ -36,7 +44,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glEnableVertexAttribArray(1);
         }
 
-        elementCount = indices.size();
+        meshData.elementCount = indices.size();
         isInitialized = true;
     }
 
@@ -51,8 +59,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             throw std::runtime_error("Mesh not initialized.");
         }
-        BindVertexArray bindVa(vertexArray);
-        glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
+        renderer.renderMesh(meshData);
     }
 
     Mesh::~Mesh()
