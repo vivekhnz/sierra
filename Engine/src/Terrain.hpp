@@ -2,6 +2,7 @@
 #define TERRAIN_HPP
 
 #include "Common.hpp"
+#include "Graphics/MeshRenderer.hpp"
 #include "Graphics/Mesh.hpp"
 #include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Texture.hpp"
@@ -17,6 +18,8 @@ namespace Terrain { namespace Engine {
         int meshEdgeCount;
         float terrainHeight;
 
+        Graphics::MeshRenderer &meshRenderer;
+        Graphics::MeshInstance meshInstance;
         Graphics::Mesh mesh;
         Graphics::Texture &heightmapTexture;
         Graphics::Texture albedoTexture;

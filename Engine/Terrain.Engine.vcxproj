@@ -58,6 +58,7 @@
     <ClInclude Include="src\Graphics\Image.hpp" />
     <ClInclude Include="src\Graphics\Mesh.hpp" />
     <ClInclude Include="src\Graphics\MeshData.hpp" />
+    <ClInclude Include="src\Graphics\MeshInstance.hpp" />
     <ClInclude Include="src\Graphics\MeshRenderer.hpp" />
     <ClInclude Include="src\Graphics\Shader.hpp" />
     <ClInclude Include="src\Graphics\ShaderManager.hpp" />

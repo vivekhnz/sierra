@@ -15,6 +15,8 @@ namespace Terrain { namespace Engine {
     class EXPORT Scene
     {
         EngineContext &ctx;
+
+        Graphics::MeshRenderer meshRenderer;
         Terrain terrain;
         Graphics::Camera orbitCamera;
         Graphics::Camera playerCamera;
@@ -36,10 +38,9 @@ namespace Terrain { namespace Engine {
         float playerCameraYaw;
         float playerCameraPitch;
 
+        Graphics::MeshInstance quadMeshInstance;
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
-
-        Graphics::MeshRenderer meshRenderer;
 
         void updateOrbitCamera(float deltaTime);
         void updatePlayerCamera(float deltaTime);

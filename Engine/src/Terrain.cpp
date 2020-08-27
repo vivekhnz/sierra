@@ -9,8 +9,8 @@ namespace Terrain { namespace Engine {
         Graphics::Texture &heightmapTexture, Graphics::MeshRenderer &meshRenderer) :
         columns(256),
         rows(256), patchSize(0.5f), patchHeights(columns * rows),
-        mesh(GL_PATCHES, meshRenderer), meshEdgeCount((2 * (rows * columns)) - rows - columns),
-        terrainHeight(25.0f), heightmapTexture(heightmapTexture),
+        meshEdgeCount((2 * (rows * columns)) - rows - columns), terrainHeight(25.0f),
+        meshRenderer(meshRenderer), heightmapTexture(heightmapTexture),
         albedoTexture(
             2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         normalTexture(
@@ -26,6 +26,11 @@ namespace Terrain { namespace Engine {
         isDisplacementMapEnabled(true), isAOMapEnabled(true), isRoughnessMapEnabled(false),
         isWireframeMode(false)
     {
+        meshInstance.meshHandle = meshRenderer.newMesh();
+        Graphics::MeshData &meshData = meshRenderer.getMesh(meshInstance.meshHandle);
+        meshData.vertexArrayId = mesh.getVertexArrayId();
+        meshData.elementCount = 0;
+        meshData.primitiveType = GL_PATCHES;
     }
 
     void Terrain::initialize(const Graphics::ShaderManager &shaderManager)
@@ -95,6 +100,8 @@ namespace Terrain { namespace Engine {
             }
         }
         mesh.initialize(vertices, indices);
+        Graphics::MeshData &meshData = meshRenderer.getMesh(meshInstance.meshHandle);
+        meshData.elementCount = indices.size();
 
         // create buffer to store vertex edge data
         std::vector<glm::vec4> vertEdgeData(vertices.size() * 2);
@@ -254,7 +261,7 @@ namespace Terrain { namespace Engine {
 
         // draw mesh
         (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
-        mesh.draw();
+        meshRenderer.renderMesh(meshInstance);
     }
 
     void Terrain::toggleLighting()

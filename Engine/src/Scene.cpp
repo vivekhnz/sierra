@@ -1,10 +1,10 @@
 #include "Scene.hpp"
 
 #include <algorithm>
+#include <glm/gtc/matrix_transform.hpp>
 #include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
 #include "Graphics/BindVertexArray.hpp"
-#include <glm/gtc/matrix_transform.hpp>
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx) :
@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine {
                                                  GL_UNSIGNED_SHORT,
                                                  GL_MIRRORED_REPEAT,
                                                  GL_LINEAR_MIPMAP_LINEAR),
-        quadMesh(GL_TRIANGLES, meshRenderer), terrain(heightmapTexture, meshRenderer)
+        terrain(heightmapTexture, meshRenderer)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
@@ -91,6 +91,12 @@ namespace Terrain { namespace Engine {
         quadIndices[5] = 2;
 
         quadMesh.initialize(quadVertices, quadIndices);
+
+        quadMeshInstance.meshHandle = meshRenderer.newMesh();
+        Graphics::MeshData &quadMeshData = meshRenderer.getMesh(quadMeshInstance.meshHandle);
+        quadMeshData.vertexArrayId = quadMesh.getVertexArrayId();
+        quadMeshData.elementCount = quadIndices.size();
+        quadMeshData.primitiveType = GL_TRIANGLES;
 
         std::vector<Graphics::Shader> quadShaders;
         quadShaders.push_back(shaderManager.loadVertexShaderFromFile(
@@ -273,7 +279,7 @@ namespace Terrain { namespace Engine {
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
         quadShaderProgram.use();
-        meshRenderer.renderMesh(quadMesh.getData());
+        meshRenderer.renderMesh(quadMeshInstance);
     }
 
     Scene::~Scene()
