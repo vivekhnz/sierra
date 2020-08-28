@@ -21,7 +21,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int getId() const;
         void link(const std::vector<Shader> &shaders);
-        void use();
         void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
         void setFloat(std::string uniformName, float value);
         void setInt(std::string uniformName, int value);

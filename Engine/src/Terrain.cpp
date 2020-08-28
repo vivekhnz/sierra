@@ -29,13 +29,24 @@ namespace Terrain { namespace Engine {
     {
         meshInstanceHandle = world.newMeshInstance();
         Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
+
         meshInstance.meshHandle = world.newMesh();
-        meshInstance.shaderProgramId = terrainShaderProgram.getId();
-        meshInstance.polygonMode = GL_FILL;
         Graphics::MeshData &meshData = world.getMesh(meshInstance.meshHandle);
         meshData.vertexArrayId = mesh.getVertexArrayId();
         meshData.elementCount = 0;
         meshData.primitiveType = GL_PATCHES;
+
+        meshInstance.materialHandle = world.newMaterial();
+        Graphics::Material &meshMaterial = world.getMaterial(meshInstance.materialHandle);
+        meshMaterial.shaderProgramId = terrainShaderProgram.getId();
+        meshMaterial.polygonMode = GL_FILL;
+        meshMaterial.textureCount = 6;
+        meshMaterial.textureIds[0] = heightmapTexture.getId();
+        meshMaterial.textureIds[1] = albedoTexture.getId();
+        meshMaterial.textureIds[2] = normalTexture.getId();
+        meshMaterial.textureIds[3] = displacementTexture.getId();
+        meshMaterial.textureIds[4] = aoTexture.getId();
+        meshMaterial.textureIds[5] = roughnessTexture.getId();
     }
 
     void Terrain::initialize(const Graphics::ShaderManager &shaderManager)
@@ -253,20 +264,9 @@ namespace Terrain { namespace Engine {
         calcTessLevelsShaderProgram.setMat4("transform", false, transform);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.getVertexBufferId());
-        calcTessLevelsShaderProgram.use();
+        glUseProgram(calcTessLevelsShaderProgram.getId());
         glDispatchCompute(meshEdgeCount, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-
-        // bind textures
-        heightmapTexture.bind(0);
-        albedoTexture.bind(1);
-        normalTexture.bind(2);
-        displacementTexture.bind(3);
-        aoTexture.bind(4);
-        roughnessTexture.bind(5);
-
-        // draw mesh
-        meshRenderer.renderMesh(meshInstanceHandle);
     }
 
     void Terrain::toggleLighting()
@@ -311,15 +311,16 @@ namespace Terrain { namespace Engine {
         isWireframeMode = !isWireframeMode;
 
         Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
+        Graphics::Material &material = world.getMaterial(meshInstance.materialHandle);
         if (isWireframeMode)
         {
-            meshInstance.shaderProgramId = wireframeShaderProgram.getId();
-            meshInstance.polygonMode = GL_LINE;
+            material.shaderProgramId = wireframeShaderProgram.getId();
+            material.polygonMode = GL_LINE;
         }
         else
         {
-            meshInstance.shaderProgramId = terrainShaderProgram.getId();
-            meshInstance.polygonMode = GL_FILL;
+            material.shaderProgramId = terrainShaderProgram.getId();
+            material.polygonMode = GL_FILL;
         }
     }
 

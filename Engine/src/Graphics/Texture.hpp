@@ -29,11 +29,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         Texture(Texture &&other) = delete;
         Texture &operator=(Texture &&other) = delete;
 
+        unsigned int getId() const;
         int getWidth() const;
         int getHeight() const;
 
         void load(const void *pixels);
-        void bind(int slot);
 
         ~Texture();
     };

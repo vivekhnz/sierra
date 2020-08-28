@@ -21,6 +21,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
     }
 
+    unsigned int Texture::getId() const
+    {
+        return id;
+    }
+
     int Texture::getWidth() const
     {
         return width;
@@ -36,12 +41,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBindTexture(GL_TEXTURE_2D, id);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels);
         glGenerateMipmap(GL_TEXTURE_2D);
-    }
-
-    void Texture::bind(int slot)
-    {
-        glActiveTexture(GL_TEXTURE0 + slot);
-        glBindTexture(GL_TEXTURE_2D, id);
     }
 
     Texture::~Texture()

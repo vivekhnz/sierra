@@ -18,13 +18,13 @@ namespace Terrain { namespace Engine {
         EngineContext &ctx;
         World &world;
 
+        Graphics::Texture heightmapTexture;
+
         Graphics::MeshRenderer meshRenderer;
         Terrain terrain;
         Graphics::Camera orbitCamera;
         Graphics::Camera playerCamera;
         IO::InputManager input;
-
-        Graphics::Texture heightmapTexture;
 
         float lightAngle;
         float prevFrameTime;
@@ -40,7 +40,6 @@ namespace Terrain { namespace Engine {
         float playerCameraYaw;
         float playerCameraPitch;
 
-        int quadMeshInstanceHandle;
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 

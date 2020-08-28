@@ -17,7 +17,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         MeshRenderer(MeshRenderer &&) = delete;
         MeshRenderer &operator=(MeshRenderer &&) = delete;
 
-        void renderMesh(int meshInstanceHandle);
+        void renderMeshes();
 
         ~MeshRenderer();
     };

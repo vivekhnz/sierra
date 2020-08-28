@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "Graphics/MeshData.hpp"
+#include "Graphics/Material.hpp"
 #include "Graphics/MeshInstance.hpp"
 
 namespace Terrain { namespace Engine {
@@ -11,6 +12,9 @@ namespace Terrain { namespace Engine {
     private:
         Graphics::MeshData meshes[100];
         int meshCount;
+
+        Graphics::Material materials[100];
+        int materialCount;
 
         Graphics::MeshInstance meshInstances[100];
         int meshInstanceCount;
@@ -25,7 +29,11 @@ namespace Terrain { namespace Engine {
         int newMesh();
         Graphics::MeshData &getMesh(int handle);
 
+        int newMaterial();
+        Graphics::Material &getMaterial(int handle);
+
         int newMeshInstance();
+        int getMeshInstanceCount() const;
         Graphics::MeshInstance &getMeshInstance(int handle);
 
         ~World();

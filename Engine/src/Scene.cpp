@@ -92,16 +92,22 @@ namespace Terrain { namespace Engine {
 
         quadMesh.initialize(quadVertices, quadIndices);
 
-        quadMeshInstanceHandle = world.newMeshInstance();
+        int quadMeshInstanceHandle = world.newMeshInstance();
         Graphics::MeshInstance &quadMeshInstance =
             world.getMeshInstance(quadMeshInstanceHandle);
+
         quadMeshInstance.meshHandle = world.newMesh();
-        quadMeshInstance.shaderProgramId = quadShaderProgram.getId();
-        quadMeshInstance.polygonMode = GL_FILL;
         Graphics::MeshData &quadMeshData = world.getMesh(quadMeshInstance.meshHandle);
         quadMeshData.vertexArrayId = quadMesh.getVertexArrayId();
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
+
+        quadMeshInstance.materialHandle = world.newMaterial();
+        Graphics::Material &quadMaterial = world.getMaterial(quadMeshInstance.materialHandle);
+        quadMaterial.shaderProgramId = quadShaderProgram.getId();
+        quadMaterial.polygonMode = GL_FILL;
+        quadMaterial.textureCount = 1;
+        quadMaterial.textureIds[0] = heightmapTexture.getId();
 
         std::vector<Graphics::Shader> quadShaders;
         quadShaders.push_back(shaderManager.loadVertexShaderFromFile(
@@ -278,12 +284,11 @@ namespace Terrain { namespace Engine {
         auto transform = activeCamera.getMatrix(vctx);
         auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
 
-        terrain.draw(transform, lightDir);
-
-        heightmapTexture.bind(0);
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
-        meshRenderer.renderMesh(quadMeshInstanceHandle);
+        terrain.draw(transform, lightDir);
+
+        meshRenderer.renderMeshes();
     }
 
     Scene::~Scene()

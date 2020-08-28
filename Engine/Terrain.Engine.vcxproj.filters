@@ -156,6 +156,9 @@
     <ClInclude Include="src\World.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\Material.hpp">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

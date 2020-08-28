@@ -34,11 +34,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    void ShaderProgram::use()
-    {
-        glUseProgram(id);
-    }
-
     void ShaderProgram::setMat4(std::string uniformName, bool transpose, glm::mat4 matrix)
     {
         unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
