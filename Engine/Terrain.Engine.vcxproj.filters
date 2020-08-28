@@ -70,6 +70,9 @@
     <ClCompile Include="src\Graphics\MeshRenderer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\World.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -149,6 +152,9 @@
     </ClInclude>
     <ClInclude Include="src\Graphics\MeshInstance.hpp">
       <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\World.hpp">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

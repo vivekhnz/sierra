@@ -3,25 +3,20 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    MeshRenderer::MeshRenderer() : meshCount(0)
+    MeshRenderer::MeshRenderer(World &world) : world(world)
     {
     }
 
-    void MeshRenderer::renderMesh(const MeshInstance &mesh)
+    void MeshRenderer::renderMesh(int meshInstanceHandle)
     {
-        auto meshData = getMesh(mesh.meshHandle);
+        auto meshInstance = world.getMeshInstance(meshInstanceHandle);
+
+        glUseProgram(meshInstance.shaderProgramId);
+        glPolygonMode(GL_FRONT_AND_BACK, meshInstance.polygonMode);
+
+        auto meshData = world.getMesh(meshInstance.meshHandle);
         glBindVertexArray(meshData.vertexArrayId);
         glDrawElements(meshData.primitiveType, meshData.elementCount, GL_UNSIGNED_INT, 0);
-    }
-
-    int MeshRenderer::newMesh()
-    {
-        return meshCount++;
-    }
-
-    MeshData &MeshRenderer::getMesh(int handle)
-    {
-        return meshes[handle];
     }
 
     MeshRenderer::~MeshRenderer()

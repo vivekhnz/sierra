@@ -16,7 +16,8 @@ int main()
         window.makePrimary();
         Terrain::Engine::WindowEngineViewContext vctx(window);
         GameEngineContext ctx(glfw, vctx);
-        Terrain::Engine::Scene scene(ctx);
+        Terrain::Engine::World world;
+        Terrain::Engine::Scene scene(ctx, world);
         scene.getTerrain().loadHeightmap(Terrain::Engine::Graphics::Image(
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true)
                                              .getData());

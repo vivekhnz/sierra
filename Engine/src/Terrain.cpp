@@ -5,12 +5,13 @@
 #include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
-    Terrain::Terrain(
-        Graphics::Texture &heightmapTexture, Graphics::MeshRenderer &meshRenderer) :
-        columns(256),
+    Terrain::Terrain(World &world,
+        Graphics::MeshRenderer &meshRenderer,
+        Graphics::Texture &heightmapTexture) :
+        world(world),
+        meshRenderer(meshRenderer), heightmapTexture(heightmapTexture), columns(256),
         rows(256), patchSize(0.5f), patchHeights(columns * rows),
         meshEdgeCount((2 * (rows * columns)) - rows - columns), terrainHeight(25.0f),
-        meshRenderer(meshRenderer), heightmapTexture(heightmapTexture),
         albedoTexture(
             2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         normalTexture(
@@ -26,8 +27,12 @@ namespace Terrain { namespace Engine {
         isDisplacementMapEnabled(true), isAOMapEnabled(true), isRoughnessMapEnabled(false),
         isWireframeMode(false)
     {
-        meshInstance.meshHandle = meshRenderer.newMesh();
-        Graphics::MeshData &meshData = meshRenderer.getMesh(meshInstance.meshHandle);
+        meshInstanceHandle = world.newMeshInstance();
+        Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
+        meshInstance.meshHandle = world.newMesh();
+        meshInstance.shaderProgramId = terrainShaderProgram.getId();
+        meshInstance.polygonMode = GL_FILL;
+        Graphics::MeshData &meshData = world.getMesh(meshInstance.meshHandle);
         meshData.vertexArrayId = mesh.getVertexArrayId();
         meshData.elementCount = 0;
         meshData.primitiveType = GL_PATCHES;
@@ -100,7 +105,8 @@ namespace Terrain { namespace Engine {
             }
         }
         mesh.initialize(vertices, indices);
-        Graphics::MeshData &meshData = meshRenderer.getMesh(meshInstance.meshHandle);
+        Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
+        Graphics::MeshData &meshData = world.getMesh(meshInstance.meshHandle);
         meshData.elementCount = indices.size();
 
         // create buffer to store vertex edge data
@@ -260,8 +266,7 @@ namespace Terrain { namespace Engine {
         roughnessTexture.bind(5);
 
         // draw mesh
-        (isWireframeMode ? wireframeShaderProgram : terrainShaderProgram).use();
-        meshRenderer.renderMesh(meshInstance);
+        meshRenderer.renderMesh(meshInstanceHandle);
     }
 
     void Terrain::toggleLighting()
@@ -304,7 +309,18 @@ namespace Terrain { namespace Engine {
     void Terrain::toggleWireframeMode()
     {
         isWireframeMode = !isWireframeMode;
-        glPolygonMode(GL_FRONT_AND_BACK, isWireframeMode ? GL_LINE : GL_FILL);
+
+        Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
+        if (isWireframeMode)
+        {
+            meshInstance.shaderProgramId = wireframeShaderProgram.getId();
+            meshInstance.polygonMode = GL_LINE;
+        }
+        else
+        {
+            meshInstance.shaderProgramId = terrainShaderProgram.getId();
+            meshInstance.polygonMode = GL_FILL;
+        }
     }
 
     Terrain::~Terrain()

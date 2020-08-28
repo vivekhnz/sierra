@@ -8,6 +8,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
     struct EXPORT MeshInstance
     {
         int meshHandle;
+        int shaderProgramId;
+        int polygonMode;
     };
 }}}
 

@@ -18,8 +18,9 @@ namespace Terrain { namespace Engine {
         int meshEdgeCount;
         float terrainHeight;
 
+        World &world;
         Graphics::MeshRenderer &meshRenderer;
-        Graphics::MeshInstance meshInstance;
+        int meshInstanceHandle;
         Graphics::Mesh mesh;
         Graphics::Texture &heightmapTexture;
         Graphics::Texture albedoTexture;
@@ -43,7 +44,9 @@ namespace Terrain { namespace Engine {
         float getTerrainPatchHeight(int x, int z) const;
 
     public:
-        Terrain(Graphics::Texture &heightmapTexture, Graphics::MeshRenderer &meshRenderer);
+        Terrain(World &world,
+            Graphics::MeshRenderer &meshRenderer,
+            Graphics::Texture &heightmapTexture);
         Terrain(const Terrain &that) = delete;
         Terrain &operator=(const Terrain &that) = delete;
         Terrain(Terrain &&) = delete;

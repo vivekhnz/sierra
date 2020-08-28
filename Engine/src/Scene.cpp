@@ -7,10 +7,10 @@
 #include "Graphics/BindVertexArray.hpp"
 
 namespace Terrain { namespace Engine {
-    Scene::Scene(EngineContext &ctx) :
-        ctx(ctx), lightAngle(7.5f), prevFrameTime(0), isOrbitCameraMode(false),
-        orbitYAngle(90.0f), orbitXAngle(15.0f), orbitDistance(112.5f),
-        orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
+    Scene::Scene(EngineContext &ctx, World &world) :
+        ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f), prevFrameTime(0),
+        isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f),
+        orbitDistance(112.5f), orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
         playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
         playerCameraPitch(0.0f), input(ctx), heightmapTexture(2048,
                                                  2048,
@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine {
                                                  GL_UNSIGNED_SHORT,
                                                  GL_MIRRORED_REPEAT,
                                                  GL_LINEAR_MIPMAP_LINEAR),
-        terrain(heightmapTexture, meshRenderer)
+        terrain(world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
@@ -92,8 +92,13 @@ namespace Terrain { namespace Engine {
 
         quadMesh.initialize(quadVertices, quadIndices);
 
-        quadMeshInstance.meshHandle = meshRenderer.newMesh();
-        Graphics::MeshData &quadMeshData = meshRenderer.getMesh(quadMeshInstance.meshHandle);
+        quadMeshInstanceHandle = world.newMeshInstance();
+        Graphics::MeshInstance &quadMeshInstance =
+            world.getMeshInstance(quadMeshInstanceHandle);
+        quadMeshInstance.meshHandle = world.newMesh();
+        quadMeshInstance.shaderProgramId = quadShaderProgram.getId();
+        quadMeshInstance.polygonMode = GL_FILL;
+        Graphics::MeshData &quadMeshData = world.getMesh(quadMeshInstance.meshHandle);
         quadMeshData.vertexArrayId = quadMesh.getVertexArrayId();
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
@@ -278,8 +283,7 @@ namespace Terrain { namespace Engine {
         heightmapTexture.bind(0);
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
-        quadShaderProgram.use();
-        meshRenderer.renderMesh(quadMeshInstance);
+        meshRenderer.renderMesh(quadMeshInstanceHandle);
     }
 
     Scene::~Scene()

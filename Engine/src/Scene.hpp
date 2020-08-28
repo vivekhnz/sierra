@@ -2,12 +2,13 @@
 #define SCENE_HPP
 
 #include "Common.hpp"
+#include "EngineContext.hpp"
+#include "World.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/Camera.hpp"
 #include "Graphics/Mesh.hpp"
 #include "Graphics/MeshRenderer.hpp"
 #include "IO/InputManager.hpp"
-#include "EngineContext.hpp"
 #include "EngineViewContext.hpp"
 #include "Terrain.hpp"
 
@@ -15,6 +16,7 @@ namespace Terrain { namespace Engine {
     class EXPORT Scene
     {
         EngineContext &ctx;
+        World &world;
 
         Graphics::MeshRenderer meshRenderer;
         Terrain terrain;
@@ -38,7 +40,7 @@ namespace Terrain { namespace Engine {
         float playerCameraYaw;
         float playerCameraPitch;
 
-        Graphics::MeshInstance quadMeshInstance;
+        int quadMeshInstanceHandle;
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
@@ -48,7 +50,7 @@ namespace Terrain { namespace Engine {
         void onMouseScroll(float xOffset, float yOffset);
 
     public:
-        Scene(EngineContext &ctx);
+        Scene(EngineContext &ctx, World &world);
         Scene(const Scene &that) = delete;
         Scene &operator=(const Scene &that) = delete;
         Scene(Scene &&) = delete;

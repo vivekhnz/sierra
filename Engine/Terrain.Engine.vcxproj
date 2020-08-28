@@ -39,6 +39,7 @@
     <ClCompile Include="src\Graphics\Texture.cpp" />
     <ClCompile Include="src\Graphics\VertexArray.cpp" />
     <ClCompile Include="src\Graphics\Window.cpp" />
+    <ClCompile Include="src\World.cpp" />
     <ClCompile Include="src\IO\InputManager.cpp" />
     <ClCompile Include="src\IO\OpenFile.cpp" />
     <ClCompile Include="src\Scene.cpp" />
@@ -66,6 +67,7 @@
     <ClInclude Include="src\Graphics\Texture.hpp" />
     <ClInclude Include="src\Graphics\VertexArray.hpp" />
     <ClInclude Include="src\Graphics\Window.hpp" />
+    <ClInclude Include="src\World.hpp" />
     <ClInclude Include="src\IO\InputManager.hpp" />
     <ClInclude Include="src\IO\OpenFile.hpp" />
     <ClInclude Include="src\IO\Path.hpp" />
