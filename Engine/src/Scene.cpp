@@ -13,13 +13,15 @@ namespace Terrain { namespace Engine {
         isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f),
         orbitDistance(112.5f), orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
         playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
-        playerCameraPitch(0.0f), input(ctx), heightmapTexture(2048,
-                                                 2048,
-                                                 GL_R16,
-                                                 GL_RED,
-                                                 GL_UNSIGNED_SHORT,
-                                                 GL_MIRRORED_REPEAT,
-                                                 GL_LINEAR_MIPMAP_LINEAR),
+        playerCameraPitch(0.0f), isLightingEnabled(true), isTextureEnabled(true),
+        isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
+        isRoughnessMapEnabled(false), input(ctx), heightmapTexture(2048,
+                                                      2048,
+                                                      GL_R16,
+                                                      GL_RED,
+                                                      GL_UNSIGNED_SHORT,
+                                                      GL_MIRRORED_REPEAT,
+                                                      GL_LINEAR_MIPMAP_LINEAR),
         terrain(world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
@@ -38,12 +40,12 @@ namespace Terrain { namespace Engine {
         playerCamera.lookAt(playerPos + playerLookDir);
 
         // configure input
-        input.mapCommand(GLFW_KEY_L, std::bind(&Terrain::toggleLighting, &terrain));
-        input.mapCommand(GLFW_KEY_T, std::bind(&Terrain::toggleAlbedoMap, &terrain));
-        input.mapCommand(GLFW_KEY_N, std::bind(&Terrain::toggleNormalMap, &terrain));
-        input.mapCommand(GLFW_KEY_B, std::bind(&Terrain::toggleDisplacementMap, &terrain));
-        input.mapCommand(GLFW_KEY_O, std::bind(&Terrain::toggleAmbientOcclusionMap, &terrain));
-        input.mapCommand(GLFW_KEY_R, std::bind(&Terrain::toggleRoughnessMap, &terrain));
+        input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
+        input.mapCommand(GLFW_KEY_T, std::bind(&Scene::toggleAlbedoMap, this));
+        input.mapCommand(GLFW_KEY_N, std::bind(&Scene::toggleNormalMap, this));
+        input.mapCommand(GLFW_KEY_B, std::bind(&Scene::toggleDisplacementMap, this));
+        input.mapCommand(GLFW_KEY_O, std::bind(&Scene::toggleAmbientOcclusionMap, this));
+        input.mapCommand(GLFW_KEY_R, std::bind(&Scene::toggleRoughnessMap, this));
         input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
         input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
         input.mapCommand(GLFW_KEY_H,
@@ -118,11 +120,20 @@ namespace Terrain { namespace Engine {
         quadShaderProgram.link(quadShaders);
         quadShaderProgram.setInt("imageTexture", 0);
 
+        // generate uniform buffer for camera state
         glGenBuffers(1, &cameraUniformBufferId);
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
         glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
         glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraUniformBufferId, 0, sizeof(glm::mat4));
+
+        // generate uniform buffer for lighting state
+        glGenBuffers(1, &lightingUniformBufferId);
+        glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBufferId);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(LightingState), NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        glBindBufferRange(
+            GL_UNIFORM_BUFFER, 1, lightingUniformBufferId, 0, sizeof(LightingState));
     }
 
     Terrain &Scene::getTerrain()
@@ -159,6 +170,36 @@ namespace Terrain { namespace Engine {
         {
             lightAngle -= deltaTime;
         }
+    }
+
+    void Scene::toggleLighting()
+    {
+        isLightingEnabled = !isLightingEnabled;
+    }
+
+    void Scene::toggleAlbedoMap()
+    {
+        isTextureEnabled = !isTextureEnabled;
+    }
+
+    void Scene::toggleNormalMap()
+    {
+        isNormalMapEnabled = !isNormalMapEnabled;
+    }
+
+    void Scene::toggleDisplacementMap()
+    {
+        isDisplacementMapEnabled = !isDisplacementMapEnabled;
+    }
+
+    void Scene::toggleAmbientOcclusionMap()
+    {
+        isAOMapEnabled = !isAOMapEnabled;
+    }
+
+    void Scene::toggleRoughnessMap()
+    {
+        isRoughnessMapEnabled = !isRoughnessMapEnabled;
     }
 
     void Scene::toggleCameraMode()
@@ -287,11 +328,24 @@ namespace Terrain { namespace Engine {
         glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        // update lighting state
         auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
+        LightingState lighting = {
+            glm::vec4(lightDir, 0.0f),        // lightDir
+            isLightingEnabled ? 1 : 0,        // isEnabled
+            isTextureEnabled ? 1 : 0,         // isTextureEnabled
+            isNormalMapEnabled ? 1 : 0,       // isNormalMapEnabled
+            isAOMapEnabled ? 1 : 0,           // isAOMapEnabled
+            isDisplacementMapEnabled ? 1 : 0, // isDisplacementMapEnabled
+            isRoughnessMapEnabled ? 1 : 0     // isRoughnessMapEnabled
+        };
+        glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBufferId);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightingState), &lighting);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
+        // update camera state
         auto &activeCamera = isOrbitCameraMode ? orbitCamera : playerCamera;
         auto cameraTransform = activeCamera.getMatrix(vctx);
-
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
         glBufferSubData(
             GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cameraTransform));
@@ -299,7 +353,7 @@ namespace Terrain { namespace Engine {
 
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
-        terrain.draw(lightDir);
+        terrain.calculateTessellationLevels();
 
         meshRenderer.renderMeshes();
     }

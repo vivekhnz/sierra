@@ -41,6 +41,15 @@ namespace Terrain { namespace Engine {
         float playerCameraPitch;
 
         unsigned int cameraUniformBufferId;
+        unsigned int lightingUniformBufferId;
+
+        bool isLightingEnabled;
+        bool isTextureEnabled;
+        bool isNormalMapEnabled;
+        bool isDisplacementMapEnabled;
+        bool isAOMapEnabled;
+        bool isRoughnessMapEnabled;
+
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
@@ -60,9 +69,26 @@ namespace Terrain { namespace Engine {
 
         void update();
         void draw(EngineViewContext &vctx);
+        void toggleLighting();
+        void toggleAlbedoMap();
+        void toggleNormalMap();
+        void toggleDisplacementMap();
+        void toggleAmbientOcclusionMap();
+        void toggleRoughnessMap();
         void toggleCameraMode();
 
         ~Scene();
+    };
+
+    struct LightingState
+    {
+        glm::vec4 lightDir;
+        int isEnabled;
+        int isTextureEnabled;
+        int isNormalMapEnabled;
+        int isAOMapEnabled;
+        int isDisplacementMapEnabled;
+        int isRoughnessMapEnabled;
     };
 }}
 

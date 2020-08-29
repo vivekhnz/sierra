@@ -11,12 +11,21 @@ layout (std140, binding = 0) uniform Camera
 {
     mat4 camera_transform;
 };
+layout (std140, binding = 1) uniform Lighting
+{
+    vec4 lighting_lightDir;
+    bool lighting_isEnabled;
+    bool lighting_isTextureEnabled;
+    bool lighting_isNormalMapEnabled;
+    bool lighting_isAOMapEnabled;
+    bool lighting_isDisplacementMapEnabled;
+    bool lighting_isRoughnessMapEnabled;
+};
 
 uniform sampler2D heightmapTexture;
 uniform sampler2D displacementTexture;
 uniform float terrainHeight;
 uniform vec2 textureScale;
-uniform bool isDisplacementMapEnabled;
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -43,7 +52,7 @@ float height(vec2 uv, float mip)
     float scaledMip = mip + log2(textureScale.x);
     float displacement =
         ((textureCLod(displacementTexture, uv * textureScale, scaledMip) * 2.0f) - 1.0f)
-        * (isDisplacementMapEnabled ? 0.002f : 0.0f);
+        * (lighting_isDisplacementMapEnabled ? 0.002f : 0.0f);
     return baseHeight + displacement;
 }
 

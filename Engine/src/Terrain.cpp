@@ -23,8 +23,6 @@ namespace Terrain { namespace Engine {
         roughnessTexture(
             2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY),
-        isLightingEnabled(true), isTextureEnabled(true), isNormalMapEnabled(true),
-        isDisplacementMapEnabled(true), isAOMapEnabled(true), isRoughnessMapEnabled(false),
         isWireframeMode(false)
     {
         meshInstanceHandle = world.newMeshInstance();
@@ -154,19 +152,12 @@ namespace Terrain { namespace Engine {
         terrainShaderProgram.setInt("displacementTexture", 3);
         terrainShaderProgram.setInt("aoTexture", 4);
         terrainShaderProgram.setInt("roughnessTexture", 5);
-        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
-        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
-        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
-        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-        terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
-        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
         wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
         wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
         wireframeShaderProgram.setInt("heightmapTexture", 0);
         wireframeShaderProgram.setInt("displacementTexture", 3);
         wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
         wireframeShaderProgram.setVector2("textureScale", textureScale);
-        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
         calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
         calcTessLevelsShaderProgram.setInt("columnCount", columns);
         calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
@@ -254,53 +245,13 @@ namespace Terrain { namespace Engine {
         return patchHeights[i];
     }
 
-    void Terrain::draw(glm::vec3 lightDir)
+    void Terrain::calculateTessellationLevels()
     {
-        terrainShaderProgram.setVector3("lightDir", lightDir);
-
-        // calculate tessellation levels
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.getVertexBufferId());
         glUseProgram(calcTessLevelsShaderProgram.getId());
         glDispatchCompute(meshEdgeCount, 1, 1);
         glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-    }
-
-    void Terrain::toggleLighting()
-    {
-        isLightingEnabled = !isLightingEnabled;
-        terrainShaderProgram.setBool("isLightingEnabled", isLightingEnabled);
-    }
-
-    void Terrain::toggleAlbedoMap()
-    {
-        isTextureEnabled = !isTextureEnabled;
-        terrainShaderProgram.setBool("isTextureEnabled", isTextureEnabled);
-    }
-
-    void Terrain::toggleNormalMap()
-    {
-        isNormalMapEnabled = !isNormalMapEnabled;
-        terrainShaderProgram.setBool("isNormalMapEnabled", isNormalMapEnabled);
-    }
-
-    void Terrain::toggleDisplacementMap()
-    {
-        isDisplacementMapEnabled = !isDisplacementMapEnabled;
-        terrainShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-        wireframeShaderProgram.setBool("isDisplacementMapEnabled", isDisplacementMapEnabled);
-    }
-
-    void Terrain::toggleAmbientOcclusionMap()
-    {
-        isAOMapEnabled = !isAOMapEnabled;
-        terrainShaderProgram.setBool("isAOMapEnabled", isAOMapEnabled);
-    }
-
-    void Terrain::toggleRoughnessMap()
-    {
-        isRoughnessMapEnabled = !isRoughnessMapEnabled;
-        terrainShaderProgram.setBool("isRoughnessMapEnabled", isRoughnessMapEnabled);
     }
 
     void Terrain::toggleWireframeMode()

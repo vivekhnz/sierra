@@ -33,12 +33,6 @@ namespace Terrain { namespace Engine {
         Graphics::ShaderProgram wireframeShaderProgram;
         Graphics::ShaderProgram calcTessLevelsShaderProgram;
 
-        bool isLightingEnabled;
-        bool isTextureEnabled;
-        bool isNormalMapEnabled;
-        bool isDisplacementMapEnabled;
-        bool isAOMapEnabled;
-        bool isRoughnessMapEnabled;
         bool isWireframeMode;
 
         float getTerrainPatchHeight(int x, int z) const;
@@ -57,14 +51,8 @@ namespace Terrain { namespace Engine {
         void initialize(const Graphics::ShaderManager &shaderManager);
         void loadHeightmapFromFile(std::string path);
         void loadHeightmap(const void *data);
-        void draw(glm::vec3 lightDir);
+        void calculateTessellationLevels();
 
-        void toggleLighting();
-        void toggleAlbedoMap();
-        void toggleNormalMap();
-        void toggleDisplacementMap();
-        void toggleAmbientOcclusionMap();
-        void toggleRoughnessMap();
         void toggleWireframeMode();
 
         ~Terrain();
