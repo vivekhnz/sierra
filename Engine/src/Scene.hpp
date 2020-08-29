@@ -40,6 +40,7 @@ namespace Terrain { namespace Engine {
         float playerCameraYaw;
         float playerCameraPitch;
 
+        unsigned int cameraUniformBufferId;
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 

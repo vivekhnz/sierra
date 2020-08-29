@@ -7,7 +7,11 @@ layout(location = 1) in vec2 in_heightmapUV[];
 patch in vec4 in_edgeMips;
 patch in vec4 in_cornerMips;
 
-uniform mat4 transform;
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
 uniform sampler2D heightmapTexture;
 uniform sampler2D displacementTexture;
 uniform float terrainHeight;
@@ -61,5 +65,5 @@ void main()
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
     pos.y = height(hUV, mip) * terrainHeight;
-    gl_Position = transform * vec4(pos, 1.0f);
+    gl_Position = camera_transform * vec4(pos, 1.0f);
 }

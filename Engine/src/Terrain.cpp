@@ -254,14 +254,11 @@ namespace Terrain { namespace Engine {
         return patchHeights[i];
     }
 
-    void Terrain::draw(glm::mat4 transform, glm::vec3 lightDir)
+    void Terrain::draw(glm::vec3 lightDir)
     {
-        terrainShaderProgram.setMat4("transform", false, transform);
-        wireframeShaderProgram.setMat4("transform", false, transform);
         terrainShaderProgram.setVector3("lightDir", lightDir);
 
         // calculate tessellation levels
-        calcTessLevelsShaderProgram.setMat4("transform", false, transform);
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.getVertexBufferId());
         glUseProgram(calcTessLevelsShaderProgram.getId());

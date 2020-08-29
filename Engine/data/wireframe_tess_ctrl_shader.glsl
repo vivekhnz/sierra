@@ -5,8 +5,12 @@ layout(location = 0) in int in_id[];
 layout(location = 1) in vec3 in_worldPos[];
 layout(location = 2) in vec2 in_heightmapUV[];
 
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
 uniform vec2 heightmapSize;
-uniform mat4 transform;
 
 struct VertexEdgeData
 {
@@ -26,7 +30,7 @@ patch out vec4 out_cornerMips;
 
 vec2 worldToScreen(vec3 p)
 {
-    vec4 clipPos = transform * vec4(p, 1.0f);
+    vec4 clipPos = camera_transform * vec4(p, 1.0f);
     return clipPos.xy / clipPos.w;
 }
 

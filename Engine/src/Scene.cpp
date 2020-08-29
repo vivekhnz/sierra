@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 #include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
 #include "Graphics/BindVertexArray.hpp"
@@ -116,6 +117,12 @@ namespace Terrain { namespace Engine {
             IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
         quadShaderProgram.link(quadShaders);
         quadShaderProgram.setInt("imageTexture", 0);
+
+        glGenBuffers(1, &cameraUniformBufferId);
+        glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraUniformBufferId, 0, sizeof(glm::mat4));
     }
 
     Terrain &Scene::getTerrain()
@@ -280,13 +287,19 @@ namespace Terrain { namespace Engine {
         glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        auto &activeCamera = isOrbitCameraMode ? orbitCamera : playerCamera;
-        auto transform = activeCamera.getMatrix(vctx);
         auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
+
+        auto &activeCamera = isOrbitCameraMode ? orbitCamera : playerCamera;
+        auto cameraTransform = activeCamera.getMatrix(vctx);
+
+        glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
+        glBufferSubData(
+            GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cameraTransform));
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
-        terrain.draw(transform, lightDir);
+        terrain.draw(lightDir);
 
         meshRenderer.renderMeshes();
     }

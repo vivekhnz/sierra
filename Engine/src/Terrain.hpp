@@ -57,7 +57,7 @@ namespace Terrain { namespace Engine {
         void initialize(const Graphics::ShaderManager &shaderManager);
         void loadHeightmapFromFile(std::string path);
         void loadHeightmap(const void *data);
-        void draw(glm::mat4 transform, glm::vec3 lightDir);
+        void draw(glm::vec3 lightDir);
 
         void toggleLighting();
         void toggleAlbedoMap();

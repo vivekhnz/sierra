@@ -24,14 +24,18 @@ layout(std430, binding = 1) buffer vertexBuffer
     Vertex vertices[];
 };
 
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
 uniform int horizontalEdgeCount;
 uniform int columnCount;
 uniform float targetTriangleSize;
-uniform mat4 transform;
 
 vec3 worldToScreen(vec3 p)
 {
-    vec4 clipPos = transform * vec4(p, 1.0f);
+    vec4 clipPos = camera_transform * vec4(p, 1.0f);
     return clipPos.xyz / clipPos.w;
 }
 
