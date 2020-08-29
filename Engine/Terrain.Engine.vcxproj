@@ -184,6 +184,21 @@
     <UpToDateCheckInput Include="@(DataFiles)" />
   </ItemGroup>
   <Target Name="CopyDataFiles" AfterTargets="AfterBuild" Inputs="@(DataFiles)" Outputs="@(DataFiles->'$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)')">
+    <ItemGroup>
+      <ReadTLogLines Include="^%(DataFiles.Identity)" />
+      <WriteTLogLines Include="^%(DataFiles.Identity)%0a$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)" />
+    </ItemGroup>
+
+    <!-- write .tlog files so incremental build works -->
+    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.read.1u.tlog"
+                      Lines="@(ReadTLogLines->'%(Identity)')"
+                      Encoding="Unicode"
+                      Overwrite="true"/>
+    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.write.1u.tlog"
+                      Lines="@(WriteTLogLines->'%(Identity)')"
+                      Encoding="Unicode"
+                      Overwrite="true"/>
+                      
     <Message Text="Copying data files..." Importance="high" />
     <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
   </Target>
