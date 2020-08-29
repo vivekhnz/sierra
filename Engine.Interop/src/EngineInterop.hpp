@@ -23,7 +23,8 @@ public
         static std::vector<HostedEngineViewContext *> *viewContexts;
         static Object ^ viewCtxLock = gcnew Object();
 
-        static bool isSceneInitialized = false;
+        static bool isWorldInitialized = false;
+        static World *world;
         static Scene *scene;
         static Proxy::SceneProxy ^ sceneProxy;
 

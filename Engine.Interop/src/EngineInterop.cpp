@@ -41,17 +41,18 @@ namespace Terrain { namespace Engine { namespace Interop {
             *glfw, imgBuffer, renderCallback, viewContexts->size() + 1);
         viewContexts->push_back(vctx);
 
-        if (!isSceneInitialized)
+        if (!isWorldInitialized)
         {
             vctx->makePrimary();
 
             // We can only initialize the scene once GLAD is initialized as it makes OpenGL
             // calls. GLAD is only initialized when a window is marked as the primary window.
-            scene = new Engine::Scene(*ctx);
+            world = new Engine::World();
+            scene = new Engine::Scene(*ctx, *world);
             scene->toggleCameraMode();
             sceneProxy = gcnew Proxy::SceneProxy(*scene);
 
-            isSceneInitialized = true;
+            isWorldInitialized = true;
         }
 
         return vctx;
@@ -85,7 +86,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         ctx->handleInput();
 
-        if (!isSceneInitialized)
+        if (!isWorldInitialized)
             return;
         scene->update();
 
@@ -138,10 +139,13 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         renderTimer->Stop();
 
-        if (isSceneInitialized)
+        if (isWorldInitialized)
         {
             delete scene;
             scene = NULL;
+
+            delete world;
+            world = NULL;
 
             for (int i = 0; i < viewContexts->size(); i++)
             {
