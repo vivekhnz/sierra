@@ -27,17 +27,23 @@ namespace Terrain { namespace Engine {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
 
-        // setup camera
+        // setup cameras
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        orbitCamera.setPosition(glm::vec3(0.0f, 37.5f, orbitDistance));
-        orbitCamera.lookAt(orbitLookAt);
+        cameraStates = new Graphics::Camera::CameraState[2];
+        cameraMatrices = new glm::mat4[2];
 
-        auto playerPos = glm::vec3(0.0f, 0.0f, 50.0f);
-        playerPos.y = terrain.getTerrainHeight(playerPos.x, playerPos.z) + 1.75f;
-        playerCamera.setPosition(playerPos);
-        playerCamera.lookAt(playerPos + playerLookDir);
+        // player camera
+        cameraStates[0].position =
+            glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
+        cameraStates[0].target = cameraStates[0].position + playerLookDir;
+        cameraMatrices[0] = glm::identity<glm::mat4>();
+
+        // orbit camera
+        cameraStates[1].position = glm::vec3(0.0f, 37.5f, orbitDistance);
+        cameraStates[1].target = orbitLookAt;
+        cameraMatrices[1] = glm::identity<glm::mat4>();
 
         // configure input
         input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
@@ -214,8 +220,8 @@ namespace Terrain { namespace Engine {
         float pitch = glm::radians(orbitXAngle);
         auto orbitLookDir =
             glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-        orbitCamera.setPosition(orbitLookAt + (orbitLookDir * orbitDistance));
-        orbitCamera.lookAt(orbitLookAt);
+        cameraStates[1].position = orbitLookAt + (orbitLookDir * orbitDistance);
+        cameraStates[1].target = orbitLookAt;
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
@@ -239,7 +245,7 @@ namespace Terrain { namespace Engine {
         glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
         playerLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
-        glm::vec3 pos = playerCamera.getPosition();
+        glm::vec3 pos = cameraStates[0].position;
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         if (input.isKeyPressed(GLFW_KEY_A))
@@ -261,8 +267,8 @@ namespace Terrain { namespace Engine {
         float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
         pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
-        playerCamera.setPosition(pos);
-        playerCamera.lookAt(pos + playerLookDir);
+        cameraStates[0].position = pos;
+        cameraStates[0].target = pos + playerLookDir;
     }
 
     void Scene::onMouseMove(float xOffset, float yOffset)
@@ -272,7 +278,7 @@ namespace Terrain { namespace Engine {
             if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
             {
                 float sensitivity = std::clamp(orbitDistance * 0.0003f, 0.001f, 0.08f);
-                auto orbitLookDir = glm::normalize(orbitLookAt - orbitCamera.getPosition());
+                auto orbitLookDir = glm::normalize(orbitLookAt - cameraStates[1].position);
                 glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
                 glm::vec3 yDir = cross(orbitLookDir, xDir);
                 glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
@@ -344,8 +350,12 @@ namespace Terrain { namespace Engine {
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         // update camera state
-        auto &activeCamera = isOrbitCameraMode ? orbitCamera : playerCamera;
-        auto cameraTransform = activeCamera.getMatrix(vctx);
+        auto [viewportWidth, viewportHeight] = vctx.getViewportSize();
+        Graphics::Camera::ViewportDimensions viewport = {
+            (float)viewportWidth, (float)viewportHeight};
+        Graphics::Camera::calculateMatrices(viewport, cameraStates, cameraMatrices, 2);
+
+        auto &cameraTransform = cameraMatrices[isOrbitCameraMode ? 1 : 0];
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
         glBufferSubData(
             GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cameraTransform));
@@ -360,5 +370,7 @@ namespace Terrain { namespace Engine {
 
     Scene::~Scene()
     {
+        delete[] cameraStates;
+        delete[] cameraMatrices;
     }
 }}

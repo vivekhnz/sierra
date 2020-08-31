@@ -22,9 +22,6 @@
     <ClCompile Include="src\Graphics\Buffer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\Camera.cpp">
-      <Filter>src\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\GlfwManager.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>

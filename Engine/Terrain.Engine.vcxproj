@@ -28,7 +28,6 @@
     <ClCompile Include="src\Graphics\BindBuffer.cpp" />
     <ClCompile Include="src\Graphics\BindVertexArray.cpp" />
     <ClCompile Include="src\Graphics\Buffer.cpp" />
-    <ClCompile Include="src\Graphics\Camera.cpp" />
     <ClCompile Include="src\Graphics\GlfwManager.cpp" />
     <ClCompile Include="src\Graphics\Image.cpp" />
     <ClCompile Include="src\Graphics\Mesh.cpp" />
@@ -188,17 +187,9 @@
       <ReadTLogLines Include="^%(DataFiles.Identity)" />
       <WriteTLogLines Include="^%(DataFiles.Identity)%0a$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)" />
     </ItemGroup>
-
     <!-- write .tlog files so incremental build works -->
-    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.read.1u.tlog"
-                      Lines="@(ReadTLogLines->'%(Identity)')"
-                      Encoding="Unicode"
-                      Overwrite="true"/>
-    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.write.1u.tlog"
-                      Lines="@(WriteTLogLines->'%(Identity)')"
-                      Encoding="Unicode"
-                      Overwrite="true"/>
-                      
+    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.read.1u.tlog" Lines="@(ReadTLogLines->'%(Identity)')" Encoding="Unicode" Overwrite="true" />
+    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.write.1u.tlog" Lines="@(WriteTLogLines->'%(Identity)')" Encoding="Unicode" Overwrite="true" />
     <Message Text="Copying data files..." Importance="high" />
     <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
   </Target>

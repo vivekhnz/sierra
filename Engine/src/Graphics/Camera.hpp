@@ -3,32 +3,42 @@
 
 #include "../Common.hpp"
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include "../EngineViewContext.hpp"
 
-namespace Terrain { namespace Engine { namespace Graphics {
-    class EXPORT Camera
+namespace Terrain { namespace Engine { namespace Graphics { namespace Camera {
+
+    struct EXPORT ViewportDimensions
     {
-        float nearPlane;
-        float farPlane;
-        float fov;
+        float width;
+        float height;
+    };
+
+    struct EXPORT CameraState
+    {
         glm::vec3 position;
         glm::vec3 target;
-        glm::vec3 up;
-
-    public:
-        Camera();
-        Camera(const Camera &that) = delete;
-        Camera &operator=(const Camera &that) = delete;
-        Camera(Camera &&) = delete;
-        Camera &operator=(Camera &&) = delete;
-
-        glm::vec3 getPosition() const;
-        void setPosition(glm::vec3 newPos);
-        void lookAt(glm::vec3 lookAtPos);
-        glm::mat4 getMatrix(const EngineViewContext &vctx) const;
-
-        ~Camera();
     };
-}}}
+
+    static void calculateMatrices(ViewportDimensions &viewport,
+        CameraState *cameraStates_in,
+        glm::mat4 *cameraMatrices_out,
+        int count)
+    {
+        constexpr float fov = glm::pi<float>() / 4.0f;
+        const float nearPlane = 0.1f;
+        const float farPlane = 10000.0f;
+        const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+
+        const float aspectRatio = viewport.width / viewport.height;
+        glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+        for (int i = 0; i < count; i++)
+        {
+            CameraState camera = cameraStates_in[i];
+            cameraMatrices_out[i] =
+                projection * glm::lookAt(camera.position, camera.target, up);
+        }
+    }
+}}}}
 
 #endif

@@ -22,13 +22,14 @@ namespace Terrain { namespace Engine {
 
         Graphics::MeshRenderer meshRenderer;
         Terrain terrain;
-        Graphics::Camera orbitCamera;
-        Graphics::Camera playerCamera;
         IO::InputManager input;
 
         float lightAngle;
         float prevFrameTime;
         bool isOrbitCameraMode;
+
+        Graphics::Camera::CameraState *cameraStates;
+        glm::mat4 *cameraMatrices;
 
         float orbitYAngle;
         float orbitXAngle;
