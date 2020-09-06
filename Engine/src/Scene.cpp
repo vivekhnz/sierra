@@ -31,12 +31,18 @@ namespace Terrain { namespace Engine {
         glEnable(GL_CULL_FACE);
 
         orbitCameraStates = new OrbitCamera::OrbitCameraState[1];
+        orbitCameraYawPitch = new OrbitCamera::OrbitCameraYawPitch[1];
+        orbitCameraDistance = new float[1];
+
         OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
         orbitCamera.cameraIndex = 1;
-        orbitCamera.xAngle = 15.0f;
-        orbitCamera.yAngle = 90.0f;
-        orbitCamera.distance = 112.5f;
         orbitCamera.lookAt = glm::vec3(0, 0, 0);
+
+        OrbitCamera::OrbitCameraYawPitch &orbitCamera_yawPitch = orbitCameraYawPitch[0];
+        orbitCamera_yawPitch.pitch = glm::radians(15.0f);
+        orbitCamera_yawPitch.yaw = glm::radians(90.0f);
+
+        orbitCameraDistance[0] = 112.5f;
 
         cameraStates = new Graphics::Camera::CameraState[2];
         cameraMatrices = new glm::mat4[2];
@@ -50,7 +56,7 @@ namespace Terrain { namespace Engine {
 
         // orbit camera
         Graphics::Camera::CameraState &orbitCamera_cameraState = cameraStates[1];
-        orbitCamera_cameraState.position = glm::vec3(0.0f, 37.5f, orbitCamera.distance);
+        orbitCamera_cameraState.position = glm::vec3(0.0f, 37.5f, orbitCameraDistance[0]);
         orbitCamera_cameraState.target = orbitCamera.lookAt;
         cameraMatrices[1] = glm::identity<glm::mat4>();
 
@@ -227,8 +233,8 @@ namespace Terrain { namespace Engine {
         OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
-            float sensitivity =
-                std::clamp(orbitCamera.distance * 0.02f, 0.05f, 6.0f) * deltaTime;
+            float orbitDistance = orbitCameraDistance[0];
+            float sensitivity = std::clamp(orbitDistance * 0.02f, 0.05f, 6.0f) * deltaTime;
             auto orbitLookDir = glm::normalize(orbitCamera.lookAt - cameraStates[1].position);
             glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(orbitLookDir, xDir);
@@ -237,13 +243,12 @@ namespace Terrain { namespace Engine {
         }
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         {
-            float sensitivity =
-                std::clamp(orbitCamera.distance * 0.04f, 0.7f, 3.5f) * deltaTime;
-            orbitCamera.yAngle += mouseOffsetX * sensitivity;
-            orbitCamera.xAngle += mouseOffsetY * sensitivity;
+            OrbitCamera::calculateYawAndPitch(mouseOffsetX, mouseOffsetY, deltaTime,
+                orbitCameraDistance, orbitCameraYawPitch, 1);
         }
 
-        OrbitCamera::calculateCameraStates(orbitCameraStates, cameraStates, 1);
+        OrbitCamera::calculateCameraStates(
+            orbitCameraStates, orbitCameraYawPitch, orbitCameraDistance, cameraStates, 1);
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
@@ -303,14 +308,14 @@ namespace Terrain { namespace Engine {
     {
         if (isOrbitCameraMode)
         {
-            OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
+            float &orbitDistance = orbitCameraDistance[0];
             if (yOffset > 0.0f)
             {
-                orbitCamera.distance *= 0.95f;
+                orbitDistance *= 0.95f;
             }
             else
             {
-                orbitCamera.distance /= 0.95f;
+                orbitDistance /= 0.95f;
             }
         }
     }
@@ -370,6 +375,9 @@ namespace Terrain { namespace Engine {
 
     Scene::~Scene()
     {
+        delete[] orbitCameraStates;
+        delete[] orbitCameraYawPitch;
+        delete[] orbitCameraDistance;
         delete[] cameraStates;
         delete[] cameraMatrices;
     }

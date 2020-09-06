@@ -30,6 +30,8 @@ namespace Terrain { namespace Engine {
         bool isOrbitCameraMode;
 
         OrbitCamera::OrbitCameraState *orbitCameraStates;
+        OrbitCamera::OrbitCameraYawPitch *orbitCameraYawPitch;
+        float *orbitCameraDistance;
         bool wasManipulatingCamera;
 
         Graphics::Camera::CameraState *cameraStates;
