@@ -4,7 +4,6 @@
 #include "../Common.hpp"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include "../EngineViewContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics { namespace Camera {
 
@@ -21,8 +20,8 @@ namespace Terrain { namespace Engine { namespace Graphics { namespace Camera {
     };
 
     static void calculateMatrices(ViewportDimensions &viewport,
-        CameraState *cameraStates_in,
-        glm::mat4 *cameraMatrices_out,
+        CameraState *in_cameraStates,
+        glm::mat4 *out_cameraMatrices,
         int count)
     {
         constexpr float fov = glm::pi<float>() / 4.0f;
@@ -34,8 +33,8 @@ namespace Terrain { namespace Engine { namespace Graphics { namespace Camera {
         glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
         for (int i = 0; i < count; i++)
         {
-            CameraState camera = cameraStates_in[i];
-            cameraMatrices_out[i] =
+            CameraState camera = in_cameraStates[i];
+            out_cameraMatrices[i] =
                 projection * glm::lookAt(camera.position, camera.target, up);
         }
     }

@@ -10,8 +10,7 @@
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f), prevFrameTime(0),
-        isOrbitCameraMode(false), orbitYAngle(90.0f), orbitXAngle(15.0f),
-        orbitDistance(112.5f), orbitLookAt(glm::vec3(0, 0, 0)), wasManipulatingCamera(false),
+        isOrbitCameraMode(false), wasManipulatingCamera(false),
         playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
         playerCameraPitch(0.0f), isLightingEnabled(true), isTextureEnabled(true),
         isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
@@ -31,18 +30,28 @@ namespace Terrain { namespace Engine {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
+        orbitCameraStates = new OrbitCamera::OrbitCameraState[1];
+        OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
+        orbitCamera.cameraIndex = 1;
+        orbitCamera.xAngle = 15.0f;
+        orbitCamera.yAngle = 90.0f;
+        orbitCamera.distance = 112.5f;
+        orbitCamera.lookAt = glm::vec3(0, 0, 0);
+
         cameraStates = new Graphics::Camera::CameraState[2];
         cameraMatrices = new glm::mat4[2];
 
         // player camera
-        cameraStates[0].position =
+        Graphics::Camera::CameraState &playerCamera = cameraStates[0];
+        playerCamera.position =
             glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
-        cameraStates[0].target = cameraStates[0].position + playerLookDir;
+        playerCamera.target = playerCamera.position + playerLookDir;
         cameraMatrices[0] = glm::identity<glm::mat4>();
 
         // orbit camera
-        cameraStates[1].position = glm::vec3(0.0f, 37.5f, orbitDistance);
-        cameraStates[1].target = orbitLookAt;
+        Graphics::Camera::CameraState &orbitCamera_cameraState = cameraStates[1];
+        orbitCamera_cameraState.position = glm::vec3(0.0f, 37.5f, orbitCamera.distance);
+        orbitCamera_cameraState.target = orbitCamera.lookAt;
         cameraMatrices[1] = glm::identity<glm::mat4>();
 
         // configure input
@@ -216,12 +225,7 @@ namespace Terrain { namespace Engine {
 
     void Scene::updateOrbitCamera(float deltaTime)
     {
-        float yaw = glm::radians(orbitYAngle);
-        float pitch = glm::radians(orbitXAngle);
-        auto orbitLookDir =
-            glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-        cameraStates[1].position = orbitLookAt + (orbitLookDir * orbitDistance);
-        cameraStates[1].target = orbitLookAt;
+        OrbitCamera::calculateCameraStates(orbitCameraStates, cameraStates, 1);
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
@@ -245,7 +249,8 @@ namespace Terrain { namespace Engine {
         glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
         playerLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
-        glm::vec3 pos = cameraStates[0].position;
+        Graphics::Camera::CameraState &playerCamera = cameraStates[0];
+        glm::vec3 pos = playerCamera.position;
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         if (input.isKeyPressed(GLFW_KEY_A))
@@ -267,28 +272,31 @@ namespace Terrain { namespace Engine {
         float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
         pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
-        cameraStates[0].position = pos;
-        cameraStates[0].target = pos + playerLookDir;
+        playerCamera.position = pos;
+        playerCamera.target = pos + playerLookDir;
     }
 
     void Scene::onMouseMove(float xOffset, float yOffset)
     {
         if (isOrbitCameraMode)
         {
+            OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
+
             if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
             {
-                float sensitivity = std::clamp(orbitDistance * 0.0003f, 0.001f, 0.08f);
-                auto orbitLookDir = glm::normalize(orbitLookAt - cameraStates[1].position);
+                float sensitivity = std::clamp(orbitCamera.distance * 0.0003f, 0.001f, 0.08f);
+                auto orbitLookDir =
+                    glm::normalize(orbitCamera.lookAt - cameraStates[1].position);
                 glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
                 glm::vec3 yDir = cross(orbitLookDir, xDir);
                 glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
-                orbitLookAt += pan * sensitivity;
+                orbitCamera.lookAt += pan * sensitivity;
             }
             if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
             {
-                float sensitivity = std::clamp(orbitDistance * 0.0007f, 0.01f, 0.05f);
-                orbitYAngle += xOffset * sensitivity;
-                orbitXAngle += yOffset * sensitivity;
+                float sensitivity = std::clamp(orbitCamera.distance * 0.0007f, 0.01f, 0.05f);
+                orbitCamera.yAngle += xOffset * sensitivity;
+                orbitCamera.xAngle += yOffset * sensitivity;
             }
         }
         else
@@ -304,13 +312,14 @@ namespace Terrain { namespace Engine {
     {
         if (isOrbitCameraMode)
         {
+            OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
             if (yOffset > 0.0f)
             {
-                orbitDistance *= 0.95f;
+                orbitCamera.distance *= 0.95f;
             }
             else
             {
-                orbitDistance /= 0.95f;
+                orbitCamera.distance /= 0.95f;
             }
         }
     }

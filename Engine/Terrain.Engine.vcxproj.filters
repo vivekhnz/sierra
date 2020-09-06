@@ -156,6 +156,9 @@
     <ClInclude Include="src\Graphics\Material.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\OrbitCamera.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
