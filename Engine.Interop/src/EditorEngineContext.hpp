@@ -10,9 +10,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         std::function<void(double, double)> onMouseScrollHandler;
 
-        double mouseXOffset;
-        double mouseYOffset;
-
         int prevMousePosX;
         int prevMousePosY;
         bool isMouseCaptured;

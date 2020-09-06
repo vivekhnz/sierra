@@ -11,8 +11,7 @@ using namespace System::Windows::Input;
 
 namespace Terrain { namespace Engine { namespace Interop {
     EditorEngineContext::EditorEngineContext() :
-        onMouseScrollHandler(NULL), prevMousePosX(0), prevMousePosY(0), mouseXOffset(0),
-        mouseYOffset(0)
+        onMouseScrollHandler(NULL), prevMousePosX(0), prevMousePosY(0)
     {
         startTime = System::DateTime::Now;
     }
@@ -54,7 +53,9 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     std::tuple<double, double> EditorEngineContext::getMouseOffset() const
     {
-        return std::make_tuple(mouseXOffset, mouseYOffset);
+        auto appWindow = Application::Current->MainWindow;
+        auto mousePos = Mouse::GetPosition(appWindow);
+        return std::make_tuple(mousePos.X - prevMousePosX, mousePos.Y - prevMousePosY);
     }
 
     void EditorEngineContext::addMouseScrollHandler(
@@ -70,38 +71,27 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EditorEngineContext::resetMouseOffset()
     {
-        mouseXOffset = 0;
-        mouseYOffset = 0;
     }
 
     void EditorEngineContext::handleInput()
     {
         auto appWindow = Application::Current->MainWindow;
-        auto mousePos = Mouse::GetPosition(appWindow);
-        appWindow->Cursor = nullptr;
 
-        // only fire mouse move events and capture mouse if mouse is in a viewport's bounds
-        if (EngineInterop::HoveredViewContext != nullptr)
+        // only capture mouse if mouse is in a viewport's bounds
+        if (EngineInterop::HoveredViewContext != nullptr && isMouseCaptured)
         {
-            mouseXOffset += mousePos.X - prevMousePosX;
-            mouseYOffset += mousePos.Y - prevMousePosY;
-            if (isMouseCaptured)
-            {
-                auto [viewportX, viewportY] =
-                    EngineInterop::HoveredViewContext->getViewportPos();
-                auto [viewportWidth, viewportHeight] =
-                    EngineInterop::HoveredViewContext->getViewportSize();
-                prevMousePosX = viewportX + (viewportWidth / 2);
-                prevMousePosY = viewportY + (viewportHeight / 2);
-                auto screenPos = appWindow->PointToScreen(Point(prevMousePosX, prevMousePosY));
-                SetCursorPos(screenPos.X, screenPos.Y);
-                appWindow->Cursor = Cursors::None;
-                return;
-            }
+            auto [viewportWidth, viewportHeight] =
+                EngineInterop::HoveredViewContext->getViewportSize();
+            auto screenPos = appWindow->PointToScreen(Point(prevMousePosX, prevMousePosY));
+            SetCursorPos(screenPos.X, screenPos.Y);
+            appWindow->Cursor = Cursors::None;
+            return;
         }
 
+        auto mousePos = Mouse::GetPosition(appWindow);
         prevMousePosX = mousePos.X;
         prevMousePosY = mousePos.Y;
+        appWindow->Cursor = nullptr;
     }
 
     void EditorEngineContext::exit()

@@ -75,9 +75,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         int height = (int)Math::Max(info->NewSize.Height, 128.0);
 
         bitmap = gcnew WriteableBitmap(width, height, 96, 96, PixelFormats::Pbgra32, nullptr);
-        auto pos = this->TransformToAncestor(Application::Current->MainWindow)
-                       ->Transform(Point(0, 0));
-        vctx->resize(pos.X, pos.Y, width, height, (char *)bitmap->BackBuffer.ToPointer());
+        vctx->resize(width, height, (char *)bitmap->BackBuffer.ToPointer());
         EngineInterop::RenderView(*vctx);
         image->Source = bitmap;
     }

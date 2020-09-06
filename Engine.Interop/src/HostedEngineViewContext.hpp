@@ -8,8 +8,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         Graphics::Window window;
         char *imgBuffer;
-        int viewportX;
-        int viewportY;
         std::function<void()> onRenderCallback;
         int id;
 
@@ -28,11 +26,10 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         int getId() const;
         std::tuple<int, int> getViewportSize() const;
-        std::tuple<int, int> getViewportPos() const;
         bool isDetached() const;
 
         void render();
-        void resize(int x, int y, int width, int height, char *buffer);
+        void resize(int width, int height, char *buffer);
         void makePrimary();
         void makeCurrent();
 
