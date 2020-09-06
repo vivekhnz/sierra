@@ -37,9 +37,9 @@ void GameEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)
     vctx.setMouseCaptureMode(shouldCaptureMouse);
 }
 
-void GameEngineContext::resetMouseOffset()
+void GameEngineContext::handleInput()
 {
-    vctx.resetMouseOffset();
+    vctx.handleInput();
 }
 
 void GameEngineContext::exit()

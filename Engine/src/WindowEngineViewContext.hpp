@@ -13,8 +13,8 @@ namespace Terrain { namespace Engine {
         bool isFirstMouseInput;
         double mouseXOffset;
         double mouseYOffset;
-
-        void onMouseMove(double x, double y);
+        double prevMouseX;
+        double prevMouseY;
 
     public:
         WindowEngineViewContext(Graphics::Window &window);
@@ -31,7 +31,7 @@ namespace Terrain { namespace Engine {
 
         void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
-        void resetMouseOffset();
+        void handleInput();
         void render();
         void exit();
 

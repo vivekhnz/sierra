@@ -2,10 +2,9 @@
 
 namespace Terrain { namespace Engine {
     WindowEngineViewContext::WindowEngineViewContext(Graphics::Window &window) :
-        window(window), isFirstMouseInput(true), mouseXOffset(0), mouseYOffset(0)
+        window(window), isFirstMouseInput(true), mouseXOffset(0), mouseYOffset(0),
+        prevMouseX(0), prevMouseY(0)
     {
-        window.addMouseMoveHandler(std::bind(&WindowEngineViewContext::onMouseMove, this,
-            std::placeholders::_1, std::placeholders::_2));
     }
 
     int WindowEngineViewContext::getId() const
@@ -33,17 +32,6 @@ namespace Terrain { namespace Engine {
         return std::make_tuple(mouseXOffset, mouseYOffset);
     }
 
-    void WindowEngineViewContext::onMouseMove(double x, double y)
-    {
-        if (isFirstMouseInput)
-        {
-            isFirstMouseInput = false;
-            return;
-        }
-        mouseXOffset += x;
-        mouseYOffset += y;
-    }
-
     void WindowEngineViewContext::addMouseScrollHandler(
         std::function<void(double, double)> handler)
     {
@@ -55,10 +43,22 @@ namespace Terrain { namespace Engine {
         window.setMouseCaptureMode(shouldCaptureMouse);
     }
 
-    void WindowEngineViewContext::resetMouseOffset()
+    void WindowEngineViewContext::handleInput()
     {
-        mouseXOffset = 0;
-        mouseYOffset = 0;
+        auto [mouseX, mouseY] = window.getMousePosition();
+
+        if (isFirstMouseInput)
+        {
+            isFirstMouseInput = false;
+        }
+        else
+        {
+            mouseXOffset = mouseX - prevMouseX;
+            mouseYOffset = mouseY - prevMouseY;
+        }
+
+        prevMouseX = mouseX;
+        prevMouseY = mouseY;
     }
 
     void WindowEngineViewContext::render()

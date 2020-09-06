@@ -24,6 +24,7 @@ int main()
 
         while (!window.isRequestingClose())
         {
+            ctx.handleInput();
             scene.update();
             scene.draw(vctx);
             vctx.render();

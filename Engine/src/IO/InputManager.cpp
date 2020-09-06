@@ -74,7 +74,6 @@ namespace Terrain { namespace Engine { namespace IO {
         {
             onMouseMoveHandler(mouseXOffset, mouseYOffset);
         }
-        ctx.resetMouseOffset();
     }
 
     void InputManager::onMouseScroll(double xOffset, double yOffset)

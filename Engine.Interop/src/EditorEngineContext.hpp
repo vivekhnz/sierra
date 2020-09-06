@@ -28,7 +28,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
-        void resetMouseOffset();
         void handleInput();
         void exit();
 

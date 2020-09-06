@@ -6,11 +6,7 @@
 #include <windows.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    std::function<void(double, double)> onMouseMoveHandler = NULL;
     std::function<void(double, double)> onMouseScrollHandler = NULL;
-    bool isFirstMouseInput = true;
-    double prevMouseX = 0;
-    double prevMouseY = 0;
 
     Window::Window(
         GlfwManager &glfw, int width, int height, const char *title, bool isHidden) :
@@ -47,9 +43,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return glfwGetMouseButton(window, button) == GLFW_PRESS;
     }
 
-    void Window::addMouseMoveHandler(std::function<void(double, double)> handler)
+    std::tuple<double, double> Window::getMousePosition() const
     {
-        onMouseMoveHandler = handler;
+        double x, y = 0.0;
+        glfwGetCursorPos(window, &x, &y);
+        return std::make_tuple(x, y);
     }
 
     void Window::addMouseScrollHandler(std::function<void(double, double)> handler)
@@ -94,25 +92,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glViewport(0, 0, width, height);
         glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
             glViewport(0, 0, width, height);
-        });
-        glfwSetCursorPosCallback(window, [](GLFWwindow *window, double x, double y) {
-            if (isFirstMouseInput)
-            {
-                prevMouseX = x;
-                prevMouseY = y;
-                isFirstMouseInput = false;
-                return;
-            }
-
-            float xOffset = x - prevMouseX;
-            float yOffset = y - prevMouseY;
-            prevMouseX = x;
-            prevMouseY = y;
-
-            if (onMouseMoveHandler != NULL)
-            {
-                onMouseMoveHandler(xOffset, yOffset);
-            }
         });
         glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
             if (onMouseScrollHandler != NULL)

@@ -69,10 +69,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         isMouseCaptured = shouldCaptureMouse;
     }
 
-    void EditorEngineContext::resetMouseOffset()
-    {
-    }
-
     void EditorEngineContext::handleInput()
     {
         auto appWindow = Application::Current->MainWindow;

@@ -24,8 +24,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         bool isRequestingClose() const;
         bool isKeyPressed(int key) const;
         bool isMouseButtonPressed(int button) const;
+        std::tuple<double, double> getMousePosition() const;
 
-        void addMouseMoveHandler(std::function<void(double, double)> handler);
         void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void refresh();
