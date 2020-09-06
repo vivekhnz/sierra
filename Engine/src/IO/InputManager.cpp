@@ -3,7 +3,7 @@
 #include <iostream>
 
 namespace Terrain { namespace Engine { namespace IO {
-    InputManager::InputManager(EngineContext &ctx) : ctx(ctx), onMouseMoveHandler(NULL)
+    InputManager::InputManager(EngineContext &ctx) : ctx(ctx)
     {
         ctx.addMouseScrollHandler(std::bind(
             &InputManager::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
@@ -25,6 +25,11 @@ namespace Terrain { namespace Engine { namespace IO {
         return ctx.isMouseButtonPressed(button);
     }
 
+    std::tuple<double, double> InputManager::getMouseOffset() const
+    {
+        return ctx.getMouseOffset();
+    }
+
     void InputManager::listenForKey(int key)
     {
         keyState[key] = std::make_tuple(false, false);
@@ -34,11 +39,6 @@ namespace Terrain { namespace Engine { namespace IO {
     {
         listenForKey(key);
         keyCommands[key] = command;
-    }
-
-    void InputManager::addMouseMoveHandler(std::function<void(float, float)> handler)
-    {
-        onMouseMoveHandler = handler;
     }
 
     void InputManager::addMouseScrollHandler(std::function<void(float, float)> handler)
@@ -67,12 +67,6 @@ namespace Terrain { namespace Engine { namespace IO {
             }
 
             iterator++;
-        }
-
-        auto [mouseXOffset, mouseYOffset] = ctx.getMouseOffset();
-        if (onMouseMoveHandler != NULL)
-        {
-            onMouseMoveHandler(mouseXOffset, mouseYOffset);
         }
     }
 

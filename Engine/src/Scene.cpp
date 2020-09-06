@@ -67,8 +67,6 @@ namespace Terrain { namespace Engine {
             std::bind(&Terrain::loadHeightmapFromFile, &terrain,
                 IO::Path::getAbsolutePath("data/heightmap2.tga")));
 
-        input.addMouseMoveHandler(std::bind(
-            &Scene::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
         input.addMouseScrollHandler(std::bind(
             &Scene::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
         input.setMouseCaptureMode(true);
@@ -168,15 +166,14 @@ namespace Terrain { namespace Engine {
         float deltaTime = currentTime - prevFrameTime;
         prevFrameTime = currentTime;
 
-        OrbitCamera::calculateCameraStates(orbitCameraStates, cameraStates, 1);
-
+        auto [mouseOffsetX, mouseOffsetY] = input.getMouseOffset();
         if (isOrbitCameraMode)
         {
-            updateOrbitCamera(deltaTime);
+            updateOrbitCamera(deltaTime, mouseOffsetX, mouseOffsetY);
         }
         else
         {
-            updatePlayerCamera(deltaTime);
+            updatePlayerCamera(deltaTime, mouseOffsetX, mouseOffsetY);
         }
 
         if (input.isKeyPressed(GLFW_KEY_LEFT))
@@ -225,8 +222,29 @@ namespace Terrain { namespace Engine {
         input.setMouseCaptureMode(!isOrbitCameraMode);
     }
 
-    void Scene::updateOrbitCamera(float deltaTime)
+    void Scene::updateOrbitCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY)
     {
+        OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
+        if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
+        {
+            float sensitivity =
+                std::clamp(orbitCamera.distance * 0.02f, 0.05f, 6.0f) * deltaTime;
+            auto orbitLookDir = glm::normalize(orbitCamera.lookAt - cameraStates[1].position);
+            glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(orbitLookDir, xDir);
+            glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
+            orbitCamera.lookAt += pan * sensitivity;
+        }
+        if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
+        {
+            float sensitivity =
+                std::clamp(orbitCamera.distance * 0.04f, 0.7f, 3.5f) * deltaTime;
+            orbitCamera.yAngle += mouseOffsetX * sensitivity;
+            orbitCamera.xAngle += mouseOffsetY * sensitivity;
+        }
+
+        OrbitCamera::calculateCameraStates(orbitCameraStates, cameraStates, 1);
+
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
             || input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
@@ -241,8 +259,13 @@ namespace Terrain { namespace Engine {
         wasManipulatingCamera = isManipulatingCamera;
     }
 
-    void Scene::updatePlayerCamera(float deltaTime)
+    void Scene::updatePlayerCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY)
     {
+        const float sensitivity = 4.0f * deltaTime;
+        playerCameraYaw += mouseOffsetX * sensitivity;
+        playerCameraPitch =
+            std::clamp(playerCameraPitch - (mouseOffsetY * sensitivity), -89.0f, 89.0f);
+
         float yaw = glm::radians(playerCameraYaw);
         float pitch = glm::radians(playerCameraPitch);
 
@@ -274,38 +297,6 @@ namespace Terrain { namespace Engine {
 
         playerCamera.position = pos;
         playerCamera.target = pos + playerLookDir;
-    }
-
-    void Scene::onMouseMove(float xOffset, float yOffset)
-    {
-        if (isOrbitCameraMode)
-        {
-            OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
-
-            if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
-            {
-                float sensitivity = std::clamp(orbitCamera.distance * 0.0003f, 0.001f, 0.08f);
-                auto orbitLookDir =
-                    glm::normalize(orbitCamera.lookAt - cameraStates[1].position);
-                glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
-                glm::vec3 yDir = cross(orbitLookDir, xDir);
-                glm::vec3 pan = (xDir * xOffset) + (yDir * yOffset);
-                orbitCamera.lookAt += pan * sensitivity;
-            }
-            if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
-            {
-                float sensitivity = std::clamp(orbitCamera.distance * 0.0007f, 0.01f, 0.05f);
-                orbitCamera.yAngle += xOffset * sensitivity;
-                orbitCamera.xAngle += yOffset * sensitivity;
-            }
-        }
-        else
-        {
-            float sensitivity = 0.05f;
-            playerCameraYaw += xOffset * sensitivity;
-            playerCameraPitch =
-                std::clamp(playerCameraPitch - (yOffset * sensitivity), -89.0f, 89.0f);
-        }
     }
 
     void Scene::onMouseScroll(float xOffset, float yOffset)
