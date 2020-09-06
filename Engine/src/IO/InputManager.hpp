@@ -15,8 +15,8 @@ namespace Terrain { namespace Engine { namespace IO {
         std::function<void(float, float)> onMouseMoveHandler;
         std::function<void(float, float)> onMouseScrollHandler;
         bool isFirstMouseInput;
-        double prevMouseX;
-        double prevMouseY;
+        double mouseXOffset;
+        double mouseYOffset;
 
         void onMouseMove(double x, double y);
         void onMouseScroll(double xOffset, double yOffset);

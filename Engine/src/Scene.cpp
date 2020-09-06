@@ -168,6 +168,8 @@ namespace Terrain { namespace Engine {
         float deltaTime = currentTime - prevFrameTime;
         prevFrameTime = currentTime;
 
+        OrbitCamera::calculateCameraStates(orbitCameraStates, cameraStates, 1);
+
         if (isOrbitCameraMode)
         {
             updateOrbitCamera(deltaTime);
@@ -225,8 +227,6 @@ namespace Terrain { namespace Engine {
 
     void Scene::updateOrbitCamera(float deltaTime)
     {
-        OrbitCamera::calculateCameraStates(orbitCameraStates, cameraStates, 1);
-
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
             || input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
