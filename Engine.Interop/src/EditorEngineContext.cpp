@@ -83,13 +83,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         // only fire mouse move events and capture mouse if mouse is in a viewport's bounds
         if (EngineInterop::HoveredViewContext != nullptr)
         {
-            int xOffset = mousePos.X - prevMousePosX;
-            int yOffset = mousePos.Y - prevMousePosY;
-            if (abs(xOffset) + abs(yOffset) > 0)
-            {
-                mouseXOffset += xOffset;
-                mouseYOffset += yOffset;
-            }
+            mouseXOffset += mousePos.X - prevMousePosX;
+            mouseYOffset += mousePos.Y - prevMousePosY;
             if (isMouseCaptured)
             {
                 auto [viewportX, viewportY] =

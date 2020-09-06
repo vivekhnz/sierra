@@ -10,6 +10,12 @@ namespace Terrain { namespace Engine {
     {
         Graphics::Window &window;
 
+        bool isFirstMouseInput;
+        double mouseXOffset;
+        double mouseYOffset;
+
+        void onMouseMove(double x, double y);
+
     public:
         WindowEngineViewContext(Graphics::Window &window);
         WindowEngineViewContext(const WindowEngineViewContext &that) = delete;
@@ -21,10 +27,11 @@ namespace Terrain { namespace Engine {
         std::tuple<int, int> getViewportSize() const;
         bool isKeyPressed(int key) const;
         bool isMouseButtonPressed(int button) const;
+        std::tuple<double, double> getMouseOffset() const;
 
-        void addMouseMoveHandler(std::function<void(double, double)> handler);
         void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
+        void resetMouseOffset();
         void render();
         void exit();
 

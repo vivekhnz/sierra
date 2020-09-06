@@ -11,12 +11,6 @@ class GameEngineContext : public Terrain::Engine::EngineContext
     Terrain::Engine::Graphics::GlfwManager &glfw;
     Terrain::Engine::WindowEngineViewContext &vctx;
 
-    bool isFirstMouseInput;
-    double mouseXOffset;
-    double mouseYOffset;
-
-    void onMouseMove(double x, double y);
-
 public:
     GameEngineContext(Terrain::Engine::Graphics::GlfwManager &glfw,
         Terrain::Engine::WindowEngineViewContext &vctx);
