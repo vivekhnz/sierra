@@ -3,12 +3,8 @@
 #include <iostream>
 
 namespace Terrain { namespace Engine { namespace IO {
-    InputManager::InputManager(EngineContext &ctx) :
-        ctx(ctx), onMouseMoveHandler(NULL), isFirstMouseInput(true), mouseXOffset(0),
-        mouseYOffset(0)
+    InputManager::InputManager(EngineContext &ctx) : ctx(ctx), onMouseMoveHandler(NULL)
     {
-        ctx.addMouseMoveHandler(std::bind(
-            &InputManager::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
         ctx.addMouseScrollHandler(std::bind(
             &InputManager::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
     }
@@ -73,23 +69,12 @@ namespace Terrain { namespace Engine { namespace IO {
             iterator++;
         }
 
+        auto [mouseXOffset, mouseYOffset] = ctx.getMouseOffset();
         if (onMouseMoveHandler != NULL)
         {
             onMouseMoveHandler(mouseXOffset, mouseYOffset);
         }
-        mouseXOffset = 0;
-        mouseYOffset = 0;
-    }
-
-    void InputManager::onMouseMove(double x, double y)
-    {
-        if (isFirstMouseInput)
-        {
-            isFirstMouseInput = false;
-            return;
-        }
-        mouseXOffset += x;
-        mouseYOffset += y;
+        ctx.resetMouseOffset();
     }
 
     void InputManager::onMouseScroll(double xOffset, double yOffset)

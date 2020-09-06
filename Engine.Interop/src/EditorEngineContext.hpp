@@ -8,8 +8,10 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         System::DateTime startTime;
 
-        std::function<void(double, double)> onMouseMoveHandler;
         std::function<void(double, double)> onMouseScrollHandler;
+
+        double mouseXOffset;
+        double mouseYOffset;
 
         int prevMousePosX;
         int prevMousePosY;
@@ -25,14 +27,14 @@ namespace Terrain { namespace Engine { namespace Interop {
         float getCurrentTime() const;
         bool isKeyPressed(int key) const;
         bool isMouseButtonPressed(int button) const;
+        std::tuple<double, double> getMouseOffset() const;
 
-        void addMouseMoveHandler(std::function<void(double, double)> handler);
         void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
+        void resetMouseOffset();
         void handleInput();
         void exit();
 
-        void onMouseMove(double x, double y);
         void onMouseScroll(double x, double y);
         bool isInMouseCaptureMode() const;
 

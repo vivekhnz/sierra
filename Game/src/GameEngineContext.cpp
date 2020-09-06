@@ -3,8 +3,10 @@
 GameEngineContext::GameEngineContext(Terrain::Engine::Graphics::GlfwManager &glfw,
     Terrain::Engine::WindowEngineViewContext &vctx) :
     glfw(glfw),
-    vctx(vctx)
+    vctx(vctx), isFirstMouseInput(true), mouseXOffset(0), mouseYOffset(0)
 {
+    vctx.addMouseMoveHandler(std::bind(
+        &GameEngineContext::onMouseMove, this, std::placeholders::_1, std::placeholders::_2));
 }
 
 float GameEngineContext::getCurrentTime() const
@@ -22,9 +24,20 @@ bool GameEngineContext::isMouseButtonPressed(int button) const
     return vctx.isMouseButtonPressed(button);
 }
 
-void GameEngineContext::addMouseMoveHandler(std::function<void(double, double)> handler)
+std::tuple<double, double> GameEngineContext::getMouseOffset() const
 {
-    vctx.addMouseMoveHandler(handler);
+    return std::make_tuple(mouseXOffset, mouseYOffset);
+}
+
+void GameEngineContext::onMouseMove(double x, double y)
+{
+    if (isFirstMouseInput)
+    {
+        isFirstMouseInput = false;
+        return;
+    }
+    mouseXOffset += x;
+    mouseYOffset += y;
 }
 
 void GameEngineContext::addMouseScrollHandler(std::function<void(double, double)> handler)
@@ -35,6 +48,12 @@ void GameEngineContext::addMouseScrollHandler(std::function<void(double, double)
 void GameEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)
 {
     vctx.setMouseCaptureMode(shouldCaptureMouse);
+}
+
+void GameEngineContext::resetMouseOffset()
+{
+    mouseXOffset = 0;
+    mouseYOffset = 0;
 }
 
 void GameEngineContext::exit()

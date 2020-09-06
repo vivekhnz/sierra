@@ -11,6 +11,12 @@ class GameEngineContext : public Terrain::Engine::EngineContext
     Terrain::Engine::Graphics::GlfwManager &glfw;
     Terrain::Engine::WindowEngineViewContext &vctx;
 
+    bool isFirstMouseInput;
+    double mouseXOffset;
+    double mouseYOffset;
+
+    void onMouseMove(double x, double y);
+
 public:
     GameEngineContext(Terrain::Engine::Graphics::GlfwManager &glfw,
         Terrain::Engine::WindowEngineViewContext &vctx);
@@ -22,10 +28,11 @@ public:
     float getCurrentTime() const;
     bool isKeyPressed(int key) const;
     bool isMouseButtonPressed(int button) const;
+    std::tuple<double, double> getMouseOffset() const;
 
-    void addMouseMoveHandler(std::function<void(double, double)> handler);
     void addMouseScrollHandler(std::function<void(double, double)> handler);
     void setMouseCaptureMode(bool shouldCaptureMouse);
+    void resetMouseOffset();
     void exit();
 
     ~GameEngineContext();

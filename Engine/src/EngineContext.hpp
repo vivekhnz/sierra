@@ -11,10 +11,11 @@ namespace Terrain { namespace Engine {
         virtual float getCurrentTime() const = 0;
         virtual bool isKeyPressed(int key) const = 0;
         virtual bool isMouseButtonPressed(int button) const = 0;
+        virtual std::tuple<double, double> getMouseOffset() const = 0;
 
-        virtual void addMouseMoveHandler(std::function<void(double, double)> handler) = 0;
         virtual void addMouseScrollHandler(std::function<void(double, double)> handler) = 0;
         virtual void setMouseCaptureMode(bool shouldCaptureMouse) = 0;
+        virtual void resetMouseOffset() = 0;
         virtual void exit() = 0;
     };
 }}

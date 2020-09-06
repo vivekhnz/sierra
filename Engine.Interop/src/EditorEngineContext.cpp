@@ -11,8 +11,8 @@ using namespace System::Windows::Input;
 
 namespace Terrain { namespace Engine { namespace Interop {
     EditorEngineContext::EditorEngineContext() :
-        onMouseMoveHandler(NULL), onMouseScrollHandler(NULL), prevMousePosX(0),
-        prevMousePosY(0)
+        onMouseScrollHandler(NULL), prevMousePosX(0), prevMousePosY(0), mouseXOffset(0),
+        mouseYOffset(0)
     {
         startTime = System::DateTime::Now;
     }
@@ -52,9 +52,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         return state == MouseButtonState::Pressed;
     }
 
-    void EditorEngineContext::addMouseMoveHandler(std::function<void(double, double)> handler)
+    std::tuple<double, double> EditorEngineContext::getMouseOffset() const
     {
-        onMouseMoveHandler = handler;
+        return std::make_tuple(mouseXOffset, mouseYOffset);
     }
 
     void EditorEngineContext::addMouseScrollHandler(
@@ -66,6 +66,12 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EditorEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
         isMouseCaptured = shouldCaptureMouse;
+    }
+
+    void EditorEngineContext::resetMouseOffset()
+    {
+        mouseXOffset = 0;
+        mouseYOffset = 0;
     }
 
     void EditorEngineContext::handleInput()
@@ -81,7 +87,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             int yOffset = mousePos.Y - prevMousePosY;
             if (abs(xOffset) + abs(yOffset) > 0)
             {
-                onMouseMove(xOffset, yOffset);
+                mouseXOffset += xOffset;
+                mouseYOffset += yOffset;
             }
             if (isMouseCaptured)
             {
@@ -104,14 +111,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EditorEngineContext::exit()
     {
-    }
-
-    void EditorEngineContext::onMouseMove(double x, double y)
-    {
-        if (onMouseMoveHandler != NULL)
-        {
-            onMouseMoveHandler(x, y);
-        }
     }
 
     void EditorEngineContext::onMouseScroll(double x, double y)
