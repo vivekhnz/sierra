@@ -13,14 +13,9 @@ namespace Terrain { namespace Engine { namespace Graphics { namespace Camera {
         float height;
     };
 
-    struct EXPORT CameraState
-    {
-        glm::vec3 position;
-        glm::vec3 target;
-    };
-
     static void calculateMatrices(ViewportDimensions &viewport,
-        CameraState *in_cameraStates,
+        glm::vec3 *in_cameraPositions,
+        glm::vec3 *in_cameraTargets,
         glm::mat4 *out_cameraMatrices,
         int count)
     {
@@ -33,9 +28,8 @@ namespace Terrain { namespace Engine { namespace Graphics { namespace Camera {
         glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
         for (int i = 0; i < count; i++)
         {
-            CameraState camera = in_cameraStates[i];
             out_cameraMatrices[i] =
-                projection * glm::lookAt(camera.position, camera.target, up);
+                projection * glm::lookAt(in_cameraPositions[i], in_cameraTargets[i], up);
         }
     }
 }}}}

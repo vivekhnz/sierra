@@ -34,7 +34,8 @@ namespace Terrain { namespace Engine {
         float *orbitCameraDistance;
         bool wasManipulatingCamera;
 
-        Graphics::Camera::CameraState *cameraStates;
+        glm::vec3 *cameraPositions;
+        glm::vec3 *cameraTargets;
         glm::mat4 *cameraMatrices;
 
         glm::vec3 playerLookDir;

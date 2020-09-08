@@ -38,7 +38,8 @@ namespace Terrain { namespace Engine { namespace OrbitCamera {
     static void calculateCameraStates(OrbitCameraState *in_orbitCameraStates,
         OrbitCameraYawPitch *in_orbitYawPitch,
         float *in_orbitDistance,
-        Graphics::Camera::CameraState *out_cameraStates,
+        glm::vec3 *out_cameraPositions,
+        glm::vec3 *out_cameraTargets,
         int count)
     {
         for (int i = 0; i < count; i++)
@@ -46,12 +47,12 @@ namespace Terrain { namespace Engine { namespace OrbitCamera {
             OrbitCameraState &orbitCamera = in_orbitCameraStates[i];
             OrbitCameraYawPitch &yawPitch = in_orbitYawPitch[i];
             float &distance = in_orbitDistance[i];
-            Graphics::Camera::CameraState &camera = out_cameraStates[orbitCamera.cameraIndex];
 
             glm::vec3 lookDir = glm::vec3(cos(yawPitch.yaw) * cos(yawPitch.pitch),
                 sin(yawPitch.pitch), sin(yawPitch.yaw) * cos(yawPitch.pitch));
-            camera.position = orbitCamera.lookAt + (lookDir * distance);
-            camera.target = orbitCamera.lookAt;
+            out_cameraPositions[orbitCamera.cameraIndex] =
+                orbitCamera.lookAt + (lookDir * distance);
+            out_cameraTargets[orbitCamera.cameraIndex] = orbitCamera.lookAt;
         }
     }
 }}}

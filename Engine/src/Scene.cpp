@@ -44,20 +44,20 @@ namespace Terrain { namespace Engine {
 
         orbitCameraDistance[0] = 112.5f;
 
-        cameraStates = new Graphics::Camera::CameraState[2];
+        cameraPositions = new glm::vec3[2];
+        cameraTargets = new glm::vec3[2];
         cameraMatrices = new glm::mat4[2];
 
         // player camera
-        Graphics::Camera::CameraState &playerCamera = cameraStates[0];
-        playerCamera.position =
+        glm::vec3 playerPos =
             glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
-        playerCamera.target = playerCamera.position + playerLookDir;
+        cameraPositions[0] = playerPos;
+        cameraTargets[0] = playerPos + playerLookDir;
         cameraMatrices[0] = glm::identity<glm::mat4>();
 
         // orbit camera
-        Graphics::Camera::CameraState &orbitCamera_cameraState = cameraStates[1];
-        orbitCamera_cameraState.position = glm::vec3(0.0f, 37.5f, orbitCameraDistance[0]);
-        orbitCamera_cameraState.target = orbitCamera.lookAt;
+        cameraPositions[1] = glm::vec3(0.0f, 37.5f, orbitCameraDistance[0]);
+        cameraTargets[1] = orbitCamera.lookAt;
         cameraMatrices[1] = glm::identity<glm::mat4>();
 
         // configure input
@@ -235,7 +235,7 @@ namespace Terrain { namespace Engine {
         {
             float orbitDistance = orbitCameraDistance[0];
             float sensitivity = std::clamp(orbitDistance * 0.02f, 0.05f, 6.0f) * deltaTime;
-            auto orbitLookDir = glm::normalize(orbitCamera.lookAt - cameraStates[1].position);
+            auto orbitLookDir = glm::normalize(orbitCamera.lookAt - cameraPositions[1]);
             glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(orbitLookDir, xDir);
             glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
@@ -247,8 +247,8 @@ namespace Terrain { namespace Engine {
                 orbitCameraDistance, orbitCameraYawPitch, 1);
         }
 
-        OrbitCamera::calculateCameraStates(
-            orbitCameraStates, orbitCameraYawPitch, orbitCameraDistance, cameraStates, 1);
+        OrbitCamera::calculateCameraStates(orbitCameraStates, orbitCameraYawPitch,
+            orbitCameraDistance, cameraPositions, cameraTargets, 1);
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
@@ -277,8 +277,7 @@ namespace Terrain { namespace Engine {
         glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
         playerLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
-        Graphics::Camera::CameraState &playerCamera = cameraStates[0];
-        glm::vec3 pos = playerCamera.position;
+        glm::vec3 pos = cameraPositions[0];
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         if (input.isKeyPressed(GLFW_KEY_A))
@@ -300,8 +299,8 @@ namespace Terrain { namespace Engine {
         float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
         pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
-        playerCamera.position = pos;
-        playerCamera.target = pos + playerLookDir;
+        cameraPositions[0] = pos;
+        cameraTargets[0] = pos + playerLookDir;
     }
 
     void Scene::onMouseScroll(float xOffset, float yOffset)
@@ -358,7 +357,8 @@ namespace Terrain { namespace Engine {
         auto [viewportWidth, viewportHeight] = vctx.getViewportSize();
         Graphics::Camera::ViewportDimensions viewport = {
             (float)viewportWidth, (float)viewportHeight};
-        Graphics::Camera::calculateMatrices(viewport, cameraStates, cameraMatrices, 2);
+        Graphics::Camera::calculateMatrices(
+            viewport, cameraPositions, cameraTargets, cameraMatrices, 2);
 
         auto &cameraTransform = cameraMatrices[isOrbitCameraMode ? 1 : 0];
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
@@ -378,7 +378,8 @@ namespace Terrain { namespace Engine {
         delete[] orbitCameraStates;
         delete[] orbitCameraYawPitch;
         delete[] orbitCameraDistance;
-        delete[] cameraStates;
+        delete[] cameraPositions;
+        delete[] cameraTargets;
         delete[] cameraMatrices;
     }
 }}
