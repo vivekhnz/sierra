@@ -230,23 +230,16 @@ namespace Terrain { namespace Engine {
 
     void Scene::updateOrbitCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY)
     {
-        OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
-            float orbitDistance = orbitCameraDistance[0];
-            float sensitivity = std::clamp(orbitDistance * 0.02f, 0.05f, 6.0f) * deltaTime;
-            auto orbitLookDir = glm::normalize(orbitCamera.lookAt - cameraPositions[1]);
-            glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
-            glm::vec3 yDir = cross(orbitLookDir, xDir);
-            glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
-            orbitCamera.lookAt += pan * sensitivity;
+            OrbitCamera::calculateLookAt(mouseOffsetX, mouseOffsetY, deltaTime,
+                orbitCameraDistance, cameraPositions, orbitCameraStates, 1);
         }
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         {
             OrbitCamera::calculateYawAndPitch(mouseOffsetX, mouseOffsetY, deltaTime,
                 orbitCameraDistance, orbitCameraYawPitch, 1);
         }
-
         OrbitCamera::calculateCameraStates(orbitCameraStates, orbitCameraYawPitch,
             orbitCameraDistance, cameraPositions, cameraTargets, 1);
 

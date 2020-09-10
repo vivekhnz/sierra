@@ -17,6 +17,29 @@ namespace Terrain { namespace Engine { namespace OrbitCamera {
         float pitch;
     };
 
+    static void calculateLookAt(float mouseOffsetX,
+        float mouseOffsetY,
+        float deltaTime,
+        float *in_orbitDistance,
+        glm::vec3 *in_cameraPositions,
+        OrbitCameraState *inout_orbitStates,
+        int count)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            OrbitCameraState &orbitCamera = inout_orbitStates[i];
+            float orbitDistance = in_orbitDistance[i];
+            float sensitivity =
+                std::max(std::min(orbitDistance * 0.02f, 6.0f), 0.05f) * deltaTime;
+            auto orbitLookDir = glm::normalize(
+                orbitCamera.lookAt - in_cameraPositions[orbitCamera.cameraIndex]);
+            glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(orbitLookDir, xDir);
+            glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
+            orbitCamera.lookAt += pan * sensitivity;
+        }
+    }
+
     static void calculateYawAndPitch(float mouseOffsetX,
         float mouseOffsetY,
         float deltaTime,
