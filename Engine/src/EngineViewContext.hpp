@@ -2,14 +2,19 @@
 #define ENGINEVIEWCONTEXT_HPP
 
 #include "Common.hpp"
-#include <tuple>
 
 namespace Terrain { namespace Engine {
+    struct EXPORT ViewportDimensions
+    {
+        int width;
+        int height;
+    };
+
     class EXPORT EngineViewContext
     {
     public:
         virtual int getId() const = 0;
-        virtual std::tuple<int, int> getViewportSize() const = 0;
+        virtual ViewportDimensions getViewportSize() const = 0;
     };
 }}
 

@@ -10,7 +10,12 @@
 namespace Terrain { namespace Engine {
     struct ComponentManagers
     {
+        CameraComponentManager camera;
         OrbitCameraComponentManager orbitCamera;
+
+        ComponentManagers() : orbitCamera(camera)
+        {
+        }
     };
 
     class EXPORT World

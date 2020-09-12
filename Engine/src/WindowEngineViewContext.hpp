@@ -24,7 +24,7 @@ namespace Terrain { namespace Engine {
         WindowEngineViewContext &operator=(WindowEngineViewContext &&) = delete;
 
         int getId() const;
-        std::tuple<int, int> getViewportSize() const;
+        ViewportDimensions getViewportSize() const;
         bool isKeyPressed(int key) const;
         bool isMouseButtonPressed(int button) const;
         std::tuple<double, double> getMouseOffset() const;

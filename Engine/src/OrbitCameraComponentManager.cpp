@@ -3,7 +3,9 @@
 #include <algorithm>
 
 namespace Terrain { namespace Engine {
-    OrbitCameraComponentManager::OrbitCameraComponentManager()
+    OrbitCameraComponentManager::OrbitCameraComponentManager(
+        CameraComponentManager &cameraComponentMgr) :
+        cameraComponentMgr(cameraComponentMgr)
     {
         data.count = 1;
         data.cameraIndex = new int[1];
@@ -20,16 +22,16 @@ namespace Terrain { namespace Engine {
     }
 
     void OrbitCameraComponentManager::calculateLookAt(
-        float mouseOffsetX, float mouseOffsetY, float deltaTime, glm::vec3 *in_cameraPositions)
+        float mouseOffsetX, float mouseOffsetY, float deltaTime)
     {
         for (int i = 0; i < data.count; i++)
         {
             glm::vec3 &lookAt = data.lookAt[i];
             float sensitivity = std::clamp(data.distance[i] * 0.02f, 0.05f, 6.0f) * deltaTime;
-            auto orbitLookDir =
-                glm::normalize(lookAt - in_cameraPositions[data.cameraIndex[i]]);
-            glm::vec3 xDir = cross(orbitLookDir, glm::vec3(0, -1, 0));
-            glm::vec3 yDir = cross(orbitLookDir, xDir);
+            glm::vec3 lookDir =
+                glm::normalize(lookAt - cameraComponentMgr.getPosition(data.cameraIndex[i]));
+            glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
             lookAt += pan * sensitivity;
         }
@@ -55,8 +57,7 @@ namespace Terrain { namespace Engine {
         }
     }
 
-    void OrbitCameraComponentManager::calculateCameraStates(
-        glm::vec3 *out_cameraPositions, glm::vec3 *out_cameraTargets)
+    void OrbitCameraComponentManager::calculateCameraStates()
     {
         for (int i = 0; i < data.count; i++)
         {
@@ -67,8 +68,8 @@ namespace Terrain { namespace Engine {
 
             glm::vec3 lookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-            out_cameraPositions[cameraIndex] = lookAt + (lookDir * data.distance[i]);
-            out_cameraTargets[cameraIndex] = lookAt;
+            cameraComponentMgr.setPosition(cameraIndex, lookAt + (lookDir * data.distance[i]));
+            cameraComponentMgr.setTarget(cameraIndex, lookAt);
         }
     }
 

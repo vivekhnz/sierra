@@ -25,7 +25,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         HostedEngineViewContext &operator=(HostedEngineViewContext &&) = delete;
 
         int getId() const;
-        std::tuple<int, int> getViewportSize() const;
+        ViewportDimensions getViewportSize() const;
         bool isDetached() const;
 
         void render();

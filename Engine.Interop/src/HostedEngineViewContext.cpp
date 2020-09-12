@@ -18,9 +18,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         return id;
     }
 
-    std::tuple<int, int> HostedEngineViewContext::getViewportSize() const
+    ViewportDimensions HostedEngineViewContext::getViewportSize() const
     {
-        return window.getSize();
+        auto [w, h] = window.getSize();
+        return {w, h};
     }
 
     bool HostedEngineViewContext::isDetached() const

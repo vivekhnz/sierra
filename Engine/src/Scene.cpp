@@ -30,19 +30,11 @@ namespace Terrain { namespace Engine {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        cameraPositions = new glm::vec3[2];
-        cameraTargets = new glm::vec3[2];
-        cameraMatrices = new glm::mat4[2];
-
         // player camera
         glm::vec3 playerPos =
             glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
-        cameraPositions[0] = playerPos;
-        cameraTargets[0] = playerPos + playerLookDir;
-        cameraMatrices[0] = glm::identity<glm::mat4>();
-
-        // orbit camera
-        cameraMatrices[1] = glm::identity<glm::mat4>();
+        world.componentManagers.camera.setPosition(0, playerPos);
+        world.componentManagers.camera.setTarget(0, playerPos + playerLookDir);
 
         // configure input
         input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
@@ -217,15 +209,14 @@ namespace Terrain { namespace Engine {
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
             world.componentManagers.orbitCamera.calculateLookAt(
-                mouseOffsetX, mouseOffsetY, deltaTime, cameraPositions);
+                mouseOffsetX, mouseOffsetY, deltaTime);
         }
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         {
             world.componentManagers.orbitCamera.calculateYawAndPitch(
                 mouseOffsetX, mouseOffsetY, deltaTime);
         }
-        world.componentManagers.orbitCamera.calculateCameraStates(
-            cameraPositions, cameraTargets);
+        world.componentManagers.orbitCamera.calculateCameraStates();
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
@@ -254,7 +245,7 @@ namespace Terrain { namespace Engine {
         glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
         playerLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
-        glm::vec3 pos = cameraPositions[0];
+        glm::vec3 pos = world.componentManagers.camera.getPosition(0);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         if (input.isKeyPressed(GLFW_KEY_A))
@@ -276,8 +267,8 @@ namespace Terrain { namespace Engine {
         float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
         pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
-        cameraPositions[0] = pos;
-        cameraTargets[0] = pos + playerLookDir;
+        world.componentManagers.camera.setPosition(0, pos);
+        world.componentManagers.camera.setTarget(0, pos + playerLookDir);
     }
 
     void Scene::onMouseScroll(float xOffset, float yOffset)
@@ -323,13 +314,10 @@ namespace Terrain { namespace Engine {
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         // update camera state
-        auto [viewportWidth, viewportHeight] = vctx.getViewportSize();
-        Graphics::Camera::ViewportDimensions viewport = {
-            (float)viewportWidth, (float)viewportHeight};
-        Graphics::Camera::calculateMatrices(
-            viewport, cameraPositions, cameraTargets, cameraMatrices, 2);
+        world.componentManagers.camera.calculateMatrices(vctx.getViewportSize());
 
-        auto &cameraTransform = cameraMatrices[isOrbitCameraMode ? 1 : 0];
+        auto &cameraTransform =
+            world.componentManagers.camera.getTransform(isOrbitCameraMode ? 1 : 0);
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
         glBufferSubData(
             GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cameraTransform));
@@ -344,8 +332,5 @@ namespace Terrain { namespace Engine {
 
     Scene::~Scene()
     {
-        delete[] cameraPositions;
-        delete[] cameraTargets;
-        delete[] cameraMatrices;
     }
 }}

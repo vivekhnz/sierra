@@ -5,7 +5,6 @@
 #include "EngineContext.hpp"
 #include "World.hpp"
 #include "Graphics/Window.hpp"
-#include "Graphics/Camera.hpp"
 #include "Graphics/Mesh.hpp"
 #include "Graphics/MeshRenderer.hpp"
 #include "IO/InputManager.hpp"
@@ -29,10 +28,6 @@ namespace Terrain { namespace Engine {
         bool isOrbitCameraMode;
 
         bool wasManipulatingCamera;
-
-        glm::vec3 *cameraPositions;
-        glm::vec3 *cameraTargets;
-        glm::mat4 *cameraMatrices;
 
         glm::vec3 playerLookDir;
         float playerCameraYaw;

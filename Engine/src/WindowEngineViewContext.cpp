@@ -12,9 +12,10 @@ namespace Terrain { namespace Engine {
         return 1;
     }
 
-    std::tuple<int, int> WindowEngineViewContext::getViewportSize() const
+    ViewportDimensions WindowEngineViewContext::getViewportSize() const
     {
-        return window.getSize();
+        auto [w, h] = window.getSize();
+        return {w, h};
     }
 
     bool WindowEngineViewContext::isKeyPressed(int key) const
