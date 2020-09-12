@@ -11,7 +11,7 @@ namespace Terrain { namespace Engine {
         struct ComponentData
         {
             int count;
-            int *cameraIndex;
+            int *entityId;
             glm::vec3 *lookAt;
             float *yaw;
             float *pitch;

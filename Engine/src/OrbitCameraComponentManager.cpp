@@ -8,13 +8,13 @@ namespace Terrain { namespace Engine {
         cameraComponentMgr(cameraComponentMgr)
     {
         data.count = 1;
-        data.cameraIndex = new int[1];
+        data.entityId = new int[1];
         data.lookAt = new glm::vec3[1];
         data.yaw = new float[1];
         data.pitch = new float[1];
         data.distance = new float[1];
 
-        data.cameraIndex[0] = 1;
+        data.entityId[0] = 1;
         data.lookAt[0] = glm::vec3(0, 0, 0);
         data.pitch[0] = glm::radians(15.0f);
         data.yaw[0] = glm::radians(90.0f);
@@ -26,10 +26,11 @@ namespace Terrain { namespace Engine {
     {
         for (int i = 0; i < data.count; i++)
         {
+            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             glm::vec3 &lookAt = data.lookAt[i];
             float sensitivity = std::clamp(data.distance[i] * 0.02f, 0.05f, 6.0f) * deltaTime;
             glm::vec3 lookDir =
-                glm::normalize(lookAt - cameraComponentMgr.getPosition(data.cameraIndex[i]));
+                glm::normalize(lookAt - cameraComponentMgr.getPosition(cameraInstanceId));
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
@@ -61,22 +62,23 @@ namespace Terrain { namespace Engine {
     {
         for (int i = 0; i < data.count; i++)
         {
-            int &cameraIndex = data.cameraIndex[i];
+            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
             glm::vec3 &lookAt = data.lookAt[i];
 
             glm::vec3 lookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-            cameraComponentMgr.setPosition(cameraIndex, lookAt + (lookDir * data.distance[i]));
-            cameraComponentMgr.setTarget(cameraIndex, lookAt);
+            cameraComponentMgr.setPosition(
+                cameraInstanceId, lookAt + (lookDir * data.distance[i]));
+            cameraComponentMgr.setTarget(cameraInstanceId, lookAt);
         }
     }
 
     OrbitCameraComponentManager::~OrbitCameraComponentManager()
     {
         data.count = 0;
-        delete[] data.cameraIndex;
+        delete[] data.entityId;
         delete[] data.lookAt;
         delete[] data.yaw;
         delete[] data.pitch;

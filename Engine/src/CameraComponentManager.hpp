@@ -4,6 +4,7 @@
 #include "Common.hpp"
 #include "EngineViewContext.hpp"
 #include <glm/glm.hpp>
+#include <map>
 
 namespace Terrain { namespace Engine {
     class EXPORT CameraComponentManager
@@ -12,12 +13,14 @@ namespace Terrain { namespace Engine {
         struct ComponentData
         {
             int count;
+            int *entityId;
             glm::vec3 *position;
             glm::vec3 *target;
             glm::mat4 *transform;
         };
 
         ComponentData data;
+        std::map<int, int> entityIdToInstanceId;
 
     public:
         CameraComponentManager();
@@ -25,6 +28,11 @@ namespace Terrain { namespace Engine {
         CameraComponentManager &operator=(const CameraComponentManager &that) = delete;
         CameraComponentManager(CameraComponentManager &&) = delete;
         CameraComponentManager &operator=(CameraComponentManager &&) = delete;
+
+        int lookup(int entityId) const
+        {
+            return entityIdToInstanceId.at(entityId);
+        }
 
         glm::vec3 &getPosition(int i) const
         {
