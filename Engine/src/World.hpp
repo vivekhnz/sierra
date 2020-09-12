@@ -5,8 +5,14 @@
 #include "Graphics/MeshData.hpp"
 #include "Graphics/Material.hpp"
 #include "Graphics/MeshInstance.hpp"
+#include "OrbitCameraComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
+    struct ComponentManagers
+    {
+        OrbitCameraComponentManager orbitCamera;
+    };
+
     class EXPORT World
     {
     private:
@@ -20,6 +26,8 @@ namespace Terrain { namespace Engine {
         int meshInstanceCount;
 
     public:
+        ComponentManagers componentManagers;
+
         World();
         World(const World &that) = delete;
         World &operator=(const World &that) = delete;

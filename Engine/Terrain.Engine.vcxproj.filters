@@ -70,6 +70,9 @@
     <ClCompile Include="src\World.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\OrbitCameraComponentManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -156,7 +159,7 @@
     <ClInclude Include="src\Graphics\Material.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\OrbitCamera.hpp">
+    <ClInclude Include="src\OrbitCameraComponentManager.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

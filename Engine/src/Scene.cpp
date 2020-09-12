@@ -30,20 +30,6 @@ namespace Terrain { namespace Engine {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        orbitCameraStates = new OrbitCamera::OrbitCameraState[1];
-        orbitCameraYawPitch = new OrbitCamera::OrbitCameraYawPitch[1];
-        orbitCameraDistance = new float[1];
-
-        OrbitCamera::OrbitCameraState &orbitCamera = orbitCameraStates[0];
-        orbitCamera.cameraIndex = 1;
-        orbitCamera.lookAt = glm::vec3(0, 0, 0);
-
-        OrbitCamera::OrbitCameraYawPitch &orbitCamera_yawPitch = orbitCameraYawPitch[0];
-        orbitCamera_yawPitch.pitch = glm::radians(15.0f);
-        orbitCamera_yawPitch.yaw = glm::radians(90.0f);
-
-        orbitCameraDistance[0] = 112.5f;
-
         cameraPositions = new glm::vec3[2];
         cameraTargets = new glm::vec3[2];
         cameraMatrices = new glm::mat4[2];
@@ -56,8 +42,6 @@ namespace Terrain { namespace Engine {
         cameraMatrices[0] = glm::identity<glm::mat4>();
 
         // orbit camera
-        cameraPositions[1] = glm::vec3(0.0f, 37.5f, orbitCameraDistance[0]);
-        cameraTargets[1] = orbitCamera.lookAt;
         cameraMatrices[1] = glm::identity<glm::mat4>();
 
         // configure input
@@ -232,16 +216,16 @@ namespace Terrain { namespace Engine {
     {
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
-            OrbitCamera::calculateLookAt(mouseOffsetX, mouseOffsetY, deltaTime,
-                orbitCameraDistance, cameraPositions, orbitCameraStates, 1);
+            world.componentManagers.orbitCamera.calculateLookAt(
+                mouseOffsetX, mouseOffsetY, deltaTime, cameraPositions);
         }
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
         {
-            OrbitCamera::calculateYawAndPitch(mouseOffsetX, mouseOffsetY, deltaTime,
-                orbitCameraDistance, orbitCameraYawPitch, 1);
+            world.componentManagers.orbitCamera.calculateYawAndPitch(
+                mouseOffsetX, mouseOffsetY, deltaTime);
         }
-        OrbitCamera::calculateCameraStates(orbitCameraStates, orbitCameraYawPitch,
-            orbitCameraDistance, cameraPositions, cameraTargets, 1);
+        world.componentManagers.orbitCamera.calculateCameraStates(
+            cameraPositions, cameraTargets);
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
@@ -300,15 +284,7 @@ namespace Terrain { namespace Engine {
     {
         if (isOrbitCameraMode)
         {
-            float &orbitDistance = orbitCameraDistance[0];
-            if (yOffset > 0.0f)
-            {
-                orbitDistance *= 0.95f;
-            }
-            else
-            {
-                orbitDistance /= 0.95f;
-            }
+            world.componentManagers.orbitCamera.calculateDistance(yOffset);
         }
     }
 
@@ -368,9 +344,6 @@ namespace Terrain { namespace Engine {
 
     Scene::~Scene()
     {
-        delete[] orbitCameraStates;
-        delete[] orbitCameraYawPitch;
-        delete[] orbitCameraDistance;
         delete[] cameraPositions;
         delete[] cameraTargets;
         delete[] cameraMatrices;

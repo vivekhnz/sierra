@@ -11,7 +11,6 @@
 #include "IO/InputManager.hpp"
 #include "EngineViewContext.hpp"
 #include "Terrain.hpp"
-#include "OrbitCamera.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT Scene
@@ -29,9 +28,6 @@ namespace Terrain { namespace Engine {
         float prevFrameTime;
         bool isOrbitCameraMode;
 
-        OrbitCamera::OrbitCameraState *orbitCameraStates;
-        OrbitCamera::OrbitCameraYawPitch *orbitCameraYawPitch;
-        float *orbitCameraDistance;
         bool wasManipulatingCamera;
 
         glm::vec3 *cameraPositions;
