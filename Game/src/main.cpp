@@ -33,6 +33,8 @@ int main()
 
             ctx.handleInput();
             scene.update(deltaTime);
+
+            vctx.setCameraEntityId(scene.getIsOrbitCameraMode() ? 1 : 0);
             scene.draw(vctx);
             vctx.render();
             glfw.processEvents();

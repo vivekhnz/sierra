@@ -58,6 +58,11 @@ namespace Terrain { namespace Engine {
 
         Terrain &getTerrain();
 
+        bool getIsOrbitCameraMode() const
+        {
+            return isOrbitCameraMode;
+        }
+
         void update(float deltaTime);
         void draw(EngineViewContext &vctx);
         void toggleLighting();

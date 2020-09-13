@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine {
     class EXPORT EngineViewContext
     {
     public:
-        virtual int getId() const = 0;
+        virtual int getCameraEntityId() const = 0;
         virtual ViewportDimensions getViewportSize() const = 0;
     };
 }}

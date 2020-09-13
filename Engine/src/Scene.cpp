@@ -216,6 +216,7 @@ namespace Terrain { namespace Engine {
     void Scene::updateOrbitCamera(
         float deltaTime, float mouseOffsetX, float mouseOffsetY, float scrollY)
     {
+        world.componentManagers.orbitCamera.calculateDistance(scrollY);
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
             world.componentManagers.orbitCamera.calculateLookAt(
@@ -226,7 +227,6 @@ namespace Terrain { namespace Engine {
             world.componentManagers.orbitCamera.calculateYawAndPitch(
                 mouseOffsetX, mouseOffsetY, deltaTime);
         }
-        world.componentManagers.orbitCamera.calculateDistance(scrollY);
         world.componentManagers.orbitCamera.calculateCameraStates();
 
         // capture mouse if camera is being manipulated
@@ -319,7 +319,7 @@ namespace Terrain { namespace Engine {
         // update camera state
         world.componentManagers.camera.calculateMatrices(vctx.getViewportSize());
 
-        int activeCamera_entityId = isOrbitCameraMode ? 1 : 0;
+        int activeCamera_entityId = vctx.getCameraEntityId();
         int activeCamera_cameraId =
             world.componentManagers.camera.lookup(activeCamera_entityId);
         glm::mat4 cameraTransform =

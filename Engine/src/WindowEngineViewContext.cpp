@@ -2,16 +2,17 @@
 
 namespace Terrain { namespace Engine {
     WindowEngineViewContext::WindowEngineViewContext(Graphics::Window &window) :
-        window(window), isFirstMouseInput(true), mouseXOffset(0), mouseYOffset(0),
-        prevMouseX(0), prevMouseY(0), nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
+        cameraEntityId(0), window(window), isFirstMouseInput(true), mouseXOffset(0),
+        mouseYOffset(0), prevMouseX(0), prevMouseY(0), nextMouseScrollOffsetX(0),
+        nextMouseScrollOffsetY(0), mouseScrollOffsetX(0), mouseScrollOffsetY(0)
     {
         window.addMouseScrollHandler(std::bind(&WindowEngineViewContext::onMouseScroll, this,
             std::placeholders::_1, std::placeholders::_2));
     }
 
-    int WindowEngineViewContext::getId() const
+    int WindowEngineViewContext::getCameraEntityId() const
     {
-        return 1;
+        return cameraEntityId;
     }
 
     ViewportDimensions WindowEngineViewContext::getViewportSize() const
@@ -43,6 +44,11 @@ namespace Terrain { namespace Engine {
     void WindowEngineViewContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
         window.setMouseCaptureMode(shouldCaptureMouse);
+    }
+
+    void WindowEngineViewContext::setCameraEntityId(int cameraEntityId)
+    {
+        this->cameraEntityId = cameraEntityId;
     }
 
     void WindowEngineViewContext::handleInput()

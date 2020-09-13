@@ -38,8 +38,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             }
         }
 
-        auto vctx = new HostedEngineViewContext(
-            *glfw, imgBuffer, renderCallback, viewContexts->size() + 1);
+        auto vctx = new HostedEngineViewContext(*glfw, imgBuffer, renderCallback, 1);
         viewContexts->push_back(vctx);
 
         if (!isWorldInitialized)
