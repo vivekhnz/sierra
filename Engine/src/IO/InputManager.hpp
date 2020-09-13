@@ -5,6 +5,7 @@
 #include <map>
 #include <functional>
 #include "../EngineContext.hpp"
+#include "MouseInputState.hpp"
 
 namespace Terrain { namespace Engine { namespace IO {
     class EXPORT InputManager
@@ -12,6 +13,8 @@ namespace Terrain { namespace Engine { namespace IO {
         EngineContext &ctx;
         std::map<int, std::tuple<bool, bool>> keyState;
         std::map<int, std::function<void()>> keyCommands;
+
+        MouseInputState mouseState;
 
     public:
         InputManager(EngineContext &ctx);
@@ -22,9 +25,11 @@ namespace Terrain { namespace Engine { namespace IO {
 
         bool isNewKeyPress(int key);
         bool isKeyPressed(int key) const;
-        bool isMouseButtonPressed(int button) const;
-        std::tuple<double, double> getMouseOffset() const;
-        std::tuple<double, double> getMouseScrollOffset() const;
+
+        MouseInputState getMouseState() const
+        {
+            return mouseState;
+        }
 
         void listenForKey(int key);
         void mapCommand(int key, std::function<void()> command);

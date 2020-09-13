@@ -45,9 +45,8 @@ namespace Terrain { namespace Engine {
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
-        void updateOrbitCamera(
-            float deltaTime, float mouseOffsetX, float mouseOffsetY, float scrollY);
-        void updatePlayerCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY);
+        void updateOrbitCamera(float deltaTime, IO::MouseInputState &mouseState);
+        void updatePlayerCamera(float deltaTime, IO::MouseInputState &mouseState);
 
     public:
         Scene(EngineContext &ctx, World &world);

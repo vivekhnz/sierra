@@ -156,15 +156,14 @@ namespace Terrain { namespace Engine {
             ctx.exit();
         }
 
-        auto [mouseOffsetX, mouseOffsetY] = input.getMouseOffset();
-        auto [scrollX, scrollY] = input.getMouseScrollOffset();
+        auto mouseState = input.getMouseState();
         if (isOrbitCameraMode)
         {
-            updateOrbitCamera(deltaTime, mouseOffsetX, mouseOffsetY, scrollY);
+            updateOrbitCamera(deltaTime, mouseState);
         }
         else
         {
-            updatePlayerCamera(deltaTime, mouseOffsetX, mouseOffsetY);
+            updatePlayerCamera(deltaTime, mouseState);
         }
 
         if (input.isKeyPressed(GLFW_KEY_LEFT))
@@ -213,25 +212,20 @@ namespace Terrain { namespace Engine {
         input.setMouseCaptureMode(!isOrbitCameraMode);
     }
 
-    void Scene::updateOrbitCamera(
-        float deltaTime, float mouseOffsetX, float mouseOffsetY, float scrollY)
+    void Scene::updateOrbitCamera(float deltaTime, IO::MouseInputState &mouseState)
     {
-        world.componentManagers.orbitCamera.calculateDistance(scrollY);
-        if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
-        {
-            world.componentManagers.orbitCamera.calculateLookAt(
-                mouseOffsetX, mouseOffsetY, deltaTime);
-        }
-        if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT))
-        {
-            world.componentManagers.orbitCamera.calculateYawAndPitch(
-                mouseOffsetX, mouseOffsetY, deltaTime);
-        }
+        bool isMiddleMouseButtonDown = mouseState.isMiddleMouseButtonDown;
+        bool isRightMouseButtonDown = mouseState.isRightMouseButtonDown;
+
+        world.componentManagers.orbitCamera.calculateDistance(mouseState.scrollOffsetY);
+        world.componentManagers.orbitCamera.calculateLookAt(mouseState.cursorOffsetX,
+            mouseState.cursorOffsetY, deltaTime, isMiddleMouseButtonDown);
+        world.componentManagers.orbitCamera.calculateYawAndPitch(mouseState.cursorOffsetX,
+            mouseState.cursorOffsetY, deltaTime, isRightMouseButtonDown);
         world.componentManagers.orbitCamera.calculateCameraStates();
 
         // capture mouse if camera is being manipulated
-        bool isManipulatingCamera = input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
-            || input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+        bool isManipulatingCamera = isMiddleMouseButtonDown || isRightMouseButtonDown;
         if (isManipulatingCamera && !wasManipulatingCamera)
         {
             input.setMouseCaptureMode(true);
@@ -243,12 +237,13 @@ namespace Terrain { namespace Engine {
         wasManipulatingCamera = isManipulatingCamera;
     }
 
-    void Scene::updatePlayerCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY)
+    void Scene::updatePlayerCamera(float deltaTime, IO::MouseInputState &mouseState)
     {
         const float sensitivity = 4.0f * deltaTime;
-        playerCameraYaw += mouseOffsetX * sensitivity;
+        playerCameraYaw += mouseState.cursorOffsetX * sensitivity;
         playerCameraPitch =
-            std::clamp(playerCameraPitch - (mouseOffsetY * sensitivity), -89.0f, 89.0f);
+            std::clamp(playerCameraPitch - ((float)mouseState.cursorOffsetY * sensitivity),
+                -89.0f, 89.0f);
 
         float yaw = glm::radians(playerCameraYaw);
         float pitch = glm::radians(playerCameraPitch);

@@ -21,8 +21,11 @@ namespace Terrain { namespace Engine {
     }
 
     void OrbitCameraComponentManager::calculateLookAt(
-        float mouseOffsetX, float mouseOffsetY, float deltaTime)
+        float mouseOffsetX, float mouseOffsetY, float deltaTime, bool isMiddleMouseButtonDown)
     {
+        if (!isMiddleMouseButtonDown)
+            return;
+
         for (int i = 0; i < data.count; i++)
         {
             int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
@@ -38,8 +41,11 @@ namespace Terrain { namespace Engine {
     }
 
     void OrbitCameraComponentManager::calculateYawAndPitch(
-        float mouseOffsetX, float mouseOffsetY, float deltaTime)
+        float mouseOffsetX, float mouseOffsetY, float deltaTime, bool isRightMouseButtonDown)
     {
+        if (!isRightMouseButtonDown)
+            return;
+
         for (int i = 0; i < data.count; i++)
         {
             float sensitivity = std::clamp(data.distance[i] * 0.05f, 0.7f, 3.5f) * deltaTime;

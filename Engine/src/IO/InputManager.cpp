@@ -1,6 +1,6 @@
 #include "InputManager.hpp"
 
-#include <iostream>
+#include "GLFW/glfw3.h"
 
 namespace Terrain { namespace Engine { namespace IO {
     InputManager::InputManager(EngineContext &ctx) : ctx(ctx)
@@ -16,21 +16,6 @@ namespace Terrain { namespace Engine { namespace IO {
     bool InputManager::isKeyPressed(int key) const
     {
         return ctx.isKeyPressed(key);
-    }
-
-    bool InputManager::isMouseButtonPressed(int button) const
-    {
-        return ctx.isMouseButtonPressed(button);
-    }
-
-    std::tuple<double, double> InputManager::getMouseOffset() const
-    {
-        return ctx.getMouseOffset();
-    }
-
-    std::tuple<double, double> InputManager::getMouseScrollOffset() const
-    {
-        return ctx.getMouseScrollOffset();
     }
 
     void InputManager::listenForKey(int key)
@@ -66,6 +51,17 @@ namespace Terrain { namespace Engine { namespace IO {
 
             iterator++;
         }
+
+        auto [cursorOffsetX, cursorOffsetY] = ctx.getMouseOffset();
+        auto [scrollOffsetX, scrollOffsetY] = ctx.getMouseScrollOffset();
+        mouseState.cursorOffsetX = cursorOffsetX;
+        mouseState.cursorOffsetY = cursorOffsetY;
+        mouseState.scrollOffsetX = scrollOffsetX;
+        mouseState.scrollOffsetY = scrollOffsetY;
+        mouseState.isLeftMouseButtonDown = ctx.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
+        mouseState.isMiddleMouseButtonDown =
+            ctx.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
+        mouseState.isRightMouseButtonDown = ctx.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     }
 
     InputManager::~InputManager()

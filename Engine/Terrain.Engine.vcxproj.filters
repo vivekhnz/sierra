@@ -171,6 +171,9 @@
     <ClInclude Include="src\EntityManager.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\IO\MouseInputState.hpp">
+      <Filter>src\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
