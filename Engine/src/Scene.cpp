@@ -319,8 +319,11 @@ namespace Terrain { namespace Engine {
         // update camera state
         world.componentManagers.camera.calculateMatrices(vctx.getViewportSize());
 
+        int activeCamera_entityId = isOrbitCameraMode ? 1 : 0;
+        int activeCamera_cameraId =
+            world.componentManagers.camera.lookup(activeCamera_entityId);
         glm::mat4 cameraTransform =
-            world.componentManagers.camera.getTransform(isOrbitCameraMode ? 1 : 0);
+            world.componentManagers.camera.getTransform(activeCamera_cameraId);
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
         glBufferSubData(
             GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cameraTransform));

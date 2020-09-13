@@ -8,11 +8,14 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         int prevMousePosX;
         int prevMousePosY;
+        double mouseOffsetX;
+        double mouseOffsetY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
         double mouseScrollOffsetX;
         double mouseScrollOffsetY;
         bool isMouseCaptured;
+        bool wasMouseCaptured;
 
     public:
         EditorEngineContext();

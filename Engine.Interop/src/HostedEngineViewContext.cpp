@@ -8,8 +8,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         std::function<void()> onRenderCallback,
         int id) :
         window(glfw, 1280, 720, "Terrain", true),
-        imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), hasFocus(false),
-        isHovered(false), id(id)
+        imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
+        hasFocus(false), isHovered(false), id(id)
     {
     }
 
@@ -22,6 +22,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         auto [w, h] = window.getSize();
         return {w, h};
+    }
+
+    std::tuple<int, int> HostedEngineViewContext::getViewportLocation() const
+    {
+        return location;
     }
 
     bool HostedEngineViewContext::isDetached() const
@@ -42,10 +47,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
     }
 
-    void HostedEngineViewContext::resize(int width, int height, char *buffer)
+    void HostedEngineViewContext::resize(int x, int y, int width, int height, char *buffer)
     {
-        imgBuffer = buffer;
+        location = std::make_tuple(x, y);
         window.setSize(width, height);
+        imgBuffer = buffer;
     }
 
     void HostedEngineViewContext::makePrimary()

@@ -11,6 +11,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         std::function<void()> onRenderCallback;
         int id;
 
+        std::tuple<int, int> location;
         bool hasFocus;
         bool isHovered;
 
@@ -26,10 +27,11 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         int getId() const;
         ViewportDimensions getViewportSize() const;
+        std::tuple<int, int> getViewportLocation() const;
         bool isDetached() const;
 
         void render();
-        void resize(int width, int height, char *buffer);
+        void resize(int x, int y, int width, int height, char *buffer);
         void makePrimary();
         void makeCurrent();
 
