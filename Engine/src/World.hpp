@@ -6,18 +6,9 @@
 #include "Graphics/Material.hpp"
 #include "Graphics/MeshInstance.hpp"
 #include "OrbitCameraComponentManager.hpp"
+#include "EntityManager.hpp"
 
 namespace Terrain { namespace Engine {
-    struct ComponentManagers
-    {
-        CameraComponentManager camera;
-        OrbitCameraComponentManager orbitCamera;
-
-        ComponentManagers() : orbitCamera(camera)
-        {
-        }
-    };
-
     class EXPORT World
     {
     private:
@@ -31,7 +22,16 @@ namespace Terrain { namespace Engine {
         int meshInstanceCount;
 
     public:
-        ComponentManagers componentManagers;
+        struct ComponentManagers
+        {
+            CameraComponentManager camera;
+            OrbitCameraComponentManager orbitCamera;
+
+            ComponentManagers() : orbitCamera(camera)
+            {
+            }
+        } componentManagers;
+        EntityManager entities;
 
         World();
         World(const World &that) = delete;

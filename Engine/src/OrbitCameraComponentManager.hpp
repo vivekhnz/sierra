@@ -4,6 +4,8 @@
 #include "Common.hpp"
 #include "CameraComponentManager.hpp"
 
+#include <vector>
+
 namespace Terrain { namespace Engine {
     class EXPORT OrbitCameraComponentManager
     {
@@ -11,14 +13,13 @@ namespace Terrain { namespace Engine {
         struct ComponentData
         {
             int count;
-            int *entityId;
-            glm::vec3 *lookAt;
-            float *yaw;
-            float *pitch;
-            float *distance;
-        };
+            std::vector<int> entityId;
+            std::vector<glm::vec3> lookAt;
+            std::vector<float> yaw;
+            std::vector<float> pitch;
+            std::vector<float> distance;
+        } data;
 
-        ComponentData data;
         CameraComponentManager &cameraComponentMgr;
 
     public:
@@ -28,6 +29,35 @@ namespace Terrain { namespace Engine {
             const OrbitCameraComponentManager &that) = delete;
         OrbitCameraComponentManager(OrbitCameraComponentManager &&) = delete;
         OrbitCameraComponentManager &operator=(OrbitCameraComponentManager &&) = delete;
+
+        int create(int entityId);
+
+        float getPitch(int i) const
+        {
+            return data.pitch[i];
+        }
+        void setPitch(int i, float value)
+        {
+            data.pitch[i] = value;
+        }
+
+        float getYaw(int i) const
+        {
+            return data.yaw[i];
+        }
+        void setYaw(int i, float value)
+        {
+            data.yaw[i] = value;
+        }
+
+        float getDistance(int i) const
+        {
+            return data.distance[i];
+        }
+        void setDistance(int i, float value)
+        {
+            data.distance[i] = value;
+        }
 
         void calculateLookAt(float mouseOffsetX, float mouseOffsetY, float deltaTime);
         void calculateYawAndPitch(float mouseOffsetX, float mouseOffsetY, float deltaTime);

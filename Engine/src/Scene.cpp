@@ -31,10 +31,25 @@ namespace Terrain { namespace Engine {
         glEnable(GL_CULL_FACE);
 
         // player camera
+        int playerCamera_entityId = world.entities.create();
+        int playerCamera_cameraId =
+            world.componentManagers.camera.create(playerCamera_entityId);
         glm::vec3 playerPos =
             glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
-        world.componentManagers.camera.setPosition(0, playerPos);
-        world.componentManagers.camera.setTarget(0, playerPos + playerLookDir);
+        world.componentManagers.camera.setPosition(playerCamera_cameraId, playerPos);
+        world.componentManagers.camera.setTarget(
+            playerCamera_cameraId, playerPos + playerLookDir);
+
+        // orbit camera
+        int orbitCamera_entityId = world.entities.create();
+        world.componentManagers.camera.create(orbitCamera_entityId);
+        int orbitCamera_orbitCameraId =
+            world.componentManagers.orbitCamera.create(orbitCamera_entityId);
+        world.componentManagers.orbitCamera.setPitch(
+            orbitCamera_orbitCameraId, glm::radians(15.0f));
+        world.componentManagers.orbitCamera.setYaw(
+            orbitCamera_orbitCameraId, glm::radians(90.0f));
+        world.componentManagers.orbitCamera.setDistance(orbitCamera_orbitCameraId, 112.5f);
 
         // configure input
         input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
@@ -316,7 +331,7 @@ namespace Terrain { namespace Engine {
         // update camera state
         world.componentManagers.camera.calculateMatrices(vctx.getViewportSize());
 
-        auto &cameraTransform =
+        glm::mat4 cameraTransform =
             world.componentManagers.camera.getTransform(isOrbitCameraMode ? 1 : 0);
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
         glBufferSubData(

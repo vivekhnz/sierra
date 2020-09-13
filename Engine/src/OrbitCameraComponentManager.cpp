@@ -7,18 +7,17 @@ namespace Terrain { namespace Engine {
         CameraComponentManager &cameraComponentMgr) :
         cameraComponentMgr(cameraComponentMgr)
     {
-        data.count = 1;
-        data.entityId = new int[1];
-        data.lookAt = new glm::vec3[1];
-        data.yaw = new float[1];
-        data.pitch = new float[1];
-        data.distance = new float[1];
+        data.count = 0;
+    }
 
-        data.entityId[0] = 1;
-        data.lookAt[0] = glm::vec3(0, 0, 0);
-        data.pitch[0] = glm::radians(15.0f);
-        data.yaw[0] = glm::radians(90.0f);
-        data.distance[0] = 112.5f;
+    int OrbitCameraComponentManager::create(int entityId)
+    {
+        data.entityId.push_back(entityId);
+        data.lookAt.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
+        data.pitch.push_back(0.0f);
+        data.yaw.push_back(0.0f);
+        data.distance.push_back(0.0f);
+        return data.count++;
     }
 
     void OrbitCameraComponentManager::calculateLookAt(
@@ -78,10 +77,5 @@ namespace Terrain { namespace Engine {
     OrbitCameraComponentManager::~OrbitCameraComponentManager()
     {
         data.count = 0;
-        delete[] data.entityId;
-        delete[] data.lookAt;
-        delete[] data.yaw;
-        delete[] data.pitch;
-        delete[] data.distance;
     }
 }}

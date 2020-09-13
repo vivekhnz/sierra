@@ -4,6 +4,7 @@
 #include "Common.hpp"
 #include "EngineViewContext.hpp"
 #include <glm/glm.hpp>
+#include <vector>
 #include <map>
 
 namespace Terrain { namespace Engine {
@@ -13,13 +14,12 @@ namespace Terrain { namespace Engine {
         struct ComponentData
         {
             int count;
-            int *entityId;
-            glm::vec3 *position;
-            glm::vec3 *target;
-            glm::mat4 *transform;
-        };
+            std::vector<int> entityId;
+            std::vector<glm::vec3> position;
+            std::vector<glm::vec3> target;
+            std::vector<glm::mat4> transform;
+        } data;
 
-        ComponentData data;
         std::map<int, int> entityIdToInstanceId;
 
     public:
@@ -29,12 +29,14 @@ namespace Terrain { namespace Engine {
         CameraComponentManager(CameraComponentManager &&) = delete;
         CameraComponentManager &operator=(CameraComponentManager &&) = delete;
 
+        int create(int entityId);
+
         int lookup(int entityId) const
         {
             return entityIdToInstanceId.at(entityId);
         }
 
-        glm::vec3 &getPosition(int i) const
+        glm::vec3 getPosition(int i) const
         {
             return data.position[i];
         }
@@ -43,7 +45,7 @@ namespace Terrain { namespace Engine {
             data.position[i] = value;
         }
 
-        glm::vec3 &getTarget(int i) const
+        glm::vec3 getTarget(int i) const
         {
             return data.target[i];
         }
@@ -52,7 +54,7 @@ namespace Terrain { namespace Engine {
             data.target[i] = value;
         }
 
-        glm::mat4 &getTransform(int i) const
+        glm::mat4 getTransform(int i) const
         {
             return data.transform[i];
         }
