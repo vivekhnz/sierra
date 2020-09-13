@@ -11,7 +11,8 @@ using namespace System::Windows::Input;
 
 namespace Terrain { namespace Engine { namespace Interop {
     EditorEngineContext::EditorEngineContext() :
-        onMouseScrollHandler(NULL), prevMousePosX(0), prevMousePosY(0)
+        onMouseScrollHandler(NULL), prevMousePosX(0), prevMousePosY(0),
+        nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
     {
         startTime = System::DateTime::Now;
     }
@@ -73,6 +74,13 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         auto appWindow = Application::Current->MainWindow;
 
+        if (onMouseScrollHandler != NULL)
+        {
+            onMouseScrollHandler(nextMouseScrollOffsetX, nextMouseScrollOffsetY);
+        }
+        nextMouseScrollOffsetX = 0;
+        nextMouseScrollOffsetY = 0;
+
         // only capture mouse if mouse is in a viewport's bounds
         if (EngineInterop::HoveredViewContext != nullptr && isMouseCaptured)
         {
@@ -96,10 +104,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EditorEngineContext::onMouseScroll(double x, double y)
     {
-        if (onMouseScrollHandler != NULL)
-        {
-            onMouseScrollHandler(x, y);
-        }
+        nextMouseScrollOffsetX = x;
+        nextMouseScrollOffsetY = y;
     }
 
     bool EditorEngineContext::isInMouseCaptureMode() const

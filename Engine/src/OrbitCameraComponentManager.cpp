@@ -50,6 +50,9 @@ namespace Terrain { namespace Engine {
 
     void OrbitCameraComponentManager::calculateDistance(float scrollY)
     {
+        if (scrollY == 0.0f)
+            return;
+
         float multiplier = scrollY > 0.0f ? 0.95f : 1.05f;
         for (int i = 0; i < data.count; i++)
         {

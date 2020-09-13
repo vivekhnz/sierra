@@ -15,6 +15,12 @@ namespace Terrain { namespace Engine {
         double mouseYOffset;
         double prevMouseX;
         double prevMouseY;
+        double nextMouseScrollOffsetX;
+        double nextMouseScrollOffsetY;
+
+        std::function<void(double, double)> onMouseScrollHandler;
+
+        void onMouseScroll(double x, double y);
 
     public:
         WindowEngineViewContext(Graphics::Window &window);

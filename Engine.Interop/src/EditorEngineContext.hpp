@@ -12,6 +12,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         int prevMousePosX;
         int prevMousePosY;
+        double nextMouseScrollOffsetX;
+        double nextMouseScrollOffsetY;
         bool isMouseCaptured;
 
     public:

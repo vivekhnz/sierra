@@ -3,8 +3,10 @@
 namespace Terrain { namespace Engine {
     WindowEngineViewContext::WindowEngineViewContext(Graphics::Window &window) :
         window(window), isFirstMouseInput(true), mouseXOffset(0), mouseYOffset(0),
-        prevMouseX(0), prevMouseY(0)
+        prevMouseX(0), prevMouseY(0), nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
     {
+        window.addMouseScrollHandler(std::bind(&WindowEngineViewContext::onMouseScroll, this,
+            std::placeholders::_1, std::placeholders::_2));
     }
 
     int WindowEngineViewContext::getId() const
@@ -36,7 +38,7 @@ namespace Terrain { namespace Engine {
     void WindowEngineViewContext::addMouseScrollHandler(
         std::function<void(double, double)> handler)
     {
-        window.addMouseScrollHandler(handler);
+        onMouseScrollHandler = handler;
     }
 
     void WindowEngineViewContext::setMouseCaptureMode(bool shouldCaptureMouse)
@@ -46,8 +48,8 @@ namespace Terrain { namespace Engine {
 
     void WindowEngineViewContext::handleInput()
     {
+        // update mouse cursor offset
         auto [mouseX, mouseY] = window.getMousePosition();
-
         if (isFirstMouseInput)
         {
             isFirstMouseInput = false;
@@ -57,9 +59,16 @@ namespace Terrain { namespace Engine {
             mouseXOffset = mouseX - prevMouseX;
             mouseYOffset = mouseY - prevMouseY;
         }
-
         prevMouseX = mouseX;
         prevMouseY = mouseY;
+
+        // update mouse scroll offset
+        if (onMouseScrollHandler != NULL)
+        {
+            onMouseScrollHandler(nextMouseScrollOffsetX, nextMouseScrollOffsetY);
+        }
+        nextMouseScrollOffsetX = 0;
+        nextMouseScrollOffsetY = 0;
     }
 
     void WindowEngineViewContext::render()
@@ -70,6 +79,12 @@ namespace Terrain { namespace Engine {
     void WindowEngineViewContext::exit()
     {
         window.close();
+    }
+
+    void WindowEngineViewContext::onMouseScroll(double x, double y)
+    {
+        nextMouseScrollOffsetX = x;
+        nextMouseScrollOffsetY = y;
     }
 
     WindowEngineViewContext::~WindowEngineViewContext()
