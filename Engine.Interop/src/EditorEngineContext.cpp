@@ -11,15 +11,9 @@ using namespace System::Windows::Input;
 
 namespace Terrain { namespace Engine { namespace Interop {
     EditorEngineContext::EditorEngineContext() :
-        onMouseScrollHandler(NULL), prevMousePosX(0), prevMousePosY(0),
-        nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
+        prevMousePosX(0), prevMousePosY(0), nextMouseScrollOffsetX(0),
+        nextMouseScrollOffsetY(0), mouseScrollOffsetX(0), mouseScrollOffsetY(0)
     {
-        startTime = System::DateTime::Now;
-    }
-
-    float EditorEngineContext::getCurrentTime() const
-    {
-        return (float)(System::DateTime::Now - startTime).TotalSeconds;
     }
 
     bool EditorEngineContext::isKeyPressed(int key) const
@@ -59,10 +53,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         return std::make_tuple(mousePos.X - prevMousePosX, mousePos.Y - prevMousePosY);
     }
 
-    void EditorEngineContext::addMouseScrollHandler(
-        std::function<void(double, double)> handler)
+    std::tuple<double, double> EditorEngineContext::getMouseScrollOffset() const
     {
-        onMouseScrollHandler = handler;
+        return std::make_tuple(mouseScrollOffsetX, mouseScrollOffsetY);
     }
 
     void EditorEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)
@@ -74,10 +67,8 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         auto appWindow = Application::Current->MainWindow;
 
-        if (onMouseScrollHandler != NULL)
-        {
-            onMouseScrollHandler(nextMouseScrollOffsetX, nextMouseScrollOffsetY);
-        }
+        mouseScrollOffsetX = nextMouseScrollOffsetX;
+        mouseScrollOffsetY = nextMouseScrollOffsetY;
         nextMouseScrollOffsetX = 0;
         nextMouseScrollOffsetY = 0;
 

@@ -31,6 +31,7 @@ public
         static HostedEngineViewContext *focusedViewCtx = nullptr;
         static HostedEngineViewContext *hoveredViewCtx = nullptr;
         static DispatcherTimer ^ renderTimer = nullptr;
+        static DateTime lastTickTime;
 
         static void OnTick(Object ^ sender, EventArgs ^ e);
         static void OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args);

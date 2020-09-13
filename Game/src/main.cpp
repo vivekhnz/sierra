@@ -15,17 +15,24 @@ int main()
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         window.makePrimary();
         Terrain::Engine::WindowEngineViewContext vctx(window);
-        GameEngineContext ctx(glfw, vctx);
+        GameEngineContext ctx(vctx);
         Terrain::Engine::World world;
         Terrain::Engine::Scene scene(ctx, world);
         scene.getTerrain().loadHeightmap(Terrain::Engine::Graphics::Image(
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true)
                                              .getData());
 
+        float now = 0;
+        float lastTickTime = glfw.getCurrentTime();
+        float deltaTime = 0;
         while (!window.isRequestingClose())
         {
+            now = glfw.getCurrentTime();
+            deltaTime = now - lastTickTime;
+            lastTickTime = now;
+
             ctx.handleInput();
-            scene.update();
+            scene.update(deltaTime);
             scene.draw(vctx);
             vctx.render();
             glfw.processEvents();

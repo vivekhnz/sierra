@@ -17,8 +17,8 @@ namespace Terrain { namespace Engine {
         double prevMouseY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
-
-        std::function<void(double, double)> onMouseScrollHandler;
+        double mouseScrollOffsetX;
+        double mouseScrollOffsetY;
 
         void onMouseScroll(double x, double y);
 
@@ -34,8 +34,8 @@ namespace Terrain { namespace Engine {
         bool isKeyPressed(int key) const;
         bool isMouseButtonPressed(int button) const;
         std::tuple<double, double> getMouseOffset() const;
+        std::tuple<double, double> getMouseScrollOffset() const;
 
-        void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void handleInput();
         void render();

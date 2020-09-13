@@ -24,7 +24,6 @@ namespace Terrain { namespace Engine {
         IO::InputManager input;
 
         float lightAngle;
-        float prevFrameTime;
         bool isOrbitCameraMode;
 
         bool wasManipulatingCamera;
@@ -46,9 +45,9 @@ namespace Terrain { namespace Engine {
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
-        void updateOrbitCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY);
+        void updateOrbitCamera(
+            float deltaTime, float mouseOffsetX, float mouseOffsetY, float scrollY);
         void updatePlayerCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY);
-        void onMouseScroll(float xOffset, float yOffset);
 
     public:
         Scene(EngineContext &ctx, World &world);
@@ -59,7 +58,7 @@ namespace Terrain { namespace Engine {
 
         Terrain &getTerrain();
 
-        void update();
+        void update(float deltaTime);
         void draw(EngineViewContext &vctx);
         void toggleLighting();
         void toggleAlbedoMap();

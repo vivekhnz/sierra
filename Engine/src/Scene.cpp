@@ -9,7 +9,7 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f), prevFrameTime(0),
+        ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f),
         isOrbitCameraMode(false), wasManipulatingCamera(false),
         playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
         playerCameraPitch(0.0f), isLightingEnabled(true), isTextureEnabled(true),
@@ -63,9 +63,6 @@ namespace Terrain { namespace Engine {
         input.mapCommand(GLFW_KEY_H,
             std::bind(&Terrain::loadHeightmapFromFile, &terrain,
                 IO::Path::getAbsolutePath("data/heightmap2.tga")));
-
-        input.addMouseScrollHandler(std::bind(
-            &Scene::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
         input.setMouseCaptureMode(true);
 
         // setup heightmap quad
@@ -151,7 +148,7 @@ namespace Terrain { namespace Engine {
         return terrain;
     }
 
-    void Scene::update()
+    void Scene::update(float deltaTime)
     {
         input.update();
         if (input.isKeyPressed(GLFW_KEY_ESCAPE))
@@ -159,14 +156,11 @@ namespace Terrain { namespace Engine {
             ctx.exit();
         }
 
-        float currentTime = ctx.getCurrentTime();
-        float deltaTime = currentTime - prevFrameTime;
-        prevFrameTime = currentTime;
-
         auto [mouseOffsetX, mouseOffsetY] = input.getMouseOffset();
+        auto [scrollX, scrollY] = input.getMouseScrollOffset();
         if (isOrbitCameraMode)
         {
-            updateOrbitCamera(deltaTime, mouseOffsetX, mouseOffsetY);
+            updateOrbitCamera(deltaTime, mouseOffsetX, mouseOffsetY, scrollY);
         }
         else
         {
@@ -219,7 +213,8 @@ namespace Terrain { namespace Engine {
         input.setMouseCaptureMode(!isOrbitCameraMode);
     }
 
-    void Scene::updateOrbitCamera(float deltaTime, float mouseOffsetX, float mouseOffsetY)
+    void Scene::updateOrbitCamera(
+        float deltaTime, float mouseOffsetX, float mouseOffsetY, float scrollY)
     {
         if (input.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE))
         {
@@ -231,6 +226,7 @@ namespace Terrain { namespace Engine {
             world.componentManagers.orbitCamera.calculateYawAndPitch(
                 mouseOffsetX, mouseOffsetY, deltaTime);
         }
+        world.componentManagers.orbitCamera.calculateDistance(scrollY);
         world.componentManagers.orbitCamera.calculateCameraStates();
 
         // capture mouse if camera is being manipulated
@@ -284,14 +280,6 @@ namespace Terrain { namespace Engine {
 
         world.componentManagers.camera.setPosition(0, pos);
         world.componentManagers.camera.setTarget(0, pos + playerLookDir);
-    }
-
-    void Scene::onMouseScroll(float xOffset, float yOffset)
-    {
-        if (isOrbitCameraMode)
-        {
-            world.componentManagers.orbitCamera.calculateDistance(yOffset);
-        }
     }
 
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)

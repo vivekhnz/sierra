@@ -12,6 +12,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         focusedViewCtx = nullptr;
         hoveredViewCtx = nullptr;
 
+        lastTickTime = DateTime::UtcNow;
         renderTimer = gcnew DispatcherTimer(DispatcherPriority::Send);
         renderTimer->Interval = TimeSpan::FromMilliseconds(1);
         renderTimer->Tick += gcnew System::EventHandler(&EngineInterop::OnTick);
@@ -84,11 +85,15 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
     {
+        auto now = DateTime::UtcNow;
+        float deltaTime = (now - lastTickTime).TotalSeconds;
+        lastTickTime = now;
+
         ctx->handleInput();
 
         if (!isWorldInitialized)
             return;
-        scene->update();
+        scene->update(deltaTime);
 
         msclr::lock l(viewCtxLock);
         for (auto vctx : *viewContexts)

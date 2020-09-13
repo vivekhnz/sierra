@@ -35,10 +35,9 @@ namespace Terrain { namespace Engine {
         return std::make_tuple(mouseXOffset, mouseYOffset);
     }
 
-    void WindowEngineViewContext::addMouseScrollHandler(
-        std::function<void(double, double)> handler)
+    std::tuple<double, double> WindowEngineViewContext::getMouseScrollOffset() const
     {
-        onMouseScrollHandler = handler;
+        return std::make_tuple(mouseScrollOffsetX, mouseScrollOffsetY);
     }
 
     void WindowEngineViewContext::setMouseCaptureMode(bool shouldCaptureMouse)
@@ -63,10 +62,8 @@ namespace Terrain { namespace Engine {
         prevMouseY = mouseY;
 
         // update mouse scroll offset
-        if (onMouseScrollHandler != NULL)
-        {
-            onMouseScrollHandler(nextMouseScrollOffsetX, nextMouseScrollOffsetY);
-        }
+        mouseScrollOffsetX = nextMouseScrollOffsetX;
+        mouseScrollOffsetY = nextMouseScrollOffsetY;
         nextMouseScrollOffsetX = 0;
         nextMouseScrollOffsetY = 0;
     }

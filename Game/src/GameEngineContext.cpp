@@ -1,15 +1,8 @@
 #include "GameEngineContext.hpp"
 
-GameEngineContext::GameEngineContext(Terrain::Engine::Graphics::GlfwManager &glfw,
-    Terrain::Engine::WindowEngineViewContext &vctx) :
-    glfw(glfw),
+GameEngineContext::GameEngineContext(Terrain::Engine::WindowEngineViewContext &vctx) :
     vctx(vctx)
 {
-}
-
-float GameEngineContext::getCurrentTime() const
-{
-    return glfw.getCurrentTime();
 }
 
 bool GameEngineContext::isKeyPressed(int key) const
@@ -27,9 +20,9 @@ std::tuple<double, double> GameEngineContext::getMouseOffset() const
     return vctx.getMouseOffset();
 }
 
-void GameEngineContext::addMouseScrollHandler(std::function<void(double, double)> handler)
+std::tuple<double, double> GameEngineContext::getMouseScrollOffset() const
 {
-    vctx.addMouseScrollHandler(handler);
+    return vctx.getMouseScrollOffset();
 }
 
 void GameEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)

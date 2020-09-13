@@ -6,14 +6,12 @@
 namespace Terrain { namespace Engine { namespace Interop {
     class EditorEngineContext : public EngineContext
     {
-        System::DateTime startTime;
-
-        std::function<void(double, double)> onMouseScrollHandler;
-
         int prevMousePosX;
         int prevMousePosY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
+        double mouseScrollOffsetX;
+        double mouseScrollOffsetY;
         bool isMouseCaptured;
 
     public:
@@ -23,12 +21,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorEngineContext(EditorEngineContext &&) = delete;
         EditorEngineContext &operator=(EditorEngineContext &&) = delete;
 
-        float getCurrentTime() const;
         bool isKeyPressed(int key) const;
         bool isMouseButtonPressed(int button) const;
         std::tuple<double, double> getMouseOffset() const;
+        std::tuple<double, double> getMouseScrollOffset() const;
 
-        void addMouseScrollHandler(std::function<void(double, double)> handler);
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void handleInput();
         void exit();
