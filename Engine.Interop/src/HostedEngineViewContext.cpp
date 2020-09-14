@@ -3,19 +3,21 @@
 #include "EngineInterop.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    HostedEngineViewContext::HostedEngineViewContext(Graphics::GlfwManager &glfw,
-        char *imgBuffer,
-        std::function<void()> onRenderCallback,
-        int cameraEntityId) :
+    HostedEngineViewContext::HostedEngineViewContext(
+        Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
-        hasFocus(false), isHovered(false), cameraEntityId(cameraEntityId)
+        hasFocus(false), isHovered(false), cameraEntityId(-1)
     {
     }
 
     int HostedEngineViewContext::getCameraEntityId() const
     {
         return cameraEntityId;
+    }
+    void HostedEngineViewContext::setCameraEntityId(int cameraEntityId)
+    {
+        this->cameraEntityId = cameraEntityId;
     }
 
     ViewportDimensions HostedEngineViewContext::getViewportSize() const

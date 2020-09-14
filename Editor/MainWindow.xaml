@@ -10,7 +10,7 @@
         Closing="Window_Closing">
     <Grid Background="#333">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="2*" />
+            <ColumnDefinition Width="*" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
@@ -23,6 +23,7 @@
                 <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
             </MenuItem>
         </Menu>
-        <interop:Viewport x:Name="viewport" Grid.Row="1" />
+        <interop:Viewport x:Name="viewport1" Grid.Row="1" />
+        <interop:Viewport x:Name="viewport2" Grid.Row="1" Grid.Column="1" />
     </Grid>
 </Window>

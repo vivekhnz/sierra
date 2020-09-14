@@ -2,7 +2,7 @@
 
 namespace Terrain { namespace Engine {
     WindowEngineViewContext::WindowEngineViewContext(Graphics::Window &window) :
-        cameraEntityId(0), window(window), isFirstMouseInput(true), mouseXOffset(0),
+        cameraEntityId(-1), window(window), isFirstMouseInput(true), mouseXOffset(0),
         mouseYOffset(0), prevMouseX(0), prevMouseY(0), nextMouseScrollOffsetX(0),
         nextMouseScrollOffsetY(0), mouseScrollOffsetX(0), mouseScrollOffsetY(0)
     {

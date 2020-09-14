@@ -38,7 +38,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             }
         }
 
-        auto vctx = new HostedEngineViewContext(*glfw, imgBuffer, renderCallback, 1);
+        auto vctx = new HostedEngineViewContext(*glfw, imgBuffer, renderCallback);
         viewContexts->push_back(vctx);
 
         if (!isWorldInitialized)
@@ -54,6 +54,16 @@ namespace Terrain { namespace Engine { namespace Interop {
 
             isWorldInitialized = true;
         }
+
+        // create orbit camera
+        int cameraEntityId = world->entities.create();
+        world->componentManagers.camera.create(cameraEntityId);
+        int orbitCameraId = world->componentManagers.orbitCamera.create(cameraEntityId);
+        world->componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
+        world->componentManagers.orbitCamera.setYaw(
+            orbitCameraId, glm::radians(90.0f + (90.0f * viewContexts->size())));
+        world->componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
+        vctx->setCameraEntityId(cameraEntityId);
 
         return vctx;
     }

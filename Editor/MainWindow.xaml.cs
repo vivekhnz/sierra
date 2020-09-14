@@ -18,7 +18,8 @@ namespace Terrain.Editor
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            viewport.Dispose();
+            viewport1.Dispose();
+            viewport2.Dispose();
             EngineInterop.Shutdown();
         }
 

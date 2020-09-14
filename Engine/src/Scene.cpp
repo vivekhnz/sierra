@@ -40,17 +40,6 @@ namespace Terrain { namespace Engine {
         world.componentManagers.camera.setTarget(
             playerCamera_cameraId, playerPos + playerLookDir);
 
-        // orbit camera
-        int orbitCamera_entityId = world.entities.create();
-        world.componentManagers.camera.create(orbitCamera_entityId);
-        int orbitCamera_orbitCameraId =
-            world.componentManagers.orbitCamera.create(orbitCamera_entityId);
-        world.componentManagers.orbitCamera.setPitch(
-            orbitCamera_orbitCameraId, glm::radians(15.0f));
-        world.componentManagers.orbitCamera.setYaw(
-            orbitCamera_orbitCameraId, glm::radians(90.0f));
-        world.componentManagers.orbitCamera.setDistance(orbitCamera_orbitCameraId, 112.5f);
-
         // configure input
         input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
         input.mapCommand(GLFW_KEY_T, std::bind(&Scene::toggleAlbedoMap, this));
@@ -296,6 +285,10 @@ namespace Terrain { namespace Engine {
         glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        int activeCamera_entityId = vctx.getCameraEntityId();
+        if (activeCamera_entityId == -1)
+            return;
+
         // update lighting state
         auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
         LightingState lighting = {
@@ -314,7 +307,6 @@ namespace Terrain { namespace Engine {
         // update camera state
         world.componentManagers.camera.calculateMatrices(vctx.getViewportSize());
 
-        int activeCamera_entityId = vctx.getCameraEntityId();
         int activeCamera_cameraId =
             world.componentManagers.camera.lookup(activeCamera_entityId);
         glm::mat4 cameraTransform =

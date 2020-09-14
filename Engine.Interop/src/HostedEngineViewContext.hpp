@@ -18,8 +18,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     public:
         HostedEngineViewContext(Graphics::GlfwManager &glfw,
             char *imgBuffer,
-            std::function<void()> onRenderCallback,
-            int id);
+            std::function<void()> onRenderCallback);
         HostedEngineViewContext(const HostedEngineViewContext &that) = delete;
         HostedEngineViewContext &operator=(const HostedEngineViewContext &that) = delete;
         HostedEngineViewContext(HostedEngineViewContext &&) = delete;
@@ -34,6 +33,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         void resize(int x, int y, int width, int height, char *buffer);
         void makePrimary();
         void makeCurrent();
+        void setCameraEntityId(int cameraEntityId);
 
         void detach();
         void reattach(char *imgBuffer, std::function<void()> onRenderCallback);

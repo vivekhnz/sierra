@@ -22,6 +22,17 @@ int main()
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true)
                                              .getData());
 
+        // create orbit camera
+        int orbitCamera_entityId = world.entities.create();
+        world.componentManagers.camera.create(orbitCamera_entityId);
+        int orbitCamera_orbitCameraId =
+            world.componentManagers.orbitCamera.create(orbitCamera_entityId);
+        world.componentManagers.orbitCamera.setPitch(
+            orbitCamera_orbitCameraId, glm::radians(15.0f));
+        world.componentManagers.orbitCamera.setYaw(
+            orbitCamera_orbitCameraId, glm::radians(90.0f));
+        world.componentManagers.orbitCamera.setDistance(orbitCamera_orbitCameraId, 112.5f);
+
         float now = 0;
         float lastTickTime = glfw.getCurrentTime();
         float deltaTime = 0;
