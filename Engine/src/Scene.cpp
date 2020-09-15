@@ -10,17 +10,17 @@
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f),
-        isOrbitCameraMode(false), wasManipulatingCamera(false),
-        playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)), playerCameraYaw(-90.0f),
-        playerCameraPitch(0.0f), isLightingEnabled(true), isTextureEnabled(true),
-        isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
-        isRoughnessMapEnabled(false), input(ctx), heightmapTexture(2048,
-                                                      2048,
-                                                      GL_R16,
-                                                      GL_RED,
-                                                      GL_UNSIGNED_SHORT,
-                                                      GL_MIRRORED_REPEAT,
-                                                      GL_LINEAR_MIPMAP_LINEAR),
+        isOrbitCameraMode(false), playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)),
+        playerCameraYaw(-90.0f), playerCameraPitch(0.0f), isLightingEnabled(true),
+        isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
+        isAOMapEnabled(true), isRoughnessMapEnabled(false), input(ctx),
+        heightmapTexture(2048,
+            2048,
+            GL_R16,
+            GL_RED,
+            GL_UNSIGNED_SHORT,
+            GL_MIRRORED_REPEAT,
+            GL_LINEAR_MIPMAP_LINEAR),
         terrain(world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
@@ -145,14 +145,13 @@ namespace Terrain { namespace Engine {
             ctx.exit();
         }
 
-        auto mouseState = input.getMouseState();
         if (isOrbitCameraMode)
         {
-            updateOrbitCamera(deltaTime, mouseState);
+            world.componentManagers.orbitCamera.calculateCameraStates(input, deltaTime);
         }
         else
         {
-            updatePlayerCamera(deltaTime, mouseState);
+            updatePlayerCamera(deltaTime);
         }
 
         if (input.isKeyPressed(GLFW_KEY_LEFT))
@@ -201,28 +200,10 @@ namespace Terrain { namespace Engine {
         input.setMouseCaptureMode(!isOrbitCameraMode);
     }
 
-    void Scene::updateOrbitCamera(float deltaTime, IO::MouseInputState &mouseState)
+    void Scene::updatePlayerCamera(float deltaTime)
     {
-        bool isMiddleMouseButtonDown = mouseState.isMiddleMouseButtonDown;
-        bool isRightMouseButtonDown = mouseState.isRightMouseButtonDown;
+        IO::MouseInputState mouseState = input.getMouseState(0);
 
-        world.componentManagers.orbitCamera.calculateCameraStates(mouseState, deltaTime);
-
-        // capture mouse if camera is being manipulated
-        bool isManipulatingCamera = isMiddleMouseButtonDown || isRightMouseButtonDown;
-        if (isManipulatingCamera && !wasManipulatingCamera)
-        {
-            input.setMouseCaptureMode(true);
-        }
-        else if (!isManipulatingCamera && wasManipulatingCamera)
-        {
-            input.setMouseCaptureMode(false);
-        }
-        wasManipulatingCamera = isManipulatingCamera;
-    }
-
-    void Scene::updatePlayerCamera(float deltaTime, IO::MouseInputState &mouseState)
-    {
         const float sensitivity = 4.0f * deltaTime;
         playerCameraYaw += mouseState.cursorOffsetX * sensitivity;
         playerCameraPitch =

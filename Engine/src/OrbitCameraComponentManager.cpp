@@ -17,14 +17,19 @@ namespace Terrain { namespace Engine {
         data.pitch.push_back(0.0f);
         data.yaw.push_back(0.0f);
         data.distance.push_back(0.0f);
+        data.inputControllerId.push_back(0);
         return data.count++;
     }
 
     void OrbitCameraComponentManager::calculateCameraStates(
-        IO::MouseInputState &mouseState, float deltaTime)
+        IO::InputManager &inputManager, float deltaTime)
     {
+        bool isManipulatingOrbitCamera = false;
+
         for (int i = 0; i < data.count; i++)
         {
+            IO::MouseInputState mouseState =
+                inputManager.getMouseState(data.inputControllerId[i]);
             int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             float &distance = data.distance[i];
             glm::vec3 &lookAt = data.lookAt[i];
@@ -57,7 +62,13 @@ namespace Terrain { namespace Engine {
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
             cameraComponentMgr.setPosition(cameraInstanceId, lookAt + (newLookDir * distance));
             cameraComponentMgr.setTarget(cameraInstanceId, lookAt);
+
+            isManipulatingOrbitCamera |=
+                mouseState.isMiddleMouseButtonDown || mouseState.isRightMouseButtonDown;
         }
+
+        // capture mouse if orbit camera is being manipulated
+        inputManager.setMouseCaptureMode(isManipulatingOrbitCamera);
     }
 
     OrbitCameraComponentManager::~OrbitCameraComponentManager()

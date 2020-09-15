@@ -7,6 +7,10 @@ namespace Terrain { namespace Engine {
     {
         window.addMouseScrollHandler(std::bind(&WindowEngineViewContext::onMouseScroll, this,
             std::placeholders::_1, std::placeholders::_2));
+
+        // todo: add support for more than one input controller
+        inputState.count = 1;
+        inputState.mouse.push_back({});
     }
 
     int WindowEngineViewContext::getCameraEntityId() const
@@ -37,6 +41,8 @@ namespace Terrain { namespace Engine {
 
     void WindowEngineViewContext::handleInput()
     {
+        IO::MouseInputState &mouseState = inputState.mouse[0];
+
         mouseState.isLeftMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
         mouseState.isMiddleMouseButtonDown =
             window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);

@@ -55,6 +55,10 @@ namespace Terrain { namespace Engine { namespace Interop {
             isWorldInitialized = true;
         }
 
+        // create input controller
+        int inputControllerId = ctx->addInputController();
+        vctx->setInputControllerId(inputControllerId);
+
         // create orbit camera
         int cameraEntityId = world->entities.create();
         world->componentManagers.camera.create(cameraEntityId);
@@ -63,6 +67,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         world->componentManagers.orbitCamera.setYaw(
             orbitCameraId, glm::radians(90.0f + (90.0f * viewContexts->size())));
         world->componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
+        world->componentManagers.orbitCamera.setInputControllerId(
+            orbitCameraId, inputControllerId);
         vctx->setCameraEntityId(cameraEntityId);
 
         return vctx;

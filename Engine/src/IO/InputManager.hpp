@@ -14,6 +14,9 @@ namespace Terrain { namespace Engine { namespace IO {
         std::map<int, std::tuple<bool, bool>> keyState;
         std::map<int, std::function<void()>> keyCommands;
 
+        bool isMouseCaptured;
+        bool wasMouseCaptured;
+
     public:
         InputManager(EngineContext &ctx);
         InputManager(const InputManager &that) = delete;
@@ -24,9 +27,9 @@ namespace Terrain { namespace Engine { namespace IO {
         bool isNewKeyPress(int key);
         bool isKeyPressed(int key) const;
 
-        MouseInputState getMouseState() const
+        MouseInputState getMouseState(int inputControllerIndex) const
         {
-            return ctx.getMouseState();
+            return ctx.getMouseState(inputControllerIndex);
         }
 
         void listenForKey(int key);

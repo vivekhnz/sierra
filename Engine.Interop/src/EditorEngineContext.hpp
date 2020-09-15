@@ -13,7 +13,15 @@ namespace Terrain { namespace Engine { namespace Interop {
         bool isMouseCaptured;
         bool wasMouseCaptured;
 
-        IO::MouseInputState mouseState;
+        struct InputState
+        {
+            int count;
+            std::vector<IO::MouseInputState> mouse;
+
+            InputState() : count(0)
+            {
+            }
+        } inputState;
 
     public:
         EditorEngineContext();
@@ -24,12 +32,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         bool isKeyPressed(int key) const;
 
-        IO::MouseInputState getMouseState() const
+        IO::MouseInputState getMouseState(int inputControllerId) const
         {
-            return mouseState;
+            return inputState.mouse[inputControllerId];
         }
 
         void setMouseCaptureMode(bool shouldCaptureMouse);
+        int addInputController();
         void handleInput();
         void exit();
 

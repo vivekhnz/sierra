@@ -7,7 +7,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
-        hasFocus(false), isHovered(false), cameraEntityId(-1)
+        hasFocus(false), isHovered(false), cameraEntityId(-1), inputControllerId(-1)
     {
     }
 
@@ -18,6 +18,15 @@ namespace Terrain { namespace Engine { namespace Interop {
     void HostedEngineViewContext::setCameraEntityId(int cameraEntityId)
     {
         this->cameraEntityId = cameraEntityId;
+    }
+
+    int HostedEngineViewContext::getInputControllerId() const
+    {
+        return inputControllerId;
+    }
+    void HostedEngineViewContext::setInputControllerId(int inputControllerId)
+    {
+        this->inputControllerId = inputControllerId;
     }
 
     ViewportDimensions HostedEngineViewContext::getViewportSize() const

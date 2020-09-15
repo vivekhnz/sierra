@@ -3,7 +3,8 @@
 #include "GLFW/glfw3.h"
 
 namespace Terrain { namespace Engine { namespace IO {
-    InputManager::InputManager(EngineContext &ctx) : ctx(ctx)
+    InputManager::InputManager(EngineContext &ctx) :
+        ctx(ctx), isMouseCaptured(false), wasMouseCaptured(false)
     {
     }
 
@@ -31,7 +32,7 @@ namespace Terrain { namespace Engine { namespace IO {
 
     void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
     {
-        ctx.setMouseCaptureMode(shouldCaptureMouse);
+        isMouseCaptured = shouldCaptureMouse;
     }
 
     void InputManager::update()
@@ -51,6 +52,17 @@ namespace Terrain { namespace Engine { namespace IO {
 
             iterator++;
         }
+
+        // only change mouse capture state if the state changed this frame
+        if (isMouseCaptured && !wasMouseCaptured)
+        {
+            ctx.setMouseCaptureMode(true);
+        }
+        else if (!isMouseCaptured && wasMouseCaptured)
+        {
+            ctx.setMouseCaptureMode(false);
+        }
+        wasMouseCaptured = isMouseCaptured;
     }
 
     InputManager::~InputManager()

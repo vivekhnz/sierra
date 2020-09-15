@@ -30,19 +30,29 @@ namespace Terrain { namespace Engine { namespace Interop {
         isMouseCaptured = shouldCaptureMouse;
     }
 
+    int EditorEngineContext::addInputController()
+    {
+        inputState.mouse.push_back({});
+        return inputState.count++;
+    }
+
     void EditorEngineContext::handleInput()
     {
         auto appWindow = Application::Current->MainWindow;
         auto mousePos = Mouse::GetPosition(appWindow);
 
-        // reset any input state if the mouse is not over a viewport
-        mouseState.cursorOffsetX = 0;
-        mouseState.cursorOffsetY = 0;
-        mouseState.scrollOffsetX = 0;
-        mouseState.scrollOffsetY = 0;
-        mouseState.isLeftMouseButtonDown = false;
-        mouseState.isMiddleMouseButtonDown = false;
-        mouseState.isRightMouseButtonDown = false;
+        // reset input state
+        for (int i = 0; i < inputState.count; i++)
+        {
+            IO::MouseInputState &mouseState = inputState.mouse[i];
+            mouseState.cursorOffsetX = 0;
+            mouseState.cursorOffsetY = 0;
+            mouseState.scrollOffsetX = 0;
+            mouseState.scrollOffsetY = 0;
+            mouseState.isLeftMouseButtonDown = false;
+            mouseState.isMiddleMouseButtonDown = false;
+            mouseState.isRightMouseButtonDown = false;
+        }
 
         if (EngineInterop::HoveredViewContext == nullptr)
         {
@@ -50,6 +60,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
         else
         {
+            IO::MouseInputState &mouseState =
+                inputState.mouse[EngineInterop::HoveredViewContext->getInputControllerId()];
             mouseState.isLeftMouseButtonDown = Mouse::LeftButton == MouseButtonState::Pressed;
             mouseState.isMiddleMouseButtonDown =
                 Mouse::MiddleButton == MouseButtonState::Pressed;

@@ -10,7 +10,7 @@ namespace Terrain { namespace Engine {
     {
     public:
         virtual bool isKeyPressed(int key) const = 0;
-        virtual IO::MouseInputState getMouseState() const = 0;
+        virtual IO::MouseInputState getMouseState(int inputControllerId) const = 0;
 
         virtual void setMouseCaptureMode(bool shouldCaptureMouse) = 0;
         virtual void exit() = 0;

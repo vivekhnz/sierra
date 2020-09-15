@@ -6,6 +6,8 @@
 #include "Graphics/Window.hpp"
 #include "IO/MouseInputState.hpp"
 
+#include <vector>
+
 namespace Terrain { namespace Engine {
     class EXPORT WindowEngineViewContext : public EngineViewContext
     {
@@ -18,7 +20,15 @@ namespace Terrain { namespace Engine {
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
 
-        IO::MouseInputState mouseState;
+        struct InputState
+        {
+            int count;
+            std::vector<IO::MouseInputState> mouse;
+
+            InputState() : count(0)
+            {
+            }
+        } inputState;
 
         void onMouseScroll(double x, double y);
 
@@ -33,9 +43,9 @@ namespace Terrain { namespace Engine {
         ViewportDimensions getViewportSize() const;
         bool isKeyPressed(int key) const;
 
-        IO::MouseInputState getMouseState() const
+        IO::MouseInputState getMouseState(int inputControllerId) const
         {
-            return mouseState;
+            return inputState.mouse[inputControllerId];
         }
 
         void setMouseCaptureMode(bool shouldCaptureMouse);

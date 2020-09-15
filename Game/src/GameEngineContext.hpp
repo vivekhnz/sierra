@@ -19,9 +19,9 @@ public:
 
     bool isKeyPressed(int key) const;
 
-    Terrain::Engine::IO::MouseInputState getMouseState() const
+    Terrain::Engine::IO::MouseInputState getMouseState(int inputControllerId) const
     {
-        return vctx.getMouseState();
+        return vctx.getMouseState(inputControllerId);
     }
 
     void setMouseCaptureMode(bool shouldCaptureMouse);

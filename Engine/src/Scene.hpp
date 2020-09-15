@@ -26,8 +26,6 @@ namespace Terrain { namespace Engine {
         float lightAngle;
         bool isOrbitCameraMode;
 
-        bool wasManipulatingCamera;
-
         glm::vec3 playerLookDir;
         float playerCameraYaw;
         float playerCameraPitch;
@@ -45,8 +43,7 @@ namespace Terrain { namespace Engine {
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
-        void updateOrbitCamera(float deltaTime, IO::MouseInputState &mouseState);
-        void updatePlayerCamera(float deltaTime, IO::MouseInputState &mouseState);
+        void updatePlayerCamera(float deltaTime);
 
     public:
         Scene(EngineContext &ctx, World &world);

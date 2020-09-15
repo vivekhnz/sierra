@@ -3,7 +3,7 @@
 
 #include "Common.hpp"
 #include "CameraComponentManager.hpp"
-#include "IO/MouseInputState.hpp"
+#include "IO/InputManager.hpp"
 
 #include <vector>
 
@@ -19,6 +19,7 @@ namespace Terrain { namespace Engine {
             std::vector<float> yaw;
             std::vector<float> pitch;
             std::vector<float> distance;
+            std::vector<int> inputControllerId;
         } data;
 
         CameraComponentManager &cameraComponentMgr;
@@ -60,7 +61,16 @@ namespace Terrain { namespace Engine {
             data.distance[i] = value;
         }
 
-        void calculateCameraStates(IO::MouseInputState &mouseState, float deltaTime);
+        int getInputControllerId(int i) const
+        {
+            return data.inputControllerId[i];
+        }
+        void setInputControllerId(int i, int value)
+        {
+            data.inputControllerId[i] = value;
+        }
+
+        void calculateCameraStates(IO::InputManager &inputManager, float deltaTime);
 
         ~OrbitCameraComponentManager();
     };

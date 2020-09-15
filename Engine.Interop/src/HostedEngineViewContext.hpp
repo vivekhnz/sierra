@@ -10,6 +10,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         char *imgBuffer;
         std::function<void()> onRenderCallback;
         int cameraEntityId;
+        int inputControllerId;
 
         std::tuple<int, int> location;
         bool hasFocus;
@@ -25,6 +26,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         HostedEngineViewContext &operator=(HostedEngineViewContext &&) = delete;
 
         int getCameraEntityId() const;
+        int getInputControllerId() const;
         ViewportDimensions getViewportSize() const;
         std::tuple<int, int> getViewportLocation() const;
         bool isDetached() const;
@@ -34,6 +36,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         void makePrimary();
         void makeCurrent();
         void setCameraEntityId(int cameraEntityId);
+        void setInputControllerId(int cameraEntityId);
 
         void detach();
         void reattach(char *imgBuffer, std::function<void()> onRenderCallback);
