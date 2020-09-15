@@ -4,6 +4,7 @@
 #include "../Engine/src/EngineContext.hpp"
 #include "../Engine/src/WindowEngineViewContext.hpp"
 #include "../Engine/src/Graphics/Window.hpp"
+#include "../Engine/src/IO/MouseInputState.hpp"
 
 class GameEngineContext : public Terrain::Engine::EngineContext
 {
@@ -17,9 +18,11 @@ public:
     GameEngineContext &operator=(GameEngineContext &&) = delete;
 
     bool isKeyPressed(int key) const;
-    bool isMouseButtonPressed(int button) const;
-    std::tuple<double, double> getMouseOffset() const;
-    std::tuple<double, double> getMouseScrollOffset() const;
+
+    Terrain::Engine::IO::MouseInputState getMouseState() const
+    {
+        return vctx.getMouseState();
+    }
 
     void setMouseCaptureMode(bool shouldCaptureMouse);
     void handleInput();

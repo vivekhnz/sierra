@@ -11,9 +11,8 @@ using namespace System::Windows::Input;
 
 namespace Terrain { namespace Engine { namespace Interop {
     EditorEngineContext::EditorEngineContext() :
-        prevMousePosX(0), prevMousePosY(0), mouseOffsetX(0), mouseOffsetY(0),
-        nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0), mouseScrollOffsetX(0),
-        mouseScrollOffsetY(0), isMouseCaptured(false), wasMouseCaptured(false)
+        prevMousePosX(0), prevMousePosY(0), nextMouseScrollOffsetX(0),
+        nextMouseScrollOffsetY(0), isMouseCaptured(false), wasMouseCaptured(false)
     {
     }
 
@@ -26,37 +25,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         return false;
     }
 
-    bool EditorEngineContext::isMouseButtonPressed(int button) const
-    {
-        if (EngineInterop::HoveredViewContext == nullptr)
-            return false;
-
-        MouseButtonState state = MouseButtonState::Released;
-        switch (button)
-        {
-        case GLFW_MOUSE_BUTTON_LEFT:
-            state = Mouse::LeftButton;
-            break;
-        case GLFW_MOUSE_BUTTON_MIDDLE:
-            state = Mouse::MiddleButton;
-            break;
-        case GLFW_MOUSE_BUTTON_RIGHT:
-            state = Mouse::RightButton;
-            break;
-        }
-        return state == MouseButtonState::Pressed;
-    }
-
-    std::tuple<double, double> EditorEngineContext::getMouseOffset() const
-    {
-        return std::make_tuple(mouseOffsetX, mouseOffsetY);
-    }
-
-    std::tuple<double, double> EditorEngineContext::getMouseScrollOffset() const
-    {
-        return std::make_tuple(mouseScrollOffsetX, mouseScrollOffsetY);
-    }
-
     void EditorEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
         isMouseCaptured = shouldCaptureMouse;
@@ -67,20 +35,30 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto appWindow = Application::Current->MainWindow;
         auto mousePos = Mouse::GetPosition(appWindow);
 
+        // reset any input state if the mouse is not over a viewport
+        mouseState.cursorOffsetX = 0;
+        mouseState.cursorOffsetY = 0;
+        mouseState.scrollOffsetX = 0;
+        mouseState.scrollOffsetY = 0;
+        mouseState.isLeftMouseButtonDown = false;
+        mouseState.isMiddleMouseButtonDown = false;
+        mouseState.isRightMouseButtonDown = false;
+
         if (EngineInterop::HoveredViewContext == nullptr)
         {
-            // reset any input state if the mouse is not over a viewport
-            mouseOffsetX = 0;
-            mouseOffsetY = 0;
-            mouseScrollOffsetX = 0;
-            mouseScrollOffsetY = 0;
             appWindow->Cursor = nullptr;
         }
         else
         {
+            mouseState.isLeftMouseButtonDown = Mouse::LeftButton == MouseButtonState::Pressed;
+            mouseState.isMiddleMouseButtonDown =
+                Mouse::MiddleButton == MouseButtonState::Pressed;
+            mouseState.isRightMouseButtonDown =
+                Mouse::RightButton == MouseButtonState::Pressed;
+
             // use the mouse scroll offset set by the scroll wheel callback
-            mouseScrollOffsetX = nextMouseScrollOffsetX;
-            mouseScrollOffsetY = nextMouseScrollOffsetY;
+            mouseState.scrollOffsetX = nextMouseScrollOffsetX;
+            mouseState.scrollOffsetY = nextMouseScrollOffsetY;
 
             if (isMouseCaptured)
             {
@@ -97,23 +75,23 @@ namespace Terrain { namespace Engine { namespace Interop {
 
                 if (wasMouseCaptured)
                 {
-                    mouseOffsetX = mousePos.X - viewportCenter.X;
-                    mouseOffsetY = mousePos.Y - viewportCenter.Y;
+                    mouseState.cursorOffsetX = mousePos.X - viewportCenter.X;
+                    mouseState.cursorOffsetY = mousePos.Y - viewportCenter.Y;
                 }
                 else
                 {
                     // don't set the mouse offset on the first frame after we capture the mouse
                     // or there will be a big jump from the initial cursor position to the
                     // center of the viewport
-                    mouseOffsetX = 0;
-                    mouseOffsetY = 0;
+                    mouseState.cursorOffsetX = 0;
+                    mouseState.cursorOffsetY = 0;
                     appWindow->Cursor = Cursors::None;
                 }
             }
             else
             {
-                mouseOffsetX = mousePos.X - prevMousePosX;
-                mouseOffsetY = mousePos.Y - prevMousePosY;
+                mouseState.cursorOffsetX = mousePos.X - prevMousePosX;
+                mouseState.cursorOffsetY = mousePos.Y - prevMousePosY;
                 appWindow->Cursor = nullptr;
             }
         }

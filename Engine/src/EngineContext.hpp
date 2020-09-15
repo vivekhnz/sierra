@@ -2,6 +2,7 @@
 #define ENGINECONTEXT_HPP
 
 #include "Common.hpp"
+#include "IO/MouseInputState.hpp"
 #include <functional>
 
 namespace Terrain { namespace Engine {
@@ -9,9 +10,7 @@ namespace Terrain { namespace Engine {
     {
     public:
         virtual bool isKeyPressed(int key) const = 0;
-        virtual bool isMouseButtonPressed(int button) const = 0;
-        virtual std::tuple<double, double> getMouseOffset() const = 0;
-        virtual std::tuple<double, double> getMouseScrollOffset() const = 0;
+        virtual IO::MouseInputState getMouseState() const = 0;
 
         virtual void setMouseCaptureMode(bool shouldCaptureMouse) = 0;
         virtual void exit() = 0;

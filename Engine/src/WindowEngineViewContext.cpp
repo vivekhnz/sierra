@@ -2,9 +2,8 @@
 
 namespace Terrain { namespace Engine {
     WindowEngineViewContext::WindowEngineViewContext(Graphics::Window &window) :
-        cameraEntityId(-1), window(window), isFirstMouseInput(true), mouseXOffset(0),
-        mouseYOffset(0), prevMouseX(0), prevMouseY(0), nextMouseScrollOffsetX(0),
-        nextMouseScrollOffsetY(0), mouseScrollOffsetX(0), mouseScrollOffsetY(0)
+        cameraEntityId(-1), window(window), isFirstMouseInput(true), prevMouseX(0),
+        prevMouseY(0), nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
     {
         window.addMouseScrollHandler(std::bind(&WindowEngineViewContext::onMouseScroll, this,
             std::placeholders::_1, std::placeholders::_2));
@@ -26,21 +25,6 @@ namespace Terrain { namespace Engine {
         return window.isKeyPressed(key);
     }
 
-    bool WindowEngineViewContext::isMouseButtonPressed(int button) const
-    {
-        return window.isMouseButtonPressed(button);
-    }
-
-    std::tuple<double, double> WindowEngineViewContext::getMouseOffset() const
-    {
-        return std::make_tuple(mouseXOffset, mouseYOffset);
-    }
-
-    std::tuple<double, double> WindowEngineViewContext::getMouseScrollOffset() const
-    {
-        return std::make_tuple(mouseScrollOffsetX, mouseScrollOffsetY);
-    }
-
     void WindowEngineViewContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
         window.setMouseCaptureMode(shouldCaptureMouse);
@@ -53,23 +37,31 @@ namespace Terrain { namespace Engine {
 
     void WindowEngineViewContext::handleInput()
     {
+        mouseState.isLeftMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
+        mouseState.isMiddleMouseButtonDown =
+            window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
+        mouseState.isRightMouseButtonDown =
+            window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
+
         // update mouse cursor offset
         auto [mouseX, mouseY] = window.getMousePosition();
         if (isFirstMouseInput)
         {
             isFirstMouseInput = false;
+            mouseState.cursorOffsetX = 0;
+            mouseState.cursorOffsetY = 0;
         }
         else
         {
-            mouseXOffset = mouseX - prevMouseX;
-            mouseYOffset = mouseY - prevMouseY;
+            mouseState.cursorOffsetX = mouseX - prevMouseX;
+            mouseState.cursorOffsetY = mouseY - prevMouseY;
         }
         prevMouseX = mouseX;
         prevMouseY = mouseY;
 
         // update mouse scroll offset
-        mouseScrollOffsetX = nextMouseScrollOffsetX;
-        mouseScrollOffsetY = nextMouseScrollOffsetY;
+        mouseState.scrollOffsetX = nextMouseScrollOffsetX;
+        mouseState.scrollOffsetY = nextMouseScrollOffsetY;
         nextMouseScrollOffsetX = 0;
         nextMouseScrollOffsetY = 0;
     }

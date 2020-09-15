@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "CameraComponentManager.hpp"
+#include "IO/MouseInputState.hpp"
 
 #include <vector>
 
@@ -59,16 +60,7 @@ namespace Terrain { namespace Engine {
             data.distance[i] = value;
         }
 
-        void calculateLookAt(float mouseOffsetX,
-            float mouseOffsetY,
-            float deltaTime,
-            bool isMiddleMouseButtonDown);
-        void calculateYawAndPitch(float mouseOffsetX,
-            float mouseOffsetY,
-            float deltaTime,
-            bool isRightMouseButtonDown);
-        void calculateDistance(float scrollY);
-        void calculateCameraStates();
+        void calculateCameraStates(IO::MouseInputState &mouseState, float deltaTime);
 
         ~OrbitCameraComponentManager();
     };

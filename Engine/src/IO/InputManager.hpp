@@ -14,8 +14,6 @@ namespace Terrain { namespace Engine { namespace IO {
         std::map<int, std::tuple<bool, bool>> keyState;
         std::map<int, std::function<void()>> keyCommands;
 
-        MouseInputState mouseState;
-
     public:
         InputManager(EngineContext &ctx);
         InputManager(const InputManager &that) = delete;
@@ -28,7 +26,7 @@ namespace Terrain { namespace Engine { namespace IO {
 
         MouseInputState getMouseState() const
         {
-            return mouseState;
+            return ctx.getMouseState();
         }
 
         void listenForKey(int key);

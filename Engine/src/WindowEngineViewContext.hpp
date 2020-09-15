@@ -4,6 +4,7 @@
 #include "Common.hpp"
 #include "EngineViewContext.hpp"
 #include "Graphics/Window.hpp"
+#include "IO/MouseInputState.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT WindowEngineViewContext : public EngineViewContext
@@ -12,14 +13,12 @@ namespace Terrain { namespace Engine {
 
         int cameraEntityId;
         bool isFirstMouseInput;
-        double mouseXOffset;
-        double mouseYOffset;
         double prevMouseX;
         double prevMouseY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
-        double mouseScrollOffsetX;
-        double mouseScrollOffsetY;
+
+        IO::MouseInputState mouseState;
 
         void onMouseScroll(double x, double y);
 
@@ -33,9 +32,11 @@ namespace Terrain { namespace Engine {
         int getCameraEntityId() const;
         ViewportDimensions getViewportSize() const;
         bool isKeyPressed(int key) const;
-        bool isMouseButtonPressed(int button) const;
-        std::tuple<double, double> getMouseOffset() const;
-        std::tuple<double, double> getMouseScrollOffset() const;
+
+        IO::MouseInputState getMouseState() const
+        {
+            return mouseState;
+        }
 
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void setCameraEntityId(int cameraEntityId);

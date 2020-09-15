@@ -20,65 +20,42 @@ namespace Terrain { namespace Engine {
         return data.count++;
     }
 
-    void OrbitCameraComponentManager::calculateLookAt(
-        float mouseOffsetX, float mouseOffsetY, float deltaTime, bool isMiddleMouseButtonDown)
+    void OrbitCameraComponentManager::calculateCameraStates(
+        IO::MouseInputState &mouseState, float deltaTime)
     {
-        if (!isMiddleMouseButtonDown)
-            return;
-
         for (int i = 0; i < data.count; i++)
         {
             int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
+            float &distance = data.distance[i];
             glm::vec3 &lookAt = data.lookAt[i];
-            float sensitivity = std::clamp(data.distance[i] * 0.02f, 0.05f, 6.0f) * deltaTime;
-            glm::vec3 lookDir =
-                glm::normalize(lookAt - cameraComponentMgr.getPosition(cameraInstanceId));
-            glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
-            glm::vec3 yDir = cross(lookDir, xDir);
-            glm::vec3 pan = (xDir * mouseOffsetX) + (yDir * mouseOffsetY);
-            lookAt += pan * sensitivity;
-        }
-    }
-
-    void OrbitCameraComponentManager::calculateYawAndPitch(
-        float mouseOffsetX, float mouseOffsetY, float deltaTime, bool isRightMouseButtonDown)
-    {
-        if (!isRightMouseButtonDown)
-            return;
-
-        for (int i = 0; i < data.count; i++)
-        {
-            float sensitivity = std::clamp(data.distance[i] * 0.05f, 0.7f, 3.5f) * deltaTime;
-            data.yaw[i] += glm::radians(mouseOffsetX * sensitivity);
-            data.pitch[i] += glm::radians(mouseOffsetY * sensitivity);
-        }
-    }
-
-    void OrbitCameraComponentManager::calculateDistance(float scrollY)
-    {
-        if (scrollY == 0.0f)
-            return;
-
-        float multiplier = scrollY > 0.0f ? 0.95f : 1.05f;
-        for (int i = 0; i < data.count; i++)
-        {
-            data.distance[i] *= multiplier;
-        }
-    }
-
-    void OrbitCameraComponentManager::calculateCameraStates()
-    {
-        for (int i = 0; i < data.count; i++)
-        {
-            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
-            glm::vec3 &lookAt = data.lookAt[i];
 
-            glm::vec3 lookDir =
+            // orbit distance is modified by scrolling the mouse wheel
+            distance *= 1.0f - (glm::sign(mouseState.scrollOffsetY) * 0.05f);
+
+            // only update the look at position if the middle mouse button is pressed
+            if (mouseState.isMiddleMouseButtonDown)
+            {
+                glm::vec3 lookDir =
+                    glm::normalize(lookAt - cameraComponentMgr.getPosition(cameraInstanceId));
+                glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
+                glm::vec3 yDir = cross(lookDir, xDir);
+                glm::vec3 pan =
+                    (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
+                lookAt += pan * std::clamp(distance, 2.5f, 300.0f) * 0.02f * deltaTime;
+            }
+
+            // only update yaw & pitch if the right mouse button is pressed
+            float rotateSensitivity = (mouseState.isRightMouseButtonDown ? 0.05f : 0.0f)
+                * std::clamp(distance, 14.0f, 70.0f) * deltaTime;
+            yaw += glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
+            pitch += glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
+
+            // update camera position and target
+            glm::vec3 newLookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-            cameraComponentMgr.setPosition(
-                cameraInstanceId, lookAt + (lookDir * data.distance[i]));
+            cameraComponentMgr.setPosition(cameraInstanceId, lookAt + (newLookDir * distance));
             cameraComponentMgr.setTarget(cameraInstanceId, lookAt);
         }
     }

@@ -206,12 +206,7 @@ namespace Terrain { namespace Engine {
         bool isMiddleMouseButtonDown = mouseState.isMiddleMouseButtonDown;
         bool isRightMouseButtonDown = mouseState.isRightMouseButtonDown;
 
-        world.componentManagers.orbitCamera.calculateDistance(mouseState.scrollOffsetY);
-        world.componentManagers.orbitCamera.calculateLookAt(mouseState.cursorOffsetX,
-            mouseState.cursorOffsetY, deltaTime, isMiddleMouseButtonDown);
-        world.componentManagers.orbitCamera.calculateYawAndPitch(mouseState.cursorOffsetX,
-            mouseState.cursorOffsetY, deltaTime, isRightMouseButtonDown);
-        world.componentManagers.orbitCamera.calculateCameraStates();
+        world.componentManagers.orbitCamera.calculateCameraStates(mouseState, deltaTime);
 
         // capture mouse if camera is being manipulated
         bool isManipulatingCamera = isMiddleMouseButtonDown || isRightMouseButtonDown;

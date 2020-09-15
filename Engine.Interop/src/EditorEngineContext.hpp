@@ -8,14 +8,12 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         int prevMousePosX;
         int prevMousePosY;
-        double mouseOffsetX;
-        double mouseOffsetY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
-        double mouseScrollOffsetX;
-        double mouseScrollOffsetY;
         bool isMouseCaptured;
         bool wasMouseCaptured;
+
+        IO::MouseInputState mouseState;
 
     public:
         EditorEngineContext();
@@ -25,9 +23,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorEngineContext &operator=(EditorEngineContext &&) = delete;
 
         bool isKeyPressed(int key) const;
-        bool isMouseButtonPressed(int button) const;
-        std::tuple<double, double> getMouseOffset() const;
-        std::tuple<double, double> getMouseScrollOffset() const;
+
+        IO::MouseInputState getMouseState() const
+        {
+            return mouseState;
+        }
 
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void handleInput();

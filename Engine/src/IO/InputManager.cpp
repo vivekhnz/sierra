@@ -51,17 +51,6 @@ namespace Terrain { namespace Engine { namespace IO {
 
             iterator++;
         }
-
-        auto [cursorOffsetX, cursorOffsetY] = ctx.getMouseOffset();
-        auto [scrollOffsetX, scrollOffsetY] = ctx.getMouseScrollOffset();
-        mouseState.cursorOffsetX = cursorOffsetX;
-        mouseState.cursorOffsetY = cursorOffsetY;
-        mouseState.scrollOffsetX = scrollOffsetX;
-        mouseState.scrollOffsetY = scrollOffsetY;
-        mouseState.isLeftMouseButtonDown = ctx.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
-        mouseState.isMiddleMouseButtonDown =
-            ctx.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
-        mouseState.isRightMouseButtonDown = ctx.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
     }
 
     InputManager::~InputManager()

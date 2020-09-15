@@ -6,16 +6,16 @@
 namespace Terrain { namespace Engine { namespace IO {
     struct EXPORT MouseInputState
     {
-        double cursorOffsetX;
-        double cursorOffsetY;
-        double scrollOffsetX;
-        double scrollOffsetY;
+        float cursorOffsetX;
+        float cursorOffsetY;
+        float scrollOffsetX;
+        float scrollOffsetY;
         bool isLeftMouseButtonDown;
         bool isMiddleMouseButtonDown;
         bool isRightMouseButtonDown;
 
         MouseInputState() :
-            cursorOffsetX(0), cursorOffsetY(0), scrollOffsetX(0), scrollOffsetY(0),
+            cursorOffsetX(0.0f), cursorOffsetY(0.0f), scrollOffsetX(0.0f), scrollOffsetY(0.0f),
             isLeftMouseButtonDown(false), isMiddleMouseButtonDown(false),
             isRightMouseButtonDown(false)
         {
