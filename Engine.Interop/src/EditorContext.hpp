@@ -30,16 +30,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorContext(EditorContext &&) = delete;
         EditorContext &operator=(EditorContext &&) = delete;
 
-        // lifecycle
-        void exit();
-
         // input
+        void updateInputState();
         bool isKeyPressed(int key) const;
         IO::MouseInputState getMouseState(int inputControllerId) const;
         void setMouseCaptureMode(bool shouldCaptureMouse);
 
         int addInputController();
-        void handleInput();
         void onMouseScroll(double x, double y);
         bool isInMouseCaptureMode() const;
 

@@ -50,9 +50,8 @@ namespace Terrain { namespace Engine {
 
         void setMouseCaptureMode(bool shouldCaptureMouse);
         void setCameraEntityId(int cameraEntityId);
-        void handleInput();
+        void updateInputState();
         void render();
-        void exit();
 
         ~WindowEngineViewContext();
     };

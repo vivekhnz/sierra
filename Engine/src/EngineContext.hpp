@@ -9,13 +9,11 @@
 namespace Terrain { namespace Engine {
     class EXPORT EngineContext
     {
-        AppContext &ctx;
-
     public:
         IO::InputManager input;
         EntityManager entities;
 
-        EngineContext(AppContext &ctx) : ctx(ctx), input(ctx)
+        EngineContext(AppContext &ctx) : input(ctx)
         {
         }
 
@@ -23,11 +21,6 @@ namespace Terrain { namespace Engine {
         EngineContext &operator=(const EngineContext &that) = delete;
         EngineContext(EngineContext &&) = delete;
         EngineContext &operator=(EngineContext &&) = delete;
-
-        void exit()
-        {
-            ctx.exit();
-        }
 
         ~EngineContext()
         {

@@ -16,14 +16,11 @@ public:
     GameContext(GameContext &&) = delete;
     GameContext &operator=(GameContext &&) = delete;
 
-    // lifecycle
-    void exit();
-
     // input
+    void updateInputState();
     bool isKeyPressed(int key) const;
     Terrain::Engine::IO::MouseInputState getMouseState(int inputControllerId) const;
     void setMouseCaptureMode(bool shouldCaptureMouse);
-    void handleInput();
 
     ~GameContext();
 };

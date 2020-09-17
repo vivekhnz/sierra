@@ -138,12 +138,6 @@ namespace Terrain { namespace Engine {
 
     void Scene::update(float deltaTime)
     {
-        ctx.input.update();
-        if (ctx.input.isKeyPressed(GLFW_KEY_ESCAPE))
-        {
-            ctx.exit();
-        }
-
         if (isOrbitCameraMode)
         {
             world.componentManagers.orbitCamera.calculateCameraStates(ctx.input, deltaTime);

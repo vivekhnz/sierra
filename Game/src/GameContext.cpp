@@ -4,13 +4,11 @@ GameContext::GameContext(Terrain::Engine::WindowEngineViewContext &vctx) : vctx(
 {
 }
 
-// lifecycle
-void GameContext::exit()
-{
-    vctx.exit();
-}
-
 // input
+void GameContext::updateInputState()
+{
+    vctx.updateInputState();
+}
 bool GameContext::isKeyPressed(int key) const
 {
     return vctx.isKeyPressed(key);
@@ -22,10 +20,6 @@ Terrain::Engine::IO::MouseInputState GameContext::getMouseState(int inputControl
 void GameContext::setMouseCaptureMode(bool shouldCaptureMouse)
 {
     vctx.setMouseCaptureMode(shouldCaptureMouse);
-}
-void GameContext::handleInput()
-{
-    vctx.handleInput();
 }
 
 GameContext::~GameContext()

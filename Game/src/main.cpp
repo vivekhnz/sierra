@@ -40,16 +40,25 @@ int main()
         float deltaTime = 0;
         while (!window.isRequestingClose())
         {
+            // query input
+            ctx.input.update();
+            if (ctx.input.isKeyPressed(GLFW_KEY_ESCAPE))
+            {
+                window.close();
+            }
+
+            // update scene
             now = glfw.getCurrentTime();
             deltaTime = now - lastTickTime;
             lastTickTime = now;
-
-            appCtx.handleInput();
             scene.update(deltaTime);
 
+            // render scene
             vctx.setCameraEntityId(scene.getIsOrbitCameraMode() ? 1 : 0);
             scene.draw(vctx);
             vctx.render();
+
+            // process events
             glfw.processEvents();
         }
 

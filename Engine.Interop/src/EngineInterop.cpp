@@ -105,7 +105,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        appCtx->handleInput();
+        ctx->input.update();
 
         if (!isWorldInitialized)
             return;

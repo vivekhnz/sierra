@@ -37,6 +37,8 @@ namespace Terrain { namespace Engine { namespace IO {
 
     void InputManager::update()
     {
+        ctx.updateInputState();
+
         auto iterator = keyState.begin();
         while (iterator != keyState.end())
         {

@@ -39,7 +39,7 @@ namespace Terrain { namespace Engine {
         this->cameraEntityId = cameraEntityId;
     }
 
-    void WindowEngineViewContext::handleInput()
+    void WindowEngineViewContext::updateInputState()
     {
         IO::MouseInputState &mouseState = inputState.mouse[0];
 
@@ -75,11 +75,6 @@ namespace Terrain { namespace Engine {
     void WindowEngineViewContext::render()
     {
         window.refresh();
-    }
-
-    void WindowEngineViewContext::exit()
-    {
-        window.close();
     }
 
     void WindowEngineViewContext::onMouseScroll(double x, double y)

@@ -16,35 +16,8 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
     }
 
-    // lifecycle
-    void EditorContext::exit()
-    {
-    }
-
     // input
-    bool EditorContext::isKeyPressed(int key) const
-    {
-        if (EngineInterop::FocusedViewContext == nullptr)
-            return false;
-
-        // todo
-        return false;
-    }
-    IO::MouseInputState EditorContext::getMouseState(int inputControllerId) const
-    {
-        return inputState.mouse[inputControllerId];
-    }
-    void EditorContext::setMouseCaptureMode(bool shouldCaptureMouse)
-    {
-        isMouseCaptured = shouldCaptureMouse;
-    }
-
-    int EditorContext::addInputController()
-    {
-        inputState.mouse.push_back({});
-        return inputState.count++;
-    }
-    void EditorContext::handleInput()
+    void EditorContext::updateInputState()
     {
         auto appWindow = Application::Current->MainWindow;
         auto mousePos = Mouse::GetPosition(appWindow);
@@ -123,6 +96,28 @@ namespace Terrain { namespace Engine { namespace Interop {
         prevMousePosX = mousePos.X;
         prevMousePosY = mousePos.Y;
         wasMouseCaptured = isMouseCaptured;
+    }
+    bool EditorContext::isKeyPressed(int key) const
+    {
+        if (EngineInterop::FocusedViewContext == nullptr)
+            return false;
+
+        // todo
+        return false;
+    }
+    IO::MouseInputState EditorContext::getMouseState(int inputControllerId) const
+    {
+        return inputState.mouse[inputControllerId];
+    }
+    void EditorContext::setMouseCaptureMode(bool shouldCaptureMouse)
+    {
+        isMouseCaptured = shouldCaptureMouse;
+    }
+
+    int EditorContext::addInputController()
+    {
+        inputState.mouse.push_back({});
+        return inputState.count++;
     }
     void EditorContext::onMouseScroll(double x, double y)
     {
