@@ -3,7 +3,7 @@
 #include "GLFW/glfw3.h"
 
 namespace Terrain { namespace Engine { namespace IO {
-    InputManager::InputManager(EngineContext &ctx) :
+    InputManager::InputManager(AppContext &ctx) :
         ctx(ctx), isMouseCaptured(false), wasMouseCaptured(false)
     {
     }

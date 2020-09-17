@@ -4,13 +4,13 @@
 #include "../Common.hpp"
 #include <map>
 #include <functional>
-#include "../EngineContext.hpp"
+#include "../AppContext.hpp"
 #include "MouseInputState.hpp"
 
 namespace Terrain { namespace Engine { namespace IO {
     class EXPORT InputManager
     {
-        EngineContext &ctx;
+        AppContext &ctx;
         std::map<int, std::tuple<bool, bool>> keyState;
         std::map<int, std::function<void()>> keyCommands;
 
@@ -18,7 +18,7 @@ namespace Terrain { namespace Engine { namespace IO {
         bool wasMouseCaptured;
 
     public:
-        InputManager(EngineContext &ctx);
+        InputManager(AppContext &ctx);
         InputManager(const InputManager &that) = delete;
         InputManager &operator=(const InputManager &that) = delete;
         InputManager(InputManager &&) = delete;

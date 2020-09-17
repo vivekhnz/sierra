@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "AppContext.hpp"
+#include "IO/InputManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT EngineContext
@@ -10,7 +11,9 @@ namespace Terrain { namespace Engine {
         AppContext &ctx;
 
     public:
-        EngineContext(AppContext &ctx) : ctx(ctx)
+        IO::InputManager input;
+
+        EngineContext(AppContext &ctx) : ctx(ctx), input(ctx)
         {
         }
 
@@ -18,21 +21,6 @@ namespace Terrain { namespace Engine {
         EngineContext &operator=(const EngineContext &that) = delete;
         EngineContext(EngineContext &&) = delete;
         EngineContext &operator=(EngineContext &&) = delete;
-
-        bool isKeyPressed(int key)
-        {
-            return ctx.isKeyPressed(key);
-        }
-
-        IO::MouseInputState getMouseState(int inputControllerId) const
-        {
-            return ctx.getMouseState(inputControllerId);
-        }
-
-        void setMouseCaptureMode(bool shouldCaptureMouse)
-        {
-            ctx.setMouseCaptureMode(shouldCaptureMouse);
-        }
 
         void exit()
         {

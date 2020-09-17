@@ -13,14 +13,13 @@ namespace Terrain { namespace Engine {
         isOrbitCameraMode(false), playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)),
         playerCameraYaw(-90.0f), playerCameraPitch(0.0f), isLightingEnabled(true),
         isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
-        isAOMapEnabled(true), isRoughnessMapEnabled(false), input(ctx),
-        heightmapTexture(2048,
-            2048,
-            GL_R16,
-            GL_RED,
-            GL_UNSIGNED_SHORT,
-            GL_MIRRORED_REPEAT,
-            GL_LINEAR_MIPMAP_LINEAR),
+        isAOMapEnabled(true), isRoughnessMapEnabled(false), heightmapTexture(2048,
+                                                                2048,
+                                                                GL_R16,
+                                                                GL_RED,
+                                                                GL_UNSIGNED_SHORT,
+                                                                GL_MIRRORED_REPEAT,
+                                                                GL_LINEAR_MIPMAP_LINEAR),
         terrain(world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
@@ -41,18 +40,18 @@ namespace Terrain { namespace Engine {
             playerCamera_cameraId, playerPos + playerLookDir);
 
         // configure input
-        input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
-        input.mapCommand(GLFW_KEY_T, std::bind(&Scene::toggleAlbedoMap, this));
-        input.mapCommand(GLFW_KEY_N, std::bind(&Scene::toggleNormalMap, this));
-        input.mapCommand(GLFW_KEY_B, std::bind(&Scene::toggleDisplacementMap, this));
-        input.mapCommand(GLFW_KEY_O, std::bind(&Scene::toggleAmbientOcclusionMap, this));
-        input.mapCommand(GLFW_KEY_R, std::bind(&Scene::toggleRoughnessMap, this));
-        input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
-        input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
-        input.mapCommand(GLFW_KEY_H,
+        ctx.input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
+        ctx.input.mapCommand(GLFW_KEY_T, std::bind(&Scene::toggleAlbedoMap, this));
+        ctx.input.mapCommand(GLFW_KEY_N, std::bind(&Scene::toggleNormalMap, this));
+        ctx.input.mapCommand(GLFW_KEY_B, std::bind(&Scene::toggleDisplacementMap, this));
+        ctx.input.mapCommand(GLFW_KEY_O, std::bind(&Scene::toggleAmbientOcclusionMap, this));
+        ctx.input.mapCommand(GLFW_KEY_R, std::bind(&Scene::toggleRoughnessMap, this));
+        ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
+        ctx.input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
+        ctx.input.mapCommand(GLFW_KEY_H,
             std::bind(&Terrain::loadHeightmapFromFile, &terrain,
                 IO::Path::getAbsolutePath("data/heightmap2.tga")));
-        input.setMouseCaptureMode(true);
+        ctx.input.setMouseCaptureMode(true);
 
         // setup heightmap quad
         std::vector<float> quadVertices(20);
@@ -139,26 +138,26 @@ namespace Terrain { namespace Engine {
 
     void Scene::update(float deltaTime)
     {
-        input.update();
-        if (input.isKeyPressed(GLFW_KEY_ESCAPE))
+        ctx.input.update();
+        if (ctx.input.isKeyPressed(GLFW_KEY_ESCAPE))
         {
             ctx.exit();
         }
 
         if (isOrbitCameraMode)
         {
-            world.componentManagers.orbitCamera.calculateCameraStates(input, deltaTime);
+            world.componentManagers.orbitCamera.calculateCameraStates(ctx.input, deltaTime);
         }
         else
         {
             updatePlayerCamera(deltaTime);
         }
 
-        if (input.isKeyPressed(GLFW_KEY_LEFT))
+        if (ctx.input.isKeyPressed(GLFW_KEY_LEFT))
         {
             lightAngle += deltaTime;
         }
-        else if (input.isKeyPressed(GLFW_KEY_RIGHT))
+        else if (ctx.input.isKeyPressed(GLFW_KEY_RIGHT))
         {
             lightAngle -= deltaTime;
         }
@@ -197,12 +196,12 @@ namespace Terrain { namespace Engine {
     void Scene::toggleCameraMode()
     {
         isOrbitCameraMode = !isOrbitCameraMode;
-        input.setMouseCaptureMode(!isOrbitCameraMode);
+        ctx.input.setMouseCaptureMode(!isOrbitCameraMode);
     }
 
     void Scene::updatePlayerCamera(float deltaTime)
     {
-        IO::MouseInputState mouseState = input.getMouseState(0);
+        IO::MouseInputState mouseState = ctx.input.getMouseState(0);
 
         const float sensitivity = 4.0f * deltaTime;
         playerCameraYaw += mouseState.cursorOffsetX * sensitivity;
@@ -219,19 +218,19 @@ namespace Terrain { namespace Engine {
         glm::vec3 pos = world.componentManagers.camera.getPosition(0);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        if (input.isKeyPressed(GLFW_KEY_A))
+        if (ctx.input.isKeyPressed(GLFW_KEY_A))
         {
             pos -= glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
         }
-        if (input.isKeyPressed(GLFW_KEY_D))
+        if (ctx.input.isKeyPressed(GLFW_KEY_D))
         {
             pos += glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
         }
-        if (input.isKeyPressed(GLFW_KEY_W))
+        if (ctx.input.isKeyPressed(GLFW_KEY_W))
         {
             pos += playerMoveDir * 4.0f * deltaTime;
         }
-        if (input.isKeyPressed(GLFW_KEY_S))
+        if (ctx.input.isKeyPressed(GLFW_KEY_S))
         {
             pos -= playerMoveDir * 4.0f * deltaTime;
         }

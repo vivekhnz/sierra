@@ -21,7 +21,6 @@ namespace Terrain { namespace Engine {
 
         Graphics::MeshRenderer meshRenderer;
         Terrain terrain;
-        IO::InputManager input;
 
         float lightAngle;
         bool isOrbitCameraMode;
