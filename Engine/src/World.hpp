@@ -6,7 +6,6 @@
 #include "Graphics/Material.hpp"
 #include "Graphics/MeshInstance.hpp"
 #include "OrbitCameraComponentManager.hpp"
-#include "EntityManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT World
@@ -31,7 +30,6 @@ namespace Terrain { namespace Engine {
             {
             }
         } componentManagers;
-        EntityManager entities;
 
         World();
         World(const World &that) = delete;

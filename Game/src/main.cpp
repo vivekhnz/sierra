@@ -25,7 +25,7 @@ int main()
                                              .getData());
 
         // create orbit camera
-        int orbitCamera_entityId = world.entities.create();
+        int orbitCamera_entityId = ctx.entities.create();
         world.componentManagers.camera.create(orbitCamera_entityId);
         int orbitCamera_orbitCameraId =
             world.componentManagers.orbitCamera.create(orbitCamera_entityId);

@@ -30,7 +30,7 @@ namespace Terrain { namespace Engine {
         glEnable(GL_CULL_FACE);
 
         // player camera
-        int playerCamera_entityId = world.entities.create();
+        int playerCamera_entityId = ctx.entities.create();
         int playerCamera_cameraId =
             world.componentManagers.camera.create(playerCamera_entityId);
         glm::vec3 playerPos =

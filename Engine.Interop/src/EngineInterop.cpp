@@ -61,7 +61,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx->setInputControllerId(inputControllerId);
 
         // create orbit camera
-        int cameraEntityId = world->entities.create();
+        int cameraEntityId = ctx->entities.create();
         world->componentManagers.camera.create(cameraEntityId);
         int orbitCameraId = world->componentManagers.orbitCamera.create(cameraEntityId);
         world->componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
