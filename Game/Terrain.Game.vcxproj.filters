@@ -9,12 +9,12 @@
     <ClCompile Include="src\main.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\GameEngineContext.cpp">
+    <ClCompile Include="src\GameContext.cpp">
       <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\GameEngineContext.hpp">
+    <ClInclude Include="src\GameContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

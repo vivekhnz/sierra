@@ -121,7 +121,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\GameEngineContext.cpp" />
+    <ClCompile Include="src\GameContext.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -140,7 +140,7 @@
     <UpToDateCheckInput Include="@(DependencyFiles);@(DataFiles)" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\GameEngineContext.hpp" />
+    <ClInclude Include="src\GameContext.hpp" />
   </ItemGroup>
   <Target Name="CopyDependencies" AfterTargets="AfterBuild" Inputs="@(DependencyFiles)" Outputs="@(DependencyFiles->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')">
     <Message Text="Copying dependencies..." Importance="high" />

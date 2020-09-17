@@ -6,7 +6,8 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
         glfw = new Graphics::GlfwManager();
-        ctx = new EditorEngineContext();
+        appCtx = new EditorContext();
+        ctx = new EngineContext(*appCtx);
         viewContexts = new std::vector<HostedEngineViewContext *>();
 
         focusedViewCtx = nullptr;
@@ -56,7 +57,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         // create input controller
-        int inputControllerId = ctx->addInputController();
+        int inputControllerId = appCtx->addInputController();
         vctx->setInputControllerId(inputControllerId);
 
         // create orbit camera
@@ -104,7 +105,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        ctx->handleInput();
+        appCtx->handleInput();
 
         if (!isWorldInitialized)
             return;
@@ -128,7 +129,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args)
     {
-        ctx->onMouseScroll(0, args->Delta);
+        appCtx->onMouseScroll(0, args->Delta);
     }
 
     void EngineInterop::SetViewContextFocusState(HostedEngineViewContext *vctx, bool hasFocus)
@@ -162,10 +163,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (isWorldInitialized)
         {
             delete scene;
-            scene = NULL;
+            scene = nullptr;
 
             delete world;
-            world = NULL;
+            world = nullptr;
 
             for (int i = 0; i < viewContexts->size(); i++)
             {
@@ -175,7 +176,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         delete ctx;
-        ctx = NULL;
+        ctx = nullptr;
+
+        delete appCtx;
+        appCtx = nullptr;
 
         delete glfw;
         glfw = nullptr;

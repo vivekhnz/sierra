@@ -3,9 +3,10 @@
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/WindowEngineViewContext.hpp"
+#include "../../Engine/src/EngineContext.hpp"
 #include "../../Engine/src/Scene.hpp"
 #include "../../Engine/src/IO/Path.hpp"
-#include "GameEngineContext.hpp"
+#include "GameContext.hpp"
 
 int main()
 {
@@ -15,7 +16,8 @@ int main()
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         window.makePrimary();
         Terrain::Engine::WindowEngineViewContext vctx(window);
-        GameEngineContext ctx(vctx);
+        GameContext appCtx(vctx);
+        Terrain::Engine::EngineContext ctx(appCtx);
         Terrain::Engine::World world;
         Terrain::Engine::Scene scene(ctx, world);
         scene.getTerrain().loadHeightmap(Terrain::Engine::Graphics::Image(
@@ -42,7 +44,7 @@ int main()
             deltaTime = now - lastTickTime;
             lastTickTime = now;
 
-            ctx.handleInput();
+            appCtx.handleInput();
             scene.update(deltaTime);
 
             vctx.setCameraEntityId(scene.getIsOrbitCameraMode() ? 1 : 0);

@@ -49,6 +49,7 @@
     <ClCompile Include="src\WindowEngineViewContext.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\AppContext.hpp" />
     <ClInclude Include="src\CameraComponentManager.hpp" />
     <ClInclude Include="src\Common.hpp" />
     <ClInclude Include="src\EngineContext.hpp" />

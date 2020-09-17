@@ -1,9 +1,5 @@
 #pragma once
 
-#include "../../Engine/src/Graphics/GlfwManager.hpp"
-#include "../../Engine/src/Graphics/Window.hpp"
-#include "../../Engine/src/Scene.hpp"
-#include "EditorEngineContext.hpp"
 #include "HostedEngineViewContext.hpp"
 
 using namespace System;

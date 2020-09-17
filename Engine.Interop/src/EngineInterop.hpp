@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
+#include "../../Engine/src/EngineContext.hpp"
+#include "EditorContext.hpp"
 #include "HostedEngineViewContext.hpp"
 #include "Viewport.h"
 #include "Proxy/SceneProxy.hpp"
@@ -18,7 +20,8 @@ public
     {
     private:
         static Graphics::GlfwManager *glfw = nullptr;
-        static EditorEngineContext *ctx = nullptr;
+        static EditorContext *appCtx = nullptr;
+        static EngineContext *ctx = nullptr;
 
         static std::vector<HostedEngineViewContext *> *viewContexts;
         static Object ^ viewCtxLock = gcnew Object();

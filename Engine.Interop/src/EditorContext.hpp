@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../../Engine/src/EngineContext.hpp"
+#include "../../Engine/src/AppContext.hpp"
 #include "HostedEngineViewContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    class EditorEngineContext : public EngineContext
+    class EditorContext : public AppContext
     {
         int prevMousePosX;
         int prevMousePosY;
@@ -24,27 +24,25 @@ namespace Terrain { namespace Engine { namespace Interop {
         } inputState;
 
     public:
-        EditorEngineContext();
-        EditorEngineContext(const EditorEngineContext &that) = delete;
-        EditorEngineContext &operator=(const EditorEngineContext &that) = delete;
-        EditorEngineContext(EditorEngineContext &&) = delete;
-        EditorEngineContext &operator=(EditorEngineContext &&) = delete;
+        EditorContext();
+        EditorContext(const EditorContext &that) = delete;
+        EditorContext &operator=(const EditorContext &that) = delete;
+        EditorContext(EditorContext &&) = delete;
+        EditorContext &operator=(EditorContext &&) = delete;
 
-        bool isKeyPressed(int key) const;
-
-        IO::MouseInputState getMouseState(int inputControllerId) const
-        {
-            return inputState.mouse[inputControllerId];
-        }
-
-        void setMouseCaptureMode(bool shouldCaptureMouse);
-        int addInputController();
-        void handleInput();
+        // lifecycle
         void exit();
 
+        // input
+        bool isKeyPressed(int key) const;
+        IO::MouseInputState getMouseState(int inputControllerId) const;
+        void setMouseCaptureMode(bool shouldCaptureMouse);
+
+        int addInputController();
+        void handleInput();
         void onMouseScroll(double x, double y);
         bool isInMouseCaptureMode() const;
 
-        ~EditorEngineContext();
+        ~EditorContext();
     };
 }}}

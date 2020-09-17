@@ -18,14 +18,14 @@
     <ClCompile Include="src\HostedEngineViewContext.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\EditorEngineContext.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\EngineInterop.cpp">
       <Filter>src</Filter>
     </ClCompile>
     <ClCompile Include="src\Proxy\TerrainProxy.cpp">
       <Filter>src\Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EditorContext.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -33,9 +33,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\HostedEngineViewContext.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\EditorEngineContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\EngineInterop.hpp">
@@ -46,6 +43,9 @@
     </ClInclude>
     <ClInclude Include="src\Proxy\TerrainProxy.hpp">
       <Filter>src\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EditorContext.hpp">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

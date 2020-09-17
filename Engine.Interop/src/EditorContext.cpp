@@ -1,4 +1,4 @@
-#include "EditorEngineContext.hpp"
+#include "EditorContext.hpp"
 
 #include <windows.h>
 #include <winuser.h>
@@ -10,13 +10,19 @@ using namespace System::Windows;
 using namespace System::Windows::Input;
 
 namespace Terrain { namespace Engine { namespace Interop {
-    EditorEngineContext::EditorEngineContext() :
+    EditorContext::EditorContext() :
         prevMousePosX(0), prevMousePosY(0), nextMouseScrollOffsetX(0),
         nextMouseScrollOffsetY(0), isMouseCaptured(false), wasMouseCaptured(false)
     {
     }
 
-    bool EditorEngineContext::isKeyPressed(int key) const
+    // lifecycle
+    void EditorContext::exit()
+    {
+    }
+
+    // input
+    bool EditorContext::isKeyPressed(int key) const
     {
         if (EngineInterop::FocusedViewContext == nullptr)
             return false;
@@ -24,19 +30,21 @@ namespace Terrain { namespace Engine { namespace Interop {
         // todo
         return false;
     }
-
-    void EditorEngineContext::setMouseCaptureMode(bool shouldCaptureMouse)
+    IO::MouseInputState EditorContext::getMouseState(int inputControllerId) const
+    {
+        return inputState.mouse[inputControllerId];
+    }
+    void EditorContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
         isMouseCaptured = shouldCaptureMouse;
     }
 
-    int EditorEngineContext::addInputController()
+    int EditorContext::addInputController()
     {
         inputState.mouse.push_back({});
         return inputState.count++;
     }
-
-    void EditorEngineContext::handleInput()
+    void EditorContext::handleInput()
     {
         auto appWindow = Application::Current->MainWindow;
         auto mousePos = Mouse::GetPosition(appWindow);
@@ -116,23 +124,17 @@ namespace Terrain { namespace Engine { namespace Interop {
         prevMousePosY = mousePos.Y;
         wasMouseCaptured = isMouseCaptured;
     }
-
-    void EditorEngineContext::exit()
-    {
-    }
-
-    void EditorEngineContext::onMouseScroll(double x, double y)
+    void EditorContext::onMouseScroll(double x, double y)
     {
         nextMouseScrollOffsetX += x;
         nextMouseScrollOffsetY += y;
     }
-
-    bool EditorEngineContext::isInMouseCaptureMode() const
+    bool EditorContext::isInMouseCaptureMode() const
     {
         return isMouseCaptured && EngineInterop::HoveredViewContext != nullptr;
     }
 
-    EditorEngineContext::~EditorEngineContext()
+    EditorContext::~EditorContext()
     {
     }
 }}}
