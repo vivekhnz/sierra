@@ -2,6 +2,7 @@
 #define WORLD_HPP
 
 #include "Common.hpp"
+#include "EngineContext.hpp"
 #include "Graphics/MeshData.hpp"
 #include "Graphics/Material.hpp"
 #include "Graphics/MeshInstance.hpp"
@@ -26,12 +27,13 @@ namespace Terrain { namespace Engine {
             CameraComponentManager camera;
             OrbitCameraComponentManager orbitCamera;
 
-            ComponentManagers() : orbitCamera(camera)
+            ComponentManagers(EngineContext &ctx) : orbitCamera(camera, ctx.input)
             {
             }
-        } componentManagers;
+        };
+        ComponentManagers componentManagers;
 
-        World();
+        World(EngineContext &ctx);
         World(const World &that) = delete;
         World &operator=(const World &that) = delete;
         World(World &&) = delete;
@@ -46,6 +48,8 @@ namespace Terrain { namespace Engine {
         int newMeshInstance();
         int getMeshInstanceCount() const;
         Graphics::MeshInstance &getMeshInstance(int handle);
+
+        void update(float deltaTime);
 
         ~World();
     };

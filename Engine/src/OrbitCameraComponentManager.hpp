@@ -20,12 +20,18 @@ namespace Terrain { namespace Engine {
             std::vector<float> pitch;
             std::vector<float> distance;
             std::vector<int> inputControllerId;
+
+            ComponentData() : count(0)
+            {
+            }
         } data;
 
         CameraComponentManager &cameraComponentMgr;
+        IO::InputManager &input;
 
     public:
-        OrbitCameraComponentManager(CameraComponentManager &cameraComponentMgr);
+        OrbitCameraComponentManager(
+            CameraComponentManager &cameraComponentMgr, IO::InputManager &input);
         OrbitCameraComponentManager(const OrbitCameraComponentManager &that) = delete;
         OrbitCameraComponentManager &operator=(
             const OrbitCameraComponentManager &that) = delete;
@@ -70,7 +76,7 @@ namespace Terrain { namespace Engine {
             data.inputControllerId[i] = value;
         }
 
-        void calculateCameraStates(IO::InputManager &inputManager, float deltaTime);
+        void calculateCameraStates(float deltaTime);
 
         ~OrbitCameraComponentManager();
     };

@@ -101,14 +101,15 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
     {
-        auto now = DateTime::UtcNow;
-        float deltaTime = (now - lastTickTime).TotalSeconds;
-        lastTickTime = now;
+        if (!isWorldInitialized)
+            return;
 
         ctx->input.update();
 
-        if (!isWorldInitialized)
-            return;
+        auto now = DateTime::UtcNow;
+        float deltaTime = (now - lastTickTime).TotalSeconds;
+        lastTickTime = now;
+        world->update(deltaTime);
         scene->update(deltaTime);
 
         msclr::lock l(viewCtxLock);

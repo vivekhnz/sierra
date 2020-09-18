@@ -51,7 +51,6 @@ namespace Terrain { namespace Engine {
         ctx.input.mapCommand(GLFW_KEY_H,
             std::bind(&Terrain::loadHeightmapFromFile, &terrain,
                 IO::Path::getAbsolutePath("data/heightmap2.tga")));
-        ctx.input.setMouseCaptureMode(true);
 
         // setup heightmap quad
         std::vector<float> quadVertices(20);
@@ -138,11 +137,7 @@ namespace Terrain { namespace Engine {
 
     void Scene::update(float deltaTime)
     {
-        if (isOrbitCameraMode)
-        {
-            world.componentManagers.orbitCamera.calculateCameraStates(ctx.input, deltaTime);
-        }
-        else
+        if (!isOrbitCameraMode)
         {
             updatePlayerCamera(deltaTime);
         }
@@ -190,7 +185,6 @@ namespace Terrain { namespace Engine {
     void Scene::toggleCameraMode()
     {
         isOrbitCameraMode = !isOrbitCameraMode;
-        ctx.input.setMouseCaptureMode(!isOrbitCameraMode);
     }
 
     void Scene::updatePlayerCamera(float deltaTime)
@@ -233,6 +227,8 @@ namespace Terrain { namespace Engine {
 
         world.componentManagers.camera.setPosition(0, pos);
         world.componentManagers.camera.setTarget(0, pos + playerLookDir);
+
+        ctx.input.setMouseCaptureMode(true);
     }
 
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)

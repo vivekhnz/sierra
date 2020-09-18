@@ -18,7 +18,7 @@ int main()
         Terrain::Engine::WindowEngineViewContext vctx(window);
         GameContext appCtx(vctx);
         Terrain::Engine::EngineContext ctx(appCtx);
-        Terrain::Engine::World world;
+        Terrain::Engine::World world(ctx);
         Terrain::Engine::Scene scene(ctx, world);
         scene.getTerrain().loadHeightmap(Terrain::Engine::Graphics::Image(
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true)
@@ -47,14 +47,19 @@ int main()
                 window.close();
             }
 
-            // update scene
+            // update world
             now = glfw.getCurrentTime();
             deltaTime = now - lastTickTime;
             lastTickTime = now;
+            world.update(deltaTime);
             scene.update(deltaTime);
 
+            bool isOrbitCameraMode = scene.getIsOrbitCameraMode();
+            world.componentManagers.orbitCamera.setInputControllerId(
+                orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
+
             // render scene
-            vctx.setCameraEntityId(scene.getIsOrbitCameraMode() ? 1 : 0);
+            vctx.setCameraEntityId(isOrbitCameraMode ? 1 : 0);
             scene.draw(vctx);
             vctx.render();
 

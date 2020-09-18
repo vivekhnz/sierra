@@ -1,7 +1,8 @@
 #include "World.hpp"
 
 namespace Terrain { namespace Engine {
-    World::World() : meshCount(0), materialCount(0), meshInstanceCount(0)
+    World::World(EngineContext &ctx) :
+        meshCount(0), materialCount(0), meshInstanceCount(0), componentManagers(ctx)
     {
     }
 
@@ -38,6 +39,11 @@ namespace Terrain { namespace Engine {
     Graphics::MeshInstance &World::getMeshInstance(int handle)
     {
         return meshInstances[handle];
+    }
+
+    void World::update(float deltaTime)
+    {
+        componentManagers.orbitCamera.calculateCameraStates(deltaTime);
     }
 
     World::~World()
