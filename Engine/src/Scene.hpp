@@ -25,10 +25,6 @@ namespace Terrain { namespace Engine {
         float lightAngle;
         bool isOrbitCameraMode;
 
-        glm::vec3 playerLookDir;
-        float playerCameraYaw;
-        float playerCameraPitch;
-
         unsigned int cameraUniformBufferId;
         unsigned int lightingUniformBufferId;
 

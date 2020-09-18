@@ -16,6 +16,8 @@ namespace Terrain { namespace Engine {
             int count;
             std::vector<int> entityId;
             std::vector<int> inputControllerId;
+            std::vector<float> yaw;
+            std::vector<float> pitch;
 
             ComponentData() : count(0)
             {
@@ -45,6 +47,24 @@ namespace Terrain { namespace Engine {
         void setInputControllerId(int i, int value)
         {
             data.inputControllerId[i] = value;
+        }
+
+        float getPitch(int i) const
+        {
+            return data.pitch[i];
+        }
+        void setPitch(int i, float value)
+        {
+            data.pitch[i] = value;
+        }
+
+        float getYaw(int i) const
+        {
+            return data.yaw[i];
+        }
+        void setYaw(int i, float value)
+        {
+            data.yaw[i] = value;
         }
 
         void calculateCameraStates(float deltaTime);

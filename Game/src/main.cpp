@@ -30,6 +30,8 @@ int main()
             world.componentManagers.firstPersonCamera.create(playerCamera_entityId);
         world.componentManagers.firstPersonCamera.setInputControllerId(
             playerCamera_firstPersonCameraId, 0);
+        world.componentManagers.firstPersonCamera.setYaw(
+            playerCamera_firstPersonCameraId, -1.57f);
 
         // create orbit camera
         int orbitCamera_entityId = ctx.entities.create();

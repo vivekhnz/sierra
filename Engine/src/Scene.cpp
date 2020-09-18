@@ -10,16 +10,15 @@
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f),
-        isOrbitCameraMode(false), playerLookDir(glm::vec3(0.0f, 0.0f, -1.0f)),
-        playerCameraYaw(-90.0f), playerCameraPitch(0.0f), isLightingEnabled(true),
-        isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
-        isAOMapEnabled(true), isRoughnessMapEnabled(false), heightmapTexture(2048,
-                                                                2048,
-                                                                GL_R16,
-                                                                GL_RED,
-                                                                GL_UNSIGNED_SHORT,
-                                                                GL_MIRRORED_REPEAT,
-                                                                GL_LINEAR_MIPMAP_LINEAR),
+        isOrbitCameraMode(false), isLightingEnabled(true), isTextureEnabled(true),
+        isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
+        isRoughnessMapEnabled(false), heightmapTexture(2048,
+                                          2048,
+                                          GL_R16,
+                                          GL_RED,
+                                          GL_UNSIGNED_SHORT,
+                                          GL_MIRRORED_REPEAT,
+                                          GL_LINEAR_MIPMAP_LINEAR),
         terrain(world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
@@ -37,7 +36,7 @@ namespace Terrain { namespace Engine {
             glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
         world.componentManagers.camera.setPosition(playerCamera_cameraId, playerPos);
         world.componentManagers.camera.setTarget(
-            playerCamera_cameraId, playerPos + playerLookDir);
+            playerCamera_cameraId, playerPos + glm::vec3(0.0f, 0.0f, -1.0f));
 
         // configure input
         ctx.input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
@@ -189,19 +188,12 @@ namespace Terrain { namespace Engine {
 
     void Scene::updatePlayerCamera(float deltaTime)
     {
-        IO::MouseInputState mouseState = ctx.input.getMouseState(0);
-
-        const float sensitivity = 4.0f * deltaTime;
-        playerCameraYaw += mouseState.cursorOffsetX * sensitivity;
-        playerCameraPitch =
-            std::clamp(playerCameraPitch - ((float)mouseState.cursorOffsetY * sensitivity),
-                -89.0f, 89.0f);
-
-        float yaw = glm::radians(playerCameraYaw);
-        float pitch = glm::radians(playerCameraPitch);
+        float yaw = world.componentManagers.firstPersonCamera.getYaw(0);
+        float pitch = world.componentManagers.firstPersonCamera.getPitch(0);
 
         glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
-        playerLookDir = glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
+        glm::vec3 playerLookDir =
+            glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
         glm::vec3 pos = world.componentManagers.camera.getPosition(0);
         glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
