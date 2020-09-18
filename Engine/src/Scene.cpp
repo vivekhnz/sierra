@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine {
                                           GL_UNSIGNED_SHORT,
                                           GL_MIRRORED_REPEAT,
                                           GL_LINEAR_MIPMAP_LINEAR),
-        terrain(world, meshRenderer, heightmapTexture)
+        terrain(ctx, world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);

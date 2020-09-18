@@ -5,13 +5,14 @@
 #include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
-    Terrain::Terrain(World &world,
+    Terrain::Terrain(EngineContext &ctx,
+        World &world,
         Graphics::MeshRenderer &meshRenderer,
         Graphics::Texture &heightmapTexture) :
         world(world),
         meshRenderer(meshRenderer), heightmapTexture(heightmapTexture), columns(256),
-        rows(256), patchSize(0.5f), patchHeights(columns * rows),
-        meshEdgeCount((2 * (rows * columns)) - rows - columns), terrainHeight(25.0f),
+        rows(256), patchSize(0.5f), meshEdgeCount((2 * (rows * columns)) - rows - columns),
+        terrainHeight(25.0f),
         albedoTexture(
             2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         normalTexture(
@@ -25,6 +26,10 @@ namespace Terrain { namespace Engine {
         tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY),
         isWireframeMode(false)
     {
+        int entityId = ctx.entities.create();
+        colliderInstanceId =
+            world.componentManagers.terrainCollider.create(entityId, columns, rows, patchSize);
+
         meshInstanceHandle = world.newMeshInstance();
         Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
 
@@ -84,7 +89,6 @@ namespace Terrain { namespace Engine {
         auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
         auto heightmapSize =
             glm::vec2(heightmapTexture.getWidth(), heightmapTexture.getHeight());
-        patchHeights.resize(columns * rows);
         for (int y = 0; y < rows; y++)
         {
             for (int x = 0; x < columns; x++)
@@ -182,6 +186,8 @@ namespace Terrain { namespace Engine {
             glm::ivec2(heightmapTexture.getWidth(), heightmapTexture.getHeight());
         float heightScalar = terrainHeight / 65535.0f;
         auto pixels = static_cast<const unsigned short *>(data);
+        int firstHeightIndex =
+            world.componentManagers.terrainCollider.getFirstHeightIndex(colliderInstanceId);
         for (int y = 0; y < rows; y++)
         {
             for (int x = 0; x < columns; x++)
@@ -199,7 +205,8 @@ namespace Terrain { namespace Engine {
                 vertices[i + 3] = uvSize.x * x;
                 vertices[i + 4] = uvSize.y * y;
 
-                patchHeights[patchIndex] = height;
+                world.componentManagers.terrainCollider.setPatchHeight(
+                    firstHeightIndex + patchIndex, height);
             }
         }
         mesh.setVertices(vertices);
@@ -225,16 +232,21 @@ namespace Terrain { namespace Engine {
         float deltaX = normalizedX - patchX;
         float deltaZ = normalizedZ - patchZ;
 
-        float topLeft = getTerrainPatchHeight(patchX, patchZ);
         float topRight = getTerrainPatchHeight(patchX + 1, patchZ);
         float bottomLeft = getTerrainPatchHeight(patchX, patchZ + 1);
-        float bottomRight = getTerrainPatchHeight(patchX + 1, patchZ + 1);
-
-        return deltaX <= 1.0f - deltaZ
-            ? barycentric(glm::vec3(0.0f, topLeft, 0.0f), glm::vec3(1.0f, topRight, 0.0f),
-                glm::vec3(0.0f, bottomLeft, 1.0f), deltaX, deltaZ)
-            : barycentric(glm::vec3(1.0f, topRight, 0.0f), glm::vec3(1.0f, bottomRight, 1.0f),
+        if (deltaX <= 1.0f - deltaZ)
+        {
+            float topLeft = getTerrainPatchHeight(patchX, patchZ);
+            return barycentric(glm::vec3(0.0f, topLeft, 0.0f), glm::vec3(1.0f, topRight, 0.0f),
                 glm::vec3(0.0f, bottomLeft, 1.0f), deltaX, deltaZ);
+        }
+        else
+        {
+            float bottomRight = getTerrainPatchHeight(patchX + 1, patchZ + 1);
+            return barycentric(glm::vec3(1.0f, topRight, 0.0f),
+                glm::vec3(1.0f, bottomRight, 1.0f), glm::vec3(0.0f, bottomLeft, 1.0f), deltaX,
+                deltaZ);
+        }
     }
 
     float Terrain::getTerrainPatchHeight(int x, int z) const
@@ -242,7 +254,7 @@ namespace Terrain { namespace Engine {
         int clampedX = (std::min)((std::max)(x, 0), columns - 1);
         int clampedZ = (std::min)((std::max)(z, 0), rows - 1);
         int i = (clampedZ * columns) + clampedX;
-        return patchHeights[i];
+        return world.componentManagers.terrainCollider.getPatchHeight(colliderInstanceId, i);
     }
 
     void Terrain::calculateTessellationLevels()

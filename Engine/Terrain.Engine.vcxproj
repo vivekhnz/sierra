@@ -42,6 +42,7 @@
     <ClCompile Include="src\Graphics\VertexArray.cpp" />
     <ClCompile Include="src\Graphics\Window.cpp" />
     <ClCompile Include="src\OrbitCameraComponentManager.cpp" />
+    <ClCompile Include="src\Physics\TerrainColliderComponentManager.cpp" />
     <ClCompile Include="src\World.cpp" />
     <ClCompile Include="src\IO\InputManager.cpp" />
     <ClCompile Include="src\IO\OpenFile.cpp" />
@@ -76,6 +77,7 @@
     <ClInclude Include="src\Graphics\Window.hpp" />
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
+    <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp" />
     <ClInclude Include="src\World.hpp" />
     <ClInclude Include="src\IO\InputManager.hpp" />
     <ClInclude Include="src\IO\OpenFile.hpp" />

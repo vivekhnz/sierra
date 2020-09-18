@@ -8,6 +8,7 @@
 #include "Graphics/MeshInstance.hpp"
 #include "OrbitCameraComponentManager.hpp"
 #include "FirstPersonCameraComponentManager.hpp"
+#include "Physics/TerrainColliderComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT World
@@ -28,6 +29,7 @@ namespace Terrain { namespace Engine {
             CameraComponentManager camera;
             OrbitCameraComponentManager orbitCamera;
             FirstPersonCameraComponentManager firstPersonCamera;
+            Physics::TerrainColliderComponentManager terrainCollider;
 
             ComponentManagers(EngineContext &ctx) :
                 orbitCamera(camera, ctx.input), firstPersonCamera(camera, ctx.input)

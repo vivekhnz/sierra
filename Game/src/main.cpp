@@ -80,7 +80,8 @@ int main()
                 orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
 
             // render scene
-            vctx.setCameraEntityId(isOrbitCameraMode ? orbitCamera_entityId : 0);
+            vctx.setCameraEntityId(
+                isOrbitCameraMode ? orbitCamera_entityId : playerCamera_entityId);
             scene.draw(vctx);
             vctx.render();
 

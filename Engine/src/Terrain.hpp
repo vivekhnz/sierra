@@ -11,10 +11,10 @@
 namespace Terrain { namespace Engine {
     class EXPORT Terrain
     {
+        int colliderInstanceId;
         int columns;
         int rows;
         float patchSize;
-        std::vector<float> patchHeights;
         int meshEdgeCount;
         float terrainHeight;
 
@@ -38,7 +38,8 @@ namespace Terrain { namespace Engine {
         float getTerrainPatchHeight(int x, int z) const;
 
     public:
-        Terrain(World &world,
+        Terrain(EngineContext &ctx,
+            World &world,
             Graphics::MeshRenderer &meshRenderer,
             Graphics::Texture &heightmapTexture);
         Terrain(const Terrain &that) = delete;

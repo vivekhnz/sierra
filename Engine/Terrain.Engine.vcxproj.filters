@@ -82,6 +82,9 @@
     <ClCompile Include="src\FirstPersonCameraComponentManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Physics\TerrainColliderComponentManager.cpp">
+      <Filter>src\Physics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -183,6 +186,9 @@
     <ClInclude Include="src\FirstPersonCameraComponentManager.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp">
+      <Filter>src\Physics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -196,6 +202,9 @@
     </Filter>
     <Filter Include="src\IO">
       <UniqueIdentifier>{f0a2bf12-335e-45b1-b986-ceed0af6ddcb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Physics">
+      <UniqueIdentifier>{18f462fe-d8f8-4fbf-8c38-f777233e61eb}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
