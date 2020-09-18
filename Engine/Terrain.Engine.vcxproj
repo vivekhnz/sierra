@@ -26,6 +26,7 @@
     <ClCompile Include="..\deps\stb\stb_image.c" />
     <ClCompile Include="src\CameraComponentManager.cpp" />
     <ClCompile Include="src\EntityManager.cpp" />
+    <ClCompile Include="src\FirstPersonCameraComponentManager.cpp" />
     <ClCompile Include="src\Graphics\AttachShader.cpp" />
     <ClCompile Include="src\Graphics\BindBuffer.cpp" />
     <ClCompile Include="src\Graphics\BindVertexArray.cpp" />
@@ -55,6 +56,7 @@
     <ClInclude Include="src\EngineContext.hpp" />
     <ClInclude Include="src\EngineViewContext.hpp" />
     <ClInclude Include="src\EntityManager.hpp" />
+    <ClInclude Include="src\FirstPersonCameraComponentManager.hpp" />
     <ClInclude Include="src\Graphics\AttachShader.hpp" />
     <ClInclude Include="src\Graphics\BindBuffer.hpp" />
     <ClInclude Include="src\Graphics\BindVertexArray.hpp" />

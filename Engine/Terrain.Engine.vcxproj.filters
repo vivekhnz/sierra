@@ -79,6 +79,9 @@
     <ClCompile Include="src\EntityManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\FirstPersonCameraComponentManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -175,6 +178,9 @@
       <Filter>src\IO</Filter>
     </ClInclude>
     <ClInclude Include="src\AppContext.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\FirstPersonCameraComponentManager.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>

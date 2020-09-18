@@ -24,6 +24,13 @@ int main()
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true)
                                              .getData());
 
+        // create player camera
+        int playerCamera_entityId = ctx.entities.create();
+        int playerCamera_firstPersonCameraId =
+            world.componentManagers.firstPersonCamera.create(playerCamera_entityId);
+        world.componentManagers.firstPersonCamera.setInputControllerId(
+            playerCamera_firstPersonCameraId, 0);
+
         // create orbit camera
         int orbitCamera_entityId = ctx.entities.create();
         world.componentManagers.camera.create(orbitCamera_entityId);
@@ -34,6 +41,8 @@ int main()
         world.componentManagers.orbitCamera.setYaw(
             orbitCamera_orbitCameraId, glm::radians(90.0f));
         world.componentManagers.orbitCamera.setDistance(orbitCamera_orbitCameraId, 112.5f);
+        world.componentManagers.orbitCamera.setInputControllerId(
+            orbitCamera_orbitCameraId, -1);
 
         float now = 0;
         float lastTickTime = glfw.getCurrentTime();
@@ -55,11 +64,13 @@ int main()
             scene.update(deltaTime);
 
             bool isOrbitCameraMode = scene.getIsOrbitCameraMode();
+            world.componentManagers.firstPersonCamera.setInputControllerId(
+                playerCamera_firstPersonCameraId, isOrbitCameraMode ? -1 : 0);
             world.componentManagers.orbitCamera.setInputControllerId(
                 orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
 
             // render scene
-            vctx.setCameraEntityId(isOrbitCameraMode ? 1 : 0);
+            vctx.setCameraEntityId(isOrbitCameraMode ? orbitCamera_entityId : 0);
             scene.draw(vctx);
             vctx.render();
 

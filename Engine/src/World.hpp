@@ -7,6 +7,7 @@
 #include "Graphics/Material.hpp"
 #include "Graphics/MeshInstance.hpp"
 #include "OrbitCameraComponentManager.hpp"
+#include "FirstPersonCameraComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT World
@@ -26,8 +27,10 @@ namespace Terrain { namespace Engine {
         {
             CameraComponentManager camera;
             OrbitCameraComponentManager orbitCamera;
+            FirstPersonCameraComponentManager firstPersonCamera;
 
-            ComponentManagers(EngineContext &ctx) : orbitCamera(camera, ctx.input)
+            ComponentManagers(EngineContext &ctx) :
+                orbitCamera(camera, ctx.input), firstPersonCamera(camera, ctx.input)
             {
             }
         };

@@ -14,7 +14,7 @@ namespace Terrain { namespace Engine { namespace IO {
         std::map<int, std::tuple<bool, bool>> keyState;
         std::map<int, std::function<void()>> keyCommands;
 
-        bool isMouseCaptured;
+        bool shouldCaptureMouse;
         bool wasMouseCaptured;
 
     public:
@@ -34,7 +34,7 @@ namespace Terrain { namespace Engine { namespace IO {
 
         void listenForKey(int key);
         void mapCommand(int key, std::function<void()> command);
-        void setMouseCaptureMode(bool shouldCaptureMouse);
+        void captureMouse();
         void update();
 
         ~InputManager();

@@ -4,7 +4,7 @@
 
 namespace Terrain { namespace Engine { namespace IO {
     InputManager::InputManager(AppContext &ctx) :
-        ctx(ctx), isMouseCaptured(false), wasMouseCaptured(false)
+        ctx(ctx), shouldCaptureMouse(false), wasMouseCaptured(false)
     {
     }
 
@@ -30,9 +30,9 @@ namespace Terrain { namespace Engine { namespace IO {
         keyCommands[key] = command;
     }
 
-    void InputManager::setMouseCaptureMode(bool shouldCaptureMouse)
+    void InputManager::captureMouse()
     {
-        isMouseCaptured = shouldCaptureMouse;
+        shouldCaptureMouse = true;
     }
 
     void InputManager::update()
@@ -56,15 +56,16 @@ namespace Terrain { namespace Engine { namespace IO {
         }
 
         // only change mouse capture state if the state changed this frame
-        if (isMouseCaptured && !wasMouseCaptured)
+        if (shouldCaptureMouse && !wasMouseCaptured)
         {
             ctx.setMouseCaptureMode(true);
         }
-        else if (!isMouseCaptured && wasMouseCaptured)
+        else if (!shouldCaptureMouse && wasMouseCaptured)
         {
             ctx.setMouseCaptureMode(false);
         }
-        wasMouseCaptured = isMouseCaptured;
+        wasMouseCaptured = shouldCaptureMouse;
+        shouldCaptureMouse = false;
     }
 
     InputManager::~InputManager()

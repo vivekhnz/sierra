@@ -227,8 +227,6 @@ namespace Terrain { namespace Engine {
 
         world.componentManagers.camera.setPosition(0, pos);
         world.componentManagers.camera.setTarget(0, pos + playerLookDir);
-
-        ctx.input.setMouseCaptureMode(true);
     }
 
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)

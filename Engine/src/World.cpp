@@ -44,6 +44,7 @@ namespace Terrain { namespace Engine {
     void World::update(float deltaTime)
     {
         componentManagers.orbitCamera.calculateCameraStates(deltaTime);
+        componentManagers.firstPersonCamera.calculateCameraStates(deltaTime);
     }
 
     World::~World()
