@@ -38,8 +38,6 @@ namespace Terrain { namespace Engine {
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
-        void updatePlayerCamera(float deltaTime);
-
     public:
         Scene(EngineContext &ctx, World &world);
         Scene(const Scene &that) = delete;

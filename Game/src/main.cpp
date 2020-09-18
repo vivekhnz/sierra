@@ -26,6 +26,14 @@ int main()
 
         // create player camera
         int playerCamera_entityId = ctx.entities.create();
+
+        int playerCamera_cameraId =
+            world.componentManagers.camera.create(playerCamera_entityId);
+        world.componentManagers.camera.setPosition(
+            playerCamera_cameraId, glm::vec3(0.0f, 4.0f, 50.0f));
+        world.componentManagers.camera.setTarget(
+            playerCamera_cameraId, glm::vec3(0.0f, 4.0f, 49.0f));
+
         int playerCamera_firstPersonCameraId =
             world.componentManagers.firstPersonCamera.create(playerCamera_entityId);
         world.componentManagers.firstPersonCamera.setInputControllerId(

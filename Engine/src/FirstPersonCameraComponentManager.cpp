@@ -1,6 +1,7 @@
 #include "FirstPersonCameraComponentManager.hpp"
 
 #include <algorithm>
+#include "GLFW/glfw3.h"
 
 namespace Terrain { namespace Engine {
     FirstPersonCameraComponentManager::FirstPersonCameraComponentManager(
@@ -22,7 +23,9 @@ namespace Terrain { namespace Engine {
     void FirstPersonCameraComponentManager::calculateCameraStates(float deltaTime)
     {
         bool isCameraActive = false;
-        const float sensitivity = 0.07f * deltaTime;
+        const float lookSensitivity = 0.07f * deltaTime;
+        const float moveSpeed = 4.0 * deltaTime;
+        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         for (int i = 0; i < data.count; i++)
         {
@@ -31,12 +34,40 @@ namespace Terrain { namespace Engine {
                 continue;
 
             IO::MouseInputState mouseState = input.getMouseState(inputControllerId);
+            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
+            glm::vec3 pos = cameraComponentMgr.getPosition(cameraInstanceId);
 
-            yaw += mouseState.cursorOffsetX * sensitivity;
+            // rotate camera by moving mouse cursor
+            yaw += mouseState.cursorOffsetX * lookSensitivity;
             pitch = std::clamp(
-                pitch - ((float)mouseState.cursorOffsetY * sensitivity), -1.55f, 1.55f);
+                pitch - ((float)mouseState.cursorOffsetY * lookSensitivity), -1.55f, 1.55f);
+            glm::vec3 lookDir =
+                glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
+
+            // move camera on XZ axis using WASD keys
+            glm::vec3 moveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
+            if (input.isKeyPressed(GLFW_KEY_A))
+            {
+                pos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
+            }
+            if (input.isKeyPressed(GLFW_KEY_D))
+            {
+                pos += glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
+            }
+            if (input.isKeyPressed(GLFW_KEY_W))
+            {
+                pos += moveDir * moveSpeed;
+            }
+            if (input.isKeyPressed(GLFW_KEY_S))
+            {
+                pos -= moveDir * moveSpeed;
+            }
+
+            // update camera position and target
+            cameraComponentMgr.setPosition(cameraInstanceId, pos);
+            cameraComponentMgr.setTarget(cameraInstanceId, pos + lookDir);
 
             isCameraActive = true;
         }

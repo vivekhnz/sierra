@@ -28,16 +28,6 @@ namespace Terrain { namespace Engine {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        // player camera
-        int playerCamera_entityId = ctx.entities.create();
-        int playerCamera_cameraId =
-            world.componentManagers.camera.create(playerCamera_entityId);
-        glm::vec3 playerPos =
-            glm::vec3(0.0f, terrain.getTerrainHeight(0.0f, 50.0f) + 1.75f, 50.0f);
-        world.componentManagers.camera.setPosition(playerCamera_cameraId, playerPos);
-        world.componentManagers.camera.setTarget(
-            playerCamera_cameraId, playerPos + glm::vec3(0.0f, 0.0f, -1.0f));
-
         // configure input
         ctx.input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
         ctx.input.mapCommand(GLFW_KEY_T, std::bind(&Scene::toggleAlbedoMap, this));
@@ -138,7 +128,17 @@ namespace Terrain { namespace Engine {
     {
         if (!isOrbitCameraMode)
         {
-            updatePlayerCamera(deltaTime);
+            glm::vec3 pos = world.componentManagers.camera.getPosition(0);
+            glm::vec3 target = world.componentManagers.camera.getTarget(0);
+            glm::vec3 lookDir = target - pos;
+
+            // smoothly lerp Y to terrain height
+            float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
+            pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
+
+            // update camera position and target
+            world.componentManagers.camera.setPosition(0, pos);
+            world.componentManagers.camera.setTarget(0, pos + lookDir);
         }
 
         if (ctx.input.isKeyPressed(GLFW_KEY_LEFT))
@@ -184,41 +184,6 @@ namespace Terrain { namespace Engine {
     void Scene::toggleCameraMode()
     {
         isOrbitCameraMode = !isOrbitCameraMode;
-    }
-
-    void Scene::updatePlayerCamera(float deltaTime)
-    {
-        float yaw = world.componentManagers.firstPersonCamera.getYaw(0);
-        float pitch = world.componentManagers.firstPersonCamera.getPitch(0);
-
-        glm::vec3 playerMoveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
-        glm::vec3 playerLookDir =
-            glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-
-        glm::vec3 pos = world.componentManagers.camera.getPosition(0);
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-
-        if (ctx.input.isKeyPressed(GLFW_KEY_A))
-        {
-            pos -= glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
-        }
-        if (ctx.input.isKeyPressed(GLFW_KEY_D))
-        {
-            pos += glm::normalize(glm::cross(playerMoveDir, up)) * 4.0f * deltaTime;
-        }
-        if (ctx.input.isKeyPressed(GLFW_KEY_W))
-        {
-            pos += playerMoveDir * 4.0f * deltaTime;
-        }
-        if (ctx.input.isKeyPressed(GLFW_KEY_S))
-        {
-            pos -= playerMoveDir * 4.0f * deltaTime;
-        }
-        float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
-        pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
-
-        world.componentManagers.camera.setPosition(0, pos);
-        world.componentManagers.camera.setTarget(0, pos + playerLookDir);
     }
 
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)
