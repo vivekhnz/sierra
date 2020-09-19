@@ -12,6 +12,8 @@ namespace Terrain { namespace Engine {
     class EXPORT Terrain
     {
         int colliderInstanceId;
+        int meshRendererInstanceId;
+
         int columns;
         int rows;
         float patchSize;

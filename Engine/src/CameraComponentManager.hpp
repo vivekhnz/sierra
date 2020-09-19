@@ -18,6 +18,10 @@ namespace Terrain { namespace Engine {
             std::vector<glm::vec3> position;
             std::vector<glm::vec3> target;
             std::vector<glm::mat4> transform;
+
+            ComponentData() : count(0)
+            {
+            }
         } data;
 
         std::map<int, int> entityIdToInstanceId;

@@ -9,12 +9,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void MeshRenderer::renderMeshes()
     {
-        int meshInstanceCount = world.getMeshInstanceCount();
+        int meshInstanceCount = world.componentManagers.meshRenderer.getMeshInstanceCount();
         for (int i = 0; i < meshInstanceCount; i++)
         {
-            auto meshInstance = world.getMeshInstance(i);
+            int meshHandle = world.componentManagers.meshRenderer.getMeshHandle(i);
+            int materialHandle = world.componentManagers.meshRenderer.getMaterialHandle(i);
 
-            auto material = world.getMaterial(meshInstance.materialHandle);
+            Material &material = world.getMaterial(materialHandle);
             glUseProgram(material.shaderProgramId);
             glPolygonMode(GL_FRONT_AND_BACK, material.polygonMode);
             for (int i = 0; i < material.textureCount; i++)
@@ -23,7 +24,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 glBindTexture(GL_TEXTURE_2D, material.textureIds[i]);
             }
 
-            auto meshData = world.getMesh(meshInstance.meshHandle);
+            MeshData &meshData = world.getMesh(meshHandle);
             glBindVertexArray(meshData.vertexArrayId);
             glDrawElements(meshData.primitiveType, meshData.elementCount, GL_UNSIGNED_INT, 0);
         }

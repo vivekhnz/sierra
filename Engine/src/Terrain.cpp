@@ -30,17 +30,14 @@ namespace Terrain { namespace Engine {
         colliderInstanceId =
             world.componentManagers.terrainCollider.create(entityId, columns, rows, patchSize);
 
-        meshInstanceHandle = world.newMeshInstance();
-        Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
-
-        meshInstance.meshHandle = world.newMesh();
-        Graphics::MeshData &meshData = world.getMesh(meshInstance.meshHandle);
+        int meshHandle = world.newMesh();
+        Graphics::MeshData &meshData = world.getMesh(meshHandle);
         meshData.vertexArrayId = mesh.getVertexArrayId();
         meshData.elementCount = 0;
         meshData.primitiveType = GL_PATCHES;
 
-        meshInstance.materialHandle = world.newMaterial();
-        Graphics::Material &meshMaterial = world.getMaterial(meshInstance.materialHandle);
+        int materialHandle = world.newMaterial();
+        Graphics::Material &meshMaterial = world.getMaterial(materialHandle);
         meshMaterial.shaderProgramId = terrainShaderProgram.getId();
         meshMaterial.polygonMode = GL_FILL;
         meshMaterial.textureCount = 6;
@@ -50,6 +47,9 @@ namespace Terrain { namespace Engine {
         meshMaterial.textureIds[3] = displacementTexture.getId();
         meshMaterial.textureIds[4] = aoTexture.getId();
         meshMaterial.textureIds[5] = roughnessTexture.getId();
+
+        meshRendererInstanceId =
+            world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
     }
 
     void Terrain::initialize(const Graphics::ShaderManager &shaderManager)
@@ -118,8 +118,8 @@ namespace Terrain { namespace Engine {
             }
         }
         mesh.initialize(vertices, indices);
-        Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
-        Graphics::MeshData &meshData = world.getMesh(meshInstance.meshHandle);
+        Graphics::MeshData &meshData = world.getMesh(
+            world.componentManagers.meshRenderer.getMeshHandle(meshRendererInstanceId));
         meshData.elementCount = indices.size();
 
         // create buffer to store vertex edge data
@@ -225,8 +225,8 @@ namespace Terrain { namespace Engine {
     {
         isWireframeMode = !isWireframeMode;
 
-        Graphics::MeshInstance &meshInstance = world.getMeshInstance(meshInstanceHandle);
-        Graphics::Material &material = world.getMaterial(meshInstance.materialHandle);
+        Graphics::Material &material = world.getMaterial(
+            world.componentManagers.meshRenderer.getMaterialHandle(meshRendererInstanceId));
         if (isWireframeMode)
         {
             material.shaderProgramId = wireframeShaderProgram.getId();

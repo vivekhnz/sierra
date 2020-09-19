@@ -76,22 +76,22 @@ namespace Terrain { namespace Engine {
 
         quadMesh.initialize(quadVertices, quadIndices);
 
-        int quadMeshInstanceHandle = world.newMeshInstance();
-        Graphics::MeshInstance &quadMeshInstance =
-            world.getMeshInstance(quadMeshInstanceHandle);
-
-        quadMeshInstance.meshHandle = world.newMesh();
-        Graphics::MeshData &quadMeshData = world.getMesh(quadMeshInstance.meshHandle);
+        int quadMesh_meshHandle = world.newMesh();
+        Graphics::MeshData &quadMeshData = world.getMesh(quadMesh_meshHandle);
         quadMeshData.vertexArrayId = quadMesh.getVertexArrayId();
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
-        quadMeshInstance.materialHandle = world.newMaterial();
-        Graphics::Material &quadMaterial = world.getMaterial(quadMeshInstance.materialHandle);
+        int quadMesh_materialHandle = world.newMaterial();
+        Graphics::Material &quadMaterial = world.getMaterial(quadMesh_materialHandle);
         quadMaterial.shaderProgramId = quadShaderProgram.getId();
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
         quadMaterial.textureIds[0] = heightmapTexture.getId();
+
+        int quadMesh_entityId = ctx.entities.create();
+        world.componentManagers.meshRenderer.create(
+            quadMesh_entityId, quadMesh_meshHandle, quadMesh_materialHandle);
 
         std::vector<Graphics::Shader> quadShaders;
         quadShaders.push_back(shaderManager.loadVertexShaderFromFile(

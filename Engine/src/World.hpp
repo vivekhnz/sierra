@@ -5,10 +5,10 @@
 #include "EngineContext.hpp"
 #include "Graphics/MeshData.hpp"
 #include "Graphics/Material.hpp"
-#include "Graphics/MeshInstance.hpp"
 #include "OrbitCameraComponentManager.hpp"
 #include "FirstPersonCameraComponentManager.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
+#include "Graphics/MeshRendererComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT World
@@ -20,9 +20,6 @@ namespace Terrain { namespace Engine {
         Graphics::Material materials[100];
         int materialCount;
 
-        Graphics::MeshInstance meshInstances[100];
-        int meshInstanceCount;
-
     public:
         struct ComponentManagers
         {
@@ -30,6 +27,7 @@ namespace Terrain { namespace Engine {
             OrbitCameraComponentManager orbitCamera;
             FirstPersonCameraComponentManager firstPersonCamera;
             Physics::TerrainColliderComponentManager terrainCollider;
+            Graphics::MeshRendererComponentManager meshRenderer;
 
             ComponentManagers(EngineContext &ctx) :
                 orbitCamera(camera, ctx.input),
@@ -50,10 +48,6 @@ namespace Terrain { namespace Engine {
 
         int newMaterial();
         Graphics::Material &getMaterial(int handle);
-
-        int newMeshInstance();
-        int getMeshInstanceCount() const;
-        Graphics::MeshInstance &getMeshInstance(int handle);
 
         void update(float deltaTime);
         void render();

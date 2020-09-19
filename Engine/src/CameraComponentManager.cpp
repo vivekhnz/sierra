@@ -6,7 +6,6 @@
 namespace Terrain { namespace Engine {
     CameraComponentManager::CameraComponentManager()
     {
-        data.count = 0;
     }
 
     int CameraComponentManager::create(int entityId)

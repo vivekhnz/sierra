@@ -3,8 +3,7 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine {
-    World::World(EngineContext &ctx) :
-        meshCount(0), materialCount(0), meshInstanceCount(0), componentManagers(ctx)
+    World::World(EngineContext &ctx) : meshCount(0), materialCount(0), componentManagers(ctx)
     {
     }
 
@@ -26,21 +25,6 @@ namespace Terrain { namespace Engine {
     Graphics::Material &World::getMaterial(int handle)
     {
         return materials[handle];
-    }
-
-    int World::newMeshInstance()
-    {
-        return meshInstanceCount++;
-    }
-
-    int World::getMeshInstanceCount() const
-    {
-        return meshInstanceCount;
-    }
-
-    Graphics::MeshInstance &World::getMeshInstance(int handle)
-    {
-        return meshInstances[handle];
     }
 
     void World::update(float deltaTime)
