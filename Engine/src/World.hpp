@@ -32,7 +32,8 @@ namespace Terrain { namespace Engine {
             Physics::TerrainColliderComponentManager terrainCollider;
 
             ComponentManagers(EngineContext &ctx) :
-                orbitCamera(camera, ctx.input), firstPersonCamera(camera, ctx.input)
+                orbitCamera(camera, ctx.input),
+                firstPersonCamera(camera, terrainCollider, ctx.input)
             {
             }
         };

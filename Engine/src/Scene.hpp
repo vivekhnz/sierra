@@ -23,7 +23,6 @@ namespace Terrain { namespace Engine {
         Terrain terrain;
 
         float lightAngle;
-        bool isOrbitCameraMode;
 
         unsigned int cameraUniformBufferId;
         unsigned int lightingUniformBufferId;
@@ -47,11 +46,6 @@ namespace Terrain { namespace Engine {
 
         Terrain &getTerrain();
 
-        bool getIsOrbitCameraMode() const
-        {
-            return isOrbitCameraMode;
-        }
-
         void update(float deltaTime);
         void draw(EngineViewContext &vctx);
         void toggleLighting();
@@ -60,7 +54,6 @@ namespace Terrain { namespace Engine {
         void toggleDisplacementMap();
         void toggleAmbientOcclusionMap();
         void toggleRoughnessMap();
-        void toggleCameraMode();
 
         ~Scene();
     };

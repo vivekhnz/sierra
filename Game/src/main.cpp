@@ -57,6 +57,9 @@ int main()
         float now = 0;
         float lastTickTime = glfw.getCurrentTime();
         float deltaTime = 0;
+        bool wasCKeyDown = false;
+        bool isOrbitCameraMode = false;
+
         while (!window.isRequestingClose())
         {
             // query input
@@ -66,18 +69,24 @@ int main()
                 window.close();
             }
 
+            // swap camera mode when C key is pressed
+            bool isCKeyDown = ctx.input.isKeyPressed(GLFW_KEY_C);
+            if (isCKeyDown && !wasCKeyDown)
+            {
+                isOrbitCameraMode = !isOrbitCameraMode;
+                world.componentManagers.firstPersonCamera.setInputControllerId(
+                    playerCamera_firstPersonCameraId, isOrbitCameraMode ? -1 : 0);
+                world.componentManagers.orbitCamera.setInputControllerId(
+                    orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
+            }
+            wasCKeyDown = isCKeyDown;
+
             // update world
             now = glfw.getCurrentTime();
             deltaTime = now - lastTickTime;
             lastTickTime = now;
             world.update(deltaTime);
             scene.update(deltaTime);
-
-            bool isOrbitCameraMode = scene.getIsOrbitCameraMode();
-            world.componentManagers.firstPersonCamera.setInputControllerId(
-                playerCamera_firstPersonCameraId, isOrbitCameraMode ? -1 : 0);
-            world.componentManagers.orbitCamera.setInputControllerId(
-                orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
 
             // render scene
             vctx.setCameraEntityId(

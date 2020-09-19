@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "CameraComponentManager.hpp"
+#include "Physics/TerrainColliderComponentManager.hpp"
 #include "IO/InputManager.hpp"
 
 #include <vector>
@@ -25,11 +26,13 @@ namespace Terrain { namespace Engine {
         } data;
 
         CameraComponentManager &cameraComponentMgr;
+        Physics::TerrainColliderComponentManager &terrainColliderComponentMgr;
         IO::InputManager &input;
 
     public:
-        FirstPersonCameraComponentManager(
-            CameraComponentManager &cameraComponentMgr, IO::InputManager &input);
+        FirstPersonCameraComponentManager(CameraComponentManager &cameraComponentMgr,
+            Physics::TerrainColliderComponentManager &terrainColliderComponentMgr,
+            IO::InputManager &input);
         FirstPersonCameraComponentManager(
             const FirstPersonCameraComponentManager &that) = delete;
         FirstPersonCameraComponentManager &operator=(

@@ -35,8 +35,6 @@ namespace Terrain { namespace Engine {
 
         bool isWireframeMode;
 
-        float getTerrainPatchHeight(int x, int z) const;
-
     public:
         Terrain(EngineContext &ctx,
             World &world,
@@ -46,8 +44,6 @@ namespace Terrain { namespace Engine {
         Terrain &operator=(const Terrain &that) = delete;
         Terrain(Terrain &&) = delete;
         Terrain &operator=(Terrain &&) = delete;
-
-        float getTerrainHeight(float worldX, float worldZ) const;
 
         void initialize(const Graphics::ShaderManager &shaderManager);
         void loadHeightmapFromFile(std::string path);

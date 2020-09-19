@@ -212,51 +212,6 @@ namespace Terrain { namespace Engine {
         mesh.setVertices(vertices);
     }
 
-    float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
-    {
-        float det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
-        float l1 = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (y - c.z)) / det;
-        float l2 = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (y - c.z)) / det;
-        float l3 = 1.0f - l1 - l2;
-        return (l1 * a.y) + (l2 * b.y) + (l3 * c.y);
-    }
-
-    float Terrain::getTerrainHeight(float worldX, float worldZ) const
-    {
-        float relativeX = worldX + (columns * patchSize * 0.5f);
-        float relativeZ = worldZ + (rows * patchSize * 0.5f);
-        float normalizedX = relativeX / patchSize;
-        float normalizedZ = relativeZ / patchSize;
-        int patchX = (int)floor(normalizedX);
-        int patchZ = (int)floor(normalizedZ);
-        float deltaX = normalizedX - patchX;
-        float deltaZ = normalizedZ - patchZ;
-
-        float topRight = getTerrainPatchHeight(patchX + 1, patchZ);
-        float bottomLeft = getTerrainPatchHeight(patchX, patchZ + 1);
-        if (deltaX <= 1.0f - deltaZ)
-        {
-            float topLeft = getTerrainPatchHeight(patchX, patchZ);
-            return barycentric(glm::vec3(0.0f, topLeft, 0.0f), glm::vec3(1.0f, topRight, 0.0f),
-                glm::vec3(0.0f, bottomLeft, 1.0f), deltaX, deltaZ);
-        }
-        else
-        {
-            float bottomRight = getTerrainPatchHeight(patchX + 1, patchZ + 1);
-            return barycentric(glm::vec3(1.0f, topRight, 0.0f),
-                glm::vec3(1.0f, bottomRight, 1.0f), glm::vec3(0.0f, bottomLeft, 1.0f), deltaX,
-                deltaZ);
-        }
-    }
-
-    float Terrain::getTerrainPatchHeight(int x, int z) const
-    {
-        int clampedX = (std::min)((std::max)(x, 0), columns - 1);
-        int clampedZ = (std::min)((std::max)(z, 0), rows - 1);
-        int i = (clampedZ * columns) + clampedX;
-        return world.componentManagers.terrainCollider.getPatchHeight(colliderInstanceId, i);
-    }
-
     void Terrain::calculateTessellationLevels()
     {
         glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());

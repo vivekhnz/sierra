@@ -9,16 +9,15 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f),
-        isOrbitCameraMode(false), isLightingEnabled(true), isTextureEnabled(true),
-        isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
-        isRoughnessMapEnabled(false), heightmapTexture(2048,
-                                          2048,
-                                          GL_R16,
-                                          GL_RED,
-                                          GL_UNSIGNED_SHORT,
-                                          GL_MIRRORED_REPEAT,
-                                          GL_LINEAR_MIPMAP_LINEAR),
+        ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f), isLightingEnabled(true),
+        isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
+        isAOMapEnabled(true), isRoughnessMapEnabled(false), heightmapTexture(2048,
+                                                                2048,
+                                                                GL_R16,
+                                                                GL_RED,
+                                                                GL_UNSIGNED_SHORT,
+                                                                GL_MIRRORED_REPEAT,
+                                                                GL_LINEAR_MIPMAP_LINEAR),
         terrain(ctx, world, meshRenderer, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
@@ -36,7 +35,6 @@ namespace Terrain { namespace Engine {
         ctx.input.mapCommand(GLFW_KEY_O, std::bind(&Scene::toggleAmbientOcclusionMap, this));
         ctx.input.mapCommand(GLFW_KEY_R, std::bind(&Scene::toggleRoughnessMap, this));
         ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
-        ctx.input.mapCommand(GLFW_KEY_C, std::bind(&Scene::toggleCameraMode, this));
         ctx.input.mapCommand(GLFW_KEY_H,
             std::bind(&Terrain::loadHeightmapFromFile, &terrain,
                 IO::Path::getAbsolutePath("data/heightmap2.tga")));
@@ -126,21 +124,6 @@ namespace Terrain { namespace Engine {
 
     void Scene::update(float deltaTime)
     {
-        if (!isOrbitCameraMode)
-        {
-            glm::vec3 pos = world.componentManagers.camera.getPosition(0);
-            glm::vec3 target = world.componentManagers.camera.getTarget(0);
-            glm::vec3 lookDir = target - pos;
-
-            // smoothly lerp Y to terrain height
-            float targetHeight = terrain.getTerrainHeight(pos.x, pos.z) + 1.75f;
-            pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
-
-            // update camera position and target
-            world.componentManagers.camera.setPosition(0, pos);
-            world.componentManagers.camera.setTarget(0, pos + lookDir);
-        }
-
         if (ctx.input.isKeyPressed(GLFW_KEY_LEFT))
         {
             lightAngle += deltaTime;
@@ -179,11 +162,6 @@ namespace Terrain { namespace Engine {
     void Scene::toggleRoughnessMap()
     {
         isRoughnessMapEnabled = !isRoughnessMapEnabled;
-    }
-
-    void Scene::toggleCameraMode()
-    {
-        isOrbitCameraMode = !isOrbitCameraMode;
     }
 
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)

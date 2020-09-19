@@ -5,9 +5,11 @@
 
 namespace Terrain { namespace Engine {
     FirstPersonCameraComponentManager::FirstPersonCameraComponentManager(
-        CameraComponentManager &cameraComponentMgr, IO::InputManager &input) :
+        CameraComponentManager &cameraComponentMgr,
+        Physics::TerrainColliderComponentManager &terrainColliderComponentMgr,
+        IO::InputManager &input) :
         cameraComponentMgr(cameraComponentMgr),
-        input(input)
+        terrainColliderComponentMgr(terrainColliderComponentMgr), input(input)
     {
     }
 
@@ -64,6 +66,11 @@ namespace Terrain { namespace Engine {
             {
                 pos -= moveDir * moveSpeed;
             }
+
+            // smoothly lerp Y to terrain height
+            float targetHeight =
+                terrainColliderComponentMgr.getTerrainHeight(pos.x, pos.z) + 1.75f;
+            pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
             // update camera position and target
             cameraComponentMgr.setPosition(cameraInstanceId, pos);

@@ -50,7 +50,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             // calls. GLAD is only initialized when a window is marked as the primary window.
             world = new Engine::World(*ctx);
             scene = new Engine::Scene(*ctx, *world);
-            scene->toggleCameraMode();
             sceneProxy = gcnew Proxy::SceneProxy(*scene);
 
             isWorldInitialized = true;
