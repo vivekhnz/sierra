@@ -5,6 +5,7 @@
 #include "AppContext.hpp"
 #include "IO/InputManager.hpp"
 #include "EntityManager.hpp"
+#include "ResourceManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT EngineContext
@@ -12,6 +13,7 @@ namespace Terrain { namespace Engine {
     public:
         IO::InputManager input;
         EntityManager entities;
+        ResourceManager resources;
 
         EngineContext(AppContext &ctx) : input(ctx)
         {

@@ -6,7 +6,6 @@
 #include "World.hpp"
 #include "Graphics/Window.hpp"
 #include "Graphics/Mesh.hpp"
-#include "Graphics/MeshRenderer.hpp"
 #include "IO/InputManager.hpp"
 #include "EngineViewContext.hpp"
 #include "Terrain.hpp"
@@ -18,8 +17,6 @@ namespace Terrain { namespace Engine {
         World &world;
 
         Graphics::Texture heightmapTexture;
-
-        Graphics::MeshRenderer meshRenderer;
         Terrain terrain;
 
         float lightAngle;

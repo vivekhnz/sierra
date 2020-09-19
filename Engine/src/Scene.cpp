@@ -9,7 +9,7 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), meshRenderer(world), lightAngle(7.5f), isLightingEnabled(true),
+        ctx(ctx), world(world), lightAngle(7.5f), isLightingEnabled(true),
         isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
         isAOMapEnabled(true), isRoughnessMapEnabled(false), heightmapTexture(2048,
                                                                 2048,
@@ -18,7 +18,7 @@ namespace Terrain { namespace Engine {
                                                                 GL_UNSIGNED_SHORT,
                                                                 GL_MIRRORED_REPEAT,
                                                                 GL_LINEAR_MIPMAP_LINEAR),
-        terrain(ctx, world, meshRenderer, heightmapTexture)
+        terrain(ctx, world, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
@@ -76,14 +76,14 @@ namespace Terrain { namespace Engine {
 
         quadMesh.initialize(quadVertices, quadIndices);
 
-        int quadMesh_meshHandle = world.newMesh();
-        Graphics::MeshData &quadMeshData = world.getMesh(quadMesh_meshHandle);
+        int quadMesh_meshHandle = ctx.resources.newMesh();
+        Graphics::MeshData &quadMeshData = ctx.resources.getMesh(quadMesh_meshHandle);
         quadMeshData.vertexArrayId = quadMesh.getVertexArrayId();
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
-        int quadMesh_materialHandle = world.newMaterial();
-        Graphics::Material &quadMaterial = world.getMaterial(quadMesh_materialHandle);
+        int quadMesh_materialHandle = ctx.resources.newMaterial();
+        Graphics::Material &quadMaterial = ctx.resources.getMaterial(quadMesh_materialHandle);
         quadMaterial.shaderProgramId = quadShaderProgram.getId();
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
@@ -215,7 +215,7 @@ namespace Terrain { namespace Engine {
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
         terrain.calculateTessellationLevels();
 
-        meshRenderer.renderMeshes();
+        world.componentManagers.meshRenderer.renderMeshes();
     }
 
     Scene::~Scene()

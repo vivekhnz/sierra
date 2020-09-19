@@ -2,7 +2,7 @@
 #define TERRAIN_HPP
 
 #include "Common.hpp"
-#include "Graphics/MeshRenderer.hpp"
+#include "World.hpp"
 #include "Graphics/Mesh.hpp"
 #include "Graphics/ShaderProgram.hpp"
 #include "Graphics/Texture.hpp"
@@ -20,8 +20,8 @@ namespace Terrain { namespace Engine {
         int meshEdgeCount;
         float terrainHeight;
 
+        EngineContext &ctx;
         World &world;
-        Graphics::MeshRenderer &meshRenderer;
         int meshInstanceHandle;
         Graphics::Mesh mesh;
         Graphics::Texture &heightmapTexture;
@@ -38,10 +38,7 @@ namespace Terrain { namespace Engine {
         bool isWireframeMode;
 
     public:
-        Terrain(EngineContext &ctx,
-            World &world,
-            Graphics::MeshRenderer &meshRenderer,
-            Graphics::Texture &heightmapTexture);
+        Terrain(EngineContext &ctx, World &world, Graphics::Texture &heightmapTexture);
         Terrain(const Terrain &that) = delete;
         Terrain &operator=(const Terrain &that) = delete;
         Terrain(Terrain &&) = delete;

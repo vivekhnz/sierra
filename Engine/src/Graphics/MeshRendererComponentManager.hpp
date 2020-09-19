@@ -2,6 +2,7 @@
 #define GRAPHICS_MESHRENDERERCOMPONENTMANAGER_HPP
 
 #include "../Common.hpp"
+#include "../ResourceManager.hpp"
 #include <vector>
 
 namespace Terrain { namespace Engine { namespace Graphics {
@@ -20,8 +21,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } data;
 
+        ResourceManager &resourceMgr;
+
     public:
-        MeshRendererComponentManager();
+        MeshRendererComponentManager(ResourceManager &resourceMgr);
         MeshRendererComponentManager(const MeshRendererComponentManager &that) = delete;
         MeshRendererComponentManager &operator=(
             const MeshRendererComponentManager &that) = delete;
@@ -30,10 +33,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int create(int entityId, int meshHandle, int materialHandle);
 
-        int getMeshInstanceCount()
-        {
-            return data.count;
-        }
         int getMeshHandle(int i)
         {
             return data.meshHandle[i];
@@ -42,6 +41,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             return data.materialHandle[i];
         }
+
+        void renderMeshes();
 
         ~MeshRendererComponentManager();
     };

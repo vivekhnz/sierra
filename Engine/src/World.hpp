@@ -3,8 +3,6 @@
 
 #include "Common.hpp"
 #include "EngineContext.hpp"
-#include "Graphics/MeshData.hpp"
-#include "Graphics/Material.hpp"
 #include "OrbitCameraComponentManager.hpp"
 #include "FirstPersonCameraComponentManager.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
@@ -13,13 +11,6 @@
 namespace Terrain { namespace Engine {
     class EXPORT World
     {
-    private:
-        Graphics::MeshData meshes[100];
-        int meshCount;
-
-        Graphics::Material materials[100];
-        int materialCount;
-
     public:
         struct ComponentManagers
         {
@@ -31,7 +22,8 @@ namespace Terrain { namespace Engine {
 
             ComponentManagers(EngineContext &ctx) :
                 orbitCamera(camera, ctx.input),
-                firstPersonCamera(camera, terrainCollider, ctx.input)
+                firstPersonCamera(camera, terrainCollider, ctx.input),
+                meshRenderer(ctx.resources)
             {
             }
         };
@@ -42,12 +34,6 @@ namespace Terrain { namespace Engine {
         World &operator=(const World &that) = delete;
         World(World &&) = delete;
         World &operator=(World &&) = delete;
-
-        int newMesh();
-        Graphics::MeshData &getMesh(int handle);
-
-        int newMaterial();
-        Graphics::Material &getMaterial(int handle);
 
         void update(float deltaTime);
         void render();

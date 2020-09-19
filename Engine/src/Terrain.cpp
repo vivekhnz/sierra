@@ -5,13 +5,9 @@
 #include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
-    Terrain::Terrain(EngineContext &ctx,
-        World &world,
-        Graphics::MeshRenderer &meshRenderer,
-        Graphics::Texture &heightmapTexture) :
-        world(world),
-        meshRenderer(meshRenderer), heightmapTexture(heightmapTexture), columns(256),
-        rows(256), patchSize(0.5f), meshEdgeCount((2 * (rows * columns)) - rows - columns),
+    Terrain::Terrain(EngineContext &ctx, World &world, Graphics::Texture &heightmapTexture) :
+        ctx(ctx), world(world), heightmapTexture(heightmapTexture), columns(256), rows(256),
+        patchSize(0.5f), meshEdgeCount((2 * (rows * columns)) - rows - columns),
         terrainHeight(25.0f),
         albedoTexture(
             2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
@@ -30,14 +26,14 @@ namespace Terrain { namespace Engine {
         colliderInstanceId =
             world.componentManagers.terrainCollider.create(entityId, columns, rows, patchSize);
 
-        int meshHandle = world.newMesh();
-        Graphics::MeshData &meshData = world.getMesh(meshHandle);
+        int meshHandle = ctx.resources.newMesh();
+        Graphics::MeshData &meshData = ctx.resources.getMesh(meshHandle);
         meshData.vertexArrayId = mesh.getVertexArrayId();
         meshData.elementCount = 0;
         meshData.primitiveType = GL_PATCHES;
 
-        int materialHandle = world.newMaterial();
-        Graphics::Material &meshMaterial = world.getMaterial(materialHandle);
+        int materialHandle = ctx.resources.newMaterial();
+        Graphics::Material &meshMaterial = ctx.resources.getMaterial(materialHandle);
         meshMaterial.shaderProgramId = terrainShaderProgram.getId();
         meshMaterial.polygonMode = GL_FILL;
         meshMaterial.textureCount = 6;
@@ -118,7 +114,7 @@ namespace Terrain { namespace Engine {
             }
         }
         mesh.initialize(vertices, indices);
-        Graphics::MeshData &meshData = world.getMesh(
+        Graphics::MeshData &meshData = ctx.resources.getMesh(
             world.componentManagers.meshRenderer.getMeshHandle(meshRendererInstanceId));
         meshData.elementCount = indices.size();
 
@@ -225,7 +221,7 @@ namespace Terrain { namespace Engine {
     {
         isWireframeMode = !isWireframeMode;
 
-        Graphics::Material &material = world.getMaterial(
+        Graphics::Material &material = ctx.resources.getMaterial(
             world.componentManagers.meshRenderer.getMaterialHandle(meshRendererInstanceId));
         if (isWireframeMode)
         {
