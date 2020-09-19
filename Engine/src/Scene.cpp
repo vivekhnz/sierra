@@ -1,11 +1,8 @@
 #include "Scene.hpp"
 
-#include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
 #include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
-#include "Graphics/BindVertexArray.hpp"
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
@@ -180,8 +177,7 @@ namespace Terrain { namespace Engine {
 
     void Scene::draw(EngineViewContext &vctx)
     {
-        int activeCamera_entityId = vctx.getCameraEntityId();
-        if (activeCamera_entityId == -1)
+        if (vctx.getCameraEntityId() == -1)
             return;
 
         // update lighting state
@@ -200,16 +196,7 @@ namespace Terrain { namespace Engine {
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         // update camera state
-        world.componentManagers.camera.calculateMatrices(vctx.getViewportSize());
-
-        int activeCamera_cameraId =
-            world.componentManagers.camera.lookup(activeCamera_entityId);
-        glm::mat4 cameraTransform =
-            world.componentManagers.camera.getTransform(activeCamera_cameraId);
-        glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
-        glBufferSubData(
-            GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(cameraTransform));
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        world.componentManagers.camera.bindTransform(vctx, cameraUniformBufferId);
 
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));

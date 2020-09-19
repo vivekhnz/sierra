@@ -17,7 +17,6 @@ namespace Terrain { namespace Engine {
             std::vector<int> entityId;
             std::vector<glm::vec3> position;
             std::vector<glm::vec3> target;
-            std::vector<glm::mat4> transform;
 
             ComponentData() : count(0)
             {
@@ -58,12 +57,7 @@ namespace Terrain { namespace Engine {
             data.target[i] = value;
         }
 
-        glm::mat4 getTransform(int i) const
-        {
-            return data.transform[i];
-        }
-
-        void calculateMatrices(ViewportDimensions viewport);
+        void bindTransform(EngineViewContext &vctx, unsigned int cameraUboId);
 
         ~CameraComponentManager();
     };

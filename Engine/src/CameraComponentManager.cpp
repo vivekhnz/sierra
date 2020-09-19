@@ -1,7 +1,8 @@
 #include "CameraComponentManager.hpp"
 
-#include <algorithm>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
+#include <glad/glad.h>
 
 namespace Terrain { namespace Engine {
     CameraComponentManager::CameraComponentManager()
@@ -13,24 +14,31 @@ namespace Terrain { namespace Engine {
         data.entityId.push_back(entityId);
         data.position.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
         data.target.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
-        data.transform.push_back(glm::identity<glm::mat4>());
         entityIdToInstanceId[entityId] = data.count;
         return data.count++;
     }
 
-    void CameraComponentManager::calculateMatrices(ViewportDimensions viewport)
+    void CameraComponentManager::bindTransform(
+        EngineViewContext &vctx, unsigned int cameraUboId)
     {
+        int entityId = vctx.getCameraEntityId();
+        int i = entityIdToInstanceId[entityId];
+        ViewportDimensions viewportSize = vctx.getViewportSize();
+
+        // calculate transform matrix
         constexpr float fov = glm::pi<float>() / 4.0f;
         const float nearPlane = 0.1f;
         const float farPlane = 10000.0f;
         const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        const float aspectRatio = (float)viewportSize.width / (float)viewportSize.height;
 
-        const float aspectRatio = (float)viewport.width / (float)viewport.height;
-        glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
-        for (int i = 0; i < data.count; i++)
-        {
-            data.transform[i] = projection * glm::lookAt(data.position[i], data.target[i], up);
-        }
+        glm::mat4 transform = glm::perspective(fov, aspectRatio, nearPlane, farPlane)
+            * glm::lookAt(data.position[i], data.target[i], up);
+
+        // update camera uniform buffer object
+        glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(transform));
+        glBindBuffer(GL_UNIFORM_BUFFER, 0);
     }
 
     CameraComponentManager::~CameraComponentManager()
