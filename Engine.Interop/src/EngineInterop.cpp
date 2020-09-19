@@ -123,6 +123,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::RenderView(HostedEngineViewContext &vctx)
     {
         vctx.makeCurrent();
+        world->render();
         scene->draw(vctx);
         vctx.render();
     }

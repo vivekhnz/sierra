@@ -56,6 +56,7 @@ namespace Terrain { namespace Engine {
         Graphics::MeshInstance &getMeshInstance(int handle);
 
         void update(float deltaTime);
+        void render();
 
         ~World();
     };

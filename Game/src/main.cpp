@@ -88,9 +88,10 @@ int main()
             world.update(deltaTime);
             scene.update(deltaTime);
 
-            // render scene
+            // render world
             vctx.setCameraEntityId(
                 isOrbitCameraMode ? orbitCamera_entityId : playerCamera_entityId);
+            world.render();
             scene.draw(vctx);
             vctx.render();
 

@@ -180,9 +180,6 @@ namespace Terrain { namespace Engine {
 
     void Scene::draw(EngineViewContext &vctx)
     {
-        glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         int activeCamera_entityId = vctx.getCameraEntityId();
         if (activeCamera_entityId == -1)
             return;
