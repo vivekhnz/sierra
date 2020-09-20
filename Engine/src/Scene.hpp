@@ -19,8 +19,6 @@ namespace Terrain { namespace Engine {
         Graphics::Texture heightmapTexture;
         Terrain terrain;
 
-        float lightAngle;
-
         bool isLightingEnabled;
         bool isTextureEnabled;
         bool isNormalMapEnabled;
@@ -40,7 +38,6 @@ namespace Terrain { namespace Engine {
 
         Terrain &getTerrain();
 
-        void update(float deltaTime);
         void draw(EngineViewContext &vctx);
         void toggleLighting();
         void toggleAlbedoMap();

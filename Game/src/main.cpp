@@ -88,7 +88,6 @@ int main()
             deltaTime = now - lastTickTime;
             lastTickTime = now;
             world.update(deltaTime);
-            scene.update(deltaTime);
 
             // render world
             vctx.setCameraEntityId(

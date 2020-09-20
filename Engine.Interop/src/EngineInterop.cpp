@@ -110,7 +110,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
         world->update(deltaTime);
-        scene->update(deltaTime);
 
         msclr::lock l(viewCtxLock);
         for (auto vctx : *viewContexts)

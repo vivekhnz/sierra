@@ -6,15 +6,15 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), lightAngle(7.5f), isLightingEnabled(true),
-        isTextureEnabled(true), isNormalMapEnabled(true), isDisplacementMapEnabled(true),
-        isAOMapEnabled(true), isRoughnessMapEnabled(false), heightmapTexture(2048,
-                                                                2048,
-                                                                GL_R16,
-                                                                GL_RED,
-                                                                GL_UNSIGNED_SHORT,
-                                                                GL_MIRRORED_REPEAT,
-                                                                GL_LINEAR_MIPMAP_LINEAR),
+        ctx(ctx), world(world), isLightingEnabled(true), isTextureEnabled(true),
+        isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
+        isRoughnessMapEnabled(false), heightmapTexture(2048,
+                                          2048,
+                                          GL_R16,
+                                          GL_RED,
+                                          GL_UNSIGNED_SHORT,
+                                          GL_MIRRORED_REPEAT,
+                                          GL_LINEAR_MIPMAP_LINEAR),
         terrain(ctx, world, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
@@ -104,18 +104,6 @@ namespace Terrain { namespace Engine {
         return terrain;
     }
 
-    void Scene::update(float deltaTime)
-    {
-        if (ctx.input.isKeyPressed(GLFW_KEY_LEFT))
-        {
-            lightAngle += deltaTime;
-        }
-        else if (ctx.input.isKeyPressed(GLFW_KEY_RIGHT))
-        {
-            lightAngle -= deltaTime;
-        }
-    }
-
     void Scene::toggleLighting()
     {
         isLightingEnabled = !isLightingEnabled;
@@ -166,15 +154,14 @@ namespace Terrain { namespace Engine {
             return;
 
         // update lighting state
-        glm::vec3 lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
         Graphics::Renderer::LightingState lighting = {
-            glm::vec4(lightDir, 0.0f),        // lightDir
-            isLightingEnabled ? 1 : 0,        // isEnabled
-            isTextureEnabled ? 1 : 0,         // isTextureEnabled
-            isNormalMapEnabled ? 1 : 0,       // isNormalMapEnabled
-            isAOMapEnabled ? 1 : 0,           // isAOMapEnabled
-            isDisplacementMapEnabled ? 1 : 0, // isDisplacementMapEnabled
-            isRoughnessMapEnabled ? 1 : 0     // isRoughnessMapEnabled
+            glm::vec4(0.84f, 0.45f, 0.31f, 0.0f), // lightDir
+            isLightingEnabled ? 1 : 0,            // isEnabled
+            isTextureEnabled ? 1 : 0,             // isTextureEnabled
+            isNormalMapEnabled ? 1 : 0,           // isNormalMapEnabled
+            isAOMapEnabled ? 1 : 0,               // isAOMapEnabled
+            isDisplacementMapEnabled ? 1 : 0,     // isDisplacementMapEnabled
+            isRoughnessMapEnabled ? 1 : 0         // isRoughnessMapEnabled
         };
         ctx.renderer.updateUniformBuffer(
             Graphics::Renderer::UniformBuffer::Lighting, &lighting);
