@@ -19,13 +19,6 @@ namespace Terrain { namespace Engine {
         Graphics::Texture heightmapTexture;
         Terrain terrain;
 
-        bool isLightingEnabled;
-        bool isTextureEnabled;
-        bool isNormalMapEnabled;
-        bool isDisplacementMapEnabled;
-        bool isAOMapEnabled;
-        bool isRoughnessMapEnabled;
-
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
@@ -39,12 +32,6 @@ namespace Terrain { namespace Engine {
         Terrain &getTerrain();
 
         void draw(EngineViewContext &vctx);
-        void toggleLighting();
-        void toggleAlbedoMap();
-        void toggleNormalMap();
-        void toggleDisplacementMap();
-        void toggleAmbientOcclusionMap();
-        void toggleRoughnessMap();
 
         ~Scene();
     };

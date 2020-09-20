@@ -59,8 +59,30 @@ int main()
         float now = 0;
         float lastTickTime = glfw.getCurrentTime();
         float deltaTime = 0;
-        bool wasCKeyDown = false;
+
+        struct KeyState
+        {
+            bool C = false;
+            bool L = false;
+            bool T = false;
+            bool N = false;
+            bool B = false;
+            bool O = false;
+            bool R = false;
+        };
+        KeyState isKeyDown;
+        KeyState wasKeyDown;
+
         bool isOrbitCameraMode = false;
+
+        bool isLightingEnabled = true;
+        bool isAlbedoEnabled = true;
+        bool isNormalMapEnabled = true;
+        bool isAOMapEnabled = true;
+        bool isDisplacementMapEnabled = true;
+        bool isRoughnessMapEnabled = false;
+
+        bool isLightingStateUpdated = false;
 
         while (!window.isRequestingClose())
         {
@@ -70,10 +92,16 @@ int main()
             {
                 window.close();
             }
+            isKeyDown.C = ctx.input.isKeyPressed(GLFW_KEY_C);
+            isKeyDown.L = ctx.input.isKeyPressed(GLFW_KEY_L);
+            isKeyDown.T = ctx.input.isKeyPressed(GLFW_KEY_T);
+            isKeyDown.N = ctx.input.isKeyPressed(GLFW_KEY_N);
+            isKeyDown.B = ctx.input.isKeyPressed(GLFW_KEY_B);
+            isKeyDown.O = ctx.input.isKeyPressed(GLFW_KEY_O);
+            isKeyDown.R = ctx.input.isKeyPressed(GLFW_KEY_R);
 
             // swap camera mode when C key is pressed
-            bool isCKeyDown = ctx.input.isKeyPressed(GLFW_KEY_C);
-            if (isCKeyDown && !wasCKeyDown)
+            if (isKeyDown.C && !wasKeyDown.C)
             {
                 isOrbitCameraMode = !isOrbitCameraMode;
                 world.componentManagers.firstPersonCamera.setInputControllerId(
@@ -81,7 +109,66 @@ int main()
                 world.componentManagers.orbitCamera.setInputControllerId(
                     orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
             }
-            wasCKeyDown = isCKeyDown;
+
+            // toggle lighting when L key is pressed
+            if (isKeyDown.L && !wasKeyDown.L)
+            {
+                isLightingEnabled = !isLightingEnabled;
+                isLightingStateUpdated = true;
+            }
+
+            // toggle albedo texture when T key is pressed
+            if (isKeyDown.T && !wasKeyDown.T)
+            {
+                isAlbedoEnabled = !isAlbedoEnabled;
+                isLightingStateUpdated = true;
+            }
+
+            // toggle normal map texture when N key is pressed
+            if (isKeyDown.N && !wasKeyDown.N)
+            {
+                isNormalMapEnabled = !isNormalMapEnabled;
+                isLightingStateUpdated = true;
+            }
+
+            // toggle displacement map texture when B key is pressed
+            if (isKeyDown.B && !wasKeyDown.B)
+            {
+                isDisplacementMapEnabled = !isDisplacementMapEnabled;
+                isLightingStateUpdated = true;
+            }
+
+            // toggle ambient occlusion texture when O key is pressed
+            if (isKeyDown.O && !wasKeyDown.O)
+            {
+                isAOMapEnabled = !isAOMapEnabled;
+                isLightingStateUpdated = true;
+            }
+
+            // toggle roughness texture when R key is pressed
+            if (isKeyDown.R && !wasKeyDown.R)
+            {
+                isRoughnessMapEnabled = !isRoughnessMapEnabled;
+                isLightingStateUpdated = true;
+            }
+
+            wasKeyDown = isKeyDown;
+
+            if (isLightingStateUpdated)
+            {
+                Terrain::Engine::Graphics::Renderer::LightingState lighting = {
+                    glm::vec4(0.84f, 0.45f, 0.31f, 0.0f), // lightDir
+                    isLightingEnabled ? 1 : 0,            // isEnabled
+                    isAlbedoEnabled ? 1 : 0,              // isTextureEnabled
+                    isNormalMapEnabled ? 1 : 0,           // isNormalMapEnabled
+                    isAOMapEnabled ? 1 : 0,               // isAOMapEnabled
+                    isDisplacementMapEnabled ? 1 : 0,     // isDisplacementMapEnabled
+                    isRoughnessMapEnabled ? 1 : 0         // isRoughnessMapEnabled
+                };
+                ctx.renderer.updateUniformBuffer(
+                    Terrain::Engine::Graphics::Renderer::UniformBuffer::Lighting, &lighting);
+                isLightingStateUpdated = false;
+            }
 
             // update world
             now = glfw.getCurrentTime();

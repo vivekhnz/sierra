@@ -6,31 +6,19 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), isLightingEnabled(true), isTextureEnabled(true),
-        isNormalMapEnabled(true), isDisplacementMapEnabled(true), isAOMapEnabled(true),
-        isRoughnessMapEnabled(false), heightmapTexture(2048,
-                                          2048,
-                                          GL_R16,
-                                          GL_RED,
-                                          GL_UNSIGNED_SHORT,
-                                          GL_MIRRORED_REPEAT,
-                                          GL_LINEAR_MIPMAP_LINEAR),
+        ctx(ctx), world(world), heightmapTexture(2048,
+                                    2048,
+                                    GL_R16,
+                                    GL_RED,
+                                    GL_UNSIGNED_SHORT,
+                                    GL_MIRRORED_REPEAT,
+                                    GL_LINEAR_MIPMAP_LINEAR),
         terrain(ctx, world, heightmapTexture)
     {
         Graphics::ShaderManager shaderManager;
         terrain.initialize(shaderManager);
 
-        // setup cameras
-        glEnable(GL_DEPTH_TEST);
-        glEnable(GL_CULL_FACE);
-
         // configure input
-        ctx.input.mapCommand(GLFW_KEY_L, std::bind(&Scene::toggleLighting, this));
-        ctx.input.mapCommand(GLFW_KEY_T, std::bind(&Scene::toggleAlbedoMap, this));
-        ctx.input.mapCommand(GLFW_KEY_N, std::bind(&Scene::toggleNormalMap, this));
-        ctx.input.mapCommand(GLFW_KEY_B, std::bind(&Scene::toggleDisplacementMap, this));
-        ctx.input.mapCommand(GLFW_KEY_O, std::bind(&Scene::toggleAmbientOcclusionMap, this));
-        ctx.input.mapCommand(GLFW_KEY_R, std::bind(&Scene::toggleRoughnessMap, this));
         ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
         ctx.input.mapCommand(GLFW_KEY_H,
             std::bind(&Terrain::loadHeightmapFromFile, &terrain,
@@ -104,36 +92,6 @@ namespace Terrain { namespace Engine {
         return terrain;
     }
 
-    void Scene::toggleLighting()
-    {
-        isLightingEnabled = !isLightingEnabled;
-    }
-
-    void Scene::toggleAlbedoMap()
-    {
-        isTextureEnabled = !isTextureEnabled;
-    }
-
-    void Scene::toggleNormalMap()
-    {
-        isNormalMapEnabled = !isNormalMapEnabled;
-    }
-
-    void Scene::toggleDisplacementMap()
-    {
-        isDisplacementMapEnabled = !isDisplacementMapEnabled;
-    }
-
-    void Scene::toggleAmbientOcclusionMap()
-    {
-        isAOMapEnabled = !isAOMapEnabled;
-    }
-
-    void Scene::toggleRoughnessMap()
-    {
-        isRoughnessMapEnabled = !isRoughnessMapEnabled;
-    }
-
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)
     {
         auto [viewportWidth, viewportHeight] = vctx.getViewportSize();
@@ -153,20 +111,6 @@ namespace Terrain { namespace Engine {
         if (vctx.getCameraEntityId() == -1)
             return;
 
-        // update lighting state
-        Graphics::Renderer::LightingState lighting = {
-            glm::vec4(0.84f, 0.45f, 0.31f, 0.0f), // lightDir
-            isLightingEnabled ? 1 : 0,            // isEnabled
-            isTextureEnabled ? 1 : 0,             // isTextureEnabled
-            isNormalMapEnabled ? 1 : 0,           // isNormalMapEnabled
-            isAOMapEnabled ? 1 : 0,               // isAOMapEnabled
-            isDisplacementMapEnabled ? 1 : 0,     // isDisplacementMapEnabled
-            isRoughnessMapEnabled ? 1 : 0         // isRoughnessMapEnabled
-        };
-        ctx.renderer.updateUniformBuffer(
-            Graphics::Renderer::UniformBuffer::Lighting, &lighting);
-
-        // update camera state
         world.componentManagers.camera.bindTransform(vctx);
 
         quadShaderProgram.setMat4(

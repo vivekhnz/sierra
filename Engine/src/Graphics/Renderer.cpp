@@ -9,6 +9,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Renderer::initialize()
     {
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+
         glGenBuffers(UNIFORM_BUFFER_COUNT, uniformBufferIds);
 
         // create uniform buffer for camera state
@@ -26,7 +29,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
         unsigned int lightingUboSize = uniformBufferSizes[lightingUboEnumUint] =
             sizeof(LightingState);
         glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
-        glBufferData(GL_UNIFORM_BUFFER, lightingUboSize, NULL, GL_DYNAMIC_DRAW);
+        LightingState lighting = {
+            glm::vec4(0.84f, 0.45f, 0.31f, 0.0f), // lightDir
+            1,                                    // isEnabled
+            1,                                    // isTextureEnabled
+            1,                                    // isNormalMapEnabled
+            1,                                    // isAOMapEnabled
+            1,                                    // isDisplacementMapEnabled
+            0                                     // isRoughnessMapEnabled
+        };
+        glBufferData(GL_UNIFORM_BUFFER, lightingUboSize, &lighting, GL_DYNAMIC_DRAW);
         glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUboId, 0, lightingUboSize);
     }
 
