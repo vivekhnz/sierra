@@ -21,7 +21,7 @@ namespace Terrain { namespace Engine {
             Graphics::MeshRendererComponentManager meshRenderer;
 
             ComponentManagers(EngineContext &ctx) :
-                orbitCamera(camera, ctx.input),
+                camera(ctx.renderer), orbitCamera(camera, ctx.input),
                 firstPersonCamera(camera, terrainCollider, ctx.input),
                 meshRenderer(ctx.resources)
             {

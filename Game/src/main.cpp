@@ -18,6 +18,8 @@ int main()
         Terrain::Engine::WindowEngineViewContext vctx(window);
         GameContext appCtx(vctx);
         Terrain::Engine::EngineContext ctx(appCtx);
+        ctx.initialize();
+
         Terrain::Engine::World world(ctx);
         Terrain::Engine::Scene scene(ctx, world);
         scene.getTerrain().loadHeightmap(Terrain::Engine::Graphics::Image(

@@ -98,18 +98,10 @@ namespace Terrain { namespace Engine {
         quadShaderProgram.link(quadShaders);
         quadShaderProgram.setInt("imageTexture", 0);
 
-        // generate uniform buffer for camera state
-        glGenBuffers(1, &cameraUniformBufferId);
-        glBindBuffer(GL_UNIFORM_BUFFER, cameraUniformBufferId);
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(glm::mat4), NULL, GL_STATIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
-        glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraUniformBufferId, 0, sizeof(glm::mat4));
-
         // generate uniform buffer for lighting state
         glGenBuffers(1, &lightingUniformBufferId);
         glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBufferId);
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(LightingState), NULL, GL_STATIC_DRAW);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        glBufferData(GL_UNIFORM_BUFFER, sizeof(LightingState), NULL, GL_DYNAMIC_DRAW);
         glBindBufferRange(
             GL_UNIFORM_BUFFER, 1, lightingUniformBufferId, 0, sizeof(LightingState));
     }
@@ -196,7 +188,7 @@ namespace Terrain { namespace Engine {
         glBindBuffer(GL_UNIFORM_BUFFER, 0);
 
         // update camera state
-        world.componentManagers.camera.bindTransform(vctx, cameraUniformBufferId);
+        world.componentManagers.camera.bindTransform(vctx);
 
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
@@ -207,5 +199,6 @@ namespace Terrain { namespace Engine {
 
     Scene::~Scene()
     {
+        glDeleteBuffers(1, &lightingUniformBufferId);
     }
 }}

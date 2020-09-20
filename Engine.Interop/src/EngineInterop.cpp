@@ -45,6 +45,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!isWorldInitialized)
         {
             vctx->makePrimary();
+            ctx->initialize();
 
             // We can only initialize the scene once GLAD is initialized as it makes OpenGL
             // calls. GLAD is only initialized when a window is marked as the primary window.

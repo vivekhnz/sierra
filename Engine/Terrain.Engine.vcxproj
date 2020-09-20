@@ -35,6 +35,7 @@
     <ClCompile Include="src\Graphics\Image.cpp" />
     <ClCompile Include="src\Graphics\Mesh.cpp" />
     <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp" />
+    <ClCompile Include="src\Graphics\Renderer.cpp" />
     <ClCompile Include="src\Graphics\Shader.cpp" />
     <ClCompile Include="src\Graphics\ShaderManager.cpp" />
     <ClCompile Include="src\Graphics\ShaderProgram.cpp" />
@@ -69,6 +70,7 @@
     <ClInclude Include="src\Graphics\Mesh.hpp" />
     <ClInclude Include="src\Graphics\MeshData.hpp" />
     <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp" />
+    <ClInclude Include="src\Graphics\Renderer.hpp" />
     <ClInclude Include="src\Graphics\Shader.hpp" />
     <ClInclude Include="src\Graphics\ShaderManager.hpp" />
     <ClInclude Include="src\Graphics\ShaderProgram.hpp" />

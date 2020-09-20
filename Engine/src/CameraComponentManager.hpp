@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "EngineViewContext.hpp"
+#include "Graphics/Renderer.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 #include <map>
@@ -23,10 +24,11 @@ namespace Terrain { namespace Engine {
             }
         } data;
 
+        Graphics::Renderer &renderer;
         std::map<int, int> entityIdToInstanceId;
 
     public:
-        CameraComponentManager();
+        CameraComponentManager(Graphics::Renderer &renderer);
         CameraComponentManager(const CameraComponentManager &that) = delete;
         CameraComponentManager &operator=(const CameraComponentManager &that) = delete;
         CameraComponentManager(CameraComponentManager &&) = delete;
@@ -57,7 +59,7 @@ namespace Terrain { namespace Engine {
             data.target[i] = value;
         }
 
-        void bindTransform(EngineViewContext &vctx, unsigned int cameraUboId);
+        void bindTransform(EngineViewContext &vctx);
 
         ~CameraComponentManager();
     };

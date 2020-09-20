@@ -21,7 +21,6 @@ namespace Terrain { namespace Engine {
 
         float lightAngle;
 
-        unsigned int cameraUniformBufferId;
         unsigned int lightingUniformBufferId;
 
         bool isLightingEnabled;

@@ -88,6 +88,9 @@
     <ClCompile Include="src\ResourceManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\Renderer.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -191,6 +194,9 @@
     </ClInclude>
     <ClInclude Include="src\ResourceManager.hpp">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\Renderer.hpp">
+      <Filter>src\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -3,17 +3,19 @@
 
 #include "Common.hpp"
 #include "AppContext.hpp"
-#include "IO/InputManager.hpp"
 #include "EntityManager.hpp"
 #include "ResourceManager.hpp"
+#include "IO/InputManager.hpp"
+#include "Graphics/Renderer.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT EngineContext
     {
     public:
-        IO::InputManager input;
         EntityManager entities;
         ResourceManager resources;
+        IO::InputManager input;
+        Graphics::Renderer renderer;
 
         EngineContext(AppContext &ctx) : input(ctx)
         {
@@ -23,6 +25,11 @@ namespace Terrain { namespace Engine {
         EngineContext &operator=(const EngineContext &that) = delete;
         EngineContext(EngineContext &&) = delete;
         EngineContext &operator=(EngineContext &&) = delete;
+
+        void initialize()
+        {
+            renderer.initialize();
+        }
 
         ~EngineContext()
         {

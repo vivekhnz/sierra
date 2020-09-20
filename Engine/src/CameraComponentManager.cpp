@@ -5,7 +5,8 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine {
-    CameraComponentManager::CameraComponentManager()
+    CameraComponentManager::CameraComponentManager(Graphics::Renderer &renderer) :
+        renderer(renderer)
     {
     }
 
@@ -18,8 +19,7 @@ namespace Terrain { namespace Engine {
         return data.count++;
     }
 
-    void CameraComponentManager::bindTransform(
-        EngineViewContext &vctx, unsigned int cameraUboId)
+    void CameraComponentManager::bindTransform(EngineViewContext &vctx)
     {
         int entityId = vctx.getCameraEntityId();
         int i = entityIdToInstanceId[entityId];
@@ -36,9 +36,8 @@ namespace Terrain { namespace Engine {
             * glm::lookAt(data.position[i], data.target[i], up);
 
         // update camera uniform buffer object
-        glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(glm::mat4), glm::value_ptr(transform));
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        renderer.updateUniformBuffer(
+            Graphics::Renderer::UniformBuffer::Camera, glm::value_ptr(transform));
     }
 
     CameraComponentManager::~CameraComponentManager()
