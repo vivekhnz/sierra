@@ -36,8 +36,8 @@ namespace Terrain { namespace Engine {
             * glm::lookAt(data.position[i], data.target[i], up);
 
         // update camera uniform buffer object
-        renderer.updateUniformBuffer(
-            Graphics::Renderer::UniformBuffer::Camera, glm::value_ptr(transform));
+        Graphics::Renderer::CameraState cameraState = {transform};
+        renderer.updateUniformBuffer(Graphics::Renderer::UniformBuffer::Camera, &cameraState);
     }
 
     CameraComponentManager::~CameraComponentManager()

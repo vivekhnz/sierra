@@ -2,19 +2,36 @@
 #define GRAPHICS_RENDERER_HPP
 
 #include "../Common.hpp"
+#include <glm/glm.hpp>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
     {
     private:
-        static const int UNIFORM_BUFFER_COUNT = 1;
+        static const int UNIFORM_BUFFER_COUNT = 2;
         unsigned int uniformBufferIds[UNIFORM_BUFFER_COUNT];
         unsigned int uniformBufferSizes[UNIFORM_BUFFER_COUNT];
 
     public:
         enum class UniformBuffer : unsigned int
         {
-            Camera = 0
+            Camera = 0,
+            Lighting = 1
+        };
+
+        struct CameraState
+        {
+            glm::mat4 transform;
+        };
+        struct LightingState
+        {
+            glm::vec4 lightDir;
+            int isEnabled;
+            int isTextureEnabled;
+            int isNormalMapEnabled;
+            int isAOMapEnabled;
+            int isDisplacementMapEnabled;
+            int isRoughnessMapEnabled;
         };
 
         Renderer();

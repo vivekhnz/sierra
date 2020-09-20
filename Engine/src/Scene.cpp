@@ -97,13 +97,6 @@ namespace Terrain { namespace Engine {
             IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
         quadShaderProgram.link(quadShaders);
         quadShaderProgram.setInt("imageTexture", 0);
-
-        // generate uniform buffer for lighting state
-        glGenBuffers(1, &lightingUniformBufferId);
-        glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBufferId);
-        glBufferData(GL_UNIFORM_BUFFER, sizeof(LightingState), NULL, GL_DYNAMIC_DRAW);
-        glBindBufferRange(
-            GL_UNIFORM_BUFFER, 1, lightingUniformBufferId, 0, sizeof(LightingState));
     }
 
     Terrain &Scene::getTerrain()
@@ -173,8 +166,8 @@ namespace Terrain { namespace Engine {
             return;
 
         // update lighting state
-        auto lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
-        LightingState lighting = {
+        glm::vec3 lightDir = glm::normalize(glm::vec3(sin(lightAngle), 0.5f, cos(lightAngle)));
+        Graphics::Renderer::LightingState lighting = {
             glm::vec4(lightDir, 0.0f),        // lightDir
             isLightingEnabled ? 1 : 0,        // isEnabled
             isTextureEnabled ? 1 : 0,         // isTextureEnabled
@@ -183,9 +176,8 @@ namespace Terrain { namespace Engine {
             isDisplacementMapEnabled ? 1 : 0, // isDisplacementMapEnabled
             isRoughnessMapEnabled ? 1 : 0     // isRoughnessMapEnabled
         };
-        glBindBuffer(GL_UNIFORM_BUFFER, lightingUniformBufferId);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(LightingState), &lighting);
-        glBindBuffer(GL_UNIFORM_BUFFER, 0);
+        ctx.renderer.updateUniformBuffer(
+            Graphics::Renderer::UniformBuffer::Lighting, &lighting);
 
         // update camera state
         world.componentManagers.camera.bindTransform(vctx);
@@ -199,6 +191,5 @@ namespace Terrain { namespace Engine {
 
     Scene::~Scene()
     {
-        glDeleteBuffers(1, &lightingUniformBufferId);
     }
 }}

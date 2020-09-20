@@ -21,8 +21,6 @@ namespace Terrain { namespace Engine {
 
         float lightAngle;
 
-        unsigned int lightingUniformBufferId;
-
         bool isLightingEnabled;
         bool isTextureEnabled;
         bool isNormalMapEnabled;
@@ -52,17 +50,6 @@ namespace Terrain { namespace Engine {
         void toggleRoughnessMap();
 
         ~Scene();
-    };
-
-    struct LightingState
-    {
-        glm::vec4 lightDir;
-        int isEnabled;
-        int isTextureEnabled;
-        int isNormalMapEnabled;
-        int isAOMapEnabled;
-        int isDisplacementMapEnabled;
-        int isRoughnessMapEnabled;
     };
 }}
 

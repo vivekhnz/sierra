@@ -1,7 +1,6 @@
 #include "Renderer.hpp"
 
 #include <glad/glad.h>
-#include <glm/glm.hpp>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::Renderer() : uniformBufferIds(), uniformBufferSizes()
@@ -15,10 +14,20 @@ namespace Terrain { namespace Engine { namespace Graphics {
         // create uniform buffer for camera state
         unsigned int cameraUboEnumUint = static_cast<unsigned int>(UniformBuffer::Camera);
         unsigned int &cameraUboId = uniformBufferIds[cameraUboEnumUint];
-        GLsizeiptr cameraUboSize = uniformBufferSizes[cameraUboEnumUint] = sizeof(glm::mat4);
+        unsigned int cameraUboSize = uniformBufferSizes[cameraUboEnumUint] =
+            sizeof(CameraState);
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
         glBufferData(GL_UNIFORM_BUFFER, cameraUboSize, NULL, GL_DYNAMIC_DRAW);
-        glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraUboId, 0, sizeof(glm::mat4));
+        glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraUboId, 0, cameraUboSize);
+
+        // create uniform buffer for lighting state
+        unsigned int lightingUboEnumUint = static_cast<unsigned int>(UniformBuffer::Lighting);
+        unsigned int &lightingUboId = uniformBufferIds[lightingUboEnumUint];
+        unsigned int lightingUboSize = uniformBufferSizes[lightingUboEnumUint] =
+            sizeof(LightingState);
+        glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
+        glBufferData(GL_UNIFORM_BUFFER, lightingUboSize, NULL, GL_DYNAMIC_DRAW);
+        glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUboId, 0, lightingUboSize);
     }
 
     void Renderer::updateUniformBuffer(UniformBuffer buffer, void *data)
