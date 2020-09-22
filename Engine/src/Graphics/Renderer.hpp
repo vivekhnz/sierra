@@ -3,6 +3,7 @@
 
 #include "../Common.hpp"
 #include <glm/glm.hpp>
+#include "ShaderManager.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
@@ -33,6 +34,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int isDisplacementMapEnabled;
             int isRoughnessMapEnabled;
         };
+
+        ShaderManager shaders;
 
         Renderer();
         Renderer(const Renderer &that) = delete;

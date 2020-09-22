@@ -17,7 +17,6 @@ namespace Terrain { namespace Engine {
         int columns;
         int rows;
         float patchSize;
-        int meshEdgeCount;
         float terrainHeight;
 
         EngineContext &ctx;
@@ -33,7 +32,6 @@ namespace Terrain { namespace Engine {
         Graphics::Buffer tessellationLevelBuffer;
         Graphics::ShaderProgram terrainShaderProgram;
         Graphics::ShaderProgram wireframeShaderProgram;
-        Graphics::ShaderProgram calcTessLevelsShaderProgram;
 
         bool isWireframeMode;
 
@@ -47,7 +45,6 @@ namespace Terrain { namespace Engine {
         void initialize(const Graphics::ShaderManager &shaderManager);
         void loadHeightmapFromFile(std::string path);
         void loadHeightmap(const void *data);
-        void calculateTessellationLevels();
 
         void toggleWireframeMode();
 

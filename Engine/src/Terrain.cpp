@@ -7,8 +7,7 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world, Graphics::Texture &heightmapTexture) :
         ctx(ctx), world(world), heightmapTexture(heightmapTexture), columns(256), rows(256),
-        patchSize(0.5f), meshEdgeCount((2 * (rows * columns)) - rows - columns),
-        terrainHeight(25.0f),
+        patchSize(0.5f), terrainHeight(25.0f),
         albedoTexture(
             2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         normalTexture(
@@ -46,6 +45,9 @@ namespace Terrain { namespace Engine {
 
         meshRendererInstanceId =
             world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
+
+        world.componentManagers.terrainRenderer.create(entityId,
+            tessellationLevelBuffer.getId(), mesh.getVertexBufferId(), rows, columns);
     }
 
     void Terrain::initialize(const Graphics::ShaderManager &shaderManager)
@@ -72,11 +74,6 @@ namespace Terrain { namespace Engine {
         wireframeShaders.push_back(shaderManager.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_fragment_shader.glsl")));
         wireframeShaderProgram.link(wireframeShaders);
-
-        std::vector<Graphics::Shader> calcTessLevelShaders;
-        calcTessLevelShaders.push_back(shaderManager.loadComputeShaderFromFile(
-            IO::Path::getAbsolutePath("data/terrain_calc_tess_levels_comp_shader.glsl")));
-        calcTessLevelsShaderProgram.link(calcTessLevelShaders);
 
         // build vertices
         std::vector<float> vertices(columns * rows * 5);
@@ -158,9 +155,6 @@ namespace Terrain { namespace Engine {
         wireframeShaderProgram.setInt("displacementTexture", 3);
         wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
         wireframeShaderProgram.setVector2("textureScale", textureScale);
-        calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
-        calcTessLevelsShaderProgram.setInt("columnCount", columns);
-        calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
         glPatchParameteri(GL_PATCH_VERTICES, 4);
     }
 
@@ -206,15 +200,6 @@ namespace Terrain { namespace Engine {
             }
         }
         mesh.setVertices(vertices);
-    }
-
-    void Terrain::calculateTessellationLevels()
-    {
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, tessellationLevelBuffer.getId());
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, mesh.getVertexBufferId());
-        glUseProgram(calcTessLevelsShaderProgram.getId());
-        glDispatchCompute(meshEdgeCount, 1, 1);
-        glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
     }
 
     void Terrain::toggleWireframeMode()

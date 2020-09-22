@@ -91,6 +91,9 @@
     <ClCompile Include="src\Graphics\Renderer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
+    <ClCompile Include="src\TerrainRendererComponentManager.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\AttachShader.hpp">
@@ -197,6 +200,9 @@
     </ClInclude>
     <ClInclude Include="src\Graphics\Renderer.hpp">
       <Filter>src\Graphics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TerrainRendererComponentManager.hpp">
+      <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

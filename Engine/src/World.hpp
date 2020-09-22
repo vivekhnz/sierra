@@ -7,6 +7,7 @@
 #include "FirstPersonCameraComponentManager.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
+#include "TerrainRendererComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT World
@@ -19,11 +20,12 @@ namespace Terrain { namespace Engine {
             FirstPersonCameraComponentManager firstPersonCamera;
             Physics::TerrainColliderComponentManager terrainCollider;
             Graphics::MeshRendererComponentManager meshRenderer;
+            TerrainRendererComponentManager terrainRenderer;
 
             ComponentManagers(EngineContext &ctx) :
                 camera(ctx.renderer), orbitCamera(camera, ctx.input),
                 firstPersonCamera(camera, terrainCollider, ctx.input),
-                meshRenderer(ctx.resources)
+                meshRenderer(ctx.resources), terrainRenderer(ctx.renderer)
             {
             }
         };

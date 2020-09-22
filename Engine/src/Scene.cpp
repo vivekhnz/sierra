@@ -115,8 +115,8 @@ namespace Terrain { namespace Engine {
 
         quadShaderProgram.setMat4(
             "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
-        terrain.calculateTessellationLevels();
 
+        world.componentManagers.terrainRenderer.calculateTessellationLevels();
         world.componentManagers.meshRenderer.renderMeshes();
     }
 

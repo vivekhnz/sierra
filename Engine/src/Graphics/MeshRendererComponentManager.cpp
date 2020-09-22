@@ -28,10 +28,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Material &material = resourceMgr.getMaterial(materialHandle);
             glUseProgram(material.shaderProgramId);
             glPolygonMode(GL_FRONT_AND_BACK, material.polygonMode);
-            for (int i = 0; i < material.textureCount; i++)
+            for (int j = 0; j < material.textureCount; j++)
             {
-                glActiveTexture(GL_TEXTURE0 + i);
-                glBindTexture(GL_TEXTURE_2D, material.textureIds[i]);
+                glActiveTexture(GL_TEXTURE0 + j);
+                glBindTexture(GL_TEXTURE_2D, material.textureIds[j]);
             }
 
             MeshData &meshData = resourceMgr.getMesh(meshHandle);
