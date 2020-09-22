@@ -13,10 +13,17 @@ namespace Terrain { namespace Engine {
         componentManagers.firstPersonCamera.calculateCameraStates(deltaTime);
     }
 
-    void World::render()
+    void World::render(EngineViewContext &vctx)
     {
         glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        if (vctx.cameraEntityId == -1)
+            return;
+
+        componentManagers.camera.bindTransform(vctx);
+        componentManagers.terrainRenderer.calculateTessellationLevels();
+        componentManagers.meshRenderer.renderMeshes();
     }
 
     World::~World()

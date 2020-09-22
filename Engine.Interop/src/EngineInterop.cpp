@@ -124,8 +124,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         vctx.makeCurrent();
         EngineViewContext view = vctx.getViewContext();
-        world->render();
-        scene->draw(view);
+        world->render(view);
         vctx.render();
     }
 

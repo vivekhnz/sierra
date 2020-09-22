@@ -31,8 +31,6 @@ namespace Terrain { namespace Engine {
 
         Terrain &getTerrain();
 
-        void draw(EngineViewContext &vctx);
-
         ~Scene();
     };
 }}

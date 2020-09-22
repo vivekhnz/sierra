@@ -92,32 +92,6 @@ namespace Terrain { namespace Engine {
         return terrain;
     }
 
-    glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)
-    {
-        auto transform = glm::scale(glm::identity<glm::mat4>(),
-            glm::vec3(2.0f * w / (float)vctx.viewportWidth,
-                -2.0f * h / (float)vctx.viewportHeight, 1.0f));
-        transform = glm::translate(transform,
-            glm::vec3((x - (0.5f * vctx.viewportWidth)) / (float)w,
-                (y - (0.5f * vctx.viewportHeight)) / (float)h, 0.0f));
-
-        return transform;
-    }
-
-    void Scene::draw(EngineViewContext &vctx)
-    {
-        if (vctx.cameraEntityId == -1)
-            return;
-
-        world.componentManagers.camera.bindTransform(vctx);
-
-        quadShaderProgram.setMat4(
-            "transform", false, getQuadTransform(vctx, 10, 10, 200, 200));
-
-        world.componentManagers.terrainRenderer.calculateTessellationLevels();
-        world.componentManagers.meshRenderer.renderMeshes();
-    }
-
     Scene::~Scene()
     {
     }

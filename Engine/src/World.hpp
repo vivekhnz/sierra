@@ -38,7 +38,7 @@ namespace Terrain { namespace Engine {
         World &operator=(World &&) = delete;
 
         void update(float deltaTime);
-        void render();
+        void render(EngineViewContext &vctx);
 
         ~World();
     };
