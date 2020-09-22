@@ -13,15 +13,10 @@ namespace Terrain { namespace Engine {
         inputState.mouse.push_back({});
     }
 
-    int WindowEngineViewContext::getCameraEntityId() const
-    {
-        return cameraEntityId;
-    }
-
-    ViewportDimensions WindowEngineViewContext::getViewportSize() const
+    EngineViewContext WindowEngineViewContext::getViewContext() const
     {
         auto [w, h] = window.getSize();
-        return {w, h};
+        return {w, h, cameraEntityId};
     }
 
     bool WindowEngineViewContext::isKeyPressed(int key) const

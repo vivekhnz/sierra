@@ -94,21 +94,19 @@ namespace Terrain { namespace Engine {
 
     glm::mat4 getQuadTransform(EngineViewContext &vctx, int x, int y, int w, int h)
     {
-        auto [viewportWidth, viewportHeight] = vctx.getViewportSize();
-
         auto transform = glm::scale(glm::identity<glm::mat4>(),
-            glm::vec3(
-                2.0f * w / (float)viewportWidth, -2.0f * h / (float)viewportHeight, 1.0f));
+            glm::vec3(2.0f * w / (float)vctx.viewportWidth,
+                -2.0f * h / (float)vctx.viewportHeight, 1.0f));
         transform = glm::translate(transform,
-            glm::vec3((x - (0.5f * viewportWidth)) / (float)w,
-                (y - (0.5f * viewportHeight)) / (float)h, 0.0f));
+            glm::vec3((x - (0.5f * vctx.viewportWidth)) / (float)w,
+                (y - (0.5f * vctx.viewportHeight)) / (float)h, 0.0f));
 
         return transform;
     }
 
     void Scene::draw(EngineViewContext &vctx)
     {
-        if (vctx.getCameraEntityId() == -1)
+        if (vctx.cameraEntityId == -1)
             return;
 
         world.componentManagers.camera.bindTransform(vctx);

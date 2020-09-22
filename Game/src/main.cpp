@@ -179,8 +179,9 @@ int main()
             // render world
             vctx.setCameraEntityId(
                 isOrbitCameraMode ? orbitCamera_entityId : playerCamera_entityId);
+            Terrain::Engine::EngineViewContext view = vctx.getViewContext();
             world.render();
-            scene.draw(vctx);
+            scene.draw(view);
             vctx.render();
 
             // process events

@@ -21,16 +21,14 @@ namespace Terrain { namespace Engine {
 
     void CameraComponentManager::bindTransform(EngineViewContext &vctx)
     {
-        int entityId = vctx.getCameraEntityId();
-        int i = entityIdToInstanceId[entityId];
-        ViewportDimensions viewportSize = vctx.getViewportSize();
+        int i = entityIdToInstanceId[vctx.cameraEntityId];
 
         // calculate transform matrix
         constexpr float fov = glm::pi<float>() / 4.0f;
         const float nearPlane = 0.1f;
         const float farPlane = 10000.0f;
         const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        const float aspectRatio = (float)viewportSize.width / (float)viewportSize.height;
+        const float aspectRatio = (float)vctx.viewportWidth / (float)vctx.viewportHeight;
 
         glm::mat4 transform = glm::perspective(fov, aspectRatio, nearPlane, farPlane)
             * glm::lookAt(data.position[i], data.target[i], up);

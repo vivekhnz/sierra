@@ -56,11 +56,11 @@ namespace Terrain { namespace Engine { namespace Interop {
             if (isMouseCaptured)
             {
                 // calculate the center of the hovered viewport relative to the window
-                auto viewportSize = EngineInterop::HoveredViewContext->getViewportSize();
+                auto view = EngineInterop::HoveredViewContext->getViewContext();
                 auto [viewportX, viewportY] =
                     EngineInterop::HoveredViewContext->getViewportLocation();
-                auto viewportCenter = Point(viewportX + (viewportSize.width / 2),
-                    viewportY + (viewportSize.height / 2));
+                auto viewportCenter = Point(viewportX + (view.viewportWidth / 2),
+                    viewportY + (view.viewportHeight / 2));
 
                 // convert the viewport center to screen space and move the cursor to it
                 auto screenPos = appWindow->PointToScreen(viewportCenter);

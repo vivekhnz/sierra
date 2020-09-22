@@ -9,7 +9,7 @@
 #include <vector>
 
 namespace Terrain { namespace Engine {
-    class EXPORT WindowEngineViewContext : public EngineViewContext
+    class EXPORT WindowEngineViewContext : public AppViewContext
     {
         Graphics::Window &window;
 
@@ -39,8 +39,7 @@ namespace Terrain { namespace Engine {
         WindowEngineViewContext(WindowEngineViewContext &&) = delete;
         WindowEngineViewContext &operator=(WindowEngineViewContext &&) = delete;
 
-        int getCameraEntityId() const;
-        ViewportDimensions getViewportSize() const;
+        EngineViewContext getViewContext() const;
         bool isKeyPressed(int key) const;
 
         IO::MouseInputState getMouseState(int inputControllerId) const

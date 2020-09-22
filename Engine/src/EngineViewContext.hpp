@@ -10,11 +10,17 @@ namespace Terrain { namespace Engine {
         int height;
     };
 
-    class EXPORT EngineViewContext
+    struct EXPORT EngineViewContext
+    {
+        int viewportWidth;
+        int viewportHeight;
+        int cameraEntityId;
+    };
+
+    class EXPORT AppViewContext
     {
     public:
-        virtual int getCameraEntityId() const = 0;
-        virtual ViewportDimensions getViewportSize() const = 0;
+        virtual EngineViewContext getViewContext() const = 0;
     };
 }}
 

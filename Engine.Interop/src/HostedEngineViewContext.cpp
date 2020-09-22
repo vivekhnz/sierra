@@ -11,10 +11,12 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
     }
 
-    int HostedEngineViewContext::getCameraEntityId() const
+    EngineViewContext HostedEngineViewContext::getViewContext() const
     {
-        return cameraEntityId;
+        auto [w, h] = window.getSize();
+        return {w, h, cameraEntityId};
     }
+
     void HostedEngineViewContext::setCameraEntityId(int cameraEntityId)
     {
         this->cameraEntityId = cameraEntityId;
@@ -27,12 +29,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void HostedEngineViewContext::setInputControllerId(int inputControllerId)
     {
         this->inputControllerId = inputControllerId;
-    }
-
-    ViewportDimensions HostedEngineViewContext::getViewportSize() const
-    {
-        auto [w, h] = window.getSize();
-        return {w, h};
     }
 
     std::tuple<int, int> HostedEngineViewContext::getViewportLocation() const

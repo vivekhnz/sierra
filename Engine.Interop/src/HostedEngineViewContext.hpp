@@ -4,7 +4,7 @@
 #include "../../Engine/src/Graphics/Window.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    class HostedEngineViewContext : public EngineViewContext
+    class HostedEngineViewContext : public AppViewContext
     {
         Graphics::Window window;
         char *imgBuffer;
@@ -25,9 +25,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         HostedEngineViewContext(HostedEngineViewContext &&) = delete;
         HostedEngineViewContext &operator=(HostedEngineViewContext &&) = delete;
 
-        int getCameraEntityId() const;
+        EngineViewContext getViewContext() const;
         int getInputControllerId() const;
-        ViewportDimensions getViewportSize() const;
         std::tuple<int, int> getViewportLocation() const;
         bool isDetached() const;
 
