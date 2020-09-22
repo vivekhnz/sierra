@@ -2,7 +2,6 @@
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
-#include "../../Engine/src/WindowEngineViewContext.hpp"
 #include "../../Engine/src/EngineContext.hpp"
 #include "../../Engine/src/Scene.hpp"
 #include "../../Engine/src/IO/Path.hpp"
@@ -15,8 +14,7 @@ int main()
         Terrain::Engine::Graphics::GlfwManager glfw;
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         window.makePrimary();
-        Terrain::Engine::WindowEngineViewContext vctx(window);
-        GameContext appCtx(vctx);
+        GameContext appCtx(window);
         Terrain::Engine::EngineContext ctx(appCtx);
         ctx.initialize();
 
@@ -177,12 +175,12 @@ int main()
             world.update(deltaTime);
 
             // render world
-            vctx.setCameraEntityId(
+            appCtx.setCameraEntityId(
                 isOrbitCameraMode ? orbitCamera_entityId : playerCamera_entityId);
-            Terrain::Engine::EngineViewContext view = vctx.getViewContext();
+            Terrain::Engine::EngineViewContext vctx = appCtx.getViewContext();
             world.render();
-            scene.draw(view);
-            vctx.render();
+            scene.draw(vctx);
+            appCtx.render();
 
             // process events
             glfw.processEvents();

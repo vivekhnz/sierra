@@ -51,7 +51,6 @@
     <ClCompile Include="src\IO\OpenFile.cpp" />
     <ClCompile Include="src\Scene.cpp" />
     <ClCompile Include="src\Terrain.cpp" />
-    <ClCompile Include="src\WindowEngineViewContext.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\AppContext.hpp" />
@@ -89,7 +88,6 @@
     <ClInclude Include="src\IO\Path.hpp" />
     <ClInclude Include="src\Scene.hpp" />
     <ClInclude Include="src\Terrain.hpp" />
-    <ClInclude Include="src\WindowEngineViewContext.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

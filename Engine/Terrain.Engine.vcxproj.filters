@@ -61,9 +61,6 @@
     <ClCompile Include="src\Terrain.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\WindowEngineViewContext.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\World.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -157,9 +154,6 @@
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\EngineViewContext.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\WindowEngineViewContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\MeshData.hpp">

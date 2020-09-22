@@ -4,7 +4,7 @@
 #include "../../Engine/src/Graphics/Window.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    class HostedEngineViewContext : public AppViewContext
+    class HostedEngineViewContext
     {
         Graphics::Window window;
         char *imgBuffer;
