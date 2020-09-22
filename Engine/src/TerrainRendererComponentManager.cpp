@@ -13,17 +13,21 @@ namespace Terrain { namespace Engine {
         calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
     }
 
-    int TerrainRendererComponentManager::create(int entityId,
-        unsigned int tessellationLevelBufferId,
-        unsigned int meshVertexBufferId,
-        int rows,
-        int columns)
+    int TerrainRendererComponentManager::create(
+        int entityId, unsigned int meshVertexBufferId, int rows, int columns)
     {
         data.entityId.push_back(entityId);
-        data.tessellationLevelBufferId.push_back(tessellationLevelBufferId);
         data.meshVertexBufferId.push_back(meshVertexBufferId);
         data.rows.push_back(rows);
         data.columns.push_back(columns);
+
+        // create buffer to store vertex edge data
+        data.tessellationLevelBuffer.push_back(
+            Graphics::Buffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY));
+        std::vector<glm::vec4> vertEdgeData(columns * rows * 10);
+        data.tessellationLevelBuffer[data.count].fill(
+            vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
+
         return data.count++;
     }
 
@@ -38,7 +42,8 @@ namespace Terrain { namespace Engine {
             calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
             calcTessLevelsShaderProgram.setInt("columnCount", columns);
 
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBufferId[i]);
+            glBindBufferBase(
+                GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, data.meshVertexBufferId[i]);
             glUseProgram(calcTessLevelsShaderProgram.getId());
             glDispatchCompute(meshEdgeCount, 1, 1);

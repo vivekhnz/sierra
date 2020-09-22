@@ -15,7 +15,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         Buffer(GLenum type, GLenum usage);
         Buffer(const Buffer &that) = delete;
         Buffer &operator=(const Buffer &that) = delete;
-        Buffer(Buffer &&) = delete;
+        Buffer(Buffer &&);
         Buffer &operator=(Buffer &&) = delete;
 
         unsigned int getId() const;

@@ -8,6 +8,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glGenBuffers(1, &id);
     }
 
+    Buffer::Buffer(Buffer &&other) : id(other.id), type(other.type), usage(other.usage)
+    {
+        other.id = 0;
+    }
+
     unsigned int Buffer::getId() const
     {
         return id;
@@ -21,6 +26,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     Buffer::~Buffer()
     {
-        glDeleteBuffers(1, &id);
+        if (id != 0)
+        {
+            glDeleteBuffers(1, &id);
+        }
     }
 }}}

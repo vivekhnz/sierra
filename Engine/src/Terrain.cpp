@@ -18,7 +18,6 @@ namespace Terrain { namespace Engine {
             2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
         roughnessTexture(
             2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-        tessellationLevelBuffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY),
         isWireframeMode(false)
     {
         int entityId = ctx.entities.create();
@@ -46,8 +45,8 @@ namespace Terrain { namespace Engine {
         meshRendererInstanceId =
             world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
 
-        world.componentManagers.terrainRenderer.create(entityId,
-            tessellationLevelBuffer.getId(), mesh.getVertexBufferId(), rows, columns);
+        world.componentManagers.terrainRenderer.create(
+            entityId, mesh.getVertexBufferId(), rows, columns);
     }
 
     void Terrain::initialize(const Graphics::ShaderManager &shaderManager)
@@ -114,11 +113,6 @@ namespace Terrain { namespace Engine {
         Graphics::MeshData &meshData = ctx.resources.getMesh(
             world.componentManagers.meshRenderer.getMeshHandle(meshRendererInstanceId));
         meshData.elementCount = indices.size();
-
-        // create buffer to store vertex edge data
-        std::vector<glm::vec4> vertEdgeData(vertices.size() * 2);
-        tessellationLevelBuffer.fill(
-            vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
 
         // load terrain textures
         albedoTexture.load(

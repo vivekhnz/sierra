@@ -29,7 +29,6 @@ namespace Terrain { namespace Engine {
         Graphics::Texture displacementTexture;
         Graphics::Texture aoTexture;
         Graphics::Texture roughnessTexture;
-        Graphics::Buffer tessellationLevelBuffer;
         Graphics::ShaderProgram terrainShaderProgram;
         Graphics::ShaderProgram wireframeShaderProgram;
 
