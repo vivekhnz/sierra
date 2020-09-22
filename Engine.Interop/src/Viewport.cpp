@@ -94,13 +94,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnMouseEnter(MouseEventArgs ^ args)
     {
-        EngineInterop::SetViewContextHoverState(vctx, true);
+        EngineInterop::SetViewportContextHoverState(vctx, true);
         hoverBorder->Visibility = Windows::Visibility::Visible;
     }
 
     void Viewport::OnMouseLeave(MouseEventArgs ^ args)
     {
-        EngineInterop::SetViewContextHoverState(vctx, false);
+        EngineInterop::SetViewportContextHoverState(vctx, false);
         hoverBorder->Visibility = Windows::Visibility::Hidden;
     }
 
@@ -111,13 +111,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnGotFocus(RoutedEventArgs ^ args)
     {
-        EngineInterop::SetViewContextFocusState(vctx, false);
+        EngineInterop::SetViewportContextFocusState(vctx, false);
         focusBorder->BorderBrush = focusedBrush;
     }
 
     void Viewport::OnLostFocus(RoutedEventArgs ^ args)
     {
-        EngineInterop::SetViewContextFocusState(vctx, false);
+        EngineInterop::SetViewportContextFocusState(vctx, false);
         focusBorder->BorderBrush = unfocusedBrush;
     }
 

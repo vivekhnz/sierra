@@ -4,7 +4,7 @@
 #include "../../Engine/src/Graphics/Window.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    class HostedEngineViewContext
+    class ViewportContext
     {
         Graphics::Window window;
         char *imgBuffer;
@@ -17,13 +17,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         bool isHovered;
 
     public:
-        HostedEngineViewContext(Graphics::GlfwManager &glfw,
+        ViewportContext(Graphics::GlfwManager &glfw,
             char *imgBuffer,
             std::function<void()> onRenderCallback);
-        HostedEngineViewContext(const HostedEngineViewContext &that) = delete;
-        HostedEngineViewContext &operator=(const HostedEngineViewContext &that) = delete;
-        HostedEngineViewContext(HostedEngineViewContext &&) = delete;
-        HostedEngineViewContext &operator=(HostedEngineViewContext &&) = delete;
+        ViewportContext(const ViewportContext &that) = delete;
+        ViewportContext &operator=(const ViewportContext &that) = delete;
+        ViewportContext(ViewportContext &&) = delete;
+        ViewportContext &operator=(ViewportContext &&) = delete;
 
         EngineViewContext getViewContext() const;
         int getInputControllerId() const;
@@ -40,6 +40,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         void detach();
         void reattach(char *imgBuffer, std::function<void()> onRenderCallback);
 
-        ~HostedEngineViewContext();
+        ~ViewportContext();
     };
 }}}

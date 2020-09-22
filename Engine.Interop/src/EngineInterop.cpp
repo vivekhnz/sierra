@@ -8,10 +8,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();
         ctx = new EngineContext(*appCtx);
-        viewContexts = new std::vector<HostedEngineViewContext *>();
+        viewportContexts = new std::vector<ViewportContext *>();
 
-        focusedViewCtx = nullptr;
-        hoveredViewCtx = nullptr;
+        focusedViewportCtx = nullptr;
+        hoveredViewportCtx = nullptr;
 
         lastTickTime = DateTime::UtcNow;
         renderTimer = gcnew DispatcherTimer(DispatcherPriority::Send);
@@ -23,15 +23,15 @@ namespace Terrain { namespace Engine { namespace Interop {
             gcnew MouseWheelEventHandler(&EngineInterop::OnMouseWheel);
     }
 
-    HostedEngineViewContext *EngineInterop::CreateView(
+    ViewportContext *EngineInterop::CreateView(
         char *imgBuffer, RenderCallbackUnmanaged renderCallback)
     {
-        msclr::lock l(viewCtxLock);
+        msclr::lock l(viewportCtxLock);
 
-        // if the primary view context is detached, reuse it instead
-        if (viewContexts->size() > 0)
+        // if the primary viewport context is detached, reuse it instead
+        if (viewportContexts->size() > 0)
         {
-            auto primaryVctx = viewContexts->at(0);
+            auto primaryVctx = viewportContexts->at(0);
             if (primaryVctx->isDetached())
             {
                 primaryVctx->reattach(imgBuffer, renderCallback);
@@ -39,8 +39,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             }
         }
 
-        auto vctx = new HostedEngineViewContext(*glfw, imgBuffer, renderCallback);
-        viewContexts->push_back(vctx);
+        auto vctx = new ViewportContext(*glfw, imgBuffer, renderCallback);
+        viewportContexts->push_back(vctx);
 
         if (!isWorldInitialized)
         {
@@ -66,7 +66,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         int orbitCameraId = world->componentManagers.orbitCamera.create(cameraEntityId);
         world->componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
         world->componentManagers.orbitCamera.setYaw(
-            orbitCameraId, glm::radians(90.0f + (90.0f * viewContexts->size())));
+            orbitCameraId, glm::radians(90.0f + (90.0f * viewportContexts->size())));
         world->componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
         world->componentManagers.orbitCamera.setInputControllerId(
             orbitCameraId, inputControllerId);
@@ -75,16 +75,16 @@ namespace Terrain { namespace Engine { namespace Interop {
         return vctx;
     }
 
-    void EngineInterop::DetachView(HostedEngineViewContext *vctxToRemove)
+    void EngineInterop::DetachView(ViewportContext *vctxToRemove)
     {
-        msclr::lock l(viewCtxLock);
-        for (int i = 0; i < viewContexts->size(); i++)
+        msclr::lock l(viewportCtxLock);
+        for (int i = 0; i < viewportContexts->size(); i++)
         {
-            if (viewContexts->at(i) == vctxToRemove)
+            if (viewportContexts->at(i) == vctxToRemove)
             {
                 if (i == 0)
                 {
-                    // the first view context's window holds the active GL context
+                    // the first viewport context's window holds the active GL context
                     // other windows need to access its GL context, so don't delete it
                     // instead, detach it from its viewport
                     vctxToRemove->detach();
@@ -92,7 +92,7 @@ namespace Terrain { namespace Engine { namespace Interop {
                 else
                 {
                     delete vctxToRemove;
-                    viewContexts->erase(viewContexts->begin() + i);
+                    viewportContexts->erase(viewportContexts->begin() + i);
                 }
                 break;
             }
@@ -111,8 +111,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         lastTickTime = now;
         world->update(deltaTime);
 
-        msclr::lock l(viewCtxLock);
-        for (auto vctx : *viewContexts)
+        msclr::lock l(viewportCtxLock);
+        for (auto vctx : *viewportContexts)
         {
             RenderView(*vctx);
         }
@@ -120,7 +120,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         glfw->processEvents();
     }
 
-    void EngineInterop::RenderView(HostedEngineViewContext &vctx)
+    void EngineInterop::RenderView(ViewportContext &vctx)
     {
         vctx.makeCurrent();
         EngineViewContext view = vctx.getViewContext();
@@ -134,27 +134,27 @@ namespace Terrain { namespace Engine { namespace Interop {
         appCtx->onMouseScroll(0, args->Delta);
     }
 
-    void EngineInterop::SetViewContextFocusState(HostedEngineViewContext *vctx, bool hasFocus)
+    void EngineInterop::SetViewportContextFocusState(ViewportContext *vctx, bool hasFocus)
     {
         if (hasFocus)
         {
-            focusedViewCtx = vctx;
+            focusedViewportCtx = vctx;
         }
-        else if (vctx == focusedViewCtx)
+        else if (vctx == focusedViewportCtx)
         {
-            focusedViewCtx = nullptr;
+            focusedViewportCtx = nullptr;
         }
     }
 
-    void EngineInterop::SetViewContextHoverState(HostedEngineViewContext *vctx, bool isHovered)
+    void EngineInterop::SetViewportContextHoverState(ViewportContext *vctx, bool isHovered)
     {
         if (isHovered)
         {
-            hoveredViewCtx = vctx;
+            hoveredViewportCtx = vctx;
         }
-        else if (vctx == hoveredViewCtx)
+        else if (vctx == hoveredViewportCtx)
         {
-            hoveredViewCtx = nullptr;
+            hoveredViewportCtx = nullptr;
         }
     }
 
@@ -170,10 +170,10 @@ namespace Terrain { namespace Engine { namespace Interop {
             delete world;
             world = nullptr;
 
-            for (int i = 0; i < viewContexts->size(); i++)
+            for (int i = 0; i < viewportContexts->size(); i++)
             {
-                delete viewContexts->at(i);
-                viewContexts->erase(viewContexts->begin() + i);
+                delete viewportContexts->at(i);
+                viewportContexts->erase(viewportContexts->begin() + i);
             }
         }
 

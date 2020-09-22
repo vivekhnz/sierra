@@ -3,7 +3,7 @@
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/EngineContext.hpp"
 #include "EditorContext.hpp"
-#include "HostedEngineViewContext.hpp"
+#include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "Proxy/SceneProxy.hpp"
 
@@ -23,16 +23,16 @@ public
         static EditorContext *appCtx = nullptr;
         static EngineContext *ctx = nullptr;
 
-        static std::vector<HostedEngineViewContext *> *viewContexts;
-        static Object ^ viewCtxLock = gcnew Object();
+        static std::vector<ViewportContext *> *viewportContexts;
+        static Object ^ viewportCtxLock = gcnew Object();
 
         static bool isWorldInitialized = false;
         static World *world;
         static Scene *scene;
         static Proxy::SceneProxy ^ sceneProxy;
 
-        static HostedEngineViewContext *focusedViewCtx = nullptr;
-        static HostedEngineViewContext *hoveredViewCtx = nullptr;
+        static ViewportContext *focusedViewportCtx = nullptr;
+        static ViewportContext *hoveredViewportCtx = nullptr;
         static DispatcherTimer ^ renderTimer = nullptr;
         static DateTime lastTickTime;
 
@@ -40,31 +40,31 @@ public
         static void OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args);
 
         // internal members
-        internal : static property HostedEngineViewContext *FocusedViewContext
+        internal : static property ViewportContext *FocusedViewportContext
         {
         internal:
-            HostedEngineViewContext *get()
+            ViewportContext *get()
             {
-                return focusedViewCtx;
+                return focusedViewportCtx;
             }
         }
 
-        static property HostedEngineViewContext *HoveredViewContext
+        static property ViewportContext *HoveredViewportContext
         {
         internal:
-            HostedEngineViewContext *get()
+            ViewportContext *get()
             {
-                return hoveredViewCtx;
+                return hoveredViewportCtx;
             }
         }
 
-        static HostedEngineViewContext *CreateView(
+        static ViewportContext *CreateView(
             char *imgBuffer, RenderCallbackUnmanaged renderCallback);
-        static void DetachView(HostedEngineViewContext *vctx);
+        static void DetachView(ViewportContext *vctx);
 
-        static void RenderView(HostedEngineViewContext &vctx);
-        static void SetViewContextFocusState(HostedEngineViewContext *vctx, bool hasFocus);
-        static void SetViewContextHoverState(HostedEngineViewContext *vctx, bool isHovered);
+        static void RenderView(ViewportContext &vctx);
+        static void SetViewportContextFocusState(ViewportContext *vctx, bool hasFocus);
+        static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:
         static property Proxy::SceneProxy^ Scene

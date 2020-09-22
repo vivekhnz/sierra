@@ -1,9 +1,9 @@
-#include "HostedEngineViewContext.hpp"
+#include "ViewportContext.hpp"
 
 #include "EngineInterop.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    HostedEngineViewContext::HostedEngineViewContext(
+    ViewportContext::ViewportContext(
         Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
@@ -11,37 +11,37 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
     }
 
-    EngineViewContext HostedEngineViewContext::getViewContext() const
+    EngineViewContext ViewportContext::getViewContext() const
     {
         auto [w, h] = window.getSize();
         return {w, h, cameraEntityId};
     }
 
-    void HostedEngineViewContext::setCameraEntityId(int cameraEntityId)
+    void ViewportContext::setCameraEntityId(int cameraEntityId)
     {
         this->cameraEntityId = cameraEntityId;
     }
 
-    int HostedEngineViewContext::getInputControllerId() const
+    int ViewportContext::getInputControllerId() const
     {
         return inputControllerId;
     }
-    void HostedEngineViewContext::setInputControllerId(int inputControllerId)
+    void ViewportContext::setInputControllerId(int inputControllerId)
     {
         this->inputControllerId = inputControllerId;
     }
 
-    std::tuple<int, int> HostedEngineViewContext::getViewportLocation() const
+    std::tuple<int, int> ViewportContext::getViewportLocation() const
     {
         return location;
     }
 
-    bool HostedEngineViewContext::isDetached() const
+    bool ViewportContext::isDetached() const
     {
         return imgBuffer == nullptr;
     }
 
-    void HostedEngineViewContext::render()
+    void ViewportContext::render()
     {
         if (imgBuffer != nullptr)
         {
@@ -54,37 +54,36 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
     }
 
-    void HostedEngineViewContext::resize(int x, int y, int width, int height, char *buffer)
+    void ViewportContext::resize(int x, int y, int width, int height, char *buffer)
     {
         location = std::make_tuple(x, y);
         window.setSize(width, height);
         imgBuffer = buffer;
     }
 
-    void HostedEngineViewContext::makePrimary()
+    void ViewportContext::makePrimary()
     {
         window.makePrimary();
     }
 
-    void HostedEngineViewContext::makeCurrent()
+    void ViewportContext::makeCurrent()
     {
         window.makeCurrent();
     }
 
-    void HostedEngineViewContext::detach()
+    void ViewportContext::detach()
     {
         imgBuffer = nullptr;
         onRenderCallback = nullptr;
     }
 
-    void HostedEngineViewContext::reattach(
-        char *imgBuffer, std::function<void()> onRenderCallback)
+    void ViewportContext::reattach(char *imgBuffer, std::function<void()> onRenderCallback)
     {
         this->imgBuffer = imgBuffer;
         this->onRenderCallback = onRenderCallback;
     }
 
-    HostedEngineViewContext::~HostedEngineViewContext()
+    ViewportContext::~ViewportContext()
     {
     }
 }}}

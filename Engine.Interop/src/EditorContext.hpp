@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../Engine/src/AppContext.hpp"
-#include "HostedEngineViewContext.hpp"
+#include "ViewportContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
     class EditorContext : public AppContext

@@ -35,14 +35,15 @@ namespace Terrain { namespace Engine { namespace Interop {
             mouseState.isRightMouseButtonDown = false;
         }
 
-        if (EngineInterop::HoveredViewContext == nullptr)
+        if (EngineInterop::HoveredViewportContext == nullptr)
         {
             appWindow->Cursor = nullptr;
         }
         else
         {
             IO::MouseInputState &mouseState =
-                inputState.mouse[EngineInterop::HoveredViewContext->getInputControllerId()];
+                inputState
+                    .mouse[EngineInterop::HoveredViewportContext->getInputControllerId()];
             mouseState.isLeftMouseButtonDown = Mouse::LeftButton == MouseButtonState::Pressed;
             mouseState.isMiddleMouseButtonDown =
                 Mouse::MiddleButton == MouseButtonState::Pressed;
@@ -56,9 +57,9 @@ namespace Terrain { namespace Engine { namespace Interop {
             if (isMouseCaptured)
             {
                 // calculate the center of the hovered viewport relative to the window
-                auto view = EngineInterop::HoveredViewContext->getViewContext();
+                auto view = EngineInterop::HoveredViewportContext->getViewContext();
                 auto [viewportX, viewportY] =
-                    EngineInterop::HoveredViewContext->getViewportLocation();
+                    EngineInterop::HoveredViewportContext->getViewportLocation();
                 auto viewportCenter = Point(viewportX + (view.viewportWidth / 2),
                     viewportY + (view.viewportHeight / 2));
 
@@ -99,7 +100,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     }
     bool EditorContext::isKeyPressed(int key) const
     {
-        if (EngineInterop::FocusedViewContext == nullptr)
+        if (EngineInterop::FocusedViewportContext == nullptr)
             return false;
 
         // todo
@@ -126,7 +127,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     }
     bool EditorContext::isInMouseCaptureMode() const
     {
-        return isMouseCaptured && EngineInterop::HoveredViewContext != nullptr;
+        return isMouseCaptured && EngineInterop::HoveredViewportContext != nullptr;
     }
 
     EditorContext::~EditorContext()

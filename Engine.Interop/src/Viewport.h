@@ -1,6 +1,6 @@
 #pragma once
 
-#include "HostedEngineViewContext.hpp"
+#include "ViewportContext.hpp"
 
 using namespace System;
 using namespace System::Windows;
@@ -16,7 +16,7 @@ public
     {
         delegate void RenderCallbackManaged();
 
-        HostedEngineViewContext *vctx;
+        ViewportContext *vctx;
 
         Grid ^ layoutRoot;
         Image ^ image;

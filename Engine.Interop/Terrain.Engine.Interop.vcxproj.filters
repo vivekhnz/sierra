@@ -15,9 +15,6 @@
     <ClCompile Include="src\Viewport.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\HostedEngineViewContext.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\EngineInterop.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -27,12 +24,12 @@
     <ClCompile Include="src\EditorContext.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\ViewportContext.cpp">
+      <Filter>src</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Viewport.h">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\HostedEngineViewContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\EngineInterop.hpp">
@@ -45,6 +42,9 @@
       <Filter>src\Proxy</Filter>
     </ClInclude>
     <ClInclude Include="src\EditorContext.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\ViewportContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
   </ItemGroup>
