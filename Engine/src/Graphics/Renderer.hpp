@@ -24,7 +24,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Textures
         {
             int count;
-            std::vector<unsigned int> ids;
+            std::vector<unsigned int> id;
+            std::vector<int> internalFormat;
+            std::vector<int> format;
+            std::vector<int> type;
 
             Textures() : count(0)
             {
@@ -64,14 +67,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
-        int createTexture(int wrapMode, int filterMode);
-        void updateTexture(int handle,
-            int internalFormat,
-            int width,
-            int height,
-            int format,
-            int type,
-            const void *pixels);
+        int createTexture(
+            int wrapMode, int filterMode, int internalFormat, int format, int type);
+        void updateTexture(int handle, int width, int height, const void *pixels);
         unsigned int getTextureId(int handle) const;
 
         ~Renderer();

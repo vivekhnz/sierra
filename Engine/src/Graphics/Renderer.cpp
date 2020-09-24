@@ -49,7 +49,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBuffers.size[uboEnumUint], data);
     }
 
-    int Renderer::createTexture(int wrapMode, int filterMode)
+    int Renderer::createTexture(
+        int wrapMode, int filterMode, int internalFormat, int format, int type)
     {
         unsigned int id;
         glGenTextures(1, &id);
@@ -59,31 +60,29 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
 
-        textures.ids.push_back(id);
+        textures.id.push_back(id);
+        textures.internalFormat.push_back(internalFormat);
+        textures.format.push_back(format);
+        textures.type.push_back(type);
         return textures.count++;
     }
 
-    void Renderer::updateTexture(int handle,
-        int internalFormat,
-        int width,
-        int height,
-        int format,
-        int type,
-        const void *pixels)
+    void Renderer::updateTexture(int handle, int width, int height, const void *pixels)
     {
-        glBindTexture(GL_TEXTURE_2D, textures.ids[handle]);
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels);
+        glBindTexture(GL_TEXTURE_2D, textures.id[handle]);
+        glTexImage2D(GL_TEXTURE_2D, 0, textures.internalFormat[handle], width, height, 0,
+            textures.format[handle], textures.type[handle], pixels);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     unsigned int Renderer::getTextureId(int handle) const
     {
-        return textures.ids[handle];
+        return textures.id[handle];
     }
 
     Renderer::~Renderer()
     {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
-        glDeleteTextures(textures.count, textures.ids.data());
+        glDeleteTextures(textures.count, textures.id.data());
     }
 }}}

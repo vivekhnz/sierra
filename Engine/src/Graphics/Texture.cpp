@@ -9,10 +9,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int type,
         int wrapMode,
         int filterMode) :
-        renderer(renderer),
-        internalFormat(internalFormat), format(format), type(type)
+        renderer(renderer)
     {
-        handle = renderer.createTexture(wrapMode, filterMode);
+        handle = renderer.createTexture(wrapMode, filterMode, internalFormat, format, type);
     }
 
     int Texture::getHandle() const
@@ -22,6 +21,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Texture::load(int width, int height, const void *pixels)
     {
-        renderer.updateTexture(handle, internalFormat, width, height, format, type, pixels);
+        renderer.updateTexture(handle, width, height, pixels);
     }
 }}}
