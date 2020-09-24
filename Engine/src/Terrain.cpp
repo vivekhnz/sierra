@@ -64,12 +64,12 @@ namespace Terrain { namespace Engine {
         meshMaterial.shaderProgramId = terrainShaderProgram.getId();
         meshMaterial.polygonMode = GL_FILL;
         meshMaterial.textureCount = 6;
-        meshMaterial.textureIds[0] = heightmapTexture.getId();
-        meshMaterial.textureIds[1] = albedoTexture.getId();
-        meshMaterial.textureIds[2] = normalTexture.getId();
-        meshMaterial.textureIds[3] = displacementTexture.getId();
-        meshMaterial.textureIds[4] = aoTexture.getId();
-        meshMaterial.textureIds[5] = roughnessTexture.getId();
+        meshMaterial.textureHandles[0] = heightmapTexture.getHandle();
+        meshMaterial.textureHandles[1] = albedoTexture.getHandle();
+        meshMaterial.textureHandles[2] = normalTexture.getHandle();
+        meshMaterial.textureHandles[3] = displacementTexture.getHandle();
+        meshMaterial.textureHandles[4] = aoTexture.getHandle();
+        meshMaterial.textureHandles[5] = roughnessTexture.getHandle();
 
         meshRendererInstanceId =
             world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);

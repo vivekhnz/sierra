@@ -5,8 +5,10 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    MeshRendererComponentManager::MeshRendererComponentManager(ResourceManager &resourceMgr) :
-        resourceMgr(resourceMgr)
+    MeshRendererComponentManager::MeshRendererComponentManager(
+        ResourceManager &resourceMgr, Graphics::Renderer &renderer) :
+        resourceMgr(resourceMgr),
+        renderer(renderer)
     {
     }
 
@@ -31,7 +33,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             for (int j = 0; j < material.textureCount; j++)
             {
                 glActiveTexture(GL_TEXTURE0 + j);
-                glBindTexture(GL_TEXTURE_2D, material.textureIds[j]);
+                glBindTexture(
+                    GL_TEXTURE_2D, renderer.getTextureId(material.textureHandles[j]));
             }
 
             MeshData &meshData = resourceMgr.getMesh(meshHandle);

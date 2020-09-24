@@ -4,14 +4,32 @@
 #include "../Common.hpp"
 #include <glm/glm.hpp>
 #include "ShaderManager.hpp"
+#include <vector>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
     {
     private:
         static const int UNIFORM_BUFFER_COUNT = 2;
-        unsigned int uniformBufferIds[UNIFORM_BUFFER_COUNT];
-        unsigned int uniformBufferSizes[UNIFORM_BUFFER_COUNT];
+        struct UniformBuffers
+        {
+            unsigned int id[UNIFORM_BUFFER_COUNT];
+            unsigned int size[UNIFORM_BUFFER_COUNT];
+
+            UniformBuffers() : id(), size()
+            {
+            }
+        } uniformBuffers;
+
+        struct Textures
+        {
+            int count;
+            std::vector<unsigned int> ids;
+
+            Textures() : count(0)
+            {
+            }
+        } textures;
 
     public:
         enum class UniformBuffer : unsigned int
@@ -46,15 +64,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
-        unsigned int createTexture(int wrapMode, int filterMode);
-        void updateTexture(unsigned int id,
+        int createTexture(int wrapMode, int filterMode);
+        void updateTexture(int handle,
             int internalFormat,
             int width,
             int height,
             int format,
             int type,
             const void *pixels);
-        void destroyTexture(unsigned int id);
+        unsigned int getTextureId(int handle) const;
 
         ~Renderer();
     };

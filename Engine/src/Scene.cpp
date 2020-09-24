@@ -73,7 +73,7 @@ namespace Terrain { namespace Engine {
         quadMaterial.shaderProgramId = quadShaderProgram.getId();
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
-        quadMaterial.textureIds[0] = heightmapTexture.getId();
+        quadMaterial.textureHandles[0] = heightmapTexture.getHandle();
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(

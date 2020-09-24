@@ -3,6 +3,7 @@
 
 #include "../Common.hpp"
 #include "../ResourceManager.hpp"
+#include "Renderer.hpp"
 #include <vector>
 
 namespace Terrain { namespace Engine { namespace Graphics {
@@ -22,9 +23,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         } data;
 
         ResourceManager &resourceMgr;
+        Graphics::Renderer &renderer;
 
     public:
-        MeshRendererComponentManager(ResourceManager &resourceMgr);
+        MeshRendererComponentManager(
+            ResourceManager &resourceMgr, Graphics::Renderer &renderer);
         MeshRendererComponentManager(const MeshRendererComponentManager &that) = delete;
         MeshRendererComponentManager &operator=(
             const MeshRendererComponentManager &that) = delete;

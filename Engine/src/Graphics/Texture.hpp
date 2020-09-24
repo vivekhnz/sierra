@@ -9,7 +9,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Texture
     {
         Graphics::Renderer &renderer;
-        unsigned int id;
+        int handle;
 
         int internalFormat;
         int format;
@@ -27,18 +27,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int type,
             int wrapMode,
             int filterMode);
-        Texture(const Texture &that) = delete;
-        Texture &operator=(const Texture &that) = delete;
-        Texture(Texture &&other) = delete;
-        Texture &operator=(Texture &&other) = delete;
 
-        unsigned int getId() const;
+        int getHandle() const;
         int getWidth() const;
         int getHeight() const;
 
         void load(const void *pixels);
-
-        ~Texture();
     };
 }}}
 

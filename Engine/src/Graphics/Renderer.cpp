@@ -3,7 +3,7 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Renderer::Renderer() : uniformBufferIds(), uniformBufferSizes()
+    Renderer::Renderer()
     {
     }
 
@@ -12,12 +12,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
 
-        glGenBuffers(UNIFORM_BUFFER_COUNT, uniformBufferIds);
+        glGenBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
 
         // create uniform buffer for camera state
         unsigned int cameraUboEnumUint = static_cast<unsigned int>(UniformBuffer::Camera);
-        unsigned int &cameraUboId = uniformBufferIds[cameraUboEnumUint];
-        unsigned int cameraUboSize = uniformBufferSizes[cameraUboEnumUint] =
+        unsigned int &cameraUboId = uniformBuffers.id[cameraUboEnumUint];
+        unsigned int cameraUboSize = uniformBuffers.size[cameraUboEnumUint] =
             sizeof(CameraState);
         glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
         glBufferData(GL_UNIFORM_BUFFER, cameraUboSize, NULL, GL_DYNAMIC_DRAW);
@@ -25,8 +25,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         // create uniform buffer for lighting state
         unsigned int lightingUboEnumUint = static_cast<unsigned int>(UniformBuffer::Lighting);
-        unsigned int &lightingUboId = uniformBufferIds[lightingUboEnumUint];
-        unsigned int lightingUboSize = uniformBufferSizes[lightingUboEnumUint] =
+        unsigned int &lightingUboId = uniformBuffers.id[lightingUboEnumUint];
+        unsigned int lightingUboSize = uniformBuffers.size[lightingUboEnumUint] =
             sizeof(LightingState);
         glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
         LightingState lighting = {
@@ -45,11 +45,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void Renderer::updateUniformBuffer(UniformBuffer buffer, void *data)
     {
         unsigned int uboEnumUint = static_cast<unsigned int>(buffer);
-        glBindBuffer(GL_UNIFORM_BUFFER, uniformBufferIds[uboEnumUint]);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBufferSizes[uboEnumUint], data);
+        glBindBuffer(GL_UNIFORM_BUFFER, uniformBuffers.id[uboEnumUint]);
+        glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBuffers.size[uboEnumUint], data);
     }
 
-    unsigned int Renderer::createTexture(int wrapMode, int filterMode)
+    int Renderer::createTexture(int wrapMode, int filterMode)
     {
         unsigned int id;
         glGenTextures(1, &id);
@@ -58,10 +58,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
-        return id;
+
+        textures.ids.push_back(id);
+        return textures.count++;
     }
 
-    void Renderer::updateTexture(unsigned int id,
+    void Renderer::updateTexture(int handle,
         int internalFormat,
         int width,
         int height,
@@ -69,18 +71,19 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int type,
         const void *pixels)
     {
-        glBindTexture(GL_TEXTURE_2D, id);
+        glBindTexture(GL_TEXTURE_2D, textures.ids[handle]);
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels);
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
-    void Renderer::destroyTexture(unsigned int id)
+    unsigned int Renderer::getTextureId(int handle) const
     {
-        glDeleteTextures(1, &id);
+        return textures.ids[handle];
     }
 
     Renderer::~Renderer()
     {
-        glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBufferIds);
+        glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
+        glDeleteTextures(textures.count, textures.ids.data());
     }
 }}}

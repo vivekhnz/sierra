@@ -15,12 +15,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         width(width), height(height), internalFormat(internalFormat), format(format),
         type(type)
     {
-        id = renderer.createTexture(wrapMode, filterMode);
+        handle = renderer.createTexture(wrapMode, filterMode);
     }
 
-    unsigned int Texture::getId() const
+    int Texture::getHandle() const
     {
-        return id;
+        return handle;
     }
 
     int Texture::getWidth() const
@@ -35,11 +35,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Texture::load(const void *pixels)
     {
-        renderer.updateTexture(id, internalFormat, width, height, format, type, pixels);
-    }
-
-    Texture::~Texture()
-    {
-        renderer.destroyTexture(id);
+        renderer.updateTexture(handle, internalFormat, width, height, format, type, pixels);
     }
 }}}

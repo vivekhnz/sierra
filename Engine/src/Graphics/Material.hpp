@@ -10,7 +10,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int polygonMode;
 
         int textureCount;
-        unsigned int textureIds[8];
+        int textureHandles[8];
     };
 }}}
 
