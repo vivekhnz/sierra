@@ -6,7 +6,7 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), terrain(ctx, world)
+        ctx(ctx), world(world), terrain(ctx, world), quadMesh(ctx.renderer)
     {
         int heightmapTextureHandle = ctx.renderer.createTexture(
             GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);

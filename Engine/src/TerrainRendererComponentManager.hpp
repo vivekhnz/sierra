@@ -3,7 +3,6 @@
 
 #include "Common.hpp"
 #include "Graphics/Buffer.hpp"
-#include "Graphics/Mesh.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/ShaderProgram.hpp"
 #include <vector>
@@ -16,7 +15,7 @@ namespace Terrain { namespace Engine {
         {
             int count;
             std::vector<int> entityId;
-            std::vector<unsigned int> meshVertexBufferId;
+            std::vector<int> meshVertexBufferHandle;
             std::vector<int> rows;
             std::vector<int> columns;
             std::vector<float> patchSize;
@@ -28,6 +27,7 @@ namespace Terrain { namespace Engine {
             }
         } data;
 
+        Graphics::Renderer &renderer;
         Graphics::ShaderProgram calcTessLevelsShaderProgram;
 
     public:
@@ -40,18 +40,15 @@ namespace Terrain { namespace Engine {
             TerrainRendererComponentManager &&) = delete;
 
         int create(int entityId,
-            unsigned int meshVertexBufferId,
+            int meshVertexBufferHandle,
             int rows,
             int columns,
             float patchSize,
             float terrainHeight);
 
         void calculateTessellationLevels();
-        void updateMesh(int i,
-            int heightmapWidth,
-            int heightmapHeight,
-            const void *heightmapData,
-            Graphics::Mesh &mesh);
+        void updateMesh(
+            int i, int heightmapWidth, int heightmapHeight, const void *heightmapData);
 
         ~TerrainRendererComponentManager();
     };

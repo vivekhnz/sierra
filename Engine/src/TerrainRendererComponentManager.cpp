@@ -4,7 +4,8 @@
 
 namespace Terrain { namespace Engine {
     TerrainRendererComponentManager::TerrainRendererComponentManager(
-        Graphics::Renderer &renderer)
+        Graphics::Renderer &renderer) :
+        renderer(renderer)
     {
         std::vector<Graphics::Shader> calcTessLevelShaders;
         calcTessLevelShaders.push_back(renderer.shaders.loadComputeShaderFromFile(
@@ -14,14 +15,14 @@ namespace Terrain { namespace Engine {
     }
 
     int TerrainRendererComponentManager::create(int entityId,
-        unsigned int meshVertexBufferId,
+        int meshVertexBufferHandle,
         int rows,
         int columns,
         float patchSize,
         float terrainHeight)
     {
         data.entityId.push_back(entityId);
-        data.meshVertexBufferId.push_back(meshVertexBufferId);
+        data.meshVertexBufferHandle.push_back(meshVertexBufferHandle);
         data.rows.push_back(rows);
         data.columns.push_back(columns);
         data.patchSize.push_back(patchSize);
@@ -50,23 +51,22 @@ namespace Terrain { namespace Engine {
 
             glBindBufferBase(
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, data.meshVertexBufferId[i]);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
+                renderer.getVertexBufferId(data.meshVertexBufferHandle[i]));
             glUseProgram(calcTessLevelsShaderProgram.getId());
             glDispatchCompute(meshEdgeCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
     }
 
-    void TerrainRendererComponentManager::updateMesh(int i,
-        int heightmapWidth,
-        int heightmapHeight,
-        const void *heightmapData,
-        Graphics::Mesh &mesh)
+    void TerrainRendererComponentManager::updateMesh(
+        int i, int heightmapWidth, int heightmapHeight, const void *heightmapData)
     {
         int &columns = data.columns[i];
         int &rows = data.rows[i];
         float &patchSize = data.patchSize[i];
         float &terrainHeight = data.terrainHeight[i];
+        int &vertexBufferHandle = data.meshVertexBufferHandle[i];
 
         // update mesh vertices
         std::vector<float> vertices(columns * rows * 5);
@@ -93,7 +93,8 @@ namespace Terrain { namespace Engine {
                 vertices[idx + 4] = uvY;
             }
         }
-        mesh.setVertices(vertices);
+        renderer.updateVertexBuffer(
+            vertexBufferHandle, vertices.size() * sizeof(float), vertices.data());
     }
 
     TerrainRendererComponentManager::~TerrainRendererComponentManager()

@@ -34,6 +34,17 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } textures;
 
+        struct VertexBuffers
+        {
+            int count;
+            std::vector<unsigned int> id;
+            std::vector<unsigned int> usage;
+
+            VertexBuffers() : count(0)
+            {
+            }
+        } vertexBuffers;
+
     public:
         enum class UniformBuffer : unsigned int
         {
@@ -71,6 +82,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int internalFormat, int format, int type, int wrapMode, int filterMode);
         void updateTexture(int handle, int width, int height, const void *pixels);
         unsigned int getTextureId(int handle) const;
+
+        int createVertexBuffer(unsigned int usage);
+        void updateVertexBuffer(int handle, int size, const void *data);
+        unsigned int getVertexBufferId(int handle) const;
 
         ~Renderer();
     };

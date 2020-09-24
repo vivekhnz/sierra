@@ -8,7 +8,7 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f),
-        isWireframeMode(false)
+        isWireframeMode(false), mesh(ctx.renderer)
     {
     }
 
@@ -156,7 +156,7 @@ namespace Terrain { namespace Engine {
         meshRendererInstanceId =
             world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
         terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, mesh.getVertexBufferId(), rows, columns, patchSize, terrainHeight);
+            entityId, mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight);
     }
 
     void Terrain::loadHeightmapFromFile(std::string path)
@@ -171,7 +171,7 @@ namespace Terrain { namespace Engine {
         world.componentManagers.terrainCollider.updatePatchHeights(
             colliderInstanceId, textureWidth, textureHeight, data);
         world.componentManagers.terrainRenderer.updateMesh(
-            terrainRendererInstanceId, textureWidth, textureHeight, data, mesh);
+            terrainRendererInstanceId, textureWidth, textureHeight, data);
 
         // update heightmap size (used by adaptive tessellation)
         glm::vec2 heightmapSize = glm::vec2(textureWidth, textureHeight);

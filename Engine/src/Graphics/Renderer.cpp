@@ -80,9 +80,31 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return textures.id[handle];
     }
 
+    int Renderer::createVertexBuffer(unsigned int usage)
+    {
+        unsigned int id;
+        glGenBuffers(1, &id);
+
+        vertexBuffers.id.push_back(id);
+        vertexBuffers.usage.push_back(usage);
+        return vertexBuffers.count++;
+    }
+
+    void Renderer::updateVertexBuffer(int handle, int size, const void *data)
+    {
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffers.id[handle]);
+        glBufferData(GL_ARRAY_BUFFER, size, data, vertexBuffers.usage[handle]);
+    }
+
+    unsigned int Renderer::getVertexBufferId(int handle) const
+    {
+        return vertexBuffers.id[handle];
+    }
+
     Renderer::~Renderer()
     {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
         glDeleteTextures(textures.count, textures.id.data());
+        glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
     }
 }}}
