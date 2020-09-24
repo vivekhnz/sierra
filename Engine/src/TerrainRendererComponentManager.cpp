@@ -13,13 +13,19 @@ namespace Terrain { namespace Engine {
         calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
     }
 
-    int TerrainRendererComponentManager::create(
-        int entityId, unsigned int meshVertexBufferId, int rows, int columns)
+    int TerrainRendererComponentManager::create(int entityId,
+        unsigned int meshVertexBufferId,
+        int rows,
+        int columns,
+        float patchSize,
+        float terrainHeight)
     {
         data.entityId.push_back(entityId);
         data.meshVertexBufferId.push_back(meshVertexBufferId);
         data.rows.push_back(rows);
         data.columns.push_back(columns);
+        data.patchSize.push_back(patchSize);
+        data.terrainHeight.push_back(terrainHeight);
 
         // create buffer to store vertex edge data
         data.tessellationLevelBuffer.push_back(
@@ -49,6 +55,45 @@ namespace Terrain { namespace Engine {
             glDispatchCompute(meshEdgeCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }
+    }
+
+    void TerrainRendererComponentManager::updateMesh(int i,
+        int heightmapWidth,
+        int heightmapHeight,
+        const void *heightmapData,
+        Graphics::Mesh &mesh)
+    {
+        int &columns = data.columns[i];
+        int &rows = data.rows[i];
+        float &patchSize = data.patchSize[i];
+        float &terrainHeight = data.terrainHeight[i];
+
+        // update mesh vertices
+        std::vector<float> vertices(columns * rows * 5);
+        float offsetX = (columns - 1) * patchSize * -0.5f;
+        float offsetY = (rows - 1) * patchSize * -0.5f;
+        glm::vec2 uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
+        float xScalar = heightmapWidth / (float)columns;
+        float yScalar = (heightmapWidth * heightmapHeight) / (float)rows;
+        float heightScalar = terrainHeight / 65535.0f;
+        const unsigned short *pixels = static_cast<const unsigned short *>(heightmapData);
+        for (int y = 0; y < rows; y++)
+        {
+            int idxStart = y * columns;
+            int rowStart = (int)(y * yScalar);
+            float uvY = uvSize.y * y;
+
+            for (int x = 0; x < columns; x++)
+            {
+                int idx = (idxStart + x) * 5;
+                vertices[idx] = (x * patchSize) + offsetX;
+                vertices[idx + 1] = pixels[rowStart + (int)(x * xScalar)] * heightScalar;
+                vertices[idx + 2] = (y * patchSize) + offsetY;
+                vertices[idx + 3] = uvSize.x * x;
+                vertices[idx + 4] = uvY;
+            }
+        }
+        mesh.setVertices(vertices);
     }
 
     TerrainRendererComponentManager::~TerrainRendererComponentManager()

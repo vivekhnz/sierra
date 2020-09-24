@@ -12,6 +12,7 @@ namespace Terrain { namespace Engine {
     {
         int colliderInstanceId;
         int meshRendererInstanceId;
+        int terrainRendererInstanceId;
 
         int columns;
         int rows;

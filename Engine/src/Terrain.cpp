@@ -155,8 +155,8 @@ namespace Terrain { namespace Engine {
             entityId, columns, rows, patchSize, terrainHeight);
         meshRendererInstanceId =
             world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
-        world.componentManagers.terrainRenderer.create(
-            entityId, mesh.getVertexBufferId(), rows, columns);
+        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
+            entityId, mesh.getVertexBufferId(), rows, columns, patchSize, terrainHeight);
     }
 
     void Terrain::loadHeightmapFromFile(std::string path)
@@ -170,33 +170,8 @@ namespace Terrain { namespace Engine {
         ctx.renderer.updateTexture(heightmapTextureHandle, textureWidth, textureHeight, data);
         world.componentManagers.terrainCollider.updatePatchHeights(
             colliderInstanceId, textureWidth, textureHeight, data);
-
-        // update mesh vertices
-        std::vector<float> vertices(columns * rows * 5);
-        float offsetX = (columns - 1) * patchSize * -0.5f;
-        float offsetY = (rows - 1) * patchSize * -0.5f;
-        auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
-        float xScalar = textureWidth / (float)columns;
-        float yScalar = (textureWidth * textureHeight) / (float)rows;
-        float heightScalar = terrainHeight / 65535.0f;
-        auto pixels = static_cast<const unsigned short *>(data);
-        for (int y = 0; y < rows; y++)
-        {
-            int idxStart = y * columns;
-            int rowStart = (int)(y * yScalar);
-            float uvY = uvSize.y * y;
-
-            for (int x = 0; x < columns; x++)
-            {
-                int i = (idxStart + x) * 5;
-                vertices[i] = (x * patchSize) + offsetX;
-                vertices[i + 1] = pixels[rowStart + (int)(x * xScalar)] * heightScalar;
-                vertices[i + 2] = (y * patchSize) + offsetY;
-                vertices[i + 3] = uvSize.x * x;
-                vertices[i + 4] = uvY;
-            }
-        }
-        mesh.setVertices(vertices);
+        world.componentManagers.terrainRenderer.updateMesh(
+            terrainRendererInstanceId, textureWidth, textureHeight, data, mesh);
 
         // update heightmap size (used by adaptive tessellation)
         glm::vec2 heightmapSize = glm::vec2(textureWidth, textureHeight);
