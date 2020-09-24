@@ -16,7 +16,6 @@ namespace Terrain { namespace Engine {
         EngineContext &ctx;
         World &world;
 
-        Graphics::Texture heightmapTexture;
         Terrain terrain;
 
         Graphics::Mesh quadMesh;

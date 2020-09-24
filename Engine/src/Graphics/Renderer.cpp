@@ -50,7 +50,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     }
 
     int Renderer::createTexture(
-        int wrapMode, int filterMode, int internalFormat, int format, int type)
+        int internalFormat, int format, int type, int wrapMode, int filterMode)
     {
         unsigned int id;
         glGenTextures(1, &id);

@@ -39,7 +39,6 @@
     <ClCompile Include="src\Graphics\Shader.cpp" />
     <ClCompile Include="src\Graphics\ShaderManager.cpp" />
     <ClCompile Include="src\Graphics\ShaderProgram.cpp" />
-    <ClCompile Include="src\Graphics\Texture.cpp" />
     <ClCompile Include="src\Graphics\VertexArray.cpp" />
     <ClCompile Include="src\Graphics\Window.cpp" />
     <ClCompile Include="src\OrbitCameraComponentManager.cpp" />
@@ -74,7 +73,6 @@
     <ClInclude Include="src\Graphics\Shader.hpp" />
     <ClInclude Include="src\Graphics\ShaderManager.hpp" />
     <ClInclude Include="src\Graphics\ShaderProgram.hpp" />
-    <ClInclude Include="src\Graphics\Texture.hpp" />
     <ClInclude Include="src\Graphics\VertexArray.hpp" />
     <ClInclude Include="src\Graphics\Window.hpp" />
     <ClInclude Include="src\IO\MouseInputState.hpp" />

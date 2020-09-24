@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
+#include "../../Engine/src/Graphics/Image.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/EngineContext.hpp"
 #include "../../Engine/src/Scene.hpp"

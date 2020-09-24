@@ -40,9 +40,6 @@
     <ClCompile Include="src\Graphics\ShaderProgram.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\Texture.cpp">
-      <Filter>src\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\VertexArray.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
@@ -121,9 +118,6 @@
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\ShaderProgram.hpp">
-      <Filter>src\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\Texture.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\VertexArray.hpp">

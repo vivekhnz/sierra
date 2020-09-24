@@ -6,16 +6,13 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), heightmapTexture(ctx.renderer,
-                                    GL_R16,
-                                    GL_RED,
-                                    GL_UNSIGNED_SHORT,
-                                    GL_MIRRORED_REPEAT,
-                                    GL_LINEAR_MIPMAP_LINEAR),
-        terrain(ctx, world, heightmapTexture)
+        ctx(ctx), world(world), terrain(ctx, world)
     {
+        int heightmapTextureHandle = ctx.renderer.createTexture(
+            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
         Graphics::ShaderManager shaderManager;
-        terrain.initialize(shaderManager);
+        terrain.initialize(shaderManager, heightmapTextureHandle);
 
         // configure input
         ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
@@ -71,7 +68,7 @@ namespace Terrain { namespace Engine {
         quadMaterial.shaderProgramId = quadShaderProgram.getId();
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
-        quadMaterial.textureHandles[0] = heightmapTexture.getHandle();
+        quadMaterial.textureHandles[0] = heightmapTextureHandle;
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(

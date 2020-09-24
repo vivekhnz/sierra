@@ -3,65 +3,20 @@
 #include <glm/glm.hpp>
 #include <algorithm>
 #include "IO/Path.hpp"
+#include "Graphics/Image.hpp"
 
 namespace Terrain { namespace Engine {
-    Terrain::Terrain(EngineContext &ctx, World &world, Graphics::Texture &heightmapTexture) :
-        ctx(ctx), world(world), heightmapTexture(heightmapTexture), columns(256), rows(256),
-        patchSize(0.5f), terrainHeight(25.0f), albedoTexture(ctx.renderer,
-                                                   GL_RGB,
-                                                   GL_RGB,
-                                                   GL_UNSIGNED_BYTE,
-                                                   GL_REPEAT,
-                                                   GL_LINEAR_MIPMAP_LINEAR),
-        normalTexture(ctx.renderer,
-            GL_RGB,
-            GL_RGB,
-            GL_UNSIGNED_BYTE,
-            GL_REPEAT,
-            GL_LINEAR_MIPMAP_LINEAR),
-        displacementTexture(ctx.renderer,
-            GL_R16,
-            GL_RED,
-            GL_UNSIGNED_SHORT,
-            GL_REPEAT,
-            GL_LINEAR_MIPMAP_LINEAR),
-        aoTexture(
-            ctx.renderer, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-        roughnessTexture(
-            ctx.renderer, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+    Terrain::Terrain(EngineContext &ctx, World &world) :
+        ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f),
         isWireframeMode(false)
     {
-        int entityId = ctx.entities.create();
-        colliderInstanceId =
-            world.componentManagers.terrainCollider.create(entityId, columns, rows, patchSize);
-
-        int meshHandle = ctx.resources.newMesh();
-        Graphics::MeshData &meshData = ctx.resources.getMesh(meshHandle);
-        meshData.vertexArrayId = mesh.getVertexArrayId();
-        meshData.elementCount = 0;
-        meshData.primitiveType = GL_PATCHES;
-
-        int materialHandle = ctx.resources.newMaterial();
-        Graphics::Material &meshMaterial = ctx.resources.getMaterial(materialHandle);
-        meshMaterial.shaderProgramId = terrainShaderProgram.getId();
-        meshMaterial.polygonMode = GL_FILL;
-        meshMaterial.textureCount = 6;
-        meshMaterial.textureHandles[0] = heightmapTexture.getHandle();
-        meshMaterial.textureHandles[1] = albedoTexture.getHandle();
-        meshMaterial.textureHandles[2] = normalTexture.getHandle();
-        meshMaterial.textureHandles[3] = displacementTexture.getHandle();
-        meshMaterial.textureHandles[4] = aoTexture.getHandle();
-        meshMaterial.textureHandles[5] = roughnessTexture.getHandle();
-
-        meshRendererInstanceId =
-            world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
-
-        world.componentManagers.terrainRenderer.create(
-            entityId, mesh.getVertexBufferId(), rows, columns);
     }
 
-    void Terrain::initialize(const Graphics::ShaderManager &shaderManager)
+    void Terrain::initialize(
+        const Graphics::ShaderManager &shaderManager, int heightmapTextureHandle)
     {
+        this->heightmapTextureHandle = heightmapTextureHandle;
+
         // load shaders
         std::vector<Graphics::Shader> terrainShaders;
         terrainShaders.push_back(shaderManager.loadVertexShaderFromFile(
@@ -85,67 +40,40 @@ namespace Terrain { namespace Engine {
             IO::Path::getAbsolutePath("data/wireframe_fragment_shader.glsl")));
         wireframeShaderProgram.link(wireframeShaders);
 
-        // build vertices
-        std::vector<float> vertices(columns * rows * 5);
-        float offsetX = (columns - 1) * patchSize * -0.5f;
-        float offsetY = (rows - 1) * patchSize * -0.5f;
-        auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
-        for (int y = 0; y < rows; y++)
-        {
-            for (int x = 0; x < columns; x++)
-            {
-                int patchIndex = (y * columns) + x;
-                int i = patchIndex * 5;
-                vertices[i] = (x * patchSize) + offsetX;
-                vertices[i + 1] = 0.0f;
-                vertices[i + 2] = (y * patchSize) + offsetY;
-                vertices[i + 3] = uvSize.x * x;
-                vertices[i + 4] = uvSize.y * y;
-            }
-        }
-
-        // build indices
-        std::vector<unsigned int> indices((rows - 1) * (columns - 1) * 4);
-        for (int y = 0; y < rows - 1; y++)
-        {
-            for (int x = 0; x < columns - 1; x++)
-            {
-                int vertIndex = (y * columns) + x;
-                int elemIndex = ((y * (columns - 1)) + x) * 4;
-                indices[elemIndex] = vertIndex;
-                indices[elemIndex + 1] = vertIndex + columns;
-                indices[elemIndex + 2] = vertIndex + columns + 1;
-                indices[elemIndex + 3] = vertIndex + 1;
-            }
-        }
-        mesh.initialize(vertices, indices);
-        Graphics::MeshData &meshData = ctx.resources.getMesh(
-            world.componentManagers.meshRenderer.getMeshHandle(meshRendererInstanceId));
-        meshData.elementCount = indices.size();
-
         // load terrain textures
         auto albedoImage =
             Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false);
-        albedoTexture.load(
-            albedoImage.getWidth(), albedoImage.getHeight(), albedoImage.getData());
+        int albedoTextureHandle = ctx.renderer.createTexture(
+            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        ctx.renderer.updateTexture(albedoTextureHandle, albedoImage.getWidth(),
+            albedoImage.getHeight(), albedoImage.getData());
 
         auto normalImage =
             Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false);
-        normalTexture.load(
-            normalImage.getWidth(), normalImage.getHeight(), normalImage.getData());
+        int normalTextureHandle = ctx.renderer.createTexture(
+            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        ctx.renderer.updateTexture(normalTextureHandle, normalImage.getWidth(),
+            normalImage.getHeight(), normalImage.getData());
 
         auto displacementImage =
             Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true);
-        displacementTexture.load(displacementImage.getWidth(), displacementImage.getHeight(),
-            displacementImage.getData());
+        int displacementTextureHandle = ctx.renderer.createTexture(
+            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        ctx.renderer.updateTexture(displacementTextureHandle, displacementImage.getWidth(),
+            displacementImage.getHeight(), displacementImage.getData());
 
         auto aoImage = Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false);
-        aoTexture.load(aoImage.getWidth(), aoImage.getHeight(), aoImage.getData());
+        int aoTextureHandle = ctx.renderer.createTexture(
+            GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        ctx.renderer.updateTexture(
+            aoTextureHandle, aoImage.getWidth(), aoImage.getHeight(), aoImage.getData());
 
         auto roughnessImage =
             Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false);
-        roughnessTexture.load(
-            roughnessImage.getWidth(), roughnessImage.getHeight(), roughnessImage.getData());
+        int roughnessTextureHandle = ctx.renderer.createTexture(
+            GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        ctx.renderer.updateTexture(roughnessTextureHandle, roughnessImage.getWidth(),
+            roughnessImage.getHeight(), roughnessImage.getData());
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);
@@ -167,6 +95,68 @@ namespace Terrain { namespace Engine {
         wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
         wireframeShaderProgram.setVector2("textureScale", textureScale);
         glPatchParameteri(GL_PATCH_VERTICES, 4);
+
+        // build material
+        int materialHandle = ctx.resources.newMaterial();
+        Graphics::Material &meshMaterial = ctx.resources.getMaterial(materialHandle);
+        meshMaterial.shaderProgramId = terrainShaderProgram.getId();
+        meshMaterial.polygonMode = GL_FILL;
+        meshMaterial.textureCount = 6;
+        meshMaterial.textureHandles[0] = heightmapTextureHandle;
+        meshMaterial.textureHandles[1] = albedoTextureHandle;
+        meshMaterial.textureHandles[2] = normalTextureHandle;
+        meshMaterial.textureHandles[3] = displacementTextureHandle;
+        meshMaterial.textureHandles[4] = aoTextureHandle;
+        meshMaterial.textureHandles[5] = roughnessTextureHandle;
+
+        // build mesh
+        std::vector<float> vertices(columns * rows * 5);
+        float offsetX = (columns - 1) * patchSize * -0.5f;
+        float offsetY = (rows - 1) * patchSize * -0.5f;
+        auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
+        for (int y = 0; y < rows; y++)
+        {
+            for (int x = 0; x < columns; x++)
+            {
+                int patchIndex = (y * columns) + x;
+                int i = patchIndex * 5;
+                vertices[i] = (x * patchSize) + offsetX;
+                vertices[i + 1] = 0.0f;
+                vertices[i + 2] = (y * patchSize) + offsetY;
+                vertices[i + 3] = uvSize.x * x;
+                vertices[i + 4] = uvSize.y * y;
+            }
+        }
+
+        std::vector<unsigned int> indices((rows - 1) * (columns - 1) * 4);
+        for (int y = 0; y < rows - 1; y++)
+        {
+            for (int x = 0; x < columns - 1; x++)
+            {
+                int vertIndex = (y * columns) + x;
+                int elemIndex = ((y * (columns - 1)) + x) * 4;
+                indices[elemIndex] = vertIndex;
+                indices[elemIndex + 1] = vertIndex + columns;
+                indices[elemIndex + 2] = vertIndex + columns + 1;
+                indices[elemIndex + 3] = vertIndex + 1;
+            }
+        }
+        mesh.initialize(vertices, indices);
+
+        int meshHandle = ctx.resources.newMesh();
+        Graphics::MeshData &meshData = ctx.resources.getMesh(meshHandle);
+        meshData.vertexArrayId = mesh.getVertexArrayId();
+        meshData.elementCount = indices.size();
+        meshData.primitiveType = GL_PATCHES;
+
+        // create entity and components
+        int entityId = ctx.entities.create();
+        colliderInstanceId =
+            world.componentManagers.terrainCollider.create(entityId, columns, rows, patchSize);
+        meshRendererInstanceId =
+            world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
+        world.componentManagers.terrainRenderer.create(
+            entityId, mesh.getVertexBufferId(), rows, columns);
     }
 
     void Terrain::loadHeightmapFromFile(std::string path)
@@ -177,7 +167,7 @@ namespace Terrain { namespace Engine {
 
     void Terrain::loadHeightmap(int textureWidth, int textureHeight, const void *data)
     {
-        heightmapTexture.load(textureWidth, textureHeight, data);
+        ctx.renderer.updateTexture(heightmapTextureHandle, textureWidth, textureHeight, data);
 
         // update mesh vertices and collider heights
         std::vector<float> vertices(columns * rows * 5);
