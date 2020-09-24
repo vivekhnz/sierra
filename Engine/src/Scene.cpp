@@ -7,8 +7,6 @@
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), heightmapTexture(ctx.renderer,
-                                    2048,
-                                    2048,
                                     GL_R16,
                                     GL_RED,
                                     GL_UNSIGNED_SHORT,

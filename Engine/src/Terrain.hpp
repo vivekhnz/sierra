@@ -43,7 +43,7 @@ namespace Terrain { namespace Engine {
 
         void initialize(const Graphics::ShaderManager &shaderManager);
         void loadHeightmapFromFile(std::string path);
-        void loadHeightmap(const void *data);
+        void loadHeightmap(int width, int height, const void *data);
 
         void toggleWireframeMode();
 

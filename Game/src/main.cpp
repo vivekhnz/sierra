@@ -20,9 +20,10 @@ int main()
 
         Terrain::Engine::World world(ctx);
         Terrain::Engine::Scene scene(ctx, world);
-        scene.getTerrain().loadHeightmap(Terrain::Engine::Graphics::Image(
-            Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true)
-                                             .getData());
+        Terrain::Engine::Graphics::Image heightmap = Terrain::Engine::Graphics::Image(
+            Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
+        scene.getTerrain().loadHeightmap(
+            heightmap.getWidth(), heightmap.getHeight(), heightmap.getData());
 
         // create player camera
         int playerCamera_entityId = ctx.entities.create();

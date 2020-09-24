@@ -4,16 +4,13 @@
 
 namespace Terrain { namespace Engine { namespace Graphics {
     Texture::Texture(Graphics::Renderer &renderer,
-        int width,
-        int height,
         int internalFormat,
         int format,
         int type,
         int wrapMode,
         int filterMode) :
         renderer(renderer),
-        width(width), height(height), internalFormat(internalFormat), format(format),
-        type(type)
+        internalFormat(internalFormat), format(format), type(type)
     {
         handle = renderer.createTexture(wrapMode, filterMode);
     }
@@ -23,17 +20,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return handle;
     }
 
-    int Texture::getWidth() const
-    {
-        return width;
-    }
-
-    int Texture::getHeight() const
-    {
-        return height;
-    }
-
-    void Texture::load(const void *pixels)
+    void Texture::load(int width, int height, const void *pixels)
     {
         renderer.updateTexture(handle, internalFormat, width, height, format, type, pixels);
     }
