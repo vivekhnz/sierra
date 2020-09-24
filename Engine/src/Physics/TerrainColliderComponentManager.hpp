@@ -17,6 +17,7 @@ namespace Terrain { namespace Engine { namespace Physics {
             std::vector<float> patchSize;
             std::vector<int> firstHeightIndex;
             std::vector<float> patchHeights;
+            std::vector<float> terrainHeight;
         } data;
 
         float getTerrainPatchHeight(
@@ -31,18 +32,11 @@ namespace Terrain { namespace Engine { namespace Physics {
         TerrainColliderComponentManager &operator=(
             TerrainColliderComponentManager &&) = delete;
 
-        int create(int entityId, int columns, int rows, float patchSize);
-
-        int getFirstHeightIndex(int i)
-        {
-            return data.firstHeightIndex[i];
-        }
-        void setPatchHeight(int index, float value)
-        {
-            data.patchHeights[index] = value;
-        }
+        int create(int entityId, int columns, int rows, float patchSize, float terrainHeight);
 
         float getTerrainHeight(float worldX, float worldZ);
+        void updatePatchHeights(
+            int i, int heightmapWidth, int heightmapHeight, const void *heightmapData);
 
         ~TerrainColliderComponentManager();
     };
