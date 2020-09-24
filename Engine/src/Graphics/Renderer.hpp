@@ -46,6 +46,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
+        unsigned int createTexture(int wrapMode, int filterMode);
+        void updateTexture(unsigned int id,
+            int internalFormat,
+            int width,
+            int height,
+            int format,
+            int type,
+            const void *pixels);
+        void destroyTexture(unsigned int id);
+
         ~Renderer();
     };
 }}}

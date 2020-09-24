@@ -7,17 +7,46 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world, Graphics::Texture &heightmapTexture) :
         ctx(ctx), world(world), heightmapTexture(heightmapTexture), columns(256), rows(256),
-        patchSize(0.5f), terrainHeight(25.0f),
-        albedoTexture(
-            2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-        normalTexture(
-            2048, 2048, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-        displacementTexture(
-            2048, 2048, GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-        aoTexture(
-            2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
-        roughnessTexture(
-            2048, 2048, GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR),
+        patchSize(0.5f), terrainHeight(25.0f), albedoTexture(ctx.renderer,
+                                                   2048,
+                                                   2048,
+                                                   GL_RGB,
+                                                   GL_RGB,
+                                                   GL_UNSIGNED_BYTE,
+                                                   GL_REPEAT,
+                                                   GL_LINEAR_MIPMAP_LINEAR),
+        normalTexture(ctx.renderer,
+            2048,
+            2048,
+            GL_RGB,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            GL_REPEAT,
+            GL_LINEAR_MIPMAP_LINEAR),
+        displacementTexture(ctx.renderer,
+            2048,
+            2048,
+            GL_R16,
+            GL_RED,
+            GL_UNSIGNED_SHORT,
+            GL_REPEAT,
+            GL_LINEAR_MIPMAP_LINEAR),
+        aoTexture(ctx.renderer,
+            2048,
+            2048,
+            GL_R8,
+            GL_RED,
+            GL_UNSIGNED_BYTE,
+            GL_REPEAT,
+            GL_LINEAR_MIPMAP_LINEAR),
+        roughnessTexture(ctx.renderer,
+            2048,
+            2048,
+            GL_R8,
+            GL_RED,
+            GL_UNSIGNED_BYTE,
+            GL_REPEAT,
+            GL_LINEAR_MIPMAP_LINEAR),
         isWireframeMode(false)
     {
         int entityId = ctx.entities.create();

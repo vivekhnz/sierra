@@ -3,22 +3,19 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Texture::Texture(int width,
+    Texture::Texture(Graphics::Renderer &renderer,
+        int width,
         int height,
         int internalFormat,
         int format,
         int type,
         int wrapMode,
         int filterMode) :
-        width(width),
-        height(height), internalFormat(internalFormat), format(format), type(type)
+        renderer(renderer),
+        width(width), height(height), internalFormat(internalFormat), format(format),
+        type(type)
     {
-        glGenTextures(1, &id);
-        glBindTexture(GL_TEXTURE_2D, id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+        id = renderer.createTexture(wrapMode, filterMode);
     }
 
     unsigned int Texture::getId() const
@@ -38,13 +35,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Texture::load(const void *pixels)
     {
-        glBindTexture(GL_TEXTURE_2D, id);
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        renderer.updateTexture(id, internalFormat, width, height, format, type, pixels);
     }
 
     Texture::~Texture()
     {
-        glDeleteTextures(1, &id);
+        renderer.destroyTexture(id);
     }
 }}}

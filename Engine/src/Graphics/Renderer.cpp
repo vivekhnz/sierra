@@ -49,6 +49,36 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBufferSizes[uboEnumUint], data);
     }
 
+    unsigned int Renderer::createTexture(int wrapMode, int filterMode)
+    {
+        unsigned int id;
+        glGenTextures(1, &id);
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+        return id;
+    }
+
+    void Renderer::updateTexture(unsigned int id,
+        int internalFormat,
+        int width,
+        int height,
+        int format,
+        int type,
+        const void *pixels)
+    {
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, pixels);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
+
+    void Renderer::destroyTexture(unsigned int id)
+    {
+        glDeleteTextures(1, &id);
+    }
+
     Renderer::~Renderer()
     {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBufferIds);

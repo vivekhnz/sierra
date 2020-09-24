@@ -3,10 +3,12 @@
 
 #include "../Common.hpp"
 #include "Image.hpp"
+#include "Renderer.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Texture
     {
+        Graphics::Renderer &renderer;
         unsigned int id;
 
         int internalFormat;
@@ -17,7 +19,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int height;
 
     public:
-        Texture(int width,
+        Texture(Graphics::Renderer &renderer,
+            int width,
             int height,
             int internalFormat,
             int format,
