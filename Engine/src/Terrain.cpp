@@ -96,18 +96,31 @@ namespace Terrain { namespace Engine {
         wireframeShaderProgram.setVector2("textureScale", textureScale);
         glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-        // build material
-        int materialHandle = ctx.resources.newMaterial();
-        Graphics::Material &meshMaterial = ctx.resources.getMaterial(materialHandle);
-        meshMaterial.shaderProgramId = terrainShaderProgram.getId();
-        meshMaterial.polygonMode = GL_FILL;
-        meshMaterial.textureCount = 6;
-        meshMaterial.textureHandles[0] = heightmapTextureHandle;
-        meshMaterial.textureHandles[1] = albedoTextureHandle;
-        meshMaterial.textureHandles[2] = normalTextureHandle;
-        meshMaterial.textureHandles[3] = displacementTextureHandle;
-        meshMaterial.textureHandles[4] = aoTextureHandle;
-        meshMaterial.textureHandles[5] = roughnessTextureHandle;
+        // build materials
+        terrainMaterialHandle = ctx.resources.newMaterial();
+        Graphics::Material &terrainMaterial = ctx.resources.getMaterial(terrainMaterialHandle);
+        terrainMaterial.shaderProgramId = terrainShaderProgram.getId();
+        terrainMaterial.polygonMode = GL_FILL;
+        terrainMaterial.textureCount = 6;
+        terrainMaterial.textureHandles[0] = heightmapTextureHandle;
+        terrainMaterial.textureHandles[1] = albedoTextureHandle;
+        terrainMaterial.textureHandles[2] = normalTextureHandle;
+        terrainMaterial.textureHandles[3] = displacementTextureHandle;
+        terrainMaterial.textureHandles[4] = aoTextureHandle;
+        terrainMaterial.textureHandles[5] = roughnessTextureHandle;
+
+        wireframeMaterialHandle = ctx.resources.newMaterial();
+        Graphics::Material &wireframeMaterial =
+            ctx.resources.getMaterial(wireframeMaterialHandle);
+        wireframeMaterial.shaderProgramId = wireframeShaderProgram.getId();
+        wireframeMaterial.polygonMode = GL_LINE;
+        wireframeMaterial.textureCount = 6;
+        wireframeMaterial.textureHandles[0] = heightmapTextureHandle;
+        wireframeMaterial.textureHandles[1] = albedoTextureHandle;
+        wireframeMaterial.textureHandles[2] = normalTextureHandle;
+        wireframeMaterial.textureHandles[3] = displacementTextureHandle;
+        wireframeMaterial.textureHandles[4] = aoTextureHandle;
+        wireframeMaterial.textureHandles[5] = roughnessTextureHandle;
 
         // build mesh
         std::vector<float> vertices(columns * rows * 5);
@@ -153,8 +166,8 @@ namespace Terrain { namespace Engine {
         int entityId = ctx.entities.create();
         colliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, columns, rows, patchSize, terrainHeight);
-        meshRendererInstanceId =
-            world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle);
+        meshRendererInstanceId = world.componentManagers.meshRenderer.create(
+            entityId, meshHandle, terrainMaterialHandle);
         terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             entityId, mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight);
     }
@@ -182,19 +195,8 @@ namespace Terrain { namespace Engine {
     void Terrain::toggleWireframeMode()
     {
         isWireframeMode = !isWireframeMode;
-
-        Graphics::Material &material = ctx.resources.getMaterial(
-            world.componentManagers.meshRenderer.getMaterialHandle(meshRendererInstanceId));
-        if (isWireframeMode)
-        {
-            material.shaderProgramId = wireframeShaderProgram.getId();
-            material.polygonMode = GL_LINE;
-        }
-        else
-        {
-            material.shaderProgramId = terrainShaderProgram.getId();
-            material.polygonMode = GL_FILL;
-        }
+        world.componentManagers.meshRenderer.setMaterialHandle(meshRendererInstanceId,
+            isWireframeMode ? wireframeMaterialHandle : terrainMaterialHandle);
     }
 
     Terrain::~Terrain()

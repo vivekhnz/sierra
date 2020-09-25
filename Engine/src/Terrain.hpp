@@ -21,11 +21,12 @@ namespace Terrain { namespace Engine {
 
         EngineContext &ctx;
         World &world;
-        int meshInstanceHandle;
         Graphics::Mesh mesh;
         int heightmapTextureHandle;
         Graphics::ShaderProgram terrainShaderProgram;
         Graphics::ShaderProgram wireframeShaderProgram;
+        int terrainMaterialHandle;
+        int wireframeMaterialHandle;
 
         bool isWireframeMode;
 

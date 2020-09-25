@@ -30,12 +30,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Material &material = resourceMgr.getMaterial(materialHandle);
             glUseProgram(material.shaderProgramId);
             glPolygonMode(GL_FRONT_AND_BACK, material.polygonMode);
-            for (int j = 0; j < material.textureCount; j++)
-            {
-                glActiveTexture(GL_TEXTURE0 + j);
-                glBindTexture(
-                    GL_TEXTURE_2D, renderer.getTextureId(material.textureHandles[j]));
-            }
+            renderer.bindTextures(material.textureHandles, material.textureCount);
 
             MeshData &meshData = resourceMgr.getMesh(meshHandle);
             glBindVertexArray(meshData.vertexArrayId);

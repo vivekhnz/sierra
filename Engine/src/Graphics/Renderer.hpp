@@ -81,7 +81,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int createTexture(
             int internalFormat, int format, int type, int wrapMode, int filterMode);
         void updateTexture(int handle, int width, int height, const void *pixels);
-        unsigned int getTextureId(int handle) const;
+        void bindTextures(int *textureHandles, int count);
 
         int createVertexBuffer(unsigned int usage);
         void updateVertexBuffer(int handle, int size, const void *data);

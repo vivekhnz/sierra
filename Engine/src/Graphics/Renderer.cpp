@@ -75,9 +75,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glGenerateMipmap(GL_TEXTURE_2D);
     }
 
-    unsigned int Renderer::getTextureId(int handle) const
+    void Renderer::bindTextures(int *textureHandles, int count)
     {
-        return textures.id[handle];
+        for (int i = 0; i < count; i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, textures.id[textureHandles[i]]);
+        }
     }
 
     int Renderer::createVertexBuffer(unsigned int usage)

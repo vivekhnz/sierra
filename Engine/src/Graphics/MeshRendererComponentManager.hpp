@@ -36,16 +36,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int create(int entityId, int meshHandle, int materialHandle);
 
-        int getMeshHandle(int i)
-        {
-            return data.meshHandle[i];
-        }
-        int getMaterialHandle(int i)
-        {
-            return data.materialHandle[i];
-        }
-
         void renderMeshes();
+
+        void setMaterialHandle(int i, int materialHandle)
+        {
+            data.materialHandle[i] = materialHandle;
+        }
 
         ~MeshRendererComponentManager();
     };
