@@ -4,8 +4,9 @@
 
 namespace Terrain { namespace Engine {
     TerrainRendererComponentManager::TerrainRendererComponentManager(
-        Graphics::Renderer &renderer) :
-        renderer(renderer)
+        Graphics::Renderer &renderer, Graphics::MeshRendererComponentManager &meshRenderer) :
+        renderer(renderer),
+        meshRenderer(meshRenderer)
     {
         std::vector<Graphics::Shader> calcTessLevelShaders;
         calcTessLevelShaders.push_back(renderer.shaders.loadComputeShaderFromFile(
@@ -19,7 +20,8 @@ namespace Terrain { namespace Engine {
         int rows,
         int columns,
         float patchSize,
-        float terrainHeight)
+        float terrainHeight,
+        unsigned int heightmapSizeUniformIndex)
     {
         data.entityId.push_back(entityId);
         data.meshVertexBufferHandle.push_back(meshVertexBufferHandle);
@@ -27,6 +29,7 @@ namespace Terrain { namespace Engine {
         data.columns.push_back(columns);
         data.patchSize.push_back(patchSize);
         data.terrainHeight.push_back(terrainHeight);
+        data.heightmapSizeUniformIndex.push_back(heightmapSizeUniformIndex);
 
         // create buffer to store vertex edge data
         data.tessellationLevelBuffer.push_back(
@@ -95,6 +98,10 @@ namespace Terrain { namespace Engine {
         }
         renderer.updateVertexBuffer(
             vertexBufferHandle, vertices.size() * sizeof(float), vertices.data());
+
+        // update heightmap size (used by adaptive tessellation)
+        meshRenderer.setMaterialUniformVector2(meshRenderer.lookup(data.entityId[i]),
+            data.heightmapSizeUniformIndex[i], glm::vec2(heightmapWidth, heightmapHeight));
     }
 
     TerrainRendererComponentManager::~TerrainRendererComponentManager()

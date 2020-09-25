@@ -5,6 +5,7 @@
 #include "../ResourceManager.hpp"
 #include "Renderer.hpp"
 #include <vector>
+#include <map>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     enum class UniformType : unsigned int
@@ -62,6 +63,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         ResourceManager &resourceMgr;
         Graphics::Renderer &renderer;
 
+        std::map<int, int> entityIdToInstanceId;
+
     public:
         MeshRendererComponentManager(
             ResourceManager &resourceMgr, Graphics::Renderer &renderer);
@@ -76,6 +79,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int materialHandle,
             std::vector<std::string> uniformNames,
             std::vector<UniformValue> uniformValues);
+
+        int lookup(int entityId) const
+        {
+            return entityIdToInstanceId.at(entityId);
+        }
 
         void renderMeshes();
         void setMaterialHandle(int i, int materialHandle);

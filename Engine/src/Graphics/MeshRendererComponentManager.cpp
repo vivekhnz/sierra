@@ -5,7 +5,6 @@
 #include <iterator>
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
-#include <map>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     MeshRendererComponentManager::MeshRendererComponentManager(
@@ -38,6 +37,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         data.uniformValues.insert(
             data.uniformValues.end(), uniformValues.begin(), uniformValues.end());
 
+        entityIdToInstanceId[entityId] = data.count;
         return data.count++;
     }
 
