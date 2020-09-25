@@ -71,8 +71,9 @@ namespace Terrain { namespace Engine {
         quadMaterial.textureHandles[0] = heightmapTextureHandle;
 
         int quadMesh_entityId = ctx.entities.create();
-        world.componentManagers.meshRenderer.create(
-            quadMesh_entityId, quadMesh_meshHandle, quadMesh_materialHandle);
+        world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
+            quadMesh_materialHandle, std::vector<std::string>(),
+            std::vector<Graphics::UniformValue>());
 
         std::vector<Graphics::Shader> quadShaders;
         quadShaders.push_back(shaderManager.loadVertexShaderFromFile(

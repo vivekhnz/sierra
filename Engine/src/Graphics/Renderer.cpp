@@ -11,6 +11,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
         glEnable(GL_DEPTH_TEST);
         glEnable(GL_CULL_FACE);
+        glPatchParameteri(GL_PATCH_VERTICES, 4);
 
         glGenBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
 

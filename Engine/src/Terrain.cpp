@@ -77,24 +77,17 @@ namespace Terrain { namespace Engine {
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);
-        terrainShaderProgram.setVector2("heightmapSize", glm::vec2(1.0f, 1.0f));
-        terrainShaderProgram.setVector2("normalSampleOffset",
-            glm::vec2(1.0f / (patchSize * columns), 1.0f / (patchSize * rows)));
         terrainShaderProgram.setVector2("textureScale", textureScale);
-        terrainShaderProgram.setFloat("terrainHeight", terrainHeight);
         terrainShaderProgram.setInt("heightmapTexture", 0);
         terrainShaderProgram.setInt("albedoTexture", 1);
         terrainShaderProgram.setInt("normalTexture", 2);
         terrainShaderProgram.setInt("displacementTexture", 3);
         terrainShaderProgram.setInt("aoTexture", 4);
         terrainShaderProgram.setInt("roughnessTexture", 5);
-        wireframeShaderProgram.setVector2("heightmapSize", glm::vec2(1.0f, 1.0f));
         wireframeShaderProgram.setVector3("color", glm::vec3(0.0f, 1.0f, 0.0f));
         wireframeShaderProgram.setInt("heightmapTexture", 0);
         wireframeShaderProgram.setInt("displacementTexture", 3);
-        wireframeShaderProgram.setFloat("terrainHeight", terrainHeight);
         wireframeShaderProgram.setVector2("textureScale", textureScale);
-        glPatchParameteri(GL_PATCH_VERTICES, 4);
 
         // build materials
         terrainMaterialHandle = ctx.resources.newMaterial();
@@ -162,12 +155,24 @@ namespace Terrain { namespace Engine {
         meshData.elementCount = indices.size();
         meshData.primitiveType = GL_PATCHES;
 
+        // build material uniforms
+        std::vector<std::string> materialUniformNames(3);
+        materialUniformNames[0] = "terrainHeight";
+        materialUniformNames[1] = "heightmapSize";
+        materialUniformNames[2] = "normalSampleOffset";
+
+        std::vector<Graphics::UniformValue> materialUniformValues(3);
+        materialUniformValues[0] = Graphics::UniformValue::forFloat(terrainHeight);
+        materialUniformValues[1] = Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
+        materialUniformValues[2] = Graphics::UniformValue::forVector2(
+            glm::vec2(1.0f / (patchSize * columns), 1.0f / (patchSize * rows)));
+
         // create entity and components
         int entityId = ctx.entities.create();
         colliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, columns, rows, patchSize, terrainHeight);
-        meshRendererInstanceId = world.componentManagers.meshRenderer.create(
-            entityId, meshHandle, terrainMaterialHandle);
+        meshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
+            meshHandle, terrainMaterialHandle, materialUniformNames, materialUniformValues);
         terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             entityId, mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight);
     }
@@ -187,9 +192,8 @@ namespace Terrain { namespace Engine {
             terrainRendererInstanceId, textureWidth, textureHeight, data);
 
         // update heightmap size (used by adaptive tessellation)
-        glm::vec2 heightmapSize = glm::vec2(textureWidth, textureHeight);
-        terrainShaderProgram.setVector2("heightmapSize", heightmapSize);
-        wireframeShaderProgram.setVector2("heightmapSize", heightmapSize);
+        world.componentManagers.meshRenderer.setMaterialUniformVector2(
+            meshRendererInstanceId, 1, glm::vec2(textureWidth, textureHeight));
     }
 
     void Terrain::toggleWireframeMode()

@@ -18,6 +18,10 @@ namespace Terrain { namespace Engine { namespace Physics {
             std::vector<int> firstHeightIndex;
             std::vector<float> patchHeights;
             std::vector<float> terrainHeight;
+
+            ComponentData() : count(0)
+            {
+            }
         } data;
 
         float getTerrainPatchHeight(

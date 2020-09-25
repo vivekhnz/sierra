@@ -7,6 +7,38 @@
 #include <vector>
 
 namespace Terrain { namespace Engine { namespace Graphics {
+    enum class UniformType : unsigned int
+    {
+        Float = 0,
+        Vector2 = 1
+    };
+
+    struct UniformValue
+    {
+        UniformType type;
+        union
+        {
+            float f;
+            glm::vec2 vec2;
+        };
+
+        static UniformValue forFloat(float value)
+        {
+            Graphics::UniformValue u;
+            u.type = UniformType::Float;
+            u.f = value;
+            return u;
+        }
+
+        static UniformValue forVector2(glm::vec2 value)
+        {
+            Graphics::UniformValue u;
+            u.type = UniformType::Vector2;
+            u.vec2 = value;
+            return u;
+        }
+    };
+
     class EXPORT MeshRendererComponentManager
     {
     private:
@@ -16,6 +48,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             std::vector<int> entityId;
             std::vector<int> meshHandle;
             std::vector<int> materialHandle;
+
+            std::vector<int> firstUniformIndex;
+            std::vector<int> uniformCount;
+            std::vector<unsigned int> uniformLocations;
+            std::vector<UniformValue> uniformValues;
 
             ComponentData() : count(0)
             {
@@ -34,13 +71,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
         MeshRendererComponentManager(MeshRendererComponentManager &&) = delete;
         MeshRendererComponentManager &operator=(MeshRendererComponentManager &&) = delete;
 
-        int create(int entityId, int meshHandle, int materialHandle);
+        int create(int entityId,
+            int meshHandle,
+            int materialHandle,
+            std::vector<std::string> uniformNames,
+            std::vector<UniformValue> uniformValues);
 
         void renderMeshes();
+        void setMaterialHandle(int i, int materialHandle);
 
-        void setMaterialHandle(int i, int materialHandle)
+        void setMaterialUniformFloat(int i, int uniformIndex, float value)
         {
-            data.materialHandle[i] = materialHandle;
+            data.uniformValues[data.firstUniformIndex[i] + uniformIndex].f = value;
+        }
+        void setMaterialUniformVector2(int i, int uniformIndex, glm::vec2 value)
+        {
+            data.uniformValues[data.firstUniformIndex[i] + uniformIndex].vec2 = value;
         }
 
         ~MeshRendererComponentManager();
