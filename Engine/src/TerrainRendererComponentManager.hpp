@@ -32,6 +32,7 @@ namespace Terrain { namespace Engine {
         Graphics::Renderer &renderer;
         Graphics::MeshRendererComponentManager &meshRenderer;
 
+        bool isInitialized;
         Graphics::ShaderProgram calcTessLevelsShaderProgram;
 
     public:
@@ -43,6 +44,8 @@ namespace Terrain { namespace Engine {
         TerrainRendererComponentManager(TerrainRendererComponentManager &&) = delete;
         TerrainRendererComponentManager &operator=(
             TerrainRendererComponentManager &&) = delete;
+
+        void onShadersLoaded(const int count, Resources::ShaderResource *resources);
 
         int create(int entityId,
             int meshVertexBufferHandle,

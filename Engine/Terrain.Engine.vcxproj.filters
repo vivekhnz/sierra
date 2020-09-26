@@ -183,6 +183,12 @@
     <ClInclude Include="src\Resources\TextureResource.hpp">
       <Filter>src\Resources</Filter>
     </ClInclude>
+    <ClInclude Include="src\Resources\ShaderResource.hpp">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TerrainResources.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

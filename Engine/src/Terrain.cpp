@@ -1,9 +1,7 @@
 #include "Terrain.hpp"
 
 #include <glm/glm.hpp>
-#include <algorithm>
 #include "IO/Path.hpp"
-#include "Resources/TextureResource.hpp"
 #include "Graphics/Image.hpp"
 
 namespace Terrain { namespace Engine {
@@ -60,17 +58,17 @@ namespace Terrain { namespace Engine {
         terrainMaterial.polygonMode = GL_FILL;
         terrainMaterial.textureCount = 6;
         terrainMaterial.textureHandles[0] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
         terrainMaterial.textureHandles[1] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ALBEDO_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO);
         terrainMaterial.textureHandles[2] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_NORMAL_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_NORMAL);
         terrainMaterial.textureHandles[3] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_DISPLACEMENT_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT);
         terrainMaterial.textureHandles[4] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_AO_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO);
         terrainMaterial.textureHandles[5] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ROUGHNESS_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS);
 
         wireframeMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &wireframeMaterial =
@@ -79,17 +77,17 @@ namespace Terrain { namespace Engine {
         wireframeMaterial.polygonMode = GL_LINE;
         wireframeMaterial.textureCount = 6;
         wireframeMaterial.textureHandles[0] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
         wireframeMaterial.textureHandles[1] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ALBEDO_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO);
         wireframeMaterial.textureHandles[2] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_NORMAL_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_NORMAL);
         wireframeMaterial.textureHandles[3] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_DISPLACEMENT_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT);
         wireframeMaterial.textureHandles[4] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_AO_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO);
         wireframeMaterial.textureHandles[5] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ROUGHNESS_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS);
 
         // build mesh
         std::vector<float> vertices(columns * rows * 5);
@@ -162,7 +160,7 @@ namespace Terrain { namespace Engine {
     void Terrain::loadHeightmap(int textureWidth, int textureHeight, const void *data)
     {
         ctx.renderer.updateTexture(
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE),
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP),
             textureWidth, textureHeight, data);
         world.componentManagers.terrainCollider.updatePatchHeights(
             colliderInstanceId, textureWidth, textureHeight, data);

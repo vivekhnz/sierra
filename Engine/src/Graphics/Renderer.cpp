@@ -73,7 +73,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 resource.height, 0, resource.format, resource.type, resource.data);
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            textures.resourceId.push_back(resource.id);
             textures.id.push_back(id);
             textures.internalFormat.push_back(resource.internalFormat);
             textures.format.push_back(resource.format);
@@ -121,6 +120,30 @@ namespace Terrain { namespace Engine { namespace Graphics {
     unsigned int Renderer::getVertexBufferId(int handle) const
     {
         return vertexBuffers.id[handle];
+    }
+
+    void Renderer::onShadersLoaded(const int count, Resources::ShaderResource *resources)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Resources::ShaderResource &resource = resources[i];
+
+            unsigned int id = glCreateShader(resource.type);
+            glShaderSource(id, 1, &resource.src, NULL);
+
+            glCompileShader(id);
+            int success;
+            glGetShaderiv(id, GL_COMPILE_STATUS, &success);
+            if (!success)
+            {
+                char infoLog[512];
+                glGetShaderInfoLog(id, 512, NULL, infoLog);
+                throw std::runtime_error("Shader compilation failed: " + std::string(infoLog));
+            }
+
+            shaders.id.push_back(id);
+            shaders.resourceIdToHandle[resource.id] = shaders.count++;
+        }
     }
 
     int Renderer::createShader(unsigned int type, std::string src)

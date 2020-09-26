@@ -9,6 +9,7 @@
 
 #include "ShaderManager.hpp"
 #include "../Resources/TextureResource.hpp"
+#include "../Resources/ShaderResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
@@ -28,7 +29,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Textures
         {
             int count;
-            std::vector<int> resourceId;
             std::vector<unsigned int> id;
             std::vector<int> internalFormat;
             std::vector<int> format;
@@ -56,6 +56,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             int count;
             std::vector<unsigned int> id;
+
+            std::map<int, int> resourceIdToHandle;
 
             Shaders() : count(0)
             {
@@ -107,8 +109,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void updateVertexBuffer(int handle, int size, const void *data);
         unsigned int getVertexBufferId(int handle) const;
 
+        void onShadersLoaded(const int count, Resources::ShaderResource *resources);
         int createShader(unsigned int type, std::string src);
         unsigned int getShaderId(int handle) const;
+        int lookupShader(int resourceId)
+        {
+            return shaders.resourceIdToHandle[resourceId];
+        }
 
         ~Renderer();
     };

@@ -1,18 +1,32 @@
 #include "TerrainRendererComponentManager.hpp"
 
-#include "IO/Path.hpp"
+#include "TerrainResources.hpp"
 
 namespace Terrain { namespace Engine {
     TerrainRendererComponentManager::TerrainRendererComponentManager(
         Graphics::Renderer &renderer, Graphics::MeshRendererComponentManager &meshRenderer) :
         renderer(renderer),
-        meshRenderer(meshRenderer), calcTessLevelsShaderProgram(renderer)
+        meshRenderer(meshRenderer), calcTessLevelsShaderProgram(renderer), isInitialized(false)
     {
-        std::vector<int> calcTessLevelShaderHandles;
-        calcTessLevelShaderHandles.push_back(renderer.shaderMgr.loadComputeShaderFromFile(
-            IO::Path::getAbsolutePath("data/terrain_calc_tess_levels_comp_shader.glsl")));
-        calcTessLevelsShaderProgram.link(calcTessLevelShaderHandles);
-        calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
+    }
+
+    void TerrainRendererComponentManager::onShadersLoaded(
+        const int count, Resources::ShaderResource *resources)
+    {
+        for (int i = 0; i < count; i++)
+        {
+            Resources::ShaderResource &resource = resources[i];
+            if (resource.id != TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL)
+                continue;
+
+            std::vector<int> calcTessLevelShaderHandles;
+            calcTessLevelShaderHandles.push_back(renderer.lookupShader(
+                TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL));
+            calcTessLevelsShaderProgram.link(calcTessLevelShaderHandles);
+            calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
+            isInitialized = true;
+            break;
+        }
     }
 
     int TerrainRendererComponentManager::create(int entityId,
@@ -42,6 +56,9 @@ namespace Terrain { namespace Engine {
 
     void TerrainRendererComponentManager::calculateTessellationLevels()
     {
+        if (!isInitialized)
+            return;
+
         for (int i = 0; i < data.count; i++)
         {
             int &rows = data.rows[i];

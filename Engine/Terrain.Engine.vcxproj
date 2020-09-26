@@ -75,8 +75,10 @@
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
     <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp" />
     <ClInclude Include="src\ResourceManager.hpp" />
+    <ClInclude Include="src\Resources\ShaderResource.hpp" />
     <ClInclude Include="src\Resources\TextureResource.hpp" />
     <ClInclude Include="src\TerrainRendererComponentManager.hpp" />
+    <ClInclude Include="src\TerrainResources.hpp" />
     <ClInclude Include="src\World.hpp" />
     <ClInclude Include="src\IO\InputManager.hpp" />
     <ClInclude Include="src\IO\OpenFile.hpp" />

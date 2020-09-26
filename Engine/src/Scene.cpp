@@ -4,6 +4,7 @@
 #include "Graphics/Image.hpp"
 #include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
+#include "IO/OpenFile.hpp"
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
@@ -69,7 +70,7 @@ namespace Terrain { namespace Engine {
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
         quadMaterial.textureHandles[0] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE);
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
@@ -83,6 +84,12 @@ namespace Terrain { namespace Engine {
             IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
         quadShaderProgram.link(quadShaderHandles);
         quadShaderProgram.setInt("imageTexture", 0);
+    }
+
+    std::string readFileText(std::string relativePath)
+    {
+        IO::OpenFile openFile(IO::Path::getAbsolutePath(relativePath));
+        return openFile.readAllText();
     }
 
     void Scene::loadResources()
@@ -101,7 +108,7 @@ namespace Terrain { namespace Engine {
             Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false);
 
         textureResources.push_back({
-            TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE, // id
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, // id
             GL_R16,                                          // internalFormat
             GL_RED,                                          // format
             GL_UNSIGNED_SHORT,                               // type
@@ -112,7 +119,7 @@ namespace Terrain { namespace Engine {
             NULL                                             // data
         });
         textureResources.push_back({
-            TerrainResources::RESOURCE_ID_ALBEDO_TEXTURE, // id
+            TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO, // id
             GL_RGB,                                       // internalFormat
             GL_RGB,                                       // format
             GL_UNSIGNED_BYTE,                             // type
@@ -123,7 +130,7 @@ namespace Terrain { namespace Engine {
             albedoImage.getData()                         // data
         });
         textureResources.push_back({
-            TerrainResources::RESOURCE_ID_NORMAL_TEXTURE, // id
+            TerrainResources::RESOURCE_ID_TEXTURE_NORMAL, // id
             GL_RGB,                                       // internalFormat
             GL_RGB,                                       // format
             GL_UNSIGNED_BYTE,                             // type
@@ -134,7 +141,7 @@ namespace Terrain { namespace Engine {
             normalImage.getData()                         // data
         });
         textureResources.push_back({
-            TerrainResources::RESOURCE_ID_DISPLACEMENT_TEXTURE, // id
+            TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT, // id
             GL_R16,                                             // internalFormat
             GL_RED,                                             // format
             GL_UNSIGNED_SHORT,                                  // type
@@ -145,7 +152,7 @@ namespace Terrain { namespace Engine {
             displacementImage.getData()                         // data
         });
         textureResources.push_back({
-            TerrainResources::RESOURCE_ID_AO_TEXTURE, // id
+            TerrainResources::RESOURCE_ID_TEXTURE_AO, // id
             GL_R8,                                    // internalFormat
             GL_RED,                                   // format
             GL_UNSIGNED_BYTE,                         // type
@@ -156,7 +163,7 @@ namespace Terrain { namespace Engine {
             aoImage.getData()                         // data
         });
         textureResources.push_back({
-            TerrainResources::RESOURCE_ID_ROUGHNESS_TEXTURE, // id
+            TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS, // id
             GL_R8,                                           // internalFormat
             GL_RED,                                          // format
             GL_UNSIGNED_BYTE,                                // type
@@ -168,6 +175,22 @@ namespace Terrain { namespace Engine {
         });
 
         ctx.renderer.onTexturesLoaded(textureResources.size(), textureResources.data());
+
+        // load shader resources
+        std::vector<Resources::ShaderResource> shaderResources;
+
+        std::string shaderSrc_terrainComputeTessLevel =
+            readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
+
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL, // id
+            GL_COMPUTE_SHADER,                                               // type
+            shaderSrc_terrainComputeTessLevel.c_str(),                       // src
+        });
+
+        ctx.renderer.onShadersLoaded(shaderResources.size(), shaderResources.data());
+        world.componentManagers.terrainRenderer.onShadersLoaded(
+            shaderResources.size(), shaderResources.data());
     }
 
     Terrain &Scene::getTerrain()
