@@ -7,7 +7,8 @@
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), terrain(ctx, world), quadMesh(ctx.renderer)
+        ctx(ctx), world(world), terrain(ctx, world), quadMesh(ctx.renderer),
+        quadShaderProgram(ctx.renderer)
     {
         loadResources();
 
@@ -75,12 +76,12 @@ namespace Terrain { namespace Engine {
             quadMesh_materialHandle, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
 
-        std::vector<Graphics::Shader> quadShaders;
-        quadShaders.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
+        std::vector<int> quadShaderHandles;
+        quadShaderHandles.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/texture_vertex_shader.glsl")));
-        quadShaders.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
+        quadShaderHandles.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
-        quadShaderProgram.link(quadShaders);
+        quadShaderProgram.link(quadShaderHandles);
         quadShaderProgram.setInt("imageTexture", 0);
     }
 

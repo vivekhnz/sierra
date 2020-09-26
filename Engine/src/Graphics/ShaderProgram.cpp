@@ -2,10 +2,9 @@
 
 #include <iostream>
 #include <glm/gtc/type_ptr.hpp>
-#include "AttachShader.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    ShaderProgram::ShaderProgram()
+    ShaderProgram::ShaderProgram(Renderer &renderer) : renderer(renderer)
     {
         id = glCreateProgram();
     }
@@ -15,12 +14,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return id;
     }
 
-    void ShaderProgram::link(const std::vector<Shader> &shaders)
+    void ShaderProgram::link(const std::vector<int> &shaderHandles)
     {
-        std::vector<AttachShader> attachShaders;
-        for (auto &&shader : shaders)
+        for (int shaderHandle : shaderHandles)
         {
-            attachShaders.push_back(AttachShader(*this, shader));
+            glAttachShader(id, renderer.getShaderId(shaderHandle));
         }
 
         glLinkProgram(id);
@@ -31,6 +29,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             char infoLog[512];
             glGetProgramInfoLog(id, 512, NULL, infoLog);
             throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
+        }
+
+        for (int shaderHandle : shaderHandles)
+        {
+            glDetachShader(id, renderer.getShaderId(shaderHandle));
         }
     }
 

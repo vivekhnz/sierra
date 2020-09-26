@@ -2,12 +2,14 @@
 #define GRAPHICS_SHADERMANAGER_HPP
 
 #include "../Common.hpp"
-#include "Shader.hpp"
+#include <string>
 
 namespace Terrain { namespace Engine { namespace Graphics {
+    class Renderer;
+
     class EXPORT ShaderManager
     {
-        Shader loadFromFile(GLenum shaderType, std::string filePath) const;
+        int loadFromFile(unsigned int shaderType, std::string filePath) const;
 
         Renderer &renderer;
 
@@ -18,11 +20,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         ShaderManager(ShaderManager &&) = delete;
         ShaderManager &operator=(ShaderManager &&) = delete;
 
-        Shader loadVertexShaderFromFile(std::string filePath) const;
-        Shader loadTessControlShaderFromFile(std::string filePath) const;
-        Shader loadTessEvalShaderFromFile(std::string filePath) const;
-        Shader loadFragmentShaderFromFile(std::string filePath) const;
-        Shader loadComputeShaderFromFile(std::string filePath) const;
+        int loadVertexShaderFromFile(std::string filePath) const;
+        int loadTessControlShaderFromFile(std::string filePath) const;
+        int loadTessEvalShaderFromFile(std::string filePath) const;
+        int loadFragmentShaderFromFile(std::string filePath) const;
+        int loadComputeShaderFromFile(std::string filePath) const;
 
         ~ShaderManager();
     };

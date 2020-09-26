@@ -10,9 +10,6 @@
     <ClCompile Include="..\deps\stb\stb_image.c">
       <Filter>deps</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\AttachShader.cpp">
-      <Filter>src\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\BindBuffer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
@@ -29,9 +26,6 @@
       <Filter>src\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\Mesh.cpp">
-      <Filter>src\Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Graphics\Shader.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
     <ClCompile Include="src\Graphics\ShaderManager.cpp">
@@ -90,9 +84,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\Graphics\AttachShader.hpp">
-      <Filter>src\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\Graphics\BindBuffer.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
@@ -109,9 +100,6 @@
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\Mesh.hpp">
-      <Filter>src\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\Shader.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\ShaderManager.hpp">

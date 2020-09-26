@@ -2,11 +2,13 @@
 #define GRAPHICS_RENDERER_HPP
 
 #include "../Common.hpp"
-#include "../Resources/TextureResource.hpp"
-#include "ShaderManager.hpp"
+
 #include <glm/glm.hpp>
 #include <vector>
 #include <map>
+
+#include "ShaderManager.hpp"
+#include "../Resources/TextureResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer

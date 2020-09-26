@@ -9,34 +9,35 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f),
-        mesh(ctx.renderer)
+        mesh(ctx.renderer), terrainShaderProgram(ctx.renderer),
+        wireframeShaderProgram(ctx.renderer)
     {
     }
 
     void Terrain::initialize()
     {
         // load shaders
-        std::vector<Graphics::Shader> terrainShaders;
-        terrainShaders.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
+        std::vector<int> terrainShaderHandles;
+        terrainShaderHandles.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_vertex_shader.glsl")));
-        terrainShaders.push_back(ctx.renderer.shaderMgr.loadTessControlShaderFromFile(
+        terrainShaderHandles.push_back(ctx.renderer.shaderMgr.loadTessControlShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_tess_ctrl_shader.glsl")));
-        terrainShaders.push_back(ctx.renderer.shaderMgr.loadTessEvalShaderFromFile(
+        terrainShaderHandles.push_back(ctx.renderer.shaderMgr.loadTessEvalShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_tess_eval_shader.glsl")));
-        terrainShaders.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
+        terrainShaderHandles.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_fragment_shader.glsl")));
-        terrainShaderProgram.link(terrainShaders);
+        terrainShaderProgram.link(terrainShaderHandles);
 
-        std::vector<Graphics::Shader> wireframeShaders;
-        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
+        std::vector<int> wireframeShaderHandles;
+        wireframeShaderHandles.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_vertex_shader.glsl")));
-        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadTessControlShaderFromFile(
+        wireframeShaderHandles.push_back(ctx.renderer.shaderMgr.loadTessControlShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_tess_ctrl_shader.glsl")));
-        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadTessEvalShaderFromFile(
+        wireframeShaderHandles.push_back(ctx.renderer.shaderMgr.loadTessEvalShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_tess_eval_shader.glsl")));
-        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
+        wireframeShaderHandles.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_fragment_shader.glsl")));
-        wireframeShaderProgram.link(wireframeShaders);
+        wireframeShaderProgram.link(wireframeShaderHandles);
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);

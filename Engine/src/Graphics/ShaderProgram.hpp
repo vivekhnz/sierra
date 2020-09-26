@@ -5,22 +5,24 @@
 #include <glad/glad.h>
 #include <glm/glm.hpp>
 #include <vector>
-#include "Shader.hpp"
+#include <string>
+#include "Renderer.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT ShaderProgram
     {
         int id;
+        Renderer &renderer;
 
     public:
-        ShaderProgram();
+        ShaderProgram(Renderer &renderer);
         ShaderProgram(const ShaderProgram &that) = delete;
         ShaderProgram &operator=(const ShaderProgram &that) = delete;
         ShaderProgram(ShaderProgram &&) = delete;
         ShaderProgram &operator=(ShaderProgram &&) = delete;
 
         int getId() const;
-        void link(const std::vector<Shader> &shaders);
+        void link(const std::vector<int> &shaderHandles);
         void setMat4(std::string uniformName, bool transpose, glm::mat4 matrix);
         void setFloat(std::string uniformName, float value);
         void setInt(std::string uniformName, int value);

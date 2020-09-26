@@ -27,7 +27,6 @@
     <ClCompile Include="src\CameraComponentManager.cpp" />
     <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\FirstPersonCameraComponentManager.cpp" />
-    <ClCompile Include="src\Graphics\AttachShader.cpp" />
     <ClCompile Include="src\Graphics\BindBuffer.cpp" />
     <ClCompile Include="src\Graphics\BindVertexArray.cpp" />
     <ClCompile Include="src\Graphics\Buffer.cpp" />
@@ -36,7 +35,6 @@
     <ClCompile Include="src\Graphics\Mesh.cpp" />
     <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp" />
     <ClCompile Include="src\Graphics\Renderer.cpp" />
-    <ClCompile Include="src\Graphics\Shader.cpp" />
     <ClCompile Include="src\Graphics\ShaderManager.cpp" />
     <ClCompile Include="src\Graphics\ShaderProgram.cpp" />
     <ClCompile Include="src\Graphics\VertexArray.cpp" />
@@ -59,7 +57,6 @@
     <ClInclude Include="src\EngineViewContext.hpp" />
     <ClInclude Include="src\EntityManager.hpp" />
     <ClInclude Include="src\FirstPersonCameraComponentManager.hpp" />
-    <ClInclude Include="src\Graphics\AttachShader.hpp" />
     <ClInclude Include="src\Graphics\BindBuffer.hpp" />
     <ClInclude Include="src\Graphics\BindVertexArray.hpp" />
     <ClInclude Include="src\Graphics\Buffer.hpp" />
@@ -70,7 +67,6 @@
     <ClInclude Include="src\Graphics\MeshData.hpp" />
     <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp" />
     <ClInclude Include="src\Graphics\Renderer.hpp" />
-    <ClInclude Include="src\Graphics\Shader.hpp" />
     <ClInclude Include="src\Graphics\ShaderManager.hpp" />
     <ClInclude Include="src\Graphics\ShaderProgram.hpp" />
     <ClInclude Include="src\Graphics\VertexArray.hpp" />
