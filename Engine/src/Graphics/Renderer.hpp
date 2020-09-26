@@ -63,6 +63,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } shaders;
 
+        struct ShaderPrograms
+        {
+            int count;
+            std::vector<unsigned int> id;
+
+            ShaderPrograms() : count(0)
+            {
+            }
+        } shaderPrograms;
+
     public:
         enum class UniformBuffer : unsigned int
         {
@@ -112,6 +122,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             return shaders.resourceIdToHandle[resourceId];
         }
+
+        int createShaderProgram();
+        unsigned int getShaderProgramId(int handle) const;
 
         ~Renderer();
     };

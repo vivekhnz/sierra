@@ -11,15 +11,11 @@
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT ShaderProgram
     {
-        int id;
+        int handle;
         Renderer &renderer;
 
     public:
         ShaderProgram(Renderer &renderer);
-        ShaderProgram(const ShaderProgram &that) = delete;
-        ShaderProgram &operator=(const ShaderProgram &that) = delete;
-        ShaderProgram(ShaderProgram &&) = delete;
-        ShaderProgram &operator=(ShaderProgram &&) = delete;
 
         int getId() const;
         void link(const std::vector<int> &shaderHandles);
@@ -29,8 +25,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void setBool(std::string uniformName, bool value);
         void setVector2(std::string uniformName, glm::vec2 value);
         void setVector3(std::string uniformName, glm::vec3 value);
-
-        ~ShaderProgram();
     };
 }}}
 

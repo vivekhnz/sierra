@@ -151,6 +151,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return shaders.id[handle];
     }
 
+    int Renderer::createShaderProgram()
+    {
+        unsigned int id = glCreateProgram();
+        shaderPrograms.id.push_back(id);
+        return shaderPrograms.count++;
+    }
+
+    unsigned int Renderer::getShaderProgramId(int handle) const
+    {
+        return shaderPrograms.id[handle];
+    }
+
     Renderer::~Renderer()
     {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
@@ -159,6 +171,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         for (int i = 0; i < shaders.count; i++)
         {
             glDeleteShader(shaders.id[i]);
+        }
+        for (int i = 0; i < shaderPrograms.count; i++)
+        {
+            glDeleteProgram(shaderPrograms.id[i]);
         }
     }
 }}}
