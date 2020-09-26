@@ -192,6 +192,9 @@
     <ClInclude Include="src\TerrainRendererComponentManager.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Resources\TextureResource.hpp">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
@@ -208,6 +211,9 @@
     </Filter>
     <Filter Include="src\Physics">
       <UniqueIdentifier>{18f462fe-d8f8-4fbf-8c38-f777233e61eb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="src\Resources">
+      <UniqueIdentifier>{76f65739-beb1-409c-95d9-71898ce0e7ed}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

@@ -2,9 +2,11 @@
 #define GRAPHICS_RENDERER_HPP
 
 #include "../Common.hpp"
-#include <glm/glm.hpp>
 #include "ShaderManager.hpp"
+#include "../Resources/TextureResource.hpp"
+#include <glm/glm.hpp>
 #include <vector>
+#include <map>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
@@ -24,10 +26,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Textures
         {
             int count;
+            std::vector<int> resourceId;
             std::vector<unsigned int> id;
             std::vector<int> internalFormat;
             std::vector<int> format;
             std::vector<int> type;
+
+            std::map<int, int> resourceIdToHandle;
 
             Textures() : count(0)
             {
@@ -78,10 +83,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
-        int createTexture(
-            int internalFormat, int format, int type, int wrapMode, int filterMode);
+        void onTexturesLoaded(const int count, Resources::TextureResource *resources);
         void updateTexture(int handle, int width, int height, const void *pixels);
         void bindTextures(int *textureHandles, int count);
+        int lookupTexture(int resourceId)
+        {
+            return textures.resourceIdToHandle[resourceId];
+        }
 
         int createVertexBuffer(unsigned int usage);
         void updateVertexBuffer(int handle, int size, const void *data);

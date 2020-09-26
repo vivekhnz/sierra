@@ -50,22 +50,38 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBuffers.size[uboEnumUint], data);
     }
 
-    int Renderer::createTexture(
-        int internalFormat, int format, int type, int wrapMode, int filterMode)
+    void Renderer::onTexturesLoaded(const int count, Resources::TextureResource *resources)
     {
-        unsigned int id;
-        glGenTextures(1, &id);
-        glBindTexture(GL_TEXTURE_2D, id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+        if (count < 1)
+            return;
 
-        textures.id.push_back(id);
-        textures.internalFormat.push_back(internalFormat);
-        textures.format.push_back(format);
-        textures.type.push_back(type);
-        return textures.count++;
+        unsigned int *ids = new unsigned int[count];
+        glGenTextures(count, ids);
+
+        for (int i = 0; i < count; i++)
+        {
+            unsigned int &id = ids[i];
+            Resources::TextureResource &resource = resources[i];
+
+            glBindTexture(GL_TEXTURE_2D, id);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, resource.wrapMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, resource.wrapMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, resource.filterMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, resource.filterMode);
+            glTexImage2D(GL_TEXTURE_2D, 0, resource.internalFormat, resource.width,
+                resource.height, 0, resource.format, resource.type, resource.data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+
+            textures.resourceId.push_back(resource.id);
+            textures.id.push_back(id);
+            textures.internalFormat.push_back(resource.internalFormat);
+            textures.format.push_back(resource.format);
+            textures.type.push_back(resource.type);
+
+            textures.resourceIdToHandle[resource.id] = textures.count++;
+        }
+
+        delete[] ids;
     }
 
     void Renderer::updateTexture(int handle, int width, int height, const void *pixels)

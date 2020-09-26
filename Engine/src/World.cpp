@@ -25,8 +25,4 @@ namespace Terrain { namespace Engine {
         componentManagers.terrainRenderer.calculateTessellationLevels();
         componentManagers.meshRenderer.renderMeshes();
     }
-
-    World::~World()
-    {
-    }
 }}

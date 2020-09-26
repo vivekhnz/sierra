@@ -3,6 +3,7 @@
 #include <glm/glm.hpp>
 #include <algorithm>
 #include "IO/Path.hpp"
+#include "Resources/TextureResource.hpp"
 #include "Graphics/Image.hpp"
 
 namespace Terrain { namespace Engine {
@@ -12,68 +13,30 @@ namespace Terrain { namespace Engine {
     {
     }
 
-    void Terrain::initialize(
-        const Graphics::ShaderManager &shaderManager, int heightmapTextureHandle)
+    void Terrain::initialize()
     {
-        this->heightmapTextureHandle = heightmapTextureHandle;
-
         // load shaders
         std::vector<Graphics::Shader> terrainShaders;
-        terrainShaders.push_back(shaderManager.loadVertexShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaders.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_vertex_shader.glsl")));
-        terrainShaders.push_back(shaderManager.loadTessControlShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaders.loadTessControlShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_tess_ctrl_shader.glsl")));
-        terrainShaders.push_back(shaderManager.loadTessEvalShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaders.loadTessEvalShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_tess_eval_shader.glsl")));
-        terrainShaders.push_back(shaderManager.loadFragmentShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaders.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_fragment_shader.glsl")));
         terrainShaderProgram.link(terrainShaders);
 
         std::vector<Graphics::Shader> wireframeShaders;
-        wireframeShaders.push_back(shaderManager.loadVertexShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaders.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_vertex_shader.glsl")));
-        wireframeShaders.push_back(shaderManager.loadTessControlShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaders.loadTessControlShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_tess_ctrl_shader.glsl")));
-        wireframeShaders.push_back(shaderManager.loadTessEvalShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaders.loadTessEvalShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_tess_eval_shader.glsl")));
-        wireframeShaders.push_back(shaderManager.loadFragmentShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaders.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_fragment_shader.glsl")));
         wireframeShaderProgram.link(wireframeShaders);
-
-        // load terrain textures
-        auto albedoImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false);
-        int albedoTextureHandle = ctx.renderer.createTexture(
-            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        ctx.renderer.updateTexture(albedoTextureHandle, albedoImage.getWidth(),
-            albedoImage.getHeight(), albedoImage.getData());
-
-        auto normalImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false);
-        int normalTextureHandle = ctx.renderer.createTexture(
-            GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        ctx.renderer.updateTexture(normalTextureHandle, normalImage.getWidth(),
-            normalImage.getHeight(), normalImage.getData());
-
-        auto displacementImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true);
-        int displacementTextureHandle = ctx.renderer.createTexture(
-            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        ctx.renderer.updateTexture(displacementTextureHandle, displacementImage.getWidth(),
-            displacementImage.getHeight(), displacementImage.getData());
-
-        auto aoImage = Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false);
-        int aoTextureHandle = ctx.renderer.createTexture(
-            GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        ctx.renderer.updateTexture(
-            aoTextureHandle, aoImage.getWidth(), aoImage.getHeight(), aoImage.getData());
-
-        auto roughnessImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false);
-        int roughnessTextureHandle = ctx.renderer.createTexture(
-            GL_R8, GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        ctx.renderer.updateTexture(roughnessTextureHandle, roughnessImage.getWidth(),
-            roughnessImage.getHeight(), roughnessImage.getData());
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);
@@ -95,12 +58,18 @@ namespace Terrain { namespace Engine {
         terrainMaterial.shaderProgramId = terrainShaderProgram.getId();
         terrainMaterial.polygonMode = GL_FILL;
         terrainMaterial.textureCount = 6;
-        terrainMaterial.textureHandles[0] = heightmapTextureHandle;
-        terrainMaterial.textureHandles[1] = albedoTextureHandle;
-        terrainMaterial.textureHandles[2] = normalTextureHandle;
-        terrainMaterial.textureHandles[3] = displacementTextureHandle;
-        terrainMaterial.textureHandles[4] = aoTextureHandle;
-        terrainMaterial.textureHandles[5] = roughnessTextureHandle;
+        terrainMaterial.textureHandles[0] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE);
+        terrainMaterial.textureHandles[1] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ALBEDO_TEXTURE);
+        terrainMaterial.textureHandles[2] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_NORMAL_TEXTURE);
+        terrainMaterial.textureHandles[3] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_DISPLACEMENT_TEXTURE);
+        terrainMaterial.textureHandles[4] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_AO_TEXTURE);
+        terrainMaterial.textureHandles[5] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ROUGHNESS_TEXTURE);
 
         wireframeMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &wireframeMaterial =
@@ -108,12 +77,18 @@ namespace Terrain { namespace Engine {
         wireframeMaterial.shaderProgramId = wireframeShaderProgram.getId();
         wireframeMaterial.polygonMode = GL_LINE;
         wireframeMaterial.textureCount = 6;
-        wireframeMaterial.textureHandles[0] = heightmapTextureHandle;
-        wireframeMaterial.textureHandles[1] = albedoTextureHandle;
-        wireframeMaterial.textureHandles[2] = normalTextureHandle;
-        wireframeMaterial.textureHandles[3] = displacementTextureHandle;
-        wireframeMaterial.textureHandles[4] = aoTextureHandle;
-        wireframeMaterial.textureHandles[5] = roughnessTextureHandle;
+        wireframeMaterial.textureHandles[0] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE);
+        wireframeMaterial.textureHandles[1] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ALBEDO_TEXTURE);
+        wireframeMaterial.textureHandles[2] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_NORMAL_TEXTURE);
+        wireframeMaterial.textureHandles[3] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_DISPLACEMENT_TEXTURE);
+        wireframeMaterial.textureHandles[4] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_AO_TEXTURE);
+        wireframeMaterial.textureHandles[5] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_ROUGHNESS_TEXTURE);
 
         // build mesh
         std::vector<float> vertices(columns * rows * 5);
@@ -185,7 +160,9 @@ namespace Terrain { namespace Engine {
 
     void Terrain::loadHeightmap(int textureWidth, int textureHeight, const void *data)
     {
-        ctx.renderer.updateTexture(heightmapTextureHandle, textureWidth, textureHeight, data);
+        ctx.renderer.updateTexture(
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE),
+            textureWidth, textureHeight, data);
         world.componentManagers.terrainCollider.updatePatchHeights(
             colliderInstanceId, textureWidth, textureHeight, data);
         world.componentManagers.terrainRenderer.updateMesh(

@@ -33,15 +33,9 @@ namespace Terrain { namespace Engine {
         ComponentManagers componentManagers;
 
         World(EngineContext &ctx);
-        World(const World &that) = delete;
-        World &operator=(const World &that) = delete;
-        World(World &&) = delete;
-        World &operator=(World &&) = delete;
 
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
-
-        ~World();
     };
 }}
 

@@ -1,6 +1,7 @@
 #include "Scene.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include "Graphics/Image.hpp"
 #include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
 
@@ -8,11 +9,89 @@ namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), terrain(ctx, world), quadMesh(ctx.renderer)
     {
-        int heightmapTextureHandle = ctx.renderer.createTexture(
-            GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        // load texture resources
+        std::vector<Resources::TextureResource> textureResources;
 
-        Graphics::ShaderManager shaderManager;
-        terrain.initialize(shaderManager, heightmapTextureHandle);
+        auto albedoImage =
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false);
+        auto normalImage =
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false);
+        auto displacementImage =
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true);
+        auto aoImage = Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false);
+        auto roughnessImage =
+            Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false);
+
+        textureResources.push_back({
+            TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE, // id
+            GL_R16,                                          // internalFormat
+            GL_RED,                                          // format
+            GL_UNSIGNED_SHORT,                               // type
+            GL_MIRRORED_REPEAT,                              // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                         // filterMode
+            0,                                               // width
+            0,                                               // height
+            NULL                                             // data
+        });
+        textureResources.push_back({
+            TerrainResources::RESOURCE_ID_ALBEDO_TEXTURE, // id
+            GL_RGB,                                       // internalFormat
+            GL_RGB,                                       // format
+            GL_UNSIGNED_BYTE,                             // type
+            GL_REPEAT,                                    // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                      // filterMode
+            albedoImage.getWidth(),                       // width
+            albedoImage.getHeight(),                      // height
+            albedoImage.getData()                         // data
+        });
+        textureResources.push_back({
+            TerrainResources::RESOURCE_ID_NORMAL_TEXTURE, // id
+            GL_RGB,                                       // internalFormat
+            GL_RGB,                                       // format
+            GL_UNSIGNED_BYTE,                             // type
+            GL_REPEAT,                                    // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                      // filterMode
+            normalImage.getWidth(),                       // width
+            normalImage.getHeight(),                      // height
+            normalImage.getData()                         // data
+        });
+        textureResources.push_back({
+            TerrainResources::RESOURCE_ID_DISPLACEMENT_TEXTURE, // id
+            GL_R16,                                             // internalFormat
+            GL_RED,                                             // format
+            GL_UNSIGNED_SHORT,                                  // type
+            GL_REPEAT,                                          // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                            // filterMode
+            displacementImage.getWidth(),                       // width
+            displacementImage.getHeight(),                      // height
+            displacementImage.getData()                         // data
+        });
+        textureResources.push_back({
+            TerrainResources::RESOURCE_ID_AO_TEXTURE, // id
+            GL_R8,                                    // internalFormat
+            GL_RED,                                   // format
+            GL_UNSIGNED_BYTE,                         // type
+            GL_REPEAT,                                // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                  // filterMode
+            aoImage.getWidth(),                       // width
+            aoImage.getHeight(),                      // height
+            aoImage.getData()                         // data
+        });
+        textureResources.push_back({
+            TerrainResources::RESOURCE_ID_ROUGHNESS_TEXTURE, // id
+            GL_R8,                                           // internalFormat
+            GL_RED,                                          // format
+            GL_UNSIGNED_BYTE,                                // type
+            GL_REPEAT,                                       // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                         // filterMode
+            roughnessImage.getWidth(),                       // width
+            roughnessImage.getHeight(),                      // height
+            roughnessImage.getData()                         // data
+        });
+
+        ctx.renderer.onTexturesLoaded(textureResources.size(), textureResources.data());
+
+        terrain.initialize();
 
         // configure input
         ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
@@ -68,7 +147,8 @@ namespace Terrain { namespace Engine {
         quadMaterial.shaderProgramId = quadShaderProgram.getId();
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
-        quadMaterial.textureHandles[0] = heightmapTextureHandle;
+        quadMaterial.textureHandles[0] =
+            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_HEIGHTMAP_TEXTURE);
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
@@ -76,9 +156,9 @@ namespace Terrain { namespace Engine {
             std::vector<Graphics::UniformValue>());
 
         std::vector<Graphics::Shader> quadShaders;
-        quadShaders.push_back(shaderManager.loadVertexShaderFromFile(
+        quadShaders.push_back(ctx.renderer.shaders.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/texture_vertex_shader.glsl")));
-        quadShaders.push_back(shaderManager.loadFragmentShaderFromFile(
+        quadShaders.push_back(ctx.renderer.shaders.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
         quadShaderProgram.link(quadShaders);
         quadShaderProgram.setInt("imageTexture", 0);
