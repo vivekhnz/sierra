@@ -24,18 +24,21 @@ namespace Terrain { namespace Engine { namespace Graphics {
         data.meshHandle.push_back(meshHandle);
         data.materialHandle.push_back(materialHandle);
 
-        int shaderProgramId = resourceMgr.getMaterial(materialHandle).shaderProgramId;
-
         int uniformCount = uniformNames.size();
         data.firstUniformIndex.push_back(data.uniformLocations.size());
         data.uniformCount.push_back(uniformCount);
+        data.uniformNames.insert(
+            data.uniformNames.end(), uniformNames.begin(), uniformNames.end());
+        data.uniformValues.insert(
+            data.uniformValues.end(), uniformValues.begin(), uniformValues.end());
+
+        // calculate uniform locations
+        int shaderProgramId = resourceMgr.getMaterial(materialHandle).shaderProgramId;
         for (int i = 0; i < uniformCount; i++)
         {
             data.uniformLocations.push_back(
                 glGetUniformLocation(shaderProgramId, uniformNames[i].c_str()));
         }
-        data.uniformValues.insert(
-            data.uniformValues.end(), uniformValues.begin(), uniformValues.end());
 
         entityIdToInstanceId[entityId] = data.count;
         return data.count++;
@@ -85,49 +88,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void MeshRendererComponentManager::setMaterialHandle(int i, int materialHandle)
     {
-        int &currentMaterialHandle = data.materialHandle[i];
+        int &uniformCount = data.uniformCount[i];
+        int &firstUniformIndex = data.firstUniformIndex[i];
 
-        // once we change material, we will be using a new shader program
-        // this means our uniform locations are no longer valid
-        // we need to update our uniform locations for the new material's shader program
-        std::map<unsigned int, std::string> oldMaterialUniformLocsToUniformNames;
-
-        // build up a map of the current shader program's uniform locations to uniform names
-        int shaderProgramId = resourceMgr.getMaterial(currentMaterialHandle).shaderProgramId;
-        int uniformCount = 0;
-        glGetProgramInterfaceiv(
-            shaderProgramId, GL_UNIFORM, GL_ACTIVE_RESOURCES, &uniformCount);
-
-        GLchar uniformName[256];
-        for (int i = 0; i < uniformCount; i++)
+        // recalculate uniform locations
+        int shaderProgramId = resourceMgr.getMaterial(materialHandle).shaderProgramId;
+        for (int u = 0; u < uniformCount; u++)
         {
-            // loop through and retrieve the uniform name
-            glGetProgramResourceName(
-                shaderProgramId, GL_UNIFORM, i, 256, NULL, &uniformName[0]);
-
-            // get the uniform location from the uniform name
-            unsigned loc = glGetUniformLocation(shaderProgramId, uniformName);
-
-            oldMaterialUniformLocsToUniformNames[loc] = uniformName;
+            int idx = firstUniformIndex + u;
+            data.uniformLocations[idx] =
+                glGetUniformLocation(shaderProgramId, data.uniformNames[idx].c_str());
         }
 
-        // get the new material's shader program
-        shaderProgramId = resourceMgr.getMaterial(materialHandle).shaderProgramId;
-
-        // loop through each material uniform and update its location to point at the
-        // respective uniform location for the new material's shader program
-        int &materialUniformCount = data.uniformCount[i];
-        for (int i = 0; i < materialUniformCount; i++)
-        {
-            unsigned int &loc = data.uniformLocations[i];
-            auto locNamePair = oldMaterialUniformLocsToUniformNames.find(loc);
-            if (locNamePair != oldMaterialUniformLocsToUniformNames.end())
-            {
-                loc = glGetUniformLocation(shaderProgramId, locNamePair->second.c_str());
-            }
-        }
-
-        // finally, update our material handle to point to the new material
         data.materialHandle[i] = materialHandle;
     }
 
