@@ -1,8 +1,8 @@
 #include "Scene.hpp"
 
 #include <glm/gtc/matrix_transform.hpp>
+#include "TerrainResources.hpp"
 #include "Graphics/Image.hpp"
-#include "Graphics/ShaderManager.hpp"
 #include "IO/Path.hpp"
 #include "IO/OpenFile.hpp"
 
@@ -78,10 +78,10 @@ namespace Terrain { namespace Engine {
             std::vector<Graphics::UniformValue>());
 
         std::vector<int> quadShaderHandles;
-        quadShaderHandles.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
-            IO::Path::getAbsolutePath("data/texture_vertex_shader.glsl")));
-        quadShaderHandles.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
-            IO::Path::getAbsolutePath("data/texture_fragment_shader.glsl")));
+        quadShaderHandles.push_back(
+            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX));
+        quadShaderHandles.push_back(
+            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT));
         quadShaderProgram.link(quadShaderHandles);
         quadShaderProgram.setInt("imageTexture", 0);
     }
@@ -179,13 +179,79 @@ namespace Terrain { namespace Engine {
         // load shader resources
         std::vector<Resources::ShaderResource> shaderResources;
 
-        std::string shaderSrc_terrainComputeTessLevel =
-            readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
+        struct ShaderSource
+        {
+            std::string textureVertex = readFileText("data/texture_vertex_shader.glsl");
+            std::string textureFragment = readFileText("data/texture_fragment_shader.glsl");
+            std::string terrainVertex = readFileText("data/terrain_vertex_shader.glsl");
+            std::string terrainTessCtrl = readFileText("data/terrain_tess_ctrl_shader.glsl");
+            std::string terrainTessEval = readFileText("data/terrain_tess_eval_shader.glsl");
+            std::string terrainFragment = readFileText("data/terrain_fragment_shader.glsl");
+            std::string terrainComputeTessLevel =
+                readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
+            std::string wireframeVertex = readFileText("data/wireframe_vertex_shader.glsl");
+            std::string wireframeTessCtrl =
+                readFileText("data/wireframe_tess_ctrl_shader.glsl");
+            std::string wireframeTessEval =
+                readFileText("data/wireframe_tess_eval_shader.glsl");
+            std::string wireframeFragment =
+                readFileText("data/wireframe_fragment_shader.glsl");
+        } shaderSrc;
 
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX, // id
+            GL_VERTEX_SHADER,                                    // type
+            shaderSrc.textureVertex.c_str(),                     // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT, // id
+            GL_FRAGMENT_SHADER,                                    // type
+            shaderSrc.textureFragment.c_str(),                     // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_VERTEX, // id
+            GL_VERTEX_SHADER,                                    // type
+            shaderSrc.terrainVertex.c_str(),                     // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_CTRL, // id
+            GL_TESS_CONTROL_SHADER,                                 // type
+            shaderSrc.terrainTessCtrl.c_str(),                      // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL, // id
+            GL_TESS_EVALUATION_SHADER,                              // type
+            shaderSrc.terrainTessEval.c_str(),                      // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT, // id
+            GL_FRAGMENT_SHADER,                                    // type
+            shaderSrc.terrainFragment.c_str(),                     // src
+        });
         shaderResources.push_back({
             TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL, // id
             GL_COMPUTE_SHADER,                                               // type
-            shaderSrc_terrainComputeTessLevel.c_str(),                       // src
+            shaderSrc.terrainComputeTessLevel.c_str(),                       // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_VERTEX, // id
+            GL_VERTEX_SHADER,                                      // type
+            shaderSrc.wireframeVertex.c_str(),                     // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_CTRL, // id
+            GL_TESS_CONTROL_SHADER,                                   // type
+            shaderSrc.wireframeTessCtrl.c_str(),                      // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL, // id
+            GL_TESS_EVALUATION_SHADER,                                // type
+            shaderSrc.wireframeTessEval.c_str(),                      // src
+        });
+        shaderResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT, // id
+            GL_FRAGMENT_SHADER,                                      // type
+            shaderSrc.wireframeFragment.c_str(),                     // src
         });
 
         ctx.renderer.onShadersLoaded(shaderResources.size(), shaderResources.data());

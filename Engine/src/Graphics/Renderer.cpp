@@ -4,7 +4,7 @@
 #include <iostream>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Renderer::Renderer() : shaderMgr(*this)
+    Renderer::Renderer()
     {
     }
 
@@ -144,27 +144,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             shaders.id.push_back(id);
             shaders.resourceIdToHandle[resource.id] = shaders.count++;
         }
-    }
-
-    int Renderer::createShader(unsigned int type, std::string src)
-    {
-        unsigned int id = glCreateShader(type);
-
-        const char *src_c = src.c_str();
-        glShaderSource(id, 1, &src_c, NULL);
-
-        glCompileShader(id);
-        int success;
-        glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            char infoLog[512];
-            glGetShaderInfoLog(id, 512, NULL, infoLog);
-            throw std::runtime_error("Shader compilation failed: " + std::string(infoLog));
-        }
-
-        shaders.id.push_back(id);
-        return shaders.count++;
     }
 
     unsigned int Renderer::getShaderId(int handle) const

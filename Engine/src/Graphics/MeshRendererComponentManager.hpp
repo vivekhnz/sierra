@@ -6,6 +6,7 @@
 #include "Renderer.hpp"
 #include <vector>
 #include <map>
+#include <string>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     enum class UniformType : unsigned int

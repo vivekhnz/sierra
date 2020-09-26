@@ -7,7 +7,6 @@
 #include <vector>
 #include <map>
 
-#include "ShaderManager.hpp"
 #include "../Resources/TextureResource.hpp"
 #include "../Resources/ShaderResource.hpp"
 
@@ -86,8 +85,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int isRoughnessMapEnabled;
         };
 
-        ShaderManager shaderMgr;
-
         Renderer();
         Renderer(const Renderer &that) = delete;
         Renderer &operator=(const Renderer &that) = delete;
@@ -110,7 +107,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         unsigned int getVertexBufferId(int handle) const;
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
-        int createShader(unsigned int type, std::string src);
         unsigned int getShaderId(int handle) const;
         int lookupShader(int resourceId)
         {
