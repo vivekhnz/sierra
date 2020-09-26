@@ -88,15 +88,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         void renderMeshes();
         void setMaterialHandle(int i, int materialHandle);
-
-        void setMaterialUniformFloat(int i, int uniformIndex, float value)
-        {
-            data.uniformValues[data.firstUniformIndex[i] + uniformIndex].f = value;
-        }
-        void setMaterialUniformVector2(int i, int uniformIndex, glm::vec2 value)
-        {
-            data.uniformValues[data.firstUniformIndex[i] + uniformIndex].vec2 = value;
-        }
+        void setMaterialUniformFloat(int i, std::string uniformName, float value);
+        void setMaterialUniformVector2(int i, std::string uniformName, glm::vec2 value);
 
         ~MeshRendererComponentManager();
     };

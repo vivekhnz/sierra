@@ -21,7 +21,6 @@ namespace Terrain { namespace Engine {
             std::vector<int> columns;
             std::vector<float> patchSize;
             std::vector<float> terrainHeight;
-            std::vector<unsigned int> heightmapSizeUniformIndex;
             std::vector<bool> isWireframeMode;
             std::vector<Graphics::Buffer> tessellationLevelBuffer;
 
@@ -50,8 +49,7 @@ namespace Terrain { namespace Engine {
             int rows,
             int columns,
             float patchSize,
-            float terrainHeight,
-            unsigned int heightmapSizeUniformIndex);
+            float terrainHeight);
 
         void calculateTessellationLevels();
         void updateMesh(

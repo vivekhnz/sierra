@@ -103,6 +103,38 @@ namespace Terrain { namespace Engine { namespace Graphics {
         data.materialHandle[i] = materialHandle;
     }
 
+    void MeshRendererComponentManager::setMaterialUniformFloat(
+        int i, std::string uniformName, float value)
+    {
+        int &startIndex = data.firstUniformIndex[i];
+        int &count = data.uniformCount[i];
+        for (int u = 0; u < count; u++)
+        {
+            int idx = startIndex + u;
+            if (data.uniformNames[idx] == uniformName)
+            {
+                data.uniformValues[idx].f = value;
+                break;
+            }
+        }
+    }
+
+    void MeshRendererComponentManager::setMaterialUniformVector2(
+        int i, std::string uniformName, glm::vec2 value)
+    {
+        int &startIndex = data.firstUniformIndex[i];
+        int &count = data.uniformCount[i];
+        for (int u = 0; u < count; u++)
+        {
+            int idx = startIndex + u;
+            if (data.uniformNames[idx] == uniformName)
+            {
+                data.uniformValues[idx].vec2 = value;
+                break;
+            }
+        }
+    }
+
     MeshRendererComponentManager::~MeshRendererComponentManager()
     {
         data.count = 0;

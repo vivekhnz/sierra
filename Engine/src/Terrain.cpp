@@ -173,8 +173,8 @@ namespace Terrain { namespace Engine {
             entityId, columns, rows, patchSize, terrainHeight);
         meshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
             meshHandle, terrainMaterialHandle, materialUniformNames, materialUniformValues);
-        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
-            mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight, 1);
+        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
+            entityId, mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight);
     }
 
     void Terrain::loadHeightmapFromFile(std::string path)
