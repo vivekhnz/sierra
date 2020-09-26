@@ -8,7 +8,7 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f),
-        isWireframeMode(false), mesh(ctx.renderer)
+        mesh(ctx.renderer)
     {
     }
 
@@ -194,9 +194,8 @@ namespace Terrain { namespace Engine {
 
     void Terrain::toggleWireframeMode()
     {
-        isWireframeMode = !isWireframeMode;
-        world.componentManagers.meshRenderer.setMaterialHandle(meshRendererInstanceId,
-            isWireframeMode ? wireframeMaterialHandle : terrainMaterialHandle);
+        world.componentManagers.terrainRenderer.toggleWireframeMode(
+            terrainRendererInstanceId, terrainMaterialHandle, wireframeMaterialHandle);
     }
 
     Terrain::~Terrain()

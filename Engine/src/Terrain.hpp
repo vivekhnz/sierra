@@ -28,8 +28,6 @@ namespace Terrain { namespace Engine {
         int terrainMaterialHandle;
         int wireframeMaterialHandle;
 
-        bool isWireframeMode;
-
     public:
         Terrain(EngineContext &ctx, World &world);
         Terrain(const Terrain &that) = delete;

@@ -30,6 +30,7 @@ namespace Terrain { namespace Engine {
         data.patchSize.push_back(patchSize);
         data.terrainHeight.push_back(terrainHeight);
         data.heightmapSizeUniformIndex.push_back(heightmapSizeUniformIndex);
+        data.isWireframeMode.push_back(false);
 
         // create buffer to store vertex edge data
         data.tessellationLevelBuffer.push_back(
@@ -102,6 +103,17 @@ namespace Terrain { namespace Engine {
         // update heightmap size (used by adaptive tessellation)
         meshRenderer.setMaterialUniformVector2(meshRenderer.lookup(data.entityId[i]),
             data.heightmapSizeUniformIndex[i], glm::vec2(heightmapWidth, heightmapHeight));
+    }
+
+    void TerrainRendererComponentManager::toggleWireframeMode(
+        int i, int terrainMaterialHandle, int wireframeMaterialHandle)
+    {
+        bool isWireframeMode = data.isWireframeMode[i];
+        isWireframeMode = !isWireframeMode;
+        data.isWireframeMode[i] = isWireframeMode;
+
+        meshRenderer.setMaterialHandle(
+            i, isWireframeMode ? wireframeMaterialHandle : terrainMaterialHandle);
     }
 
     TerrainRendererComponentManager::~TerrainRendererComponentManager()
