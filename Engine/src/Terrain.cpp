@@ -17,24 +17,24 @@ namespace Terrain { namespace Engine {
     {
         // load shaders
         std::vector<Graphics::Shader> terrainShaders;
-        terrainShaders.push_back(ctx.renderer.shaders.loadVertexShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_vertex_shader.glsl")));
-        terrainShaders.push_back(ctx.renderer.shaders.loadTessControlShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaderMgr.loadTessControlShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_tess_ctrl_shader.glsl")));
-        terrainShaders.push_back(ctx.renderer.shaders.loadTessEvalShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaderMgr.loadTessEvalShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_tess_eval_shader.glsl")));
-        terrainShaders.push_back(ctx.renderer.shaders.loadFragmentShaderFromFile(
+        terrainShaders.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_fragment_shader.glsl")));
         terrainShaderProgram.link(terrainShaders);
 
         std::vector<Graphics::Shader> wireframeShaders;
-        wireframeShaders.push_back(ctx.renderer.shaders.loadVertexShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadVertexShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_vertex_shader.glsl")));
-        wireframeShaders.push_back(ctx.renderer.shaders.loadTessControlShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadTessControlShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_tess_ctrl_shader.glsl")));
-        wireframeShaders.push_back(ctx.renderer.shaders.loadTessEvalShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadTessEvalShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_tess_eval_shader.glsl")));
-        wireframeShaders.push_back(ctx.renderer.shaders.loadFragmentShaderFromFile(
+        wireframeShaders.push_back(ctx.renderer.shaderMgr.loadFragmentShaderFromFile(
             IO::Path::getAbsolutePath("data/wireframe_fragment_shader.glsl")));
         wireframeShaderProgram.link(wireframeShaders);
 
@@ -173,9 +173,5 @@ namespace Terrain { namespace Engine {
     {
         world.componentManagers.terrainRenderer.toggleWireframeMode(
             terrainRendererInstanceId, terrainMaterialHandle, wireframeMaterialHandle);
-    }
-
-    Terrain::~Terrain()
-    {
     }
 }}

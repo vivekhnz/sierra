@@ -1,48 +1,15 @@
 #include "Shader.hpp"
 
-#include <iostream>
+#include "Renderer.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Shader::Shader(GLenum shaderType, std::string src)
+    Shader::Shader(Renderer &renderer, GLenum shaderType, std::string src) : renderer(renderer)
     {
-        id = glCreateShader(shaderType);
-        const char *src_c = src.c_str();
-        glShaderSource(id, 1, &src_c, NULL);
+        id = renderer.createShader(shaderType, src);
     }
 
-    Shader::Shader(Shader &&other) : id(other.id)
+    unsigned int Shader::getId() const
     {
-        other.id = NULL;
-    }
-
-    int Shader::getId() const
-    {
-        return id;
-    }
-
-    void Shader::compile()
-    {
-        if (id == NULL)
-        {
-            throw std::runtime_error("Shader not initialized.");
-        }
-
-        glCompileShader(id);
-        int success;
-        glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-        if (!success)
-        {
-            char infoLog[512];
-            glGetShaderInfoLog(id, 512, NULL, infoLog);
-            throw std::runtime_error("Shader compilation failed: " + std::string(infoLog));
-        }
-    }
-
-    Shader::~Shader()
-    {
-        if (id != NULL)
-        {
-            glDeleteShader(id);
-        }
+        return renderer.getShaderId(id);
     }
 }}}

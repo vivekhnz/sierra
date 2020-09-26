@@ -21,6 +21,8 @@ namespace Terrain { namespace Engine {
         Graphics::Mesh quadMesh;
         Graphics::ShaderProgram quadShaderProgram;
 
+        void loadResources();
+
     public:
         Scene(EngineContext &ctx, World &world);
         Scene(const Scene &that) = delete;

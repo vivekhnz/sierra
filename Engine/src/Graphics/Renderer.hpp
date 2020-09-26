@@ -2,8 +2,8 @@
 #define GRAPHICS_RENDERER_HPP
 
 #include "../Common.hpp"
-#include "ShaderManager.hpp"
 #include "../Resources/TextureResource.hpp"
+#include "ShaderManager.hpp"
 #include <glm/glm.hpp>
 #include <vector>
 #include <map>
@@ -50,6 +50,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } vertexBuffers;
 
+        struct Shaders
+        {
+            int count;
+            std::vector<unsigned int> id;
+
+            Shaders() : count(0)
+            {
+            }
+        } shaders;
+
     public:
         enum class UniformBuffer : unsigned int
         {
@@ -72,7 +82,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int isRoughnessMapEnabled;
         };
 
-        ShaderManager shaders;
+        ShaderManager shaderMgr;
 
         Renderer();
         Renderer(const Renderer &that) = delete;
@@ -94,6 +104,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int createVertexBuffer(unsigned int usage);
         void updateVertexBuffer(int handle, int size, const void *data);
         unsigned int getVertexBufferId(int handle) const;
+
+        int createShader(unsigned int type, std::string src);
+        unsigned int getShaderId(int handle) const;
 
         ~Renderer();
     };

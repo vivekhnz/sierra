@@ -6,21 +6,18 @@
 #include <string>
 
 namespace Terrain { namespace Engine { namespace Graphics {
+    class Renderer;
+
     class EXPORT Shader
     {
-        int id;
+        unsigned int id;
+
+        Renderer &renderer;
 
     public:
-        Shader(GLenum shaderType, std::string src);
-        Shader(const Shader &that) = delete;
-        Shader &operator=(const Shader &that) = delete;
-        Shader(Shader &&other);
-        Shader &operator=(Shader &&other) = delete;
+        Shader(Renderer &renderer, GLenum shaderType, std::string src);
 
-        int getId() const;
-        void compile();
-
-        ~Shader();
+        unsigned int getId() const;
     };
 }}}
 

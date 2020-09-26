@@ -9,7 +9,7 @@ namespace Terrain { namespace Engine {
         meshRenderer(meshRenderer)
     {
         std::vector<Graphics::Shader> calcTessLevelShaders;
-        calcTessLevelShaders.push_back(renderer.shaders.loadComputeShaderFromFile(
+        calcTessLevelShaders.push_back(renderer.shaderMgr.loadComputeShaderFromFile(
             IO::Path::getAbsolutePath("data/terrain_calc_tess_levels_comp_shader.glsl")));
         calcTessLevelsShaderProgram.link(calcTessLevelShaders);
         calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);

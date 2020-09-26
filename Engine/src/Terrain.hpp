@@ -37,18 +37,12 @@ namespace Terrain { namespace Engine {
 
     public:
         Terrain(EngineContext &ctx, World &world);
-        Terrain(const Terrain &that) = delete;
-        Terrain &operator=(const Terrain &that) = delete;
-        Terrain(Terrain &&) = delete;
-        Terrain &operator=(Terrain &&) = delete;
 
         void initialize();
         void loadHeightmapFromFile(std::string path);
         void loadHeightmap(int width, int height, const void *data);
 
         void toggleWireframeMode();
-
-        ~Terrain();
     };
 }}
 

@@ -3,7 +3,7 @@
 #include "../IO/OpenFile.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    ShaderManager::ShaderManager()
+    ShaderManager::ShaderManager(Renderer &renderer) : renderer(renderer)
     {
     }
 
@@ -14,9 +14,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         std::string src = openFile.readAllText();
 
         // compile shader
-        Shader shader(shaderType, src);
-        shader.compile();
-        return shader;
+        return Shader(renderer, shaderType, src);
     }
 
     Shader ShaderManager::loadVertexShaderFromFile(std::string filePath) const

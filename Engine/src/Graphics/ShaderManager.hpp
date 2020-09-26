@@ -9,8 +9,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
         Shader loadFromFile(GLenum shaderType, std::string filePath) const;
 
+        Renderer &renderer;
+
     public:
-        ShaderManager();
+        ShaderManager(Renderer &renderer);
         ShaderManager(const ShaderManager &that) = delete;
         ShaderManager &operator=(const ShaderManager &that) = delete;
         ShaderManager(ShaderManager &&) = delete;

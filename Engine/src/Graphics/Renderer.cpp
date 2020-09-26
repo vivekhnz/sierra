@@ -1,9 +1,10 @@
 #include "Renderer.hpp"
 
 #include <glad/glad.h>
+#include <iostream>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Renderer::Renderer()
+    Renderer::Renderer() : shaderMgr(*this)
     {
     }
 
@@ -122,10 +123,40 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return vertexBuffers.id[handle];
     }
 
+    int Renderer::createShader(unsigned int type, std::string src)
+    {
+        unsigned int id = glCreateShader(type);
+
+        const char *src_c = src.c_str();
+        glShaderSource(id, 1, &src_c, NULL);
+
+        glCompileShader(id);
+        int success;
+        glGetShaderiv(id, GL_COMPILE_STATUS, &success);
+        if (!success)
+        {
+            char infoLog[512];
+            glGetShaderInfoLog(id, 512, NULL, infoLog);
+            throw std::runtime_error("Shader compilation failed: " + std::string(infoLog));
+        }
+
+        shaders.id.push_back(id);
+        return shaders.count++;
+    }
+
+    unsigned int Renderer::getShaderId(int handle) const
+    {
+        return shaders.id[handle];
+    }
+
     Renderer::~Renderer()
     {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
         glDeleteTextures(textures.count, textures.id.data());
         glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
+        for (int i = 0; i < shaders.count; i++)
+        {
+            glDeleteShader(shaders.id[i]);
+        }
     }
 }}}
