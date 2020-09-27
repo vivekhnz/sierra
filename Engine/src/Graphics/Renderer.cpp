@@ -147,7 +147,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    int Renderer::createShaderProgram(const std::vector<int> &shaderHandles)
+    int Renderer::createShaderProgram(
+        const std::vector<int> &shaderHandles, const std::vector<std::string> &uniformNames)
     {
         unsigned int id = glCreateProgram();
 
@@ -170,6 +171,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glDetachShader(id, shaders.id[shaderHandle]);
         }
 
+        // calculate uniform locations
+        int uniformCount = uniformNames.size();
+        for (int i = 0; i < uniformCount; i++)
+        {
+            const std::string &uniformName = uniformNames[i];
+            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)] =
+                glGetUniformLocation(id, uniformName.c_str());
+        }
+
         shaderPrograms.id.push_back(id);
         return shaderPrograms.count++;
     }
@@ -183,7 +193,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int handle, std::string uniformName, bool transpose, glm::mat4 matrix)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        unsigned int loc =
+            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
         glProgramUniformMatrix4fv(
             id, loc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
     }
@@ -192,14 +203,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int handle, std::string uniformName, float value)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        unsigned int loc =
+            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
         glProgramUniform1f(id, loc, value);
     }
 
     void Renderer::setShaderProgramUniformInt(int handle, std::string uniformName, int value)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        unsigned int loc =
+            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
         glProgramUniform1i(id, loc, value);
     }
 
@@ -207,7 +220,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int handle, std::string uniformName, glm::vec2 value)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        unsigned int loc =
+            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
         glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
     }
 
@@ -215,7 +229,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int handle, std::string uniformName, glm::vec3 value)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        unsigned int loc =
+            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
         glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
     }
 

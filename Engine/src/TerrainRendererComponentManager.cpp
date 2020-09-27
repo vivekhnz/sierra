@@ -19,11 +19,17 @@ namespace Terrain { namespace Engine {
             if (resource.id != TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL)
                 continue;
 
-            std::vector<int> calcTessLevelShaderHandles;
-            calcTessLevelShaderHandles.push_back(renderer.lookupShader(
+            std::vector<int> shaderHandles;
+            shaderHandles.push_back(renderer.lookupShader(
                 TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL));
+
+            std::vector<std::string> uniformNames;
+            uniformNames.push_back("horizontalEdgeCount");
+            uniformNames.push_back("columnCount");
+            uniformNames.push_back("targetTriangleSize");
+
             calcTessLevelsShaderProgramHandle =
-                renderer.createShaderProgram(calcTessLevelShaderHandles);
+                renderer.createShaderProgram(shaderHandles, uniformNames);
             renderer.setShaderProgramUniformFloat(
                 calcTessLevelsShaderProgramHandle, "targetTriangleSize", 0.015f);
             break;

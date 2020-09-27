@@ -23,8 +23,21 @@ namespace Terrain { namespace Engine {
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL));
         terrainShaderHandles.push_back(
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT));
+
+        std::vector<std::string> terrainShaderUniformNames;
+        terrainShaderUniformNames.push_back("heightmapSize");
+        terrainShaderUniformNames.push_back("heightmapTexture");
+        terrainShaderUniformNames.push_back("albedoTexture");
+        terrainShaderUniformNames.push_back("normalTexture");
+        terrainShaderUniformNames.push_back("displacementTexture");
+        terrainShaderUniformNames.push_back("aoTexture");
+        terrainShaderUniformNames.push_back("roughnessTexture");
+        terrainShaderUniformNames.push_back("terrainHeight");
+        terrainShaderUniformNames.push_back("normalSampleOffset");
+        terrainShaderUniformNames.push_back("textureScale");
+
         int terrainShaderProgramHandle =
-            ctx.renderer.createShaderProgram(terrainShaderHandles);
+            ctx.renderer.createShaderProgram(terrainShaderHandles, terrainShaderUniformNames);
 
         std::vector<int> wireframeShaderHandles;
         wireframeShaderHandles.push_back(
@@ -35,8 +48,17 @@ namespace Terrain { namespace Engine {
             TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL));
         wireframeShaderHandles.push_back(ctx.renderer.lookupShader(
             TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT));
-        int wireframeShaderProgramHandle =
-            ctx.renderer.createShaderProgram(wireframeShaderHandles);
+
+        std::vector<std::string> wireframeShaderUniformNames;
+        wireframeShaderUniformNames.push_back("heightmapSize");
+        wireframeShaderUniformNames.push_back("heightmapTexture");
+        wireframeShaderUniformNames.push_back("displacementTexture");
+        wireframeShaderUniformNames.push_back("terrainHeight");
+        wireframeShaderUniformNames.push_back("textureScale");
+        wireframeShaderUniformNames.push_back("color");
+
+        int wireframeShaderProgramHandle = ctx.renderer.createShaderProgram(
+            wireframeShaderHandles, wireframeShaderUniformNames);
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);

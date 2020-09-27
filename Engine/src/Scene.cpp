@@ -68,7 +68,13 @@ namespace Terrain { namespace Engine {
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX));
         quadShaderHandles.push_back(
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT));
-        int quadShaderProgramHandle = ctx.renderer.createShaderProgram(quadShaderHandles);
+
+        std::vector<std::string> quadShaderUniformNames;
+        quadShaderUniformNames.push_back("transform");
+        quadShaderUniformNames.push_back("imageTexture");
+
+        int quadShaderProgramHandle =
+            ctx.renderer.createShaderProgram(quadShaderHandles, quadShaderUniformNames);
         ctx.renderer.setShaderProgramUniformInt(quadShaderProgramHandle, "imageTexture", 0);
 
         int quadMesh_materialHandle = ctx.resources.newMaterial();

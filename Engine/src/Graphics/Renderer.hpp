@@ -69,6 +69,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int count;
             std::vector<unsigned int> id;
 
+            std::map<std::pair<unsigned int, std::string>, unsigned int> uniformNameToLocation;
+
             ShaderPrograms() : count(0)
             {
             }
@@ -123,7 +125,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return shaders.resourceIdToHandle[resourceId];
         }
 
-        int createShaderProgram(const std::vector<int> &shaderHandles);
+        int createShaderProgram(const std::vector<int> &shaderHandles,
+            const std::vector<std::string> &uniformNames);
         unsigned int getShaderProgramId(int handle) const;
         void setShaderProgramUniformMat4(
             int handle, std::string uniformName, bool transpose, glm::mat4 matrix);
