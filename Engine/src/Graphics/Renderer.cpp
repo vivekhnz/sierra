@@ -1,7 +1,8 @@
 #include "Renderer.hpp"
 
-#include <glad/glad.h>
 #include <iostream>
+#include <glad/glad.h>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::Renderer()
@@ -161,6 +162,46 @@ namespace Terrain { namespace Engine { namespace Graphics {
     unsigned int Renderer::getShaderProgramId(int handle) const
     {
         return shaderPrograms.id[handle];
+    }
+
+    void Renderer::setShaderProgramUniformMat4(
+        int handle, std::string uniformName, bool transpose, glm::mat4 matrix)
+    {
+        unsigned int id = shaderPrograms.id[handle];
+        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        glProgramUniformMatrix4fv(
+            id, loc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
+    }
+
+    void Renderer::setShaderProgramUniformFloat(
+        int handle, std::string uniformName, float value)
+    {
+        unsigned int id = shaderPrograms.id[handle];
+        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        glProgramUniform1f(id, loc, value);
+    }
+
+    void Renderer::setShaderProgramUniformInt(int handle, std::string uniformName, int value)
+    {
+        unsigned int id = shaderPrograms.id[handle];
+        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        glProgramUniform1i(id, loc, value);
+    }
+
+    void Renderer::setShaderProgramUniformVector2(
+        int handle, std::string uniformName, glm::vec2 value)
+    {
+        unsigned int id = shaderPrograms.id[handle];
+        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
+    }
+
+    void Renderer::setShaderProgramUniformVector3(
+        int handle, std::string uniformName, glm::vec3 value)
+    {
+        unsigned int id = shaderPrograms.id[handle];
+        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
+        glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
     }
 
     Renderer::~Renderer()

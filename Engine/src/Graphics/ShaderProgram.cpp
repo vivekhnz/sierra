@@ -40,42 +40,31 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void ShaderProgram::setMat4(std::string uniformName, bool transpose, glm::mat4 matrix)
     {
-        unsigned int id = renderer.getShaderProgramId(handle);
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
-        glProgramUniformMatrix4fv(
-            id, loc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
+        renderer.setShaderProgramUniformMat4(handle, uniformName, transpose, matrix);
     }
 
     void ShaderProgram::setFloat(std::string uniformName, float value)
     {
-        unsigned int id = renderer.getShaderProgramId(handle);
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
-        glProgramUniform1f(id, loc, value);
+        renderer.setShaderProgramUniformFloat(handle, uniformName, value);
     }
 
     void ShaderProgram::setInt(std::string uniformName, int value)
     {
-        unsigned int id = renderer.getShaderProgramId(handle);
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
-        glProgramUniform1i(id, loc, value);
+        renderer.setShaderProgramUniformInt(handle, uniformName, value);
     }
 
     void ShaderProgram::setBool(std::string uniformName, bool value)
     {
-        setInt(uniformName, value ? 1 : 0);
+        renderer.setShaderProgramUniformInt(handle, uniformName, value ? 1 : 0);
     }
 
     void ShaderProgram::setVector2(std::string uniformName, glm::vec2 value)
     {
-        unsigned int id = renderer.getShaderProgramId(handle);
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
-        glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
+        renderer.setShaderProgramUniformVector2(handle, uniformName, value);
     }
 
     void ShaderProgram::setVector3(std::string uniformName, glm::vec3 value)
     {
-        unsigned int id = renderer.getShaderProgramId(handle);
-        unsigned int loc = glGetUniformLocation(id, uniformName.c_str());
-        glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
+        renderer.setShaderProgramUniformVector3(handle, uniformName, value);
     }
 }}}

@@ -6,6 +6,7 @@
 #include <glm/glm.hpp>
 #include <vector>
 #include <map>
+#include <string>
 
 #include "../Resources/TextureResource.hpp"
 #include "../Resources/ShaderResource.hpp"
@@ -125,6 +126,14 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int createShaderProgram();
         unsigned int getShaderProgramId(int handle) const;
+        void setShaderProgramUniformMat4(
+            int handle, std::string uniformName, bool transpose, glm::mat4 matrix);
+        void setShaderProgramUniformFloat(int handle, std::string uniformName, float value);
+        void setShaderProgramUniformInt(int handle, std::string uniformName, int value);
+        void setShaderProgramUniformVector2(
+            int handle, std::string uniformName, glm::vec2 value);
+        void setShaderProgramUniformVector3(
+            int handle, std::string uniformName, glm::vec3 value);
 
         ~Renderer();
     };
