@@ -118,13 +118,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         unsigned int getVertexBufferId(int handle) const;
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
-        unsigned int getShaderId(int handle) const;
         int lookupShader(int resourceId)
         {
             return shaders.resourceIdToHandle[resourceId];
         }
 
         int createShaderProgram();
+        void linkShaderProgram(int handle, const std::vector<int> &shaderHandles);
         unsigned int getShaderProgramId(int handle) const;
         void setShaderProgramUniformMat4(
             int handle, std::string uniformName, bool transpose, glm::mat4 matrix);

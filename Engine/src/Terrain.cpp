@@ -7,8 +7,7 @@
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world) :
         ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f),
-        mesh(ctx.renderer), terrainShaderProgram(ctx.renderer),
-        wireframeShaderProgram(ctx.renderer)
+        mesh(ctx.renderer)
     {
     }
 
@@ -24,7 +23,9 @@ namespace Terrain { namespace Engine {
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL));
         terrainShaderHandles.push_back(
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT));
-        terrainShaderProgram.link(terrainShaderHandles);
+
+        int terrainShaderProgramHandle = ctx.renderer.createShaderProgram();
+        ctx.renderer.linkShaderProgram(terrainShaderProgramHandle, terrainShaderHandles);
 
         std::vector<int> wireframeShaderHandles;
         wireframeShaderHandles.push_back(
@@ -35,38 +36,39 @@ namespace Terrain { namespace Engine {
             TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL));
         wireframeShaderHandles.push_back(ctx.renderer.lookupShader(
             TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT));
-        wireframeShaderProgram.link(wireframeShaderHandles);
+
+        int wireframeShaderProgramHandle = ctx.renderer.createShaderProgram();
+        ctx.renderer.linkShaderProgram(wireframeShaderProgramHandle, wireframeShaderHandles);
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);
         ctx.renderer.setShaderProgramUniformVector2(
-            terrainShaderProgram.getHandle(), "textureScale", textureScale);
+            terrainShaderProgramHandle, "textureScale", textureScale);
         ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgram.getHandle(), "heightmapTexture", 0);
+            terrainShaderProgramHandle, "heightmapTexture", 0);
         ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgram.getHandle(), "albedoTexture", 1);
+            terrainShaderProgramHandle, "albedoTexture", 1);
         ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgram.getHandle(), "normalTexture", 2);
+            terrainShaderProgramHandle, "normalTexture", 2);
         ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgram.getHandle(), "displacementTexture", 3);
+            terrainShaderProgramHandle, "displacementTexture", 3);
+        ctx.renderer.setShaderProgramUniformInt(terrainShaderProgramHandle, "aoTexture", 4);
         ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgram.getHandle(), "aoTexture", 4);
-        ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgram.getHandle(), "roughnessTexture", 5);
+            terrainShaderProgramHandle, "roughnessTexture", 5);
         ctx.renderer.setShaderProgramUniformVector3(
-            wireframeShaderProgram.getHandle(), "color", glm::vec3(0.0f, 1.0f, 0.0f));
+            wireframeShaderProgramHandle, "color", glm::vec3(0.0f, 1.0f, 0.0f));
         ctx.renderer.setShaderProgramUniformInt(
-            wireframeShaderProgram.getHandle(), "heightmapTexture", 0);
+            wireframeShaderProgramHandle, "heightmapTexture", 0);
         ctx.renderer.setShaderProgramUniformInt(
-            wireframeShaderProgram.getHandle(), "displacementTexture", 3);
+            wireframeShaderProgramHandle, "displacementTexture", 3);
         ctx.renderer.setShaderProgramUniformVector2(
-            wireframeShaderProgram.getHandle(), "textureScale", textureScale);
+            wireframeShaderProgramHandle, "textureScale", textureScale);
 
         // build materials
         terrainMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &terrainMaterial = ctx.resources.getMaterial(terrainMaterialHandle);
         terrainMaterial.shaderProgramId =
-            ctx.renderer.getShaderProgramId(terrainShaderProgram.getHandle());
+            ctx.renderer.getShaderProgramId(terrainShaderProgramHandle);
         terrainMaterial.polygonMode = GL_FILL;
         terrainMaterial.textureCount = 6;
         terrainMaterial.textureHandles[0] =
@@ -86,7 +88,7 @@ namespace Terrain { namespace Engine {
         Graphics::Material &wireframeMaterial =
             ctx.resources.getMaterial(wireframeMaterialHandle);
         wireframeMaterial.shaderProgramId =
-            ctx.renderer.getShaderProgramId(wireframeShaderProgram.getHandle());
+            ctx.renderer.getShaderProgramId(wireframeShaderProgramHandle);
         wireframeMaterial.polygonMode = GL_LINE;
         wireframeMaterial.textureCount = 6;
         wireframeMaterial.textureHandles[0] =

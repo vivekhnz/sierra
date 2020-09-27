@@ -4,7 +4,6 @@
 #include "Common.hpp"
 #include "World.hpp"
 #include "Graphics/Mesh.hpp"
-#include "Graphics/ShaderProgram.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT Terrain
@@ -21,8 +20,6 @@ namespace Terrain { namespace Engine {
         EngineContext &ctx;
         World &world;
         Graphics::Mesh mesh;
-        Graphics::ShaderProgram terrainShaderProgram;
-        Graphics::ShaderProgram wireframeShaderProgram;
         int terrainMaterialHandle;
         int wireframeMaterialHandle;
 

@@ -19,7 +19,6 @@ namespace Terrain { namespace Engine {
         Terrain terrain;
 
         Graphics::Mesh quadMesh;
-        Graphics::ShaderProgram quadShaderProgram;
 
         void loadResources();
 

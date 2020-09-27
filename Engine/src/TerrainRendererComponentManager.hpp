@@ -5,7 +5,6 @@
 #include "Graphics/Buffer.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
 #include "Graphics/Renderer.hpp"
-#include "Graphics/ShaderProgram.hpp"
 #include <vector>
 
 namespace Terrain { namespace Engine {
@@ -32,8 +31,7 @@ namespace Terrain { namespace Engine {
         Graphics::Renderer &renderer;
         Graphics::MeshRendererComponentManager &meshRenderer;
 
-        bool isInitialized;
-        Graphics::ShaderProgram calcTessLevelsShaderProgram;
+        int calcTessLevelsShaderProgramHandle;
 
     public:
         TerrainRendererComponentManager(Graphics::Renderer &renderer,
