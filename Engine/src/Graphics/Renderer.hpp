@@ -123,8 +123,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return shaders.resourceIdToHandle[resourceId];
         }
 
-        int createShaderProgram();
-        void linkShaderProgram(int handle, const std::vector<int> &shaderHandles);
+        int createShaderProgram(const std::vector<int> &shaderHandles);
         unsigned int getShaderProgramId(int handle) const;
         void setShaderProgramUniformMat4(
             int handle, std::string uniformName, bool transpose, glm::mat4 matrix);

@@ -23,9 +23,8 @@ namespace Terrain { namespace Engine {
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL));
         terrainShaderHandles.push_back(
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT));
-
-        int terrainShaderProgramHandle = ctx.renderer.createShaderProgram();
-        ctx.renderer.linkShaderProgram(terrainShaderProgramHandle, terrainShaderHandles);
+        int terrainShaderProgramHandle =
+            ctx.renderer.createShaderProgram(terrainShaderHandles);
 
         std::vector<int> wireframeShaderHandles;
         wireframeShaderHandles.push_back(
@@ -36,9 +35,8 @@ namespace Terrain { namespace Engine {
             TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL));
         wireframeShaderHandles.push_back(ctx.renderer.lookupShader(
             TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT));
-
-        int wireframeShaderProgramHandle = ctx.renderer.createShaderProgram();
-        ctx.renderer.linkShaderProgram(wireframeShaderProgramHandle, wireframeShaderHandles);
+        int wireframeShaderProgramHandle =
+            ctx.renderer.createShaderProgram(wireframeShaderHandles);
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);

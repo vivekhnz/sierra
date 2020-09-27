@@ -22,10 +22,8 @@ namespace Terrain { namespace Engine {
             std::vector<int> calcTessLevelShaderHandles;
             calcTessLevelShaderHandles.push_back(renderer.lookupShader(
                 TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL));
-
-            calcTessLevelsShaderProgramHandle = renderer.createShaderProgram();
-            renderer.linkShaderProgram(
-                calcTessLevelsShaderProgramHandle, calcTessLevelShaderHandles);
+            calcTessLevelsShaderProgramHandle =
+                renderer.createShaderProgram(calcTessLevelShaderHandles);
             renderer.setShaderProgramUniformFloat(
                 calcTessLevelsShaderProgramHandle, "targetTriangleSize", 0.015f);
             break;

@@ -147,21 +147,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    int Renderer::createShaderProgram()
+    int Renderer::createShaderProgram(const std::vector<int> &shaderHandles)
     {
         unsigned int id = glCreateProgram();
-        shaderPrograms.id.push_back(id);
-        return shaderPrograms.count++;
-    }
 
-    void Renderer::linkShaderProgram(int handle, const std::vector<int> &shaderHandles)
-    {
-        unsigned int id = shaderPrograms.id[handle];
+        // link shader program
         for (int shaderHandle : shaderHandles)
         {
             glAttachShader(id, shaders.id[shaderHandle]);
         }
-
         glLinkProgram(id);
         int success;
         glGetProgramiv(id, GL_LINK_STATUS, &success);
@@ -171,11 +165,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glGetProgramInfoLog(id, 512, NULL, infoLog);
             throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
         }
-
         for (int shaderHandle : shaderHandles)
         {
             glDetachShader(id, shaders.id[shaderHandle]);
         }
+
+        shaderPrograms.id.push_back(id);
+        return shaderPrograms.count++;
     }
 
     unsigned int Renderer::getShaderProgramId(int handle) const

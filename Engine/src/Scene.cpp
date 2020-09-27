@@ -63,9 +63,16 @@ namespace Terrain { namespace Engine {
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
+        std::vector<int> quadShaderHandles;
+        quadShaderHandles.push_back(
+            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX));
+        quadShaderHandles.push_back(
+            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT));
+        int quadShaderProgramHandle = ctx.renderer.createShaderProgram(quadShaderHandles);
+        ctx.renderer.setShaderProgramUniformInt(quadShaderProgramHandle, "imageTexture", 0);
+
         int quadMesh_materialHandle = ctx.resources.newMaterial();
         Graphics::Material &quadMaterial = ctx.resources.getMaterial(quadMesh_materialHandle);
-        int quadShaderProgramHandle = ctx.renderer.createShaderProgram();
         quadMaterial.shaderProgramId =
             ctx.renderer.getShaderProgramId(quadShaderProgramHandle);
         quadMaterial.polygonMode = GL_FILL;
@@ -77,14 +84,6 @@ namespace Terrain { namespace Engine {
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
             quadMesh_materialHandle, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
-
-        std::vector<int> quadShaderHandles;
-        quadShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX));
-        quadShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT));
-        ctx.renderer.linkShaderProgram(quadShaderProgramHandle, quadShaderHandles);
-        ctx.renderer.setShaderProgramUniformInt(quadShaderProgramHandle, "imageTexture", 0);
     }
 
     std::string readFileText(std::string relativePath)
