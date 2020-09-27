@@ -81,7 +81,7 @@ namespace Terrain { namespace Engine {
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
                 renderer.getVertexBufferId(data.meshVertexBufferHandle[i]));
-            glUseProgram(renderer.getShaderProgramId(calcTessLevelsShaderProgramHandle));
+            renderer.useShaderProgram(calcTessLevelsShaderProgramHandle);
             glDispatchCompute(meshEdgeCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }

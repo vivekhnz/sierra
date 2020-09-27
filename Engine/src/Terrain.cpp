@@ -87,8 +87,7 @@ namespace Terrain { namespace Engine {
         // build materials
         terrainMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &terrainMaterial = ctx.resources.getMaterial(terrainMaterialHandle);
-        terrainMaterial.shaderProgramId =
-            ctx.renderer.getShaderProgramId(terrainShaderProgramHandle);
+        terrainMaterial.shaderProgramHandle = terrainShaderProgramHandle;
         terrainMaterial.polygonMode = GL_FILL;
         terrainMaterial.textureCount = 6;
         terrainMaterial.textureHandles[0] =
@@ -107,8 +106,7 @@ namespace Terrain { namespace Engine {
         wireframeMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &wireframeMaterial =
             ctx.resources.getMaterial(wireframeMaterialHandle);
-        wireframeMaterial.shaderProgramId =
-            ctx.renderer.getShaderProgramId(wireframeShaderProgramHandle);
+        wireframeMaterial.shaderProgramHandle = wireframeShaderProgramHandle;
         wireframeMaterial.polygonMode = GL_LINE;
         wireframeMaterial.textureCount = 6;
         wireframeMaterial.textureHandles[0] =

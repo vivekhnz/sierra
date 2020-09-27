@@ -6,7 +6,7 @@
 namespace Terrain { namespace Engine { namespace Graphics {
     struct EXPORT Material
     {
-        int shaderProgramId;
+        int shaderProgramHandle;
         int polygonMode;
 
         int textureCount;

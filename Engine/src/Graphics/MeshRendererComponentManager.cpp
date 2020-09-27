@@ -25,20 +25,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         data.materialHandle.push_back(materialHandle);
 
         int uniformCount = uniformNames.size();
-        data.firstUniformIndex.push_back(data.uniformLocations.size());
+        data.firstUniformIndex.push_back(data.uniformNames.size());
         data.uniformCount.push_back(uniformCount);
         data.uniformNames.insert(
             data.uniformNames.end(), uniformNames.begin(), uniformNames.end());
         data.uniformValues.insert(
             data.uniformValues.end(), uniformValues.begin(), uniformValues.end());
-
-        // calculate uniform locations
-        int shaderProgramId = resourceMgr.getMaterial(materialHandle).shaderProgramId;
-        for (int i = 0; i < uniformCount; i++)
-        {
-            data.uniformLocations.push_back(
-                glGetUniformLocation(shaderProgramId, uniformNames[i].c_str()));
-        }
 
         entityIdToInstanceId[entityId] = data.count;
         return data.count++;
@@ -52,7 +44,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
             // bind material data
             Material &material = resourceMgr.getMaterial(materialHandle);
-            glUseProgram(material.shaderProgramId);
+            renderer.useShaderProgram(material.shaderProgramHandle);
             glPolygonMode(GL_FRONT_AND_BACK, material.polygonMode);
             renderer.bindTextures(material.textureHandles, material.textureCount);
 
@@ -67,16 +59,17 @@ namespace Terrain { namespace Engine { namespace Graphics {
             for (int u = 0; u < uniformCount; u++)
             {
                 int idx = uniformStart + u;
-                unsigned int &loc = data.uniformLocations[idx];
+                std::string &uniformName = data.uniformNames[idx];
                 UniformValue &val = data.uniformValues[idx];
                 switch (val.type)
                 {
                 case UniformType::Float:
-                    glProgramUniform1f(material.shaderProgramId, loc, val.f);
+                    renderer.setShaderProgramUniformFloat(
+                        material.shaderProgramHandle, uniformName, val.f);
                     break;
                 case UniformType::Vector2:
-                    glProgramUniform2fv(
-                        material.shaderProgramId, loc, 1, glm::value_ptr(val.vec2));
+                    renderer.setShaderProgramUniformVector2(
+                        material.shaderProgramHandle, uniformName, val.vec2);
                     break;
                 }
             }
@@ -88,18 +81,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void MeshRendererComponentManager::setMaterialHandle(int i, int materialHandle)
     {
-        int &uniformCount = data.uniformCount[i];
-        int &firstUniformIndex = data.firstUniformIndex[i];
-
-        // recalculate uniform locations
-        int shaderProgramId = resourceMgr.getMaterial(materialHandle).shaderProgramId;
-        for (int u = 0; u < uniformCount; u++)
-        {
-            int idx = firstUniformIndex + u;
-            data.uniformLocations[idx] =
-                glGetUniformLocation(shaderProgramId, data.uniformNames[idx].c_str());
-        }
-
         data.materialHandle[i] = materialHandle;
     }
 

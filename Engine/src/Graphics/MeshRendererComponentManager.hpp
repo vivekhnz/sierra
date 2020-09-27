@@ -55,7 +55,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             std::vector<int> uniformCount;
             std::vector<std::string> uniformNames;
             std::vector<UniformValue> uniformValues;
-            std::vector<unsigned int> uniformLocations;
 
             ComponentData() : count(0)
             {

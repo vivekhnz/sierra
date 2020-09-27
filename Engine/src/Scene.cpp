@@ -79,8 +79,7 @@ namespace Terrain { namespace Engine {
 
         int quadMesh_materialHandle = ctx.resources.newMaterial();
         Graphics::Material &quadMaterial = ctx.resources.getMaterial(quadMesh_materialHandle);
-        quadMaterial.shaderProgramId =
-            ctx.renderer.getShaderProgramId(quadShaderProgramHandle);
+        quadMaterial.shaderProgramHandle = quadShaderProgramHandle;
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
         quadMaterial.textureHandles[0] =

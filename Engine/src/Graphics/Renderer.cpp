@@ -184,9 +184,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return shaderPrograms.count++;
     }
 
-    unsigned int Renderer::getShaderProgramId(int handle) const
+    void Renderer::useShaderProgram(int handle)
     {
-        return shaderPrograms.id[handle];
+        glUseProgram(shaderPrograms.id[handle]);
     }
 
     void Renderer::setShaderProgramUniformMat4(
