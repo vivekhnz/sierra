@@ -23,7 +23,8 @@ namespace Terrain { namespace Engine {
             calcTessLevelShaderHandles.push_back(renderer.lookupShader(
                 TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL));
             calcTessLevelsShaderProgram.link(calcTessLevelShaderHandles);
-            calcTessLevelsShaderProgram.setFloat("targetTriangleSize", 0.015f);
+            renderer.setShaderProgramUniformFloat(
+                calcTessLevelsShaderProgram.getHandle(), "targetTriangleSize", 0.015f);
             isInitialized = true;
             break;
         }
@@ -65,14 +66,16 @@ namespace Terrain { namespace Engine {
             int &columns = data.columns[i];
             int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
 
-            calcTessLevelsShaderProgram.setInt("horizontalEdgeCount", rows * (columns - 1));
-            calcTessLevelsShaderProgram.setInt("columnCount", columns);
+            renderer.setShaderProgramUniformInt(calcTessLevelsShaderProgram.getHandle(),
+                "horizontalEdgeCount", rows * (columns - 1));
+            renderer.setShaderProgramUniformInt(
+                calcTessLevelsShaderProgram.getHandle(), "columnCount", columns);
 
             glBindBufferBase(
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
             glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
                 renderer.getVertexBufferId(data.meshVertexBufferHandle[i]));
-            glUseProgram(calcTessLevelsShaderProgram.getId());
+            glUseProgram(renderer.getShaderProgramId(calcTessLevelsShaderProgram.getHandle()));
             glDispatchCompute(meshEdgeCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }

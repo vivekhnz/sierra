@@ -66,7 +66,8 @@ namespace Terrain { namespace Engine {
 
         int quadMesh_materialHandle = ctx.resources.newMaterial();
         Graphics::Material &quadMaterial = ctx.resources.getMaterial(quadMesh_materialHandle);
-        quadMaterial.shaderProgramId = quadShaderProgram.getId();
+        quadMaterial.shaderProgramId =
+            ctx.renderer.getShaderProgramId(quadShaderProgram.getHandle());
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
         quadMaterial.textureHandles[0] =
@@ -83,7 +84,8 @@ namespace Terrain { namespace Engine {
         quadShaderHandles.push_back(
             ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT));
         quadShaderProgram.link(quadShaderHandles);
-        quadShaderProgram.setInt("imageTexture", 0);
+        ctx.renderer.setShaderProgramUniformInt(
+            quadShaderProgram.getHandle(), "imageTexture", 0);
     }
 
     std::string readFileText(std::string relativePath)

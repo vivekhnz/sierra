@@ -1,7 +1,6 @@
 #include "ShaderProgram.hpp"
 
 #include <iostream>
-#include <glm/gtc/type_ptr.hpp>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     ShaderProgram::ShaderProgram(Renderer &renderer) : renderer(renderer)
@@ -9,9 +8,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         handle = renderer.createShaderProgram();
     }
 
-    int ShaderProgram::getId() const
+    int ShaderProgram::getHandle() const
     {
-        return renderer.getShaderProgramId(handle);
+        return handle;
     }
 
     void ShaderProgram::link(const std::vector<int> &shaderHandles)
@@ -36,35 +35,5 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             glDetachShader(id, renderer.getShaderId(shaderHandle));
         }
-    }
-
-    void ShaderProgram::setMat4(std::string uniformName, bool transpose, glm::mat4 matrix)
-    {
-        renderer.setShaderProgramUniformMat4(handle, uniformName, transpose, matrix);
-    }
-
-    void ShaderProgram::setFloat(std::string uniformName, float value)
-    {
-        renderer.setShaderProgramUniformFloat(handle, uniformName, value);
-    }
-
-    void ShaderProgram::setInt(std::string uniformName, int value)
-    {
-        renderer.setShaderProgramUniformInt(handle, uniformName, value);
-    }
-
-    void ShaderProgram::setBool(std::string uniformName, bool value)
-    {
-        renderer.setShaderProgramUniformInt(handle, uniformName, value ? 1 : 0);
-    }
-
-    void ShaderProgram::setVector2(std::string uniformName, glm::vec2 value)
-    {
-        renderer.setShaderProgramUniformVector2(handle, uniformName, value);
-    }
-
-    void ShaderProgram::setVector3(std::string uniformName, glm::vec3 value)
-    {
-        renderer.setShaderProgramUniformVector3(handle, uniformName, value);
     }
 }}}
