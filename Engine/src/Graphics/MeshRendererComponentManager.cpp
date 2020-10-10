@@ -4,7 +4,6 @@
 #include "MeshData.hpp"
 #include <iterator>
 #include <glad/glad.h>
-#include <glm/gtc/type_ptr.hpp>
 
 namespace Terrain { namespace Engine { namespace Graphics {
     MeshRendererComponentManager::MeshRendererComponentManager(
@@ -53,26 +52,14 @@ namespace Terrain { namespace Engine { namespace Graphics {
             MeshData &meshData = resourceMgr.getMesh(meshHandle);
             glBindVertexArray(meshData.vertexArrayId);
 
+            // set per-material uniforms
+            renderer.setShaderProgramUniforms(material.shaderProgramHandle,
+                material.uniformCount, 0, material.uniformNames, material.uniformValues);
+
             // set per-instance material uniforms
-            int &uniformStart = data.firstUniformIndex[i];
-            int &uniformCount = data.uniformCount[i];
-            for (int u = 0; u < uniformCount; u++)
-            {
-                int idx = uniformStart + u;
-                std::string &uniformName = data.uniformNames[idx];
-                UniformValue &val = data.uniformValues[idx];
-                switch (val.type)
-                {
-                case UniformType::Float:
-                    renderer.setShaderProgramUniformFloat(
-                        material.shaderProgramHandle, uniformName, val.f);
-                    break;
-                case UniformType::Vector2:
-                    renderer.setShaderProgramUniformVector2(
-                        material.shaderProgramHandle, uniformName, val.vec2);
-                    break;
-                }
-            }
+            renderer.setShaderProgramUniforms(material.shaderProgramHandle,
+                data.uniformCount[i], data.firstUniformIndex[i], data.uniformNames,
+                data.uniformValues);
 
             // draw mesh instance
             glDrawElements(meshData.primitiveType, meshData.elementCount, GL_UNSIGNED_INT, 0);

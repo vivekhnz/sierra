@@ -60,31 +60,9 @@ namespace Terrain { namespace Engine {
         int wireframeShaderProgramHandle = ctx.renderer.createShaderProgram(
             wireframeShaderResourceIds, wireframeShaderUniformNames);
 
-        // configure shaders
-        auto textureScale = glm::vec2(48.0f, 48.0f);
-        ctx.renderer.setShaderProgramUniformVector2(
-            terrainShaderProgramHandle, "textureScale", textureScale);
-        ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgramHandle, "heightmapTexture", 0);
-        ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgramHandle, "albedoTexture", 1);
-        ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgramHandle, "normalTexture", 2);
-        ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgramHandle, "displacementTexture", 3);
-        ctx.renderer.setShaderProgramUniformInt(terrainShaderProgramHandle, "aoTexture", 4);
-        ctx.renderer.setShaderProgramUniformInt(
-            terrainShaderProgramHandle, "roughnessTexture", 5);
-        ctx.renderer.setShaderProgramUniformVector3(
-            wireframeShaderProgramHandle, "color", glm::vec3(0.0f, 1.0f, 0.0f));
-        ctx.renderer.setShaderProgramUniformInt(
-            wireframeShaderProgramHandle, "heightmapTexture", 0);
-        ctx.renderer.setShaderProgramUniformInt(
-            wireframeShaderProgramHandle, "displacementTexture", 3);
-        ctx.renderer.setShaderProgramUniformVector2(
-            wireframeShaderProgramHandle, "textureScale", textureScale);
-
         // build materials
+        auto textureScale = glm::vec2(48.0f, 48.0f);
+
         terrainMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &terrainMaterial = ctx.resources.getMaterial(terrainMaterialHandle);
         terrainMaterial.shaderProgramHandle = terrainShaderProgramHandle;
@@ -102,6 +80,22 @@ namespace Terrain { namespace Engine {
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO);
         terrainMaterial.textureHandles[5] =
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS);
+        terrainMaterial.uniformCount = 7;
+        terrainMaterial.uniformNames.push_back("textureScale");
+        terrainMaterial.uniformValues.push_back(
+            Graphics::UniformValue::forVector2(textureScale));
+        terrainMaterial.uniformNames.push_back("heightmapTexture");
+        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(0));
+        terrainMaterial.uniformNames.push_back("albedoTexture");
+        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(1));
+        terrainMaterial.uniformNames.push_back("normalTexture");
+        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(2));
+        terrainMaterial.uniformNames.push_back("displacementTexture");
+        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(3));
+        terrainMaterial.uniformNames.push_back("aoTexture");
+        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(4));
+        terrainMaterial.uniformNames.push_back("roughnessTexture");
+        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(5));
 
         wireframeMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &wireframeMaterial =
@@ -121,6 +115,17 @@ namespace Terrain { namespace Engine {
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO);
         wireframeMaterial.textureHandles[5] =
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS);
+        wireframeMaterial.uniformCount = 4;
+        wireframeMaterial.uniformNames.push_back("color");
+        wireframeMaterial.uniformValues.push_back(
+            Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)));
+        wireframeMaterial.uniformNames.push_back("heightmapTexture");
+        wireframeMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(0));
+        wireframeMaterial.uniformNames.push_back("displacementTexture");
+        wireframeMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(3));
+        wireframeMaterial.uniformNames.push_back("textureScale");
+        wireframeMaterial.uniformValues.push_back(
+            Graphics::UniformValue::forVector2(textureScale));
 
         // build mesh
         std::vector<float> vertices(columns * rows * 5);

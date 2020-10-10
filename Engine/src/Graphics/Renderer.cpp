@@ -189,16 +189,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glUseProgram(shaderPrograms.id[handle]);
     }
 
-    void Renderer::setShaderProgramUniformMat4(
-        int handle, std::string uniformName, bool transpose, glm::mat4 matrix)
-    {
-        unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc =
-            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
-        glProgramUniformMatrix4fv(
-            id, loc, 1, transpose ? GL_TRUE : GL_FALSE, glm::value_ptr(matrix));
-    }
-
     void Renderer::setShaderProgramUniformFloat(
         int handle, std::string uniformName, float value)
     {
@@ -216,22 +206,39 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glProgramUniform1i(id, loc, value);
     }
 
-    void Renderer::setShaderProgramUniformVector2(
-        int handle, std::string uniformName, glm::vec2 value)
+    void Renderer::setShaderProgramUniforms(int handle,
+        int uniformCount,
+        int uniformOffset,
+        const std::vector<std::string> &uniformNames,
+        const std::vector<UniformValue> &uniformValues)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc =
-            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
-        glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
-    }
 
-    void Renderer::setShaderProgramUniformVector3(
-        int handle, std::string uniformName, glm::vec3 value)
-    {
-        unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc =
-            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
-        glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
+        for (int u = 0; u < uniformCount; u++)
+        {
+            int i = uniformOffset + u;
+
+            const std::string &uniformName = uniformNames[i];
+            unsigned int loc =
+                shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
+
+            const UniformValue &val = uniformValues[i];
+            switch (val.type)
+            {
+            case UniformType::Float:
+                glProgramUniform1f(id, loc, val.f);
+                break;
+            case UniformType::Integer:
+                glProgramUniform1i(id, loc, val.i);
+                break;
+            case UniformType::Vector2:
+                glProgramUniform2fv(id, loc, 1, glm::value_ptr(val.vec2));
+                break;
+            case UniformType::Vector3:
+                glProgramUniform3fv(id, loc, 1, glm::value_ptr(val.vec3));
+                break;
+            }
+        }
     }
 
     Renderer::~Renderer()

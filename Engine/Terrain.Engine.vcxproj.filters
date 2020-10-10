@@ -177,6 +177,9 @@
     <ClInclude Include="src\TerrainResources.hpp">
       <Filter>src</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\UniformValue.hpp">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

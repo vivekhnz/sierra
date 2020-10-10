@@ -73,7 +73,6 @@ namespace Terrain { namespace Engine {
 
         int quadShaderProgramHandle =
             ctx.renderer.createShaderProgram(quadShaderResourceIds, quadShaderUniformNames);
-        ctx.renderer.setShaderProgramUniformInt(quadShaderProgramHandle, "imageTexture", 0);
 
         int quadMesh_materialHandle = ctx.resources.newMaterial();
         Graphics::Material &quadMaterial = ctx.resources.getMaterial(quadMesh_materialHandle);
@@ -82,6 +81,9 @@ namespace Terrain { namespace Engine {
         quadMaterial.textureCount = 1;
         quadMaterial.textureHandles[0] =
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
+        quadMaterial.uniformCount = 1;
+        quadMaterial.uniformNames.push_back("imageTexture");
+        quadMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(0));
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,

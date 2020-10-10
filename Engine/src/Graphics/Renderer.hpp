@@ -10,6 +10,7 @@
 
 #include "../Resources/TextureResource.hpp"
 #include "../Resources/ShaderResource.hpp"
+#include "UniformValue.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
@@ -124,14 +125,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int createShaderProgram(const std::vector<int> &shaderHandles,
             const std::vector<std::string> &uniformNames);
         void useShaderProgram(int handle);
-        void setShaderProgramUniformMat4(
-            int handle, std::string uniformName, bool transpose, glm::mat4 matrix);
         void setShaderProgramUniformFloat(int handle, std::string uniformName, float value);
         void setShaderProgramUniformInt(int handle, std::string uniformName, int value);
-        void setShaderProgramUniformVector2(
-            int handle, std::string uniformName, glm::vec2 value);
-        void setShaderProgramUniformVector3(
-            int handle, std::string uniformName, glm::vec3 value);
+        void setShaderProgramUniforms(int handle,
+            int uniformCount,
+            int uniformOffset,
+            const std::vector<std::string> &uniformNames,
+            const std::vector<UniformValue> &uniformValues);
 
         ~Renderer();
     };
