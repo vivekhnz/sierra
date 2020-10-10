@@ -147,15 +147,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    int Renderer::createShaderProgram(
-        const std::vector<int> &shaderHandles, const std::vector<std::string> &uniformNames)
+    int Renderer::createShaderProgram(const std::vector<int> &shaderResourceIds,
+        const std::vector<std::string> &uniformNames)
     {
         unsigned int id = glCreateProgram();
 
         // link shader program
-        for (int shaderHandle : shaderHandles)
+        for (int shaderResourceId : shaderResourceIds)
         {
-            glAttachShader(id, shaders.id[shaderHandle]);
+            glAttachShader(id, shaders.id[shaders.resourceIdToHandle[shaderResourceId]]);
         }
         glLinkProgram(id);
         int success;
@@ -166,9 +166,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glGetProgramInfoLog(id, 512, NULL, infoLog);
             throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
         }
-        for (int shaderHandle : shaderHandles)
+        for (int shaderResourceId : shaderResourceIds)
         {
-            glDetachShader(id, shaders.id[shaderHandle]);
+            glDetachShader(id, shaders.id[shaders.resourceIdToHandle[shaderResourceId]]);
         }
 
         // calculate uniform locations

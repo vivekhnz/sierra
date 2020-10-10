@@ -120,10 +120,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         unsigned int getVertexBufferId(int handle) const;
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
-        int lookupShader(int resourceId)
-        {
-            return shaders.resourceIdToHandle[resourceId];
-        }
 
         int createShaderProgram(const std::vector<int> &shaderHandles,
             const std::vector<std::string> &uniformNames);

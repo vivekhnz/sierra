@@ -14,15 +14,15 @@ namespace Terrain { namespace Engine {
     void Terrain::initialize()
     {
         // load shaders
-        std::vector<int> terrainShaderHandles;
-        terrainShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_VERTEX));
-        terrainShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_CTRL));
-        terrainShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL));
-        terrainShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT));
+        std::vector<int> terrainShaderResourceIds;
+        terrainShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_VERTEX);
+        terrainShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_CTRL);
+        terrainShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL);
+        terrainShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT);
 
         std::vector<std::string> terrainShaderUniformNames;
         terrainShaderUniformNames.push_back("heightmapSize");
@@ -36,18 +36,18 @@ namespace Terrain { namespace Engine {
         terrainShaderUniformNames.push_back("normalSampleOffset");
         terrainShaderUniformNames.push_back("textureScale");
 
-        int terrainShaderProgramHandle =
-            ctx.renderer.createShaderProgram(terrainShaderHandles, terrainShaderUniformNames);
+        int terrainShaderProgramHandle = ctx.renderer.createShaderProgram(
+            terrainShaderResourceIds, terrainShaderUniformNames);
 
-        std::vector<int> wireframeShaderHandles;
-        wireframeShaderHandles.push_back(
-            ctx.renderer.lookupShader(TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_VERTEX));
-        wireframeShaderHandles.push_back(ctx.renderer.lookupShader(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_CTRL));
-        wireframeShaderHandles.push_back(ctx.renderer.lookupShader(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL));
-        wireframeShaderHandles.push_back(ctx.renderer.lookupShader(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT));
+        std::vector<int> wireframeShaderResourceIds;
+        wireframeShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_VERTEX);
+        wireframeShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_CTRL);
+        wireframeShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL);
+        wireframeShaderResourceIds.push_back(
+            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT);
 
         std::vector<std::string> wireframeShaderUniformNames;
         wireframeShaderUniformNames.push_back("heightmapSize");
@@ -58,7 +58,7 @@ namespace Terrain { namespace Engine {
         wireframeShaderUniformNames.push_back("color");
 
         int wireframeShaderProgramHandle = ctx.renderer.createShaderProgram(
-            wireframeShaderHandles, wireframeShaderUniformNames);
+            wireframeShaderResourceIds, wireframeShaderUniformNames);
 
         // configure shaders
         auto textureScale = glm::vec2(48.0f, 48.0f);
