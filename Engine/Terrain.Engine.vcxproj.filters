@@ -180,6 +180,9 @@
     <ClInclude Include="src\Graphics\UniformValue.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Resources\ShaderProgramResource.hpp">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

@@ -10,26 +10,18 @@ namespace Terrain { namespace Engine {
     {
     }
 
-    void TerrainRendererComponentManager::onShadersLoaded(
-        const int count, Resources::ShaderResource *resources)
+    void TerrainRendererComponentManager::onShaderProgramsLoaded(
+        const int count, Resources::ShaderProgramResource *resources)
     {
         for (int i = 0; i < count; i++)
         {
-            Resources::ShaderResource &resource = resources[i];
-            if (resource.id != TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL)
+            Resources::ShaderProgramResource &resource = resources[i];
+            if (resource.id
+                != TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL)
                 continue;
 
-            std::vector<int> shaderResourceIds;
-            shaderResourceIds.push_back(
-                TerrainResources::RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL);
-
-            std::vector<std::string> uniformNames;
-            uniformNames.push_back("horizontalEdgeCount");
-            uniformNames.push_back("columnCount");
-            uniformNames.push_back("targetTriangleSize");
-
-            calcTessLevelsShaderProgramHandle =
-                renderer.createShaderProgram(shaderResourceIds, uniformNames);
+            calcTessLevelsShaderProgramHandle = renderer.lookupShaderProgram(
+                TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
             renderer.setShaderProgramUniformFloat(
                 calcTessLevelsShaderProgramHandle, "targetTriangleSize", 0.015f);
             break;

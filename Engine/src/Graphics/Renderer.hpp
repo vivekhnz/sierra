@@ -10,6 +10,7 @@
 
 #include "../Resources/TextureResource.hpp"
 #include "../Resources/ShaderResource.hpp"
+#include "../Resources/ShaderProgramResource.hpp"
 #include "UniformValue.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
@@ -71,6 +72,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             std::vector<unsigned int> id;
 
             std::map<std::pair<unsigned int, std::string>, unsigned int> uniformNameToLocation;
+            std::map<int, int> resourceIdToHandle;
 
             ShaderPrograms() : count(0)
             {
@@ -122,8 +124,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
 
-        int createShaderProgram(const std::vector<int> &shaderHandles,
-            const std::vector<std::string> &uniformNames);
+        void onShaderProgramsLoaded(
+            const int count, Resources::ShaderProgramResource *resources);
         void useShaderProgram(int handle);
         void setShaderProgramUniformFloat(int handle, std::string uniformName, float value);
         void setShaderProgramUniformInt(int handle, std::string uniformName, int value);
@@ -132,6 +134,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int uniformOffset,
             const std::vector<std::string> &uniformNames,
             const std::vector<UniformValue> &uniformValues);
+        int lookupShaderProgram(int resourceId)
+        {
+            return shaderPrograms.resourceIdToHandle[resourceId];
+        }
 
         ~Renderer();
     };

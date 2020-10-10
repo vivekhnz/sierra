@@ -147,41 +147,55 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    int Renderer::createShaderProgram(const std::vector<int> &shaderResourceIds,
-        const std::vector<std::string> &uniformNames)
+    void Renderer::onShaderProgramsLoaded(
+        const int count, Resources::ShaderProgramResource *resources)
     {
-        unsigned int id = glCreateProgram();
+        for (int i = 0; i < count; i++)
+        {
+            Resources::ShaderProgramResource &resource = resources[i];
 
-        // link shader program
-        for (int shaderResourceId : shaderResourceIds)
-        {
-            glAttachShader(id, shaders.id[shaders.resourceIdToHandle[shaderResourceId]]);
-        }
-        glLinkProgram(id);
-        int success;
-        glGetProgramiv(id, GL_LINK_STATUS, &success);
-        if (!success)
-        {
-            char infoLog[512];
-            glGetProgramInfoLog(id, 512, NULL, infoLog);
-            throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
-        }
-        for (int shaderResourceId : shaderResourceIds)
-        {
-            glDetachShader(id, shaders.id[shaders.resourceIdToHandle[shaderResourceId]]);
-        }
+            unsigned int id = glCreateProgram();
 
-        // calculate uniform locations
-        int uniformCount = uniformNames.size();
-        for (int i = 0; i < uniformCount; i++)
-        {
-            const std::string &uniformName = uniformNames[i];
-            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)] =
-                glGetUniformLocation(id, uniformName.c_str());
-        }
+            // link shader program
+            for (int s = 0; s < resource.shaderCount; s++)
+            {
+                glAttachShader(
+                    id, shaders.id[shaders.resourceIdToHandle[resource.shaderResourceIds[s]]]);
+            }
+            glLinkProgram(id);
+            int success;
+            glGetProgramiv(id, GL_LINK_STATUS, &success);
+            if (!success)
+            {
+                char infoLog[512];
+                glGetProgramInfoLog(id, 512, NULL, infoLog);
+                throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
+            }
+            for (int s = 0; s < resource.shaderCount; s++)
+            {
+                glDetachShader(
+                    id, shaders.id[shaders.resourceIdToHandle[resource.shaderResourceIds[s]]]);
+            }
 
-        shaderPrograms.id.push_back(id);
-        return shaderPrograms.count++;
+            // calculate uniform locations
+            int uniformNameStart = 0;
+            for (int u = 0; u < resource.uniformCount; u++)
+            {
+                int uniformNameLength = resource.uniformNameLengths[u];
+                char *uniformName = new char[uniformNameLength + 1];
+                memcpy(
+                    uniformName, &resource.uniformNames[uniformNameStart], uniformNameLength);
+                uniformName[uniformNameLength] = '\0';
+                uniformNameStart += uniformNameLength;
+
+                shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)] =
+                    glGetUniformLocation(id, uniformName);
+                delete[] uniformName;
+            }
+
+            shaderPrograms.id.push_back(id);
+            shaderPrograms.resourceIdToHandle[resource.id] = shaderPrograms.count++;
+        }
     }
 
     void Renderer::useShaderProgram(int handle)

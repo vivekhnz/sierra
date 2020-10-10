@@ -13,59 +13,13 @@ namespace Terrain { namespace Engine {
 
     void Terrain::initialize()
     {
-        // load shaders
-        std::vector<int> terrainShaderResourceIds;
-        terrainShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_VERTEX);
-        terrainShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_CTRL);
-        terrainShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL);
-        terrainShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT);
-
-        std::vector<std::string> terrainShaderUniformNames;
-        terrainShaderUniformNames.push_back("heightmapSize");
-        terrainShaderUniformNames.push_back("heightmapTexture");
-        terrainShaderUniformNames.push_back("albedoTexture");
-        terrainShaderUniformNames.push_back("normalTexture");
-        terrainShaderUniformNames.push_back("displacementTexture");
-        terrainShaderUniformNames.push_back("aoTexture");
-        terrainShaderUniformNames.push_back("roughnessTexture");
-        terrainShaderUniformNames.push_back("terrainHeight");
-        terrainShaderUniformNames.push_back("normalSampleOffset");
-        terrainShaderUniformNames.push_back("textureScale");
-
-        int terrainShaderProgramHandle = ctx.renderer.createShaderProgram(
-            terrainShaderResourceIds, terrainShaderUniformNames);
-
-        std::vector<int> wireframeShaderResourceIds;
-        wireframeShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_VERTEX);
-        wireframeShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_CTRL);
-        wireframeShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL);
-        wireframeShaderResourceIds.push_back(
-            TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT);
-
-        std::vector<std::string> wireframeShaderUniformNames;
-        wireframeShaderUniformNames.push_back("heightmapSize");
-        wireframeShaderUniformNames.push_back("heightmapTexture");
-        wireframeShaderUniformNames.push_back("displacementTexture");
-        wireframeShaderUniformNames.push_back("terrainHeight");
-        wireframeShaderUniformNames.push_back("textureScale");
-        wireframeShaderUniformNames.push_back("color");
-
-        int wireframeShaderProgramHandle = ctx.renderer.createShaderProgram(
-            wireframeShaderResourceIds, wireframeShaderUniformNames);
-
         // build materials
         auto textureScale = glm::vec2(48.0f, 48.0f);
 
         terrainMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &terrainMaterial = ctx.resources.getMaterial(terrainMaterialHandle);
-        terrainMaterial.shaderProgramHandle = terrainShaderProgramHandle;
+        terrainMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED);
         terrainMaterial.polygonMode = GL_FILL;
         terrainMaterial.textureCount = 6;
         terrainMaterial.textureHandles[0] =
@@ -100,7 +54,8 @@ namespace Terrain { namespace Engine {
         wireframeMaterialHandle = ctx.resources.newMaterial();
         Graphics::Material &wireframeMaterial =
             ctx.resources.getMaterial(wireframeMaterialHandle);
-        wireframeMaterial.shaderProgramHandle = wireframeShaderProgramHandle;
+        wireframeMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME);
         wireframeMaterial.polygonMode = GL_LINE;
         wireframeMaterial.textureCount = 6;
         wireframeMaterial.textureHandles[0] =

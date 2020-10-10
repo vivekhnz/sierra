@@ -43,7 +43,8 @@ namespace Terrain { namespace Engine {
         TerrainRendererComponentManager &operator=(
             TerrainRendererComponentManager &&) = delete;
 
-        void onShadersLoaded(const int count, Resources::ShaderResource *resources);
+        void onShaderProgramsLoaded(
+            const int count, Resources::ShaderProgramResource *resources);
 
         int create(int entityId,
             int meshVertexBufferHandle,

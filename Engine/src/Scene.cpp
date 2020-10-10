@@ -63,20 +63,10 @@ namespace Terrain { namespace Engine {
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
-        std::vector<int> quadShaderResourceIds;
-        quadShaderResourceIds.push_back(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX);
-        quadShaderResourceIds.push_back(TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT);
-
-        std::vector<std::string> quadShaderUniformNames;
-        quadShaderUniformNames.push_back("transform");
-        quadShaderUniformNames.push_back("imageTexture");
-
-        int quadShaderProgramHandle =
-            ctx.renderer.createShaderProgram(quadShaderResourceIds, quadShaderUniformNames);
-
         int quadMesh_materialHandle = ctx.resources.newMaterial();
         Graphics::Material &quadMaterial = ctx.resources.getMaterial(quadMesh_materialHandle);
-        quadMaterial.shaderProgramHandle = quadShaderProgramHandle;
+        quadMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD);
         quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
         quadMaterial.textureHandles[0] =
@@ -260,8 +250,75 @@ namespace Terrain { namespace Engine {
         });
 
         ctx.renderer.onShadersLoaded(shaderResources.size(), shaderResources.data());
-        world.componentManagers.terrainRenderer.onShadersLoaded(
-            shaderResources.size(), shaderResources.data());
+
+        // load shader program resources
+        std::vector<Resources::ShaderProgramResource> shaderProgramResources;
+
+        shaderProgramResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, // id
+            2,                                                 // shaderCount
+            {TerrainResources::RESOURCE_ID_SHADER_TEXTURE_VERTEX,
+                TerrainResources::RESOURCE_ID_SHADER_TEXTURE_FRAGMENT}, // shaderResourceIds
+            2,                                                          // uniformCount
+            {9, 12},                                                    // uniformNameLengths
+            "transform"
+            "imageTexture" // uniformNames
+        });
+
+        shaderProgramResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED, // id
+            4,                                                             // shaderCount
+            {TerrainResources::RESOURCE_ID_SHADER_TERRAIN_VERTEX,
+                TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_CTRL,
+                TerrainResources::RESOURCE_ID_SHADER_TERRAIN_TESS_EVAL,
+                TerrainResources::RESOURCE_ID_SHADER_TERRAIN_FRAGMENT}, // shaderResourceIds
+            10,                                                         // uniformCount
+            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12},                    // uniformNameLengths
+            "heightmapSize"
+            "heightmapTexture"
+            "albedoTexture"
+            "normalTexture"
+            "displacementTexture"
+            "aoTexture"
+            "roughnessTexture"
+            "terrainHeight"
+            "normalSampleOffset"
+            "textureScale" // uniformNames
+        });
+
+        shaderProgramResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME, // id
+            4,                                                              // shaderCount
+            {TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_VERTEX,
+                TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_CTRL,
+                TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_TESS_EVAL,
+                TerrainResources::RESOURCE_ID_SHADER_WIREFRAME_FRAGMENT}, // shaderResourceIds
+            6,                                                            // uniformCount
+            {13, 16, 19, 13, 12, 5},                                      // uniformNameLengths
+            "heightmapSize"
+            "heightmapTexture"
+            "displacementTexture"
+            "terrainHeight"
+            "textureScale"
+            "color" // uniformNames
+        });
+
+        shaderProgramResources.push_back({
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL, // id
+            1, // shaderCount
+            {TerrainResources::
+                    RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL}, // shaderResourceIds
+            3,                                                      // uniformCount
+            {19, 11, 18},                                           // uniformNameLengths
+            "horizontalEdgeCount"
+            "columnCount"
+            "targetTriangleSize" // uniformNames
+        });
+
+        ctx.renderer.onShaderProgramsLoaded(
+            shaderProgramResources.size(), shaderProgramResources.data());
+        world.componentManagers.terrainRenderer.onShaderProgramsLoaded(
+            shaderProgramResources.size(), shaderProgramResources.data());
     }
 
     Terrain &Scene::getTerrain()
