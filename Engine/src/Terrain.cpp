@@ -16,8 +16,9 @@ namespace Terrain { namespace Engine {
         // build materials
         auto textureScale = glm::vec2(48.0f, 48.0f);
 
-        terrainMaterialHandle = ctx.resources.newMaterial();
-        Graphics::Material &terrainMaterial = ctx.resources.getMaterial(terrainMaterialHandle);
+        terrainMaterialHandle = ctx.assets.graphics.createMaterial();
+        Graphics::Material &terrainMaterial =
+            ctx.assets.graphics.getMaterial(terrainMaterialHandle);
         terrainMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
             TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED);
         terrainMaterial.polygonMode = GL_FILL;
@@ -51,9 +52,9 @@ namespace Terrain { namespace Engine {
         terrainMaterial.uniformNames.push_back("roughnessTexture");
         terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(5));
 
-        wireframeMaterialHandle = ctx.resources.newMaterial();
+        wireframeMaterialHandle = ctx.assets.graphics.createMaterial();
         Graphics::Material &wireframeMaterial =
-            ctx.resources.getMaterial(wireframeMaterialHandle);
+            ctx.assets.graphics.getMaterial(wireframeMaterialHandle);
         wireframeMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
             TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME);
         wireframeMaterial.polygonMode = GL_LINE;

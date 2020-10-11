@@ -3,6 +3,7 @@
 
 #include "../Common.hpp"
 #include "../ResourceManager.hpp"
+#include "GraphicsAssetManager.hpp"
 #include "Renderer.hpp"
 #include "UniformValue.hpp"
 #include <vector>
@@ -31,13 +32,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
         } data;
 
         ResourceManager &resourceMgr;
-        Graphics::Renderer &renderer;
+        GraphicsAssetManager &graphicsAssets;
+        Renderer &renderer;
 
         std::map<int, int> entityIdToInstanceId;
 
     public:
-        MeshRendererComponentManager(
-            ResourceManager &resourceMgr, Graphics::Renderer &renderer);
+        MeshRendererComponentManager(ResourceManager &resourceMgr,
+            GraphicsAssetManager &graphicsAssets,
+            Renderer &renderer);
         MeshRendererComponentManager(const MeshRendererComponentManager &that) = delete;
         MeshRendererComponentManager &operator=(
             const MeshRendererComponentManager &that) = delete;

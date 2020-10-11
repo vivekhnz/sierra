@@ -6,10 +6,11 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    MeshRendererComponentManager::MeshRendererComponentManager(
-        ResourceManager &resourceMgr, Graphics::Renderer &renderer) :
+    MeshRendererComponentManager::MeshRendererComponentManager(ResourceManager &resourceMgr,
+        GraphicsAssetManager &graphicsAssets,
+        Renderer &renderer) :
         resourceMgr(resourceMgr),
-        renderer(renderer)
+        graphicsAssets(graphicsAssets), renderer(renderer)
     {
     }
 
@@ -42,7 +43,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int &materialHandle = data.materialHandle[i];
 
             // bind material data
-            Material &material = resourceMgr.getMaterial(materialHandle);
+            Material &material = graphicsAssets.getMaterial(materialHandle);
             renderer.useShaderProgram(material.shaderProgramHandle);
             glPolygonMode(GL_FRONT_AND_BACK, material.polygonMode);
             renderer.bindTextures(material.textureHandles, material.textureCount);

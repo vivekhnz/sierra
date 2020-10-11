@@ -3,7 +3,6 @@
 
 #include "Common.hpp"
 #include "Graphics/MeshData.hpp"
-#include "Graphics/Material.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT ResourceManager
@@ -11,9 +10,6 @@ namespace Terrain { namespace Engine {
     private:
         Graphics::MeshData meshes[100];
         int meshCount;
-
-        Graphics::Material materials[100];
-        int materialCount;
 
     public:
         ResourceManager();
@@ -24,9 +20,6 @@ namespace Terrain { namespace Engine {
 
         int newMesh();
         Graphics::MeshData &getMesh(int handle);
-
-        int newMaterial();
-        Graphics::Material &getMaterial(int handle);
 
         ~ResourceManager();
     };

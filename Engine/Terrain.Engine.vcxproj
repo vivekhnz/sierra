@@ -31,6 +31,7 @@
     <ClCompile Include="src\Graphics\BindVertexArray.cpp" />
     <ClCompile Include="src\Graphics\Buffer.cpp" />
     <ClCompile Include="src\Graphics\GlfwManager.cpp" />
+    <ClCompile Include="src\Graphics\GraphicsAssetManager.cpp" />
     <ClCompile Include="src\Graphics\Image.cpp" />
     <ClCompile Include="src\Graphics\Mesh.cpp" />
     <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp" />
@@ -59,6 +60,7 @@
     <ClInclude Include="src\Graphics\BindVertexArray.hpp" />
     <ClInclude Include="src\Graphics\Buffer.hpp" />
     <ClInclude Include="src\Graphics\GlfwManager.hpp" />
+    <ClInclude Include="src\Graphics\GraphicsAssetManager.hpp" />
     <ClInclude Include="src\Graphics\Image.hpp" />
     <ClInclude Include="src\Graphics\Material.hpp" />
     <ClInclude Include="src\Graphics\Mesh.hpp" />

@@ -7,6 +7,7 @@
 #include "ResourceManager.hpp"
 #include "IO/InputManager.hpp"
 #include "Graphics/Renderer.hpp"
+#include "Graphics/GraphicsAssetManager.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT EngineContext
@@ -15,9 +16,19 @@ namespace Terrain { namespace Engine {
         EntityManager entities;
         ResourceManager resources;
         IO::InputManager input;
+
         Graphics::Renderer renderer;
 
-        EngineContext(AppContext &ctx) : input(ctx)
+        struct Assets
+        {
+            Graphics::GraphicsAssetManager graphics;
+
+            Assets(Graphics::Renderer &renderer) : graphics(renderer)
+            {
+            }
+        } assets;
+
+        EngineContext(AppContext &ctx) : input(ctx), assets(renderer)
         {
         }
 

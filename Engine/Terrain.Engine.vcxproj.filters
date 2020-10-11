@@ -76,6 +76,9 @@
     <ClCompile Include="src\TerrainRendererComponentManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\GraphicsAssetManager.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\BindBuffer.hpp">
@@ -182,6 +185,9 @@
     </ClInclude>
     <ClInclude Include="src\Resources\ShaderProgramResource.hpp">
       <Filter>src\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\GraphicsAssetManager.hpp">
+      <Filter>src\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
