@@ -2,7 +2,6 @@
 #define GRAPHICS_MESHRENDERERCOMPONENTMANAGER_HPP
 
 #include "../Common.hpp"
-#include "../ResourceManager.hpp"
 #include "GraphicsAssetManager.hpp"
 #include "Renderer.hpp"
 #include "UniformValue.hpp"
@@ -31,16 +30,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } data;
 
-        ResourceManager &resourceMgr;
         GraphicsAssetManager &graphicsAssets;
         Renderer &renderer;
 
         std::map<int, int> entityIdToInstanceId;
 
     public:
-        MeshRendererComponentManager(ResourceManager &resourceMgr,
-            GraphicsAssetManager &graphicsAssets,
-            Renderer &renderer);
+        MeshRendererComponentManager(GraphicsAssetManager &graphicsAssets, Renderer &renderer);
         MeshRendererComponentManager(const MeshRendererComponentManager &that) = delete;
         MeshRendererComponentManager &operator=(
             const MeshRendererComponentManager &that) = delete;

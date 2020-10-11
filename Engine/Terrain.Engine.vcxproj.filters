@@ -61,9 +61,6 @@
     <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\ResourceManager.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\Renderer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
@@ -72,6 +69,12 @@
     </ClCompile>
     <ClCompile Include="src\Graphics\GraphicsAssetManager.cpp">
       <Filter>src\Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Resources\ResourceManager.cpp">
+      <Filter>src\Resources</Filter>
+    </ClCompile>
+    <ClCompile Include="src\EngineContext.cpp">
+      <Filter>src</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -144,9 +147,6 @@
     <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\ResourceManager.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
     <ClInclude Include="src\Graphics\Renderer.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
@@ -172,6 +172,9 @@
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Resources\MaterialResource.hpp">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Resources\ResourceManager.hpp">
       <Filter>src\Resources</Filter>
     </ClInclude>
   </ItemGroup>

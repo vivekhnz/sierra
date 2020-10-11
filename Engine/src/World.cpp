@@ -5,6 +5,7 @@
 namespace Terrain { namespace Engine {
     World::World(EngineContext &ctx) : componentManagers(ctx)
     {
+        ctx.registerWorld(*this);
     }
 
     void World::update(float deltaTime)
@@ -24,5 +25,20 @@ namespace Terrain { namespace Engine {
         componentManagers.camera.bindTransform(vctx);
         componentManagers.terrainRenderer.calculateTessellationLevels();
         componentManagers.meshRenderer.renderMeshes();
+    }
+
+    void World::onTexturesLoaded(const int count, Resources::TextureResource *resources)
+    {
+    }
+    void World::onShadersLoaded(const int count, Resources::ShaderResource *resources)
+    {
+    }
+    void World::onShaderProgramsLoaded(
+        const int count, Resources::ShaderProgramResource *resources)
+    {
+        componentManagers.terrainRenderer.onShaderProgramsLoaded(count, resources);
+    }
+    void World::onMaterialsLoaded(const int count, Resources::MaterialResource *resources)
+    {
     }
 }}

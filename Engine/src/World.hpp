@@ -25,7 +25,7 @@ namespace Terrain { namespace Engine {
             ComponentManagers(EngineContext &ctx) :
                 camera(ctx.renderer), orbitCamera(camera, ctx.input),
                 firstPersonCamera(camera, terrainCollider, ctx.input),
-                meshRenderer(ctx.resources, ctx.assets.graphics, ctx.renderer),
+                meshRenderer(ctx.assets.graphics, ctx.renderer),
                 terrainRenderer(ctx.renderer, meshRenderer)
             {
             }
@@ -36,6 +36,12 @@ namespace Terrain { namespace Engine {
 
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
+
+        void onTexturesLoaded(const int count, Resources::TextureResource *resources);
+        void onShadersLoaded(const int count, Resources::ShaderResource *resources);
+        void onShaderProgramsLoaded(
+            const int count, Resources::ShaderProgramResource *resources);
+        void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
     };
 }}
 

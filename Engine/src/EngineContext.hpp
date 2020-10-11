@@ -4,17 +4,22 @@
 #include "Common.hpp"
 #include "AppContext.hpp"
 #include "EntityManager.hpp"
-#include "ResourceManager.hpp"
+#include "Resources/ResourceManager.hpp"
 #include "IO/InputManager.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/GraphicsAssetManager.hpp"
 
 namespace Terrain { namespace Engine {
+    class World;
+
     class EXPORT EngineContext
     {
+    private:
+        std::vector<World *> worlds;
+
     public:
         EntityManager entities;
-        ResourceManager resources;
+        Resources::ResourceManager resources;
         IO::InputManager input;
 
         Graphics::Renderer renderer;
@@ -28,7 +33,7 @@ namespace Terrain { namespace Engine {
             }
         } assets;
 
-        EngineContext(AppContext &ctx) : input(ctx), assets(renderer)
+        EngineContext(AppContext &ctx) : resources(*this), input(ctx), assets(renderer)
         {
         }
 
@@ -37,10 +42,14 @@ namespace Terrain { namespace Engine {
         EngineContext(EngineContext &&) = delete;
         EngineContext &operator=(EngineContext &&) = delete;
 
-        void initialize()
-        {
-            renderer.initialize();
-        }
+        void initialize();
+        void registerWorld(World &world);
+
+        void onTexturesLoaded(const int count, Resources::TextureResource *resources);
+        void onShadersLoaded(const int count, Resources::ShaderResource *resources);
+        void onShaderProgramsLoaded(
+            const int count, Resources::ShaderProgramResource *resources);
+        void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
 
         ~EngineContext()
         {

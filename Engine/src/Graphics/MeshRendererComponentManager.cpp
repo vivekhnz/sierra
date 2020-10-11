@@ -4,11 +4,10 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    MeshRendererComponentManager::MeshRendererComponentManager(ResourceManager &resourceMgr,
-        GraphicsAssetManager &graphicsAssets,
-        Renderer &renderer) :
-        resourceMgr(resourceMgr),
-        graphicsAssets(graphicsAssets), renderer(renderer)
+    MeshRendererComponentManager::MeshRendererComponentManager(
+        GraphicsAssetManager &graphicsAssets, Renderer &renderer) :
+        graphicsAssets(graphicsAssets),
+        renderer(renderer)
     {
     }
 

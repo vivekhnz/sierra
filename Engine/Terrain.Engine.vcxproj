@@ -25,6 +25,7 @@
     <ClCompile Include="..\deps\glad\glad.c" />
     <ClCompile Include="..\deps\stb\stb_image.c" />
     <ClCompile Include="src\CameraComponentManager.cpp" />
+    <ClCompile Include="src\EngineContext.cpp" />
     <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\FirstPersonCameraComponentManager.cpp" />
     <ClCompile Include="src\Graphics\BindBuffer.cpp" />
@@ -38,7 +39,7 @@
     <ClCompile Include="src\Graphics\Window.cpp" />
     <ClCompile Include="src\OrbitCameraComponentManager.cpp" />
     <ClCompile Include="src\Physics\TerrainColliderComponentManager.cpp" />
-    <ClCompile Include="src\ResourceManager.cpp" />
+    <ClCompile Include="src\Resources\ResourceManager.cpp" />
     <ClCompile Include="src\TerrainRendererComponentManager.cpp" />
     <ClCompile Include="src\World.cpp" />
     <ClCompile Include="src\IO\InputManager.cpp" />
@@ -67,8 +68,8 @@
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
     <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp" />
-    <ClInclude Include="src\ResourceManager.hpp" />
     <ClInclude Include="src\Resources\MaterialResource.hpp" />
+    <ClInclude Include="src\Resources\ResourceManager.hpp" />
     <ClInclude Include="src\Resources\ShaderProgramResource.hpp" />
     <ClInclude Include="src\Resources\ShaderResource.hpp" />
     <ClInclude Include="src\Resources\TextureResource.hpp" />
