@@ -28,6 +28,11 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
     const int RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED = 18;
     const int RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME = 19;
     const int RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL = 20;
+
+    // materials
+    const int RESOURCE_ID_MATERIAL_QUAD = 21;
+    const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 22;
+    const int RESOURCE_ID_MATERIAL_TERRAIN_WIREFRAME = 23;
 }}}
 
 #endif

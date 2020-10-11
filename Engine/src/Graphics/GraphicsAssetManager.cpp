@@ -5,7 +5,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
     }
 
-    int GraphicsAssetManager::createMaterial(int shaderProgramResourceId,
+    void GraphicsAssetManager::createMaterial(int resourceId,
+        int shaderProgramResourceId,
         int polygonMode,
         std::vector<int> textureResourceIds,
         std::vector<std::string> uniformNames,
@@ -31,7 +32,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         materials.uniformValues.insert(
             materials.uniformValues.end(), uniformValues.begin(), uniformValues.end());
 
-        return materials.count++;
+        materials.resourceIdToHandle[resourceId] = materials.count++;
     }
 
     int &GraphicsAssetManager::getMaterialShaderProgramHandle(int handle)

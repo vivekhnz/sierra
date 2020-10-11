@@ -121,15 +121,15 @@ namespace Terrain { namespace Engine {
             "heightmapSize", glm::vec2(heightmapWidth, heightmapHeight));
     }
 
-    void TerrainRendererComponentManager::toggleWireframeMode(
-        int i, int terrainMaterialHandle, int wireframeMaterialHandle)
+    void TerrainRendererComponentManager::toggleWireframeMode(int i)
     {
         bool isWireframeMode = data.isWireframeMode[i];
         isWireframeMode = !isWireframeMode;
         data.isWireframeMode[i] = isWireframeMode;
 
-        meshRenderer.setMaterialHandle(
-            i, isWireframeMode ? wireframeMaterialHandle : terrainMaterialHandle);
+        meshRenderer.setMaterial(i,
+            isWireframeMode ? TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_WIREFRAME
+                            : TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
     }
 
     TerrainRendererComponentManager::~TerrainRendererComponentManager()

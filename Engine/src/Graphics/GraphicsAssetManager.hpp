@@ -24,6 +24,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             std::vector<std::string> uniformNames;
             std::vector<UniformValue> uniformValues;
 
+            std::map<int, int> resourceIdToHandle;
+
             Materials() : count(0)
             {
             }
@@ -34,13 +36,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
     public:
         GraphicsAssetManager(Renderer &renderer);
 
-        int createMaterial(int shaderProgramResourceId,
+        void createMaterial(int resourceId,
+            int shaderProgramResourceId,
             int polygonMode,
             std::vector<int> textureResourceIds,
             std::vector<std::string> uniformNames,
             std::vector<UniformValue> uniformValues);
         int &getMaterialShaderProgramHandle(int handle);
         void useMaterial(int handle);
+        int lookupMaterial(int resourceId)
+        {
+            return materials.resourceIdToHandle[resourceId];
+        }
     };
 }}}
 

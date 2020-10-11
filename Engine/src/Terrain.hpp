@@ -20,8 +20,6 @@ namespace Terrain { namespace Engine {
         EngineContext &ctx;
         World &world;
         Graphics::Mesh mesh;
-        int terrainMaterialHandle;
-        int wireframeMaterialHandle;
 
     public:
         Terrain(EngineContext &ctx, World &world);

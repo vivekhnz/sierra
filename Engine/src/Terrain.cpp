@@ -43,7 +43,8 @@ namespace Terrain { namespace Engine {
         terrainMaterialUniformValues[5] = Graphics::UniformValue::forInteger(4);
         terrainMaterialUniformValues[6] = Graphics::UniformValue::forInteger(5);
 
-        terrainMaterialHandle = ctx.assets.graphics.createMaterial(
+        ctx.assets.graphics.createMaterial(
+            TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED,
             TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED, GL_FILL,
             terrainMaterialTextureResourceIds, terrainMaterialUniformNames,
             terrainMaterialUniformValues);
@@ -72,7 +73,8 @@ namespace Terrain { namespace Engine {
         wireframeMaterialUniformValues[2] = Graphics::UniformValue::forInteger(3);
         wireframeMaterialUniformValues[3] = Graphics::UniformValue::forVector2(textureScale);
 
-        wireframeMaterialHandle = ctx.assets.graphics.createMaterial(
+        ctx.assets.graphics.createMaterial(
+            TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_WIREFRAME,
             TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME, GL_LINE,
             wireframeMaterialTextureResourceIds, wireframeMaterialUniformNames,
             wireframeMaterialUniformValues);
@@ -134,7 +136,8 @@ namespace Terrain { namespace Engine {
         colliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, columns, rows, patchSize, terrainHeight);
         meshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
-            meshHandle, terrainMaterialHandle, materialUniformNames, materialUniformValues);
+            meshHandle, TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED,
+            materialUniformNames, materialUniformValues);
         terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             entityId, mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight);
     }
@@ -158,7 +161,6 @@ namespace Terrain { namespace Engine {
 
     void Terrain::toggleWireframeMode()
     {
-        world.componentManagers.terrainRenderer.toggleWireframeMode(
-            terrainRendererInstanceId, terrainMaterialHandle, wireframeMaterialHandle);
+        world.componentManagers.terrainRenderer.toggleWireframeMode(terrainRendererInstanceId);
     }
 }}

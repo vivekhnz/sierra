@@ -73,14 +73,14 @@ namespace Terrain { namespace Engine {
         std::vector<Graphics::UniformValue> quadMaterialUniformValues(1);
         quadMaterialUniformValues[0] = Graphics::UniformValue::forInteger(0);
 
-        int quadMesh_materialHandle = ctx.assets.graphics.createMaterial(
+        ctx.assets.graphics.createMaterial(TerrainResources::RESOURCE_ID_MATERIAL_QUAD,
             TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, GL_FILL,
             quadMaterialTextureResourceIds, quadMaterialUniformNames,
             quadMaterialUniformValues);
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
-            quadMesh_materialHandle, std::vector<std::string>(),
+            TerrainResources::RESOURCE_ID_MATERIAL_QUAD, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
     }
 

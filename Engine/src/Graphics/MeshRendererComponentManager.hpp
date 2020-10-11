@@ -49,7 +49,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int create(int entityId,
             int meshHandle,
-            int materialHandle,
+            int materialResourceId,
             std::vector<std::string> uniformNames,
             std::vector<UniformValue> uniformValues);
 
@@ -59,7 +59,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
 
         void renderMeshes();
-        void setMaterialHandle(int i, int materialHandle);
+        void setMaterial(int i, int materialResourceId);
         void setMaterialUniformFloat(int i, std::string uniformName, float value);
         void setMaterialUniformVector2(int i, std::string uniformName, glm::vec2 value);
 

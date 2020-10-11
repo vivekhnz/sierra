@@ -56,8 +56,7 @@ namespace Terrain { namespace Engine {
         void calculateTessellationLevels();
         void updateMesh(
             int i, int heightmapWidth, int heightmapHeight, const void *heightmapData);
-        void toggleWireframeMode(
-            int i, int wireframeMaterialHandle, int terrainMaterialHandle);
+        void toggleWireframeMode(int i);
 
         ~TerrainRendererComponentManager();
     };
