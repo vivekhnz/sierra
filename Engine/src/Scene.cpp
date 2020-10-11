@@ -57,11 +57,8 @@ namespace Terrain { namespace Engine {
 
         quadMesh.initialize(quadVertices, quadIndices);
 
-        int quadMesh_meshHandle = ctx.resources.newMesh();
-        Graphics::MeshData &quadMeshData = ctx.resources.getMesh(quadMesh_meshHandle);
-        quadMeshData.vertexArrayHandle = quadMesh.getVertexArrayHandle();
-        quadMeshData.elementCount = quadIndices.size();
-        quadMeshData.primitiveType = GL_TRIANGLES;
+        int quadMesh_meshHandle = ctx.assets.graphics.createMesh(
+            quadMesh.getVertexArrayHandle(), quadIndices.size(), GL_TRIANGLES);
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,

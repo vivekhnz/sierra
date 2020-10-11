@@ -32,24 +32,35 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } materials;
 
+        struct Meshes
+        {
+            int count;
+            std::vector<int> vertexArrayHandle;
+            std::vector<int> elementCount;
+            std::vector<unsigned int> primitiveType;
+
+            Meshes() : count(0)
+            {
+            }
+        } meshes;
+
         Renderer &renderer;
 
     public:
         GraphicsAssetManager(Renderer &renderer);
 
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
-        void createMaterial(int resourceId,
-            int shaderProgramResourceId,
-            int polygonMode,
-            std::vector<int> textureResourceIds,
-            std::vector<std::string> uniformNames,
-            std::vector<UniformValue> uniformValues);
         int &getMaterialShaderProgramHandle(int handle);
         void useMaterial(int handle);
         int lookupMaterial(int resourceId)
         {
             return materials.resourceIdToHandle[resourceId];
         }
+
+        int createMesh(int vertexArrayHandle, int elementCount, unsigned int primitiveType);
+        int getMeshVertexArrayHandle(int handle);
+        int getMeshElementCount(int handle);
+        unsigned int getMeshPrimitiveType(int handle);
     };
 }}}
 

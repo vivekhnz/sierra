@@ -47,11 +47,8 @@ namespace Terrain { namespace Engine {
         }
         mesh.initialize(vertices, indices);
 
-        int meshHandle = ctx.resources.newMesh();
-        Graphics::MeshData &meshData = ctx.resources.getMesh(meshHandle);
-        meshData.vertexArrayHandle = mesh.getVertexArrayHandle();
-        meshData.elementCount = indices.size();
-        meshData.primitiveType = GL_PATCHES;
+        int meshHandle = ctx.assets.graphics.createMesh(
+            mesh.getVertexArrayHandle(), indices.size(), GL_PATCHES);
 
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);

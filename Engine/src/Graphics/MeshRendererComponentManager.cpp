@@ -1,6 +1,5 @@
 #include "MeshRendererComponentManager.hpp"
 
-#include "MeshData.hpp"
 #include <iterator>
 #include <glad/glad.h>
 
@@ -48,15 +47,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
             // bind mesh data
             int &meshHandle = data.meshHandle[i];
-            MeshData &meshData = resourceMgr.getMesh(meshHandle);
-            renderer.bindVertexArray(meshData.vertexArrayHandle);
+            int elementCount = graphicsAssets.getMeshElementCount(meshHandle);
+            unsigned int primitiveType = graphicsAssets.getMeshPrimitiveType(meshHandle);
+            renderer.bindVertexArray(graphicsAssets.getMeshVertexArrayHandle(meshHandle));
 
             // set per-instance material uniforms
             renderer.setShaderProgramUniforms(shaderProgramHandle, data.uniformCount[i],
                 data.firstUniformIndex[i], data.uniformNames, data.uniformValues);
 
             // draw mesh instance
-            glDrawElements(meshData.primitiveType, meshData.elementCount, GL_UNSIGNED_INT, 0);
+            glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
         }
     }
 

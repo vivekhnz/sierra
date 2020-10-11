@@ -1,5 +1,7 @@
 #include "GraphicsAssetManager.hpp"
 
+#include <glad/glad.h>
+
 namespace Terrain { namespace Engine { namespace Graphics {
     GraphicsAssetManager::GraphicsAssetManager(Renderer &renderer) : renderer(renderer)
     {
@@ -52,36 +54,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    void GraphicsAssetManager::createMaterial(int resourceId,
-        int shaderProgramResourceId,
-        int polygonMode,
-        std::vector<int> textureResourceIds,
-        std::vector<std::string> uniformNames,
-        std::vector<UniformValue> uniformValues)
-    {
-        materials.shaderProgramHandle.push_back(
-            renderer.lookupShaderProgram(shaderProgramResourceId));
-        materials.polygonMode.push_back(polygonMode);
-
-        int textureCount = textureResourceIds.size();
-        materials.firstTextureIndex.push_back(materials.textureHandles.size());
-        materials.textureCount.push_back(textureCount);
-        for (int i = 0; i < textureCount; i++)
-        {
-            materials.textureHandles.push_back(renderer.lookupTexture(textureResourceIds[i]));
-        }
-
-        int uniformCount = uniformNames.size();
-        materials.firstUniformIndex.push_back(materials.uniformNames.size());
-        materials.uniformCount.push_back(uniformCount);
-        materials.uniformNames.insert(
-            materials.uniformNames.end(), uniformNames.begin(), uniformNames.end());
-        materials.uniformValues.insert(
-            materials.uniformValues.end(), uniformValues.begin(), uniformValues.end());
-
-        materials.resourceIdToHandle[resourceId] = materials.count++;
-    }
-
     int &GraphicsAssetManager::getMaterialShaderProgramHandle(int handle)
     {
         return materials.shaderProgramHandle[handle];
@@ -100,5 +72,29 @@ namespace Terrain { namespace Engine { namespace Graphics {
         renderer.setShaderProgramUniforms(shaderProgramHandle, materials.uniformCount[handle],
             materials.firstUniformIndex[handle], materials.uniformNames,
             materials.uniformValues);
+    }
+
+    int GraphicsAssetManager::createMesh(
+        int vertexArrayHandle, int elementCount, unsigned int primitiveType)
+    {
+        meshes.vertexArrayHandle.push_back(vertexArrayHandle);
+        meshes.elementCount.push_back(elementCount);
+        meshes.primitiveType.push_back(primitiveType);
+        return meshes.count++;
+    }
+
+    int GraphicsAssetManager::getMeshVertexArrayHandle(int handle)
+    {
+        return meshes.vertexArrayHandle[handle];
+    }
+
+    int GraphicsAssetManager::getMeshElementCount(int handle)
+    {
+        return meshes.elementCount[handle];
+    }
+
+    unsigned int GraphicsAssetManager::getMeshPrimitiveType(int handle)
+    {
+        return meshes.primitiveType[handle];
     }
 }}}
