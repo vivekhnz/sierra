@@ -43,9 +43,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int &materialHandle = data.materialHandle[i];
 
             // bind material data
+            int &shaderProgramHandle =
+                graphicsAssets.getMaterialShaderProgramHandle(materialHandle);
+            int &polygonMode = graphicsAssets.getMaterialPolygonMode(materialHandle);
             Material &material = graphicsAssets.getMaterial(materialHandle);
-            renderer.useShaderProgram(material.shaderProgramHandle);
-            glPolygonMode(GL_FRONT_AND_BACK, material.polygonMode);
+
+            renderer.useShaderProgram(shaderProgramHandle);
+            glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
             renderer.bindTextures(material.textureHandles, material.textureCount);
 
             // bind mesh data
@@ -54,13 +58,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glBindVertexArray(meshData.vertexArrayId);
 
             // set per-material uniforms
-            renderer.setShaderProgramUniforms(material.shaderProgramHandle,
-                material.uniformCount, 0, material.uniformNames, material.uniformValues);
+            renderer.setShaderProgramUniforms(shaderProgramHandle, material.uniformCount, 0,
+                material.uniformNames, material.uniformValues);
 
             // set per-instance material uniforms
-            renderer.setShaderProgramUniforms(material.shaderProgramHandle,
-                data.uniformCount[i], data.firstUniformIndex[i], data.uniformNames,
-                data.uniformValues);
+            renderer.setShaderProgramUniforms(shaderProgramHandle, data.uniformCount[i],
+                data.firstUniformIndex[i], data.uniformNames, data.uniformValues);
 
             // draw mesh instance
             glDrawElements(meshData.primitiveType, meshData.elementCount, GL_UNSIGNED_INT, 0);

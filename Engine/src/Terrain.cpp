@@ -16,12 +16,10 @@ namespace Terrain { namespace Engine {
         // build materials
         auto textureScale = glm::vec2(48.0f, 48.0f);
 
-        terrainMaterialHandle = ctx.assets.graphics.createMaterial();
+        terrainMaterialHandle = ctx.assets.graphics.createMaterial(
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED, GL_FILL);
         Graphics::Material &terrainMaterial =
             ctx.assets.graphics.getMaterial(terrainMaterialHandle);
-        terrainMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED);
-        terrainMaterial.polygonMode = GL_FILL;
         terrainMaterial.textureCount = 6;
         terrainMaterial.textureHandles[0] =
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
@@ -52,12 +50,10 @@ namespace Terrain { namespace Engine {
         terrainMaterial.uniformNames.push_back("roughnessTexture");
         terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(5));
 
-        wireframeMaterialHandle = ctx.assets.graphics.createMaterial();
+        wireframeMaterialHandle = ctx.assets.graphics.createMaterial(
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME, GL_LINE);
         Graphics::Material &wireframeMaterial =
             ctx.assets.graphics.getMaterial(wireframeMaterialHandle);
-        wireframeMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME);
-        wireframeMaterial.polygonMode = GL_LINE;
         wireframeMaterial.textureCount = 6;
         wireframeMaterial.textureHandles[0] =
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);

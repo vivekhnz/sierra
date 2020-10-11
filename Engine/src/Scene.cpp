@@ -63,12 +63,10 @@ namespace Terrain { namespace Engine {
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
-        int quadMesh_materialHandle = ctx.assets.graphics.createMaterial();
+        int quadMesh_materialHandle = ctx.assets.graphics.createMaterial(
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, GL_FILL);
         Graphics::Material &quadMaterial =
             ctx.assets.graphics.getMaterial(quadMesh_materialHandle);
-        quadMaterial.shaderProgramHandle = ctx.renderer.lookupShaderProgram(
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD);
-        quadMaterial.polygonMode = GL_FILL;
         quadMaterial.textureCount = 1;
         quadMaterial.textureHandles[0] =
             ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);

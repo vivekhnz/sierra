@@ -13,6 +13,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Materials
         {
             int count;
+            std::vector<int> shaderProgramHandle;
+            std::vector<int> polygonMode;
             std::vector<Material> data;
 
             Materials() : count(0)
@@ -25,7 +27,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
     public:
         GraphicsAssetManager(Renderer &renderer);
 
-        int createMaterial();
+        int createMaterial(int shaderProgramResourceId, int polygonMode);
+        int &getMaterialShaderProgramHandle(int handle);
+        int &getMaterialPolygonMode(int handle);
         Material &getMaterial(int handle);
     };
 }}}
