@@ -123,6 +123,27 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return vertexBuffers.id[handle];
     }
 
+    int Renderer::createElementBuffer(unsigned int usage)
+    {
+        unsigned int id;
+        glGenBuffers(1, &id);
+
+        elementBuffers.id.push_back(id);
+        elementBuffers.usage.push_back(usage);
+        return elementBuffers.count++;
+    }
+
+    void Renderer::updateElementBuffer(int handle, int size, const void *data)
+    {
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, elementBuffers.id[handle]);
+        glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, elementBuffers.usage[handle]);
+    }
+
+    unsigned int Renderer::getElementBufferId(int handle) const
+    {
+        return elementBuffers.id[handle];
+    }
+
     void Renderer::onShadersLoaded(const int count, Resources::ShaderResource *resources)
     {
         for (int i = 0; i < count; i++)
@@ -265,6 +286,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
         glDeleteTextures(textures.count, textures.id.data());
         glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
+        glDeleteBuffers(elementBuffers.count, elementBuffers.id.data());
         for (int i = 0; i < shaders.count; i++)
         {
             glDeleteShader(shaders.id[i]);

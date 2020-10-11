@@ -28,7 +28,6 @@
     <ClCompile Include="src\EntityManager.cpp" />
     <ClCompile Include="src\FirstPersonCameraComponentManager.cpp" />
     <ClCompile Include="src\Graphics\BindBuffer.cpp" />
-    <ClCompile Include="src\Graphics\BindVertexArray.cpp" />
     <ClCompile Include="src\Graphics\Buffer.cpp" />
     <ClCompile Include="src\Graphics\GlfwManager.cpp" />
     <ClCompile Include="src\Graphics\GraphicsAssetManager.cpp" />
@@ -57,7 +56,6 @@
     <ClInclude Include="src\EntityManager.hpp" />
     <ClInclude Include="src\FirstPersonCameraComponentManager.hpp" />
     <ClInclude Include="src\Graphics\BindBuffer.hpp" />
-    <ClInclude Include="src\Graphics\BindVertexArray.hpp" />
     <ClInclude Include="src\Graphics\Buffer.hpp" />
     <ClInclude Include="src\Graphics\GlfwManager.hpp" />
     <ClInclude Include="src\Graphics\GraphicsAssetManager.hpp" />

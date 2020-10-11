@@ -54,6 +54,17 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } vertexBuffers;
 
+        struct ElementBuffers
+        {
+            int count;
+            std::vector<unsigned int> id;
+            std::vector<unsigned int> usage;
+
+            ElementBuffers() : count(0)
+            {
+            }
+        } elementBuffers;
+
         struct Shaders
         {
             int count;
@@ -121,6 +132,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int createVertexBuffer(unsigned int usage);
         void updateVertexBuffer(int handle, int size, const void *data);
         unsigned int getVertexBufferId(int handle) const;
+
+        int createElementBuffer(unsigned int usage);
+        void updateElementBuffer(int handle, int size, const void *data);
+        unsigned int getElementBufferId(int handle) const;
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
 

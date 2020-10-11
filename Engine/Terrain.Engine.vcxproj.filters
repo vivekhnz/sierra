@@ -13,9 +13,6 @@
     <ClCompile Include="src\Graphics\BindBuffer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\BindVertexArray.cpp">
-      <Filter>src\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\Buffer.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
@@ -82,9 +79,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\BindBuffer.hpp">
-      <Filter>src\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\BindVertexArray.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\Buffer.hpp">
