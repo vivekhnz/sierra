@@ -4,6 +4,7 @@
 #include "../Common.hpp"
 
 #include "Renderer.hpp"
+#include "../Resources/MaterialResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT GraphicsAssetManager
@@ -36,6 +37,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     public:
         GraphicsAssetManager(Renderer &renderer);
 
+        void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
         void createMaterial(int resourceId,
             int shaderProgramResourceId,
             int polygonMode,

@@ -186,6 +186,9 @@
     <ClInclude Include="src\Graphics\GraphicsAssetManager.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Resources\MaterialResource.hpp">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

@@ -63,21 +63,6 @@ namespace Terrain { namespace Engine {
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
-        // build material
-        std::vector<int> quadMaterialTextureResourceIds(1);
-        quadMaterialTextureResourceIds[0] = TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP;
-
-        std::vector<std::string> quadMaterialUniformNames(1);
-        quadMaterialUniformNames[0] = "imageTexture";
-
-        std::vector<Graphics::UniformValue> quadMaterialUniformValues(1);
-        quadMaterialUniformValues[0] = Graphics::UniformValue::forInteger(0);
-
-        ctx.assets.graphics.createMaterial(TerrainResources::RESOURCE_ID_MATERIAL_QUAD,
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, GL_FILL,
-            quadMaterialTextureResourceIds, quadMaterialUniformNames,
-            quadMaterialUniformValues);
-
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
             TerrainResources::RESOURCE_ID_MATERIAL_QUAD, std::vector<std::string>(),
@@ -322,6 +307,86 @@ namespace Terrain { namespace Engine {
             shaderProgramResources.size(), shaderProgramResources.data());
         world.componentManagers.terrainRenderer.onShaderProgramsLoaded(
             shaderProgramResources.size(), shaderProgramResources.data());
+
+        // load materials
+        std::vector<Resources::MaterialResource> materialResources;
+
+        materialResources.push_back({
+            TerrainResources::RESOURCE_ID_MATERIAL_QUAD,       // id
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, // shaderProgramResourceId
+            GL_FILL,                                           // polygonMode
+            1,                                                 // textureCount
+            {TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP}, // textureResourceIds
+            1,                                                 // uniformCount
+            {12},                                              // uniformNameLengths
+            "imageTexture",                                    // uniformNames
+            {Graphics::UniformValue::forInteger(0)}            // uniformValues
+        });
+
+        materialResources.push_back({
+            TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED, // id
+            TerrainResources::
+                RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED, // shaderProgramResourceId
+            GL_FILL,                                         // polygonMode
+            6,                                               // textureCount
+            {
+                TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
+                TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO,
+                TerrainResources::RESOURCE_ID_TEXTURE_NORMAL,
+                TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT,
+                TerrainResources::RESOURCE_ID_TEXTURE_AO,
+                TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS,
+            },                           // textureResourceIds
+            7,                           // uniformCount
+            {12, 16, 13, 13, 19, 9, 16}, // uniformNameLengths
+            "textureScale"
+            "heightmapTexture"
+            "albedoTexture"
+            "normalTexture"
+            "displacementTexture"
+            "aoTexture"
+            "roughnessTexture", // uniformNames
+            {
+                Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
+                Graphics::UniformValue::forInteger(0),
+                Graphics::UniformValue::forInteger(1),
+                Graphics::UniformValue::forInteger(2),
+                Graphics::UniformValue::forInteger(3),
+                Graphics::UniformValue::forInteger(4),
+                Graphics::UniformValue::forInteger(5),
+            } // uniformValues
+        });
+
+        materialResources.push_back({
+            TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_WIREFRAME, // id
+            TerrainResources::
+                RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME, // shaderProgramResourceId
+            GL_LINE,                                          // polygonMode
+            6,                                                // textureCount
+            {
+                TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
+                TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO,
+                TerrainResources::RESOURCE_ID_TEXTURE_NORMAL,
+                TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT,
+                TerrainResources::RESOURCE_ID_TEXTURE_AO,
+                TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS,
+            },               // textureResourceIds
+            4,               // uniformCount
+            {5, 16, 19, 12}, // uniformNameLengths
+            "color"
+            "heightmapTexture"
+            "displacementTexture"
+            "textureScale", // uniformNames
+            {
+                Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)),
+                Graphics::UniformValue::forInteger(0),
+                Graphics::UniformValue::forInteger(3),
+                Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
+            } // uniformValues
+        });
+
+        ctx.assets.graphics.onMaterialsLoaded(
+            materialResources.size(), materialResources.data());
     }
 
     Terrain &Scene::getTerrain()
