@@ -59,7 +59,7 @@ namespace Terrain { namespace Engine {
 
         int quadMesh_meshHandle = ctx.resources.newMesh();
         Graphics::MeshData &quadMeshData = ctx.resources.getMesh(quadMesh_meshHandle);
-        quadMeshData.vertexArrayId = quadMesh.getVertexArrayId();
+        quadMeshData.vertexArrayHandle = quadMesh.getVertexArrayHandle();
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 

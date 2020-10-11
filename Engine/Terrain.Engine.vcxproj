@@ -35,7 +35,6 @@
     <ClCompile Include="src\Graphics\Mesh.cpp" />
     <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp" />
     <ClCompile Include="src\Graphics\Renderer.cpp" />
-    <ClCompile Include="src\Graphics\VertexArray.cpp" />
     <ClCompile Include="src\Graphics\Window.cpp" />
     <ClCompile Include="src\OrbitCameraComponentManager.cpp" />
     <ClCompile Include="src\Physics\TerrainColliderComponentManager.cpp" />
@@ -65,7 +64,6 @@
     <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp" />
     <ClInclude Include="src\Graphics\Renderer.hpp" />
     <ClInclude Include="src\Graphics\UniformValue.hpp" />
-    <ClInclude Include="src\Graphics\VertexArray.hpp" />
     <ClInclude Include="src\Graphics\Window.hpp" />
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />

@@ -144,6 +144,20 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return elementBuffers.id[handle];
     }
 
+    int Renderer::createVertexArray()
+    {
+        unsigned int id;
+        glGenVertexArrays(1, &id);
+
+        vertexArrays.id.push_back(id);
+        return vertexArrays.count++;
+    }
+
+    void Renderer::bindVertexArray(int handle)
+    {
+        glBindVertexArray(vertexArrays.id[handle]);
+    }
+
     void Renderer::onShadersLoaded(const int count, Resources::ShaderResource *resources)
     {
         for (int i = 0; i < count; i++)
@@ -287,6 +301,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glDeleteTextures(textures.count, textures.id.data());
         glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
         glDeleteBuffers(elementBuffers.count, elementBuffers.id.data());
+        glDeleteVertexArrays(vertexArrays.count, vertexArrays.id.data());
         for (int i = 0; i < shaders.count; i++)
         {
             glDeleteShader(shaders.id[i]);

@@ -49,7 +49,7 @@ namespace Terrain { namespace Engine {
 
         int meshHandle = ctx.resources.newMesh();
         Graphics::MeshData &meshData = ctx.resources.getMesh(meshHandle);
-        meshData.vertexArrayId = mesh.getVertexArrayId();
+        meshData.vertexArrayHandle = mesh.getVertexArrayHandle();
         meshData.elementCount = indices.size();
         meshData.primitiveType = GL_PATCHES;
 

@@ -4,23 +4,21 @@
 #include "../Common.hpp"
 #include <vector>
 #include "Buffer.hpp"
-#include "VertexArray.hpp"
 #include "Renderer.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Mesh
     {
-        unsigned int vertexBufferHandle;
-        unsigned int elementBufferHandle;
+        int vertexBufferHandle;
+        int elementBufferHandle;
+        int vertexArrayHandle;
 
         Graphics::Renderer &renderer;
-
-        VertexArray vertexArray;
 
     public:
         Mesh(Graphics::Renderer &renderer);
 
-        unsigned int getVertexArrayId() const;
+        int getVertexArrayHandle() const;
         int getVertexBufferHandle() const;
 
         void initialize(

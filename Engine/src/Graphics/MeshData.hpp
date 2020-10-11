@@ -8,7 +8,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
         unsigned int primitiveType;
         int elementCount;
-        int vertexArrayId;
+        int vertexArrayHandle;
     };
 }}}
 

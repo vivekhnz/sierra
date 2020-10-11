@@ -5,11 +5,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
         vertexBufferHandle = renderer.createVertexBuffer(GL_STATIC_DRAW);
         elementBufferHandle = renderer.createElementBuffer(GL_STATIC_DRAW);
+        vertexArrayHandle = renderer.createVertexArray();
     }
 
-    unsigned int Mesh::getVertexArrayId() const
+    int Mesh::getVertexArrayHandle() const
     {
-        return vertexArray.getId();
+        return vertexArrayHandle;
     }
 
     int Mesh::getVertexBufferHandle() const
@@ -27,7 +28,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             elementBufferHandle, indices.size() * sizeof(unsigned int), indices.data());
 
         // configure VAO
-        glBindVertexArray(vertexArray.getId());
+        renderer.bindVertexArray(vertexArrayHandle);
         glBindBuffer(GL_ARRAY_BUFFER, renderer.getVertexBufferId(vertexBufferHandle));
         glBindBuffer(
             GL_ELEMENT_ARRAY_BUFFER, renderer.getElementBufferId(elementBufferHandle));

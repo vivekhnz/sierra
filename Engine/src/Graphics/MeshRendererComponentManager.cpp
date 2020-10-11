@@ -49,7 +49,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             // bind mesh data
             int &meshHandle = data.meshHandle[i];
             MeshData &meshData = resourceMgr.getMesh(meshHandle);
-            glBindVertexArray(meshData.vertexArrayId);
+            renderer.bindVertexArray(meshData.vertexArrayHandle);
 
             // set per-instance material uniforms
             renderer.setShaderProgramUniforms(shaderProgramHandle, data.uniformCount[i],
