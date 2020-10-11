@@ -1,17 +1,13 @@
 #include "Scene.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
 #include "TerrainResources.hpp"
-#include "Graphics/Image.hpp"
+#include "Graphics/Window.hpp"
 #include "IO/Path.hpp"
-#include "IO/OpenFile.hpp"
 
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), terrain(ctx, world), quadMesh(ctx.renderer)
+        terrain(ctx, world), quadMesh(ctx.renderer)
     {
-        ctx.resources.loadResources();
-
         terrain.initialize();
 
         // configure input
@@ -69,9 +65,5 @@ namespace Terrain { namespace Engine {
     Terrain &Scene::getTerrain()
     {
         return terrain;
-    }
-
-    Scene::~Scene()
-    {
     }
 }}

@@ -50,6 +50,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             // We can only initialize the scene once GLAD is initialized as it makes OpenGL
             // calls. GLAD is only initialized when a window is marked as the primary window.
             world = new Engine::World(*ctx);
+            ctx->resources.loadResources();
+
             scene = new Engine::Scene(*ctx, *world);
             sceneProxy = gcnew Proxy::SceneProxy(*scene);
 

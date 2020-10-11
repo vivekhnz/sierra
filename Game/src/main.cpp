@@ -20,6 +20,8 @@ int main()
         ctx.initialize();
 
         Terrain::Engine::World world(ctx);
+        ctx.resources.loadResources();
+
         Terrain::Engine::Scene scene(ctx, world);
         Terrain::Engine::Graphics::Image heightmap = Terrain::Engine::Graphics::Image(
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
