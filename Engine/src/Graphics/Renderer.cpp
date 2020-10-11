@@ -203,6 +203,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glUseProgram(shaderPrograms.id[handle]);
     }
 
+    void Renderer::setPolygonMode(int polygonMode)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
+    }
+
     void Renderer::setShaderProgramUniformFloat(
         int handle, std::string uniformName, float value)
     {

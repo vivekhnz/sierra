@@ -63,16 +63,20 @@ namespace Terrain { namespace Engine {
         quadMeshData.elementCount = quadIndices.size();
         quadMeshData.primitiveType = GL_TRIANGLES;
 
+        // build material
+        std::vector<int> quadMaterialTextureResourceIds(1);
+        quadMaterialTextureResourceIds[0] = TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP;
+
+        std::vector<std::string> quadMaterialUniformNames(1);
+        quadMaterialUniformNames[0] = "imageTexture";
+
+        std::vector<Graphics::UniformValue> quadMaterialUniformValues(1);
+        quadMaterialUniformValues[0] = Graphics::UniformValue::forInteger(0);
+
         int quadMesh_materialHandle = ctx.assets.graphics.createMaterial(
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, GL_FILL);
-        Graphics::Material &quadMaterial =
-            ctx.assets.graphics.getMaterial(quadMesh_materialHandle);
-        quadMaterial.textureCount = 1;
-        quadMaterial.textureHandles[0] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
-        quadMaterial.uniformCount = 1;
-        quadMaterial.uniformNames.push_back("imageTexture");
-        quadMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(0));
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_QUAD, GL_FILL,
+            quadMaterialTextureResourceIds, quadMaterialUniformNames,
+            quadMaterialUniformValues);
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,

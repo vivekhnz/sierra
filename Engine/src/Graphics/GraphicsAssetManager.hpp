@@ -4,7 +4,6 @@
 #include "../Common.hpp"
 
 #include "Renderer.hpp"
-#include "Material.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT GraphicsAssetManager
@@ -15,7 +14,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int count;
             std::vector<int> shaderProgramHandle;
             std::vector<int> polygonMode;
-            std::vector<Material> data;
+
+            std::vector<int> firstTextureIndex;
+            std::vector<int> textureCount;
+            std::vector<int> textureHandles;
+
+            std::vector<int> firstUniformIndex;
+            std::vector<int> uniformCount;
+            std::vector<std::string> uniformNames;
+            std::vector<UniformValue> uniformValues;
 
             Materials() : count(0)
             {
@@ -27,10 +34,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
     public:
         GraphicsAssetManager(Renderer &renderer);
 
-        int createMaterial(int shaderProgramResourceId, int polygonMode);
+        int createMaterial(int shaderProgramResourceId,
+            int polygonMode,
+            std::vector<int> textureResourceIds,
+            std::vector<std::string> uniformNames,
+            std::vector<UniformValue> uniformValues);
         int &getMaterialShaderProgramHandle(int handle);
-        int &getMaterialPolygonMode(int handle);
-        Material &getMaterial(int handle);
+        void useMaterial(int handle);
     };
 }}}
 

@@ -135,9 +135,6 @@
     <ClInclude Include="src\World.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Graphics\Material.hpp">
-      <Filter>src\Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="src\OrbitCameraComponentManager.hpp">
       <Filter>src</Filter>
     </ClInclude>

@@ -16,68 +16,66 @@ namespace Terrain { namespace Engine {
         // build materials
         auto textureScale = glm::vec2(48.0f, 48.0f);
 
+        std::vector<int> terrainMaterialTextureResourceIds(6);
+        terrainMaterialTextureResourceIds[0] = TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP;
+        terrainMaterialTextureResourceIds[1] = TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO;
+        terrainMaterialTextureResourceIds[2] = TerrainResources::RESOURCE_ID_TEXTURE_NORMAL;
+        terrainMaterialTextureResourceIds[3] =
+            TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT;
+        terrainMaterialTextureResourceIds[4] = TerrainResources::RESOURCE_ID_TEXTURE_AO;
+        terrainMaterialTextureResourceIds[5] = TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS;
+
+        std::vector<std::string> terrainMaterialUniformNames(7);
+        terrainMaterialUniformNames[0] = "textureScale";
+        terrainMaterialUniformNames[1] = "heightmapTexture";
+        terrainMaterialUniformNames[2] = "albedoTexture";
+        terrainMaterialUniformNames[3] = "normalTexture";
+        terrainMaterialUniformNames[4] = "displacementTexture";
+        terrainMaterialUniformNames[5] = "aoTexture";
+        terrainMaterialUniformNames[6] = "roughnessTexture";
+
+        std::vector<Graphics::UniformValue> terrainMaterialUniformValues(7);
+        terrainMaterialUniformValues[0] = Graphics::UniformValue::forVector2(textureScale);
+        terrainMaterialUniformValues[1] = Graphics::UniformValue::forInteger(0);
+        terrainMaterialUniformValues[2] = Graphics::UniformValue::forInteger(1);
+        terrainMaterialUniformValues[3] = Graphics::UniformValue::forInteger(2);
+        terrainMaterialUniformValues[4] = Graphics::UniformValue::forInteger(3);
+        terrainMaterialUniformValues[5] = Graphics::UniformValue::forInteger(4);
+        terrainMaterialUniformValues[6] = Graphics::UniformValue::forInteger(5);
+
         terrainMaterialHandle = ctx.assets.graphics.createMaterial(
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED, GL_FILL);
-        Graphics::Material &terrainMaterial =
-            ctx.assets.graphics.getMaterial(terrainMaterialHandle);
-        terrainMaterial.textureCount = 6;
-        terrainMaterial.textureHandles[0] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
-        terrainMaterial.textureHandles[1] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO);
-        terrainMaterial.textureHandles[2] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_NORMAL);
-        terrainMaterial.textureHandles[3] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT);
-        terrainMaterial.textureHandles[4] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO);
-        terrainMaterial.textureHandles[5] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS);
-        terrainMaterial.uniformCount = 7;
-        terrainMaterial.uniformNames.push_back("textureScale");
-        terrainMaterial.uniformValues.push_back(
-            Graphics::UniformValue::forVector2(textureScale));
-        terrainMaterial.uniformNames.push_back("heightmapTexture");
-        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(0));
-        terrainMaterial.uniformNames.push_back("albedoTexture");
-        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(1));
-        terrainMaterial.uniformNames.push_back("normalTexture");
-        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(2));
-        terrainMaterial.uniformNames.push_back("displacementTexture");
-        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(3));
-        terrainMaterial.uniformNames.push_back("aoTexture");
-        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(4));
-        terrainMaterial.uniformNames.push_back("roughnessTexture");
-        terrainMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(5));
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_TEXTURED, GL_FILL,
+            terrainMaterialTextureResourceIds, terrainMaterialUniformNames,
+            terrainMaterialUniformValues);
+
+        std::vector<int> wireframeMaterialTextureResourceIds(6);
+        wireframeMaterialTextureResourceIds[0] =
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP;
+        wireframeMaterialTextureResourceIds[1] = TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO;
+        wireframeMaterialTextureResourceIds[2] = TerrainResources::RESOURCE_ID_TEXTURE_NORMAL;
+        wireframeMaterialTextureResourceIds[3] =
+            TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT;
+        wireframeMaterialTextureResourceIds[4] = TerrainResources::RESOURCE_ID_TEXTURE_AO;
+        wireframeMaterialTextureResourceIds[5] =
+            TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS;
+
+        std::vector<std::string> wireframeMaterialUniformNames(4);
+        wireframeMaterialUniformNames[0] = "color";
+        wireframeMaterialUniformNames[1] = "heightmapTexture";
+        wireframeMaterialUniformNames[2] = "displacementTexture";
+        wireframeMaterialUniformNames[3] = "textureScale";
+
+        std::vector<Graphics::UniformValue> wireframeMaterialUniformValues(4);
+        wireframeMaterialUniformValues[0] =
+            Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f));
+        wireframeMaterialUniformValues[1] = Graphics::UniformValue::forInteger(0);
+        wireframeMaterialUniformValues[2] = Graphics::UniformValue::forInteger(3);
+        wireframeMaterialUniformValues[3] = Graphics::UniformValue::forVector2(textureScale);
 
         wireframeMaterialHandle = ctx.assets.graphics.createMaterial(
-            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME, GL_LINE);
-        Graphics::Material &wireframeMaterial =
-            ctx.assets.graphics.getMaterial(wireframeMaterialHandle);
-        wireframeMaterial.textureCount = 6;
-        wireframeMaterial.textureHandles[0] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP);
-        wireframeMaterial.textureHandles[1] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO);
-        wireframeMaterial.textureHandles[2] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_NORMAL);
-        wireframeMaterial.textureHandles[3] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT);
-        wireframeMaterial.textureHandles[4] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO);
-        wireframeMaterial.textureHandles[5] =
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS);
-        wireframeMaterial.uniformCount = 4;
-        wireframeMaterial.uniformNames.push_back("color");
-        wireframeMaterial.uniformValues.push_back(
-            Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)));
-        wireframeMaterial.uniformNames.push_back("heightmapTexture");
-        wireframeMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(0));
-        wireframeMaterial.uniformNames.push_back("displacementTexture");
-        wireframeMaterial.uniformValues.push_back(Graphics::UniformValue::forInteger(3));
-        wireframeMaterial.uniformNames.push_back("textureScale");
-        wireframeMaterial.uniformValues.push_back(
-            Graphics::UniformValue::forVector2(textureScale));
+            TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_WIREFRAME, GL_LINE,
+            wireframeMaterialTextureResourceIds, wireframeMaterialUniformNames,
+            wireframeMaterialUniformValues);
 
         // build mesh
         std::vector<float> vertices(columns * rows * 5);
