@@ -15,7 +15,7 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         int width;
         int height;
-        void *data;
+        const void *data;
     };
 }}}
 

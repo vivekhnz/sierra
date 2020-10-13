@@ -75,6 +75,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glGenerateMipmap(GL_TEXTURE_2D);
 
             textures.id.push_back(id);
+            textures.resourceId.push_back(resource.id);
             textures.internalFormat.push_back(resource.internalFormat);
             textures.format.push_back(resource.format);
             textures.type.push_back(resource.type);
@@ -85,12 +86,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
         delete[] ids;
     }
 
-    void Renderer::updateTexture(int handle, int width, int height, const void *pixels)
+    void Renderer::onTextureReloaded(Resources::TextureResource &resource)
     {
-        glBindTexture(GL_TEXTURE_2D, textures.id[handle]);
-        glTexImage2D(GL_TEXTURE_2D, 0, textures.internalFormat[handle], width, height, 0,
-            textures.format[handle], textures.type[handle], pixels);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        for (int i = 0; i < textures.count; i++)
+        {
+            if (textures.resourceId[i] != resource.id)
+                continue;
+
+            glBindTexture(GL_TEXTURE_2D, textures.id[i]);
+            glTexImage2D(GL_TEXTURE_2D, 0, textures.internalFormat[i], resource.width,
+                resource.height, 0, textures.format[i], textures.type[i], resource.data);
+            glGenerateMipmap(GL_TEXTURE_2D);
+        }
     }
 
     void Renderer::bindTextures(int *textureHandles, int count)

@@ -1,7 +1,6 @@
 #include <iostream>
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
-#include "../../Engine/src/Graphics/Image.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/EngineContext.hpp"
 #include "../../Engine/src/Scene.hpp"
@@ -23,10 +22,8 @@ int main()
         ctx.resources.loadResources();
 
         Terrain::Engine::Scene scene(ctx, world);
-        Terrain::Engine::Graphics::Image heightmap = Terrain::Engine::Graphics::Image(
-            Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
-        scene.getTerrain().loadHeightmap(
-            heightmap.getWidth(), heightmap.getHeight(), heightmap.getData());
+        scene.getTerrain().loadHeightmapFromFile(
+            Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"));
 
         // create player camera
         int playerCamera_entityId = ctx.entities.create();

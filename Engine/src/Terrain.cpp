@@ -41,18 +41,28 @@ namespace Terrain { namespace Engine {
     void Terrain::loadHeightmapFromFile(std::string path)
     {
         auto image = Graphics::Image(path, true);
-        loadHeightmap(image.getWidth(), image.getHeight(), image.getData());
+        Resources::TextureResource resource = {
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, // id
+            GL_R16,                                          // internalFormat
+            GL_RED,                                          // format
+            GL_UNSIGNED_SHORT,                               // type
+            GL_MIRRORED_REPEAT,                              // wrapMode
+            GL_LINEAR_MIPMAP_LINEAR,                         // filterMode
+            image.getWidth(),                                // width
+            image.getHeight(),                               // height
+            image.getData()                                  // data
+        };
+
+        loadHeightmap(resource);
     }
 
-    void Terrain::loadHeightmap(int textureWidth, int textureHeight, const void *data)
+    void Terrain::loadHeightmap(Resources::TextureResource &resource)
     {
-        ctx.renderer.updateTexture(
-            ctx.renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP),
-            textureWidth, textureHeight, data);
+        ctx.renderer.onTextureReloaded(resource);
         world.componentManagers.terrainCollider.updatePatchHeights(
-            colliderInstanceId, textureWidth, textureHeight, data);
+            colliderInstanceId, resource.width, resource.height, resource.data);
         world.componentManagers.terrainRenderer.updateMesh(
-            terrainRendererInstanceId, textureWidth, textureHeight, data);
+            terrainRendererInstanceId, resource.width, resource.height, resource.data);
     }
 
     void Terrain::toggleWireframeMode()

@@ -32,6 +32,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             int count;
             std::vector<unsigned int> id;
+            std::vector<int> resourceId;
             std::vector<int> internalFormat;
             std::vector<int> format;
             std::vector<int> type;
@@ -132,7 +133,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
         void onTexturesLoaded(const int count, Resources::TextureResource *resources);
-        void updateTexture(int handle, int width, int height, const void *pixels);
+        void onTextureReloaded(Resources::TextureResource &resource);
         void bindTextures(int *textureHandles, int count);
         int lookupTexture(int resourceId)
         {
