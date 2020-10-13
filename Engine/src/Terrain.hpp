@@ -9,18 +9,12 @@ namespace Terrain { namespace Engine {
     {
         int terrainRendererInstanceId;
 
-        int columns;
-        int rows;
-        float patchSize;
-        float terrainHeight;
-
         EngineContext &ctx;
         World &world;
 
     public:
         Terrain(EngineContext &ctx, World &world);
 
-        void initialize();
         void loadHeightmapFromFile(std::string path);
         void loadHeightmap(Resources::TextureResource &resource);
 

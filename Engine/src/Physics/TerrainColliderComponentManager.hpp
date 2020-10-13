@@ -15,8 +15,8 @@ namespace Terrain { namespace Engine { namespace Physics {
             int count;
             std::vector<int> entityId;
             std::vector<int> heightmapTextureResourceId;
-            std::vector<int> columns;
             std::vector<int> rows;
+            std::vector<int> columns;
             std::vector<float> patchSize;
             std::vector<int> firstHeightIndex;
             std::vector<float> patchHeights;
@@ -41,8 +41,8 @@ namespace Terrain { namespace Engine { namespace Physics {
 
         int create(int entityId,
             int heightmapTextureResourceId,
-            int columns,
             int rows,
+            int columns,
             float patchSize,
             float terrainHeight);
 

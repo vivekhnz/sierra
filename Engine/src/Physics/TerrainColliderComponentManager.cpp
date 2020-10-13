@@ -12,15 +12,15 @@ namespace Terrain { namespace Engine { namespace Physics {
 
     int TerrainColliderComponentManager::create(int entityId,
         int heightmapTextureResourceId,
-        int columns,
         int rows,
+        int columns,
         float patchSize,
         float terrainHeight)
     {
         data.entityId.push_back(entityId);
         data.heightmapTextureResourceId.push_back(heightmapTextureResourceId);
-        data.columns.push_back(columns);
         data.rows.push_back(rows);
+        data.columns.push_back(columns);
         data.patchSize.push_back(patchSize);
         data.firstHeightIndex.push_back(data.patchHeights.size());
         std::fill_n(std::back_inserter(data.patchHeights), columns * rows, 0.0f);

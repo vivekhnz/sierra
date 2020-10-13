@@ -7,8 +7,6 @@
 namespace Terrain { namespace Engine {
     Scene::Scene(EngineContext &ctx, World &world) : terrain(ctx, world)
     {
-        terrain.initialize();
-
         // configure input
         ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
         ctx.input.mapCommand(GLFW_KEY_H,

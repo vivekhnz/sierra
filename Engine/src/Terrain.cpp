@@ -5,13 +5,13 @@
 #include "TerrainResources.hpp"
 
 namespace Terrain { namespace Engine {
-    Terrain::Terrain(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f)
+    Terrain::Terrain(EngineContext &ctx, World &world) : ctx(ctx), world(world)
     {
-    }
+        int columns = 256;
+        int rows = 256;
+        float patchSize = 0.5f;
+        float terrainHeight = 25.0f;
 
-    void Terrain::initialize()
-    {
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);
         materialUniformNames[0] = "terrainHeight";
@@ -29,7 +29,7 @@ namespace Terrain { namespace Engine {
         terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             entityId, rows, columns, patchSize, terrainHeight);
         world.componentManagers.terrainCollider.create(entityId,
-            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, columns, rows, patchSize,
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, rows, columns, patchSize,
             terrainHeight);
 
         int &meshHandle =
