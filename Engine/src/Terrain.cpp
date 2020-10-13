@@ -6,8 +6,7 @@
 
 namespace Terrain { namespace Engine {
     Terrain::Terrain(EngineContext &ctx, World &world) :
-        ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f),
-        mesh(ctx.renderer)
+        ctx(ctx), world(world), columns(256), rows(256), patchSize(0.5f), terrainHeight(25.0f)
     {
     }
 
@@ -45,10 +44,7 @@ namespace Terrain { namespace Engine {
                 indices[elemIndex + 3] = vertIndex + 1;
             }
         }
-        mesh.initialize(vertices, indices);
-
-        int meshHandle = ctx.assets.graphics.createMesh(
-            mesh.getVertexArrayHandle(), indices.size(), GL_PATCHES);
+        int meshHandle = ctx.assets.graphics.createMesh(GL_PATCHES, vertices, indices);
 
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);
@@ -66,11 +62,12 @@ namespace Terrain { namespace Engine {
         int entityId = ctx.entities.create();
         colliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, columns, rows, patchSize, terrainHeight);
-        meshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
-            meshHandle, TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED,
-            materialUniformNames, materialUniformValues);
-        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, mesh.getVertexBufferHandle(), rows, columns, patchSize, terrainHeight);
+        world.componentManagers.meshRenderer.create(entityId, meshHandle,
+            TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED, materialUniformNames,
+            materialUniformValues);
+        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
+            ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle), rows, columns,
+            patchSize, terrainHeight);
     }
 
     void Terrain::loadHeightmapFromFile(std::string path)

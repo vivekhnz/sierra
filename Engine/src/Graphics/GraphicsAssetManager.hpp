@@ -35,6 +35,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Meshes
         {
             int count;
+            std::vector<int> vertexBufferHandle;
             std::vector<int> vertexArrayHandle;
             std::vector<int> elementCount;
             std::vector<unsigned int> primitiveType;
@@ -57,7 +58,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return materials.resourceIdToHandle[resourceId];
         }
 
-        int createMesh(int vertexArrayHandle, int elementCount, unsigned int primitiveType);
+        int createMesh(unsigned int primitiveType,
+            const std::vector<float> &vertices,
+            const std::vector<unsigned int> &indices);
+        int getMeshVertexBufferHandle(int handle);
         int getMeshVertexArrayHandle(int handle);
         int getMeshElementCount(int handle);
         unsigned int getMeshPrimitiveType(int handle);

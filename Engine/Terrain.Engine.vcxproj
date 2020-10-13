@@ -33,7 +33,6 @@
     <ClCompile Include="src\Graphics\GlfwManager.cpp" />
     <ClCompile Include="src\Graphics\GraphicsAssetManager.cpp" />
     <ClCompile Include="src\Graphics\Image.cpp" />
-    <ClCompile Include="src\Graphics\Mesh.cpp" />
     <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp" />
     <ClCompile Include="src\Graphics\Renderer.cpp" />
     <ClCompile Include="src\Graphics\Window.cpp" />
@@ -60,7 +59,6 @@
     <ClInclude Include="src\Graphics\GlfwManager.hpp" />
     <ClInclude Include="src\Graphics\GraphicsAssetManager.hpp" />
     <ClInclude Include="src\Graphics\Image.hpp" />
-    <ClInclude Include="src\Graphics\Mesh.hpp" />
     <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp" />
     <ClInclude Include="src\Graphics\Renderer.hpp" />
     <ClInclude Include="src\Graphics\UniformValue.hpp" />

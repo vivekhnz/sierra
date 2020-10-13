@@ -5,8 +5,7 @@
 #include "IO/Path.hpp"
 
 namespace Terrain { namespace Engine {
-    Scene::Scene(EngineContext &ctx, World &world) :
-        terrain(ctx, world), quadMesh(ctx.renderer)
+    Scene::Scene(EngineContext &ctx, World &world) : terrain(ctx, world)
     {
         terrain.initialize();
 
@@ -51,10 +50,8 @@ namespace Terrain { namespace Engine {
         quadIndices[4] = 3;
         quadIndices[5] = 2;
 
-        quadMesh.initialize(quadVertices, quadIndices);
-
-        int quadMesh_meshHandle = ctx.assets.graphics.createMesh(
-            quadMesh.getVertexArrayHandle(), quadIndices.size(), GL_TRIANGLES);
+        int quadMesh_meshHandle =
+            ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
 
         int quadMesh_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,

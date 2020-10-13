@@ -74,13 +74,44 @@ namespace Terrain { namespace Engine { namespace Graphics {
             materials.uniformValues);
     }
 
-    int GraphicsAssetManager::createMesh(
-        int vertexArrayHandle, int elementCount, unsigned int primitiveType)
+    int GraphicsAssetManager::createMesh(unsigned int primitiveType,
+        const std::vector<float> &vertices,
+        const std::vector<unsigned int> &indices)
     {
+        // create renderer resources
+        int vertexBufferHandle = renderer.createVertexBuffer(GL_STATIC_DRAW);
+        int elementBufferHandle = renderer.createElementBuffer(GL_STATIC_DRAW);
+        int vertexArrayHandle = renderer.createVertexArray();
+
+        // fill buffers
+        renderer.updateVertexBuffer(
+            vertexBufferHandle, vertices.size() * sizeof(float), vertices.data());
+        renderer.updateElementBuffer(
+            elementBufferHandle, indices.size() * sizeof(unsigned int), indices.data());
+
+        // configure VAO
+        renderer.bindVertexArray(vertexArrayHandle);
+        glBindBuffer(GL_ARRAY_BUFFER, renderer.getVertexBufferId(vertexBufferHandle));
+        glBindBuffer(
+            GL_ELEMENT_ARRAY_BUFFER, renderer.getElementBufferId(elementBufferHandle));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
+        glEnableVertexAttribArray(0);
+        glVertexAttribPointer(
+            1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
+        glEnableVertexAttribArray(1);
+        glBindVertexArray(0);
+
+        // create component data
+        meshes.vertexBufferHandle.push_back(vertexBufferHandle);
         meshes.vertexArrayHandle.push_back(vertexArrayHandle);
-        meshes.elementCount.push_back(elementCount);
+        meshes.elementCount.push_back(indices.size());
         meshes.primitiveType.push_back(primitiveType);
         return meshes.count++;
+    }
+
+    int GraphicsAssetManager::getMeshVertexBufferHandle(int handle)
+    {
+        return meshes.vertexBufferHandle[handle];
     }
 
     int GraphicsAssetManager::getMeshVertexArrayHandle(int handle)

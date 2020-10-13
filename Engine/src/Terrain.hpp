@@ -3,13 +3,11 @@
 
 #include "Common.hpp"
 #include "World.hpp"
-#include "Graphics/Mesh.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT Terrain
     {
         int colliderInstanceId;
-        int meshRendererInstanceId;
         int terrainRendererInstanceId;
 
         int columns;
@@ -19,7 +17,6 @@ namespace Terrain { namespace Engine {
 
         EngineContext &ctx;
         World &world;
-        Graphics::Mesh mesh;
 
     public:
         Terrain(EngineContext &ctx, World &world);
