@@ -28,8 +28,9 @@ namespace Terrain { namespace Engine {
         int entityId = ctx.entities.create();
         terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             entityId, rows, columns, patchSize, terrainHeight);
-        colliderInstanceId = world.componentManagers.terrainCollider.create(
-            entityId, columns, rows, patchSize, terrainHeight);
+        world.componentManagers.terrainCollider.create(entityId,
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, columns, rows, patchSize,
+            terrainHeight);
 
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
@@ -59,8 +60,7 @@ namespace Terrain { namespace Engine {
     void Terrain::loadHeightmap(Resources::TextureResource &resource)
     {
         ctx.renderer.onTextureReloaded(resource);
-        world.componentManagers.terrainCollider.updatePatchHeights(
-            colliderInstanceId, resource.width, resource.height, resource.data);
+        world.componentManagers.terrainCollider.onTextureReloaded(resource);
         world.componentManagers.terrainRenderer.updateMesh(
             terrainRendererInstanceId, resource.width, resource.height, resource.data);
     }

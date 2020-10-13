@@ -7,7 +7,6 @@
 namespace Terrain { namespace Engine {
     class EXPORT Terrain
     {
-        int colliderInstanceId;
         int terrainRendererInstanceId;
 
         int columns;

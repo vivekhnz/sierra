@@ -2,7 +2,9 @@
 #define PHYSICS_TERRAINCOLLIDERCOMPONENTMANAGER_HPP
 
 #include "../Common.hpp"
+
 #include <vector>
+#include "../Resources/TextureResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Physics {
     class EXPORT TerrainColliderComponentManager
@@ -12,6 +14,7 @@ namespace Terrain { namespace Engine { namespace Physics {
         {
             int count;
             std::vector<int> entityId;
+            std::vector<int> heightmapTextureResourceId;
             std::vector<int> columns;
             std::vector<int> rows;
             std::vector<float> patchSize;
@@ -36,11 +39,16 @@ namespace Terrain { namespace Engine { namespace Physics {
         TerrainColliderComponentManager &operator=(
             TerrainColliderComponentManager &&) = delete;
 
-        int create(int entityId, int columns, int rows, float patchSize, float terrainHeight);
+        int create(int entityId,
+            int heightmapTextureResourceId,
+            int columns,
+            int rows,
+            float patchSize,
+            float terrainHeight);
+
+        void onTextureReloaded(Resources::TextureResource &resource);
 
         float getTerrainHeight(float worldX, float worldZ);
-        void updatePatchHeights(
-            int i, int heightmapWidth, int heightmapHeight, const void *heightmapData);
 
         ~TerrainColliderComponentManager();
     };

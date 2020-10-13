@@ -10,10 +10,15 @@ namespace Terrain { namespace Engine { namespace Physics {
         data.count = 0;
     }
 
-    int TerrainColliderComponentManager::create(
-        int entityId, int columns, int rows, float patchSize, float terrainHeight)
+    int TerrainColliderComponentManager::create(int entityId,
+        int heightmapTextureResourceId,
+        int columns,
+        int rows,
+        float patchSize,
+        float terrainHeight)
     {
         data.entityId.push_back(entityId);
+        data.heightmapTextureResourceId.push_back(heightmapTextureResourceId);
         data.columns.push_back(columns);
         data.rows.push_back(rows);
         data.patchSize.push_back(patchSize);
@@ -21,6 +26,36 @@ namespace Terrain { namespace Engine { namespace Physics {
         std::fill_n(std::back_inserter(data.patchHeights), columns * rows, 0.0f);
         data.terrainHeight.push_back(terrainHeight);
         return data.count++;
+    }
+
+    void TerrainColliderComponentManager::onTextureReloaded(
+        Resources::TextureResource &resource)
+    {
+        for (int i = 0; i < data.count; i++)
+        {
+            if (data.heightmapTextureResourceId[i] != resource.id)
+                continue;
+
+            int &columns = data.columns[i];
+            int &rows = data.rows[i];
+            int &firstHeightIndex = data.firstHeightIndex[i];
+
+            float xScalar = resource.width / (float)columns;
+            float yScalar = (resource.height * resource.width) / (float)rows;
+            float heightScalar = data.terrainHeight[i] / 65535.0f;
+            const unsigned short *pixels = static_cast<const unsigned short *>(resource.data);
+            for (int y = 0; y < rows; y++)
+            {
+                int idxStart = firstHeightIndex + (y * columns);
+                int rowStart = (int)(y * yScalar);
+
+                for (int x = 0; x < columns; x++)
+                {
+                    data.patchHeights[idxStart + x] =
+                        pixels[rowStart + (int)(x * xScalar)] * heightScalar;
+                }
+            }
+        }
     }
 
     float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
@@ -80,30 +115,6 @@ namespace Terrain { namespace Engine { namespace Physics {
         int clampedZ = std::clamp(z, 0, rows - 1);
         int i = (clampedZ * columns) + clampedX;
         return data.patchHeights[firstHeightIndex + i];
-    }
-
-    void TerrainColliderComponentManager::updatePatchHeights(
-        int i, int heightmapWidth, int heightmapHeight, const void *heightmapData)
-    {
-        int &columns = data.columns[i];
-        int &rows = data.rows[i];
-        int &firstHeightIndex = data.firstHeightIndex[i];
-
-        float xScalar = heightmapWidth / (float)columns;
-        float yScalar = (heightmapHeight * heightmapWidth) / (float)rows;
-        float heightScalar = data.terrainHeight[i] / 65535.0f;
-        const unsigned short *pixels = static_cast<const unsigned short *>(heightmapData);
-        for (int y = 0; y < rows; y++)
-        {
-            int idxStart = firstHeightIndex + (y * columns);
-            int rowStart = (int)(y * yScalar);
-
-            for (int x = 0; x < columns; x++)
-            {
-                data.patchHeights[idxStart + x] =
-                    pixels[rowStart + (int)(x * xScalar)] * heightScalar;
-            }
-        }
     }
 
     TerrainColliderComponentManager::~TerrainColliderComponentManager()
