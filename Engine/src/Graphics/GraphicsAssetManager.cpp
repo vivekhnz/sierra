@@ -109,22 +109,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return meshes.count++;
     }
 
-    int GraphicsAssetManager::getMeshVertexBufferHandle(int handle)
+    int &GraphicsAssetManager::getMeshVertexBufferHandle(int handle)
     {
         return meshes.vertexBufferHandle[handle];
     }
 
-    int GraphicsAssetManager::getMeshVertexArrayHandle(int handle)
+    int &GraphicsAssetManager::getMeshVertexArrayHandle(int handle)
     {
         return meshes.vertexArrayHandle[handle];
     }
 
-    int GraphicsAssetManager::getMeshElementCount(int handle)
+    int &GraphicsAssetManager::getMeshElementCount(int handle)
     {
         return meshes.elementCount[handle];
     }
 
-    unsigned int GraphicsAssetManager::getMeshPrimitiveType(int handle)
+    unsigned int &GraphicsAssetManager::getMeshPrimitiveType(int handle)
     {
         return meshes.primitiveType[handle];
     }

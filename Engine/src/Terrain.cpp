@@ -12,40 +12,6 @@ namespace Terrain { namespace Engine {
 
     void Terrain::initialize()
     {
-        // build mesh
-        std::vector<float> vertices(columns * rows * 5);
-        float offsetX = (columns - 1) * patchSize * -0.5f;
-        float offsetY = (rows - 1) * patchSize * -0.5f;
-        auto uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
-        for (int y = 0; y < rows; y++)
-        {
-            for (int x = 0; x < columns; x++)
-            {
-                int patchIndex = (y * columns) + x;
-                int i = patchIndex * 5;
-                vertices[i] = (x * patchSize) + offsetX;
-                vertices[i + 1] = 0.0f;
-                vertices[i + 2] = (y * patchSize) + offsetY;
-                vertices[i + 3] = uvSize.x * x;
-                vertices[i + 4] = uvSize.y * y;
-            }
-        }
-
-        std::vector<unsigned int> indices((rows - 1) * (columns - 1) * 4);
-        for (int y = 0; y < rows - 1; y++)
-        {
-            for (int x = 0; x < columns - 1; x++)
-            {
-                int vertIndex = (y * columns) + x;
-                int elemIndex = ((y * (columns - 1)) + x) * 4;
-                indices[elemIndex] = vertIndex;
-                indices[elemIndex + 1] = vertIndex + columns;
-                indices[elemIndex + 2] = vertIndex + columns + 1;
-                indices[elemIndex + 3] = vertIndex + 1;
-            }
-        }
-        int meshHandle = ctx.assets.graphics.createMesh(GL_PATCHES, vertices, indices);
-
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);
         materialUniformNames[0] = "terrainHeight";
@@ -60,14 +26,16 @@ namespace Terrain { namespace Engine {
 
         // create entity and components
         int entityId = ctx.entities.create();
+        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
+            entityId, rows, columns, patchSize, terrainHeight);
         colliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, columns, rows, patchSize, terrainHeight);
+
+        int &meshHandle =
+            world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
         world.componentManagers.meshRenderer.create(entityId, meshHandle,
             TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED, materialUniformNames,
             materialUniformValues);
-        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
-            ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle), rows, columns,
-            patchSize, terrainHeight);
     }
 
     void Terrain::loadHeightmapFromFile(std::string path)

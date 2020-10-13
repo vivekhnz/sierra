@@ -15,6 +15,7 @@ namespace Terrain { namespace Engine {
         {
             int count;
             std::vector<int> entityId;
+            std::vector<int> meshHandle;
             std::vector<int> meshVertexBufferHandle;
             std::vector<int> rows;
             std::vector<int> columns;
@@ -30,12 +31,14 @@ namespace Terrain { namespace Engine {
 
         Graphics::Renderer &renderer;
         Graphics::MeshRendererComponentManager &meshRenderer;
+        Graphics::GraphicsAssetManager &graphicsAssets;
 
         int calcTessLevelsShaderProgramHandle;
 
     public:
         TerrainRendererComponentManager(Graphics::Renderer &renderer,
-            Graphics::MeshRendererComponentManager &meshRenderer);
+            Graphics::MeshRendererComponentManager &meshRenderer,
+            Graphics::GraphicsAssetManager &graphicsAssets);
         TerrainRendererComponentManager(const TerrainRendererComponentManager &that) = delete;
         TerrainRendererComponentManager &operator=(
             const TerrainRendererComponentManager &that) = delete;
@@ -46,17 +49,16 @@ namespace Terrain { namespace Engine {
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);
 
-        int create(int entityId,
-            int meshVertexBufferHandle,
-            int rows,
-            int columns,
-            float patchSize,
-            float terrainHeight);
+        int create(int entityId, int rows, int columns, float patchSize, float terrainHeight);
 
         void calculateTessellationLevels();
         void updateMesh(
             int i, int heightmapWidth, int heightmapHeight, const void *heightmapData);
         void toggleWireframeMode(int i);
+        int &getMeshHandle(int i)
+        {
+            return data.meshHandle[i];
+        }
 
         ~TerrainRendererComponentManager();
     };

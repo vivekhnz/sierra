@@ -61,10 +61,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int createMesh(unsigned int primitiveType,
             const std::vector<float> &vertices,
             const std::vector<unsigned int> &indices);
-        int getMeshVertexBufferHandle(int handle);
-        int getMeshVertexArrayHandle(int handle);
-        int getMeshElementCount(int handle);
-        unsigned int getMeshPrimitiveType(int handle);
+        int &getMeshVertexBufferHandle(int handle);
+        int &getMeshVertexArrayHandle(int handle);
+        int &getMeshElementCount(int handle);
+        unsigned int &getMeshPrimitiveType(int handle);
     };
 }}}
 
