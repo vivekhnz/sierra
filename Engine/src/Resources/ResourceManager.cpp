@@ -329,4 +329,9 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         ctx.onMaterialsLoaded(materialResources.size(), materialResources.data());
     }
+
+    void ResourceManager::reloadTexture(TextureResource &resource)
+    {
+        ctx.onTextureReloaded(resource);
+    }
 }}}

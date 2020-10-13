@@ -16,8 +16,6 @@ namespace Terrain { namespace Engine {
         Terrain(EngineContext &ctx, World &world);
 
         void loadHeightmapFromFile(std::string path);
-        void loadHeightmap(Resources::TextureResource &resource);
-
         void toggleWireframeMode();
     };
 }}

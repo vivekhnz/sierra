@@ -42,6 +42,8 @@ namespace Terrain { namespace Engine {
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
+
+        void onTextureReloaded(Resources::TextureResource &resource);
     };
 }}
 

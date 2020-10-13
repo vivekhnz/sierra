@@ -54,15 +54,7 @@ namespace Terrain { namespace Engine {
             image.getHeight(),                               // height
             image.getData()                                  // data
         };
-
-        loadHeightmap(resource);
-    }
-
-    void Terrain::loadHeightmap(Resources::TextureResource &resource)
-    {
-        ctx.renderer.onTextureReloaded(resource);
-        world.componentManagers.terrainCollider.onTextureReloaded(resource);
-        world.componentManagers.terrainRenderer.onTextureReloaded(resource);
+        ctx.resources.reloadTexture(resource);
     }
 
     void Terrain::toggleWireframeMode()

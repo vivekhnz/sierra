@@ -3,6 +3,8 @@
 
 #include "../Common.hpp"
 
+#include "TextureResource.hpp"
+
 namespace Terrain { namespace Engine {
     class EngineContext;
 }}
@@ -17,6 +19,8 @@ namespace Terrain { namespace Engine { namespace Resources {
         ResourceManager(EngineContext &ctx);
 
         void loadResources();
+
+        void reloadTexture(TextureResource &resource);
     };
 }}}
 

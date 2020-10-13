@@ -41,4 +41,10 @@ namespace Terrain { namespace Engine {
     void World::onMaterialsLoaded(const int count, Resources::MaterialResource *resources)
     {
     }
+
+    void World::onTextureReloaded(Resources::TextureResource &resource)
+    {
+        componentManagers.terrainCollider.onTextureReloaded(resource);
+        componentManagers.terrainRenderer.onTextureReloaded(resource);
+    }
 }}
