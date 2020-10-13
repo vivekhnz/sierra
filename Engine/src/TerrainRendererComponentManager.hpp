@@ -2,10 +2,12 @@
 #define TERRAINRENDERERCOMPONENTMANAGER_HPP
 
 #include "Common.hpp"
+
+#include <vector>
 #include "Graphics/Buffer.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
 #include "Graphics/Renderer.hpp"
-#include <vector>
+#include "Resources/TextureResource.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT TerrainRendererComponentManager
@@ -15,6 +17,7 @@ namespace Terrain { namespace Engine {
         {
             int count;
             std::vector<int> entityId;
+            std::vector<int> heightmapTextureResourceId;
             std::vector<int> meshHandle;
             std::vector<int> meshVertexBufferHandle;
             std::vector<int> rows;
@@ -49,11 +52,16 @@ namespace Terrain { namespace Engine {
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);
 
-        int create(int entityId, int rows, int columns, float patchSize, float terrainHeight);
+        int create(int entityId,
+            int heightmapTextureResourceId,
+            int rows,
+            int columns,
+            float patchSize,
+            float terrainHeight);
+
+        void onTextureReloaded(Resources::TextureResource &resource);
 
         void calculateTessellationLevels();
-        void updateMesh(
-            int i, int heightmapWidth, int heightmapHeight, const void *heightmapData);
         void toggleWireframeMode(int i);
         int &getMeshHandle(int i)
         {

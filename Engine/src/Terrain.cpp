@@ -26,8 +26,9 @@ namespace Terrain { namespace Engine {
 
         // create entity and components
         int entityId = ctx.entities.create();
-        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, rows, columns, patchSize, terrainHeight);
+        terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, rows, columns, patchSize,
+            terrainHeight);
         world.componentManagers.terrainCollider.create(entityId,
             TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, rows, columns, patchSize,
             terrainHeight);
@@ -61,8 +62,7 @@ namespace Terrain { namespace Engine {
     {
         ctx.renderer.onTextureReloaded(resource);
         world.componentManagers.terrainCollider.onTextureReloaded(resource);
-        world.componentManagers.terrainRenderer.updateMesh(
-            terrainRendererInstanceId, resource.width, resource.height, resource.data);
+        world.componentManagers.terrainRenderer.onTextureReloaded(resource);
     }
 
     void Terrain::toggleWireframeMode()
