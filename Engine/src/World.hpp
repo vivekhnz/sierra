@@ -37,13 +37,15 @@ namespace Terrain { namespace Engine {
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
 
-        void onTexturesLoaded(const int count, Resources::TextureResource *resources);
+        void onTexturesLoaded(const int count,
+            Resources::TextureResourceDescription *descriptions,
+            Resources::TextureResourceData *data);
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
 
-        void onTextureReloaded(Resources::TextureResource &resource);
+        void onTextureReloaded(Resources::TextureResourceData &resource);
     };
 }}
 

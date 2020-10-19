@@ -27,7 +27,9 @@ namespace Terrain { namespace Engine {
         componentManagers.meshRenderer.renderMeshes();
     }
 
-    void World::onTexturesLoaded(const int count, Resources::TextureResource *resources)
+    void World::onTexturesLoaded(const int count,
+        Resources::TextureResourceDescription *descriptions,
+        Resources::TextureResourceData *data)
     {
     }
     void World::onShadersLoaded(const int count, Resources::ShaderResource *resources)
@@ -42,7 +44,7 @@ namespace Terrain { namespace Engine {
     {
     }
 
-    void World::onTextureReloaded(Resources::TextureResource &resource)
+    void World::onTextureReloaded(Resources::TextureResourceData &resource)
     {
         componentManagers.terrainCollider.onTextureReloaded(resource);
         componentManagers.terrainRenderer.onTextureReloaded(resource);

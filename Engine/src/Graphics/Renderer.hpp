@@ -132,8 +132,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
-        void onTexturesLoaded(const int count, Resources::TextureResource *resources);
-        void onTextureReloaded(Resources::TextureResource &resource);
+        void onTexturesLoaded(const int count,
+            Resources::TextureResourceDescription *descriptions,
+            Resources::TextureResourceData *data);
+        void onTextureReloaded(Resources::TextureResourceData &resource);
         void bindTextures(int *textureHandles, int count);
         int lookupTexture(int resourceId)
         {

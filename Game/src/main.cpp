@@ -158,8 +158,7 @@ int main()
             if (isKeyDown.H && !wasKeyDown.H)
             {
                 ctx.resources.reloadTexture(
-                    Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, GL_R16,
-                    GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                    Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
                     Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap2.tga"), true);
             }
 

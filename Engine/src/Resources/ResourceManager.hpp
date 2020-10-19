@@ -21,14 +21,7 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         void loadResources();
 
-        void reloadTexture(int resourceId,
-            int internalFormat,
-            int format,
-            int type,
-            int wrapMode,
-            int filterMode,
-            std::string path,
-            bool is16Bit);
+        void reloadTexture(int resourceId, std::string path, bool is16Bit);
     };
 }}}
 

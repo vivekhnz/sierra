@@ -13,13 +13,14 @@ namespace Terrain { namespace Engine {
         worlds.push_back(&world);
     }
 
-    void EngineContext::onTexturesLoaded(
-        const int count, Resources::TextureResource *resources)
+    void EngineContext::onTexturesLoaded(const int count,
+        Resources::TextureResourceDescription *descriptions,
+        Resources::TextureResourceData *data)
     {
-        renderer.onTexturesLoaded(count, resources);
+        renderer.onTexturesLoaded(count, descriptions, data);
         for (World *world : worlds)
         {
-            world->onTexturesLoaded(count, resources);
+            world->onTexturesLoaded(count, descriptions, data);
         }
     }
     void EngineContext::onShadersLoaded(const int count, Resources::ShaderResource *resources)
@@ -49,7 +50,7 @@ namespace Terrain { namespace Engine {
         }
     }
 
-    void EngineContext::onTextureReloaded(Resources::TextureResource &resource)
+    void EngineContext::onTextureReloaded(Resources::TextureResourceData &resource)
     {
         renderer.onTextureReloaded(resource);
         for (World *world : worlds)

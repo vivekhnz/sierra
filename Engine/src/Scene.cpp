@@ -87,9 +87,8 @@ namespace Terrain { namespace Engine {
 
     void Scene::loadTerrainHeightmapFromFile(std::string path)
     {
-        ctx.resources.reloadTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, GL_R16,
-            GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR, path,
-            true);
+        ctx.resources.reloadTexture(
+            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, path, true);
     }
 
     void Scene::toggleTerrainWireframeMode()

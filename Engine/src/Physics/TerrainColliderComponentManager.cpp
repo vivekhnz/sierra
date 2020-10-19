@@ -29,7 +29,7 @@ namespace Terrain { namespace Engine { namespace Physics {
     }
 
     void TerrainColliderComponentManager::onTextureReloaded(
-        Resources::TextureResource &resource)
+        Resources::TextureResourceData &resource)
     {
         for (int i = 0; i < data.count; i++)
         {

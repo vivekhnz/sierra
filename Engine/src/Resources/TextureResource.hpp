@@ -4,7 +4,7 @@
 #include "../Common.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources {
-    struct EXPORT TextureResource
+    struct EXPORT TextureResourceDescription
     {
         int id;
         int internalFormat;
@@ -12,7 +12,11 @@ namespace Terrain { namespace Engine { namespace Resources {
         int type;
         int wrapMode;
         int filterMode;
+    };
 
+    struct EXPORT TextureResourceData
+    {
+        int id;
         int width;
         int height;
         void *data;

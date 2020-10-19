@@ -59,7 +59,7 @@ namespace Terrain { namespace Engine {
             float patchSize,
             float terrainHeight);
 
-        void onTextureReloaded(Resources::TextureResource &resource);
+        void onTextureReloaded(Resources::TextureResourceData &resource);
 
         void calculateTessellationLevels();
         void toggleWireframeMode(int i);

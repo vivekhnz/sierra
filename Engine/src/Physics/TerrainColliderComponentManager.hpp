@@ -46,7 +46,7 @@ namespace Terrain { namespace Engine { namespace Physics {
             float patchSize,
             float terrainHeight);
 
-        void onTextureReloaded(Resources::TextureResource &resource);
+        void onTextureReloaded(Resources::TextureResourceData &resource);
 
         float getTerrainHeight(float worldX, float worldZ);
 

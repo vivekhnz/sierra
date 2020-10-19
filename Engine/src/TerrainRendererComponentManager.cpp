@@ -94,7 +94,7 @@ namespace Terrain { namespace Engine {
     }
 
     void TerrainRendererComponentManager::onTextureReloaded(
-        Resources::TextureResource &resource)
+        Resources::TextureResourceData &resource)
     {
         for (int i = 0; i < data.count; i++)
         {

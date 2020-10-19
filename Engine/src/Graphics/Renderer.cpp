@@ -52,7 +52,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBuffers.size[uboEnumUint], data);
     }
 
-    void Renderer::onTexturesLoaded(const int count, Resources::TextureResource *resources)
+    void Renderer::onTexturesLoaded(const int count,
+        Resources::TextureResourceDescription *descriptions,
+        Resources::TextureResourceData *data)
     {
         if (count < 1)
             return;
@@ -63,30 +65,31 @@ namespace Terrain { namespace Engine { namespace Graphics {
         for (int i = 0; i < count; i++)
         {
             unsigned int &id = ids[i];
-            Resources::TextureResource &resource = resources[i];
+            Resources::TextureResourceDescription &desc = descriptions[i];
+            Resources::TextureResourceData &resourceData = data[i];
 
             glBindTexture(GL_TEXTURE_2D, id);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, resource.wrapMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, resource.wrapMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, resource.filterMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, resource.filterMode);
-            glTexImage2D(GL_TEXTURE_2D, 0, resource.internalFormat, resource.width,
-                resource.height, 0, resource.format, resource.type, resource.data);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, desc.wrapMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, desc.wrapMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.filterMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, desc.filterMode);
+            glTexImage2D(GL_TEXTURE_2D, 0, desc.internalFormat, resourceData.width,
+                resourceData.height, 0, desc.format, desc.type, resourceData.data);
             glGenerateMipmap(GL_TEXTURE_2D);
 
             textures.id.push_back(id);
-            textures.resourceId.push_back(resource.id);
-            textures.internalFormat.push_back(resource.internalFormat);
-            textures.format.push_back(resource.format);
-            textures.type.push_back(resource.type);
+            textures.resourceId.push_back(desc.id);
+            textures.internalFormat.push_back(desc.internalFormat);
+            textures.format.push_back(desc.format);
+            textures.type.push_back(desc.type);
 
-            textures.resourceIdToHandle[resource.id] = textures.count++;
+            textures.resourceIdToHandle[desc.id] = textures.count++;
         }
 
         delete[] ids;
     }
 
-    void Renderer::onTextureReloaded(Resources::TextureResource &resource)
+    void Renderer::onTextureReloaded(Resources::TextureResourceData &resource)
     {
         for (int i = 0; i < textures.count; i++)
         {
