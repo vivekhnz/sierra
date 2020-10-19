@@ -31,9 +31,6 @@
     <ClCompile Include="src\Scene.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Terrain.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\World.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -94,9 +91,6 @@
       <Filter>src\IO</Filter>
     </ClInclude>
     <ClInclude Include="src\Scene.hpp">
-      <Filter>src</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Terrain.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Common.hpp">

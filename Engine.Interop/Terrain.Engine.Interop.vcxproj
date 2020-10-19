@@ -110,7 +110,6 @@
     <ClInclude Include="src\EditorContext.hpp" />
     <ClInclude Include="src\ViewportContext.hpp" />
     <ClInclude Include="src\Proxy\SceneProxy.hpp" />
-    <ClInclude Include="src\Proxy\TerrainProxy.hpp" />
     <ClInclude Include="src\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
@@ -118,7 +117,7 @@
     <ClCompile Include="src\AssemblyInfo.cpp" />
     <ClCompile Include="src\EditorContext.cpp" />
     <ClCompile Include="src\ViewportContext.cpp" />
-    <ClCompile Include="src\Proxy\TerrainProxy.cpp" />
+    <ClCompile Include="src\Proxy\SceneProxy.cpp" />
     <ClCompile Include="src\Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../../../Engine/src/Scene.hpp"
-#include "TerrainProxy.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Proxy {
 public
@@ -15,9 +14,6 @@ public
         {
         }
 
-        property TerrainProxy ^ Terrain {
-        public:
-            TerrainProxy ^ get() { return gcnew TerrainProxy(engineObj.getTerrain()); }
-        }
+        void LoadTerrainHeightmapFromFile(System::String ^ path);
     };
 }}}}

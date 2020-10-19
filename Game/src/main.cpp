@@ -23,7 +23,7 @@ int main()
         ctx.resources.loadResources();
 
         Terrain::Engine::Scene scene(ctx, world);
-        scene.getTerrain().loadHeightmapFromFile(
+        scene.loadTerrainHeightmapFromFile(
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"));
 
         // create player camera

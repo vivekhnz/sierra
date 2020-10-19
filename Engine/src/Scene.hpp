@@ -4,17 +4,20 @@
 #include "Common.hpp"
 #include "EngineContext.hpp"
 #include "World.hpp"
-#include "Terrain.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT Scene
     {
-        Terrain terrain;
+        EngineContext &ctx;
+        World &world;
+
+        int terrain_terrainRendererInstanceId;
 
     public:
         Scene(EngineContext &ctx, World &world);
 
-        Terrain &getTerrain();
+        void loadTerrainHeightmapFromFile(std::string path);
+        void toggleTerrainWireframeMode();
     };
 }}
 
