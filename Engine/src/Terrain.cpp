@@ -1,7 +1,6 @@
 #include "Terrain.hpp"
 
 #include <glm/glm.hpp>
-#include "Graphics/Image.hpp"
 #include "TerrainResources.hpp"
 
 namespace Terrain { namespace Engine {
@@ -42,19 +41,9 @@ namespace Terrain { namespace Engine {
 
     void Terrain::loadHeightmapFromFile(std::string path)
     {
-        auto image = Graphics::Image(path, true);
-        Resources::TextureResource resource = {
-            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, // id
-            GL_R16,                                          // internalFormat
-            GL_RED,                                          // format
-            GL_UNSIGNED_SHORT,                               // type
-            GL_MIRRORED_REPEAT,                              // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR,                         // filterMode
-            image.getWidth(),                                // width
-            image.getHeight(),                               // height
-            image.getData()                                  // data
-        };
-        ctx.resources.reloadTexture(resource);
+        ctx.resources.reloadTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, GL_R16,
+            GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR, path,
+            true);
     }
 
     void Terrain::toggleWireframeMode()

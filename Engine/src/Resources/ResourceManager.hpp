@@ -3,6 +3,7 @@
 
 #include "../Common.hpp"
 
+#include <string>
 #include "TextureResource.hpp"
 
 namespace Terrain { namespace Engine {
@@ -20,7 +21,14 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         void loadResources();
 
-        void reloadTexture(TextureResource &resource);
+        void reloadTexture(int resourceId,
+            int internalFormat,
+            int format,
+            int type,
+            int wrapMode,
+            int filterMode,
+            std::string path,
+            bool is16Bit);
     };
 }}}
 

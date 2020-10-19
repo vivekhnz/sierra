@@ -19,9 +19,6 @@
     <ClCompile Include="src\Graphics\GlfwManager.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="src\Graphics\Image.cpp">
-      <Filter>src\Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="src\Graphics\Window.cpp">
       <Filter>src\Graphics</Filter>
     </ClCompile>
@@ -82,9 +79,6 @@
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\GlfwManager.hpp">
-      <Filter>src\Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Graphics\Image.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
     <ClInclude Include="src\Graphics\Window.hpp">
@@ -169,6 +163,9 @@
       <Filter>src\Resources</Filter>
     </ClInclude>
     <ClInclude Include="src\Resources\ResourceManager.hpp">
+      <Filter>src\Resources</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Resources\TextureLoader.hpp">
       <Filter>src\Resources</Filter>
     </ClInclude>
   </ItemGroup>

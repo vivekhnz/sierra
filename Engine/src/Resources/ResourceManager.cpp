@@ -6,7 +6,7 @@
 #include "../EngineContext.hpp"
 #include "../IO/OpenFile.hpp"
 #include "../IO/Path.hpp"
-#include "../Graphics/Image.hpp"
+#include "TextureLoader.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources {
     ResourceManager::ResourceManager(EngineContext &ctx) : ctx(ctx)
@@ -24,16 +24,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         // load texture resources
         std::vector<TextureResource> textureResources;
 
-        auto albedoImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false);
-        auto normalImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_normal.bmp"), false);
-        auto displacementImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_displacement.tga"), true);
-        auto aoImage = Graphics::Image(IO::Path::getAbsolutePath("data/ground_ao.tga"), false);
-        auto roughnessImage =
-            Graphics::Image(IO::Path::getAbsolutePath("data/ground_roughness.tga"), false);
-
         textureResources.push_back({
             TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, // id
             GL_R16,                                          // internalFormat
@@ -45,63 +35,33 @@ namespace Terrain { namespace Engine { namespace Resources {
             0,                                               // height
             NULL                                             // data
         });
-        textureResources.push_back({
-            TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO, // id
-            GL_RGB,                                       // internalFormat
-            GL_RGB,                                       // format
-            GL_UNSIGNED_BYTE,                             // type
-            GL_REPEAT,                                    // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR,                      // filterMode
-            albedoImage.getWidth(),                       // width
-            albedoImage.getHeight(),                      // height
-            albedoImage.getData()                         // data
-        });
-        textureResources.push_back({
-            TerrainResources::RESOURCE_ID_TEXTURE_NORMAL, // id
-            GL_RGB,                                       // internalFormat
-            GL_RGB,                                       // format
-            GL_UNSIGNED_BYTE,                             // type
-            GL_REPEAT,                                    // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR,                      // filterMode
-            normalImage.getWidth(),                       // width
-            normalImage.getHeight(),                      // height
-            normalImage.getData()                         // data
-        });
-        textureResources.push_back({
-            TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT, // id
-            GL_R16,                                             // internalFormat
-            GL_RED,                                             // format
-            GL_UNSIGNED_SHORT,                                  // type
-            GL_REPEAT,                                          // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR,                            // filterMode
-            displacementImage.getWidth(),                       // width
-            displacementImage.getHeight(),                      // height
-            displacementImage.getData()                         // data
-        });
-        textureResources.push_back({
-            TerrainResources::RESOURCE_ID_TEXTURE_AO, // id
-            GL_R8,                                    // internalFormat
-            GL_RED,                                   // format
-            GL_UNSIGNED_BYTE,                         // type
-            GL_REPEAT,                                // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR,                  // filterMode
-            aoImage.getWidth(),                       // width
-            aoImage.getHeight(),                      // height
-            aoImage.getData()                         // data
-        });
-        textureResources.push_back({
-            TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS, // id
-            GL_R8,                                           // internalFormat
-            GL_RED,                                          // format
-            GL_UNSIGNED_BYTE,                                // type
-            GL_REPEAT,                                       // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR,                         // filterMode
-            roughnessImage.getWidth(),                       // width
-            roughnessImage.getHeight(),                      // height
-            roughnessImage.getData()                         // data
-        });
+        textureResources.push_back(
+            TextureLoader::loadTexture(TerrainResources::RESOURCE_ID_TEXTURE_ALBEDO, GL_RGB,
+                GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false));
+        textureResources.push_back(
+            TextureLoader::loadTexture(TerrainResources::RESOURCE_ID_TEXTURE_NORMAL, GL_RGB,
+                GL_RGB, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                IO::Path::getAbsolutePath("data/ground_normal.bmp"), false));
+        textureResources.push_back(
+            TextureLoader::loadTexture(TerrainResources::RESOURCE_ID_TEXTURE_DISPLACEMENT,
+                GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                IO::Path::getAbsolutePath("data/ground_displacement.tga"), true));
+        textureResources.push_back(
+            TextureLoader::loadTexture(TerrainResources::RESOURCE_ID_TEXTURE_AO, GL_R8, GL_RED,
+                GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                IO::Path::getAbsolutePath("data/ground_ao.tga"), false));
+        textureResources.push_back(
+            TextureLoader::loadTexture(TerrainResources::RESOURCE_ID_TEXTURE_ROUGHNESS, GL_R8,
+                GL_RED, GL_UNSIGNED_BYTE, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                IO::Path::getAbsolutePath("data/ground_roughness.tga"), false));
 
-        ctx.onTexturesLoaded(textureResources.size(), textureResources.data());
+        int textureCount = textureResources.size();
+        ctx.onTexturesLoaded(textureCount, textureResources.data());
+        for (int i = 0; i < textureCount; i++)
+        {
+            TextureLoader::unloadTexture(textureResources[i]);
+        }
 
         // load shader resources
         std::vector<ShaderResource> shaderResources;
@@ -330,8 +290,18 @@ namespace Terrain { namespace Engine { namespace Resources {
         ctx.onMaterialsLoaded(materialResources.size(), materialResources.data());
     }
 
-    void ResourceManager::reloadTexture(TextureResource &resource)
+    void ResourceManager::reloadTexture(int resourceId,
+        int internalFormat,
+        int format,
+        int type,
+        int wrapMode,
+        int filterMode,
+        std::string path,
+        bool is16Bit)
     {
+        TextureResource resource = TextureLoader::loadTexture(
+            resourceId, internalFormat, format, type, wrapMode, filterMode, path, is16Bit);
         ctx.onTextureReloaded(resource);
+        TextureLoader::unloadTexture(resource);
     }
 }}}

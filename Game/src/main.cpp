@@ -3,6 +3,7 @@
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/EngineContext.hpp"
+#include "../../Engine/src/TerrainResources.hpp"
 #include "../../Engine/src/Scene.hpp"
 #include "../../Engine/src/IO/Path.hpp"
 #include "GameContext.hpp"
@@ -68,6 +69,7 @@ int main()
             bool B = false;
             bool O = false;
             bool R = false;
+            bool H = false;
         };
         KeyState isKeyDown;
         KeyState wasKeyDown;
@@ -98,6 +100,7 @@ int main()
             isKeyDown.B = ctx.input.isKeyPressed(GLFW_KEY_B);
             isKeyDown.O = ctx.input.isKeyPressed(GLFW_KEY_O);
             isKeyDown.R = ctx.input.isKeyPressed(GLFW_KEY_R);
+            isKeyDown.H = ctx.input.isKeyPressed(GLFW_KEY_H);
 
             // swap camera mode when C key is pressed
             if (isKeyDown.C && !wasKeyDown.C)
@@ -149,6 +152,15 @@ int main()
             {
                 isRoughnessMapEnabled = !isRoughnessMapEnabled;
                 isLightingStateUpdated = true;
+            }
+
+            // load a different heightmap when H is pressed
+            if (isKeyDown.H && !wasKeyDown.H)
+            {
+                ctx.resources.reloadTexture(
+                    Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, GL_R16,
+                    GL_RED, GL_UNSIGNED_SHORT, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR,
+                    Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap2.tga"), true);
             }
 
             wasKeyDown = isKeyDown;

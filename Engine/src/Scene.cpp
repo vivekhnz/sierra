@@ -9,9 +9,6 @@ namespace Terrain { namespace Engine {
     {
         // configure input
         ctx.input.mapCommand(GLFW_KEY_Z, std::bind(&Terrain::toggleWireframeMode, &terrain));
-        ctx.input.mapCommand(GLFW_KEY_H,
-            std::bind(&Terrain::loadHeightmapFromFile, &terrain,
-                IO::Path::getAbsolutePath("data/heightmap2.tga")));
 
         // setup heightmap quad
         std::vector<float> quadVertices(20);

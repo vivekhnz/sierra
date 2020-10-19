@@ -37,11 +37,6 @@ namespace Terrain { namespace Engine {
         {
         }
 
-        EngineContext(const EngineContext &that) = delete;
-        EngineContext &operator=(const EngineContext &that) = delete;
-        EngineContext(EngineContext &&) = delete;
-        EngineContext &operator=(EngineContext &&) = delete;
-
         void initialize();
         void registerWorld(World &world);
 
@@ -52,10 +47,6 @@ namespace Terrain { namespace Engine {
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
 
         void onTextureReloaded(Resources::TextureResource &resource);
-
-        ~EngineContext()
-        {
-        }
     };
 }}
 
