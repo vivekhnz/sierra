@@ -4,7 +4,7 @@
 #include "Graphics/Window.hpp"
 
 namespace Terrain { namespace Engine {
-    Scene::Scene(EngineContext &ctx, World &world) : ctx(ctx), world(world)
+    Scene::Scene(EngineContext &ctx, World &world) : world(world)
     {
         int terrainColumns = 256;
         int terrainRows = 256;
@@ -83,12 +83,6 @@ namespace Terrain { namespace Engine {
         world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
             TerrainResources::RESOURCE_ID_MATERIAL_QUAD, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
-    }
-
-    void Scene::loadTerrainHeightmapFromFile(std::string path)
-    {
-        ctx.resources.reloadTexture(
-            TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, path, true);
     }
 
     void Scene::toggleTerrainWireframeMode()

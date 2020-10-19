@@ -2,10 +2,11 @@
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/EngineContext.hpp"
+#include "../../Engine/src/Scene.hpp"
 #include "EditorContext.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
-#include "Proxy/SceneProxy.hpp"
+#include "Proxy/ResourceManagerProxy.hpp"
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -29,7 +30,8 @@ public
         static bool isWorldInitialized = false;
         static World *world;
         static Scene *scene;
-        static Proxy::SceneProxy ^ sceneProxy;
+
+        static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
 
         static ViewportContext *focusedViewportCtx = nullptr;
         static ViewportContext *hoveredViewportCtx = nullptr;
@@ -67,12 +69,12 @@ public
         static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:
-        static property Proxy::SceneProxy^ Scene
+        static property Proxy::ResourceManagerProxy^ ResourceManager
         {
         public:
-            Proxy::SceneProxy^ get()
+            Proxy::ResourceManagerProxy^ get()
             {
-                return sceneProxy;
+                return resourceManagerProxy;
             }
         }
 

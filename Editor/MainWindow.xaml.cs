@@ -32,7 +32,8 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                EngineInterop.Scene.LoadTerrainHeightmapFromFile(ofd.FileName);
+                // resource ID 0 = terrain heightmap texture
+                EngineInterop.ResourceManager.ReloadTexture(0, ofd.FileName, true);
             }
         }
     }

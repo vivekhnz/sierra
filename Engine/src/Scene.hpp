@@ -8,7 +8,6 @@
 namespace Terrain { namespace Engine {
     class EXPORT Scene
     {
-        EngineContext &ctx;
         World &world;
 
         int terrain_terrainRendererInstanceId;
@@ -16,7 +15,6 @@ namespace Terrain { namespace Engine {
     public:
         Scene(EngineContext &ctx, World &world);
 
-        void loadTerrainHeightmapFromFile(std::string path);
         void toggleTerrainWireframeMode();
     };
 }}

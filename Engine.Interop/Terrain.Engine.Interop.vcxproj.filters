@@ -24,7 +24,7 @@
     <ClCompile Include="src\ViewportContext.cpp">
       <Filter>src</Filter>
     </ClCompile>
-    <ClCompile Include="src\Proxy\SceneProxy.cpp">
+    <ClCompile Include="src\Proxy\ResourceManagerProxy.cpp">
       <Filter>src\Proxy</Filter>
     </ClCompile>
   </ItemGroup>
@@ -35,14 +35,14 @@
     <ClInclude Include="src\EngineInterop.hpp">
       <Filter>src</Filter>
     </ClInclude>
-    <ClInclude Include="src\Proxy\SceneProxy.hpp">
-      <Filter>src\Proxy</Filter>
-    </ClInclude>
     <ClInclude Include="src\EditorContext.hpp">
       <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\ViewportContext.hpp">
       <Filter>src</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp">
+      <Filter>src\Proxy</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

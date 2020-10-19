@@ -108,16 +108,16 @@
   <ItemGroup>
     <ClInclude Include="src\EngineInterop.hpp" />
     <ClInclude Include="src\EditorContext.hpp" />
+    <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp" />
     <ClInclude Include="src\ViewportContext.hpp" />
-    <ClInclude Include="src\Proxy\SceneProxy.hpp" />
     <ClInclude Include="src\Viewport.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EngineInterop.cpp" />
     <ClCompile Include="src\AssemblyInfo.cpp" />
     <ClCompile Include="src\EditorContext.cpp" />
+    <ClCompile Include="src\Proxy\ResourceManagerProxy.cpp" />
     <ClCompile Include="src\ViewportContext.cpp" />
-    <ClCompile Include="src\Proxy\SceneProxy.cpp" />
     <ClCompile Include="src\Viewport.cpp" />
   </ItemGroup>
   <ItemGroup>
