@@ -9,6 +9,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         Graphics::Window window;
         char *imgBuffer;
         std::function<void()> onRenderCallback;
+        bool isFirstWorld;
         int cameraEntityId;
         int inputControllerId;
 
@@ -20,13 +21,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         ViewportContext(Graphics::GlfwManager &glfw,
             char *imgBuffer,
             std::function<void()> onRenderCallback);
-        ViewportContext(const ViewportContext &that) = delete;
-        ViewportContext &operator=(const ViewportContext &that) = delete;
-        ViewportContext(ViewportContext &&) = delete;
-        ViewportContext &operator=(ViewportContext &&) = delete;
 
         EngineViewContext getViewContext() const;
         int getInputControllerId() const;
+        bool getIsFirstWorld() const;
         std::tuple<int, int> getViewportLocation() const;
         bool isDetached() const;
 
@@ -34,12 +32,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         void resize(int x, int y, int width, int height, char *buffer);
         void makePrimary();
         void makeCurrent();
-        void setCameraEntityId(int cameraEntityId);
+        void setCameraEntityId(bool isFirstWorld, int cameraEntityId);
         void setInputControllerId(int cameraEntityId);
 
         void detach();
         void reattach(char *imgBuffer, std::function<void()> onRenderCallback);
-
-        ~ViewportContext();
     };
 }}}

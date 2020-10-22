@@ -28,7 +28,8 @@ public
         static Object ^ viewportCtxLock = gcnew Object();
 
         static bool isWorldInitialized = false;
-        static World *world;
+        static World *world1;
+        static World *world2;
         static Scene *scene;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;

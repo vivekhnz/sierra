@@ -51,10 +51,55 @@ namespace Terrain { namespace Engine { namespace Interop {
 
             // We can only initialize the scene once GLAD is initialized as it makes OpenGL
             // calls. GLAD is only initialized when a window is marked as the primary window.
-            world = new Engine::World(*ctx);
+            world1 = new Engine::World(*ctx);
+            world2 = new Engine::World(*ctx);
             ctx->resources.loadResources();
 
-            scene = new Engine::Scene(*ctx, *world);
+            scene = new Engine::Scene(*ctx, *world1);
+
+            // setup heightmap quad
+            std::vector<float> quadVertices(20);
+
+            quadVertices[0] = 0.0f;
+            quadVertices[1] = 0.0f;
+            quadVertices[2] = 0.0f;
+            quadVertices[3] = 0.0f;
+            quadVertices[4] = 0.0f;
+
+            quadVertices[5] = 1.0f;
+            quadVertices[6] = 0.0f;
+            quadVertices[7] = 0.0f;
+            quadVertices[8] = 1.0f;
+            quadVertices[9] = 0.0f;
+
+            quadVertices[10] = 1.0f;
+            quadVertices[11] = 1.0f;
+            quadVertices[12] = 0.0f;
+            quadVertices[13] = 1.0f;
+            quadVertices[14] = 1.0f;
+
+            quadVertices[15] = 0.0f;
+            quadVertices[16] = 1.0f;
+            quadVertices[17] = 0.0f;
+            quadVertices[18] = 0.0f;
+            quadVertices[19] = 1.0f;
+
+            std::vector<unsigned int> quadIndices(6);
+            quadIndices[0] = 0;
+            quadIndices[1] = 2;
+            quadIndices[2] = 1;
+            quadIndices[3] = 0;
+            quadIndices[4] = 3;
+            quadIndices[5] = 2;
+
+            int quadMesh_meshHandle =
+                ctx->assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
+
+            int quadMesh_entityId = ctx->entities.create();
+            // resource id 21 = quad material
+            world2->componentManagers.meshRenderer.create(quadMesh_entityId,
+                quadMesh_meshHandle, 21, std::vector<std::string>(),
+                std::vector<Graphics::UniformValue>());
 
             isWorldInitialized = true;
         }
@@ -65,15 +110,30 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         // create orbit camera
         int cameraEntityId = ctx->entities.create();
+
+        bool isFirstWorld = viewportContexts->size() % 2 == 1;
+        World *world = isFirstWorld ? world1 : world2;
+
         world->componentManagers.camera.create(cameraEntityId);
-        int orbitCameraId = world->componentManagers.orbitCamera.create(cameraEntityId);
-        world->componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
-        world->componentManagers.orbitCamera.setYaw(
-            orbitCameraId, glm::radians(90.0f + (90.0f * viewportContexts->size())));
-        world->componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
-        world->componentManagers.orbitCamera.setInputControllerId(
-            orbitCameraId, inputControllerId);
-        vctx->setCameraEntityId(cameraEntityId);
+        vctx->setCameraEntityId(isFirstWorld, cameraEntityId);
+
+        if (isFirstWorld)
+        {
+            int orbitCameraId = world->componentManagers.orbitCamera.create(cameraEntityId);
+            world->componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
+            world->componentManagers.orbitCamera.setYaw(
+                orbitCameraId, glm::radians(90.0f + (90.0f * viewportContexts->size())));
+            world->componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
+            world->componentManagers.orbitCamera.setInputControllerId(
+                orbitCameraId, inputControllerId);
+        }
+        else
+        {
+            int orthographicCameraId =
+                world->componentManagers.orthographicCamera.create(cameraEntityId);
+            world->componentManagers.orthographicCamera.setInputControllerId(
+                orthographicCameraId, inputControllerId);
+        }
 
         return vctx;
     }
@@ -112,7 +172,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
-        world->update(deltaTime);
+        world1->update(deltaTime);
+        world2->update(deltaTime);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -127,7 +188,14 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         vctx.makeCurrent();
         EngineViewContext view = vctx.getViewContext();
-        world->render(view);
+        if (vctx.getIsFirstWorld())
+        {
+            world1->render(view);
+        }
+        else
+        {
+            world2->render(view);
+        }
         vctx.render();
     }
 
@@ -169,8 +237,11 @@ namespace Terrain { namespace Engine { namespace Interop {
             delete scene;
             scene = nullptr;
 
-            delete world;
-            world = nullptr;
+            delete world1;
+            world1 = nullptr;
+
+            delete world2;
+            world2 = nullptr;
 
             for (int i = 0; i < viewportContexts->size(); i++)
             {
