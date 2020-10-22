@@ -1,6 +1,7 @@
 #include "FirstPersonCameraComponentManager.hpp"
 
 #include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
 #include "GLFW/glfw3.h"
 
 namespace Terrain { namespace Engine {
@@ -17,8 +18,10 @@ namespace Terrain { namespace Engine {
     {
         data.entityId.push_back(entityId);
         data.inputControllerId.push_back(0);
+        data.position.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
         data.pitch.push_back(0.0f);
         data.yaw.push_back(0.0f);
+        data.lookAt.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
         return data.count++;
     }
 
@@ -27,7 +30,7 @@ namespace Terrain { namespace Engine {
         bool isCameraActive = false;
         const float lookSensitivity = 0.07f * deltaTime;
         const float moveSpeed = 4.0 * deltaTime;
-        glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
         for (int i = 0; i < data.count; i++)
         {
@@ -36,10 +39,9 @@ namespace Terrain { namespace Engine {
                 continue;
 
             IO::MouseInputState mouseState = input.getMouseState(inputControllerId);
-            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
-            glm::vec3 pos = cameraComponentMgr.getPosition(cameraInstanceId);
+            glm::vec3 &pos = data.position[i];
 
             // rotate camera by moving mouse cursor
             yaw += mouseState.cursorOffsetX * lookSensitivity;
@@ -72,9 +74,7 @@ namespace Terrain { namespace Engine {
                 terrainColliderComponentMgr.getTerrainHeight(pos.x, pos.z) + 1.75f;
             pos.y = (pos.y * 0.95f) + (targetHeight * 0.05f);
 
-            // update camera position and target
-            cameraComponentMgr.setPosition(cameraInstanceId, pos);
-            cameraComponentMgr.setTarget(cameraInstanceId, pos + lookDir);
+            data.lookAt[i] = pos + lookDir;
 
             isCameraActive = true;
         }
@@ -86,8 +86,21 @@ namespace Terrain { namespace Engine {
         }
     }
 
-    FirstPersonCameraComponentManager::~FirstPersonCameraComponentManager()
+    void FirstPersonCameraComponentManager::calculateCameraTransforms(EngineViewContext &vctx)
     {
-        data.count = 0;
+        constexpr float fov = glm::pi<float>() / 4.0f;
+        const float nearPlane = 0.1f;
+        const float farPlane = 10000.0f;
+        const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        const float aspectRatio = (float)vctx.viewportWidth / (float)vctx.viewportHeight;
+
+        glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+
+        for (int i = 0; i < data.count; i++)
+        {
+            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
+            cameraComponentMgr.setTransform(cameraInstanceId,
+                projection * glm::lookAt(data.position[i], data.lookAt[i], up));
+        }
     }
 }}

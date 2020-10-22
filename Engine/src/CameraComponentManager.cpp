@@ -1,8 +1,6 @@
 #include "CameraComponentManager.hpp"
 
-#include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glad/glad.h>
 
 namespace Terrain { namespace Engine {
     CameraComponentManager::CameraComponentManager(Graphics::Renderer &renderer) :
@@ -13,8 +11,7 @@ namespace Terrain { namespace Engine {
     int CameraComponentManager::create(int entityId)
     {
         data.entityId.push_back(entityId);
-        data.position.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
-        data.target.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
+        data.transform.push_back(glm::identity<glm::mat4>());
         entityIdToInstanceId[entityId] = data.count;
         return data.count++;
     }
@@ -22,24 +19,7 @@ namespace Terrain { namespace Engine {
     void CameraComponentManager::bindTransform(EngineViewContext &vctx)
     {
         int i = entityIdToInstanceId[vctx.cameraEntityId];
-
-        // calculate transform matrix
-        constexpr float fov = glm::pi<float>() / 4.0f;
-        const float nearPlane = 0.1f;
-        const float farPlane = 10000.0f;
-        const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        const float aspectRatio = (float)vctx.viewportWidth / (float)vctx.viewportHeight;
-
-        glm::mat4 transform = glm::perspective(fov, aspectRatio, nearPlane, farPlane)
-            * glm::lookAt(data.position[i], data.target[i], up);
-
-        // update camera uniform buffer object
-        Graphics::Renderer::CameraState cameraState = {transform};
+        Graphics::Renderer::CameraState cameraState = {data.transform[i]};
         renderer.updateUniformBuffer(Graphics::Renderer::UniformBuffer::Camera, &cameraState);
-    }
-
-    CameraComponentManager::~CameraComponentManager()
-    {
-        data.count = 0;
     }
 }}

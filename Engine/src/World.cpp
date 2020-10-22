@@ -22,7 +22,10 @@ namespace Terrain { namespace Engine {
         if (vctx.cameraEntityId == -1)
             return;
 
+        componentManagers.orbitCamera.calculateCameraTransforms(vctx);
+        componentManagers.firstPersonCamera.calculateCameraTransforms(vctx);
         componentManagers.camera.bindTransform(vctx);
+
         componentManagers.terrainRenderer.calculateTessellationLevels();
         componentManagers.meshRenderer.renderMeshes();
     }

@@ -15,6 +15,7 @@ namespace Terrain { namespace Engine {
         {
             int count;
             std::vector<int> entityId;
+            std::vector<glm::vec3> position;
             std::vector<glm::vec3> lookAt;
             std::vector<float> yaw;
             std::vector<float> pitch;
@@ -32,11 +33,6 @@ namespace Terrain { namespace Engine {
     public:
         OrbitCameraComponentManager(
             CameraComponentManager &cameraComponentMgr, IO::InputManager &input);
-        OrbitCameraComponentManager(const OrbitCameraComponentManager &that) = delete;
-        OrbitCameraComponentManager &operator=(
-            const OrbitCameraComponentManager &that) = delete;
-        OrbitCameraComponentManager(OrbitCameraComponentManager &&) = delete;
-        OrbitCameraComponentManager &operator=(OrbitCameraComponentManager &&) = delete;
 
         int create(int entityId);
 
@@ -77,8 +73,7 @@ namespace Terrain { namespace Engine {
         }
 
         void calculateCameraStates(float deltaTime);
-
-        ~OrbitCameraComponentManager();
+        void calculateCameraTransforms(EngineViewContext &vctx);
     };
 }}
 

@@ -16,8 +16,7 @@ namespace Terrain { namespace Engine {
         {
             int count;
             std::vector<int> entityId;
-            std::vector<glm::vec3> position;
-            std::vector<glm::vec3> target;
+            std::vector<glm::mat4> transform;
 
             ComponentData() : count(0)
             {
@@ -29,10 +28,6 @@ namespace Terrain { namespace Engine {
 
     public:
         CameraComponentManager(Graphics::Renderer &renderer);
-        CameraComponentManager(const CameraComponentManager &that) = delete;
-        CameraComponentManager &operator=(const CameraComponentManager &that) = delete;
-        CameraComponentManager(CameraComponentManager &&) = delete;
-        CameraComponentManager &operator=(CameraComponentManager &&) = delete;
 
         int create(int entityId);
 
@@ -41,27 +36,12 @@ namespace Terrain { namespace Engine {
             return entityIdToInstanceId.at(entityId);
         }
 
-        glm::vec3 getPosition(int i) const
+        void setTransform(int i, glm::mat4 value)
         {
-            return data.position[i];
-        }
-        void setPosition(int i, glm::vec3 value)
-        {
-            data.position[i] = value;
-        }
-
-        glm::vec3 getTarget(int i) const
-        {
-            return data.target[i];
-        }
-        void setTarget(int i, glm::vec3 value)
-        {
-            data.target[i] = value;
+            data.transform[i] = value;
         }
 
         void bindTransform(EngineViewContext &vctx);
-
-        ~CameraComponentManager();
     };
 }}
 

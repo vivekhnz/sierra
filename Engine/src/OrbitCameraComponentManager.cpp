@@ -1,6 +1,7 @@
 #include "OrbitCameraComponentManager.hpp"
 
 #include <algorithm>
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Terrain { namespace Engine {
     OrbitCameraComponentManager::OrbitCameraComponentManager(
@@ -13,6 +14,7 @@ namespace Terrain { namespace Engine {
     int OrbitCameraComponentManager::create(int entityId)
     {
         data.entityId.push_back(entityId);
+        data.position.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
         data.lookAt.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
         data.pitch.push_back(0.0f);
         data.yaw.push_back(0.0f);
@@ -32,8 +34,8 @@ namespace Terrain { namespace Engine {
                 continue;
 
             IO::MouseInputState mouseState = input.getMouseState(inputControllerId);
-            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
             float &distance = data.distance[i];
+            glm::vec3 &position = data.position[i];
             glm::vec3 &lookAt = data.lookAt[i];
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
@@ -44,8 +46,7 @@ namespace Terrain { namespace Engine {
             // only update the look at position if the middle mouse button is pressed
             if (mouseState.isMiddleMouseButtonDown)
             {
-                glm::vec3 lookDir =
-                    glm::normalize(lookAt - cameraComponentMgr.getPosition(cameraInstanceId));
+                glm::vec3 lookDir = glm::normalize(lookAt - position);
                 glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
                 glm::vec3 yDir = cross(lookDir, xDir);
                 glm::vec3 pan =
@@ -59,11 +60,10 @@ namespace Terrain { namespace Engine {
             yaw += glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
             pitch += glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
 
-            // update camera position and target
+            // calcalate camera position
             glm::vec3 newLookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
-            cameraComponentMgr.setPosition(cameraInstanceId, lookAt + (newLookDir * distance));
-            cameraComponentMgr.setTarget(cameraInstanceId, lookAt);
+            position = lookAt + (newLookDir * distance);
 
             isManipulatingOrbitCamera |=
                 mouseState.isMiddleMouseButtonDown || mouseState.isRightMouseButtonDown;
@@ -76,8 +76,21 @@ namespace Terrain { namespace Engine {
         }
     }
 
-    OrbitCameraComponentManager::~OrbitCameraComponentManager()
+    void OrbitCameraComponentManager::calculateCameraTransforms(EngineViewContext &vctx)
     {
-        data.count = 0;
+        constexpr float fov = glm::pi<float>() / 4.0f;
+        const float nearPlane = 0.1f;
+        const float farPlane = 10000.0f;
+        const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        const float aspectRatio = (float)vctx.viewportWidth / (float)vctx.viewportHeight;
+
+        glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+
+        for (int i = 0; i < data.count; i++)
+        {
+            int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
+            cameraComponentMgr.setTransform(cameraInstanceId,
+                projection * glm::lookAt(data.position[i], data.lookAt[i], up));
+        }
     }
 }}
