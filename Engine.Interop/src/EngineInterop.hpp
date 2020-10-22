@@ -30,8 +30,7 @@ public
         static Object ^ viewportCtxLock = gcnew Object();
 
         static bool areWorldsInitialized = false;
-        static Worlds::SceneWorld *sceneWorld;
-        static Worlds::HeightmapWorld *heightmapWorld;
+        static std::vector<Worlds::EditorWorld *> *worlds;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
 

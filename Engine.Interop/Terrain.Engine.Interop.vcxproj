@@ -111,6 +111,7 @@
     <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp" />
     <ClInclude Include="src\ViewportContext.hpp" />
     <ClInclude Include="src\Viewport.h" />
+    <ClInclude Include="src\Worlds\EditorWorld.hpp" />
     <ClInclude Include="src\Worlds\HeightmapWorld.hpp" />
     <ClInclude Include="src\Worlds\SceneWorld.hpp" />
   </ItemGroup>

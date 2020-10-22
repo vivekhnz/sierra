@@ -44,11 +44,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             materialUniformValues);
     }
 
-    void SceneWorld::addViewport(ViewportContext &vctx, int inputControllerId)
+    int SceneWorld::addCamera(int inputControllerId)
     {
         int cameraEntityId = ctx.entities.create();
         world.componentManagers.camera.create(cameraEntityId);
-        vctx.setCameraEntityId(true, cameraEntityId);
 
         int orbitCameraId = world.componentManagers.orbitCamera.create(cameraEntityId);
         world.componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
@@ -56,6 +55,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
         world.componentManagers.orbitCamera.setInputControllerId(
             orbitCameraId, inputControllerId);
+
+        return cameraEntityId;
     }
 
     void SceneWorld::update(float deltaTime)

@@ -10,6 +10,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         ctx = new EngineContext(*appCtx);
         viewportContexts = new std::vector<ViewportContext *>();
 
+        worlds = new std::vector<Worlds::EditorWorld *>();
+        worlds->push_back(new Worlds::SceneWorld(*ctx));
+        worlds->push_back(new Worlds::HeightmapWorld(*ctx));
+
+        resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);
+
         focusedViewportCtx = nullptr;
         hoveredViewportCtx = nullptr;
 
@@ -44,19 +50,20 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         if (!areWorldsInitialized)
         {
+            /*
+             * We can only initialize the engine context once GLAD is initialized as it makes
+             * OpenGL calls. GLAD is only initialized when a window is marked as the primary
+             * window.
+             */
             vctx->makePrimary();
             ctx->initialize();
 
-            resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);
-
-            // We can only initialize the scene once GLAD is initialized as it makes OpenGL
-            // calls. GLAD is only initialized when a window is marked as the primary window.
-            sceneWorld = new Worlds::SceneWorld(*ctx);
-            heightmapWorld = new Worlds::HeightmapWorld(*ctx);
             ctx->resources.loadResources();
 
-            sceneWorld->initialize();
-            heightmapWorld->initialize();
+            for (int i = 0; i < worlds->size(); i++)
+            {
+                worlds->at(i)->initialize();
+            }
 
             areWorldsInitialized = true;
         }
@@ -65,16 +72,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         int inputControllerId = appCtx->addInputController();
         vctx->setInputControllerId(inputControllerId);
 
-        // create orbit camera
-        bool isFirstWorld = viewportContexts->size() % 2 == 1;
-        if (isFirstWorld)
-        {
-            sceneWorld->addViewport(*vctx, inputControllerId);
-        }
-        else
-        {
-            heightmapWorld->addViewport(*vctx, inputControllerId);
-        }
+        // associate viewport with world
+        int worldId = (viewportContexts->size() + 1) % 2;
+        Worlds::EditorWorld *world = worlds->at(worldId);
+        int cameraEntityId = world->addCamera(inputControllerId);
+        vctx->setWorldId(worldId);
+        vctx->setCameraEntityId(cameraEntityId);
 
         return vctx;
     }
@@ -113,8 +116,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
-        sceneWorld->update(deltaTime);
-        heightmapWorld->update(deltaTime);
+
+        for (int i = 0; i < worlds->size(); i++)
+        {
+            worlds->at(i)->update(deltaTime);
+        }
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -129,14 +135,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         vctx.makeCurrent();
         EngineViewContext view = vctx.getViewContext();
-        if (vctx.getIsFirstWorld())
-        {
-            sceneWorld->render(view);
-        }
-        else
-        {
-            heightmapWorld->render(view);
-        }
+        worlds->at(vctx.getWorldId())->render(view);
         vctx.render();
     }
 
@@ -173,19 +172,21 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         renderTimer->Stop();
 
+        for (int i = 0; i < worlds->size(); i++)
+        {
+            delete worlds->at(i);
+        }
+        worlds->clear();
+        delete worlds;
+
         if (areWorldsInitialized)
         {
-            delete sceneWorld;
-            sceneWorld = nullptr;
-
-            delete heightmapWorld;
-            heightmapWorld = nullptr;
-
             for (int i = 0; i < viewportContexts->size(); i++)
             {
                 delete viewportContexts->at(i);
-                viewportContexts->erase(viewportContexts->begin() + i);
             }
+            viewportContexts->clear();
+            delete viewportContexts;
         }
 
         delete ctx;

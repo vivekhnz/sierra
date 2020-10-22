@@ -59,5 +59,8 @@
     <ClInclude Include="src\Worlds\HeightmapWorld.hpp">
       <Filter>src\Worlds</Filter>
     </ClInclude>
+    <ClInclude Include="src\Worlds\EditorWorld.hpp">
+      <Filter>src\Worlds</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
