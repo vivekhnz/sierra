@@ -8,6 +8,7 @@
 #include "Viewport.h"
 #include "Proxy/ResourceManagerProxy.hpp"
 #include "Worlds/SceneWorld.hpp"
+#include "Worlds/HeightmapWorld.hpp"
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -30,7 +31,7 @@ public
 
         static bool areWorldsInitialized = false;
         static Worlds::SceneWorld *sceneWorld;
-        static World *world2;
+        static Worlds::HeightmapWorld *heightmapWorld;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
 

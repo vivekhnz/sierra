@@ -52,54 +52,11 @@ namespace Terrain { namespace Engine { namespace Interop {
             // We can only initialize the scene once GLAD is initialized as it makes OpenGL
             // calls. GLAD is only initialized when a window is marked as the primary window.
             sceneWorld = new Worlds::SceneWorld(*ctx);
-            world2 = new Engine::World(*ctx);
+            heightmapWorld = new Worlds::HeightmapWorld(*ctx);
             ctx->resources.loadResources();
 
             sceneWorld->initialize();
-
-            // setup heightmap quad
-            std::vector<float> quadVertices(20);
-
-            quadVertices[0] = 0.0f;
-            quadVertices[1] = 0.0f;
-            quadVertices[2] = 0.0f;
-            quadVertices[3] = 0.0f;
-            quadVertices[4] = 0.0f;
-
-            quadVertices[5] = 1.0f;
-            quadVertices[6] = 0.0f;
-            quadVertices[7] = 0.0f;
-            quadVertices[8] = 1.0f;
-            quadVertices[9] = 0.0f;
-
-            quadVertices[10] = 1.0f;
-            quadVertices[11] = 1.0f;
-            quadVertices[12] = 0.0f;
-            quadVertices[13] = 1.0f;
-            quadVertices[14] = 1.0f;
-
-            quadVertices[15] = 0.0f;
-            quadVertices[16] = 1.0f;
-            quadVertices[17] = 0.0f;
-            quadVertices[18] = 0.0f;
-            quadVertices[19] = 1.0f;
-
-            std::vector<unsigned int> quadIndices(6);
-            quadIndices[0] = 0;
-            quadIndices[1] = 2;
-            quadIndices[2] = 1;
-            quadIndices[3] = 0;
-            quadIndices[4] = 3;
-            quadIndices[5] = 2;
-
-            int quadMesh_meshHandle =
-                ctx->assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
-
-            int quadMesh_entityId = ctx->entities.create();
-            // resource id 21 = quad material
-            world2->componentManagers.meshRenderer.create(quadMesh_entityId,
-                quadMesh_meshHandle, 21, std::vector<std::string>(),
-                std::vector<Graphics::UniformValue>());
+            heightmapWorld->initialize();
 
             areWorldsInitialized = true;
         }
@@ -116,14 +73,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
         else
         {
-            int cameraEntityId = ctx->entities.create();
-            world2->componentManagers.camera.create(cameraEntityId);
-            vctx->setCameraEntityId(false, cameraEntityId);
-
-            int orthographicCameraId =
-                world2->componentManagers.orthographicCamera.create(cameraEntityId);
-            world2->componentManagers.orthographicCamera.setInputControllerId(
-                orthographicCameraId, inputControllerId);
+            heightmapWorld->addViewport(*vctx, inputControllerId);
         }
 
         return vctx;
@@ -164,7 +114,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
         sceneWorld->update(deltaTime);
-        world2->update(deltaTime);
+        heightmapWorld->update(deltaTime);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -185,7 +135,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
         else
         {
-            world2->render(view);
+            heightmapWorld->render(view);
         }
         vctx.render();
     }
@@ -228,8 +178,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             delete sceneWorld;
             sceneWorld = nullptr;
 
-            delete world2;
-            world2 = nullptr;
+            delete heightmapWorld;
+            heightmapWorld = nullptr;
 
             for (int i = 0; i < viewportContexts->size(); i++)
             {
