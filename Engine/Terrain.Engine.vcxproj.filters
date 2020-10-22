@@ -28,9 +28,6 @@
     <ClCompile Include="src\IO\OpenFile.cpp">
       <Filter>src\IO</Filter>
     </ClCompile>
-    <ClCompile Include="src\Scene.cpp">
-      <Filter>src</Filter>
-    </ClCompile>
     <ClCompile Include="src\World.cpp">
       <Filter>src</Filter>
     </ClCompile>
@@ -92,9 +89,6 @@
     </ClInclude>
     <ClInclude Include="src\IO\Path.hpp">
       <Filter>src\IO</Filter>
-    </ClInclude>
-    <ClInclude Include="src\Scene.hpp">
-      <Filter>src</Filter>
     </ClInclude>
     <ClInclude Include="src\Common.hpp">
       <Filter>src</Filter>

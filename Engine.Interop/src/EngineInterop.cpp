@@ -23,6 +23,45 @@ namespace Terrain { namespace Engine { namespace Interop {
             gcnew MouseWheelEventHandler(&EngineInterop::OnMouseWheel);
     }
 
+    void createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &world)
+    {
+        int terrainColumns = 256;
+        int terrainRows = 256;
+        float patchSize = 0.5f;
+        float terrainHeight = 25.0f;
+
+        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
+        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 22;
+
+        // build material uniforms
+        std::vector<std::string> materialUniformNames(3);
+        materialUniformNames[0] = "terrainHeight";
+        materialUniformNames[1] = "heightmapSize";
+        materialUniformNames[2] = "normalSampleOffset";
+
+        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(3);
+        materialUniformValues[0] =
+            Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
+        materialUniformValues[1] =
+            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
+        materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forVector2(
+            glm::vec2(1.0f / (patchSize * terrainColumns), 1.0f / (patchSize * terrainRows)));
+
+        // create entity and components
+        int entityId = ctx.entities.create();
+        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
+            entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows, terrainColumns, patchSize,
+            terrainHeight);
+        world.componentManagers.terrainCollider.create(entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP,
+            terrainRows, terrainColumns, patchSize, terrainHeight);
+
+        int &meshHandle =
+            world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
+        world.componentManagers.meshRenderer.create(entityId, meshHandle,
+            RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED, materialUniformNames,
+            materialUniformValues);
+    }
+
     ViewportContext *EngineInterop::CreateView(
         char *imgBuffer, RenderCallbackUnmanaged renderCallback)
     {
@@ -55,7 +94,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             world2 = new Engine::World(*ctx);
             ctx->resources.loadResources();
 
-            scene = new Engine::Scene(*ctx, *world1);
+            createTerrain(*ctx, *world1);
 
             // setup heightmap quad
             std::vector<float> quadVertices(20);
@@ -234,9 +273,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         if (isWorldInitialized)
         {
-            delete scene;
-            scene = nullptr;
-
             delete world1;
             world1 = nullptr;
 

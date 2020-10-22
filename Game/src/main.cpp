@@ -3,10 +3,49 @@
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
 #include "../../Engine/src/EngineContext.hpp"
+#include "../../Engine/src/World.hpp"
 #include "../../Engine/src/TerrainResources.hpp"
-#include "../../Engine/src/Scene.hpp"
 #include "../../Engine/src/IO/Path.hpp"
 #include "GameContext.hpp"
+
+int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &world)
+{
+    int terrainColumns = 256;
+    int terrainRows = 256;
+    float patchSize = 0.5f;
+    float terrainHeight = 25.0f;
+
+    // build material uniforms
+    std::vector<std::string> materialUniformNames(3);
+    materialUniformNames[0] = "terrainHeight";
+    materialUniformNames[1] = "heightmapSize";
+    materialUniformNames[2] = "normalSampleOffset";
+
+    std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(3);
+    materialUniformValues[0] =
+        Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
+    materialUniformValues[1] =
+        Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
+    materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forVector2(
+        glm::vec2(1.0f / (patchSize * terrainColumns), 1.0f / (patchSize * terrainRows)));
+
+    // create entity and components
+    int entityId = ctx.entities.create();
+    int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
+        Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows,
+        terrainColumns, patchSize, terrainHeight);
+    world.componentManagers.terrainCollider.create(entityId,
+        Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows,
+        terrainColumns, patchSize, terrainHeight);
+
+    int &meshHandle =
+        world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
+    world.componentManagers.meshRenderer.create(entityId, meshHandle,
+        Terrain::Engine::TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED,
+        materialUniformNames, materialUniformValues);
+
+    return terrainRendererInstanceId;
+}
 
 int main()
 {
@@ -22,7 +61,8 @@ int main()
         Terrain::Engine::World world(ctx);
         ctx.resources.loadResources();
 
-        Terrain::Engine::Scene scene(ctx, world);
+        // create terrain
+        int terrain_terrainRendererInstanceId = createTerrain(ctx, world);
         ctx.resources.reloadTexture(
             Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
@@ -70,6 +110,7 @@ int main()
             bool O = false;
             bool R = false;
             bool H = false;
+            bool Z = false;
         };
         KeyState isKeyDown;
         KeyState wasKeyDown;
@@ -101,6 +142,7 @@ int main()
             isKeyDown.O = ctx.input.isKeyPressed(GLFW_KEY_O);
             isKeyDown.R = ctx.input.isKeyPressed(GLFW_KEY_R);
             isKeyDown.H = ctx.input.isKeyPressed(GLFW_KEY_H);
+            isKeyDown.Z = ctx.input.isKeyPressed(GLFW_KEY_Z);
 
             // swap camera mode when C key is pressed
             if (isKeyDown.C && !wasKeyDown.C)
@@ -160,6 +202,13 @@ int main()
                 ctx.resources.reloadTexture(
                     Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
                     Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap2.tga"), true);
+            }
+
+            // toggle terrain wireframe mode when Z is pressed
+            if (isKeyDown.Z && !wasKeyDown.Z)
+            {
+                world.componentManagers.terrainRenderer.toggleWireframeMode(
+                    terrain_terrainRendererInstanceId);
             }
 
             wasKeyDown = isKeyDown;

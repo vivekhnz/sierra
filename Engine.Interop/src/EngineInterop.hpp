@@ -2,7 +2,7 @@
 
 #include "../../Engine/src/Graphics/GlfwManager.hpp"
 #include "../../Engine/src/EngineContext.hpp"
-#include "../../Engine/src/Scene.hpp"
+#include "../../Engine/src/World.hpp"
 #include "EditorContext.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
@@ -30,7 +30,6 @@ public
         static bool isWorldInitialized = false;
         static World *world1;
         static World *world2;
-        static Scene *scene;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
 
