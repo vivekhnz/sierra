@@ -5,6 +5,7 @@
 #include "EngineContext.hpp"
 #include "OrbitCameraComponentManager.hpp"
 #include "FirstPersonCameraComponentManager.hpp"
+#include "OrthographicCameraComponentManager.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
 #include "TerrainRendererComponentManager.hpp"
@@ -18,6 +19,7 @@ namespace Terrain { namespace Engine {
             CameraComponentManager camera;
             OrbitCameraComponentManager orbitCamera;
             FirstPersonCameraComponentManager firstPersonCamera;
+            OrthographicCameraComponentManager orthographicCamera;
             Physics::TerrainColliderComponentManager terrainCollider;
             Graphics::MeshRendererComponentManager meshRenderer;
             TerrainRendererComponentManager terrainRenderer;
@@ -25,6 +27,7 @@ namespace Terrain { namespace Engine {
             ComponentManagers(EngineContext &ctx) :
                 camera(ctx.renderer), orbitCamera(camera, ctx.input),
                 firstPersonCamera(camera, terrainCollider, ctx.input),
+                orthographicCamera(camera, ctx.input),
                 meshRenderer(ctx.assets.graphics, ctx.renderer),
                 terrainRenderer(ctx.renderer, meshRenderer, ctx.assets.graphics)
             {

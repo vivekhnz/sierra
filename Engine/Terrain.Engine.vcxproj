@@ -36,6 +36,7 @@
     <ClCompile Include="src\Graphics\Renderer.cpp" />
     <ClCompile Include="src\Graphics\Window.cpp" />
     <ClCompile Include="src\OrbitCameraComponentManager.cpp" />
+    <ClCompile Include="src\OrthographicCameraComponentManager.cpp" />
     <ClCompile Include="src\Physics\TerrainColliderComponentManager.cpp" />
     <ClCompile Include="src\Resources\ResourceManager.cpp" />
     <ClCompile Include="src\TerrainRendererComponentManager.cpp" />
@@ -62,6 +63,7 @@
     <ClInclude Include="src\Graphics\Window.hpp" />
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
+    <ClInclude Include="src\OrthographicCameraComponentManager.hpp" />
     <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp" />
     <ClInclude Include="src\Resources\MaterialResource.hpp" />
     <ClInclude Include="src\Resources\ResourceManager.hpp" />

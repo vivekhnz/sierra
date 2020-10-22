@@ -12,6 +12,7 @@ namespace Terrain { namespace Engine {
     {
         componentManagers.orbitCamera.calculateCameraStates(deltaTime);
         componentManagers.firstPersonCamera.calculateCameraStates(deltaTime);
+        componentManagers.orthographicCamera.calculateCameraStates(deltaTime);
     }
 
     void World::render(EngineViewContext &vctx)
@@ -24,6 +25,7 @@ namespace Terrain { namespace Engine {
 
         componentManagers.orbitCamera.calculateCameraTransforms(vctx);
         componentManagers.firstPersonCamera.calculateCameraTransforms(vctx);
+        componentManagers.orthographicCamera.calculateCameraTransforms(vctx);
         componentManagers.camera.bindTransform(vctx);
 
         componentManagers.terrainRenderer.calculateTessellationLevels();
