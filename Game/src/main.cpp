@@ -56,14 +56,6 @@ int main()
         world.componentManagers.orbitCamera.setInputControllerId(
             orbitCamera_orbitCameraId, -1);
 
-        // create orthographic camera
-        int orthographicCamera_entityId = ctx.entities.create();
-        world.componentManagers.camera.create(orthographicCamera_entityId);
-        int orthographicCamera_orthographicCameraId =
-            world.componentManagers.orthographicCamera.create(orthographicCamera_entityId);
-        world.componentManagers.orthographicCamera.setInputControllerId(
-            orthographicCamera_orthographicCameraId, -1);
-
         float now = 0;
         float lastTickTime = glfw.getCurrentTime();
         float deltaTime = 0;
@@ -82,9 +74,7 @@ int main()
         KeyState isKeyDown;
         KeyState wasKeyDown;
 
-        int activeCameraIndex = 0;
-        int cameraEntityIds[3] = {
-            playerCamera_entityId, orbitCamera_entityId, orthographicCamera_entityId};
+        bool isOrbitCameraMode = false;
 
         bool isLightingEnabled = true;
         bool isAlbedoEnabled = true;
@@ -115,13 +105,11 @@ int main()
             // swap camera mode when C key is pressed
             if (isKeyDown.C && !wasKeyDown.C)
             {
-                activeCameraIndex = (activeCameraIndex + 1) % 3;
+                isOrbitCameraMode = !isOrbitCameraMode;
                 world.componentManagers.firstPersonCamera.setInputControllerId(
-                    playerCamera_firstPersonCameraId, activeCameraIndex == 0 ? 0 : -1);
+                    playerCamera_firstPersonCameraId, isOrbitCameraMode ? -1 : 0);
                 world.componentManagers.orbitCamera.setInputControllerId(
-                    orbitCamera_orbitCameraId, activeCameraIndex == 1 ? 0 : -1);
-                world.componentManagers.orthographicCamera.setInputControllerId(
-                    orthographicCamera_orthographicCameraId, activeCameraIndex == 2 ? 0 : -1);
+                    orbitCamera_orbitCameraId, isOrbitCameraMode ? 0 : -1);
             }
 
             // toggle lighting when L key is pressed
@@ -199,7 +187,8 @@ int main()
             world.update(deltaTime);
 
             // render world
-            appCtx.setCameraEntityId(cameraEntityIds[activeCameraIndex]);
+            appCtx.setCameraEntityId(
+                isOrbitCameraMode ? orbitCamera_entityId : playerCamera_entityId);
             Terrain::Engine::EngineViewContext vctx = appCtx.getViewContext();
             world.render(vctx);
             appCtx.render();
