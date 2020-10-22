@@ -111,6 +111,7 @@
     <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp" />
     <ClInclude Include="src\ViewportContext.hpp" />
     <ClInclude Include="src\Viewport.h" />
+    <ClInclude Include="src\Worlds\SceneWorld.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\EngineInterop.cpp" />
@@ -119,6 +120,7 @@
     <ClCompile Include="src\Proxy\ResourceManagerProxy.cpp" />
     <ClCompile Include="src\ViewportContext.cpp" />
     <ClCompile Include="src\Viewport.cpp" />
+    <ClCompile Include="src\Worlds\SceneWorld.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">

@@ -69,9 +69,7 @@ int main()
 
         // create player camera
         int playerCamera_entityId = ctx.entities.create();
-
         world.componentManagers.camera.create(playerCamera_entityId);
-
         int playerCamera_firstPersonCameraId =
             world.componentManagers.firstPersonCamera.create(playerCamera_entityId);
         world.componentManagers.firstPersonCamera.setPosition(

@@ -7,6 +7,9 @@
     <Filter Include="src\Proxy">
       <UniqueIdentifier>{f1e3b91c-89b3-41d9-a59c-920660a056c1}</UniqueIdentifier>
     </Filter>
+    <Filter Include="src\Worlds">
+      <UniqueIdentifier>{2fd8b25b-f043-4bc8-a7a2-5b20091d04ae}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\AssemblyInfo.cpp">
@@ -27,6 +30,9 @@
     <ClCompile Include="src\Proxy\ResourceManagerProxy.cpp">
       <Filter>src\Proxy</Filter>
     </ClCompile>
+    <ClCompile Include="src\Worlds\SceneWorld.cpp">
+      <Filter>src\Worlds</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Viewport.h">
@@ -43,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp">
       <Filter>src\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Worlds\SceneWorld.hpp">
+      <Filter>src\Worlds</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

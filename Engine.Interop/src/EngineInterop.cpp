@@ -23,45 +23,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             gcnew MouseWheelEventHandler(&EngineInterop::OnMouseWheel);
     }
 
-    void createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &world)
-    {
-        int terrainColumns = 256;
-        int terrainRows = 256;
-        float patchSize = 0.5f;
-        float terrainHeight = 25.0f;
-
-        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 22;
-
-        // build material uniforms
-        std::vector<std::string> materialUniformNames(3);
-        materialUniformNames[0] = "terrainHeight";
-        materialUniformNames[1] = "heightmapSize";
-        materialUniformNames[2] = "normalSampleOffset";
-
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(3);
-        materialUniformValues[0] =
-            Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
-        materialUniformValues[1] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
-        materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forVector2(
-            glm::vec2(1.0f / (patchSize * terrainColumns), 1.0f / (patchSize * terrainRows)));
-
-        // create entity and components
-        int entityId = ctx.entities.create();
-        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows, terrainColumns, patchSize,
-            terrainHeight);
-        world.componentManagers.terrainCollider.create(entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP,
-            terrainRows, terrainColumns, patchSize, terrainHeight);
-
-        int &meshHandle =
-            world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-        world.componentManagers.meshRenderer.create(entityId, meshHandle,
-            RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED, materialUniformNames,
-            materialUniformValues);
-    }
-
     ViewportContext *EngineInterop::CreateView(
         char *imgBuffer, RenderCallbackUnmanaged renderCallback)
     {
@@ -81,7 +42,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto vctx = new ViewportContext(*glfw, imgBuffer, renderCallback);
         viewportContexts->push_back(vctx);
 
-        if (!isWorldInitialized)
+        if (!areWorldsInitialized)
         {
             vctx->makePrimary();
             ctx->initialize();
@@ -90,11 +51,11 @@ namespace Terrain { namespace Engine { namespace Interop {
 
             // We can only initialize the scene once GLAD is initialized as it makes OpenGL
             // calls. GLAD is only initialized when a window is marked as the primary window.
-            world1 = new Engine::World(*ctx);
+            sceneWorld = new Worlds::SceneWorld(*ctx);
             world2 = new Engine::World(*ctx);
             ctx->resources.loadResources();
 
-            createTerrain(*ctx, *world1);
+            sceneWorld->initialize();
 
             // setup heightmap quad
             std::vector<float> quadVertices(20);
@@ -140,7 +101,7 @@ namespace Terrain { namespace Engine { namespace Interop {
                 quadMesh_meshHandle, 21, std::vector<std::string>(),
                 std::vector<Graphics::UniformValue>());
 
-            isWorldInitialized = true;
+            areWorldsInitialized = true;
         }
 
         // create input controller
@@ -148,29 +109,20 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx->setInputControllerId(inputControllerId);
 
         // create orbit camera
-        int cameraEntityId = ctx->entities.create();
-
         bool isFirstWorld = viewportContexts->size() % 2 == 1;
-        World *world = isFirstWorld ? world1 : world2;
-
-        world->componentManagers.camera.create(cameraEntityId);
-        vctx->setCameraEntityId(isFirstWorld, cameraEntityId);
-
         if (isFirstWorld)
         {
-            int orbitCameraId = world->componentManagers.orbitCamera.create(cameraEntityId);
-            world->componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
-            world->componentManagers.orbitCamera.setYaw(
-                orbitCameraId, glm::radians(90.0f + (90.0f * viewportContexts->size())));
-            world->componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
-            world->componentManagers.orbitCamera.setInputControllerId(
-                orbitCameraId, inputControllerId);
+            sceneWorld->addViewport(*vctx, inputControllerId);
         }
         else
         {
+            int cameraEntityId = ctx->entities.create();
+            world2->componentManagers.camera.create(cameraEntityId);
+            vctx->setCameraEntityId(false, cameraEntityId);
+
             int orthographicCameraId =
-                world->componentManagers.orthographicCamera.create(cameraEntityId);
-            world->componentManagers.orthographicCamera.setInputControllerId(
+                world2->componentManagers.orthographicCamera.create(cameraEntityId);
+            world2->componentManagers.orthographicCamera.setInputControllerId(
                 orthographicCameraId, inputControllerId);
         }
 
@@ -203,7 +155,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
     {
-        if (!isWorldInitialized)
+        if (!areWorldsInitialized)
             return;
 
         ctx->input.update();
@@ -211,7 +163,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
-        world1->update(deltaTime);
+        sceneWorld->update(deltaTime);
         world2->update(deltaTime);
 
         msclr::lock l(viewportCtxLock);
@@ -229,7 +181,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         EngineViewContext view = vctx.getViewContext();
         if (vctx.getIsFirstWorld())
         {
-            world1->render(view);
+            sceneWorld->render(view);
         }
         else
         {
@@ -271,10 +223,10 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         renderTimer->Stop();
 
-        if (isWorldInitialized)
+        if (areWorldsInitialized)
         {
-            delete world1;
-            world1 = nullptr;
+            delete sceneWorld;
+            sceneWorld = nullptr;
 
             delete world2;
             world2 = nullptr;

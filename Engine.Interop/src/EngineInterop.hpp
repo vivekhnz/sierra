@@ -7,6 +7,7 @@
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "Proxy/ResourceManagerProxy.hpp"
+#include "Worlds/SceneWorld.hpp"
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -27,8 +28,8 @@ public
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();
 
-        static bool isWorldInitialized = false;
-        static World *world1;
+        static bool areWorldsInitialized = false;
+        static Worlds::SceneWorld *sceneWorld;
         static World *world2;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
