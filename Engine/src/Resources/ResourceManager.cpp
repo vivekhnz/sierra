@@ -245,11 +245,13 @@ namespace Terrain { namespace Engine { namespace Resources {
             1, // shaderCount
             {TerrainResources::
                     RESOURCE_ID_SHADER_TERRAIN_COMPUTE_TESS_LEVEL}, // shaderResourceIds
-            3,                                                      // uniformCount
-            {19, 11, 18},                                           // uniformNameLengths
+            5,                                                      // uniformCount
+            {19, 11, 18, 13, 16},                                   // uniformNameLengths
             "horizontalEdgeCount"
             "columnCount"
-            "targetTriangleSize" // uniformNames
+            "targetTriangleSize"
+            "terrainHeight"
+            "heightmapTexture" // uniformNames
         });
 
         ctx.onShaderProgramsLoaded(

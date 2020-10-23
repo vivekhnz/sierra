@@ -32,6 +32,8 @@ layout (std140, binding = 0) uniform Camera
 uniform int horizontalEdgeCount;
 uniform int columnCount;
 uniform float targetTriangleSize;
+uniform float terrainHeight;
+uniform sampler2D heightmapTexture;
 
 vec3 worldToScreen(vec3 p)
 {
@@ -39,16 +41,59 @@ vec3 worldToScreen(vec3 p)
     return clipPos.xyz / clipPos.w;
 }
 
+float height(vec2 uv)
+{
+    return texture(heightmapTexture, uv).x * terrainHeight;
+}
+
 float calcTessLevel(Vertex a, Vertex b)
 {
-    vec3 pA = vec3(a.pos_x, a.pos_y, a.pos_z);
-    vec3 pB = vec3(b.pos_x, b.pos_y, b.pos_z);
+    // we could set the tessellation level to 0 to cull patches however we can only determine
+    // whether this edge should be culled, not the entire patch
+    bool cull = false;
+
+    vec3 pA = vec3(a.pos_x, height(vec2(a.uv_x, a.uv_y)), a.pos_z);
+    vec3 pB = vec3(b.pos_x, height(vec2(b.uv_x, b.uv_y)), b.pos_z);
     
     vec3 pAB1 = (pA + pB) * 0.5f;
     vec3 pAB2 = pAB1 + vec3(0.0f, distance(pA, pB), 0.0f);
+
+    float clipW = (camera_transform * vec4(pAB1, 1.0f)).w;
+    if (clipW < 0.0f)
+    {
+        // cull anything behind the camera
+        cull = true;
+    }
+    else
+    {
+        // cull anything that is too far outside of the screen bounds
+        vec3 pAScreen = worldToScreen(pA);
+        vec3 pBScreen = worldToScreen(pB);
+        float xBounds = min(abs(pAScreen.x), abs(pBScreen.x));
+        float yBounds = min(abs(pAScreen.z), abs(pBScreen.z));
+
+        // increase tolerance for triangles directly in front of the camera to avoid them
+        // being culled when the camera gets very close
+        float tolerance = clipW > 10.0f ? 1.5f : 5.0f;
+        if (max(xBounds, yBounds) > tolerance)
+        {
+            cull = true;
+        }
+    }
     
     float screenEdgeLength = distance(worldToScreen(pAB1), worldToScreen(pAB2));
-    return screenEdgeLength / targetTriangleSize;
+    float T = screenEdgeLength / targetTriangleSize;
+
+    /*
+     * We could set the tessellation level to 0 to cull patches however we have only
+     * determined whether this edge should be culled, not the entire patch.
+     *
+     * Instead of returning zero, we will negate the tessellation level to indicate that
+     * it can be culled, but still provide the calculated tessellation level. This allows
+     * the tessellation control shader to only cull the patch if all edges are marked
+     * cullable (have a negative tessellation level).
+     */
+    return T * (cull ? -1.0f : 1.0f);
 }
 
 void main()

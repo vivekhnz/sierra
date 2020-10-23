@@ -5,11 +5,6 @@ layout(location = 0) in int in_id[];
 layout(location = 1) in vec3 in_worldPos[];
 layout(location = 2) in vec2 in_heightmapUV[];
 
-layout (std140, binding = 0) uniform Camera
-{
-    mat4 camera_transform;
-};
-
 uniform vec2 heightmapSize;
 
 struct VertexEdgeData
@@ -27,12 +22,6 @@ layout(location = 1) out vec2 out_heightmapUV[];
 
 patch out vec4 out_edgeMips;
 patch out vec4 out_cornerMips;
-
-vec2 worldToScreen(vec3 p)
-{
-    vec4 clipPos = camera_transform * vec4(p, 1.0f);
-    return clipPos.xy / clipPos.w;
-}
 
 float calcCornerMips(VertexEdgeData vertEdge)
 {
@@ -58,30 +47,30 @@ void main()
         VertexEdgeData cEdges = vertEdgeData[in_id[2]];
         VertexEdgeData dEdges = vertEdgeData[in_id[3]];
         float heightmapLength = length(heightmapSize);
-
-        vec2 screenPositions[4] = vec2[4]
-        (
-            worldToScreen(in_worldPos[0]),
-            worldToScreen(in_worldPos[1]),
-            worldToScreen(in_worldPos[2]),
-            worldToScreen(in_worldPos[3])
-        );
-        float xBounds = min(
-            min(abs(screenPositions[0].x), abs(screenPositions[1].x)),
-            min(abs(screenPositions[2].x), abs(screenPositions[3].x))
-        );
-        float yBounds = min(
-            min(abs(screenPositions[0].y), abs(screenPositions[1].y)),
-            min(abs(screenPositions[2].y), abs(screenPositions[3].y))
-        );
-        float cullMult = 1.0f - sign(max(xBounds, yBounds) - 1.5f);
         
-        gl_TessLevelOuter[0] = cullMult * aEdges.tessLevels.y; // AB
-        gl_TessLevelOuter[1] = cullMult * aEdges.tessLevels.x; // AD
-        gl_TessLevelOuter[2] = cullMult * cEdges.tessLevels.w; // CD
-        gl_TessLevelOuter[3] = cullMult * cEdges.tessLevels.z; // BC
-        gl_TessLevelInner[0] = cullMult * max(aEdges.tessLevels.x, cEdges.tessLevels.z);
-        gl_TessLevelInner[1] = cullMult * max(aEdges.tessLevels.y, cEdges.tessLevels.w);
+        if (aEdges.tessLevels.x < 0 && aEdges.tessLevels.y < 0 &&
+            cEdges.tessLevels.z < 0 && cEdges.tessLevels.w < 0)
+        {
+            // cull the patch
+            gl_TessLevelOuter[0] = 0;
+            gl_TessLevelOuter[1] = 0;
+            gl_TessLevelOuter[2] = 0;
+            gl_TessLevelOuter[3] = 0;
+            gl_TessLevelInner[0] = 0;
+            gl_TessLevelInner[1] = 0;
+        }
+        else
+        {
+            // at least one edge is not cullable
+            // need to use the absolute value of each tessellation level as they could be
+            // negative if the edge was marked cullable
+            gl_TessLevelOuter[0] = abs(aEdges.tessLevels.y); // AB
+            gl_TessLevelOuter[1] = abs(aEdges.tessLevels.x); // AD
+            gl_TessLevelOuter[2] = abs(cEdges.tessLevels.w); // CD
+            gl_TessLevelOuter[3] = abs(cEdges.tessLevels.z); // BC
+            gl_TessLevelInner[0] = max(abs(aEdges.tessLevels.x), abs(cEdges.tessLevels.z));
+            gl_TessLevelInner[1] = max(abs(aEdges.tessLevels.y), abs(cEdges.tessLevels.w));
+        }
         
         out_edgeMips = vec4(
             log2(aEdges.uvLengths.y * heightmapLength / aEdges.tessLevels.y) + 1,

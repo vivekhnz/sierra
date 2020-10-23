@@ -34,8 +34,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows, terrainColumns, patchSize,
             terrainHeight);
-        world.componentManagers.terrainCollider.create(entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP,
-            terrainRows, terrainColumns, patchSize, terrainHeight);
 
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);

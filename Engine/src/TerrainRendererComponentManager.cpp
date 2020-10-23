@@ -27,6 +27,8 @@ namespace Terrain { namespace Engine {
                 TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
             renderer.setShaderProgramUniformFloat(
                 calcTessLevelsShaderProgramHandle, "targetTriangleSize", 0.015f);
+            renderer.setShaderProgramUniformInt(
+                calcTessLevelsShaderProgramHandle, "heightmapTexture", 0);
             break;
         }
     }
@@ -146,6 +148,10 @@ namespace Terrain { namespace Engine {
         if (calcTessLevelsShaderProgramHandle == -1)
             return;
 
+        int textureHandles[1] = {
+            renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP)};
+        renderer.bindTextures(textureHandles, 1);
+
         for (int i = 0; i < data.count; i++)
         {
             int &rows = data.rows[i];
@@ -156,6 +162,8 @@ namespace Terrain { namespace Engine {
                 "horizontalEdgeCount", rows * (columns - 1));
             renderer.setShaderProgramUniformInt(
                 calcTessLevelsShaderProgramHandle, "columnCount", columns);
+            renderer.setShaderProgramUniformFloat(
+                calcTessLevelsShaderProgramHandle, "terrainHeight", data.terrainHeight[i]);
 
             glBindBufferBase(
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
