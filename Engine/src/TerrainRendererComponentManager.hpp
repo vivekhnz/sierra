@@ -22,7 +22,6 @@ namespace Terrain { namespace Engine {
             std::vector<int> meshVertexBufferHandle;
             std::vector<int> rows;
             std::vector<int> columns;
-            std::vector<float> patchSize;
             std::vector<float> terrainHeight;
             std::vector<bool> isWireframeMode;
             std::vector<Graphics::Buffer> tessellationLevelBuffer;

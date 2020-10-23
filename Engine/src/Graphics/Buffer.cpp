@@ -8,6 +8,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glGenBuffers(1, &id);
     }
 
+    Buffer::Buffer(const Buffer &that) : id(that.id), type(that.type), usage(that.usage)
+    {
+    }
+
     Buffer::Buffer(Buffer &&other) : id(other.id), type(other.type), usage(other.usage)
     {
         other.id = 0;

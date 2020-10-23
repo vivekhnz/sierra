@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     public:
         Buffer(GLenum type, GLenum usage);
-        Buffer(const Buffer &that) = delete;
+        Buffer(const Buffer &that);
         Buffer &operator=(const Buffer &that) = delete;
         Buffer(Buffer &&);
         Buffer &operator=(Buffer &&) = delete;

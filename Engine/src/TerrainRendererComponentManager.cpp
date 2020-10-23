@@ -81,7 +81,6 @@ namespace Terrain { namespace Engine {
         data.meshVertexBufferHandle.push_back(vertexBufferHandle);
         data.rows.push_back(rows);
         data.columns.push_back(columns);
-        data.patchSize.push_back(patchSize);
         data.terrainHeight.push_back(terrainHeight);
         data.isWireframeMode.push_back(false);
 
@@ -102,34 +101,6 @@ namespace Terrain { namespace Engine {
         {
             if (data.heightmapTextureResourceId[i] != resource.id)
                 continue;
-
-            int &columns = data.columns[i];
-            int &rows = data.rows[i];
-            float &patchSize = data.patchSize[i];
-            int &vertexBufferHandle = data.meshVertexBufferHandle[i];
-
-            // update mesh vertices
-            std::vector<float> vertices(columns * rows * 5);
-            float offsetX = (columns - 1) * patchSize * -0.5f;
-            float offsetY = (rows - 1) * patchSize * -0.5f;
-            glm::vec2 uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
-            for (int y = 0; y < rows; y++)
-            {
-                int idxStart = y * columns;
-                float uvY = uvSize.y * y;
-
-                for (int x = 0; x < columns; x++)
-                {
-                    int idx = (idxStart + x) * 5;
-                    vertices[idx] = (x * patchSize) + offsetX;
-                    vertices[idx + 1] = 0.0f;
-                    vertices[idx + 2] = (y * patchSize) + offsetY;
-                    vertices[idx + 3] = uvSize.x * x;
-                    vertices[idx + 4] = uvY;
-                }
-            }
-            renderer.updateVertexBuffer(
-                vertexBufferHandle, vertices.size() * sizeof(float), vertices.data());
 
             // update heightmap size (used by adaptive tessellation)
             meshRenderer.setMaterialUniformVector2(meshRenderer.lookup(data.entityId[i]),
@@ -178,10 +149,5 @@ namespace Terrain { namespace Engine {
         meshRenderer.setMaterial(i,
             isWireframeMode ? TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_WIREFRAME
                             : TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
-    }
-
-    TerrainRendererComponentManager::~TerrainRendererComponentManager()
-    {
-        data.count = 0;
     }
 }}
