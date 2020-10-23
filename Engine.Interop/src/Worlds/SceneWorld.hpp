@@ -1,10 +1,10 @@
 #pragma once
 
-#include "EditorWorld.hpp"
 #include "../../../Engine/src/World.hpp"
+#include "../ViewportContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    class SceneWorld : public EditorWorld
+    class SceneWorld
     {
         EngineContext &ctx;
         Engine::World world;
@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         SceneWorld(EngineContext &ctx);
 
         void initialize();
-        int addCamera(int inputControllerId);
+        void linkViewport(ViewportContext &vctx);
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
     };

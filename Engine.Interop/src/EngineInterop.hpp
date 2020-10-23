@@ -7,8 +7,7 @@
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "Proxy/ResourceManagerProxy.hpp"
-#include "Worlds/SceneWorld.hpp"
-#include "Worlds/HeightmapWorld.hpp"
+#include "Worlds/EditorWorlds.hpp"
 
 using namespace System;
 using namespace System::Collections::Generic;
@@ -30,7 +29,7 @@ public
         static Object ^ viewportCtxLock = gcnew Object();
 
         static bool areWorldsInitialized = false;
-        static std::vector<Worlds::EditorWorld *> *worlds;
+        static Worlds::EditorWorlds *worlds;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
 
@@ -63,6 +62,8 @@ public
 
         static ViewportContext *CreateView(
             char *imgBuffer, RenderCallbackUnmanaged renderCallback);
+        static void LinkViewportToWorld(
+            ViewportContext *vctx, Worlds::EditorWorld editorWorld);
         static void DetachView(ViewportContext *vctx);
 
         static void RenderView(ViewportContext &vctx);

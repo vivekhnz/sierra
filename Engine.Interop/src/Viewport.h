@@ -17,6 +17,7 @@ public
         delegate void RenderCallbackManaged();
 
         ViewportContext *vctx;
+        Worlds::EditorWorld world;
 
         Grid ^ layoutRoot;
         Image ^ image;
@@ -31,10 +32,25 @@ public
         RenderCallbackManaged ^ onRenderCallback;
 
         void UpdateImage();
+        void OnWorldUpdated();
 
     public:
         Viewport();
         ~Viewport();
+
+        property Worlds::EditorWorld World
+        {
+            Worlds::EditorWorld get()
+            {
+                return world;
+            }
+
+            void set(Worlds::EditorWorld value)
+            {
+                world = value;
+                OnWorldUpdated();
+            }
+        }
 
         void OnRenderSizeChanged(SizeChangedInfo ^ info) override;
         void OnMouseEnter(MouseEventArgs ^ args) override;

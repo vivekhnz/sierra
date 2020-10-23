@@ -10,10 +10,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         ctx = new EngineContext(*appCtx);
         viewportContexts = new std::vector<ViewportContext *>();
 
-        worlds = new std::vector<Worlds::EditorWorld *>();
-        worlds->push_back(new Worlds::SceneWorld(*ctx));
-        worlds->push_back(new Worlds::HeightmapWorld(*ctx));
-
+        worlds = new Worlds::EditorWorlds(*ctx);
         resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);
 
         focusedViewportCtx = nullptr;
@@ -59,11 +56,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             ctx->initialize();
 
             ctx->resources.loadResources();
-
-            for (int i = 0; i < worlds->size(); i++)
-            {
-                worlds->at(i)->initialize();
-            }
+            worlds->initialize();
 
             areWorldsInitialized = true;
         }
@@ -72,14 +65,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         int inputControllerId = appCtx->addInputController();
         vctx->setInputControllerId(inputControllerId);
 
-        // associate viewport with world
-        int worldId = (viewportContexts->size() + 1) % 2;
-        Worlds::EditorWorld *world = worlds->at(worldId);
-        int cameraEntityId = world->addCamera(inputControllerId);
-        vctx->setWorldId(worldId);
-        vctx->setCameraEntityId(cameraEntityId);
-
         return vctx;
+    }
+
+    void EngineInterop::LinkViewportToWorld(
+        ViewportContext *vctx, Worlds::EditorWorld editorWorld)
+    {
+        worlds->linkViewport(editorWorld, *vctx);
     }
 
     void EngineInterop::DetachView(ViewportContext *vctxToRemove)
@@ -117,10 +109,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        for (int i = 0; i < worlds->size(); i++)
-        {
-            worlds->at(i)->update(deltaTime);
-        }
+        worlds->update(deltaTime);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -134,8 +123,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::RenderView(ViewportContext &vctx)
     {
         vctx.makeCurrent();
-        EngineViewContext view = vctx.getViewContext();
-        worlds->at(vctx.getWorldId())->render(view);
+        worlds->render(vctx);
         vctx.render();
     }
 
@@ -172,12 +160,8 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         renderTimer->Stop();
 
-        for (int i = 0; i < worlds->size(); i++)
-        {
-            delete worlds->at(i);
-        }
-        worlds->clear();
         delete worlds;
+        worlds = nullptr;
 
         if (areWorldsInitialized)
         {

@@ -23,9 +23,9 @@
                 <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
             </MenuItem>
         </Menu>
-        <interop:Viewport x:Name="viewport1" Grid.Row="1" />
+        <interop:Viewport x:Name="viewport1" Grid.Row="1" World="Scene" />
         <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="1">
-            <interop:Viewport x:Name="viewport2" Height="284" Margin="8" />
+            <interop:Viewport x:Name="viewport2" Height="284" Margin="8" World="Heightmap" />
         </StackPanel>
     </Grid>
 </Window>

@@ -2,6 +2,7 @@
 
 #include "../../Engine/src/EngineViewContext.hpp"
 #include "../../Engine/src/Graphics/Window.hpp"
+#include "Worlds/EditorWorld.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
     class ViewportContext
@@ -9,7 +10,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         Graphics::Window window;
         char *imgBuffer;
         std::function<void()> onRenderCallback;
-        int worldId;
+        Worlds::EditorWorld world;
         int cameraEntityId;
         int inputControllerId;
 
@@ -24,7 +25,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         EngineViewContext getViewContext() const;
         int getInputControllerId() const;
-        int getWorldId() const;
+        Worlds::EditorWorld getWorld() const;
         std::tuple<int, int> getViewportLocation() const;
         bool isDetached() const;
 
@@ -32,7 +33,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         void resize(int x, int y, int width, int height, char *buffer);
         void makePrimary();
         void makeCurrent();
-        void setWorldId(int worldId);
+        void setWorld(Worlds::EditorWorld world);
         void setCameraEntityId(int cameraEntityId);
         void setInputControllerId(int cameraEntityId);
 

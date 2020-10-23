@@ -44,7 +44,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             materialUniformValues);
     }
 
-    int SceneWorld::addCamera(int inputControllerId)
+    void SceneWorld::linkViewport(ViewportContext &vctx)
     {
         int cameraEntityId = ctx.entities.create();
         world.componentManagers.camera.create(cameraEntityId);
@@ -54,9 +54,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.componentManagers.orbitCamera.setYaw(orbitCameraId, glm::radians(180.0f));
         world.componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
         world.componentManagers.orbitCamera.setInputControllerId(
-            orbitCameraId, inputControllerId);
+            orbitCameraId, vctx.getInputControllerId());
 
-        return cameraEntityId;
+        vctx.setCameraEntityId(cameraEntityId);
     }
 
     void SceneWorld::update(float deltaTime)

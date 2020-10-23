@@ -121,6 +121,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         focusBorder->BorderBrush = unfocusedBrush;
     }
 
+    void Viewport::OnWorldUpdated()
+    {
+        vctx->setWorld(World);
+        EngineInterop::LinkViewportToWorld(vctx, World);
+    }
+
     Viewport::~Viewport()
     {
         if (!isInitialized)

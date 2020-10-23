@@ -36,6 +36,9 @@
     <ClCompile Include="src\Worlds\HeightmapWorld.cpp">
       <Filter>src\Worlds</Filter>
     </ClCompile>
+    <ClCompile Include="src\Worlds\EditorWorlds.cpp">
+      <Filter>src\Worlds</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Viewport.h">
@@ -57,6 +60,9 @@
       <Filter>src\Worlds</Filter>
     </ClInclude>
     <ClInclude Include="src\Worlds\HeightmapWorld.hpp">
+      <Filter>src\Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Worlds\EditorWorlds.hpp">
       <Filter>src\Worlds</Filter>
     </ClInclude>
     <ClInclude Include="src\Worlds\EditorWorld.hpp">

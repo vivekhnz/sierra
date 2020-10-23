@@ -53,7 +53,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             std::vector<Graphics::UniformValue>());
     }
 
-    int HeightmapWorld::addCamera(int inputControllerId)
+    void HeightmapWorld::linkViewport(ViewportContext &vctx)
     {
         int cameraEntityId = ctx.entities.create();
         world.componentManagers.camera.create(cameraEntityId);
@@ -61,9 +61,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int orthographicCameraId =
             world.componentManagers.orthographicCamera.create(cameraEntityId);
         world.componentManagers.orthographicCamera.setInputControllerId(
-            orthographicCameraId, inputControllerId);
+            orthographicCameraId, vctx.getInputControllerId());
 
-        return cameraEntityId;
+        vctx.setCameraEntityId(cameraEntityId);
     }
 
     void HeightmapWorld::update(float deltaTime)
