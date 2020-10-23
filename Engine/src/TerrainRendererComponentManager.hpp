@@ -42,12 +42,6 @@ namespace Terrain { namespace Engine {
         TerrainRendererComponentManager(Graphics::Renderer &renderer,
             Graphics::MeshRendererComponentManager &meshRenderer,
             Graphics::GraphicsAssetManager &graphicsAssets);
-        TerrainRendererComponentManager(const TerrainRendererComponentManager &that) = delete;
-        TerrainRendererComponentManager &operator=(
-            const TerrainRendererComponentManager &that) = delete;
-        TerrainRendererComponentManager(TerrainRendererComponentManager &&) = delete;
-        TerrainRendererComponentManager &operator=(
-            TerrainRendererComponentManager &&) = delete;
 
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);
@@ -67,8 +61,6 @@ namespace Terrain { namespace Engine {
         {
             return data.meshHandle[i];
         }
-
-        ~TerrainRendererComponentManager();
     };
 }}
 

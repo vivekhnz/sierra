@@ -106,7 +106,6 @@ namespace Terrain { namespace Engine {
             int &columns = data.columns[i];
             int &rows = data.rows[i];
             float &patchSize = data.patchSize[i];
-            float &terrainHeight = data.terrainHeight[i];
             int &vertexBufferHandle = data.meshVertexBufferHandle[i];
 
             // update mesh vertices
@@ -114,21 +113,16 @@ namespace Terrain { namespace Engine {
             float offsetX = (columns - 1) * patchSize * -0.5f;
             float offsetY = (rows - 1) * patchSize * -0.5f;
             glm::vec2 uvSize = glm::vec2(1.0f / (columns - 1), 1.0f / (rows - 1));
-            float xScalar = resource.width / (float)columns;
-            float yScalar = (resource.width * resource.height) / (float)rows;
-            float heightScalar = terrainHeight / 65535.0f;
-            const unsigned short *pixels = static_cast<const unsigned short *>(resource.data);
             for (int y = 0; y < rows; y++)
             {
                 int idxStart = y * columns;
-                int rowStart = (int)(y * yScalar);
                 float uvY = uvSize.y * y;
 
                 for (int x = 0; x < columns; x++)
                 {
                     int idx = (idxStart + x) * 5;
                     vertices[idx] = (x * patchSize) + offsetX;
-                    vertices[idx + 1] = pixels[rowStart + (int)(x * xScalar)] * heightScalar;
+                    vertices[idx + 1] = 0.0f;
                     vertices[idx + 2] = (y * patchSize) + offsetY;
                     vertices[idx + 3] = uvSize.x * x;
                     vertices[idx + 4] = uvY;
