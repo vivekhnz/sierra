@@ -18,8 +18,8 @@ namespace Terrain.Editor
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            viewport1.Dispose();
-            viewport2.Dispose();
+            sceneViewport.Dispose();
+            heightmapViewport.Dispose();
             EngineInterop.Shutdown();
         }
 
@@ -32,8 +32,9 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                // resource ID 0 = terrain heightmap texture
-                EngineInterop.ResourceManager.ReloadTexture(0, ofd.FileName, true);
+                const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
+                EngineInterop.ResourceManager.ReloadTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP,
+                    ofd.FileName, true);
             }
         }
     }

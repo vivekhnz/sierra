@@ -19,12 +19,11 @@ namespace Terrain { namespace Engine {
         for (int i = 0; i < count; i++)
         {
             Resources::ShaderProgramResource &resource = resources[i];
-            if (resource.id
-                != TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL)
+            if (resource.id != TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL)
                 continue;
 
             calcTessLevelsShaderProgramHandle = renderer.lookupShaderProgram(
-                TerrainResources::RESOURCE_ID_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
+                TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL);
             renderer.setShaderProgramUniformFloat(
                 calcTessLevelsShaderProgramHandle, "targetTriangleSize", 0.015f);
             renderer.setShaderProgramUniformInt(
@@ -114,7 +113,7 @@ namespace Terrain { namespace Engine {
             return;
 
         int textureHandles[1] = {
-            renderer.lookupTexture(TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP)};
+            renderer.lookupTexture(TerrainResources::Textures::HEIGHTMAP)};
         renderer.bindTextures(textureHandles, 1);
 
         for (int i = 0; i < data.count; i++)
@@ -147,7 +146,7 @@ namespace Terrain { namespace Engine {
         data.isWireframeMode[i] = isWireframeMode;
 
         meshRenderer.setMaterial(i,
-            isWireframeMode ? TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_WIREFRAME
-                            : TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
+            isWireframeMode ? TerrainResources::Materials::TERRAIN_WIREFRAME
+                            : TerrainResources::Materials::TERRAIN_TEXTURED);
     }
 }}

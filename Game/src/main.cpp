@@ -32,17 +32,17 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
     // create entity and components
     int entityId = ctx.entities.create();
     int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
-        Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows,
-        terrainColumns, patchSize, terrainHeight);
+        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows, terrainColumns,
+        patchSize, terrainHeight);
     world.componentManagers.terrainCollider.create(entityId,
-        Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows,
-        terrainColumns, patchSize, terrainHeight);
+        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows, terrainColumns,
+        patchSize, terrainHeight);
 
     int &meshHandle =
         world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
     world.componentManagers.meshRenderer.create(entityId, meshHandle,
-        Terrain::Engine::TerrainResources::RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED,
-        materialUniformNames, materialUniformValues);
+        Terrain::Engine::TerrainResources::Materials::TERRAIN_TEXTURED, materialUniformNames,
+        materialUniformValues);
 
     return terrainRendererInstanceId;
 }
@@ -63,8 +63,7 @@ int main()
 
         // create terrain
         int terrain_terrainRendererInstanceId = createTerrain(ctx, world);
-        ctx.resources.reloadTexture(
-            Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
+        ctx.resources.reloadTexture(Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
 
         // create player camera
@@ -198,7 +197,7 @@ int main()
             if (isKeyDown.H && !wasKeyDown.H)
             {
                 ctx.resources.reloadTexture(
-                    Terrain::Engine::TerrainResources::RESOURCE_ID_TEXTURE_HEIGHTMAP,
+                    Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
                     Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap2.tga"), true);
             }
 

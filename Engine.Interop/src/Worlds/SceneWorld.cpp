@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         float terrainHeight = 25.0f;
 
         const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 22;
+        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 1;
 
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);

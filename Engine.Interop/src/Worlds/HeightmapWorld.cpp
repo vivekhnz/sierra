@@ -7,7 +7,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void HeightmapWorld::initialize()
     {
-        const int RESOURCE_ID_MATERIAL_QUAD = 21;
+        const int RESOURCE_ID_MATERIAL_QUAD = 0;
+        const int RESOURCE_ID_MATERIAL_BRUSH = 3;
 
         // setup heightmap quad
         std::vector<float> quadVertices(20);
@@ -47,9 +48,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int quadMesh_meshHandle =
             ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
 
-        int quadMesh_entityId = ctx.entities.create();
-        world.componentManagers.meshRenderer.create(quadMesh_entityId, quadMesh_meshHandle,
-            RESOURCE_ID_MATERIAL_QUAD, std::vector<std::string>(),
+        int heightmapQuad_entityId = ctx.entities.create();
+        world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
+            quadMesh_meshHandle, RESOURCE_ID_MATERIAL_QUAD, std::vector<std::string>(),
+            std::vector<Graphics::UniformValue>());
+
+        int brushQuad_entityId = ctx.entities.create();
+        world.componentManagers.meshRenderer.create(brushQuad_entityId, quadMesh_meshHandle,
+            RESOURCE_ID_MATERIAL_BRUSH, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
     }
 

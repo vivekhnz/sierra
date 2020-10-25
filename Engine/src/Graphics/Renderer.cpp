@@ -12,6 +12,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void Renderer::initialize()
     {
         glEnable(GL_DEPTH_TEST);
+        glDepthFunc(GL_LEQUAL);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glEnable(GL_CULL_FACE);
         glPatchParameteri(GL_PATCH_VERTICES, 4);
 

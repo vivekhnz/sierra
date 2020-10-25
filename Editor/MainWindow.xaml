@@ -11,21 +11,20 @@
     <Grid Background="#333">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="300" />
+            <ColumnDefinition Width="Auto" />
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="3*" />
-            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Menu Grid.ColumnSpan="2" Padding="0 4">
             <MenuItem Header="File">
                 <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
             </MenuItem>
         </Menu>
-        <interop:Viewport x:Name="viewport1" Grid.Row="1" World="Scene" />
+        <interop:Viewport x:Name="sceneViewport" Grid.Row="1" World="Scene" />
         <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="1">
-            <interop:Viewport x:Name="viewport2" Height="284" Margin="8" World="Heightmap" />
+            <interop:Viewport x:Name="heightmapViewport" Width="400" Height="400" World="Heightmap" />
         </StackPanel>
     </Grid>
 </Window>
