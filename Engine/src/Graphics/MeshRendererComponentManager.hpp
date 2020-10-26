@@ -37,15 +37,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     public:
         MeshRendererComponentManager(GraphicsAssetManager &graphicsAssets, Renderer &renderer);
-        MeshRendererComponentManager(const MeshRendererComponentManager &that) = delete;
-        MeshRendererComponentManager &operator=(
-            const MeshRendererComponentManager &that) = delete;
-        MeshRendererComponentManager(MeshRendererComponentManager &&) = delete;
-        MeshRendererComponentManager &operator=(MeshRendererComponentManager &&) = delete;
 
         int create(int entityId,
             int meshHandle,
-            int materialResourceId,
+            int materialHandle,
             std::vector<std::string> uniformNames,
             std::vector<UniformValue> uniformValues);
 
@@ -58,8 +53,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void setMaterial(int i, int materialResourceId);
         void setMaterialUniformFloat(int i, std::string uniformName, float value);
         void setMaterialUniformVector2(int i, std::string uniformName, glm::vec2 value);
-
-        ~MeshRendererComponentManager();
     };
 }}}
 

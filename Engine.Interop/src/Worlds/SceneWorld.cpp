@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         float terrainHeight = 25.0f;
 
         const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 1;
+        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
 
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);
@@ -38,8 +38,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
         world.componentManagers.meshRenderer.create(entityId, meshHandle,
-            RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED, materialUniformNames,
-            materialUniformValues);
+            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED),
+            materialUniformNames, materialUniformValues);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)

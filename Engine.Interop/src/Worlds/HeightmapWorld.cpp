@@ -7,8 +7,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void HeightmapWorld::initialize()
     {
-        const int RESOURCE_ID_MATERIAL_QUAD = 0;
-        const int RESOURCE_ID_MATERIAL_BRUSH = 3;
+        const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
         // setup heightmap quad
         std::vector<float> quadVertices(20);
@@ -47,16 +46,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         int quadMesh_meshHandle =
             ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
+        int quadMaterialHandle = createQuadMaterial();
 
         int heightmapQuad_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
-            quadMesh_meshHandle, RESOURCE_ID_MATERIAL_QUAD, std::vector<std::string>(),
+            quadMesh_meshHandle, quadMaterialHandle, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
 
         int brushQuad_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(brushQuad_entityId, quadMesh_meshHandle,
-            RESOURCE_ID_MATERIAL_BRUSH, std::vector<std::string>(),
-            std::vector<Graphics::UniformValue>());
+            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
+            std::vector<std::string>(), std::vector<Graphics::UniformValue>());
     }
 
     void HeightmapWorld::linkViewport(ViewportContext &vctx)
@@ -81,5 +81,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapWorld::render(EngineViewContext &vctx)
     {
         world.render(vctx);
+    }
+
+    int HeightmapWorld::createQuadMaterial()
+    {
+        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
+        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
+
+        int shaderProgramHandle =
+            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
+        int textureHandles[1] = {ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP)};
+        int uniformNameLengths[1] = {12};
+        Graphics::UniformValue uniformValues[1] = {Graphics::UniformValue::forInteger(0)};
+
+        return ctx.assets.graphics.createMaterial(shaderProgramHandle, GL_FILL, 1,
+            textureHandles, 1, uniformNameLengths, "imageTexture", uniformValues);
     }
 }}}}

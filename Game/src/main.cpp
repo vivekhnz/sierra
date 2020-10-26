@@ -40,9 +40,10 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
 
     int &meshHandle =
         world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-    world.componentManagers.meshRenderer.create(entityId, meshHandle,
-        Terrain::Engine::TerrainResources::Materials::TERRAIN_TEXTURED, materialUniformNames,
-        materialUniformValues);
+    int &materialHandle = ctx.assets.graphics.lookupMaterial(
+        Terrain::Engine::TerrainResources::Materials::TERRAIN_TEXTURED);
+    world.componentManagers.meshRenderer.create(
+        entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues);
 
     return terrainRendererInstanceId;
 }

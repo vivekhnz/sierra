@@ -54,6 +54,51 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
+    int GraphicsAssetManager::createMaterial(int shaderProgramHandle,
+        int polygonMode,
+        int textureCount,
+        int *textureHandles,
+        int uniformCount,
+        int *uniformNameLengths,
+        const char *uniformNames,
+        Graphics::UniformValue *uniformValues)
+    {
+        materials.shaderProgramHandle.push_back(shaderProgramHandle);
+        materials.polygonMode.push_back(polygonMode);
+
+        materials.firstTextureIndex.push_back(materials.textureHandles.size());
+        materials.textureCount.push_back(textureCount);
+        for (int t = 0; t < textureCount; t++)
+        {
+            materials.textureHandles.push_back(textureHandles[t]);
+        }
+
+        int currentUniformCount = materials.uniformNames.size();
+        int newUniformCount = currentUniformCount + uniformCount;
+        materials.firstUniformIndex.push_back(currentUniformCount);
+        materials.uniformCount.push_back(uniformCount);
+        materials.uniformNames.resize(newUniformCount);
+        materials.uniformValues.resize(newUniformCount);
+
+        int uniformNameStart = 0;
+        for (int u = 0; u < uniformCount; u++)
+        {
+            int idx = currentUniformCount + u;
+
+            int uniformNameLength = uniformNameLengths[u];
+            char *uniformName = new char[uniformNameLength + 1];
+            memcpy(uniformName, &uniformNames[uniformNameStart], uniformNameLength);
+            uniformName[uniformNameLength] = '\0';
+            uniformNameStart += uniformNameLength;
+
+            materials.uniformNames[idx] = uniformName;
+            materials.uniformValues[idx] = uniformValues[u];
+            delete[] uniformName;
+        }
+
+        return materials.count++;
+    }
+
     int &GraphicsAssetManager::getMaterialShaderProgramHandle(int handle)
     {
         return materials.shaderProgramHandle[handle];

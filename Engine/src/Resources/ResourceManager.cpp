@@ -281,18 +281,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         std::vector<MaterialResource> materialResources;
 
         materialResources.push_back({
-            TerrainResources::Materials::QUAD,       // id
-            TerrainResources::ShaderPrograms::QUAD,  // shaderProgramResourceId
-            GL_FILL,                                 // polygonMode
-            1,                                       // textureCount
-            {TerrainResources::Textures::HEIGHTMAP}, // textureResourceIds
-            1,                                       // uniformCount
-            {12},                                    // uniformNameLengths
-            "imageTexture",                          // uniformNames
-            {Graphics::UniformValue::forInteger(0)}  // uniformValues
-        });
-
-        materialResources.push_back({
             TerrainResources::Materials::TERRAIN_TEXTURED,      // id
             TerrainResources::ShaderPrograms::TERRAIN_TEXTURED, // shaderProgramResourceId
             GL_FILL,                                            // polygonMode

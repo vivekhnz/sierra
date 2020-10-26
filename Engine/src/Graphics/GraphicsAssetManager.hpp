@@ -51,9 +51,17 @@ namespace Terrain { namespace Engine { namespace Graphics {
         GraphicsAssetManager(Renderer &renderer);
 
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
+        int createMaterial(int shaderProgramHandle,
+            int polygonMode,
+            int textureCount,
+            int *textureHandles,
+            int uniformCount,
+            int *uniformNameLengths,
+            const char *uniformNames,
+            Graphics::UniformValue *uniformValues);
         int &getMaterialShaderProgramHandle(int handle);
         void useMaterial(int handle);
-        int lookupMaterial(int resourceId)
+        int &lookupMaterial(int resourceId)
         {
             return materials.resourceIdToHandle[resourceId];
         }

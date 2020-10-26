@@ -16,5 +16,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void linkViewport(ViewportContext &vctx);
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
+
+        int createQuadMaterial();
     };
 }}}}

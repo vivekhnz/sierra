@@ -36,10 +36,9 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
     }
 
     namespace Materials {
-        const int QUAD = 0;
-        const int TERRAIN_TEXTURED = 1;
-        const int TERRAIN_WIREFRAME = 2;
-        const int BRUSH = 3;
+        const int TERRAIN_TEXTURED = 0;
+        const int TERRAIN_WIREFRAME = 1;
+        const int BRUSH = 2;
     }
 }}}
 

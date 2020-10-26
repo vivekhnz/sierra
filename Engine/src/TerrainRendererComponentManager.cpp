@@ -112,22 +112,22 @@ namespace Terrain { namespace Engine {
         if (calcTessLevelsShaderProgramHandle == -1)
             return;
 
-        int textureHandles[1] = {
-            renderer.lookupTexture(TerrainResources::Textures::HEIGHTMAP)};
-        renderer.bindTextures(textureHandles, 1);
-
         for (int i = 0; i < data.count; i++)
         {
             int &rows = data.rows[i];
             int &columns = data.columns[i];
-            int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
 
+            int textureHandles[1] = {
+                renderer.lookupTexture(data.heightmapTextureResourceId[i])};
+            renderer.bindTextures(textureHandles, 1);
             renderer.setShaderProgramUniformInt(calcTessLevelsShaderProgramHandle,
                 "horizontalEdgeCount", rows * (columns - 1));
             renderer.setShaderProgramUniformInt(
                 calcTessLevelsShaderProgramHandle, "columnCount", columns);
             renderer.setShaderProgramUniformFloat(
                 calcTessLevelsShaderProgramHandle, "terrainHeight", data.terrainHeight[i]);
+
+            int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
 
             glBindBufferBase(
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());

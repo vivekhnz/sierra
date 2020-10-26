@@ -13,13 +13,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     int MeshRendererComponentManager::create(int entityId,
         int meshHandle,
-        int materialResourceId,
+        int materialHandle,
         std::vector<std::string> uniformNames,
         std::vector<UniformValue> uniformValues)
     {
         data.entityId.push_back(entityId);
         data.meshHandle.push_back(meshHandle);
-        data.materialHandle.push_back(graphicsAssets.lookupMaterial(materialResourceId));
+        data.materialHandle.push_back(materialHandle);
 
         int uniformCount = uniformNames.size();
         data.firstUniformIndex.push_back(data.uniformNames.size());
@@ -94,10 +94,5 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 break;
             }
         }
-    }
-
-    MeshRendererComponentManager::~MeshRendererComponentManager()
-    {
-        data.count = 0;
     }
 }}}
