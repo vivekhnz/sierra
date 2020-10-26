@@ -119,6 +119,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
             materials.uniformValues);
     }
 
+    void GraphicsAssetManager::setMaterialTexture(
+        int materialHandle, int slot, int textureHandle)
+    {
+        int idx = materials.firstTextureIndex[materialHandle] + slot;
+        materials.textureHandles[idx] = textureHandle;
+    }
+
     int GraphicsAssetManager::createMesh(unsigned int primitiveType,
         const std::vector<float> &vertices,
         const std::vector<unsigned int> &indices)

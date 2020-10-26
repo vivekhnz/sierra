@@ -346,6 +346,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         framebuffers.id.push_back(framebufferId);
+        framebuffers.textureHandle.push_back(textureHandle);
         return framebuffers.count++;
     }
 
@@ -357,6 +358,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glViewport(0, 0, width, height);
         glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
+    void Renderer::finalizeFramebuffer(int handle)
+    {
+        glBindTexture(GL_TEXTURE_2D, textures.id[framebuffers.textureHandle[handle]]);
+        glGenerateMipmap(GL_TEXTURE_2D);
     }
 
     Renderer::~Renderer()

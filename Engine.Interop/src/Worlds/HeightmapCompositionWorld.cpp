@@ -11,8 +11,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
         // create framebuffer
-        renderTextureHandle = ctx.renderer.createTexture(
-            2048, 2048, GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+        renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
+            GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         framebufferHandle = ctx.renderer.createFramebuffer(renderTextureHandle);
 
         // setup camera

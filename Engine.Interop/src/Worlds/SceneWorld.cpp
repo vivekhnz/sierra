@@ -5,15 +5,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
     }
 
-    void SceneWorld::initialize()
+    void SceneWorld::initialize(int heightmapTextureHandle)
     {
         int terrainColumns = 256;
         int terrainRows = 256;
         float patchSize = 0.5f;
         float terrainHeight = 25.0f;
 
-        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
         const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
+
+        // edit terrain material to point to composited heightmap texture handle
+        int &materialHandle =
+            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
+        ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
         std::vector<std::string> materialUniformNames(3);
@@ -31,15 +35,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // create entity and components
         int entityId = ctx.entities.create();
-        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, RESOURCE_ID_TEXTURE_HEIGHTMAP, terrainRows, terrainColumns, patchSize,
-            terrainHeight);
+        int terrainRendererInstanceId =
+            world.componentManagers.terrainRenderer.create(entityId, -1,
+                heightmapTextureHandle, terrainRows, terrainColumns, patchSize, terrainHeight);
 
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-        world.componentManagers.meshRenderer.create(entityId, meshHandle,
-            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED),
-            materialUniformNames, materialUniformValues);
+        world.componentManagers.meshRenderer.create(
+            entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)

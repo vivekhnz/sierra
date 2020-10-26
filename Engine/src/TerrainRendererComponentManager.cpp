@@ -34,6 +34,7 @@ namespace Terrain { namespace Engine {
 
     int TerrainRendererComponentManager::create(int entityId,
         int heightmapTextureResourceId,
+        int heightmapTextureHandle,
         int rows,
         int columns,
         float patchSize,
@@ -76,6 +77,10 @@ namespace Terrain { namespace Engine {
 
         data.entityId.push_back(entityId);
         data.heightmapTextureResourceId.push_back(heightmapTextureResourceId);
+        data.heightmapTextureHandle.push_back(
+            heightmapTextureHandle == -1 && heightmapTextureResourceId != -1
+                ? renderer.lookupTexture(heightmapTextureResourceId)
+                : heightmapTextureHandle);
         data.meshHandle.push_back(meshHandle);
         data.meshVertexBufferHandle.push_back(vertexBufferHandle);
         data.rows.push_back(rows);
@@ -101,6 +106,8 @@ namespace Terrain { namespace Engine {
             if (data.heightmapTextureResourceId[i] != resource.id)
                 continue;
 
+            data.heightmapTextureHandle[i] = renderer.lookupTexture(resource.id);
+
             // update heightmap size (used by adaptive tessellation)
             meshRenderer.setMaterialUniformVector2(meshRenderer.lookup(data.entityId[i]),
                 "heightmapSize", glm::vec2(resource.width, resource.height));
@@ -117,8 +124,7 @@ namespace Terrain { namespace Engine {
             int &rows = data.rows[i];
             int &columns = data.columns[i];
 
-            int textureHandles[1] = {
-                renderer.lookupTexture(data.heightmapTextureResourceId[i])};
+            int textureHandles[1] = {data.heightmapTextureHandle[i]};
             renderer.bindTextures(textureHandles, 1);
             renderer.setShaderProgramUniformInt(calcTessLevelsShaderProgramHandle,
                 "horizontalEdgeCount", rows * (columns - 1));

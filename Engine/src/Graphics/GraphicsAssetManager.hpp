@@ -61,6 +61,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Graphics::UniformValue *uniformValues);
         int &getMaterialShaderProgramHandle(int handle);
         void useMaterial(int handle);
+        void setMaterialTexture(int materialHandle, int slot, int textureHandle);
         int &lookupMaterial(int resourceId)
         {
             return materials.resourceIdToHandle[resourceId];

@@ -32,4 +32,15 @@ namespace Terrain { namespace Engine {
         renderer.clearBackBuffer(vctx.viewportWidth, vctx.viewportHeight, data.clearColor[i],
             data.framebufferHandle[i]);
     }
+
+    void CameraComponentManager::finalizeRender(EngineViewContext &vctx)
+    {
+        // if we are rendering to a framebuffer, generate a mipmap of the resulting texture
+        int i = entityIdToInstanceId[vctx.cameraEntityId];
+        int &framebufferHandle = data.framebufferHandle[i];
+        if (framebufferHandle == -1)
+            return;
+
+        renderer.finalizeFramebuffer(framebufferHandle);
+    }
 }}

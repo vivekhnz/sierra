@@ -45,6 +45,7 @@ namespace Terrain { namespace Engine {
 
         void bindTransform(EngineViewContext &vctx);
         void clearBackBuffer(EngineViewContext &vctx);
+        void finalizeRender(EngineViewContext &vctx);
     };
 }}
 

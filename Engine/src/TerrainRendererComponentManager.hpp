@@ -18,6 +18,7 @@ namespace Terrain { namespace Engine {
             int count;
             std::vector<int> entityId;
             std::vector<int> heightmapTextureResourceId;
+            std::vector<int> heightmapTextureHandle;
             std::vector<int> meshHandle;
             std::vector<int> meshVertexBufferHandle;
             std::vector<int> rows;
@@ -47,6 +48,7 @@ namespace Terrain { namespace Engine {
 
         int create(int entityId,
             int heightmapTextureResourceId,
+            int heightmapTextureHandle,
             int rows,
             int columns,
             float patchSize,

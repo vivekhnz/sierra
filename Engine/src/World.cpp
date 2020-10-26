@@ -28,6 +28,8 @@ namespace Terrain { namespace Engine {
 
         componentManagers.terrainRenderer.calculateTessellationLevels();
         componentManagers.meshRenderer.renderMeshes();
+
+        componentManagers.camera.finalizeRender(vctx);
     }
 
     void World::onTexturesLoaded(const int count,

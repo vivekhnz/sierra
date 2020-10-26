@@ -32,8 +32,8 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
     // create entity and components
     int entityId = ctx.entities.create();
     int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
-        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows, terrainColumns,
-        patchSize, terrainHeight);
+        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, -1, terrainRows,
+        terrainColumns, patchSize, terrainHeight);
     world.componentManagers.terrainCollider.create(entityId,
         Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows, terrainColumns,
         patchSize, terrainHeight);

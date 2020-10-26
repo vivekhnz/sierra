@@ -105,6 +105,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             int count;
             std::vector<unsigned int> id;
+            std::vector<int> textureHandle;
 
             Framebuffers() : count(0)
             {
@@ -192,6 +193,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         void clearBackBuffer(
             int width, int height, glm::vec4 clearColor, int framebufferHandle);
+        void finalizeFramebuffer(int handle);
 
         ~Renderer();
     };

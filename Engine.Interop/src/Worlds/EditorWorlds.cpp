@@ -8,10 +8,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void EditorWorlds::initialize()
     {
-        sceneWorld.initialize();
         heightmapCompositionWorld.initialize();
-        heightmapPreviewWorld.initialize(
-            heightmapCompositionWorld.getCompositedTextureHandle());
+        int heightmapTextureHandle = heightmapCompositionWorld.getCompositedTextureHandle();
+
+        sceneWorld.initialize(heightmapTextureHandle);
+        heightmapPreviewWorld.initialize(heightmapTextureHandle);
     }
 
     void EditorWorlds::linkViewport(ViewportWorld viewportWorld, ViewportContext &vctx)
