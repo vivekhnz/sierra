@@ -10,6 +10,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
+        // create framebuffer
+        renderTextureHandle = ctx.renderer.createTexture(
+            2048, 2048, GL_R16, GL_RED, GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR);
+        framebufferHandle = ctx.renderer.createFramebuffer(renderTextureHandle);
+
+        // setup camera
+        cameraEntityId = ctx.entities.create();
+        world.componentManagers.camera.create(
+            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), framebufferHandle);
+        world.componentManagers.orthographicCamera.create(cameraEntityId, true);
+
         // setup heightmap quad
         std::vector<float> quadVertices(20);
 
@@ -39,11 +50,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         std::vector<unsigned int> quadIndices(6);
         quadIndices[0] = 0;
-        quadIndices[1] = 2;
-        quadIndices[2] = 1;
+        quadIndices[1] = 1;
+        quadIndices[2] = 2;
         quadIndices[3] = 0;
-        quadIndices[4] = 3;
-        quadIndices[5] = 2;
+        quadIndices[4] = 2;
+        quadIndices[5] = 3;
 
         int quadMesh_meshHandle =
             ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
@@ -60,27 +71,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             std::vector<std::string>(), std::vector<Graphics::UniformValue>());
     }
 
-    void HeightmapCompositionWorld::linkViewport(ViewportContext &vctx)
-    {
-        int cameraEntityId = ctx.entities.create();
-        world.componentManagers.camera.create(
-            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
-
-        int orthographicCameraId =
-            world.componentManagers.orthographicCamera.create(cameraEntityId);
-        world.componentManagers.orthographicCamera.setInputControllerId(
-            orthographicCameraId, vctx.getInputControllerId());
-
-        vctx.setCameraEntityId(cameraEntityId);
-    }
-
     void HeightmapCompositionWorld::update(float deltaTime)
     {
         world.update(deltaTime);
     }
 
-    void HeightmapCompositionWorld::render(EngineViewContext &vctx)
+    void HeightmapCompositionWorld::compositeHeightmap()
     {
+        EngineViewContext vctx = {
+            2048,          // viewportWidth
+            2048,          // viewportHeight
+            cameraEntityId // cameraEntityId
+        };
         world.render(vctx);
     }
 

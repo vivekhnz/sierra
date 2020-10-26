@@ -101,6 +101,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } shaderPrograms;
 
+        struct Framebuffers
+        {
+            int count;
+            std::vector<unsigned int> id;
+
+            Framebuffers() : count(0)
+            {
+            }
+        } framebuffers;
+
     public:
         enum class UniformBuffer : unsigned int
         {
@@ -132,6 +142,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
+        int createTexture(int width,
+            int height,
+            int internalFormat,
+            int format,
+            int type,
+            int wrapMode,
+            int filterMode);
         void onTexturesLoaded(const int count,
             Resources::TextureResourceDescription *descriptions,
             Resources::TextureResourceData *data);
@@ -171,7 +188,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return shaderPrograms.resourceIdToHandle[resourceId];
         }
 
-        void clearBackBuffer(glm::vec4 clearColor);
+        int createFramebuffer(int textureHandle);
+
+        void clearBackBuffer(
+            int width, int height, glm::vec4 clearColor, int framebufferHandle);
 
         ~Renderer();
     };

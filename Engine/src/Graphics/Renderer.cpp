@@ -55,6 +55,34 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBuffers.size[uboEnumUint], data);
     }
 
+    int Renderer::createTexture(int width,
+        int height,
+        int internalFormat,
+        int format,
+        int type,
+        int wrapMode,
+        int filterMode)
+    {
+        unsigned int id;
+        glGenTextures(1, &id);
+
+        glBindTexture(GL_TEXTURE_2D, id);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, NULL);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        textures.id.push_back(id);
+        textures.resourceId.push_back(-1);
+        textures.internalFormat.push_back(internalFormat);
+        textures.format.push_back(format);
+        textures.type.push_back(type);
+
+        return textures.count++;
+    }
+
     void Renderer::onTexturesLoaded(const int count,
         Resources::TextureResourceDescription *descriptions,
         Resources::TextureResourceData *data)
@@ -308,8 +336,25 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    void Renderer::clearBackBuffer(glm::vec4 clearColor)
+    int Renderer::createFramebuffer(int textureHandle)
     {
+        unsigned int framebufferId;
+        glGenFramebuffers(1, &framebufferId);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
+            textures.id[textureHandle], 0);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        framebuffers.id.push_back(framebufferId);
+        return framebuffers.count++;
+    }
+
+    void Renderer::clearBackBuffer(
+        int width, int height, glm::vec4 clearColor, int framebufferHandle)
+    {
+        glBindFramebuffer(
+            GL_FRAMEBUFFER, framebufferHandle == -1 ? 0 : framebuffers.id[framebufferHandle]);
+        glViewport(0, 0, width, height);
         glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -329,5 +374,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             glDeleteProgram(shaderPrograms.id[i]);
         }
+        glDeleteFramebuffers(framebuffers.count, framebuffers.id.data());
     }
 }}}

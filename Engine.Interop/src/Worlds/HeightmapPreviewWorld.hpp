@@ -12,11 +12,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     public:
         HeightmapPreviewWorld(EngineContext &ctx);
 
-        void initialize();
+        void initialize(int heightmapTextureHandle);
         void linkViewport(ViewportContext &vctx);
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
 
-        int createQuadMaterial();
+        int createQuadMaterial(int textureHandle);
     };
 }}}}

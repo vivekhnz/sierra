@@ -6,7 +6,6 @@ public
     {
         None = 0,
         Scene = 1,
-        HeightmapComposition = 2,
-        HeightmapPreview = 3
+        HeightmapPreview = 2
     };
 }}}}

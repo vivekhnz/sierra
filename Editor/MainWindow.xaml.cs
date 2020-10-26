@@ -19,7 +19,6 @@ namespace Terrain.Editor
         private void Window_Closing(object sender, CancelEventArgs e)
         {
             sceneViewport.Dispose();
-            heightmapCompositionViewport.Dispose();
             heightmapPreviewViewport.Dispose();
             EngineInterop.Shutdown();
         }

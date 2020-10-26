@@ -8,11 +8,13 @@ namespace Terrain { namespace Engine {
     {
     }
 
-    int CameraComponentManager::create(int entityId, glm::vec4 clearColor)
+    int CameraComponentManager::create(
+        int entityId, glm::vec4 clearColor, int framebufferHandle)
     {
         data.entityId.push_back(entityId);
         data.transform.push_back(glm::identity<glm::mat4>());
         data.clearColor.push_back(clearColor);
+        data.framebufferHandle.push_back(framebufferHandle);
         entityIdToInstanceId[entityId] = data.count;
         return data.count++;
     }
@@ -27,6 +29,7 @@ namespace Terrain { namespace Engine {
     void CameraComponentManager::clearBackBuffer(EngineViewContext &vctx)
     {
         int i = entityIdToInstanceId[vctx.cameraEntityId];
-        renderer.clearBackBuffer(data.clearColor[i]);
+        renderer.clearBackBuffer(vctx.viewportWidth, vctx.viewportHeight, data.clearColor[i],
+            data.framebufferHandle[i]);
     }
 }}

@@ -9,14 +9,22 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineContext &ctx;
         Engine::World world;
 
+        int cameraEntityId;
+        int renderTextureHandle;
+        int framebufferHandle;
+
     public:
         HeightmapCompositionWorld(EngineContext &ctx);
 
         void initialize();
-        void linkViewport(ViewportContext &vctx);
         void update(float deltaTime);
-        void render(EngineViewContext &vctx);
+        void compositeHeightmap();
 
         int createQuadMaterial();
+
+        int getCompositedTextureHandle() const
+        {
+            return renderTextureHandle;
+        }
     };
 }}}}

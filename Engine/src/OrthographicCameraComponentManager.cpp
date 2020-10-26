@@ -11,10 +11,11 @@ namespace Terrain { namespace Engine {
     {
     }
 
-    int OrthographicCameraComponentManager::create(int entityId)
+    int OrthographicCameraComponentManager::create(int entityId, bool flipY)
     {
         data.entityId.push_back(entityId);
         data.inputControllerId.push_back(0);
+        data.flipY.push_back(flipY);
         return data.count++;
     }
 
@@ -28,10 +29,15 @@ namespace Terrain { namespace Engine {
             glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f, -2.0f, 1.0f));
         transform = glm::translate(transform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
+        glm::mat4 transformFlipped =
+            glm::scale(glm::identity<glm::mat4>(), glm::vec3(2.0f, 2.0f, 1.0f));
+        transformFlipped = glm::translate(transformFlipped, glm::vec3(-0.5f, -0.5f, 0.0f));
+
         for (int i = 0; i < data.count; i++)
         {
             int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
-            cameraComponentMgr.setTransform(cameraInstanceId, transform);
+            cameraComponentMgr.setTransform(
+                cameraInstanceId, data.flipY[i] ? transformFlipped : transform);
         }
     }
 }}

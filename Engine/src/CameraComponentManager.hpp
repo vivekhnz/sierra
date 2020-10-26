@@ -18,6 +18,7 @@ namespace Terrain { namespace Engine {
             std::vector<int> entityId;
             std::vector<glm::mat4> transform;
             std::vector<glm::vec4> clearColor;
+            std::vector<int> framebufferHandle;
 
             ComponentData() : count(0)
             {
@@ -30,7 +31,7 @@ namespace Terrain { namespace Engine {
     public:
         CameraComponentManager(Graphics::Renderer &renderer);
 
-        int create(int entityId, glm::vec4 clearColor);
+        int create(int entityId, glm::vec4 clearColor, int framebufferHandle);
 
         int lookup(int entityId) const
         {

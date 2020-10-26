@@ -16,6 +16,7 @@ namespace Terrain { namespace Engine {
             int count;
             std::vector<int> entityId;
             std::vector<int> inputControllerId;
+            std::vector<bool> flipY;
 
             ComponentData() : count(0)
             {
@@ -29,7 +30,7 @@ namespace Terrain { namespace Engine {
         OrthographicCameraComponentManager(
             CameraComponentManager &cameraComponentMgr, IO::InputManager &input);
 
-        int create(int entityId);
+        int create(int entityId, bool flipY);
 
         int getInputControllerId(int i) const
         {

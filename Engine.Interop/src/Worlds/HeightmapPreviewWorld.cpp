@@ -5,7 +5,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
     }
 
-    void HeightmapPreviewWorld::initialize()
+    void HeightmapPreviewWorld::initialize(int heightmapTextureHandle)
     {
         // setup heightmap quad
         std::vector<float> quadVertices(20);
@@ -44,7 +44,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         int quadMesh_meshHandle =
             ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
-        int quadMaterialHandle = createQuadMaterial();
+        int quadMaterialHandle = createQuadMaterial(heightmapTextureHandle);
 
         int heightmapQuad_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
@@ -56,10 +56,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         int cameraEntityId = ctx.entities.create();
         world.componentManagers.camera.create(
-            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
+            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), -1);
 
         int orthographicCameraId =
-            world.componentManagers.orthographicCamera.create(cameraEntityId);
+            world.componentManagers.orthographicCamera.create(cameraEntityId, false);
         world.componentManagers.orthographicCamera.setInputControllerId(
             orthographicCameraId, vctx.getInputControllerId());
 
@@ -76,14 +76,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.render(vctx);
     }
 
-    int HeightmapPreviewWorld::createQuadMaterial()
+    int HeightmapPreviewWorld::createQuadMaterial(int textureHandle)
     {
         const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
-        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
 
         int shaderProgramHandle =
             ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
-        int textureHandles[1] = {ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP)};
+        int textureHandles[1] = {textureHandle};
         int uniformNameLengths[1] = {12};
         Graphics::UniformValue uniformValues[1] = {Graphics::UniformValue::forInteger(0)};
 
