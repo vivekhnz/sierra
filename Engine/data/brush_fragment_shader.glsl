@@ -1,11 +1,10 @@
 #version 430 core
+layout(location = 0) in vec2 uv;
+
 out vec4 FragColor;
 
 void main()
 {
-    vec2 resolution = vec2(400.0f, 400.0f);
-    vec2 uv = gl_FragCoord.xy / resolution;
-    
     float innerRadius = 0.05f;
     float outerRadius = 0.15f;
 

@@ -17,6 +17,7 @@ namespace Terrain { namespace Engine {
             int count;
             std::vector<int> entityId;
             std::vector<glm::mat4> transform;
+            std::vector<glm::vec4> clearColor;
 
             ComponentData() : count(0)
             {
@@ -29,7 +30,7 @@ namespace Terrain { namespace Engine {
     public:
         CameraComponentManager(Graphics::Renderer &renderer);
 
-        int create(int entityId);
+        int create(int entityId, glm::vec4 clearColor);
 
         int lookup(int entityId) const
         {
@@ -42,6 +43,7 @@ namespace Terrain { namespace Engine {
         }
 
         void bindTransform(EngineViewContext &vctx);
+        void clearBackBuffer(EngineViewContext &vctx);
     };
 }}
 

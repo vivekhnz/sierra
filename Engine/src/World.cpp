@@ -17,9 +17,6 @@ namespace Terrain { namespace Engine {
 
     void World::render(EngineViewContext &vctx)
     {
-        glClearColor(0.392f, 0.584f, 0.929f, 1.0f);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         if (vctx.cameraEntityId == -1)
             return;
 
@@ -27,6 +24,7 @@ namespace Terrain { namespace Engine {
         componentManagers.firstPersonCamera.calculateCameraTransforms(vctx);
         componentManagers.orthographicCamera.calculateCameraTransforms(vctx);
         componentManagers.camera.bindTransform(vctx);
+        componentManagers.camera.clearBackBuffer(vctx);
 
         componentManagers.terrainRenderer.calculateTessellationLevels();
         componentManagers.meshRenderer.renderMeshes();

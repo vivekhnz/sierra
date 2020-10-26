@@ -68,7 +68,8 @@ int main()
 
         // create player camera
         int playerCamera_entityId = ctx.entities.create();
-        world.componentManagers.camera.create(playerCamera_entityId);
+        world.componentManagers.camera.create(
+            playerCamera_entityId, glm::vec4(0.392f, 0.584f, 0.929f, 1.0f));
         int playerCamera_firstPersonCameraId =
             world.componentManagers.firstPersonCamera.create(playerCamera_entityId);
         world.componentManagers.firstPersonCamera.setPosition(
@@ -82,7 +83,8 @@ int main()
 
         // create orbit camera
         int orbitCamera_entityId = ctx.entities.create();
-        world.componentManagers.camera.create(orbitCamera_entityId);
+        world.componentManagers.camera.create(
+            orbitCamera_entityId, glm::vec4(0.392f, 0.584f, 0.929f, 1.0f));
         int orbitCamera_orbitCameraId =
             world.componentManagers.orbitCamera.create(orbitCamera_entityId);
         world.componentManagers.orbitCamera.setPitch(

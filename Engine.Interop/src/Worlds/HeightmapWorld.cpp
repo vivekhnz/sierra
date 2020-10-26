@@ -62,7 +62,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapWorld::linkViewport(ViewportContext &vctx)
     {
         int cameraEntityId = ctx.entities.create();
-        world.componentManagers.camera.create(cameraEntityId);
+        world.componentManagers.camera.create(
+            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f));
 
         int orthographicCameraId =
             world.componentManagers.orthographicCamera.create(cameraEntityId);

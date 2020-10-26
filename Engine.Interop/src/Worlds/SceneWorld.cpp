@@ -45,7 +45,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void SceneWorld::linkViewport(ViewportContext &vctx)
     {
         int cameraEntityId = ctx.entities.create();
-        world.componentManagers.camera.create(cameraEntityId);
+        world.componentManagers.camera.create(
+            cameraEntityId, glm::vec4(0.392f, 0.584f, 0.929f, 1.0f));
 
         int orbitCameraId = world.componentManagers.orbitCamera.create(cameraEntityId);
         world.componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));

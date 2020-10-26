@@ -308,6 +308,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
+    void Renderer::clearBackBuffer(glm::vec4 clearColor)
+    {
+        glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    }
+
     Renderer::~Renderer()
     {
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);

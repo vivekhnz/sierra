@@ -171,6 +171,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return shaderPrograms.resourceIdToHandle[resourceId];
         }
 
+        void clearBackBuffer(glm::vec4 clearColor);
+
         ~Renderer();
     };
 }}}
