@@ -33,10 +33,13 @@
     <ClCompile Include="src\Worlds\SceneWorld.cpp">
       <Filter>src\Worlds</Filter>
     </ClCompile>
-    <ClCompile Include="src\Worlds\HeightmapWorld.cpp">
+    <ClCompile Include="src\Worlds\EditorWorlds.cpp">
       <Filter>src\Worlds</Filter>
     </ClCompile>
-    <ClCompile Include="src\Worlds\EditorWorlds.cpp">
+    <ClCompile Include="src\Worlds\HeightmapCompositionWorld.cpp">
+      <Filter>src\Worlds</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Worlds\HeightmapPreviewWorld.cpp">
       <Filter>src\Worlds</Filter>
     </ClCompile>
   </ItemGroup>
@@ -59,13 +62,16 @@
     <ClInclude Include="src\Worlds\SceneWorld.hpp">
       <Filter>src\Worlds</Filter>
     </ClInclude>
-    <ClInclude Include="src\Worlds\HeightmapWorld.hpp">
-      <Filter>src\Worlds</Filter>
-    </ClInclude>
     <ClInclude Include="src\Worlds\EditorWorlds.hpp">
       <Filter>src\Worlds</Filter>
     </ClInclude>
-    <ClInclude Include="src\Worlds\EditorWorld.hpp">
+    <ClInclude Include="src\Worlds\ViewportWorld.hpp">
+      <Filter>src\Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Worlds\HeightmapCompositionWorld.hpp">
+      <Filter>src\Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Worlds\HeightmapPreviewWorld.hpp">
       <Filter>src\Worlds</Filter>
     </ClInclude>
   </ItemGroup>

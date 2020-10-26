@@ -1,21 +1,23 @@
 #pragma once
 
 #include "../ViewportContext.hpp"
-#include "EditorWorld.hpp"
+#include "ViewportWorld.hpp"
 #include "SceneWorld.hpp"
-#include "HeightmapWorld.hpp"
+#include "HeightmapCompositionWorld.hpp"
+#include "HeightmapPreviewWorld.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class EditorWorlds
     {
         SceneWorld sceneWorld;
-        HeightmapWorld heightmapWorld;
+        HeightmapCompositionWorld heightmapCompositionWorld;
+        HeightmapPreviewWorld heightmapPreviewWorld;
 
     public:
         EditorWorlds(EngineContext &ctx);
 
         void initialize();
-        void linkViewport(EditorWorld editorWorld, ViewportContext &vctx);
+        void linkViewport(ViewportWorld viewportWorld, ViewportContext &vctx);
         void update(float deltaTime);
         void render(ViewportContext &vctx);
     };

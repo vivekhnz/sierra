@@ -24,7 +24,8 @@
         </Menu>
         <interop:Viewport x:Name="sceneViewport" Grid.Row="1" World="Scene" />
         <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="1">
-            <interop:Viewport x:Name="heightmapViewport" Width="400" Height="400" World="Heightmap" />
+            <interop:Viewport x:Name="heightmapCompositionViewport" Width="300" Height="300" World="HeightmapComposition" />
+            <interop:Viewport x:Name="heightmapPreviewViewport" Width="300" Height="300" World="HeightmapPreview" Margin="0,16,0,0" />
         </StackPanel>
     </Grid>
 </Window>

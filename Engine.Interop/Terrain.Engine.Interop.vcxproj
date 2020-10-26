@@ -111,9 +111,10 @@
     <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp" />
     <ClInclude Include="src\ViewportContext.hpp" />
     <ClInclude Include="src\Viewport.h" />
-    <ClInclude Include="src\Worlds\EditorWorld.hpp" />
+    <ClInclude Include="src\Worlds\HeightmapCompositionWorld.hpp" />
+    <ClInclude Include="src\Worlds\HeightmapPreviewWorld.hpp" />
+    <ClInclude Include="src\Worlds\ViewportWorld.hpp" />
     <ClInclude Include="src\Worlds\EditorWorlds.hpp" />
-    <ClInclude Include="src\Worlds\HeightmapWorld.hpp" />
     <ClInclude Include="src\Worlds\SceneWorld.hpp" />
   </ItemGroup>
   <ItemGroup>
@@ -124,7 +125,8 @@
     <ClCompile Include="src\ViewportContext.cpp" />
     <ClCompile Include="src\Viewport.cpp" />
     <ClCompile Include="src\Worlds\EditorWorlds.cpp" />
-    <ClCompile Include="src\Worlds\HeightmapWorld.cpp" />
+    <ClCompile Include="src\Worlds\HeightmapCompositionWorld.cpp" />
+    <ClCompile Include="src\Worlds\HeightmapPreviewWorld.cpp" />
     <ClCompile Include="src\Worlds\SceneWorld.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -8,7 +8,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
         hasFocus(false), isHovered(false), cameraEntityId(-1), inputControllerId(-1),
-        world(Worlds::EditorWorld::None)
+        world(Worlds::ViewportWorld::None)
     {
     }
 
@@ -18,11 +18,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         return {w, h, cameraEntityId};
     }
 
-    Worlds::EditorWorld ViewportContext::getWorld() const
+    Worlds::ViewportWorld ViewportContext::getWorld() const
     {
         return world;
     }
-    void ViewportContext::setWorld(Worlds::EditorWorld world)
+    void ViewportContext::setWorld(Worlds::ViewportWorld world)
     {
         this->world = world;
     }

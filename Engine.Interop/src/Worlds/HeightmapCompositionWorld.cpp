@@ -1,11 +1,12 @@
-#include "HeightmapWorld.hpp"
+#include "HeightmapCompositionWorld.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    HeightmapWorld::HeightmapWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
+    HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) :
+        ctx(ctx), world(ctx)
     {
     }
 
-    void HeightmapWorld::initialize()
+    void HeightmapCompositionWorld::initialize()
     {
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
@@ -59,7 +60,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             std::vector<std::string>(), std::vector<Graphics::UniformValue>());
     }
 
-    void HeightmapWorld::linkViewport(ViewportContext &vctx)
+    void HeightmapCompositionWorld::linkViewport(ViewportContext &vctx)
     {
         int cameraEntityId = ctx.entities.create();
         world.componentManagers.camera.create(
@@ -73,17 +74,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         vctx.setCameraEntityId(cameraEntityId);
     }
 
-    void HeightmapWorld::update(float deltaTime)
+    void HeightmapCompositionWorld::update(float deltaTime)
     {
         world.update(deltaTime);
     }
 
-    void HeightmapWorld::render(EngineViewContext &vctx)
+    void HeightmapCompositionWorld::render(EngineViewContext &vctx)
     {
         world.render(vctx);
     }
 
-    int HeightmapWorld::createQuadMaterial()
+    int HeightmapCompositionWorld::createQuadMaterial()
     {
         const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
         const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;

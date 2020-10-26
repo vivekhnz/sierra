@@ -123,6 +123,9 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnWorldUpdated()
     {
+        if (vctx == nullptr)
+            return;
+
         vctx->setWorld(World);
         EngineInterop::LinkViewportToWorld(vctx, World);
     }

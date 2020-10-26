@@ -1,25 +1,30 @@
 #include "EditorWorlds.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    EditorWorlds::EditorWorlds(EngineContext &ctx) : sceneWorld(ctx), heightmapWorld(ctx)
+    EditorWorlds::EditorWorlds(EngineContext &ctx) :
+        sceneWorld(ctx), heightmapCompositionWorld(ctx), heightmapPreviewWorld(ctx)
     {
     }
 
     void EditorWorlds::initialize()
     {
         sceneWorld.initialize();
-        heightmapWorld.initialize();
+        heightmapCompositionWorld.initialize();
+        heightmapPreviewWorld.initialize();
     }
 
-    void EditorWorlds::linkViewport(EditorWorld editorWorld, ViewportContext &vctx)
+    void EditorWorlds::linkViewport(ViewportWorld viewportWorld, ViewportContext &vctx)
     {
-        switch (editorWorld)
+        switch (viewportWorld)
         {
-        case EditorWorld::Scene:
+        case ViewportWorld::Scene:
             sceneWorld.linkViewport(vctx);
             break;
-        case EditorWorld::Heightmap:
-            heightmapWorld.linkViewport(vctx);
+        case ViewportWorld::HeightmapComposition:
+            heightmapCompositionWorld.linkViewport(vctx);
+            break;
+        case ViewportWorld::HeightmapPreview:
+            heightmapPreviewWorld.linkViewport(vctx);
             break;
         }
     }
@@ -27,7 +32,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void EditorWorlds::update(float deltaTime)
     {
         sceneWorld.update(deltaTime);
-        heightmapWorld.update(deltaTime);
+        heightmapCompositionWorld.update(deltaTime);
+        heightmapPreviewWorld.update(deltaTime);
     }
 
     void EditorWorlds::render(ViewportContext &vctx)
@@ -35,11 +41,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineViewContext view = vctx.getViewContext();
         switch (vctx.getWorld())
         {
-        case EditorWorld::Scene:
+        case ViewportWorld::Scene:
             sceneWorld.render(view);
             break;
-        case EditorWorld::Heightmap:
-            heightmapWorld.render(view);
+        case ViewportWorld::HeightmapComposition:
+            heightmapCompositionWorld.render(view);
+            break;
+        case ViewportWorld::HeightmapPreview:
+            heightmapPreviewWorld.render(view);
             break;
         }
     }

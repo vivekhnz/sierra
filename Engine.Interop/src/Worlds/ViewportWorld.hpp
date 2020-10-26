@@ -2,10 +2,11 @@
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 public
-    enum class EditorWorld
+    enum class ViewportWorld
     {
         None = 0,
         Scene = 1,
-        Heightmap = 2
+        HeightmapComposition = 2,
+        HeightmapPreview = 3
     };
 }}}}

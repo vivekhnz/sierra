@@ -4,13 +4,13 @@
 #include "../ViewportContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    class HeightmapWorld
+    class HeightmapPreviewWorld
     {
         EngineContext &ctx;
         Engine::World world;
 
     public:
-        HeightmapWorld(EngineContext &ctx);
+        HeightmapPreviewWorld(EngineContext &ctx);
 
         void initialize();
         void linkViewport(ViewportContext &vctx);

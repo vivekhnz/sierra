@@ -63,7 +63,7 @@ public
         static ViewportContext *CreateView(
             char *imgBuffer, RenderCallbackUnmanaged renderCallback);
         static void LinkViewportToWorld(
-            ViewportContext *vctx, Worlds::EditorWorld editorWorld);
+            ViewportContext *vctx, Worlds::ViewportWorld viewportWorld);
         static void DetachView(ViewportContext *vctx);
 
         static void RenderView(ViewportContext &vctx);

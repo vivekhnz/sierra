@@ -17,7 +17,7 @@ public
         delegate void RenderCallbackManaged();
 
         ViewportContext *vctx;
-        Worlds::EditorWorld world;
+        Worlds::ViewportWorld world;
 
         Grid ^ layoutRoot;
         Image ^ image;
@@ -38,14 +38,14 @@ public
         Viewport();
         ~Viewport();
 
-        property Worlds::EditorWorld World
+        property Worlds::ViewportWorld World
         {
-            Worlds::EditorWorld get()
+            Worlds::ViewportWorld get()
             {
                 return world;
             }
 
-            void set(Worlds::EditorWorld value)
+            void set(Worlds::ViewportWorld value)
             {
                 world = value;
                 OnWorldUpdated();

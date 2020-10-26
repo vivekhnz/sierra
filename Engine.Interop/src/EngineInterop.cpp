@@ -69,9 +69,9 @@ namespace Terrain { namespace Engine { namespace Interop {
     }
 
     void EngineInterop::LinkViewportToWorld(
-        ViewportContext *vctx, Worlds::EditorWorld editorWorld)
+        ViewportContext *vctx, Worlds::ViewportWorld viewportWorld)
     {
-        worlds->linkViewport(editorWorld, *vctx);
+        worlds->linkViewport(viewportWorld, *vctx);
     }
 
     void EngineInterop::DetachView(ViewportContext *vctxToRemove)
