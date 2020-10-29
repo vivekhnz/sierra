@@ -11,7 +11,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         Float = 0,
         Integer = 1,
         Vector2 = 2,
-        Vector3 = 3
+        Vector3 = 3,
+        Matrix4x4 = 4
     };
 
     struct UniformValue
@@ -23,6 +24,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int i;
             glm::vec2 vec2;
             glm::vec3 vec3;
+            glm::mat4 mat4;
         };
 
         static UniformValue forFloat(float value)
@@ -54,6 +56,14 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Graphics::UniformValue u;
             u.type = UniformType::Vector3;
             u.vec3 = value;
+            return u;
+        }
+
+        static UniformValue forMatrix4x4(glm::mat4 value)
+        {
+            Graphics::UniformValue u;
+            u.type = UniformType::Matrix4x4;
+            u.mat4 = value;
             return u;
         }
     };

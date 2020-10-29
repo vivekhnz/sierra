@@ -1,4 +1,5 @@
 #include "HeightmapCompositionWorld.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) :
@@ -65,14 +66,38 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             quadMesh_meshHandle, quadMaterialHandle, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
 
+        // setup brush quad
+        std::vector<std::string> brushQuad_uniformNames(1);
+        brushQuad_uniformNames[0] = "instance_transform";
+
+        std::vector<Graphics::UniformValue> brushQuad_uniformValues(1);
+        brushQuad_uniformValues[0] =
+            Graphics::UniformValue::forMatrix4x4(glm::identity<glm::mat4>());
+
         int brushQuad_entityId = ctx.entities.create();
-        world.componentManagers.meshRenderer.create(brushQuad_entityId, quadMesh_meshHandle,
+        brushQuad_meshRendererInstanceId = world.componentManagers.meshRenderer.create(
+            brushQuad_entityId, quadMesh_meshHandle,
             ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
-            std::vector<std::string>(), std::vector<Graphics::UniformValue>());
+            brushQuad_uniformNames, brushQuad_uniformValues);
     }
 
     void HeightmapCompositionWorld::update(float deltaTime)
     {
+        // animate brush quad position
+        brushQuad_x = fmod(brushQuad_x + (deltaTime * 0.25f), 2.0f);
+        brushQuad_y = fmod(brushQuad_y + (deltaTime * 0.25f), 2.0f);
+
+        float scale = 1024.0f / 2048.0f;
+        float x = brushQuad_x - 0.5f;
+        float y = brushQuad_y - 0.5f;
+
+        glm::mat4 brushTransform = glm::identity<glm::mat4>();
+        brushTransform = glm::translate(
+            brushTransform, glm::vec3((scale * -0.5f) + x, (scale * -0.5f) + y, 0.0f));
+        brushTransform = glm::scale(brushTransform, glm::vec3(scale, scale, scale));
+        world.componentManagers.meshRenderer.setMaterialUniformMatrix4x4(
+            brushQuad_meshRendererInstanceId, "instance_transform", brushTransform);
+
         world.update(deltaTime);
     }
 

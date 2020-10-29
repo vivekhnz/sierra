@@ -269,9 +269,9 @@ namespace Terrain { namespace Engine { namespace Resources {
             2,                                       // shaderCount
             {TerrainResources::Shaders::BRUSH_VERTEX,
                 TerrainResources::Shaders::BRUSH_FRAGMENT}, // shaderResourceIds
-            0,                                              // uniformCount
-            {},                                             // uniformNameLengths
-            ""                                              // uniformNames
+            1,                                              // uniformCount
+            {18},                                           // uniformNameLengths
+            "instance_transform"                            // uniformNames
         });
 
         ctx.onShaderProgramsLoaded(

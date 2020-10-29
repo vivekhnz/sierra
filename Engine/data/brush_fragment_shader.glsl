@@ -5,9 +5,9 @@ out vec4 FragColor;
 
 void main()
 {
-    float innerRadius = 0.05f;
-    float outerRadius = 0.5f;
-    float strength = 0.4f;
+    float innerRadius = 0.1f;
+    float outerRadius = 1.0f;
+    float strength = 0.25f;
 
     float value = distance(uv, vec2(0.5f)) * 2.0f;
     value = (-value + outerRadius) / (outerRadius - innerRadius);

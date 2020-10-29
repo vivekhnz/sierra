@@ -95,4 +95,20 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         }
     }
+
+    void MeshRendererComponentManager::setMaterialUniformMatrix4x4(
+        int i, std::string uniformName, glm::mat4 value)
+    {
+        int &startIndex = data.firstUniformIndex[i];
+        int &count = data.uniformCount[i];
+        for (int u = 0; u < count; u++)
+        {
+            int idx = startIndex + u;
+            if (data.uniformNames[idx] == uniformName)
+            {
+                data.uniformValues[idx].mat4 = value;
+                break;
+            }
+        }
+    }
 }}}

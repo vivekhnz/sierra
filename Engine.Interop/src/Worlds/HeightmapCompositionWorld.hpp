@@ -12,6 +12,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int cameraEntityId;
         int renderTextureHandle;
         int framebufferHandle;
+        int brushQuad_meshRendererInstanceId;
+
+        float brushQuad_x;
+        float brushQuad_y;
 
     public:
         HeightmapCompositionWorld(EngineContext &ctx);
