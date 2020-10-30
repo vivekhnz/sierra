@@ -74,5 +74,11 @@
     <ClInclude Include="src\Worlds\HeightmapPreviewWorld.hpp">
       <Filter>src\Worlds</Filter>
     </ClInclude>
+    <ClInclude Include="src\Proxy\StateProxy.hpp">
+      <Filter>src\Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="src\EditorState.hpp">
+      <Filter>src</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

@@ -28,10 +28,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
     }
 
-    void EditorWorlds::update(float deltaTime)
+    void EditorWorlds::update(float deltaTime, EditorState &state)
     {
         sceneWorld.update(deltaTime);
-        heightmapCompositionWorld.update(deltaTime);
+        heightmapCompositionWorld.update(deltaTime, state);
         heightmapPreviewWorld.update(deltaTime);
 
         heightmapCompositionWorld.compositeHeightmap();

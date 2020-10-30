@@ -106,9 +106,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="src\EditorState.hpp" />
     <ClInclude Include="src\EngineInterop.hpp" />
     <ClInclude Include="src\EditorContext.hpp" />
     <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp" />
+    <ClInclude Include="src\Proxy\StateProxy.hpp" />
     <ClInclude Include="src\ViewportContext.hpp" />
     <ClInclude Include="src\Viewport.h" />
     <ClInclude Include="src\Worlds\HeightmapCompositionWorld.hpp" />

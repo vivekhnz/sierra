@@ -2,6 +2,7 @@
 
 #include "../../../Engine/src/World.hpp"
 #include "../ViewportContext.hpp"
+#include "../EditorState.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class HeightmapCompositionWorld
@@ -14,14 +15,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int framebufferHandle;
         int brushQuad_meshRendererInstanceId;
 
-        float brushQuad_x;
-        float brushQuad_y;
-
     public:
         HeightmapCompositionWorld(EngineContext &ctx);
 
         void initialize();
-        void update(float deltaTime);
+        void update(float deltaTime, EditorState &state);
         void compositeHeightmap();
 
         int createQuadMaterial();

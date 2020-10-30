@@ -116,9 +116,4 @@ namespace Terrain { namespace Engine { namespace Physics {
         int i = (clampedZ * columns) + clampedX;
         return data.patchHeights[firstHeightIndex + i];
     }
-
-    TerrainColliderComponentManager::~TerrainColliderComponentManager()
-    {
-        data.count = 0;
-    }
 }}}

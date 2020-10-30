@@ -10,8 +10,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         ctx = new EngineContext(*appCtx);
         viewportContexts = new std::vector<ViewportContext *>();
 
+        currentEditorState = new EditorState();
+        newEditorState = new EditorState();
+
         worlds = new Worlds::EditorWorlds(*ctx);
         resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);
+        stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 
         focusedViewportCtx = nullptr;
         hoveredViewportCtx = nullptr;
@@ -109,7 +113,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        worlds->update(deltaTime);
+        memcpy(currentEditorState, newEditorState, sizeof(*currentEditorState));
+        worlds->update(deltaTime, *currentEditorState);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -172,6 +177,12 @@ namespace Terrain { namespace Engine { namespace Interop {
             viewportContexts->clear();
             delete viewportContexts;
         }
+
+        delete currentEditorState;
+        currentEditorState = nullptr;
+
+        delete newEditorState;
+        newEditorState = nullptr;
 
         delete ctx;
         ctx = nullptr;

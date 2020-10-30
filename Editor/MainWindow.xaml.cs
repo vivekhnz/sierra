@@ -1,5 +1,6 @@
 ﻿using Microsoft.Win32;
 using System.ComponentModel;
+using System.Numerics;
 using System.Windows;
 using Terrain.Engine.Interop;
 
@@ -36,6 +37,18 @@ namespace Terrain.Editor
                 EngineInterop.ResourceManager.ReloadTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP,
                     ofd.FileName, true);
             }
+        }
+
+        private void OnBrushQuadXSliderChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.BrushQuadX = (float)brushQuadXSlider.Value;
+        }
+
+        private void OnBrushQuadYSliderChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.BrushQuadY = (float)brushQuadYSlider.Value;
         }
     }
 }

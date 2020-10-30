@@ -25,10 +25,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     public:
         EditorContext();
-        EditorContext(const EditorContext &that) = delete;
-        EditorContext &operator=(const EditorContext &that) = delete;
-        EditorContext(EditorContext &&) = delete;
-        EditorContext &operator=(EditorContext &&) = delete;
 
         // input
         void updateInputState();
@@ -39,7 +35,5 @@ namespace Terrain { namespace Engine { namespace Interop {
         int addInputController();
         void onMouseScroll(double x, double y);
         bool isInMouseCaptureMode() const;
-
-        ~EditorContext();
     };
 }}}

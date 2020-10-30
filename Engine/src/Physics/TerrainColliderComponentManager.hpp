@@ -32,12 +32,6 @@ namespace Terrain { namespace Engine { namespace Physics {
 
     public:
         TerrainColliderComponentManager();
-        TerrainColliderComponentManager(const TerrainColliderComponentManager &that) = delete;
-        TerrainColliderComponentManager &operator=(
-            const TerrainColliderComponentManager &that) = delete;
-        TerrainColliderComponentManager(TerrainColliderComponentManager &&) = delete;
-        TerrainColliderComponentManager &operator=(
-            TerrainColliderComponentManager &&) = delete;
 
         int create(int entityId,
             int heightmapTextureResourceId,
@@ -49,8 +43,6 @@ namespace Terrain { namespace Engine { namespace Physics {
         void onTextureReloaded(Resources::TextureResourceData &resource);
 
         float getTerrainHeight(float worldX, float worldZ);
-
-        ~TerrainColliderComponentManager();
     };
 }}}
 

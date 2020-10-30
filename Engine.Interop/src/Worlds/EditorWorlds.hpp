@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../ViewportContext.hpp"
+#include "../EditorState.hpp"
 #include "ViewportWorld.hpp"
 #include "SceneWorld.hpp"
 #include "HeightmapCompositionWorld.hpp"
@@ -18,7 +19,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         void initialize();
         void linkViewport(ViewportWorld viewportWorld, ViewportContext &vctx);
-        void update(float deltaTime);
+        void update(float deltaTime, EditorState &state);
         void render(ViewportContext &vctx);
     };
 }}}}

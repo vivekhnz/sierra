@@ -4,9 +4,11 @@
 #include "../../Engine/src/EngineContext.hpp"
 #include "../../Engine/src/World.hpp"
 #include "EditorContext.hpp"
+#include "EditorState.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "Proxy/ResourceManagerProxy.hpp"
+#include "Proxy/StateProxy.hpp"
 #include "Worlds/EditorWorlds.hpp"
 
 using namespace System;
@@ -28,10 +30,14 @@ public
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();
 
+        static EditorState *currentEditorState;
+        static EditorState *newEditorState;
+
         static bool areWorldsInitialized = false;
         static Worlds::EditorWorlds *worlds;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
+        static Proxy::StateProxy ^ stateProxy;
 
         static ViewportContext *focusedViewportCtx = nullptr;
         static ViewportContext *hoveredViewportCtx = nullptr;
@@ -77,6 +83,15 @@ public
             Proxy::ResourceManagerProxy^ get()
             {
                 return resourceManagerProxy;
+            }
+        }
+
+        static property Proxy::StateProxy^ State
+        {
+        public:
+            Proxy::StateProxy^ get()
+            {
+                return stateProxy;
             }
         }
 

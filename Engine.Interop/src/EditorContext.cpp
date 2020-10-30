@@ -129,8 +129,4 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         return isMouseCaptured && EngineInterop::HoveredViewportContext != nullptr;
     }
-
-    EditorContext::~EditorContext()
-    {
-    }
 }}}

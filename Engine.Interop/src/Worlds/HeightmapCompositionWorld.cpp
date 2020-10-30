@@ -81,19 +81,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             brushQuad_uniformNames, brushQuad_uniformValues);
     }
 
-    void HeightmapCompositionWorld::update(float deltaTime)
+    void HeightmapCompositionWorld::update(float deltaTime, EditorState &state)
     {
-        // animate brush quad position
-        brushQuad_x = fmod(brushQuad_x + (deltaTime * 0.25f), 2.0f);
-        brushQuad_y = fmod(brushQuad_y + (deltaTime * 0.25f), 2.0f);
-
-        float scale = 1024.0f / 2048.0f;
-        float x = brushQuad_x - 0.5f;
-        float y = brushQuad_y - 0.5f;
-
+        float scale = 512.0f / 2048.0f;
         glm::mat4 brushTransform = glm::identity<glm::mat4>();
-        brushTransform = glm::translate(
-            brushTransform, glm::vec3((scale * -0.5f) + x, (scale * -0.5f) + y, 0.0f));
+        brushTransform = glm::translate(brushTransform,
+            glm::vec3(
+                (scale * -0.5f) + state.brushQuadX, (scale * -0.5f) + state.brushQuadY, 0.0f));
         brushTransform = glm::scale(brushTransform, glm::vec3(scale, scale, scale));
         world.componentManagers.meshRenderer.setMaterialUniformMatrix4x4(
             brushQuad_meshRendererInstanceId, "instance_transform", brushTransform);
