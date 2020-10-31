@@ -63,6 +63,7 @@
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
     <ClInclude Include="src\OrthographicCameraComponentManager.hpp" />
+    <ClInclude Include="src\Physics\Ray.hpp" />
     <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp" />
     <ClInclude Include="src\Resources\MaterialResource.hpp" />
     <ClInclude Include="src\Resources\ResourceManager.hpp" />

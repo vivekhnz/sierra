@@ -21,8 +21,12 @@ void GameContext::updateInputState()
     mouseState.isMiddleMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
     mouseState.isRightMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
 
-    // update mouse cursor offset
     auto [mouseX, mouseY] = window.getMousePosition();
+    auto [w, h] = window.getSize();
+    mouseState.normalizedCursorX = mouseX / (float)w;
+    mouseState.normalizedCursorY = mouseY / (float)h;
+
+    // update mouse cursor offset
     if (isFirstMouseInput)
     {
         isFirstMouseInput = false;

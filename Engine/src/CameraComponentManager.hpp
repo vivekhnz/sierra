@@ -38,6 +38,10 @@ namespace Terrain { namespace Engine {
             return entityIdToInstanceId.at(entityId);
         }
 
+        glm::mat4 &getTransform(int i)
+        {
+            return data.transform[i];
+        }
         void setTransform(int i, glm::mat4 value)
         {
             data.transform[i] = value;

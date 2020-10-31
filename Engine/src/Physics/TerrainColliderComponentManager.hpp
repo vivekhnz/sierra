@@ -4,6 +4,7 @@
 #include "../Common.hpp"
 
 #include <vector>
+#include "Ray.hpp"
 #include "../Resources/TextureResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Physics {
@@ -43,6 +44,7 @@ namespace Terrain { namespace Engine { namespace Physics {
         void onTextureReloaded(Resources::TextureResourceData &resource);
 
         float getTerrainHeight(float worldX, float worldZ);
+        bool intersects(int i, Ray ray, glm::vec3 &out_intersectionPoint);
     };
 }}}
 

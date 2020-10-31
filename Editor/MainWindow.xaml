@@ -24,26 +24,8 @@
         </Menu>
         <interop:Viewport x:Name="sceneViewport" Grid.Row="1" World="Scene" />
         <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="1">
-            <Grid Margin="0 8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                </Grid.RowDefinitions>
-                <interop:Viewport x:Name="heightmapPreviewViewport" Width="300" Height="300"
-                                  Grid.Column="1" World="HeightmapPreview" />
-                <Slider x:Name="brushQuadXSlider" Orientation="Horizontal" Margin="0 8"
-                        Minimum="0" Maximum="1" Value="0.5" LargeChange="0.1" SmallChange="0.01"
-                        IsDirectionReversed="False" Grid.Row="1" Grid.Column="1"
-                        ValueChanged="OnBrushQuadXSliderChanged" />
-                <Slider x:Name="brushQuadYSlider" Orientation="Vertical" Margin="8 0"
-                        Minimum="0" Maximum="1" Value="0.5" LargeChange="0.1" SmallChange="0.01"
-                        IsDirectionReversed="True"
-                        ValueChanged="OnBrushQuadYSliderChanged" />
-            </Grid>
+            <interop:Viewport x:Name="heightmapPreviewViewport" Width="300" Height="300"
+                              World="HeightmapPreview" />
         </StackPanel>
     </Grid>
 </Window>

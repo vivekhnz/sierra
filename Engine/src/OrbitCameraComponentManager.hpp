@@ -4,6 +4,7 @@
 #include "Common.hpp"
 #include "CameraComponentManager.hpp"
 #include "IO/InputManager.hpp"
+#include "Physics/Ray.hpp"
 
 #include <vector>
 
@@ -74,6 +75,8 @@ namespace Terrain { namespace Engine {
 
         void calculateCameraStates(float deltaTime);
         void calculateCameraTransforms(EngineViewContext &vctx);
+
+        Physics::Ray getPickRay(int i);
     };
 }}
 

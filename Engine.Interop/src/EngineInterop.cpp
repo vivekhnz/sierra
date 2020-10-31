@@ -114,7 +114,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         lastTickTime = now;
 
         memcpy(currentEditorState, newEditorState, sizeof(*currentEditorState));
-        worlds->update(deltaTime, *currentEditorState);
+        worlds->update(deltaTime, *currentEditorState, *newEditorState);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)

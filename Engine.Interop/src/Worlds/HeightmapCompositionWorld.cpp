@@ -81,7 +81,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             brushQuad_uniformNames, brushQuad_uniformValues);
     }
 
-    void HeightmapCompositionWorld::update(float deltaTime, EditorState &state)
+    void HeightmapCompositionWorld::update(
+        float deltaTime, const EditorState &state, EditorState &newState)
     {
         float scale = 512.0f / 2048.0f;
         glm::mat4 brushTransform = glm::identity<glm::mat4>();

@@ -2,7 +2,6 @@
 
 #include <algorithm>
 #include <iterator>
-#include <glm/glm.hpp>
 
 namespace Terrain { namespace Engine { namespace Physics {
     TerrainColliderComponentManager::TerrainColliderComponentManager()
@@ -115,5 +114,91 @@ namespace Terrain { namespace Engine { namespace Physics {
         int clampedZ = std::clamp(z, 0, rows - 1);
         int i = (clampedZ * columns) + clampedX;
         return data.patchHeights[firstHeightIndex + i];
+    }
+
+    bool isRayIntersectingTriangle(glm::vec3 rayOrigin,
+        glm::vec3 rayVector,
+        glm::vec3 v1,
+        glm::vec3 v2,
+        glm::vec3 v3,
+        glm::vec3 &out_intersectionPoint,
+        float &out_intersectionDistance)
+    {
+        // Moller-Trumbore intersection algorithm
+        // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+
+        const float EPSILON = 0.0000001f;
+        glm::vec3 h, s, q;
+        float a, f, u, v;
+        glm::vec3 edge1 = v2 - v1;
+        glm::vec3 edge2 = v3 - v1;
+        h = glm::cross(rayVector, edge2);
+        a = glm::dot(edge1, h);
+        if (a > -EPSILON && a < EPSILON)
+            return false; // ray is parallel to this triangle
+
+        f = 1.0 / a;
+        s = rayOrigin - v1;
+        u = f * glm::dot(s, h);
+        if (u < 0.0 || u > 1.0)
+            return false;
+        q = glm::cross(s, edge1);
+        v = f * glm::dot(rayVector, q);
+        if (v < 0.0 || u + v > 1.0)
+            return false;
+
+        // compute t to find out where the intersection point is on the line
+        float t = f * glm::dot(edge2, q);
+        if (t <= EPSILON)
+            return false; // there is a line intersection but not a ray intersection
+
+        out_intersectionPoint = rayOrigin + (rayVector * t);
+        out_intersectionDistance = t;
+        return true;
+    }
+
+    bool TerrainColliderComponentManager::intersects(
+        int i, Ray ray, glm::vec3 &out_intersectionPoint)
+    {
+        int &columns = data.columns[i];
+        int &rows = data.rows[i];
+        float &patchSize = data.patchSize[i];
+
+        // calculate world-space corners of terrain quad
+        float offsetX = (columns - 1) * patchSize * -0.5f;
+        float offsetY = (rows - 1) * patchSize * -0.5f;
+
+        glm::vec3 topLeft = glm::vec3(offsetX, 0.0f, offsetY);
+        glm::vec3 topRight = glm::vec3(((columns - 1) * patchSize) + offsetX, 0.0f, offsetY);
+        glm::vec3 bottomRight = glm::vec3(
+            ((columns - 1) * patchSize) + offsetX, 0.0f, ((rows - 1) * patchSize) + offsetY);
+        glm::vec3 bottomLeft =
+            glm::vec3(0 + offsetX, 0.0f, ((rows - 1) * patchSize) + offsetY);
+
+        // raycast against 2 triangles of terrain quad
+        glm::vec3 intersectPointA, intersectPointB;
+        float intersectDistA, intersectDistB;
+        bool hitA = isRayIntersectingTriangle(ray.origin, ray.direction, topLeft, topRight,
+            bottomRight, intersectPointA, intersectDistA);
+        bool hitB = isRayIntersectingTriangle(ray.origin, ray.direction, bottomRight,
+            bottomLeft, topLeft, intersectPointB, intersectDistB);
+        if (hitA && hitB)
+        {
+            // use the result from the raycast hit closest to the ray's origin
+            out_intersectionPoint =
+                intersectDistA < intersectDistB ? intersectPointA : intersectPointB;
+            return true;
+        }
+        else if (hitA)
+        {
+            out_intersectionPoint = intersectPointA;
+            return true;
+        }
+        else if (hitB)
+        {
+            out_intersectionPoint = intersectPointB;
+            return true;
+        }
+        return false;
     }
 }}}

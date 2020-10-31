@@ -66,7 +66,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         vctx.setCameraEntityId(cameraEntityId);
     }
 
-    void HeightmapPreviewWorld::update(float deltaTime)
+    void HeightmapPreviewWorld::update(
+        float deltaTime, const EditorState &state, EditorState &newState)
     {
         world.update(deltaTime);
     }

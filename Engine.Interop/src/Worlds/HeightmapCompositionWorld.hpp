@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         HeightmapCompositionWorld(EngineContext &ctx);
 
         void initialize();
-        void update(float deltaTime, EditorState &state);
+        void update(float deltaTime, const EditorState &state, EditorState &newState);
         void compositeHeightmap();
 
         int createQuadMaterial();

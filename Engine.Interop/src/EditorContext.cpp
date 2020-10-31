@@ -26,6 +26,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         for (int i = 0; i < inputState.count; i++)
         {
             IO::MouseInputState &mouseState = inputState.mouse[i];
+            mouseState.normalizedCursorX = 0;
+            mouseState.normalizedCursorY = 0;
             mouseState.cursorOffsetX = 0;
             mouseState.cursorOffsetY = 0;
             mouseState.scrollOffsetX = 0;
@@ -41,6 +43,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
         else
         {
+            auto view = EngineInterop::HoveredViewportContext->getViewContext();
+
             IO::MouseInputState &mouseState =
                 inputState
                     .mouse[EngineInterop::HoveredViewportContext->getInputControllerId()];
@@ -50,6 +54,9 @@ namespace Terrain { namespace Engine { namespace Interop {
             mouseState.isRightMouseButtonDown =
                 Mouse::RightButton == MouseButtonState::Pressed;
 
+            mouseState.normalizedCursorX = mousePos.X / (float)view.viewportWidth;
+            mouseState.normalizedCursorY = mousePos.Y / (float)view.viewportHeight;
+
             // use the mouse scroll offset set by the scroll wheel callback
             mouseState.scrollOffsetX = nextMouseScrollOffsetX;
             mouseState.scrollOffsetY = nextMouseScrollOffsetY;
@@ -57,7 +64,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             if (isMouseCaptured)
             {
                 // calculate the center of the hovered viewport relative to the window
-                auto view = EngineInterop::HoveredViewportContext->getViewContext();
                 auto [viewportX, viewportY] =
                     EngineInterop::HoveredViewportContext->getViewportLocation();
                 auto viewportCenter = Point(viewportX + (view.viewportWidth / 2),

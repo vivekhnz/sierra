@@ -43,6 +43,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
         world.componentManagers.meshRenderer.create(
             entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues);
+
+        terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
+            entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
@@ -59,11 +62,35 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             orbitCameraId, vctx.getInputControllerId());
 
         vctx.setCameraEntityId(cameraEntityId);
+        orbitCameraIds.push_back(orbitCameraId);
     }
 
-    void SceneWorld::update(float deltaTime)
+    void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
     {
         world.update(deltaTime);
+
+        int cameraCount = orbitCameraIds.size();
+        for (int i = 0; i < cameraCount; i++)
+        {
+            int orbitCameraId = orbitCameraIds[i];
+            int inputControllerId =
+                world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
+
+            IO::MouseInputState &mouseState = ctx.input.getMouseState(inputControllerId);
+            if (!mouseState.isLeftMouseButtonDown || mouseState.isMiddleMouseButtonDown
+                || mouseState.isRightMouseButtonDown)
+                continue;
+
+            Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
+
+            glm::vec3 intersectionPoint;
+            if (!world.componentManagers.terrainCollider.intersects(
+                    terrainColliderInstanceId, ray, intersectionPoint))
+                continue;
+
+            newState.brushQuadX = (intersectionPoint.x / 127.5f) + 0.5f;
+            newState.brushQuadY = (intersectionPoint.z / 127.5f) + 0.5f;
+        }
     }
 
     void SceneWorld::render(EngineViewContext &vctx)
