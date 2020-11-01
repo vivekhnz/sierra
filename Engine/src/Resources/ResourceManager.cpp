@@ -220,8 +220,8 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::TERRAIN_TESS_CTRL,
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
                 TerrainResources::Shaders::TERRAIN_FRAGMENT}, // shaderResourceIds
-            10,                                               // uniformCount
-            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12},          // uniformNameLengths
+            12,                                               // uniformCount
+            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12, 17, 22},  // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "albedoTexture"
@@ -231,7 +231,9 @@ namespace Terrain { namespace Engine { namespace Resources {
             "roughnessTexture"
             "terrainHeight"
             "normalSampleOffset"
-            "textureScale" // uniformNames
+            "textureScale"
+            "brushHighlightPos"
+            "brushHighlightStrength" // uniformNames
         });
 
         shaderProgramResources.push_back({
@@ -292,16 +294,18 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::DISPLACEMENT,
                 TerrainResources::Textures::AO,
                 TerrainResources::Textures::ROUGHNESS,
-            },                           // textureResourceIds
-            7,                           // uniformCount
-            {12, 16, 13, 13, 19, 9, 16}, // uniformNameLengths
+            },                                   // textureResourceIds
+            9,                                   // uniformCount
+            {12, 16, 13, 13, 19, 9, 16, 17, 22}, // uniformNameLengths
             "textureScale"
             "heightmapTexture"
             "albedoTexture"
             "normalTexture"
             "displacementTexture"
             "aoTexture"
-            "roughnessTexture", // uniformNames
+            "roughnessTexture"
+            "brushHighlightPos"
+            "brushHighlightStrength", // uniformNames
             {
                 Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
                 Graphics::UniformValue::forInteger(0),
@@ -310,6 +314,8 @@ namespace Terrain { namespace Engine { namespace Resources {
                 Graphics::UniformValue::forInteger(3),
                 Graphics::UniformValue::forInteger(4),
                 Graphics::UniformValue::forInteger(5),
+                Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
+                Graphics::UniformValue::forFloat(0.0f),
             } // uniformValues
         });
 

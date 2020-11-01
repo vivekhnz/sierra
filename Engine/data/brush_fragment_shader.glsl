@@ -7,7 +7,7 @@ void main()
 {
     float innerRadius = 0.1f;
     float outerRadius = 1.0f;
-    float strength = 0.25f;
+    float strength = 0.1f;
 
     float value = distance(uv, vec2(0.5f)) * 2.0f;
     value = (-value + outerRadius) / (outerRadius - innerRadius);

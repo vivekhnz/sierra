@@ -10,6 +10,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineContext &ctx;
         Engine::World world;
 
+        int terrainMeshRendererInstanceId;
         int terrainColliderInstanceId;
         std::vector<int> orbitCameraIds;
 

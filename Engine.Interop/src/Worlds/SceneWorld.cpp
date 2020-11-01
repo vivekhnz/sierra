@@ -20,18 +20,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
-        std::vector<std::string> materialUniformNames(3);
+        std::vector<std::string> materialUniformNames(5);
         materialUniformNames[0] = "terrainHeight";
         materialUniformNames[1] = "heightmapSize";
         materialUniformNames[2] = "normalSampleOffset";
+        materialUniformNames[3] = "brushHighlightStrength";
+        materialUniformNames[4] = "brushHighlightPos";
 
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(3);
+        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(5);
         materialUniformValues[0] =
             Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
         materialUniformValues[1] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
         materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forVector2(
             glm::vec2(1.0f / (patchSize * terrainColumns), 1.0f / (patchSize * terrainRows)));
+        materialUniformValues[3] = Terrain::Engine::Graphics::UniformValue::forFloat(0.4f);
+        materialUniformValues[4] =
+            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(0.5f, 0.5f));
 
         // create entity and components
         int entityId = ctx.entities.create();
@@ -41,7 +46,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-        world.componentManagers.meshRenderer.create(
+        terrainMeshRendererInstanceId = world.componentManagers.meshRenderer.create(
             entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues);
 
         terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
@@ -76,11 +81,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int inputControllerId =
                 world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
-            IO::MouseInputState &mouseState = ctx.input.getMouseState(inputControllerId);
-            if (!mouseState.isLeftMouseButtonDown || mouseState.isMiddleMouseButtonDown
-                || mouseState.isRightMouseButtonDown)
-                continue;
-
             Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
 
             glm::vec3 intersectionPoint;
@@ -88,8 +88,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                     terrainColliderInstanceId, ray, intersectionPoint))
                 continue;
 
-            newState.brushQuadX = (intersectionPoint.x / 127.5f) + 0.5f;
-            newState.brushQuadY = (intersectionPoint.z / 127.5f) + 0.5f;
+            IO::MouseInputState &mouseState = ctx.input.getMouseState(inputControllerId);
+
+            if (mouseState.isMiddleMouseButtonDown || mouseState.isRightMouseButtonDown)
+                continue;
+
+            glm::vec2 normalizedPickPoint = glm::vec2(
+                (intersectionPoint.x / 127.5f) + 0.5f, (intersectionPoint.z / 127.5f) + 0.5f);
+            world.componentManagers.meshRenderer.setMaterialUniformVector2(
+                terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
+
+            if (mouseState.isLeftMouseButtonDown)
+            {
+                newState.brushQuadX = normalizedPickPoint.x;
+                newState.brushQuadY = normalizedPickPoint.y;
+            }
         }
     }
 
