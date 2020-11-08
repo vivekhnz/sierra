@@ -3,26 +3,13 @@
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) :
-        ctx(ctx), world(ctx)
+        ctx(ctx), working(ctx), staging(ctx)
     {
     }
 
     void HeightmapCompositionWorld::initialize()
     {
-        const int RESOURCE_ID_MATERIAL_BRUSH = 2;
-
-        // create framebuffer
-        renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
-            GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-        framebufferHandle = ctx.renderer.createFramebuffer(renderTextureHandle);
-
-        // setup camera
-        cameraEntityId = ctx.entities.create();
-        world.componentManagers.camera.create(
-            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), framebufferHandle);
-        world.componentManagers.orthographicCamera.create(cameraEntityId, true);
-
-        // setup heightmap quad
+        // create quad mesh
         std::vector<float> quadVertices(20);
 
         quadVertices[0] = 0.0f;
@@ -57,16 +44,44 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         quadIndices[4] = 2;
         quadIndices[5] = 3;
 
-        int quadMesh_meshHandle =
+        int quadMeshHandle =
             ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
-        int quadMaterialHandle = createQuadMaterial();
+
+        // setup worlds
+        setupWorkingWorld(quadMeshHandle);
+        setupStagingWorld(quadMeshHandle);
+    }
+
+    void HeightmapCompositionWorld::setupWorkingWorld(int quadMeshHandle)
+    {
+        // the working world is where the base heightmap and brush strokes will be drawn
+
+        // create framebuffer
+        working.renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
+            GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        working.framebufferHandle =
+            ctx.renderer.createFramebuffer(working.renderTextureHandle);
+
+        // setup camera
+        working.cameraEntityId = ctx.entities.create();
+        working.world.componentManagers.camera.create(working.cameraEntityId,
+            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), working.framebufferHandle);
+        working.world.componentManagers.orthographicCamera.create(
+            working.cameraEntityId, true);
+
+        // setup heightmap quad
+        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
+        working.quadMaterialHandle =
+            createQuadMaterial(ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
 
         int heightmapQuad_entityId = ctx.entities.create();
-        world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
-            quadMesh_meshHandle, quadMaterialHandle, std::vector<std::string>(),
+        working.world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
+            quadMeshHandle, working.quadMaterialHandle, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>());
 
         // setup brush quad
+        const int RESOURCE_ID_MATERIAL_BRUSH = 2;
+
         std::vector<std::string> brushQuad_uniformNames(1);
         brushQuad_uniformNames[0] = "instance_transform";
 
@@ -75,10 +90,36 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             Graphics::UniformValue::forMatrix4x4(glm::identity<glm::mat4>());
 
         int brushQuad_entityId = ctx.entities.create();
-        brushQuad_meshRendererInstanceId = world.componentManagers.meshRenderer.create(
-            brushQuad_entityId, quadMesh_meshHandle,
-            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
-            brushQuad_uniformNames, brushQuad_uniformValues);
+        working.brushQuad_meshRendererInstanceId =
+            working.world.componentManagers.meshRenderer.create(brushQuad_entityId,
+                quadMeshHandle, ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
+                brushQuad_uniformNames, brushQuad_uniformValues);
+    }
+
+    void HeightmapCompositionWorld::setupStagingWorld(int quadMeshHandle)
+    {
+        // the staging world is a quad textured with the framebuffer of the working world
+        // the resulting texture is fed back into the working world as the base heightmap
+
+        // create framebuffer
+        staging.renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
+            GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        staging.framebufferHandle =
+            ctx.renderer.createFramebuffer(staging.renderTextureHandle);
+
+        // setup camera
+        staging.cameraEntityId = ctx.entities.create();
+        staging.world.componentManagers.camera.create(staging.cameraEntityId,
+            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), staging.framebufferHandle);
+        staging.world.componentManagers.orthographicCamera.create(
+            staging.cameraEntityId, true);
+
+        staging.quadMaterialHandle = createQuadMaterial(working.renderTextureHandle);
+
+        int stagingQuad_entityId = ctx.entities.create();
+        staging.world.componentManagers.meshRenderer.create(stagingQuad_entityId,
+            quadMeshHandle, staging.quadMaterialHandle, std::vector<std::string>(),
+            std::vector<Graphics::UniformValue>());
     }
 
     void HeightmapCompositionWorld::update(
@@ -90,10 +131,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::vec3(
                 (scale * -0.5f) + state.brushQuadX, (scale * -0.5f) + state.brushQuadY, 0.0f));
         brushTransform = glm::scale(brushTransform, glm::vec3(scale, scale, scale));
-        world.componentManagers.meshRenderer.setMaterialUniformMatrix4x4(
-            brushQuad_meshRendererInstanceId, "instance_transform", brushTransform);
+        working.world.componentManagers.meshRenderer.setMaterialUniformMatrix4x4(
+            working.brushQuad_meshRendererInstanceId, "instance_transform", brushTransform);
 
-        world.update(deltaTime);
+        working.world.update(deltaTime);
+        staging.world.update(deltaTime);
     }
 
     void HeightmapCompositionWorld::compositeHeightmap(
@@ -101,15 +143,29 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         if (state.doesHeightmapRequireRedraw)
         {
-            EngineViewContext vctx = {
-                2048,          // viewportWidth
-                2048,          // viewportHeight
-                cameraEntityId // cameraEntityId
+            EngineViewContext workingVctx = {
+                2048,                  // viewportWidth
+                2048,                  // viewportHeight
+                working.cameraEntityId // cameraEntityId
             };
-            world.render(vctx);
+            working.world.render(workingVctx);
 
             newState.doesHeightmapRequireRedraw = false;
             newState.wasHeightmapUpdated = true;
+
+            if (working.isFirstRender)
+            {
+                working.isFirstRender = false;
+                ctx.assets.graphics.setMaterialTexture(
+                    working.quadMaterialHandle, 0, staging.renderTextureHandle);
+            }
+
+            EngineViewContext stagingVctx = {
+                2048,                  // viewportWidth
+                2048,                  // viewportHeight
+                staging.cameraEntityId // cameraEntityId
+            };
+            staging.world.render(stagingVctx);
         }
         else
         {
@@ -117,14 +173,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
     }
 
-    int HeightmapCompositionWorld::createQuadMaterial()
+    int HeightmapCompositionWorld::createQuadMaterial(int textureHandle)
     {
         const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
-        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
 
         int shaderProgramHandle =
             ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
-        int textureHandles[1] = {ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP)};
+        int textureHandles[1] = {textureHandle};
         int uniformNameLengths[1] = {12};
         Graphics::UniformValue uniformValues[1] = {Graphics::UniformValue::forInteger(0)};
 
