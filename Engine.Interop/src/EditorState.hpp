@@ -5,5 +5,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         float brushQuadX;
         float brushQuadY;
+        bool doesHeightmapRequireRedraw;
+        bool wasHeightmapUpdated;
     };
 }}}

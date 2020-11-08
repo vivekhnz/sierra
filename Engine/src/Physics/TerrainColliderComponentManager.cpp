@@ -57,6 +57,29 @@ namespace Terrain { namespace Engine { namespace Physics {
         }
     }
 
+    void TerrainColliderComponentManager::updateHeights(
+        int i, int width, int height, const unsigned short *pixels)
+    {
+        int &columns = data.columns[i];
+        int &rows = data.rows[i];
+        int &firstHeightIndex = data.firstHeightIndex[i];
+
+        float xScalar = width / (float)columns;
+        float yScalar = (height * width) / (float)rows;
+        float heightScalar = data.terrainHeight[i] / 65535.0f;
+        for (int y = 0; y < rows; y++)
+        {
+            int idxStart = firstHeightIndex + (y * columns);
+            int rowStart = (int)(y * yScalar);
+
+            for (int x = 0; x < columns; x++)
+            {
+                data.patchHeights[idxStart + x] =
+                    pixels[rowStart + (int)(x * xScalar)] * heightScalar;
+            }
+        }
+    }
+
     float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
     {
         float det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
@@ -121,7 +144,6 @@ namespace Terrain { namespace Engine { namespace Physics {
         glm::vec3 v1,
         glm::vec3 v2,
         glm::vec3 v3,
-        glm::vec3 &out_intersectionPoint,
         float &out_intersectionDistance)
     {
         // Moller-Trumbore intersection algorithm
@@ -152,7 +174,6 @@ namespace Terrain { namespace Engine { namespace Physics {
         if (t <= EPSILON)
             return false; // there is a line intersection but not a ray intersection
 
-        out_intersectionPoint = rayOrigin + (rayVector * t);
         out_intersectionDistance = t;
         return true;
     }
@@ -163,9 +184,83 @@ namespace Terrain { namespace Engine { namespace Physics {
         int &columns = data.columns[i];
         int &rows = data.rows[i];
         float &patchSize = data.patchSize[i];
+        int &firstHeightIndex = data.firstHeightIndex[i];
+
+        /*float heightScalar = data.terrainHeight[i] / 65535.0f;
+        for (int y = 0; y < rows; y++)
+        {
+            int idxStart = firstHeightIndex + (y * columns);
+            for (int x = 0; x < columns; x++)
+            {
+                float h = data.patchHeights[idxStart + x];
+            }
+        }
+
+        for (int y = 0; y < rows - 1; y++)
+        {
+            for (int x = 0; x < columns - 1; x++)
+            {
+                int vertIndex = (y * columns) + x;
+                int elemIndex = ((y * (columns - 1)) + x) * 4;
+
+                indices[elemIndex] = vertIndex;
+                indices[elemIndex + 1] = vertIndex + columns;
+                indices[elemIndex + 2] = vertIndex + columns + 1;
+                indices[elemIndex + 3] = vertIndex + 1;
+            }
+        }*/
+
+        float offsetX = (columns - 1) * patchSize * -0.5f;
+        float offsetY = (rows - 1) * patchSize * -0.5f;
+        bool hit = false;
+        float hitDistance = 0.0f;
+        for (int y = 0; y < rows - 1; y++)
+        {
+            for (int x = 0; x < columns - 1; x++)
+            {
+                // calculate world-space corners of patch
+                glm::vec3 topLeft = glm::vec3(offsetX + (x * patchSize),
+                    data.patchHeights[firstHeightIndex + ((y * columns) + x)],
+                    offsetY + (y * patchSize));
+                glm::vec3 topRight = glm::vec3(offsetX + ((x + 1) * patchSize),
+                    data.patchHeights[firstHeightIndex + ((y * columns) + x + 1)],
+                    offsetY + (y * patchSize));
+                glm::vec3 bottomRight = glm::vec3(offsetX + ((x + 1) * patchSize),
+                    data.patchHeights[firstHeightIndex + (((y + 1) * columns) + x + 1)],
+                    offsetY + ((y + 1) * patchSize));
+                glm::vec3 bottomLeft = glm::vec3(offsetX + (x * patchSize),
+                    data.patchHeights[firstHeightIndex + (((y + 1) * columns) + x)],
+                    offsetY + ((y + 1) * patchSize));
+
+                // raycast against 2 triangles of quad
+                float intersectDist;
+                if (isRayIntersectingTriangle(ray.origin, ray.direction, topLeft, topRight,
+                        bottomRight, intersectDist)
+                    && (!hit || intersectDist < hitDistance))
+                {
+                    hit = true;
+                    hitDistance = intersectDist;
+                }
+                if (isRayIntersectingTriangle(ray.origin, ray.direction, bottomRight,
+                        bottomLeft, topLeft, intersectDist)
+                    && (!hit || intersectDist < hitDistance))
+                {
+                    hit = true;
+                    hitDistance = intersectDist;
+                }
+            }
+        }
+
+        if (hit)
+        {
+            out_intersectionPoint = ray.origin + (ray.direction * hitDistance);
+            return true;
+        }
+
+        return false;
 
         // calculate world-space corners of terrain quad
-        float offsetX = (columns - 1) * patchSize * -0.5f;
+        /*float offsetX = (columns - 1) * patchSize * -0.5f;
         float offsetY = (rows - 1) * patchSize * -0.5f;
 
         glm::vec3 topLeft = glm::vec3(offsetX, 0.0f, offsetY);
@@ -199,6 +294,6 @@ namespace Terrain { namespace Engine { namespace Physics {
             out_intersectionPoint = intersectPointB;
             return true;
         }
-        return false;
+        return false;*/
     }
 }}}

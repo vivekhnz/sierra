@@ -155,6 +155,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Resources::TextureResourceData *data);
         void onTextureReloaded(Resources::TextureResourceData &resource);
         void bindTextures(int *textureHandles, int count);
+        void getTexturePixels(int handle, void *out_data);
         int lookupTexture(int resourceId)
         {
             return textures.resourceIdToHandle[resourceId];

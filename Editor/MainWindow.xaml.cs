@@ -35,6 +35,7 @@ namespace Terrain.Editor
                 const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
                 EngineInterop.ResourceManager.ReloadTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP,
                     ofd.FileName, true);
+                EngineInterop.State.DoesHeightmapRequireRedraw = true;
             }
         }
     }

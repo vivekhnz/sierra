@@ -12,6 +12,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         float patchSize = 0.5f;
         float terrainHeight = 25.0f;
 
+        this->heightmapTextureHandle = heightmapTextureHandle;
+
         const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
 
         // edit terrain material to point to composited heightmap texture handle
@@ -72,6 +74,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
     {
+        if (state.wasHeightmapUpdated)
+        {
+            // update terrain collider with composited heightmap texture
+            void *textureData = malloc(2048 * 2048 * 2);
+            ctx.renderer.getTexturePixels(heightmapTextureHandle, textureData);
+            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
+                2048, 2048, static_cast<const unsigned short *>(textureData));
+            free(textureData);
+        }
+
         world.update(deltaTime);
 
         int cameraCount = orbitCameraIds.size();
@@ -102,6 +114,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             {
                 newState.brushQuadX = normalizedPickPoint.x;
                 newState.brushQuadY = normalizedPickPoint.y;
+                newState.doesHeightmapRequireRedraw = true;
             }
         }
     }

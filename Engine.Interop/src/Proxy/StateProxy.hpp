@@ -39,5 +39,31 @@ public
                 state.brushQuadY = value;
             }
         }
+
+        property bool DoesHeightmapRequireRedraw
+        {
+            bool get()
+            {
+                return state.doesHeightmapRequireRedraw;
+            }
+
+            void set(bool value)
+            {
+                state.doesHeightmapRequireRedraw = value;
+            }
+        }
+
+        property bool WasHeightmapUpdated
+        {
+            bool get()
+            {
+                return state.wasHeightmapUpdated;
+            }
+
+            void set(bool value)
+            {
+                state.wasHeightmapUpdated = value;
+            }
+        }
     };
 }}}}

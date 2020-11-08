@@ -96,14 +96,25 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.update(deltaTime);
     }
 
-    void HeightmapCompositionWorld::compositeHeightmap()
+    void HeightmapCompositionWorld::compositeHeightmap(
+        const EditorState &state, EditorState &newState)
     {
-        EngineViewContext vctx = {
-            2048,          // viewportWidth
-            2048,          // viewportHeight
-            cameraEntityId // cameraEntityId
-        };
-        world.render(vctx);
+        if (state.doesHeightmapRequireRedraw)
+        {
+            EngineViewContext vctx = {
+                2048,          // viewportWidth
+                2048,          // viewportHeight
+                cameraEntityId // cameraEntityId
+            };
+            world.render(vctx);
+
+            newState.doesHeightmapRequireRedraw = false;
+            newState.wasHeightmapUpdated = true;
+        }
+        else
+        {
+            newState.wasHeightmapUpdated = false;
+        }
     }
 
     int HeightmapCompositionWorld::createQuadMaterial()

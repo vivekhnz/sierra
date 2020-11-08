@@ -143,6 +143,14 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
+    void Renderer::getTexturePixels(int handle, void *out_data)
+    {
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textures.id[handle]);
+        glGetTexImage(
+            GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
+    }
+
     int Renderer::createVertexBuffer(unsigned int usage)
     {
         unsigned int id;

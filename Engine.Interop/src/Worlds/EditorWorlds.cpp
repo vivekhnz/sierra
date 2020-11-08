@@ -33,8 +33,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         sceneWorld.update(deltaTime, state, newState);
         heightmapCompositionWorld.update(deltaTime, state, newState);
         heightmapPreviewWorld.update(deltaTime, state, newState);
-
-        heightmapCompositionWorld.compositeHeightmap();
+        heightmapCompositionWorld.compositeHeightmap(state, newState);
     }
 
     void EditorWorlds::render(ViewportContext &vctx)

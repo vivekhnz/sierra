@@ -20,7 +20,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         void initialize();
         void update(float deltaTime, const EditorState &state, EditorState &newState);
-        void compositeHeightmap();
+        void compositeHeightmap(const EditorState &state, EditorState &newState);
 
         int createQuadMaterial();
 

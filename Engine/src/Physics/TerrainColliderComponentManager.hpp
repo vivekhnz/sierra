@@ -42,6 +42,7 @@ namespace Terrain { namespace Engine { namespace Physics {
             float terrainHeight);
 
         void onTextureReloaded(Resources::TextureResourceData &resource);
+        void updateHeights(int i, int width, int height, const unsigned short *pixels);
 
         float getTerrainHeight(float worldX, float worldZ);
         bool intersects(int i, Ray ray, glm::vec3 &out_intersectionPoint);
