@@ -30,6 +30,18 @@ namespace Terrain { namespace Engine { namespace Physics {
 
         float getTerrainPatchHeight(
             int x, int z, int &columns, int &rows, int &firstHeightIndex);
+        bool isRayIntersectingTerrainSlice(Ray &ray,
+            int xStart,
+            int xEnd,
+            int yStart,
+            int yEnd,
+            float offsetX,
+            float offsetY,
+            int columns,
+            int firstHeightIndex,
+            float patchSize,
+            float terrainHeight,
+            float &inout_hitDistance);
 
     public:
         TerrainColliderComponentManager();

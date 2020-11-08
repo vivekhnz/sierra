@@ -93,16 +93,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int inputControllerId =
                 world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
+            IO::MouseInputState &mouseState = ctx.input.getMouseState(inputControllerId);
+            if (mouseState.isMiddleMouseButtonDown || mouseState.isRightMouseButtonDown)
+                continue;
+
             Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
 
             glm::vec3 intersectionPoint;
             if (!world.componentManagers.terrainCollider.intersects(
                     terrainColliderInstanceId, ray, intersectionPoint))
-                continue;
-
-            IO::MouseInputState &mouseState = ctx.input.getMouseState(inputControllerId);
-
-            if (mouseState.isMiddleMouseButtonDown || mouseState.isRightMouseButtonDown)
                 continue;
 
             glm::vec2 normalizedPickPoint = glm::vec2(

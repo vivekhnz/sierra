@@ -139,6 +139,47 @@ namespace Terrain { namespace Engine { namespace Physics {
         return data.patchHeights[firstHeightIndex + i];
     }
 
+    bool isRayIntersectingBox(
+        glm::vec3 rayOrigin, glm::vec3 rayVector, glm::vec3 boundsMin, glm::vec3 boundsMax)
+    {
+        // based on:
+        // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
+
+        glm::vec3 invRayVector = 1.0f / rayVector;
+
+        bool xSign = invRayVector.x >= 0;
+        float txMin = ((xSign ? boundsMin.x : boundsMax.x) - rayOrigin.x) * invRayVector.x;
+        float txMax = ((xSign ? boundsMax.x : boundsMin.x) - rayOrigin.x) * invRayVector.x;
+
+        bool ySign = invRayVector.y >= 0;
+        float tyMin = ((ySign ? boundsMin.y : boundsMax.y) - rayOrigin.y) * invRayVector.y;
+        float tyMax = ((ySign ? boundsMax.y : boundsMin.y) - rayOrigin.y) * invRayVector.y;
+
+        if ((txMin > tyMax) || (tyMin > txMax))
+            return false;
+
+        if (tyMin > txMin)
+            txMin = tyMin;
+
+        if (tyMax < txMax)
+            txMax = tyMax;
+
+        bool zSign = invRayVector.z >= 0;
+        float tzMin = ((zSign ? boundsMin.z : boundsMax.z) - rayOrigin.z) * invRayVector.z;
+        float tzMax = ((zSign ? boundsMax.z : boundsMin.z) - rayOrigin.z) * invRayVector.z;
+
+        if ((txMin > tzMax) || (tzMin > txMax))
+            return false;
+
+        if (tzMin > txMin)
+            txMin = tzMin;
+
+        if (tzMax < txMax)
+            txMax = tzMax;
+
+        return true;
+    }
+
     bool isRayIntersectingTriangle(glm::vec3 rayOrigin,
         glm::vec3 rayVector,
         glm::vec3 v1,
@@ -178,45 +219,33 @@ namespace Terrain { namespace Engine { namespace Physics {
         return true;
     }
 
-    bool TerrainColliderComponentManager::intersects(
-        int i, Ray ray, glm::vec3 &out_intersectionPoint)
+    bool TerrainColliderComponentManager::isRayIntersectingTerrainSlice(Ray &ray,
+        int xStart,
+        int xEnd,
+        int yStart,
+        int yEnd,
+        float offsetX,
+        float offsetY,
+        int columns,
+        int firstHeightIndex,
+        float patchSize,
+        float terrainHeight,
+        float &inout_hitDistance)
     {
-        int &columns = data.columns[i];
-        int &rows = data.rows[i];
-        float &patchSize = data.patchSize[i];
-        int &firstHeightIndex = data.firstHeightIndex[i];
-
-        /*float heightScalar = data.terrainHeight[i] / 65535.0f;
-        for (int y = 0; y < rows; y++)
+        // raycast a bounding box first to avoid expensive triangle raycasting
+        glm::vec3 boundsTopLeft =
+            glm::vec3(offsetX + (xStart * patchSize), 0.0f, offsetY + (yStart * patchSize));
+        glm::vec3 boundsBottomRight = glm::vec3(
+            offsetX + (xEnd * patchSize), terrainHeight, offsetY + (yEnd * patchSize));
+        if (!isRayIntersectingBox(ray.origin, ray.direction, boundsTopLeft, boundsBottomRight))
         {
-            int idxStart = firstHeightIndex + (y * columns);
-            for (int x = 0; x < columns; x++)
-            {
-                float h = data.patchHeights[idxStart + x];
-            }
+            return false;
         }
 
-        for (int y = 0; y < rows - 1; y++)
-        {
-            for (int x = 0; x < columns - 1; x++)
-            {
-                int vertIndex = (y * columns) + x;
-                int elemIndex = ((y * (columns - 1)) + x) * 4;
-
-                indices[elemIndex] = vertIndex;
-                indices[elemIndex + 1] = vertIndex + columns;
-                indices[elemIndex + 2] = vertIndex + columns + 1;
-                indices[elemIndex + 3] = vertIndex + 1;
-            }
-        }*/
-
-        float offsetX = (columns - 1) * patchSize * -0.5f;
-        float offsetY = (rows - 1) * patchSize * -0.5f;
         bool hit = false;
-        float hitDistance = 0.0f;
-        for (int y = 0; y < rows - 1; y++)
+        for (int y = yStart; y < yEnd; y++)
         {
-            for (int x = 0; x < columns - 1; x++)
+            for (int x = xStart; x < xEnd; x++)
             {
                 // calculate world-space corners of patch
                 glm::vec3 topLeft = glm::vec3(offsetX + (x * patchSize),
@@ -236,18 +265,52 @@ namespace Terrain { namespace Engine { namespace Physics {
                 float intersectDist;
                 if (isRayIntersectingTriangle(ray.origin, ray.direction, topLeft, topRight,
                         bottomRight, intersectDist)
-                    && (!hit || intersectDist < hitDistance))
+                    && intersectDist < inout_hitDistance)
                 {
                     hit = true;
-                    hitDistance = intersectDist;
+                    inout_hitDistance = intersectDist;
                 }
                 if (isRayIntersectingTriangle(ray.origin, ray.direction, bottomRight,
                         bottomLeft, topLeft, intersectDist)
-                    && (!hit || intersectDist < hitDistance))
+                    && intersectDist < inout_hitDistance)
                 {
                     hit = true;
-                    hitDistance = intersectDist;
+                    inout_hitDistance = intersectDist;
                 }
+            }
+        }
+
+        return hit;
+    }
+
+    bool TerrainColliderComponentManager::intersects(
+        int i, Ray ray, glm::vec3 &out_intersectionPoint)
+    {
+        int &columns = data.columns[i];
+        int &rows = data.rows[i];
+        float &patchSize = data.patchSize[i];
+        int &firstHeightIndex = data.firstHeightIndex[i];
+        float &terrainHeight = data.terrainHeight[i];
+
+        float offsetX = (columns - 1) * patchSize * -0.5f;
+        float offsetY = (rows - 1) * patchSize * -0.5f;
+
+        float hitDistance = 999999.0f;
+        bool hit = false;
+
+        // divide terrain into 64 slices (8x8) and raycast against each slice's bounding box
+        // this lets us skip expensive triangle raycasting if we don't hit the bounding box
+        int sliceCount = 8;
+        int colSlice = columns / sliceCount;
+        int rowSlice = rows / sliceCount;
+
+        for (int y = 0; y < sliceCount; y++)
+        {
+            for (int x = 0; x < sliceCount; x++)
+            {
+                hit |= isRayIntersectingTerrainSlice(ray, colSlice * x,
+                    (colSlice * (x + 1)) - 1, rowSlice * y, (rowSlice * (y + 1)) - 1, offsetX,
+                    offsetY, columns, firstHeightIndex, patchSize, terrainHeight, hitDistance);
             }
         }
 
@@ -256,44 +319,6 @@ namespace Terrain { namespace Engine { namespace Physics {
             out_intersectionPoint = ray.origin + (ray.direction * hitDistance);
             return true;
         }
-
         return false;
-
-        // calculate world-space corners of terrain quad
-        /*float offsetX = (columns - 1) * patchSize * -0.5f;
-        float offsetY = (rows - 1) * patchSize * -0.5f;
-
-        glm::vec3 topLeft = glm::vec3(offsetX, 0.0f, offsetY);
-        glm::vec3 topRight = glm::vec3(((columns - 1) * patchSize) + offsetX, 0.0f, offsetY);
-        glm::vec3 bottomRight = glm::vec3(
-            ((columns - 1) * patchSize) + offsetX, 0.0f, ((rows - 1) * patchSize) + offsetY);
-        glm::vec3 bottomLeft =
-            glm::vec3(0 + offsetX, 0.0f, ((rows - 1) * patchSize) + offsetY);
-
-        // raycast against 2 triangles of terrain quad
-        glm::vec3 intersectPointA, intersectPointB;
-        float intersectDistA, intersectDistB;
-        bool hitA = isRayIntersectingTriangle(ray.origin, ray.direction, topLeft, topRight,
-            bottomRight, intersectPointA, intersectDistA);
-        bool hitB = isRayIntersectingTriangle(ray.origin, ray.direction, bottomRight,
-            bottomLeft, topLeft, intersectPointB, intersectDistB);
-        if (hitA && hitB)
-        {
-            // use the result from the raycast hit closest to the ray's origin
-            out_intersectionPoint =
-                intersectDistA < intersectDistB ? intersectPointA : intersectPointB;
-            return true;
-        }
-        else if (hitA)
-        {
-            out_intersectionPoint = intersectPointA;
-            return true;
-        }
-        else if (hitB)
-        {
-            out_intersectionPoint = intersectPointB;
-            return true;
-        }
-        return false;*/
     }
 }}}
