@@ -130,6 +130,8 @@ namespace Terrain { namespace Engine { namespace Resources {
                 readFileText("data/wireframe_fragment_shader.glsl");
             std::string brushVertex = readFileText("data/brush_vertex_shader.glsl");
             std::string brushFragment = readFileText("data/brush_fragment_shader.glsl");
+            std::string uiVertex = readFileText("data/ui_vertex_shader.glsl");
+            std::string uiFragment = readFileText("data/ui_fragment_shader.glsl");
         } shaderSrc;
 
         shaderResources.push_back({
@@ -196,6 +198,16 @@ namespace Terrain { namespace Engine { namespace Resources {
             TerrainResources::Shaders::BRUSH_FRAGMENT, // id
             GL_FRAGMENT_SHADER,                        // type
             shaderSrc.brushFragment.c_str(),           // src
+        });
+        shaderResources.push_back({
+            TerrainResources::Shaders::UI_VERTEX, // id
+            GL_VERTEX_SHADER,                     // type
+            shaderSrc.uiVertex.c_str(),           // src
+        });
+        shaderResources.push_back({
+            TerrainResources::Shaders::UI_FRAGMENT, // id
+            GL_FRAGMENT_SHADER,                     // type
+            shaderSrc.uiFragment.c_str(),           // src
         });
 
         ctx.onShadersLoaded(shaderResources.size(), shaderResources.data());
@@ -274,6 +286,17 @@ namespace Terrain { namespace Engine { namespace Resources {
             1,                                              // uniformCount
             {18},                                           // uniformNameLengths
             "instance_transform"                            // uniformNames
+        });
+
+        shaderProgramResources.push_back({
+            TerrainResources::ShaderPrograms::UI, // id
+            2,                                    // shaderCount
+            {TerrainResources::Shaders::UI_VERTEX,
+                TerrainResources::Shaders::UI_FRAGMENT}, // shaderResourceIds
+            2,                                           // uniformCount
+            {18, 5},                                     // uniformNameLengths
+            "instance_transform"
+            "color" // uniformNames
         });
 
         ctx.onShaderProgramsLoaded(
@@ -356,6 +379,18 @@ namespace Terrain { namespace Engine { namespace Resources {
             {},                                      // uniformNameLengths
             "",                                      // uniformNames
             {}                                       // uniformValues
+        });
+
+        materialResources.push_back({
+            TerrainResources::Materials::UI,      // id
+            TerrainResources::ShaderPrograms::UI, // shaderProgramResourceId
+            GL_FILL,                              // polygonMode
+            0,                                    // textureCount
+            {},                                   // textureResourceIds
+            1,                                    // uniformCount
+            {5},                                  // uniformNameLengths
+            "color",                              // uniformNames
+            {Graphics::UniformValue::forVector3(glm::vec3(1.0f, 1.0f, 1.0f))} // uniformValues
         });
 
         ctx.onMaterialsLoaded(materialResources.size(), materialResources.data());

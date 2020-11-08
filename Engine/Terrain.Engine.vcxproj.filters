@@ -67,6 +67,9 @@
     <ClCompile Include="src\OrthographicCameraComponentManager.cpp">
       <Filter>src</Filter>
     </ClCompile>
+    <ClCompile Include="src\Graphics\DebugUIRenderer.cpp">
+      <Filter>src\Graphics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\Graphics\BindBuffer.hpp">
@@ -164,6 +167,9 @@
     </ClInclude>
     <ClInclude Include="src\Physics\Ray.hpp">
       <Filter>src\Physics</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Graphics\DebugUIRenderer.hpp">
+      <Filter>src\Graphics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

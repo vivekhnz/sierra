@@ -25,6 +25,8 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
         const int WIREFRAME_FRAGMENT = 10;
         const int BRUSH_VERTEX = 11;
         const int BRUSH_FRAGMENT = 12;
+        const int UI_VERTEX = 13;
+        const int UI_FRAGMENT = 14;
     }
 
     namespace ShaderPrograms {
@@ -33,12 +35,14 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
         const int TERRAIN_WIREFRAME = 2;
         const int TERRAIN_CALC_TESS_LEVEL = 3;
         const int BRUSH = 4;
+        const int UI = 5;
     }
 
     namespace Materials {
         const int TERRAIN_TEXTURED = 0;
         const int TERRAIN_WIREFRAME = 1;
         const int BRUSH = 2;
+        const int UI = 3;
     }
 }}}
 

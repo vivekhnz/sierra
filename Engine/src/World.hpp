@@ -8,6 +8,7 @@
 #include "OrthographicCameraComponentManager.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
+#include "Graphics/DebugUIRenderer.hpp"
 #include "TerrainRendererComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
@@ -34,6 +35,7 @@ namespace Terrain { namespace Engine {
             }
         };
         ComponentManagers componentManagers;
+        Graphics::DebugUIRenderer debugUI;
 
         World(EngineContext &ctx);
 
