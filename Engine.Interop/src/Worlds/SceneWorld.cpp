@@ -74,18 +74,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
     {
-        if (state.wasHeightmapUpdated)
-        {
-            // update terrain collider with composited heightmap texture
-            void *textureData = malloc(2048 * 2048 * 2);
-            ctx.renderer.getTexturePixels(heightmapTextureHandle, textureData);
-            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
-                2048, 2048, static_cast<const unsigned short *>(textureData));
-            free(textureData);
-        }
-
         world.update(deltaTime);
 
+        bool isManipulatingTerrain = false;
         int cameraCount = orbitCameraIds.size();
         for (int i = 0; i < cameraCount; i++)
         {
@@ -114,7 +105,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 newState.brushQuadX = normalizedPickPoint.x;
                 newState.brushQuadY = normalizedPickPoint.y;
                 newState.doesHeightmapRequireRedraw = true;
+                isManipulatingTerrain = true;
             }
+        }
+
+        // only update collider if terrain was modified in the previous frame but is no longer
+        // being manipulated this frame
+        if (state.wasHeightmapUpdated && !isManipulatingTerrain)
+        {
+            // update terrain collider with composited heightmap texture
+            void *textureData = malloc(2048 * 2048 * 2);
+            ctx.renderer.getTexturePixels(heightmapTextureHandle, textureData);
+            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
+                2048, 2048, static_cast<const unsigned short *>(textureData));
+            free(textureData);
         }
     }
 
