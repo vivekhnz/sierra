@@ -65,5 +65,18 @@ public
                 state.wasHeightmapUpdated = value;
             }
         }
+
+        property bool ShouldDiscardHeightmap
+        {
+            bool get()
+            {
+                return state.shouldDiscardHeightmap;
+            }
+
+            void set(bool value)
+            {
+                state.shouldDiscardHeightmap = value;
+            }
+        }
     };
 }}}}

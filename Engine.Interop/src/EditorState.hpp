@@ -7,5 +7,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         float brushQuadY;
         bool doesHeightmapRequireRedraw;
         bool wasHeightmapUpdated;
+        bool shouldDiscardHeightmap;
     };
 }}}

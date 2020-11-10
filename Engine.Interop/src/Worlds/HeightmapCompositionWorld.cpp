@@ -143,6 +143,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         if (state.doesHeightmapRequireRedraw)
         {
+            if (state.shouldDiscardHeightmap)
+            {
+                // reset heightmap quad's texture back to heightmap texture resource
+                working.isFirstRender = true;
+                const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
+                ctx.assets.graphics.setMaterialTexture(working.quadMaterialHandle, 0,
+                    ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
+                newState.shouldDiscardHeightmap = false;
+            }
+
             EngineViewContext workingVctx = {
                 2048,                  // viewportWidth
                 2048,                  // viewportHeight
