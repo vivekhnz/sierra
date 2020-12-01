@@ -14,6 +14,19 @@ public
         {
         }
 
+        property EditStatus CurrentEditStatus
+        {
+            EditStatus get()
+            {
+                return state.editStatus;
+            }
+
+            void set(EditStatus value)
+            {
+                state.editStatus = value;
+            }
+        }
+
         property float BrushQuadX
         {
             float get()
@@ -37,45 +50,6 @@ public
             void set(float value)
             {
                 state.brushQuadY = value;
-            }
-        }
-
-        property bool DoesHeightmapRequireRedraw
-        {
-            bool get()
-            {
-                return state.doesHeightmapRequireRedraw;
-            }
-
-            void set(bool value)
-            {
-                state.doesHeightmapRequireRedraw = value;
-            }
-        }
-
-        property bool WasHeightmapUpdated
-        {
-            bool get()
-            {
-                return state.wasHeightmapUpdated;
-            }
-
-            void set(bool value)
-            {
-                state.wasHeightmapUpdated = value;
-            }
-        }
-
-        property bool ShouldDiscardHeightmap
-        {
-            bool get()
-            {
-                return state.shouldDiscardHeightmap;
-            }
-
-            void set(bool value)
-            {
-                state.shouldDiscardHeightmap = value;
             }
         }
     };

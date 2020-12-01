@@ -141,46 +141,38 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::compositeHeightmap(
         const EditorState &state, EditorState &newState)
     {
-        if (state.doesHeightmapRequireRedraw)
+        if (state.editStatus == EditStatus::Idle)
+            return;
+
+        if (state.editStatus == EditStatus::Initializing)
         {
-            if (state.shouldDiscardHeightmap)
-            {
-                // reset heightmap quad's texture back to heightmap texture resource
-                working.isFirstRender = true;
-                const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-                ctx.assets.graphics.setMaterialTexture(working.quadMaterialHandle, 0,
-                    ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
-                newState.shouldDiscardHeightmap = false;
-            }
-
-            EngineViewContext workingVctx = {
-                2048,                  // viewportWidth
-                2048,                  // viewportHeight
-                working.cameraEntityId // cameraEntityId
-            };
-            working.world.render(workingVctx);
-
-            newState.doesHeightmapRequireRedraw = false;
-            newState.wasHeightmapUpdated = true;
-
-            if (working.isFirstRender)
-            {
-                working.isFirstRender = false;
-                ctx.assets.graphics.setMaterialTexture(
-                    working.quadMaterialHandle, 0, staging.renderTextureHandle);
-            }
-
-            EngineViewContext stagingVctx = {
-                2048,                  // viewportWidth
-                2048,                  // viewportHeight
-                staging.cameraEntityId // cameraEntityId
-            };
-            staging.world.render(stagingVctx);
+            // reset heightmap quad's texture back to heightmap texture resource
+            const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
+            ctx.assets.graphics.setMaterialTexture(working.quadMaterialHandle, 0,
+                ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
+            newState.editStatus = EditStatus::Committing;
         }
-        else
+
+        EngineViewContext workingVctx = {
+            2048,                  // viewportWidth
+            2048,                  // viewportHeight
+            working.cameraEntityId // cameraEntityId
+        };
+        working.world.render(workingVctx);
+
+        if (state.editStatus == EditStatus::Initializing)
         {
-            newState.wasHeightmapUpdated = false;
+            // set heightmap quad's texture to the staging world's render target
+            ctx.assets.graphics.setMaterialTexture(
+                working.quadMaterialHandle, 0, staging.renderTextureHandle);
         }
+
+        EngineViewContext stagingVctx = {
+            2048,                  // viewportWidth
+            2048,                  // viewportHeight
+            staging.cameraEntityId // cameraEntityId
+        };
+        staging.world.render(stagingVctx);
     }
 
     int HeightmapCompositionWorld::createQuadMaterial(int textureHandle)

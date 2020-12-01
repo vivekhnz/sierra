@@ -104,14 +104,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             {
                 newState.brushQuadX = normalizedPickPoint.x;
                 newState.brushQuadY = normalizedPickPoint.y;
-                newState.doesHeightmapRequireRedraw = true;
                 isManipulatingTerrain = true;
             }
         }
 
-        // only update collider if terrain was modified in the previous frame but is no longer
-        // being manipulated this frame
-        if (state.wasHeightmapUpdated && !isManipulatingTerrain)
+        if (state.editStatus == EditStatus::Idle && isManipulatingTerrain)
+        {
+            newState.editStatus = EditStatus::Editing;
+        }
+        else if (state.editStatus == EditStatus::Editing && !isManipulatingTerrain)
+        {
+            newState.editStatus = EditStatus::Committing;
+        }
+        else if (state.editStatus == EditStatus::Committing)
         {
             // update terrain collider with composited heightmap texture
             void *textureData = malloc(2048 * 2048 * 2);
@@ -119,6 +124,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
                 2048, 2048, static_cast<const unsigned short *>(textureData));
             free(textureData);
+
+            newState.editStatus =
+                isManipulatingTerrain ? EditStatus::Editing : EditStatus::Idle;
         }
     }
 

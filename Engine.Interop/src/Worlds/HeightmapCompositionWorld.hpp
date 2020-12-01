@@ -17,9 +17,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int framebufferHandle;
             int brushQuad_meshRendererInstanceId;
             int quadMaterialHandle;
-            bool isFirstRender;
 
-            WorkingWorld(EngineContext &ctx) : world(ctx), isFirstRender(true)
+            WorkingWorld(EngineContext &ctx) : world(ctx)
             {
             }
         } working;
