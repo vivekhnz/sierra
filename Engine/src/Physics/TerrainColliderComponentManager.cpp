@@ -308,9 +308,12 @@ namespace Terrain { namespace Engine { namespace Physics {
         {
             for (int x = 0; x < sliceCount; x++)
             {
-                hit |= isRayIntersectingTerrainSlice(ray, colSlice * x,
-                    (colSlice * (x + 1)) - 1, rowSlice * y, (rowSlice * (y + 1)) - 1, offsetX,
-                    offsetY, columns, firstHeightIndex, patchSize, terrainHeight, hitDistance);
+                int xStart = x == 0 ? 0 : (colSlice * x) - 1;
+                int yStart = y == 0 ? 0 : (rowSlice * y) - 1;
+
+                hit |= isRayIntersectingTerrainSlice(ray, xStart, (colSlice * (x + 1)) - 1,
+                    yStart, (rowSlice * (y + 1)) - 1, offsetX, offsetY, columns,
+                    firstHeightIndex, patchSize, terrainHeight, hitDistance);
             }
         }
 
