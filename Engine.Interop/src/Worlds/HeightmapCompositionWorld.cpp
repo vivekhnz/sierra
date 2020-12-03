@@ -44,8 +44,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         quadIndices[4] = 2;
         quadIndices[5] = 3;
 
-        int quadMeshHandle =
-            ctx.assets.graphics.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
+        std::vector<Graphics::VertexAttribute> vertexAttributes(2);
+        vertexAttributes[0] = Graphics::VertexAttribute::forFloat(3, false);
+        vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
+
+        int quadMeshHandle = ctx.assets.graphics.createMesh(
+            GL_TRIANGLES, quadVertices, quadIndices, vertexAttributes);
 
         // setup worlds
         setupWorkingWorld(quadMeshHandle);

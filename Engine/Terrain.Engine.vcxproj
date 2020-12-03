@@ -61,6 +61,7 @@
     <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp" />
     <ClInclude Include="src\Graphics\Renderer.hpp" />
     <ClInclude Include="src\Graphics\UniformValue.hpp" />
+    <ClInclude Include="src\Graphics\VertexAttribute.hpp" />
     <ClInclude Include="src\Graphics\Window.hpp" />
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />

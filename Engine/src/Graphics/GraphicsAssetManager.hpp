@@ -5,6 +5,7 @@
 
 #include "Renderer.hpp"
 #include "../Resources/MaterialResource.hpp"
+#include "VertexAttribute.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT GraphicsAssetManager
@@ -69,7 +70,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int createMesh(unsigned int primitiveType,
             const std::vector<float> &vertices,
-            const std::vector<unsigned int> &indices);
+            const std::vector<unsigned int> &indices,
+            const std::vector<Graphics::VertexAttribute> &vertexAttributes);
         int &getMeshVertexBufferHandle(int handle);
         int &getMeshVertexArrayHandle(int handle);
         int &getMeshElementCount(int handle);

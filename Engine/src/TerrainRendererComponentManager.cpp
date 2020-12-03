@@ -72,7 +72,13 @@ namespace Terrain { namespace Engine {
                 indices[elemIndex + 3] = vertIndex + 1;
             }
         }
-        int meshHandle = graphicsAssets.createMesh(GL_PATCHES, vertices, indices);
+
+        std::vector<Graphics::VertexAttribute> vertexAttributes(2);
+        vertexAttributes[0] = Graphics::VertexAttribute::forFloat(3, false);
+        vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
+
+        int meshHandle =
+            graphicsAssets.createMesh(GL_PATCHES, vertices, indices, vertexAttributes);
         int vertexBufferHandle = graphicsAssets.getMeshVertexBufferHandle(meshHandle);
 
         data.entityId.push_back(entityId);

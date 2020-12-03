@@ -22,31 +22,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 continue;
 
             // setup quad
-            std::vector<float> quadVertices(20);
-
+            std::vector<float> quadVertices(8);
             quadVertices[0] = -1.0f;
             quadVertices[1] = -1.0f;
-            quadVertices[2] = 0.0f;
-            quadVertices[3] = 0.0f;
-            quadVertices[4] = 0.0f;
-
+            quadVertices[2] = 1.0f;
+            quadVertices[3] = -1.0f;
+            quadVertices[4] = 1.0f;
             quadVertices[5] = 1.0f;
             quadVertices[6] = -1.0f;
-            quadVertices[7] = 0.0f;
-            quadVertices[8] = 1.0f;
-            quadVertices[9] = 0.0f;
-
-            quadVertices[10] = 1.0f;
-            quadVertices[11] = 1.0f;
-            quadVertices[12] = 0.0f;
-            quadVertices[13] = 1.0f;
-            quadVertices[14] = 1.0f;
-
-            quadVertices[15] = -1.0f;
-            quadVertices[16] = 1.0f;
-            quadVertices[17] = 0.0f;
-            quadVertices[18] = 0.0f;
-            quadVertices[19] = 1.0f;
+            quadVertices[7] = 1.0f;
 
             std::vector<unsigned int> quadIndices(6);
             quadIndices[0] = 0;
@@ -56,8 +40,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             quadIndices[4] = 2;
             quadIndices[5] = 3;
 
-            quadMeshHandle =
-                graphicsAssets.createMesh(GL_TRIANGLES, quadVertices, quadIndices);
+            std::vector<VertexAttribute> vertexAttributes(1);
+            vertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
+
+            quadMeshHandle = graphicsAssets.createMesh(
+                GL_TRIANGLES, quadVertices, quadIndices, vertexAttributes);
 
             break;
         }

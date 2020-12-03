@@ -128,7 +128,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     int GraphicsAssetManager::createMesh(unsigned int primitiveType,
         const std::vector<float> &vertices,
-        const std::vector<unsigned int> &indices)
+        const std::vector<unsigned int> &indices,
+        const std::vector<Graphics::VertexAttribute> &vertexAttributes)
     {
         // create renderer resources
         int vertexBufferHandle = renderer.createVertexBuffer(GL_STATIC_DRAW);
@@ -141,16 +142,31 @@ namespace Terrain { namespace Engine { namespace Graphics {
         renderer.updateElementBuffer(
             elementBufferHandle, indices.size() * sizeof(unsigned int), indices.data());
 
+        // calculate VAO stride
+        int vertexAttributeCount = vertexAttributes.size();
+        int stride = 0;
+        for (int i = 0; i < vertexAttributeCount; i++)
+        {
+            const VertexAttribute &attr = vertexAttributes[i];
+            stride += attr.count * attr.typeSize;
+        }
+
         // configure VAO
         renderer.bindVertexArray(vertexArrayHandle);
         glBindBuffer(GL_ARRAY_BUFFER, renderer.getVertexBufferId(vertexBufferHandle));
         glBindBuffer(
             GL_ELEMENT_ARRAY_BUFFER, renderer.getElementBufferId(elementBufferHandle));
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)0);
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(
-            1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void *)(3 * sizeof(float)));
-        glEnableVertexAttribArray(1);
+
+        int offset = 0;
+        for (int i = 0; i < vertexAttributeCount; i++)
+        {
+            const VertexAttribute &attr = vertexAttributes[i];
+            glVertexAttribPointer(
+                i, attr.count, attr.type, attr.isNormalized, stride, (void *)offset);
+            glEnableVertexAttribArray(i);
+            offset += attr.count * attr.typeSize;
+        }
+
         glBindVertexArray(0);
 
         // create component data

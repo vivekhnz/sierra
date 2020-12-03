@@ -171,6 +171,9 @@
     <ClInclude Include="src\Graphics\DebugUIRenderer.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
+    <ClInclude Include="src\Graphics\VertexAttribute.hpp">
+      <Filter>src\Graphics</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">
