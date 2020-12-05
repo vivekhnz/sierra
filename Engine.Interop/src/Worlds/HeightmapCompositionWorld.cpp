@@ -199,15 +199,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // update brush quad instance buffer
         if (state.editStatus == EditStatus::Editing)
         {
-            int idx = working.brushInstanceCount * 2;
-            working.brushQuad_instanceBufferData[idx] = state.currentBrushPos.x;
-            working.brushQuad_instanceBufferData[idx + 1] = state.currentBrushPos.y;
+            if (working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
+            {
+                int idx = working.brushInstanceCount * 2;
+                working.brushQuad_instanceBufferData[idx] = state.currentBrushPos.x;
+                working.brushQuad_instanceBufferData[idx + 1] = state.currentBrushPos.y;
 
-            ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
-                WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-                working.brushQuad_instanceBufferData);
+                ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
+                    WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+                    working.brushQuad_instanceBufferData);
 
-            working.brushInstanceCount++;
+                working.brushInstanceCount++;
+            }
         }
         else
         {
