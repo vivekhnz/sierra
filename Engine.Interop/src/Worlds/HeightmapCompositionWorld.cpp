@@ -197,16 +197,24 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         float deltaTime, const EditorState &state, EditorState &newState)
     {
         // update brush quad instance buffer
-        working.brushQuad_instanceBufferData[0] = state.brushQuadX;
-        working.brushQuad_instanceBufferData[1] = state.brushQuadY;
+        if (state.editStatus == EditStatus::Editing)
+        {
+            int idx = working.brushInstanceCount * 2;
+            working.brushQuad_instanceBufferData[idx] = state.currentBrushPos.x;
+            working.brushQuad_instanceBufferData[idx + 1] = state.currentBrushPos.y;
 
-        ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
-            WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-            working.brushQuad_instanceBufferData);
+            ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
+                WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+                working.brushQuad_instanceBufferData);
 
-        bool isBrushActive = state.editStatus == EditStatus::Editing;
+            working.brushInstanceCount++;
+        }
+        else
+        {
+            working.brushInstanceCount = 0;
+        }
         working.world.componentManagers.meshRenderer.setInstanceCount(
-            working.brushQuad_meshRendererInstanceId, isBrushActive ? 1 : 0);
+            working.brushQuad_meshRendererInstanceId, working.brushInstanceCount);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);
@@ -217,6 +225,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         if (state.editStatus == EditStatus::Idle)
             return;
+
+        if (state.editStatus == EditStatus::Committing)
+        {
+            EngineViewContext stagingVctx = {
+                2048,                  // viewportWidth
+                2048,                  // viewportHeight
+                staging.cameraEntityId // cameraEntityId
+            };
+            staging.world.render(stagingVctx);
+        }
 
         if (state.editStatus == EditStatus::Initializing)
         {
@@ -240,13 +258,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             ctx.assets.graphics.setMaterialTexture(
                 working.quadMaterialHandle, 0, staging.renderTextureHandle);
         }
-
-        EngineViewContext stagingVctx = {
-            2048,                  // viewportWidth
-            2048,                  // viewportHeight
-            staging.cameraEntityId // cameraEntityId
-        };
-        staging.world.render(stagingVctx);
     }
 
     int HeightmapCompositionWorld::createQuadMaterial(int textureHandle)

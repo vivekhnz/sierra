@@ -58,7 +58,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         int getCompositedTextureHandle() const
         {
-            return staging.renderTextureHandle;
+            return working.renderTextureHandle;
         }
     };
 }}}}

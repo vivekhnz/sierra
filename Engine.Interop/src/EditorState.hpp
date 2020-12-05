@@ -1,5 +1,7 @@
 #pragma once
 
+#include <glm/glm.hpp>
+
 namespace Terrain { namespace Engine { namespace Interop {
 public
     enum class EditStatus : int
@@ -13,7 +15,6 @@ public
     struct EditorState
     {
         EditStatus editStatus;
-        float brushQuadX;
-        float brushQuadY;
+        glm::vec2 currentBrushPos;
     };
 }}}

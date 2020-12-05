@@ -102,8 +102,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             if (mouseState.isLeftMouseButtonDown)
             {
-                newState.brushQuadX = normalizedPickPoint.x;
-                newState.brushQuadY = normalizedPickPoint.y;
+                newState.currentBrushPos = normalizedPickPoint;
                 isManipulatingTerrain = true;
             }
         }
