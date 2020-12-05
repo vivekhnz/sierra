@@ -94,23 +94,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // create brush quad mesh
         std::vector<float> brushQuadVertices(16);
 
-        brushQuadVertices[0] = 0.0f;
-        brushQuadVertices[1] = 0.0f;
+        brushQuadVertices[0] = -0.5f;
+        brushQuadVertices[1] = -0.5f;
         brushQuadVertices[2] = 0.0f;
         brushQuadVertices[3] = 0.0f;
 
-        brushQuadVertices[4] = 1.0f;
-        brushQuadVertices[5] = 0.0f;
+        brushQuadVertices[4] = 0.5f;
+        brushQuadVertices[5] = -0.5f;
         brushQuadVertices[6] = 1.0f;
         brushQuadVertices[7] = 0.0f;
 
-        brushQuadVertices[8] = 1.0f;
-        brushQuadVertices[9] = 1.0f;
+        brushQuadVertices[8] = 0.5f;
+        brushQuadVertices[9] = 0.5f;
         brushQuadVertices[10] = 1.0f;
         brushQuadVertices[11] = 1.0f;
 
-        brushQuadVertices[12] = 0.0f;
-        brushQuadVertices[13] = 1.0f;
+        brushQuadVertices[12] = -0.5f;
+        brushQuadVertices[13] = 0.5f;
         brushQuadVertices[14] = 0.0f;
         brushQuadVertices[15] = 1.0f;
 
@@ -122,30 +122,42 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         brushQuadIndices[4] = 2;
         brushQuadIndices[5] = 3;
 
-        std::vector<Graphics::VertexAttribute> vertexAttributes(2);
-        vertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
-        vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
+        std::vector<Graphics::VertexAttribute> meshVertexAttributes(2);
+        meshVertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
+        meshVertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
 
-        std::vector<Graphics::VertexBufferDescription> brushQuadVertexBuffers(1);
+        std::vector<Graphics::VertexAttribute> instanceVertexAttributes(1);
+        instanceVertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
+
+        std::vector<Graphics::VertexBufferDescription> brushQuadVertexBuffers(2);
         brushQuadVertexBuffers[0] = {
             brushQuadVertices.data(),                        // data
             (int)(brushQuadVertices.size() * sizeof(float)), // size
-            vertexAttributes.data(),                         // attributes
-            (int)vertexAttributes.size(),                    // attributeCount
+            meshVertexAttributes.data(),                     // attributes
+            (int)meshVertexAttributes.size(),                // attributeCount
             false                                            // isPerInstance
+        };
+        brushQuadVertexBuffers[1] = {
+            working.brushQuad_instanceBufferData,          // data
+            WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE, // size
+            instanceVertexAttributes.data(),               // attributes
+            (int)instanceVertexAttributes.size(),          // attributeCount
+            true                                           // isPerInstance
         };
         int brushQuadMeshHandle = ctx.assets.graphics.createMesh(
             GL_TRIANGLES, brushQuadVertexBuffers, brushQuadIndices);
+        working.brushQuad_instanceBufferHandle =
+            ctx.assets.graphics.getMeshVertexBufferHandle(brushQuadMeshHandle, 1);
+        working.brushInstanceCount = 0;
 
         // setup brush quad
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
         std::vector<std::string> brushQuad_uniformNames(1);
-        brushQuad_uniformNames[0] = "instance_transform";
+        brushQuad_uniformNames[0] = "brushScale";
 
         std::vector<Graphics::UniformValue> brushQuad_uniformValues(1);
-        brushQuad_uniformValues[0] =
-            Graphics::UniformValue::forMatrix4x4(glm::identity<glm::mat4>());
+        brushQuad_uniformValues[0] = Graphics::UniformValue::forFloat(128 / 2048.0f);
 
         int brushQuad_entityId = ctx.entities.create();
         working.brushQuad_meshRendererInstanceId =
@@ -184,14 +196,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::update(
         float deltaTime, const EditorState &state, EditorState &newState)
     {
-        float scale = 128 / 2048.0f;
-        glm::mat4 brushTransform = glm::identity<glm::mat4>();
-        brushTransform = glm::translate(brushTransform,
-            glm::vec3(
-                (scale * -0.5f) + state.brushQuadX, (scale * -0.5f) + state.brushQuadY, 0.0f));
-        brushTransform = glm::scale(brushTransform, glm::vec3(scale, scale, scale));
-        working.world.componentManagers.meshRenderer.setMaterialUniformMatrix4x4(
-            working.brushQuad_meshRendererInstanceId, "instance_transform", brushTransform);
+        // update brush quad instance buffer
+        working.brushQuad_instanceBufferData[0] = state.brushQuadX;
+        working.brushQuad_instanceBufferData[1] = state.brushQuadY;
+
+        ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
+            WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+            working.brushQuad_instanceBufferData);
 
         bool isBrushActive = state.editStatus == EditStatus::Editing;
         working.world.componentManagers.meshRenderer.setInstanceCount(

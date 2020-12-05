@@ -11,12 +11,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         struct WorkingWorld
         {
+            static const int MAX_BRUSH_QUADS = 1024;
+            static const int BRUSH_QUAD_INSTANCE_BUFFER_STRIDE = 2 * sizeof(float);
+            static const int BRUSH_QUAD_INSTANCE_BUFFER_SIZE =
+                MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE;
+
             Engine::World world;
             int cameraEntityId;
             int renderTextureHandle;
             int framebufferHandle;
             int brushQuad_meshRendererInstanceId;
             int quadMaterialHandle;
+
+            int brushQuad_instanceBufferHandle;
+            float brushQuad_instanceBufferData[MAX_BRUSH_QUADS * 2];
+            int brushInstanceCount;
 
             WorkingWorld(EngineContext &ctx) : world(ctx)
             {
