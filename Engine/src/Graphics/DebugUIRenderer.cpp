@@ -32,6 +32,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             quadVertices[6] = -1.0f;
             quadVertices[7] = 1.0f;
 
+            std::vector<VertexAttribute> quadVertexAttributes(1);
+            quadVertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
+
             std::vector<unsigned int> quadIndices(6);
             quadIndices[0] = 0;
             quadIndices[1] = 1;
@@ -40,11 +43,31 @@ namespace Terrain { namespace Engine { namespace Graphics {
             quadIndices[4] = 2;
             quadIndices[5] = 3;
 
-            std::vector<VertexAttribute> vertexAttributes(1);
-            vertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
+            // setup instance buffer
+            std::vector<VertexAttribute> instanceVertexAttributes(1);
+            instanceVertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
 
-            quadMeshHandle = graphicsAssets.createMesh(
-                GL_TRIANGLES, quadVertices, quadIndices, vertexAttributes);
+            // setup vertex buffers
+            std::vector<VertexBufferDescription> vertexBuffers(2);
+            vertexBuffers[0] = {
+                quadVertices.data(),                        // data
+                (int)(quadVertices.size() * sizeof(float)), // size
+                quadVertexAttributes.data(),                // attributes
+                (int)quadVertexAttributes.size(),           // attributeCount
+                false                                       // isPerInstance
+            };
+            vertexBuffers[1] = {
+                points.instanceBufferData,            // data
+                Points::SIZE,                         // size
+                instanceVertexAttributes.data(),      // attributes
+                (int)instanceVertexAttributes.size(), // attributeCount
+                true                                  // isPerInstance
+            };
+
+            quadMeshHandle =
+                graphicsAssets.createMesh(GL_TRIANGLES, vertexBuffers, quadIndices);
+            points.instanceBufferHandle =
+                graphicsAssets.getMeshVertexBufferHandle(quadMeshHandle, 1);
 
             break;
         }
@@ -52,21 +75,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void DebugUIRenderer::drawPoint(float ndc_x, float ndc_y)
     {
-        glm::vec3 pos = glm::vec3(ndc_x, ndc_y, 0.0f);
-        if (points.count == points.capacity)
-        {
-            points.capacity++;
-            points.position.push_back(pos);
-        }
-        else
-        {
-            points.position[points.count] = pos;
-        }
+        int idx = points.count * 2;
+        points.instanceBufferData[idx] = ndc_x;
+        points.instanceBufferData[idx + 1] = ndc_y;
         points.count++;
     }
 
     void DebugUIRenderer::render(EngineViewContext &vctx)
     {
+        // update point instance buffer
+        renderer.updateVertexBuffer(
+            points.instanceBufferHandle, Points::SIZE, points.instanceBufferData);
+
         // bind material data
         int &materialHandle = graphicsAssets.lookupMaterial(TerrainResources::Materials::UI);
         int &shaderProgramHandle =
@@ -78,28 +98,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
         unsigned int primitiveType = graphicsAssets.getMeshPrimitiveType(quadMeshHandle);
         renderer.bindVertexArray(graphicsAssets.getMeshVertexArrayHandle(quadMeshHandle));
 
+        // update point scale transform
         std::vector<std::string> uniformNames;
-        uniformNames.push_back("instance_transform");
+        uniformNames.push_back("transform");
 
+        std::vector<Graphics::UniformValue> uniformValues;
         const float POINT_SIZE = 3.0f;
         glm::vec3 pointScale =
             glm::vec3(POINT_SIZE / vctx.viewportWidth, POINT_SIZE / vctx.viewportHeight, 1.0f);
-        for (int i = 0; i < points.count; i++)
-        {
-            // calculate transform
-            glm::mat4 transform =
-                glm::translate(glm::identity<glm::mat4>(), points.position[i]);
-            transform = glm::scale(transform, pointScale);
+        uniformValues.push_back(Graphics::UniformValue::forMatrix4x4(
+            glm::scale(glm::identity<glm::mat4>(), pointScale)));
 
-            // set transform
-            std::vector<Graphics::UniformValue> uniformValues;
-            uniformValues.push_back(Graphics::UniformValue::forMatrix4x4(transform));
-            renderer.setShaderProgramUniforms(
-                shaderProgramHandle, 1, 0, uniformNames, uniformValues);
+        renderer.setShaderProgramUniforms(
+            shaderProgramHandle, 1, 0, uniformNames, uniformValues);
 
-            // draw mesh instance
-            glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
-        }
+        // draw mesh instances
+        glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, points.count);
 
         points.count = 0;
     }

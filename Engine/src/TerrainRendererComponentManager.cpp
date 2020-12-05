@@ -77,9 +77,17 @@ namespace Terrain { namespace Engine {
         vertexAttributes[0] = Graphics::VertexAttribute::forFloat(3, false);
         vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
 
-        int meshHandle =
-            graphicsAssets.createMesh(GL_PATCHES, vertices, indices, vertexAttributes);
-        int vertexBufferHandle = graphicsAssets.getMeshVertexBufferHandle(meshHandle);
+        std::vector<Graphics::VertexBufferDescription> vertexBuffers(1);
+        vertexBuffers[0] = {
+            vertices.data(),                        // data
+            (int)(vertices.size() * sizeof(float)), // size
+            vertexAttributes.data(),                // attributes
+            (int)vertexAttributes.size(),           // attributeCount
+            false                                   // isPerInstance
+        };
+
+        int meshHandle = graphicsAssets.createMesh(GL_PATCHES, vertexBuffers, indices);
+        int vertexBufferHandle = graphicsAssets.getMeshVertexBufferHandle(meshHandle, 0);
 
         data.entityId.push_back(entityId);
         data.heightmapTextureResourceId.push_back(heightmapTextureResourceId);

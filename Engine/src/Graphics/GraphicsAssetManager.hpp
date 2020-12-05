@@ -5,7 +5,7 @@
 
 #include "Renderer.hpp"
 #include "../Resources/MaterialResource.hpp"
-#include "VertexAttribute.hpp"
+#include "VertexBufferDescription.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT GraphicsAssetManager
@@ -36,7 +36,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Meshes
         {
             int count;
-            std::vector<int> vertexBufferHandle;
+            std::vector<int> firstVertexBufferHandle;
+            std::vector<int> vertexBufferHandles;
             std::vector<int> vertexArrayHandle;
             std::vector<int> elementCount;
             std::vector<unsigned int> primitiveType;
@@ -69,10 +70,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
 
         int createMesh(unsigned int primitiveType,
-            const std::vector<float> &vertices,
-            const std::vector<unsigned int> &indices,
-            const std::vector<Graphics::VertexAttribute> &vertexAttributes);
-        int &getMeshVertexBufferHandle(int handle);
+            const std::vector<Graphics::VertexBufferDescription> &vertexBuffers,
+            const std::vector<unsigned int> &indices);
+        int &getMeshVertexBufferHandle(int handle, int idx);
         int &getMeshVertexArrayHandle(int handle);
         int &getMeshElementCount(int handle);
         unsigned int &getMeshPrimitiveType(int handle);

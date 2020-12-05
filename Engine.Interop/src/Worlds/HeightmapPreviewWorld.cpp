@@ -46,8 +46,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         vertexAttributes[0] = Graphics::VertexAttribute::forFloat(3, false);
         vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
 
-        int quadMesh_meshHandle = ctx.assets.graphics.createMesh(
-            GL_TRIANGLES, quadVertices, quadIndices, vertexAttributes);
+        std::vector<Graphics::VertexBufferDescription> vertexBuffers(1);
+        vertexBuffers[0] = {
+            quadVertices.data(),                        // data
+            (int)(quadVertices.size() * sizeof(float)), // size
+            vertexAttributes.data(),                    // attributes
+            (int)vertexAttributes.size(),               // attributeCount
+            false                                       // isPerInstance
+        };
+
+        int quadMesh_meshHandle =
+            ctx.assets.graphics.createMesh(GL_TRIANGLES, vertexBuffers, quadIndices);
         int quadMaterialHandle = createQuadMaterial(heightmapTextureHandle);
 
         int heightmapQuad_entityId = ctx.entities.create();

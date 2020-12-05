@@ -127,59 +127,69 @@ namespace Terrain { namespace Engine { namespace Graphics {
     }
 
     int GraphicsAssetManager::createMesh(unsigned int primitiveType,
-        const std::vector<float> &vertices,
-        const std::vector<unsigned int> &indices,
-        const std::vector<Graphics::VertexAttribute> &vertexAttributes)
+        const std::vector<Graphics::VertexBufferDescription> &vertexBuffers,
+        const std::vector<unsigned int> &indices)
     {
-        // create renderer resources
-        int vertexBufferHandle = renderer.createVertexBuffer(GL_STATIC_DRAW);
+        // create element buffer
         int elementBufferHandle = renderer.createElementBuffer(GL_STATIC_DRAW);
-        int vertexArrayHandle = renderer.createVertexArray();
-
-        // fill buffers
-        renderer.updateVertexBuffer(
-            vertexBufferHandle, vertices.size() * sizeof(float), vertices.data());
         renderer.updateElementBuffer(
             elementBufferHandle, indices.size() * sizeof(unsigned int), indices.data());
 
-        // calculate VAO stride
-        int vertexAttributeCount = vertexAttributes.size();
-        int stride = 0;
-        for (int i = 0; i < vertexAttributeCount; i++)
-        {
-            const VertexAttribute &attr = vertexAttributes[i];
-            stride += attr.count * attr.typeSize;
-        }
-
-        // configure VAO
+        // create VAO
+        int vertexArrayHandle = renderer.createVertexArray();
         renderer.bindVertexArray(vertexArrayHandle);
-        glBindBuffer(GL_ARRAY_BUFFER, renderer.getVertexBufferId(vertexBufferHandle));
         glBindBuffer(
             GL_ELEMENT_ARRAY_BUFFER, renderer.getElementBufferId(elementBufferHandle));
+        meshes.firstVertexBufferHandle.push_back(meshes.vertexBufferHandles.size());
 
-        int offset = 0;
-        for (int i = 0; i < vertexAttributeCount; i++)
+        int attributeIdx = 0;
+        int vertexBufferCount = vertexBuffers.size();
+        for (int i = 0; i < vertexBufferCount; i++)
         {
-            const VertexAttribute &attr = vertexAttributes[i];
-            glVertexAttribPointer(
-                i, attr.count, attr.type, attr.isNormalized, stride, (void *)offset);
-            glEnableVertexAttribArray(i);
-            offset += attr.count * attr.typeSize;
+            const VertexBufferDescription &vertexBufferDesc = vertexBuffers[i];
+
+            // create vertex buffer
+            int vertexBufferHandle = renderer.createVertexBuffer(GL_STATIC_DRAW);
+            renderer.updateVertexBuffer(
+                vertexBufferHandle, vertexBufferDesc.size, vertexBufferDesc.data);
+            meshes.vertexBufferHandles.push_back(vertexBufferHandle);
+
+            // calculate stride
+            int stride = 0;
+            for (int j = 0; j < vertexBufferDesc.attributeCount; j++)
+            {
+                const VertexAttribute &attr = vertexBufferDesc.attributes[j];
+                stride += attr.count * attr.typeSize;
+            }
+
+            // bind vertex attributes
+            glBindBuffer(GL_ARRAY_BUFFER, renderer.getVertexBufferId(vertexBufferHandle));
+            int offset = 0;
+            int attributeDivisor = vertexBufferDesc.isPerInstance ? 1 : 0;
+            for (int j = 0; j < vertexBufferDesc.attributeCount; j++)
+            {
+                const VertexAttribute &attr = vertexBufferDesc.attributes[j];
+                glVertexAttribPointer(attributeIdx, attr.count, attr.type, attr.isNormalized,
+                    stride, (void *)offset);
+                glEnableVertexAttribArray(attributeIdx);
+                glVertexAttribDivisor(attributeIdx, attributeDivisor);
+                offset += attr.count * attr.typeSize;
+                attributeIdx++;
+            }
         }
 
         glBindVertexArray(0);
 
         // create component data
-        meshes.vertexBufferHandle.push_back(vertexBufferHandle);
         meshes.vertexArrayHandle.push_back(vertexArrayHandle);
         meshes.elementCount.push_back(indices.size());
         meshes.primitiveType.push_back(primitiveType);
         return meshes.count++;
     }
 
-    int &GraphicsAssetManager::getMeshVertexBufferHandle(int handle)
+    int &GraphicsAssetManager::getMeshVertexBufferHandle(int handle, int idx)
     {
-        return meshes.vertexBufferHandle[handle];
+        return meshes.vertexBufferHandles[meshes.firstVertexBufferHandle[handle] + idx];
     }
 
     int &GraphicsAssetManager::getMeshVertexArrayHandle(int handle)

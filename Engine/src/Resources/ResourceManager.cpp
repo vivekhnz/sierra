@@ -294,8 +294,8 @@ namespace Terrain { namespace Engine { namespace Resources {
             {TerrainResources::Shaders::UI_VERTEX,
                 TerrainResources::Shaders::UI_FRAGMENT}, // shaderResourceIds
             2,                                           // uniformCount
-            {18, 5},                                     // uniformNameLengths
-            "instance_transform"
+            {9, 5},                                      // uniformNameLengths
+            "transform"
             "color" // uniformNames
         });
 

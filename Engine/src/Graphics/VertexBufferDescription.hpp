@@ -1,5 +1,5 @@
-#ifndef GRAPHICS_VERTEXATTRIBUTE_HPP
-#define GRAPHICS_VERTEXATTRIBUTE_HPP
+#ifndef GRAPHICS_VERTEXBUFFERDESCRIPTION_HPP
+#define GRAPHICS_VERTEXBUFFERDESCRIPTION_HPP
 
 #include "../Common.hpp"
 
@@ -22,6 +22,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 sizeof(float) // typeSize
             };
         }
+    };
+
+    struct VertexBufferDescription
+    {
+        const void *data;
+        int size;
+        const VertexAttribute *attributes;
+        int attributeCount;
+        bool isPerInstance;
     };
 }}}
 

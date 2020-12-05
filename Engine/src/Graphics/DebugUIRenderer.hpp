@@ -18,11 +18,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         struct Points
         {
-            int count;
-            int capacity;
-            std::vector<glm::vec3> position;
+            static const int MAX_POINTS = 1024;
+            static const int STRIDE = 2 * sizeof(float);
+            static const int SIZE = MAX_POINTS * STRIDE;
 
-            Points() : count(0), capacity(0)
+            int instanceBufferHandle;
+            float instanceBufferData[MAX_POINTS * 2];
+
+            int count;
+
+            Points() : count(0)
             {
             }
         } points;
