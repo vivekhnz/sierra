@@ -91,6 +91,52 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             quadMeshHandle, working.quadMaterialHandle, std::vector<std::string>(),
             std::vector<Graphics::UniformValue>(), 1);
 
+        // create brush quad mesh
+        std::vector<float> brushQuadVertices(16);
+
+        brushQuadVertices[0] = 0.0f;
+        brushQuadVertices[1] = 0.0f;
+        brushQuadVertices[2] = 0.0f;
+        brushQuadVertices[3] = 0.0f;
+
+        brushQuadVertices[4] = 1.0f;
+        brushQuadVertices[5] = 0.0f;
+        brushQuadVertices[6] = 1.0f;
+        brushQuadVertices[7] = 0.0f;
+
+        brushQuadVertices[8] = 1.0f;
+        brushQuadVertices[9] = 1.0f;
+        brushQuadVertices[10] = 1.0f;
+        brushQuadVertices[11] = 1.0f;
+
+        brushQuadVertices[12] = 0.0f;
+        brushQuadVertices[13] = 1.0f;
+        brushQuadVertices[14] = 0.0f;
+        brushQuadVertices[15] = 1.0f;
+
+        std::vector<unsigned int> brushQuadIndices(6);
+        brushQuadIndices[0] = 0;
+        brushQuadIndices[1] = 1;
+        brushQuadIndices[2] = 2;
+        brushQuadIndices[3] = 0;
+        brushQuadIndices[4] = 2;
+        brushQuadIndices[5] = 3;
+
+        std::vector<Graphics::VertexAttribute> vertexAttributes(2);
+        vertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
+        vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
+
+        std::vector<Graphics::VertexBufferDescription> brushQuadVertexBuffers(1);
+        brushQuadVertexBuffers[0] = {
+            brushQuadVertices.data(),                        // data
+            (int)(brushQuadVertices.size() * sizeof(float)), // size
+            vertexAttributes.data(),                         // attributes
+            (int)vertexAttributes.size(),                    // attributeCount
+            false                                            // isPerInstance
+        };
+        int brushQuadMeshHandle = ctx.assets.graphics.createMesh(
+            GL_TRIANGLES, brushQuadVertexBuffers, brushQuadIndices);
+
         // setup brush quad
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
@@ -104,7 +150,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int brushQuad_entityId = ctx.entities.create();
         working.brushQuad_meshRendererInstanceId =
             working.world.componentManagers.meshRenderer.create(brushQuad_entityId,
-                quadMeshHandle, ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
+                brushQuadMeshHandle,
+                ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
                 brushQuad_uniformNames, brushQuad_uniformValues, 0);
     }
 
