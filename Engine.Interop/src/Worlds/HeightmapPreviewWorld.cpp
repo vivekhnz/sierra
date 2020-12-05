@@ -62,7 +62,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int heightmapQuad_entityId = ctx.entities.create();
         world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
             quadMesh_meshHandle, quadMaterialHandle, std::vector<std::string>(),
-            std::vector<Graphics::UniformValue>());
+            std::vector<Graphics::UniformValue>(), 1);
     }
 
     void HeightmapPreviewWorld::linkViewport(ViewportContext &vctx)

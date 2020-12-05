@@ -48,8 +48,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-        terrainMeshRendererInstanceId = world.componentManagers.meshRenderer.create(
-            entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues);
+        terrainMeshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
+            meshHandle, materialHandle, materialUniformNames, materialUniformValues, 1);
 
         terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);

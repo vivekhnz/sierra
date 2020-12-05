@@ -25,6 +25,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             std::vector<std::string> uniformNames;
             std::vector<UniformValue> uniformValues;
 
+            std::vector<int> instanceCount;
+
             ComponentData() : count(0)
             {
             }
@@ -42,7 +44,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int meshHandle,
             int materialHandle,
             std::vector<std::string> uniformNames,
-            std::vector<UniformValue> uniformValues);
+            std::vector<UniformValue> uniformValues,
+            int instanceCount);
 
         int lookup(int entityId) const
         {
@@ -54,6 +57,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void setMaterialUniformFloat(int i, std::string uniformName, float value);
         void setMaterialUniformVector2(int i, std::string uniformName, glm::vec2 value);
         void setMaterialUniformMatrix4x4(int i, std::string uniformName, glm::mat4 value);
+        void setInstanceCount(int i, int instanceCount);
     };
 }}}
 

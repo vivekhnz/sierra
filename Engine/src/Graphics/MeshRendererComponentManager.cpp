@@ -15,7 +15,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int meshHandle,
         int materialHandle,
         std::vector<std::string> uniformNames,
-        std::vector<UniformValue> uniformValues)
+        std::vector<UniformValue> uniformValues,
+        int instanceCount)
     {
         data.entityId.push_back(entityId);
         data.meshHandle.push_back(meshHandle);
@@ -28,6 +29,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             data.uniformNames.end(), uniformNames.begin(), uniformNames.end());
         data.uniformValues.insert(
             data.uniformValues.end(), uniformValues.begin(), uniformValues.end());
+
+        data.instanceCount.push_back(instanceCount);
 
         entityIdToInstanceId[entityId] = data.count;
         return data.count++;
@@ -54,8 +57,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             renderer.setShaderProgramUniforms(shaderProgramHandle, data.uniformCount[i],
                 data.firstUniformIndex[i], data.uniformNames, data.uniformValues);
 
-            // draw mesh instance
-            glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
+            // draw mesh instances
+            glDrawElementsInstanced(
+                primitiveType, elementCount, GL_UNSIGNED_INT, 0, data.instanceCount[i]);
         }
     }
 
@@ -110,5 +114,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 break;
             }
         }
+    }
+
+    void MeshRendererComponentManager::setInstanceCount(int i, int instanceCount)
+    {
+        data.instanceCount[i] = instanceCount;
     }
 }}}

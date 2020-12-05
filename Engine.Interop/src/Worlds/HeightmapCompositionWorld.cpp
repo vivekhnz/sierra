@@ -89,7 +89,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int heightmapQuad_entityId = ctx.entities.create();
         working.world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
             quadMeshHandle, working.quadMaterialHandle, std::vector<std::string>(),
-            std::vector<Graphics::UniformValue>());
+            std::vector<Graphics::UniformValue>(), 1);
 
         // setup brush quad
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
@@ -105,7 +105,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         working.brushQuad_meshRendererInstanceId =
             working.world.componentManagers.meshRenderer.create(brushQuad_entityId,
                 quadMeshHandle, ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH),
-                brushQuad_uniformNames, brushQuad_uniformValues);
+                brushQuad_uniformNames, brushQuad_uniformValues, 0);
     }
 
     void HeightmapCompositionWorld::setupStagingWorld(int quadMeshHandle)
@@ -131,7 +131,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int stagingQuad_entityId = ctx.entities.create();
         staging.world.componentManagers.meshRenderer.create(stagingQuad_entityId,
             quadMeshHandle, staging.quadMaterialHandle, std::vector<std::string>(),
-            std::vector<Graphics::UniformValue>());
+            std::vector<Graphics::UniformValue>(), 1);
     }
 
     void HeightmapCompositionWorld::update(
@@ -145,6 +145,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         brushTransform = glm::scale(brushTransform, glm::vec3(scale, scale, scale));
         working.world.componentManagers.meshRenderer.setMaterialUniformMatrix4x4(
             working.brushQuad_meshRendererInstanceId, "instance_transform", brushTransform);
+
+        bool isBrushActive = state.editStatus == EditStatus::Editing;
+        working.world.componentManagers.meshRenderer.setInstanceCount(
+            working.brushQuad_meshRendererInstanceId, isBrushActive ? 1 : 0);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);
