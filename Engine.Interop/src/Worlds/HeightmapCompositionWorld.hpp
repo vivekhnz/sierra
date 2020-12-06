@@ -11,7 +11,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         struct WorkingWorld
         {
-            static const int MAX_BRUSH_QUADS = 1024;
+            static const int MAX_BRUSH_QUADS = 2048;
             static const int BRUSH_QUAD_INSTANCE_BUFFER_STRIDE = 2 * sizeof(float);
             static const int BRUSH_QUAD_INSTANCE_BUFFER_SIZE =
                 MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE;
@@ -48,6 +48,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int createQuadMaterial(int textureHandle);
         void setupWorkingWorld(int quadMeshHandle);
         void setupStagingWorld(int quadMeshHandle);
+        void addBrushInstance(glm::vec2 pos);
 
     public:
         HeightmapCompositionWorld(EngineContext &ctx);

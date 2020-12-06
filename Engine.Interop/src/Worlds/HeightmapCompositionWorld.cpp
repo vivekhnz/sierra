@@ -196,31 +196,60 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::update(
         float deltaTime, const EditorState &state, EditorState &newState)
     {
-        // update brush quad instance buffer
-        if (state.editStatus == EditStatus::Editing)
-        {
-            if (working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
-            {
-                int idx = working.brushInstanceCount * 2;
-                working.brushQuad_instanceBufferData[idx] = state.currentBrushPos.x;
-                working.brushQuad_instanceBufferData[idx + 1] = state.currentBrushPos.y;
+        const float BRUSH_INSTANCE_SPACING = 0.01f;
 
-                ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
-                    WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-                    working.brushQuad_instanceBufferData);
-
-                working.brushInstanceCount++;
-            }
-        }
-        else
+        if (state.editStatus != EditStatus::Editing)
         {
+            // don't draw any brush instances if we are not editing the heightmap
             working.brushInstanceCount = 0;
+        }
+        else if (working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
+        {
+            int idx = working.brushInstanceCount * 2;
+
+            if (working.brushInstanceCount == 0)
+            {
+                addBrushInstance(state.currentBrushPos);
+            }
+            else
+            {
+                int prevIdx = (working.brushInstanceCount - 1) * 2;
+                glm::vec2 prevInstancePos =
+                    glm::vec2(working.brushQuad_instanceBufferData[prevIdx],
+                        working.brushQuad_instanceBufferData[prevIdx + 1]);
+
+                glm::vec2 diff = state.currentBrushPos - prevInstancePos;
+                glm::vec2 direction = glm::normalize(diff);
+                float distance = glm::length(diff);
+
+                while (distance > BRUSH_INSTANCE_SPACING
+                    && working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
+                {
+                    prevInstancePos += direction * BRUSH_INSTANCE_SPACING;
+                    addBrushInstance(prevInstancePos);
+
+                    distance -= BRUSH_INSTANCE_SPACING;
+                }
+            }
+
+            // update brush quad instance buffer
+            ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
+                WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+                working.brushQuad_instanceBufferData);
         }
         working.world.componentManagers.meshRenderer.setInstanceCount(
             working.brushQuad_meshRendererInstanceId, working.brushInstanceCount);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);
+    }
+
+    void HeightmapCompositionWorld::addBrushInstance(glm::vec2 pos)
+    {
+        int idx = working.brushInstanceCount * 2;
+        working.brushQuad_instanceBufferData[idx] = pos.x;
+        working.brushQuad_instanceBufferData[idx + 1] = pos.y;
+        working.brushInstanceCount++;
     }
 
     void HeightmapCompositionWorld::compositeHeightmap(

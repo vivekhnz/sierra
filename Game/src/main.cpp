@@ -43,7 +43,7 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
     int &materialHandle = ctx.assets.graphics.lookupMaterial(
         Terrain::Engine::TerrainResources::Materials::TERRAIN_TEXTURED);
     world.componentManagers.meshRenderer.create(
-        entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues);
+        entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues, 1);
 
     return terrainRendererInstanceId;
 }
