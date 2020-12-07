@@ -206,10 +206,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         else if (working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
         {
             int idx = working.brushInstanceCount * 2;
+            bool wasInstanceAdded = false;
 
             if (working.brushInstanceCount == 0)
             {
                 addBrushInstance(state.currentBrushPos);
+                wasInstanceAdded = true;
             }
             else
             {
@@ -227,15 +229,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 {
                     prevInstancePos += direction * BRUSH_INSTANCE_SPACING;
                     addBrushInstance(prevInstancePos);
+                    wasInstanceAdded = true;
 
                     distance -= BRUSH_INSTANCE_SPACING;
                 }
             }
 
             // update brush quad instance buffer
-            ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
-                WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-                working.brushQuad_instanceBufferData);
+            if (wasInstanceAdded)
+            {
+                ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
+                    WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+                    working.brushQuad_instanceBufferData);
+            }
         }
         working.world.componentManagers.meshRenderer.setInstanceCount(
             working.brushQuad_meshRendererInstanceId, working.brushInstanceCount);

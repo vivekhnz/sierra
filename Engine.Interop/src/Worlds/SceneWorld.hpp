@@ -15,8 +15,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int terrainColliderInstanceId;
         std::vector<int> orbitCameraIds;
 
+        void *heightmapTextureDataTempBuffer;
+
     public:
         SceneWorld(EngineContext &ctx);
+        ~SceneWorld();
 
         void initialize(int heightmapTextureHandle);
         void linkViewport(ViewportContext &vctx);

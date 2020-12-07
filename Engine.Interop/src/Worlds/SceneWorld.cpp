@@ -3,6 +3,13 @@
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     SceneWorld::SceneWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
     {
+        // allocate a buffer that heightmap texture data can be copied into
+        heightmapTextureDataTempBuffer = malloc(2048 * 2048 * 2);
+    }
+
+    SceneWorld::~SceneWorld()
+    {
+        free(heightmapTextureDataTempBuffer);
     }
 
     void SceneWorld::initialize(int heightmapTextureHandle)
@@ -117,15 +124,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         else if (state.editStatus == EditStatus::Committing)
         {
-            // update terrain collider with composited heightmap texture
-            void *textureData = malloc(2048 * 2048 * 2);
-            ctx.renderer.getTexturePixels(heightmapTextureHandle, textureData);
-            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
-                2048, 2048, static_cast<const unsigned short *>(textureData));
-            free(textureData);
-
             newState.editStatus =
                 isManipulatingTerrain ? EditStatus::Editing : EditStatus::Idle;
+        }
+
+        if (state.editStatus == EditStatus::Editing
+            || state.editStatus == EditStatus::Committing)
+        {
+            // update terrain collider with composited heightmap texture
+            ctx.renderer.getTexturePixels(
+                heightmapTextureHandle, heightmapTextureDataTempBuffer);
+            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
+                2048, 2048,
+                static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
         }
     }
 
