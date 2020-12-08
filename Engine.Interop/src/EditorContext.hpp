@@ -17,6 +17,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         {
             int count;
             std::vector<IO::MouseInputState> mouse;
+            std::vector<IO::KeyboardInputState> keyboard;
 
             InputState() : count(0)
             {
@@ -28,8 +29,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         // input
         void updateInputState();
-        bool isKeyPressed(int key) const;
         IO::MouseInputState getMouseState(int inputControllerId) const;
+        IO::KeyboardInputState getKeyboardState(int inputControllerId) const;
         void setMouseCaptureMode(bool shouldCaptureMouse);
 
         int addInputController();

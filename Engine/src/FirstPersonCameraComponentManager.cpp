@@ -39,6 +39,8 @@ namespace Terrain { namespace Engine {
                 continue;
 
             IO::MouseInputState mouseState = input.getMouseState(inputControllerId);
+            IO::KeyboardInputState keyboardState = input.getKeyboardState(inputControllerId);
+
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
             glm::vec3 &pos = data.position[i];
@@ -52,19 +54,19 @@ namespace Terrain { namespace Engine {
 
             // move camera on XZ axis using WASD keys
             glm::vec3 moveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
-            if (input.isKeyPressed(GLFW_KEY_A))
+            if (keyboardState.a)
             {
                 pos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
             }
-            if (input.isKeyPressed(GLFW_KEY_D))
+            if (keyboardState.d)
             {
                 pos += glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
             }
-            if (input.isKeyPressed(GLFW_KEY_W))
+            if (keyboardState.w)
             {
                 pos += moveDir * moveSpeed;
             }
-            if (input.isKeyPressed(GLFW_KEY_S))
+            if (keyboardState.s)
             {
                 pos -= moveDir * moveSpeed;
             }

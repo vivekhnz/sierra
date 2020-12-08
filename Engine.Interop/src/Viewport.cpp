@@ -111,7 +111,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnGotFocus(RoutedEventArgs ^ args)
     {
-        EngineInterop::SetViewportContextFocusState(vctx, false);
+        EngineInterop::SetViewportContextFocusState(vctx, true);
         focusBorder->BorderBrush = focusedBrush;
     }
 

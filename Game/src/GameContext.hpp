@@ -21,6 +21,7 @@ class GameContext : public Terrain::Engine::AppContext
     {
         int count;
         std::vector<Terrain::Engine::IO::MouseInputState> mouse;
+        std::vector<Terrain::Engine::IO::KeyboardInputState> keyboard;
 
         InputState() : count(0)
         {
@@ -31,23 +32,17 @@ class GameContext : public Terrain::Engine::AppContext
 
 public:
     GameContext(Terrain::Engine::Graphics::Window &window);
-    GameContext(const GameContext &that) = delete;
-    GameContext &operator=(const GameContext &that) = delete;
-    GameContext(GameContext &&) = delete;
-    GameContext &operator=(GameContext &&) = delete;
 
     // input
     void updateInputState();
-    bool isKeyPressed(int key) const;
     Terrain::Engine::IO::MouseInputState getMouseState(int inputControllerId) const;
+    Terrain::Engine::IO::KeyboardInputState getKeyboardState(int inputControllerId) const;
     void setMouseCaptureMode(bool shouldCaptureMouse);
 
     // game-specific
     Terrain::Engine::EngineViewContext getViewContext() const;
     void setCameraEntityId(int cameraEntityId);
     void render();
-
-    ~GameContext();
 };
 
 #endif

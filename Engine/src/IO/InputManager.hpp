@@ -2,42 +2,32 @@
 #define IO_INPUTMANAGER_HPP
 
 #include "../Common.hpp"
-#include <map>
-#include <functional>
 #include "../AppContext.hpp"
 #include "MouseInputState.hpp"
+#include "KeyboardInputState.hpp"
 
 namespace Terrain { namespace Engine { namespace IO {
     class EXPORT InputManager
     {
         AppContext &ctx;
-        std::map<int, std::tuple<bool, bool>> keyState;
-        std::map<int, std::function<void()>> keyCommands;
 
         bool shouldCaptureMouse;
         bool wasMouseCaptured;
 
     public:
         InputManager(AppContext &ctx);
-        InputManager(const InputManager &that) = delete;
-        InputManager &operator=(const InputManager &that) = delete;
-        InputManager(InputManager &&) = delete;
-        InputManager &operator=(InputManager &&) = delete;
-
-        bool isNewKeyPress(int key);
-        bool isKeyPressed(int key) const;
 
         MouseInputState getMouseState(int inputControllerIndex) const
         {
             return ctx.getMouseState(inputControllerIndex);
         }
+        KeyboardInputState getKeyboardState(int inputControllerIndex) const
+        {
+            return ctx.getKeyboardState(inputControllerIndex);
+        }
 
-        void listenForKey(int key);
-        void mapCommand(int key, std::function<void()> command);
         void captureMouse();
         void update();
-
-        ~InputManager();
     };
 }}}
 

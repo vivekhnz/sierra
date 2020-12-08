@@ -12,17 +12,9 @@ namespace Terrain { namespace Engine { namespace IO {
         float cursorOffsetY;
         float scrollOffsetX;
         float scrollOffsetY;
-        bool isLeftMouseButtonDown;
-        bool isMiddleMouseButtonDown;
-        bool isRightMouseButtonDown;
-
-        MouseInputState() :
-            normalizedCursorX(0.0f), normalizedCursorY(0.0f), cursorOffsetX(0.0f),
-            cursorOffsetY(0.0f), scrollOffsetX(0.0f), scrollOffsetY(0.0f),
-            isLeftMouseButtonDown(false), isMiddleMouseButtonDown(false),
-            isRightMouseButtonDown(false)
-        {
-        }
+        bool isLeftMouseButtonDown : 1;
+        bool isMiddleMouseButtonDown : 1;
+        bool isRightMouseButtonDown : 1;
     };
 }}}
 

@@ -100,20 +100,8 @@ int main()
         float lastTickTime = glfw.getCurrentTime();
         float deltaTime = 0;
 
-        struct KeyState
-        {
-            bool C = false;
-            bool L = false;
-            bool T = false;
-            bool N = false;
-            bool B = false;
-            bool O = false;
-            bool R = false;
-            bool H = false;
-            bool Z = false;
-        };
-        KeyState isKeyDown;
-        KeyState wasKeyDown;
+        Terrain::Engine::IO::KeyboardInputState isKeyDown = {};
+        Terrain::Engine::IO::KeyboardInputState wasKeyDown = {};
 
         bool isOrbitCameraMode = false;
 
@@ -130,22 +118,15 @@ int main()
         {
             // query input
             ctx.input.update();
-            if (ctx.input.isKeyPressed(GLFW_KEY_ESCAPE))
+            isKeyDown = ctx.input.getKeyboardState(0);
+
+            if (isKeyDown.escape)
             {
                 window.close();
             }
-            isKeyDown.C = ctx.input.isKeyPressed(GLFW_KEY_C);
-            isKeyDown.L = ctx.input.isKeyPressed(GLFW_KEY_L);
-            isKeyDown.T = ctx.input.isKeyPressed(GLFW_KEY_T);
-            isKeyDown.N = ctx.input.isKeyPressed(GLFW_KEY_N);
-            isKeyDown.B = ctx.input.isKeyPressed(GLFW_KEY_B);
-            isKeyDown.O = ctx.input.isKeyPressed(GLFW_KEY_O);
-            isKeyDown.R = ctx.input.isKeyPressed(GLFW_KEY_R);
-            isKeyDown.H = ctx.input.isKeyPressed(GLFW_KEY_H);
-            isKeyDown.Z = ctx.input.isKeyPressed(GLFW_KEY_Z);
 
             // swap camera mode when C key is pressed
-            if (isKeyDown.C && !wasKeyDown.C)
+            if (isKeyDown.c && !wasKeyDown.c)
             {
                 isOrbitCameraMode = !isOrbitCameraMode;
                 world.componentManagers.firstPersonCamera.setInputControllerId(
@@ -155,49 +136,49 @@ int main()
             }
 
             // toggle lighting when L key is pressed
-            if (isKeyDown.L && !wasKeyDown.L)
+            if (isKeyDown.l && !wasKeyDown.l)
             {
                 isLightingEnabled = !isLightingEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle albedo texture when T key is pressed
-            if (isKeyDown.T && !wasKeyDown.T)
+            if (isKeyDown.t && !wasKeyDown.t)
             {
                 isAlbedoEnabled = !isAlbedoEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle normal map texture when N key is pressed
-            if (isKeyDown.N && !wasKeyDown.N)
+            if (isKeyDown.n && !wasKeyDown.n)
             {
                 isNormalMapEnabled = !isNormalMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle displacement map texture when B key is pressed
-            if (isKeyDown.B && !wasKeyDown.B)
+            if (isKeyDown.b && !wasKeyDown.b)
             {
                 isDisplacementMapEnabled = !isDisplacementMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle ambient occlusion texture when O key is pressed
-            if (isKeyDown.O && !wasKeyDown.O)
+            if (isKeyDown.o && !wasKeyDown.o)
             {
                 isAOMapEnabled = !isAOMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle roughness texture when R key is pressed
-            if (isKeyDown.R && !wasKeyDown.R)
+            if (isKeyDown.r && !wasKeyDown.r)
             {
                 isRoughnessMapEnabled = !isRoughnessMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // load a different heightmap when H is pressed
-            if (isKeyDown.H && !wasKeyDown.H)
+            if (isKeyDown.h && !wasKeyDown.h)
             {
                 ctx.resources.reloadTexture(
                     Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
@@ -205,13 +186,13 @@ int main()
             }
 
             // toggle terrain wireframe mode when Z is pressed
-            if (isKeyDown.Z && !wasKeyDown.Z)
+            if (isKeyDown.z && !wasKeyDown.z)
             {
                 world.componentManagers.terrainRenderer.toggleWireframeMode(
                     terrain_terrainRendererInstanceId);
             }
 
-            wasKeyDown = isKeyDown;
+            memcpy(&wasKeyDown, &isKeyDown, sizeof(isKeyDown));
 
             if (isLightingStateUpdated)
             {

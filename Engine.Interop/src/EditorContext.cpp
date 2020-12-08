@@ -25,16 +25,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         // reset input state
         for (int i = 0; i < inputState.count; i++)
         {
-            IO::MouseInputState &mouseState = inputState.mouse[i];
-            mouseState.normalizedCursorX = 0;
-            mouseState.normalizedCursorY = 0;
-            mouseState.cursorOffsetX = 0;
-            mouseState.cursorOffsetY = 0;
-            mouseState.scrollOffsetX = 0;
-            mouseState.scrollOffsetY = 0;
-            mouseState.isLeftMouseButtonDown = false;
-            mouseState.isMiddleMouseButtonDown = false;
-            mouseState.isRightMouseButtonDown = false;
+            inputState.mouse[i] = {};
+            inputState.keyboard[i] = {};
         }
 
         if (EngineInterop::HoveredViewportContext == nullptr)
@@ -105,18 +97,89 @@ namespace Terrain { namespace Engine { namespace Interop {
         prevMousePosX = mousePos.X;
         prevMousePosY = mousePos.Y;
         wasMouseCaptured = isMouseCaptured;
-    }
-    bool EditorContext::isKeyPressed(int key) const
-    {
-        if (EngineInterop::FocusedViewportContext == nullptr)
-            return false;
 
-        // todo
-        return false;
+        // update keyboard state for focused viewport
+        if (EngineInterop::FocusedViewportContext != nullptr)
+        {
+            IO::KeyboardInputState &keyboardState =
+                inputState
+                    .keyboard[EngineInterop::FocusedViewportContext->getInputControllerId()];
+
+            keyboardState.space = Keyboard::IsKeyDown(System::Windows::Input::Key::Space);
+            keyboardState.d0 = Keyboard::IsKeyDown(System::Windows::Input::Key::D0);
+            keyboardState.d1 = Keyboard::IsKeyDown(System::Windows::Input::Key::D1);
+            keyboardState.d2 = Keyboard::IsKeyDown(System::Windows::Input::Key::D2);
+            keyboardState.d3 = Keyboard::IsKeyDown(System::Windows::Input::Key::D3);
+            keyboardState.d4 = Keyboard::IsKeyDown(System::Windows::Input::Key::D4);
+            keyboardState.d5 = Keyboard::IsKeyDown(System::Windows::Input::Key::D5);
+            keyboardState.d6 = Keyboard::IsKeyDown(System::Windows::Input::Key::D6);
+            keyboardState.d7 = Keyboard::IsKeyDown(System::Windows::Input::Key::D7);
+            keyboardState.d8 = Keyboard::IsKeyDown(System::Windows::Input::Key::D8);
+            keyboardState.d9 = Keyboard::IsKeyDown(System::Windows::Input::Key::D9);
+            keyboardState.a = Keyboard::IsKeyDown(System::Windows::Input::Key::A);
+            keyboardState.b = Keyboard::IsKeyDown(System::Windows::Input::Key::B);
+            keyboardState.c = Keyboard::IsKeyDown(System::Windows::Input::Key::C);
+            keyboardState.d = Keyboard::IsKeyDown(System::Windows::Input::Key::D);
+            keyboardState.e = Keyboard::IsKeyDown(System::Windows::Input::Key::E);
+            keyboardState.f = Keyboard::IsKeyDown(System::Windows::Input::Key::F);
+            keyboardState.g = Keyboard::IsKeyDown(System::Windows::Input::Key::G);
+            keyboardState.h = Keyboard::IsKeyDown(System::Windows::Input::Key::H);
+            keyboardState.i = Keyboard::IsKeyDown(System::Windows::Input::Key::I);
+            keyboardState.j = Keyboard::IsKeyDown(System::Windows::Input::Key::J);
+            keyboardState.k = Keyboard::IsKeyDown(System::Windows::Input::Key::K);
+            keyboardState.l = Keyboard::IsKeyDown(System::Windows::Input::Key::L);
+            keyboardState.m = Keyboard::IsKeyDown(System::Windows::Input::Key::M);
+            keyboardState.n = Keyboard::IsKeyDown(System::Windows::Input::Key::N);
+            keyboardState.o = Keyboard::IsKeyDown(System::Windows::Input::Key::O);
+            keyboardState.p = Keyboard::IsKeyDown(System::Windows::Input::Key::P);
+            keyboardState.q = Keyboard::IsKeyDown(System::Windows::Input::Key::Q);
+            keyboardState.r = Keyboard::IsKeyDown(System::Windows::Input::Key::R);
+            keyboardState.s = Keyboard::IsKeyDown(System::Windows::Input::Key::S);
+            keyboardState.t = Keyboard::IsKeyDown(System::Windows::Input::Key::T);
+            keyboardState.u = Keyboard::IsKeyDown(System::Windows::Input::Key::U);
+            keyboardState.v = Keyboard::IsKeyDown(System::Windows::Input::Key::V);
+            keyboardState.w = Keyboard::IsKeyDown(System::Windows::Input::Key::W);
+            keyboardState.x = Keyboard::IsKeyDown(System::Windows::Input::Key::X);
+            keyboardState.y = Keyboard::IsKeyDown(System::Windows::Input::Key::Y);
+            keyboardState.z = Keyboard::IsKeyDown(System::Windows::Input::Key::Z);
+            keyboardState.escape = Keyboard::IsKeyDown(System::Windows::Input::Key::Escape);
+            keyboardState.enter = Keyboard::IsKeyDown(System::Windows::Input::Key::Enter);
+            keyboardState.right = Keyboard::IsKeyDown(System::Windows::Input::Key::Right);
+            keyboardState.left = Keyboard::IsKeyDown(System::Windows::Input::Key::Left);
+            keyboardState.down = Keyboard::IsKeyDown(System::Windows::Input::Key::Down);
+            keyboardState.up = Keyboard::IsKeyDown(System::Windows::Input::Key::Up);
+            keyboardState.f1 = Keyboard::IsKeyDown(System::Windows::Input::Key::F1);
+            keyboardState.f2 = Keyboard::IsKeyDown(System::Windows::Input::Key::F2);
+            keyboardState.f3 = Keyboard::IsKeyDown(System::Windows::Input::Key::F3);
+            keyboardState.f4 = Keyboard::IsKeyDown(System::Windows::Input::Key::F4);
+            keyboardState.f5 = Keyboard::IsKeyDown(System::Windows::Input::Key::F5);
+            keyboardState.f6 = Keyboard::IsKeyDown(System::Windows::Input::Key::F6);
+            keyboardState.f7 = Keyboard::IsKeyDown(System::Windows::Input::Key::F7);
+            keyboardState.f8 = Keyboard::IsKeyDown(System::Windows::Input::Key::F8);
+            keyboardState.f9 = Keyboard::IsKeyDown(System::Windows::Input::Key::F9);
+            keyboardState.f10 = Keyboard::IsKeyDown(System::Windows::Input::Key::F10);
+            keyboardState.f11 = Keyboard::IsKeyDown(System::Windows::Input::Key::F11);
+            keyboardState.f12 = Keyboard::IsKeyDown(System::Windows::Input::Key::F12);
+            keyboardState.leftShift =
+                Keyboard::IsKeyDown(System::Windows::Input::Key::LeftShift);
+            keyboardState.leftControl =
+                Keyboard::IsKeyDown(System::Windows::Input::Key::LeftCtrl);
+            keyboardState.leftAlt = Keyboard::IsKeyDown(System::Windows::Input::Key::LeftAlt);
+            keyboardState.rightShift =
+                Keyboard::IsKeyDown(System::Windows::Input::Key::RightShift);
+            keyboardState.rightControl =
+                Keyboard::IsKeyDown(System::Windows::Input::Key::RightCtrl);
+            keyboardState.rightAlt =
+                Keyboard::IsKeyDown(System::Windows::Input::Key::RightAlt);
+        }
     }
     IO::MouseInputState EditorContext::getMouseState(int inputControllerId) const
     {
         return inputState.mouse[inputControllerId];
+    }
+    IO::KeyboardInputState EditorContext::getKeyboardState(int inputControllerId) const
+    {
+        return inputState.keyboard[inputControllerId];
     }
     void EditorContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
@@ -126,6 +189,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     int EditorContext::addInputController()
     {
         inputState.mouse.push_back({});
+        inputState.keyboard.push_back({});
         return inputState.count++;
     }
     void EditorContext::onMouseScroll(double x, double y)
