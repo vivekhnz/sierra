@@ -39,18 +39,16 @@ namespace Terrain { namespace Engine {
             if (inputControllerId == -1)
                 continue;
 
-            const IO::InputControllerState &inputState =
-                input.getInputControllerState(inputControllerId);
+            const IO::MouseInputState &mouseState = input.getMouseState(inputControllerId);
 
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
             glm::vec3 &pos = data.position[i];
 
             // rotate camera by moving mouse cursor
-            yaw += inputState.mouseCurrent.cursorOffsetX * lookSensitivity;
+            yaw += mouseState.cursorOffsetX * lookSensitivity;
             pitch = std::clamp(
-                pitch - ((float)inputState.mouseCurrent.cursorOffsetY * lookSensitivity),
-                -1.55f, 1.55f);
+                pitch - ((float)mouseState.cursorOffsetY * lookSensitivity), -1.55f, 1.55f);
             glm::vec3 lookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 

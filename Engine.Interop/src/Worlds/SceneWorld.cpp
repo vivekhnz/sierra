@@ -93,12 +93,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int inputControllerId =
                 world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
-            const IO::InputControllerState &inputState =
-                ctx.input.getInputControllerState(inputControllerId);
             isDiscardingStroke |= ctx.input.isNewKeyPress(inputControllerId, IO::Key::Escape);
 
-            if (inputState.mouseCurrent.isMiddleMouseButtonDown
-                || inputState.mouseCurrent.isRightMouseButtonDown)
+            if (ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle)
+                || ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right))
                 continue;
 
             Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
@@ -113,9 +111,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.meshRenderer.setMaterialUniformVector2(
                 terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
-            if (inputState.mouseCurrent.isLeftMouseButtonDown
-                && (state.editStatus == EditStatus::Editing
-                    || !inputState.mousePrev.isLeftMouseButtonDown))
+            if ((state.editStatus == EditStatus::Editing
+                    && ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Left))
+                || ctx.input.isNewMouseButtonPress(inputControllerId, IO::MouseButton::Left))
             {
                 newState.currentBrushPos = normalizedPickPoint;
                 isManipulatingTerrain = true;

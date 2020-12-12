@@ -1,6 +1,7 @@
 #include "GameContext.hpp"
 
 #include "../../Engine/src/IO/Key.hpp"
+#include "../../Engine/src/IO/MouseButton.hpp"
 
 GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
     window(window), cameraEntityId(-1), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0),
@@ -12,18 +13,25 @@ GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
     // todo: add support for more than one input controller
     inputState.count = 1;
     inputState.mouse.push_back({});
+    inputState.pressedMouseButtons.push_back(0);
     inputState.pressedKeys.push_back(0);
 }
 
 // input
 void GameContext::updateInputState()
 {
+    // update mouse button state
+    unsigned short &pressedButtons = inputState.pressedMouseButtons[0];
+    pressedButtons = 0;
+    pressedButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)
+        * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Left);
+    pressedButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
+        * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Middle);
+    pressedButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)
+        * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Right);
+
+    // update mouse cursor position
     Terrain::Engine::IO::MouseInputState &mouseState = inputState.mouse[0];
-
-    mouseState.isLeftMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT);
-    mouseState.isMiddleMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE);
-    mouseState.isRightMouseButtonDown = window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT);
-
     auto [mouseX, mouseY] = window.getMousePosition();
     auto [w, h] = window.getSize();
     mouseState.normalizedCursorX = mouseX / (float)w;
@@ -124,6 +132,10 @@ const Terrain::Engine::IO::MouseInputState &GameContext::getMouseState(
     int inputControllerId) const
 {
     return inputState.mouse[inputControllerId];
+}
+const unsigned short &GameContext::getPressedMouseButtons(int inputControllerId) const
+{
+    return inputState.pressedMouseButtons[inputControllerId];
 }
 const unsigned long long &GameContext::getPressedKeys(int inputControllerId) const
 {

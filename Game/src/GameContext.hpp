@@ -21,6 +21,7 @@ class GameContext : public Terrain::Engine::AppContext
     {
         int count;
         std::vector<Terrain::Engine::IO::MouseInputState> mouse;
+        std::vector<unsigned short> pressedMouseButtons;
         std::vector<unsigned long long> pressedKeys;
 
         InputState() : count(0)
@@ -36,6 +37,7 @@ public:
     // input
     void updateInputState();
     const Terrain::Engine::IO::MouseInputState &getMouseState(int inputControllerId) const;
+    const unsigned short &getPressedMouseButtons(int inputControllerId) const;
     const unsigned long long &getPressedKeys(int inputControllerId) const;
     void setMouseCaptureMode(bool shouldCaptureMouse);
 

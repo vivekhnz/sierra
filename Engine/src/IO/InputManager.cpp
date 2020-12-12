@@ -9,6 +9,7 @@ namespace Terrain { namespace Engine { namespace IO {
     void InputManager::addInputController()
     {
         prevInputState.mouse.push_back({});
+        prevInputState.pressedMouseButtons.push_back(0);
         prevInputState.pressedKeys.push_back(0);
         prevInputState.count++;
     }
@@ -24,6 +25,7 @@ namespace Terrain { namespace Engine { namespace IO {
         {
             memcpy(
                 &prevInputState.mouse[i], &ctx.getMouseState(i), sizeof(IO::MouseInputState));
+            prevInputState.pressedMouseButtons[i] = ctx.getPressedMouseButtons(i);
             prevInputState.pressedKeys[i] = ctx.getPressedKeys(i);
         }
 

@@ -174,10 +174,10 @@
     <ClInclude Include="src\Graphics\VertexBufferDescription.hpp">
       <Filter>src\Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="src\IO\InputControllerState.hpp">
+    <ClInclude Include="src\IO\Key.hpp">
       <Filter>src\IO</Filter>
     </ClInclude>
-    <ClInclude Include="src\IO\Key.hpp">
+    <ClInclude Include="src\IO\MouseButton.hpp">
       <Filter>src\IO</Filter>
     </ClInclude>
   </ItemGroup>

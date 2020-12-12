@@ -6,8 +6,8 @@
 #include <vector>
 #include "../AppContext.hpp"
 #include "MouseInputState.hpp"
-#include "InputControllerState.hpp"
 #include "Key.hpp"
+#include "MouseButton.hpp"
 
 namespace Terrain { namespace Engine { namespace IO {
     class EXPORT InputManager
@@ -21,6 +21,7 @@ namespace Terrain { namespace Engine { namespace IO {
         {
             int count;
             std::vector<MouseInputState> mouse;
+            std::vector<unsigned short> pressedMouseButtons;
             std::vector<unsigned long long> pressedKeys;
 
             InputState() : count(0)
@@ -31,12 +32,9 @@ namespace Terrain { namespace Engine { namespace IO {
     public:
         InputManager(AppContext &ctx);
 
-        InputControllerState getInputControllerState(int inputControllerId) const
+        const MouseInputState &getMouseState(int inputControllerId) const
         {
-            return {
-                ctx.getMouseState(inputControllerId),   // mouseCurrent
-                prevInputState.mouse[inputControllerId] // mousePrev
-            };
+            return ctx.getMouseState(inputControllerId);
         }
 
         bool isKeyDown(int inputControllerId, Key key) const
@@ -51,6 +49,22 @@ namespace Terrain { namespace Engine { namespace IO {
             unsigned long long prevPressedKeys = prevInputState.pressedKeys[inputControllerId];
             return ((currentPressedKeys & static_cast<unsigned long long>(key)) != 0)
                 && ((prevPressedKeys & static_cast<unsigned long long>(key)) == 0);
+        }
+
+        bool isMouseButtonDown(int inputControllerId, MouseButton button) const
+        {
+            unsigned short pressedButtons = ctx.getPressedMouseButtons(inputControllerId);
+            return (pressedButtons & static_cast<unsigned short>(button)) != 0;
+        }
+
+        bool isNewMouseButtonPress(int inputControllerId, MouseButton button) const
+        {
+            unsigned short currentPressedButtons =
+                ctx.getPressedMouseButtons(inputControllerId);
+            unsigned short prevPressedButtons =
+                prevInputState.pressedMouseButtons[inputControllerId];
+            return ((currentPressedButtons & static_cast<unsigned long long>(button)) != 0)
+                && ((prevPressedButtons & static_cast<unsigned long long>(button)) == 0);
         }
 
         void addInputController();

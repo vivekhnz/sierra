@@ -26,6 +26,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         for (int i = 0; i < inputState.count; i++)
         {
             inputState.mouse[i] = {};
+            inputState.pressedMouseButtons[i] = 0;
             inputState.pressedKeys[i] = 0;
         }
 
@@ -36,16 +37,18 @@ namespace Terrain { namespace Engine { namespace Interop {
         else
         {
             auto view = EngineInterop::HoveredViewportContext->getViewContext();
+            int inputControllerId =
+                EngineInterop::HoveredViewportContext->getInputControllerId();
 
-            IO::MouseInputState &mouseState =
-                inputState
-                    .mouse[EngineInterop::HoveredViewportContext->getInputControllerId()];
-            mouseState.isLeftMouseButtonDown = Mouse::LeftButton == MouseButtonState::Pressed;
-            mouseState.isMiddleMouseButtonDown =
-                Mouse::MiddleButton == MouseButtonState::Pressed;
-            mouseState.isRightMouseButtonDown =
-                Mouse::RightButton == MouseButtonState::Pressed;
+            unsigned short &pressedButtons = inputState.pressedMouseButtons[inputControllerId];
+            pressedButtons |= (Mouse::LeftButton == MouseButtonState::Pressed)
+                * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Left);
+            pressedButtons |= (Mouse::MiddleButton == MouseButtonState::Pressed)
+                * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Middle);
+            pressedButtons |= (Mouse::RightButton == MouseButtonState::Pressed)
+                * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Right);
 
+            IO::MouseInputState &mouseState = inputState.mouse[inputControllerId];
             auto [viewportX, viewportY] =
                 EngineInterop::HoveredViewportContext->getViewportLocation();
             mouseState.normalizedCursorX =
@@ -176,6 +179,10 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         return inputState.mouse[inputControllerId];
     }
+    const unsigned short &EditorContext::getPressedMouseButtons(int inputControllerId) const
+    {
+        return inputState.pressedMouseButtons[inputControllerId];
+    }
     const unsigned long long &EditorContext::getPressedKeys(int inputControllerId) const
     {
         return inputState.pressedKeys[inputControllerId];
@@ -188,6 +195,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     int EditorContext::addInputController()
     {
         inputState.mouse.push_back({});
+        inputState.pressedMouseButtons.push_back(0);
         inputState.pressedKeys.push_back(0);
         return inputState.count++;
     }

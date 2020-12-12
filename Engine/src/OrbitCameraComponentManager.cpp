@@ -33,8 +33,7 @@ namespace Terrain { namespace Engine {
             if (inputControllerId == -1)
                 continue;
 
-            const IO::InputControllerState &inputState =
-                input.getInputControllerState(inputControllerId);
+            const IO::MouseInputState &mouseState = input.getMouseState(inputControllerId);
 
             float &distance = data.distance[i];
             glm::vec3 &position = data.position[i];
@@ -43,33 +42,35 @@ namespace Terrain { namespace Engine {
             float &pitch = data.pitch[i];
 
             // orbit distance is modified by scrolling the mouse wheel
-            distance *= 1.0f - (glm::sign(inputState.mouseCurrent.scrollOffsetY) * 0.05f);
+            distance *= 1.0f - (glm::sign(mouseState.scrollOffsetY) * 0.05f);
 
             // only update the look at position if the middle mouse button is pressed
-            if (inputState.mouseCurrent.isMiddleMouseButtonDown)
+            if (input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle))
             {
                 glm::vec3 lookDir = glm::normalize(lookAt - position);
                 glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
                 glm::vec3 yDir = cross(lookDir, xDir);
-                glm::vec3 pan = (xDir * inputState.mouseCurrent.cursorOffsetX)
-                    + (yDir * inputState.mouseCurrent.cursorOffsetY);
+                glm::vec3 pan =
+                    (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
                 lookAt += pan * std::clamp(distance, 2.5f, 300.0f) * 0.02f * deltaTime;
             }
 
             // only update yaw & pitch if the right mouse button is pressed
             float rotateSensitivity =
-                (inputState.mouseCurrent.isRightMouseButtonDown ? 0.05f : 0.0f)
+                (input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right) ? 0.05f
+                                                                                    : 0.0f)
                 * std::clamp(distance, 14.0f, 70.0f) * deltaTime;
-            yaw += glm::radians(inputState.mouseCurrent.cursorOffsetX * rotateSensitivity);
-            pitch += glm::radians(inputState.mouseCurrent.cursorOffsetY * rotateSensitivity);
+            yaw += glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
+            pitch += glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
 
             // calcalate camera position
             glm::vec3 newLookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
             position = lookAt + (newLookDir * distance);
 
-            isManipulatingOrbitCamera |= inputState.mouseCurrent.isMiddleMouseButtonDown
-                || inputState.mouseCurrent.isRightMouseButtonDown;
+            isManipulatingOrbitCamera |=
+                input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle)
+                || input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right);
         }
 
         // capture mouse if orbit camera is being manipulated
@@ -103,10 +104,9 @@ namespace Terrain { namespace Engine {
         int &inputControllerId = data.inputControllerId[i];
         int cameraInstanceId = cameraComponentMgr.lookup(data.entityId[i]);
 
-        const IO::InputControllerState &inputState =
-            input.getInputControllerState(inputControllerId);
-        float mouseX = (inputState.mouseCurrent.normalizedCursorX * 2.0f) - 1.0f;
-        float mouseY = (inputState.mouseCurrent.normalizedCursorY * 2.0f) - 1.0f;
+        const IO::MouseInputState &mouseState = input.getMouseState(inputControllerId);
+        float mouseX = (mouseState.normalizedCursorX * 2.0f) - 1.0f;
+        float mouseY = (mouseState.normalizedCursorY * 2.0f) - 1.0f;
 
         glm::mat4 inverseViewProjection =
             glm::inverse(cameraComponentMgr.getTransform(cameraInstanceId));
