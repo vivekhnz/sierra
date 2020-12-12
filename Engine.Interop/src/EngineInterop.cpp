@@ -66,9 +66,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         // create input controller
-        ctx->input.addInputController();
         int inputControllerId = appCtx->addInputController();
         vctx->setInputControllerId(inputControllerId);
+        ctx->input.addInputController();
 
         return vctx;
     }

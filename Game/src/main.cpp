@@ -101,9 +101,6 @@ int main()
         float lastTickTime = glfw.getCurrentTime();
         float deltaTime = 0;
 
-        Terrain::Engine::IO::KeyboardInputState isKeyDown = {};
-        Terrain::Engine::IO::KeyboardInputState wasKeyDown = {};
-
         bool isOrbitCameraMode = false;
 
         bool isLightingEnabled = true;
@@ -119,15 +116,16 @@ int main()
         {
             // query input
             ctx.input.update();
-            isKeyDown = ctx.input.getKeyboardState(0);
+            const Terrain::Engine::IO::InputControllerState &inputState =
+                ctx.input.getInputControllerState(0);
 
-            if (isKeyDown.escape)
+            if (inputState.keyboardCurrent.escape)
             {
                 window.close();
             }
 
             // swap camera mode when C key is pressed
-            if (isKeyDown.c && !wasKeyDown.c)
+            if (inputState.keyboardCurrent.c && !inputState.keyboardPrev.c)
             {
                 isOrbitCameraMode = !isOrbitCameraMode;
                 world.componentManagers.firstPersonCamera.setInputControllerId(
@@ -137,49 +135,49 @@ int main()
             }
 
             // toggle lighting when L key is pressed
-            if (isKeyDown.l && !wasKeyDown.l)
+            if (inputState.keyboardCurrent.l && !inputState.keyboardPrev.l)
             {
                 isLightingEnabled = !isLightingEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle albedo texture when T key is pressed
-            if (isKeyDown.t && !wasKeyDown.t)
+            if (inputState.keyboardCurrent.t && !inputState.keyboardPrev.t)
             {
                 isAlbedoEnabled = !isAlbedoEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle normal map texture when N key is pressed
-            if (isKeyDown.n && !wasKeyDown.n)
+            if (inputState.keyboardCurrent.n && !inputState.keyboardPrev.n)
             {
                 isNormalMapEnabled = !isNormalMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle displacement map texture when B key is pressed
-            if (isKeyDown.b && !wasKeyDown.b)
+            if (inputState.keyboardCurrent.b && !inputState.keyboardPrev.b)
             {
                 isDisplacementMapEnabled = !isDisplacementMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle ambient occlusion texture when O key is pressed
-            if (isKeyDown.o && !wasKeyDown.o)
+            if (inputState.keyboardCurrent.o && !inputState.keyboardPrev.o)
             {
                 isAOMapEnabled = !isAOMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // toggle roughness texture when R key is pressed
-            if (isKeyDown.r && !wasKeyDown.r)
+            if (inputState.keyboardCurrent.r && !inputState.keyboardPrev.r)
             {
                 isRoughnessMapEnabled = !isRoughnessMapEnabled;
                 isLightingStateUpdated = true;
             }
 
             // load a different heightmap when H is pressed
-            if (isKeyDown.h && !wasKeyDown.h)
+            if (inputState.keyboardCurrent.h && !inputState.keyboardPrev.h)
             {
                 ctx.resources.reloadTexture(
                     Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
@@ -187,13 +185,11 @@ int main()
             }
 
             // toggle terrain wireframe mode when Z is pressed
-            if (isKeyDown.z && !wasKeyDown.z)
+            if (inputState.keyboardCurrent.z && !inputState.keyboardPrev.z)
             {
                 world.componentManagers.terrainRenderer.toggleWireframeMode(
                     terrain_terrainRendererInstanceId);
             }
-
-            memcpy(&wasKeyDown, &isKeyDown, sizeof(isKeyDown));
 
             if (isLightingStateUpdated)
             {

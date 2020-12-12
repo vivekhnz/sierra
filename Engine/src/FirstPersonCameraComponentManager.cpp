@@ -38,35 +38,36 @@ namespace Terrain { namespace Engine {
             if (inputControllerId == -1)
                 continue;
 
-            IO::MouseInputState mouseState = input.getMouseState(inputControllerId);
-            IO::KeyboardInputState keyboardState = input.getKeyboardState(inputControllerId);
+            const IO::InputControllerState &inputState =
+                input.getInputControllerState(inputControllerId);
 
             float &yaw = data.yaw[i];
             float &pitch = data.pitch[i];
             glm::vec3 &pos = data.position[i];
 
             // rotate camera by moving mouse cursor
-            yaw += mouseState.cursorOffsetX * lookSensitivity;
+            yaw += inputState.mouseCurrent.cursorOffsetX * lookSensitivity;
             pitch = std::clamp(
-                pitch - ((float)mouseState.cursorOffsetY * lookSensitivity), -1.55f, 1.55f);
+                pitch - ((float)inputState.mouseCurrent.cursorOffsetY * lookSensitivity),
+                -1.55f, 1.55f);
             glm::vec3 lookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
 
             // move camera on XZ axis using WASD keys
             glm::vec3 moveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
-            if (keyboardState.a)
+            if (inputState.keyboardCurrent.a)
             {
                 pos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
             }
-            if (keyboardState.d)
+            if (inputState.keyboardCurrent.d)
             {
                 pos += glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
             }
-            if (keyboardState.w)
+            if (inputState.keyboardCurrent.w)
             {
                 pos += moveDir * moveSpeed;
             }
-            if (keyboardState.s)
+            if (inputState.keyboardCurrent.s)
             {
                 pos -= moveDir * moveSpeed;
             }

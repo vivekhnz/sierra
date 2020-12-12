@@ -177,6 +177,9 @@
     <ClInclude Include="src\IO\KeyboardInputState.hpp">
       <Filter>src\IO</Filter>
     </ClInclude>
+    <ClInclude Include="src\IO\InputControllerState.hpp">
+      <Filter>src\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

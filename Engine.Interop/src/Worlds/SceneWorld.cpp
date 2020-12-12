@@ -93,7 +93,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int inputControllerId =
                 world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
-            IO::InputManager::InputControllerState &inputState =
+            const IO::InputControllerState &inputState =
                 ctx.input.getInputControllerState(inputControllerId);
 
             isDiscardingStroke |=
@@ -124,8 +124,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             }
         }
 
-        bool shouldUpdateCollider = false;
-
         if (state.editStatus == EditStatus::Idle)
         {
             if (isManipulatingTerrain)
@@ -135,7 +133,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         else if (state.editStatus == EditStatus::Editing)
         {
-            shouldUpdateCollider = true;
             if (isDiscardingStroke)
             {
                 newState.editStatus = EditStatus::Discarding;
@@ -147,16 +144,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         else if (state.editStatus == EditStatus::Committing)
         {
-            shouldUpdateCollider = true;
             newState.editStatus =
                 isManipulatingTerrain ? EditStatus::Editing : EditStatus::Idle;
         }
         else if (state.editStatus == EditStatus::Discarding)
         {
-            newState.editStatus = EditStatus::Idle;
+            newState.editStatus = EditStatus::Committing;
         }
 
-        if (shouldUpdateCollider)
+        if (state.editStatus != EditStatus::Idle)
         {
             // update terrain collider with composited heightmap texture
             ctx.renderer.getTexturePixels(
