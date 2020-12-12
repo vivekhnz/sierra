@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <glm/gtc/type_ptr.hpp>
 #include "GLFW/glfw3.h"
+#include "IO/Key.hpp"
 
 namespace Terrain { namespace Engine {
     FirstPersonCameraComponentManager::FirstPersonCameraComponentManager(
@@ -55,19 +56,19 @@ namespace Terrain { namespace Engine {
 
             // move camera on XZ axis using WASD keys
             glm::vec3 moveDir = glm::vec3(cos(yaw), 0.0f, sin(yaw));
-            if (inputState.keyboardCurrent.a)
+            if (input.isKeyDown(inputControllerId, IO::Key::A))
             {
                 pos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
             }
-            if (inputState.keyboardCurrent.d)
+            if (input.isKeyDown(inputControllerId, IO::Key::D))
             {
                 pos += glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
             }
-            if (inputState.keyboardCurrent.w)
+            if (input.isKeyDown(inputControllerId, IO::Key::W))
             {
                 pos += moveDir * moveSpeed;
             }
-            if (inputState.keyboardCurrent.s)
+            if (input.isKeyDown(inputControllerId, IO::Key::S))
             {
                 pos -= moveDir * moveSpeed;
             }

@@ -95,9 +95,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             const IO::InputControllerState &inputState =
                 ctx.input.getInputControllerState(inputControllerId);
-
-            isDiscardingStroke |=
-                (inputState.keyboardCurrent.escape && !inputState.keyboardPrev.escape);
+            isDiscardingStroke |= ctx.input.isNewKeyPress(inputControllerId, IO::Key::Escape);
 
             if (inputState.mouseCurrent.isMiddleMouseButtonDown
                 || inputState.mouseCurrent.isRightMouseButtonDown)

@@ -105,72 +105,72 @@ namespace Terrain { namespace Engine { namespace Interop {
                 inputState
                     .keyboard[EngineInterop::FocusedViewportContext->getInputControllerId()];
 
-            keyboardState.space = Keyboard::IsKeyDown(System::Windows::Input::Key::Space);
-            keyboardState.d0 = Keyboard::IsKeyDown(System::Windows::Input::Key::D0);
-            keyboardState.d1 = Keyboard::IsKeyDown(System::Windows::Input::Key::D1);
-            keyboardState.d2 = Keyboard::IsKeyDown(System::Windows::Input::Key::D2);
-            keyboardState.d3 = Keyboard::IsKeyDown(System::Windows::Input::Key::D3);
-            keyboardState.d4 = Keyboard::IsKeyDown(System::Windows::Input::Key::D4);
-            keyboardState.d5 = Keyboard::IsKeyDown(System::Windows::Input::Key::D5);
-            keyboardState.d6 = Keyboard::IsKeyDown(System::Windows::Input::Key::D6);
-            keyboardState.d7 = Keyboard::IsKeyDown(System::Windows::Input::Key::D7);
-            keyboardState.d8 = Keyboard::IsKeyDown(System::Windows::Input::Key::D8);
-            keyboardState.d9 = Keyboard::IsKeyDown(System::Windows::Input::Key::D9);
-            keyboardState.a = Keyboard::IsKeyDown(System::Windows::Input::Key::A);
-            keyboardState.b = Keyboard::IsKeyDown(System::Windows::Input::Key::B);
-            keyboardState.c = Keyboard::IsKeyDown(System::Windows::Input::Key::C);
-            keyboardState.d = Keyboard::IsKeyDown(System::Windows::Input::Key::D);
-            keyboardState.e = Keyboard::IsKeyDown(System::Windows::Input::Key::E);
-            keyboardState.f = Keyboard::IsKeyDown(System::Windows::Input::Key::F);
-            keyboardState.g = Keyboard::IsKeyDown(System::Windows::Input::Key::G);
-            keyboardState.h = Keyboard::IsKeyDown(System::Windows::Input::Key::H);
-            keyboardState.i = Keyboard::IsKeyDown(System::Windows::Input::Key::I);
-            keyboardState.j = Keyboard::IsKeyDown(System::Windows::Input::Key::J);
-            keyboardState.k = Keyboard::IsKeyDown(System::Windows::Input::Key::K);
-            keyboardState.l = Keyboard::IsKeyDown(System::Windows::Input::Key::L);
-            keyboardState.m = Keyboard::IsKeyDown(System::Windows::Input::Key::M);
-            keyboardState.n = Keyboard::IsKeyDown(System::Windows::Input::Key::N);
-            keyboardState.o = Keyboard::IsKeyDown(System::Windows::Input::Key::O);
-            keyboardState.p = Keyboard::IsKeyDown(System::Windows::Input::Key::P);
-            keyboardState.q = Keyboard::IsKeyDown(System::Windows::Input::Key::Q);
-            keyboardState.r = Keyboard::IsKeyDown(System::Windows::Input::Key::R);
-            keyboardState.s = Keyboard::IsKeyDown(System::Windows::Input::Key::S);
-            keyboardState.t = Keyboard::IsKeyDown(System::Windows::Input::Key::T);
-            keyboardState.u = Keyboard::IsKeyDown(System::Windows::Input::Key::U);
-            keyboardState.v = Keyboard::IsKeyDown(System::Windows::Input::Key::V);
-            keyboardState.w = Keyboard::IsKeyDown(System::Windows::Input::Key::W);
-            keyboardState.x = Keyboard::IsKeyDown(System::Windows::Input::Key::X);
-            keyboardState.y = Keyboard::IsKeyDown(System::Windows::Input::Key::Y);
-            keyboardState.z = Keyboard::IsKeyDown(System::Windows::Input::Key::Z);
-            keyboardState.escape = Keyboard::IsKeyDown(System::Windows::Input::Key::Escape);
-            keyboardState.enter = Keyboard::IsKeyDown(System::Windows::Input::Key::Enter);
-            keyboardState.right = Keyboard::IsKeyDown(System::Windows::Input::Key::Right);
-            keyboardState.left = Keyboard::IsKeyDown(System::Windows::Input::Key::Left);
-            keyboardState.down = Keyboard::IsKeyDown(System::Windows::Input::Key::Down);
-            keyboardState.up = Keyboard::IsKeyDown(System::Windows::Input::Key::Up);
-            keyboardState.f1 = Keyboard::IsKeyDown(System::Windows::Input::Key::F1);
-            keyboardState.f2 = Keyboard::IsKeyDown(System::Windows::Input::Key::F2);
-            keyboardState.f3 = Keyboard::IsKeyDown(System::Windows::Input::Key::F3);
-            keyboardState.f4 = Keyboard::IsKeyDown(System::Windows::Input::Key::F4);
-            keyboardState.f5 = Keyboard::IsKeyDown(System::Windows::Input::Key::F5);
-            keyboardState.f6 = Keyboard::IsKeyDown(System::Windows::Input::Key::F6);
-            keyboardState.f7 = Keyboard::IsKeyDown(System::Windows::Input::Key::F7);
-            keyboardState.f8 = Keyboard::IsKeyDown(System::Windows::Input::Key::F8);
-            keyboardState.f9 = Keyboard::IsKeyDown(System::Windows::Input::Key::F9);
-            keyboardState.f10 = Keyboard::IsKeyDown(System::Windows::Input::Key::F10);
-            keyboardState.f11 = Keyboard::IsKeyDown(System::Windows::Input::Key::F11);
-            keyboardState.f12 = Keyboard::IsKeyDown(System::Windows::Input::Key::F12);
-            keyboardState.leftShift =
-                Keyboard::IsKeyDown(System::Windows::Input::Key::LeftShift);
-            keyboardState.leftControl =
-                Keyboard::IsKeyDown(System::Windows::Input::Key::LeftCtrl);
-            keyboardState.leftAlt = Keyboard::IsKeyDown(System::Windows::Input::Key::LeftAlt);
-            keyboardState.rightShift =
-                Keyboard::IsKeyDown(System::Windows::Input::Key::RightShift);
-            keyboardState.rightControl =
-                Keyboard::IsKeyDown(System::Windows::Input::Key::RightCtrl);
-            keyboardState.rightAlt =
-                Keyboard::IsKeyDown(System::Windows::Input::Key::RightAlt);
+#define UPDATE_KEYBOARD_STATE(ENGINE_KEY, WINDOWS_KEY)                                        \
+    keyboardState.value |= Keyboard::IsKeyDown(WINDOWS_KEY)                                   \
+        * static_cast<unsigned long long>(Terrain::Engine::IO::Key::ENGINE_KEY);
+
+            keyboardState.value = 0;
+            UPDATE_KEYBOARD_STATE(Space, System::Windows::Input::Key::Space)
+            UPDATE_KEYBOARD_STATE(D0, System::Windows::Input::Key::D0)
+            UPDATE_KEYBOARD_STATE(D1, System::Windows::Input::Key::D1)
+            UPDATE_KEYBOARD_STATE(D2, System::Windows::Input::Key::D2)
+            UPDATE_KEYBOARD_STATE(D3, System::Windows::Input::Key::D3)
+            UPDATE_KEYBOARD_STATE(D4, System::Windows::Input::Key::D4)
+            UPDATE_KEYBOARD_STATE(D5, System::Windows::Input::Key::D5)
+            UPDATE_KEYBOARD_STATE(D6, System::Windows::Input::Key::D6)
+            UPDATE_KEYBOARD_STATE(D7, System::Windows::Input::Key::D7)
+            UPDATE_KEYBOARD_STATE(D8, System::Windows::Input::Key::D8)
+            UPDATE_KEYBOARD_STATE(D9, System::Windows::Input::Key::D9)
+            UPDATE_KEYBOARD_STATE(A, System::Windows::Input::Key::A)
+            UPDATE_KEYBOARD_STATE(B, System::Windows::Input::Key::B)
+            UPDATE_KEYBOARD_STATE(C, System::Windows::Input::Key::C)
+            UPDATE_KEYBOARD_STATE(D, System::Windows::Input::Key::D)
+            UPDATE_KEYBOARD_STATE(E, System::Windows::Input::Key::E)
+            UPDATE_KEYBOARD_STATE(F, System::Windows::Input::Key::F)
+            UPDATE_KEYBOARD_STATE(G, System::Windows::Input::Key::G)
+            UPDATE_KEYBOARD_STATE(H, System::Windows::Input::Key::H)
+            UPDATE_KEYBOARD_STATE(I, System::Windows::Input::Key::I)
+            UPDATE_KEYBOARD_STATE(J, System::Windows::Input::Key::J)
+            UPDATE_KEYBOARD_STATE(K, System::Windows::Input::Key::K)
+            UPDATE_KEYBOARD_STATE(L, System::Windows::Input::Key::L)
+            UPDATE_KEYBOARD_STATE(M, System::Windows::Input::Key::M)
+            UPDATE_KEYBOARD_STATE(N, System::Windows::Input::Key::N)
+            UPDATE_KEYBOARD_STATE(O, System::Windows::Input::Key::O)
+            UPDATE_KEYBOARD_STATE(P, System::Windows::Input::Key::P)
+            UPDATE_KEYBOARD_STATE(Q, System::Windows::Input::Key::Q)
+            UPDATE_KEYBOARD_STATE(R, System::Windows::Input::Key::R)
+            UPDATE_KEYBOARD_STATE(S, System::Windows::Input::Key::S)
+            UPDATE_KEYBOARD_STATE(T, System::Windows::Input::Key::T)
+            UPDATE_KEYBOARD_STATE(U, System::Windows::Input::Key::U)
+            UPDATE_KEYBOARD_STATE(V, System::Windows::Input::Key::V)
+            UPDATE_KEYBOARD_STATE(W, System::Windows::Input::Key::W)
+            UPDATE_KEYBOARD_STATE(X, System::Windows::Input::Key::X)
+            UPDATE_KEYBOARD_STATE(Y, System::Windows::Input::Key::Y)
+            UPDATE_KEYBOARD_STATE(Z, System::Windows::Input::Key::Z)
+            UPDATE_KEYBOARD_STATE(Escape, System::Windows::Input::Key::Escape)
+            UPDATE_KEYBOARD_STATE(Enter, System::Windows::Input::Key::Enter)
+            UPDATE_KEYBOARD_STATE(Right, System::Windows::Input::Key::Right)
+            UPDATE_KEYBOARD_STATE(Left, System::Windows::Input::Key::Left)
+            UPDATE_KEYBOARD_STATE(Down, System::Windows::Input::Key::Down)
+            UPDATE_KEYBOARD_STATE(Up, System::Windows::Input::Key::Up)
+            UPDATE_KEYBOARD_STATE(F1, System::Windows::Input::Key::F1)
+            UPDATE_KEYBOARD_STATE(F2, System::Windows::Input::Key::F2)
+            UPDATE_KEYBOARD_STATE(F3, System::Windows::Input::Key::F3)
+            UPDATE_KEYBOARD_STATE(F4, System::Windows::Input::Key::F4)
+            UPDATE_KEYBOARD_STATE(F5, System::Windows::Input::Key::F5)
+            UPDATE_KEYBOARD_STATE(F6, System::Windows::Input::Key::F6)
+            UPDATE_KEYBOARD_STATE(F7, System::Windows::Input::Key::F7)
+            UPDATE_KEYBOARD_STATE(F8, System::Windows::Input::Key::F8)
+            UPDATE_KEYBOARD_STATE(F9, System::Windows::Input::Key::F9)
+            UPDATE_KEYBOARD_STATE(F10, System::Windows::Input::Key::F10)
+            UPDATE_KEYBOARD_STATE(F11, System::Windows::Input::Key::F11)
+            UPDATE_KEYBOARD_STATE(F12, System::Windows::Input::Key::F12)
+            UPDATE_KEYBOARD_STATE(LeftShift, System::Windows::Input::Key::LeftShift)
+            UPDATE_KEYBOARD_STATE(LeftCtrl, System::Windows::Input::Key::LeftCtrl)
+            UPDATE_KEYBOARD_STATE(LeftAlt, System::Windows::Input::Key::LeftAlt)
+            UPDATE_KEYBOARD_STATE(RightShift, System::Windows::Input::Key::RightShift)
+            UPDATE_KEYBOARD_STATE(RightCtrl, System::Windows::Input::Key::RightCtrl)
+            UPDATE_KEYBOARD_STATE(RightAlt, System::Windows::Input::Key::RightAlt)
         }
     }
     const IO::MouseInputState &EditorContext::getMouseState(int inputControllerId) const

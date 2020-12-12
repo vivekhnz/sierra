@@ -1,5 +1,7 @@
 #include "GameContext.hpp"
 
+#include "../../Engine/src/IO/Key.hpp"
+
 GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
     window(window), cameraEntityId(-1), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0),
     nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
@@ -50,67 +52,73 @@ void GameContext::updateInputState()
 
     // update keyboard state
     Terrain::Engine::IO::KeyboardInputState &keyboardState = inputState.keyboard[0];
-    keyboardState.space = window.isKeyPressed(GLFW_KEY_SPACE);
-    keyboardState.d0 = window.isKeyPressed(GLFW_KEY_0);
-    keyboardState.d1 = window.isKeyPressed(GLFW_KEY_1);
-    keyboardState.d2 = window.isKeyPressed(GLFW_KEY_2);
-    keyboardState.d3 = window.isKeyPressed(GLFW_KEY_3);
-    keyboardState.d4 = window.isKeyPressed(GLFW_KEY_4);
-    keyboardState.d5 = window.isKeyPressed(GLFW_KEY_5);
-    keyboardState.d6 = window.isKeyPressed(GLFW_KEY_6);
-    keyboardState.d7 = window.isKeyPressed(GLFW_KEY_7);
-    keyboardState.d8 = window.isKeyPressed(GLFW_KEY_8);
-    keyboardState.d9 = window.isKeyPressed(GLFW_KEY_9);
-    keyboardState.a = window.isKeyPressed(GLFW_KEY_A);
-    keyboardState.b = window.isKeyPressed(GLFW_KEY_B);
-    keyboardState.c = window.isKeyPressed(GLFW_KEY_C);
-    keyboardState.d = window.isKeyPressed(GLFW_KEY_D);
-    keyboardState.e = window.isKeyPressed(GLFW_KEY_E);
-    keyboardState.f = window.isKeyPressed(GLFW_KEY_F);
-    keyboardState.g = window.isKeyPressed(GLFW_KEY_G);
-    keyboardState.h = window.isKeyPressed(GLFW_KEY_H);
-    keyboardState.i = window.isKeyPressed(GLFW_KEY_I);
-    keyboardState.j = window.isKeyPressed(GLFW_KEY_J);
-    keyboardState.k = window.isKeyPressed(GLFW_KEY_K);
-    keyboardState.l = window.isKeyPressed(GLFW_KEY_L);
-    keyboardState.m = window.isKeyPressed(GLFW_KEY_M);
-    keyboardState.n = window.isKeyPressed(GLFW_KEY_N);
-    keyboardState.o = window.isKeyPressed(GLFW_KEY_O);
-    keyboardState.p = window.isKeyPressed(GLFW_KEY_P);
-    keyboardState.q = window.isKeyPressed(GLFW_KEY_Q);
-    keyboardState.r = window.isKeyPressed(GLFW_KEY_R);
-    keyboardState.s = window.isKeyPressed(GLFW_KEY_S);
-    keyboardState.t = window.isKeyPressed(GLFW_KEY_T);
-    keyboardState.u = window.isKeyPressed(GLFW_KEY_U);
-    keyboardState.v = window.isKeyPressed(GLFW_KEY_V);
-    keyboardState.w = window.isKeyPressed(GLFW_KEY_W);
-    keyboardState.x = window.isKeyPressed(GLFW_KEY_X);
-    keyboardState.y = window.isKeyPressed(GLFW_KEY_Y);
-    keyboardState.z = window.isKeyPressed(GLFW_KEY_Z);
-    keyboardState.escape = window.isKeyPressed(GLFW_KEY_ESCAPE);
-    keyboardState.enter = window.isKeyPressed(GLFW_KEY_ENTER);
-    keyboardState.right = window.isKeyPressed(GLFW_KEY_RIGHT);
-    keyboardState.left = window.isKeyPressed(GLFW_KEY_LEFT);
-    keyboardState.down = window.isKeyPressed(GLFW_KEY_DOWN);
-    keyboardState.up = window.isKeyPressed(GLFW_KEY_UP);
-    keyboardState.f1 = window.isKeyPressed(GLFW_KEY_F1);
-    keyboardState.f2 = window.isKeyPressed(GLFW_KEY_F2);
-    keyboardState.f3 = window.isKeyPressed(GLFW_KEY_F3);
-    keyboardState.f4 = window.isKeyPressed(GLFW_KEY_F4);
-    keyboardState.f5 = window.isKeyPressed(GLFW_KEY_F5);
-    keyboardState.f6 = window.isKeyPressed(GLFW_KEY_F6);
-    keyboardState.f7 = window.isKeyPressed(GLFW_KEY_F7);
-    keyboardState.f8 = window.isKeyPressed(GLFW_KEY_F8);
-    keyboardState.f9 = window.isKeyPressed(GLFW_KEY_F9);
-    keyboardState.f10 = window.isKeyPressed(GLFW_KEY_F10);
-    keyboardState.f11 = window.isKeyPressed(GLFW_KEY_F11);
-    keyboardState.f12 = window.isKeyPressed(GLFW_KEY_F12);
-    keyboardState.leftShift = window.isKeyPressed(GLFW_KEY_LEFT_SHIFT);
-    keyboardState.leftControl = window.isKeyPressed(GLFW_KEY_LEFT_CONTROL);
-    keyboardState.leftAlt = window.isKeyPressed(GLFW_KEY_LEFT_ALT);
-    keyboardState.rightShift = window.isKeyPressed(GLFW_KEY_RIGHT_SHIFT);
-    keyboardState.rightControl = window.isKeyPressed(GLFW_KEY_RIGHT_CONTROL);
-    keyboardState.rightAlt = window.isKeyPressed(GLFW_KEY_RIGHT_ALT);
+
+#define UPDATE_KEYBOARD_STATE(ENGINE_KEY, GLFW_KEY)                                           \
+    keyboardState.value |= window.isKeyPressed(GLFW_KEY)                                      \
+        * static_cast<unsigned long long>(Terrain::Engine::IO::Key::ENGINE_KEY);
+
+    keyboardState.value = 0;
+    UPDATE_KEYBOARD_STATE(Space, GLFW_KEY_SPACE)
+    UPDATE_KEYBOARD_STATE(D0, GLFW_KEY_0)
+    UPDATE_KEYBOARD_STATE(D1, GLFW_KEY_1)
+    UPDATE_KEYBOARD_STATE(D2, GLFW_KEY_2)
+    UPDATE_KEYBOARD_STATE(D3, GLFW_KEY_3)
+    UPDATE_KEYBOARD_STATE(D4, GLFW_KEY_4)
+    UPDATE_KEYBOARD_STATE(D5, GLFW_KEY_5)
+    UPDATE_KEYBOARD_STATE(D6, GLFW_KEY_6)
+    UPDATE_KEYBOARD_STATE(D7, GLFW_KEY_7)
+    UPDATE_KEYBOARD_STATE(D8, GLFW_KEY_8)
+    UPDATE_KEYBOARD_STATE(D9, GLFW_KEY_9)
+    UPDATE_KEYBOARD_STATE(A, GLFW_KEY_A)
+    UPDATE_KEYBOARD_STATE(B, GLFW_KEY_B)
+    UPDATE_KEYBOARD_STATE(C, GLFW_KEY_C)
+    UPDATE_KEYBOARD_STATE(D, GLFW_KEY_D)
+    UPDATE_KEYBOARD_STATE(E, GLFW_KEY_E)
+    UPDATE_KEYBOARD_STATE(F, GLFW_KEY_F)
+    UPDATE_KEYBOARD_STATE(G, GLFW_KEY_G)
+    UPDATE_KEYBOARD_STATE(H, GLFW_KEY_H)
+    UPDATE_KEYBOARD_STATE(I, GLFW_KEY_I)
+    UPDATE_KEYBOARD_STATE(J, GLFW_KEY_J)
+    UPDATE_KEYBOARD_STATE(K, GLFW_KEY_K)
+    UPDATE_KEYBOARD_STATE(L, GLFW_KEY_L)
+    UPDATE_KEYBOARD_STATE(M, GLFW_KEY_M)
+    UPDATE_KEYBOARD_STATE(N, GLFW_KEY_N)
+    UPDATE_KEYBOARD_STATE(O, GLFW_KEY_O)
+    UPDATE_KEYBOARD_STATE(P, GLFW_KEY_P)
+    UPDATE_KEYBOARD_STATE(Q, GLFW_KEY_Q)
+    UPDATE_KEYBOARD_STATE(R, GLFW_KEY_R)
+    UPDATE_KEYBOARD_STATE(S, GLFW_KEY_S)
+    UPDATE_KEYBOARD_STATE(T, GLFW_KEY_T)
+    UPDATE_KEYBOARD_STATE(U, GLFW_KEY_U)
+    UPDATE_KEYBOARD_STATE(V, GLFW_KEY_V)
+    UPDATE_KEYBOARD_STATE(W, GLFW_KEY_W)
+    UPDATE_KEYBOARD_STATE(X, GLFW_KEY_X)
+    UPDATE_KEYBOARD_STATE(Y, GLFW_KEY_Y)
+    UPDATE_KEYBOARD_STATE(Z, GLFW_KEY_Z)
+    UPDATE_KEYBOARD_STATE(Escape, GLFW_KEY_ESCAPE)
+    UPDATE_KEYBOARD_STATE(Enter, GLFW_KEY_ENTER)
+    UPDATE_KEYBOARD_STATE(Right, GLFW_KEY_RIGHT)
+    UPDATE_KEYBOARD_STATE(Left, GLFW_KEY_LEFT)
+    UPDATE_KEYBOARD_STATE(Down, GLFW_KEY_DOWN)
+    UPDATE_KEYBOARD_STATE(Up, GLFW_KEY_UP)
+    UPDATE_KEYBOARD_STATE(F1, GLFW_KEY_F1)
+    UPDATE_KEYBOARD_STATE(F2, GLFW_KEY_F2)
+    UPDATE_KEYBOARD_STATE(F3, GLFW_KEY_F3)
+    UPDATE_KEYBOARD_STATE(F4, GLFW_KEY_F4)
+    UPDATE_KEYBOARD_STATE(F5, GLFW_KEY_F5)
+    UPDATE_KEYBOARD_STATE(F6, GLFW_KEY_F6)
+    UPDATE_KEYBOARD_STATE(F7, GLFW_KEY_F7)
+    UPDATE_KEYBOARD_STATE(F8, GLFW_KEY_F8)
+    UPDATE_KEYBOARD_STATE(F9, GLFW_KEY_F9)
+    UPDATE_KEYBOARD_STATE(F10, GLFW_KEY_F10)
+    UPDATE_KEYBOARD_STATE(F11, GLFW_KEY_F11)
+    UPDATE_KEYBOARD_STATE(F12, GLFW_KEY_F12)
+    UPDATE_KEYBOARD_STATE(LeftShift, GLFW_KEY_LEFT_SHIFT)
+    UPDATE_KEYBOARD_STATE(LeftCtrl, GLFW_KEY_LEFT_CONTROL)
+    UPDATE_KEYBOARD_STATE(LeftAlt, GLFW_KEY_LEFT_ALT)
+    UPDATE_KEYBOARD_STATE(RightShift, GLFW_KEY_RIGHT_SHIFT)
+    UPDATE_KEYBOARD_STATE(RightCtrl, GLFW_KEY_RIGHT_CONTROL)
+    UPDATE_KEYBOARD_STATE(RightAlt, GLFW_KEY_RIGHT_ALT)
 }
 const Terrain::Engine::IO::MouseInputState &GameContext::getMouseState(
     int inputControllerId) const
