@@ -29,8 +29,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         // input
         void updateInputState();
-        IO::MouseInputState getMouseState(int inputControllerId) const;
-        IO::KeyboardInputState getKeyboardState(int inputControllerId) const;
+        const IO::MouseInputState &getMouseState(int inputControllerId) const;
+        const IO::KeyboardInputState &getKeyboardState(int inputControllerId) const;
         void setMouseCaptureMode(bool shouldCaptureMouse);
 
         int addInputController();

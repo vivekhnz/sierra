@@ -112,11 +112,12 @@ void GameContext::updateInputState()
     keyboardState.rightControl = window.isKeyPressed(GLFW_KEY_RIGHT_CONTROL);
     keyboardState.rightAlt = window.isKeyPressed(GLFW_KEY_RIGHT_ALT);
 }
-Terrain::Engine::IO::MouseInputState GameContext::getMouseState(int inputControllerId) const
+const Terrain::Engine::IO::MouseInputState &GameContext::getMouseState(
+    int inputControllerId) const
 {
     return inputState.mouse[inputControllerId];
 }
-Terrain::Engine::IO::KeyboardInputState GameContext::getKeyboardState(
+const Terrain::Engine::IO::KeyboardInputState &GameContext::getKeyboardState(
     int inputControllerId) const
 {
     return inputState.keyboard[inputControllerId];

@@ -6,6 +6,13 @@ namespace Terrain { namespace Engine { namespace IO {
     {
     }
 
+    void InputManager::addInputController()
+    {
+        prevInputState.mouse.push_back({});
+        prevInputState.keyboard.push_back({});
+        prevInputState.count++;
+    }
+
     void InputManager::captureMouse()
     {
         shouldCaptureMouse = true;
@@ -13,6 +20,14 @@ namespace Terrain { namespace Engine { namespace IO {
 
     void InputManager::update()
     {
+        for (int i = 0; i < prevInputState.count; i++)
+        {
+            memcpy(
+                &prevInputState.mouse[i], &ctx.getMouseState(i), sizeof(IO::MouseInputState));
+            memcpy(&prevInputState.keyboard[i], &ctx.getKeyboardState(i),
+                sizeof(IO::KeyboardInputState));
+        }
+
         ctx.updateInputState();
 
         // only change mouse capture state if the state changed this frame

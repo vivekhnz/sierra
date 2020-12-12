@@ -35,8 +35,9 @@ public:
 
     // input
     void updateInputState();
-    Terrain::Engine::IO::MouseInputState getMouseState(int inputControllerId) const;
-    Terrain::Engine::IO::KeyboardInputState getKeyboardState(int inputControllerId) const;
+    const Terrain::Engine::IO::MouseInputState &getMouseState(int inputControllerId) const;
+    const Terrain::Engine::IO::KeyboardInputState &getKeyboardState(
+        int inputControllerId) const;
     void setMouseCaptureMode(bool shouldCaptureMouse);
 
     // game-specific

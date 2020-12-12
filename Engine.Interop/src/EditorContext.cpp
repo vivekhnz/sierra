@@ -173,11 +173,11 @@ namespace Terrain { namespace Engine { namespace Interop {
                 Keyboard::IsKeyDown(System::Windows::Input::Key::RightAlt);
         }
     }
-    IO::MouseInputState EditorContext::getMouseState(int inputControllerId) const
+    const IO::MouseInputState &EditorContext::getMouseState(int inputControllerId) const
     {
         return inputState.mouse[inputControllerId];
     }
-    IO::KeyboardInputState EditorContext::getKeyboardState(int inputControllerId) const
+    const IO::KeyboardInputState &EditorContext::getKeyboardState(int inputControllerId) const
     {
         return inputState.keyboard[inputControllerId];
     }

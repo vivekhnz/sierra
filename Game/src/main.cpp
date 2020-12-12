@@ -58,6 +58,7 @@ int main()
         GameContext appCtx(window);
         Terrain::Engine::EngineContext ctx(appCtx);
         ctx.initialize();
+        ctx.input.addInputController();
 
         Terrain::Engine::World world(ctx);
         ctx.resources.loadResources();

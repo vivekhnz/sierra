@@ -9,7 +9,8 @@ public
         Initializing = 0,
         Idle = 1,
         Editing = 2,
-        Committing = 3
+        Committing = 3,
+        Discarding = 4
     };
 
     struct EditorState

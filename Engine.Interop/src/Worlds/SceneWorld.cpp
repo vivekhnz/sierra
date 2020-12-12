@@ -84,6 +84,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.update(deltaTime);
 
         bool isManipulatingTerrain = false;
+        bool isDiscardingStroke = false;
+
         int cameraCount = orbitCameraIds.size();
         for (int i = 0; i < cameraCount; i++)
         {
@@ -91,8 +93,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int inputControllerId =
                 world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
-            IO::MouseInputState &mouseState = ctx.input.getMouseState(inputControllerId);
-            if (mouseState.isMiddleMouseButtonDown || mouseState.isRightMouseButtonDown)
+            IO::InputManager::InputControllerState &inputState =
+                ctx.input.getInputControllerState(inputControllerId);
+
+            isDiscardingStroke |=
+                (inputState.keyboardCurrent.escape && !inputState.keyboardPrev.escape);
+
+            if (inputState.mouseCurrent.isMiddleMouseButtonDown
+                || inputState.mouseCurrent.isRightMouseButtonDown)
                 continue;
 
             Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
@@ -107,29 +115,48 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.meshRenderer.setMaterialUniformVector2(
                 terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
-            if (mouseState.isLeftMouseButtonDown)
+            if (inputState.mouseCurrent.isLeftMouseButtonDown
+                && (state.editStatus == EditStatus::Editing
+                    || !inputState.mousePrev.isLeftMouseButtonDown))
             {
                 newState.currentBrushPos = normalizedPickPoint;
                 isManipulatingTerrain = true;
             }
         }
 
-        if (state.editStatus == EditStatus::Idle && isManipulatingTerrain)
+        bool shouldUpdateCollider = false;
+
+        if (state.editStatus == EditStatus::Idle)
         {
-            newState.editStatus = EditStatus::Editing;
+            if (isManipulatingTerrain)
+            {
+                newState.editStatus = EditStatus::Editing;
+            }
         }
-        else if (state.editStatus == EditStatus::Editing && !isManipulatingTerrain)
+        else if (state.editStatus == EditStatus::Editing)
         {
-            newState.editStatus = EditStatus::Committing;
+            shouldUpdateCollider = true;
+            if (isDiscardingStroke)
+            {
+                newState.editStatus = EditStatus::Discarding;
+            }
+            else if (!isManipulatingTerrain)
+            {
+                newState.editStatus = EditStatus::Committing;
+            }
         }
         else if (state.editStatus == EditStatus::Committing)
         {
+            shouldUpdateCollider = true;
             newState.editStatus =
                 isManipulatingTerrain ? EditStatus::Editing : EditStatus::Idle;
         }
+        else if (state.editStatus == EditStatus::Discarding)
+        {
+            newState.editStatus = EditStatus::Idle;
+        }
 
-        if (state.editStatus == EditStatus::Editing
-            || state.editStatus == EditStatus::Committing)
+        if (shouldUpdateCollider)
         {
             // update terrain collider with composited heightmap texture
             ctx.renderer.getTexturePixels(
