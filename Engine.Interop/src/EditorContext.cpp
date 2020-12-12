@@ -26,7 +26,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         for (int i = 0; i < inputState.count; i++)
         {
             inputState.mouse[i] = {};
-            inputState.keyboard[i] = {};
+            inputState.pressedKeys[i] = 0;
         }
 
         if (EngineInterop::HoveredViewportContext == nullptr)
@@ -101,15 +101,14 @@ namespace Terrain { namespace Engine { namespace Interop {
         // update keyboard state for focused viewport
         if (EngineInterop::FocusedViewportContext != nullptr)
         {
-            IO::KeyboardInputState &keyboardState =
-                inputState
-                    .keyboard[EngineInterop::FocusedViewportContext->getInputControllerId()];
+            unsigned long long &pressedKeys =
+                inputState.pressedKeys[EngineInterop::FocusedViewportContext
+                                           ->getInputControllerId()];
 
 #define UPDATE_KEYBOARD_STATE(ENGINE_KEY, WINDOWS_KEY)                                        \
-    keyboardState.value |= Keyboard::IsKeyDown(WINDOWS_KEY)                                   \
+    pressedKeys |= Keyboard::IsKeyDown(WINDOWS_KEY)                                           \
         * static_cast<unsigned long long>(Terrain::Engine::IO::Key::ENGINE_KEY);
 
-            keyboardState.value = 0;
             UPDATE_KEYBOARD_STATE(Space, System::Windows::Input::Key::Space)
             UPDATE_KEYBOARD_STATE(D0, System::Windows::Input::Key::D0)
             UPDATE_KEYBOARD_STATE(D1, System::Windows::Input::Key::D1)
@@ -177,9 +176,9 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         return inputState.mouse[inputControllerId];
     }
-    const IO::KeyboardInputState &EditorContext::getKeyboardState(int inputControllerId) const
+    const unsigned long long &EditorContext::getPressedKeys(int inputControllerId) const
     {
-        return inputState.keyboard[inputControllerId];
+        return inputState.pressedKeys[inputControllerId];
     }
     void EditorContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
@@ -189,7 +188,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     int EditorContext::addInputController()
     {
         inputState.mouse.push_back({});
-        inputState.keyboard.push_back({});
+        inputState.pressedKeys.push_back(0);
         return inputState.count++;
     }
     void EditorContext::onMouseScroll(double x, double y)

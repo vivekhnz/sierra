@@ -65,7 +65,6 @@
     <ClInclude Include="src\Graphics\Window.hpp" />
     <ClInclude Include="src\IO\InputControllerState.hpp" />
     <ClInclude Include="src\IO\Key.hpp" />
-    <ClInclude Include="src\IO\KeyboardInputState.hpp" />
     <ClInclude Include="src\IO\MouseInputState.hpp" />
     <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
     <ClInclude Include="src\OrthographicCameraComponentManager.hpp" />

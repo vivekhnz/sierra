@@ -12,7 +12,7 @@ GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
     // todo: add support for more than one input controller
     inputState.count = 1;
     inputState.mouse.push_back({});
-    inputState.keyboard.push_back({});
+    inputState.pressedKeys.push_back(0);
 }
 
 // input
@@ -51,13 +51,13 @@ void GameContext::updateInputState()
     nextMouseScrollOffsetY = 0;
 
     // update keyboard state
-    Terrain::Engine::IO::KeyboardInputState &keyboardState = inputState.keyboard[0];
+    unsigned long long &pressedKeys = inputState.pressedKeys[0];
 
 #define UPDATE_KEYBOARD_STATE(ENGINE_KEY, GLFW_KEY)                                           \
-    keyboardState.value |= window.isKeyPressed(GLFW_KEY)                                      \
+    pressedKeys |= window.isKeyPressed(GLFW_KEY)                                              \
         * static_cast<unsigned long long>(Terrain::Engine::IO::Key::ENGINE_KEY);
 
-    keyboardState.value = 0;
+    pressedKeys = 0;
     UPDATE_KEYBOARD_STATE(Space, GLFW_KEY_SPACE)
     UPDATE_KEYBOARD_STATE(D0, GLFW_KEY_0)
     UPDATE_KEYBOARD_STATE(D1, GLFW_KEY_1)
@@ -125,10 +125,9 @@ const Terrain::Engine::IO::MouseInputState &GameContext::getMouseState(
 {
     return inputState.mouse[inputControllerId];
 }
-const Terrain::Engine::IO::KeyboardInputState &GameContext::getKeyboardState(
-    int inputControllerId) const
+const unsigned long long &GameContext::getPressedKeys(int inputControllerId) const
 {
-    return inputState.keyboard[inputControllerId];
+    return inputState.pressedKeys[inputControllerId];
 }
 void GameContext::setMouseCaptureMode(bool shouldCaptureMouse)
 {

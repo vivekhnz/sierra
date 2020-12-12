@@ -6,7 +6,6 @@
 #include <vector>
 #include "../AppContext.hpp"
 #include "MouseInputState.hpp"
-#include "KeyboardInputState.hpp"
 #include "InputControllerState.hpp"
 #include "Key.hpp"
 
@@ -22,7 +21,7 @@ namespace Terrain { namespace Engine { namespace IO {
         {
             int count;
             std::vector<MouseInputState> mouse;
-            std::vector<KeyboardInputState> keyboard;
+            std::vector<unsigned long long> pressedKeys;
 
             InputState() : count(0)
             {
@@ -42,16 +41,16 @@ namespace Terrain { namespace Engine { namespace IO {
 
         bool isKeyDown(int inputControllerId, Key key) const
         {
-            unsigned long long value = ctx.getKeyboardState(inputControllerId).value;
-            return (value & static_cast<unsigned long long>(key)) != 0;
+            unsigned long long pressedKeys = ctx.getPressedKeys(inputControllerId);
+            return (pressedKeys & static_cast<unsigned long long>(key)) != 0;
         }
 
         bool isNewKeyPress(int inputControllerId, Key key) const
         {
-            unsigned long long currentValue = ctx.getKeyboardState(inputControllerId).value;
-            unsigned long long prevValue = prevInputState.keyboard[inputControllerId].value;
-            return ((currentValue & static_cast<unsigned long long>(key)) != 0)
-                && ((prevValue & static_cast<unsigned long long>(key)) == 0);
+            unsigned long long currentPressedKeys = ctx.getPressedKeys(inputControllerId);
+            unsigned long long prevPressedKeys = prevInputState.pressedKeys[inputControllerId];
+            return ((currentPressedKeys & static_cast<unsigned long long>(key)) != 0)
+                && ((prevPressedKeys & static_cast<unsigned long long>(key)) == 0);
         }
 
         void addInputController();
