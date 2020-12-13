@@ -38,5 +38,11 @@ namespace Terrain.Editor
                 EngineInterop.State.CurrentEditStatus = EditStatus.Initializing;
             }
         }
+
+        private void brushRadiusSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.BrushRadius = (float)brushRadiusSlider.Value;
+        }
     }
 }

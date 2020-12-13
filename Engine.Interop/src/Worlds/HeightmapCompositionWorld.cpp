@@ -196,7 +196,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::update(
         float deltaTime, const EditorState &state, EditorState &newState)
     {
-        const float BRUSH_INSTANCE_SPACING = 0.01f;
+        float brushScale = state.brushRadius / 2048.0f;
+        float brushInstanceSpacing = 0.16f * brushScale;
 
         if (state.editStatus != EditStatus::Editing)
         {
@@ -224,14 +225,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 glm::vec2 direction = glm::normalize(diff);
                 float distance = glm::length(diff);
 
-                while (distance > BRUSH_INSTANCE_SPACING
+                while (distance > brushInstanceSpacing
                     && working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
                 {
-                    prevInstancePos += direction * BRUSH_INSTANCE_SPACING;
+                    prevInstancePos += direction * brushInstanceSpacing;
                     addBrushInstance(prevInstancePos);
                     wasInstanceAdded = true;
 
-                    distance -= BRUSH_INSTANCE_SPACING;
+                    distance -= brushInstanceSpacing;
                 }
             }
 
@@ -245,6 +246,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         working.world.componentManagers.meshRenderer.setInstanceCount(
             working.brushQuad_meshRendererInstanceId, working.brushInstanceCount);
+        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            working.brushQuad_meshRendererInstanceId, "brushScale", brushScale);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);

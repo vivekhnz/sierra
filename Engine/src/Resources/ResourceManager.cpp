@@ -231,9 +231,9 @@ namespace Terrain { namespace Engine { namespace Resources {
             {TerrainResources::Shaders::TERRAIN_VERTEX,
                 TerrainResources::Shaders::TERRAIN_TESS_CTRL,
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
-                TerrainResources::Shaders::TERRAIN_FRAGMENT}, // shaderResourceIds
-            12,                                               // uniformCount
-            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12, 17, 22},  // uniformNameLengths
+                TerrainResources::Shaders::TERRAIN_FRAGMENT},    // shaderResourceIds
+            13,                                                  // uniformCount
+            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12, 17, 22, 20}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "albedoTexture"
@@ -245,7 +245,8 @@ namespace Terrain { namespace Engine { namespace Resources {
             "normalSampleOffset"
             "textureScale"
             "brushHighlightPos"
-            "brushHighlightStrength" // uniformNames
+            "brushHighlightStrength"
+            "brushHighlightRadius" // uniformNames
         });
 
         shaderProgramResources.push_back({
@@ -328,18 +329,15 @@ namespace Terrain { namespace Engine { namespace Resources {
             "aoTexture"
             "roughnessTexture"
             "brushHighlightPos"
-            "brushHighlightStrength", // uniformNames
-            {
-                Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
-                Graphics::UniformValue::forInteger(0),
-                Graphics::UniformValue::forInteger(1),
-                Graphics::UniformValue::forInteger(2),
-                Graphics::UniformValue::forInteger(3),
-                Graphics::UniformValue::forInteger(4),
-                Graphics::UniformValue::forInteger(5),
+            "brushHighlightStrength"
+            "brushHighlightRadius", // uniformNames
+            {Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
+                Graphics::UniformValue::forInteger(0), Graphics::UniformValue::forInteger(1),
+                Graphics::UniformValue::forInteger(2), Graphics::UniformValue::forInteger(3),
+                Graphics::UniformValue::forInteger(4), Graphics::UniformValue::forInteger(5),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
                 Graphics::UniformValue::forFloat(0.0f),
-            } // uniformValues
+                Graphics::UniformValue::forFloat(0.0f)} // uniformValues
         });
 
         materialResources.push_back({

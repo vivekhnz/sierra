@@ -26,6 +26,19 @@
         <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="1">
             <interop:Viewport x:Name="heightmapPreviewViewport" Width="300" Height="300"
                               World="HeightmapPreview" />
+            <TextBlock Text="Brush Radius" Foreground="#888" Margin="12 12 12 8" />
+            <Grid Margin="12 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="brushRadiusSlider" Minimum="32" Maximum="512" Value="128"
+                        SmallChange="1" LargeChange="16" IsSnapToTickEnabled="True"
+                        ValueChanged="brushRadiusSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=brushRadiusSlider, Path=Value}"
+                           Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+            </Grid>
+
         </StackPanel>
     </Grid>
 </Window>

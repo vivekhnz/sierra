@@ -20,6 +20,7 @@ uniform sampler2D roughnessTexture;
 uniform vec2 textureScale;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;
+uniform float brushHighlightRadius;
 
 out vec4 FragColor;
 
@@ -37,15 +38,16 @@ void main()
     vec3 albedo = lighting_isTextureEnabled ? texture(albedoTexture, texcoord).rgb : vec3(1.0f);
     float ao = lighting_isAOMapEnabled ? mix(0.6f, 1.0f, texture(aoTexture, texcoord).r) : 1.0f;
 
-    float r = 0.03f;
+    float highlightRadius = brushHighlightRadius * 0.5f;
+    float distFromHighlight = distance(texcoord / textureScale, brushHighlightPos);
     
     // outline thickness is based on depth
-    float w = min(gl_FragCoord.w, 0.028f);
-    float o = 0.09f - (5.09f * w) + (88.16f * pow(w, 2));
-    
-    float d = distance(texcoord / textureScale, brushHighlightPos) / r;
-    float a = clamp(1 - d, 0, 1) + clamp(1 - abs((d - 1) / o), 0, 1);
-    vec3 brushHighlight = vec3(0.0f, 1.0f, 0.25f) * a;
+    float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);
+    float outlineIntensity =
+        max(1 - abs((((distFromHighlight - highlightRadius) / outlineWidth) * 2) - 1), 0);
+    float highlightIntensity =
+        clamp(1 - (distFromHighlight / highlightRadius), 0, 1) + outlineIntensity;
 
+    vec3 brushHighlight = vec3(0.0f, 1.0f, 0.25f) * highlightIntensity;
     FragColor = vec4((albedo * lightingCol * ao) + (brushHighlight * brushHighlightStrength), 1.0f);
 }

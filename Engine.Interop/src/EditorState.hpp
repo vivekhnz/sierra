@@ -17,5 +17,6 @@ public
     {
         EditStatus editStatus;
         glm::vec2 currentBrushPos;
+        float brushRadius;
     };
 }}}

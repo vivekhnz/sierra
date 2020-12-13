@@ -29,14 +29,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
-        std::vector<std::string> materialUniformNames(5);
+        std::vector<std::string> materialUniformNames(6);
         materialUniformNames[0] = "terrainHeight";
         materialUniformNames[1] = "heightmapSize";
         materialUniformNames[2] = "normalSampleOffset";
         materialUniformNames[3] = "brushHighlightStrength";
         materialUniformNames[4] = "brushHighlightPos";
+        materialUniformNames[5] = "brushHighlightRadius";
 
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(5);
+        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(6);
         materialUniformValues[0] =
             Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
         materialUniformValues[1] =
@@ -46,6 +47,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         materialUniformValues[3] = Terrain::Engine::Graphics::UniformValue::forFloat(0.4f);
         materialUniformValues[4] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(0.5f, 0.5f));
+        materialUniformValues[5] =
+            Terrain::Engine::Graphics::UniformValue::forFloat(128 / 2048.0f);
 
         // create entity and components
         int entityId = ctx.entities.create();
@@ -157,6 +160,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 2048, 2048,
                 static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
         }
+
+        world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            terrainMeshRendererInstanceId, "brushHighlightRadius",
+            state.brushRadius / 2048.0f);
     }
 
     void SceneWorld::render(EngineViewContext &vctx)

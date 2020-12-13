@@ -26,5 +26,18 @@ public
                 state.editStatus = value;
             }
         }
+
+        property float BrushRadius
+        {
+            float get()
+            {
+                return state.brushRadius;
+            }
+
+            void set(float value)
+            {
+                state.brushRadius = value;
+            }
+        }
     };
 }}}}
