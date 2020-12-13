@@ -13,6 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         currentEditorState = new EditorState();
         newEditorState = new EditorState();
         newEditorState->brushRadius = 128.0f;
+        newEditorState->currentTool = EditorTool::RaiseTerrain;
 
         worlds = new Worlds::EditorWorlds(*ctx);
         resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);

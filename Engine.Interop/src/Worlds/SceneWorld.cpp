@@ -86,6 +86,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         world.update(deltaTime);
 
+        bool isMovingCamera = false;
         bool isManipulatingTerrain = false;
         bool isDiscardingStroke = false;
 
@@ -100,7 +101,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             if (ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle)
                 || ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right))
-                continue;
+            {
+                isMovingCamera = true;
+                break;
+            }
 
             Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
 
@@ -161,6 +165,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
         }
 
+        newState.currentTool =
+            isMovingCamera ? EditorTool::MoveCamera : EditorTool::RaiseTerrain;
+        world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            terrainMeshRendererInstanceId, "brushHighlightStrength",
+            newState.currentTool == EditorTool::MoveCamera ? 0.0f : 0.4f);
         world.componentManagers.meshRenderer.setMaterialUniformFloat(
             terrainMeshRendererInstanceId, "brushHighlightRadius",
             state.brushRadius / 2048.0f);

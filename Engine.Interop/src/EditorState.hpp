@@ -13,9 +13,16 @@ public
         Discarding = 4
     };
 
+    enum class EditorTool : int
+    {
+        MoveCamera = 0,
+        RaiseTerrain = 1
+    };
+
     struct EditorState
     {
         EditStatus editStatus;
+        EditorTool currentTool;
         glm::vec2 currentBrushPos;
         float brushRadius;
     };
