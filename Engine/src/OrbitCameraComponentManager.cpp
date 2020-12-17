@@ -53,24 +53,25 @@ namespace Terrain { namespace Engine {
                 glm::vec3 pan =
                     (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
                 lookAt += pan * std::clamp(distance, 2.5f, 300.0f) * 0.02f * deltaTime;
+
+                isManipulatingOrbitCamera = true;
             }
 
             // only update yaw & pitch if the right mouse button is pressed
-            float rotateSensitivity =
-                (input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right) ? 0.05f
-                                                                                    : 0.0f)
-                * std::clamp(distance, 14.0f, 70.0f) * deltaTime;
-            yaw += glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
-            pitch += glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
+            if (input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right))
+            {
+                float rotateSensitivity =
+                    0.05f * std::clamp(distance, 14.0f, 70.0f) * deltaTime;
+                yaw += glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
+                pitch += glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
+
+                isManipulatingOrbitCamera = true;
+            }
 
             // calcalate camera position
             glm::vec3 newLookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
             position = lookAt + (newLookDir * distance);
-
-            isManipulatingOrbitCamera |=
-                input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle)
-                || input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right);
         }
 
         // capture mouse if orbit camera is being manipulated

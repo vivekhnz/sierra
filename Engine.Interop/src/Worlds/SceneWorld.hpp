@@ -7,6 +7,14 @@
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class SceneWorld
     {
+        struct OperationState
+        {
+            EditorTool selectedTool;
+            bool isBrushActive;
+            bool isDiscardingStroke;
+            glm::vec2 brushPosition;
+        };
+
         EngineContext &ctx;
         Engine::World world;
 
@@ -16,6 +24,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         std::vector<int> orbitCameraIds;
 
         void *heightmapTextureDataTempBuffer;
+
+        OperationState getCurrentOperation(EditStatus currentEditStatus);
+        EditStatus getNextEditStatus(
+            EditStatus currentEditStatus, bool isBrushActive, bool isDiscardingStroke);
 
     public:
         SceneWorld(EngineContext &ctx);

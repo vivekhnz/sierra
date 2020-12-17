@@ -84,12 +84,46 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
     {
+        if (state.editStatus != EditStatus::Idle)
+        {
+            // update terrain collider with composited heightmap texture
+            ctx.renderer.getTexturePixels(
+                heightmapTextureHandle, heightmapTextureDataTempBuffer);
+            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
+                2048, 2048,
+                static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
+        }
+
         world.update(deltaTime);
 
-        bool isMovingCamera = false;
-        bool isManipulatingTerrain = false;
-        bool isDiscardingStroke = false;
+        // determine the current operation being performed
+        OperationState operation = getCurrentOperation(state.editStatus);
 
+        // update editor state
+        newState.currentTool = operation.selectedTool;
+        newState.editStatus = getNextEditStatus(
+            state.editStatus, operation.isBrushActive, operation.isDiscardingStroke);
+        if (operation.isBrushActive)
+        {
+            newState.currentBrushPos = operation.brushPosition;
+        }
+
+        // update brush highlight
+        bool isBrushHiglightVisible = operation.selectedTool != EditorTool::MoveCamera;
+        world.componentManagers.meshRenderer.setMaterialUniformVector2(
+            terrainMeshRendererInstanceId, "brushHighlightPos", operation.brushPosition);
+        world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            terrainMeshRendererInstanceId, "brushHighlightStrength",
+            isBrushHiglightVisible ? 0.4f : 0.0f);
+        world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            terrainMeshRendererInstanceId, "brushHighlightRadius",
+            state.brushRadius / 2048.0f);
+    }
+
+    SceneWorld::OperationState SceneWorld::getCurrentOperation(EditStatus currentEditStatus)
+    {
+        // first pass - loop through each camera and determine whether the camera is being
+        // moved or the active brush stroke is being discarded
         int cameraCount = orbitCameraIds.size();
         for (int i = 0; i < cameraCount; i++)
         {
@@ -97,14 +131,34 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int inputControllerId =
                 world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
-            isDiscardingStroke |= ctx.input.isNewKeyPress(inputControllerId, IO::Key::Escape);
-
             if (ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle)
                 || ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right))
             {
-                isMovingCamera = true;
-                break;
+                return {
+                    EditorTool::MoveCamera, // selectedTool
+                    false,                  // isBrushActive
+                    false,                  // isDiscardingStroke
+                    glm::vec2()             // brushPosition
+                };
             }
+            if (currentEditStatus == EditStatus::Editing
+                && ctx.input.isKeyDown(inputControllerId, IO::Key::Escape))
+            {
+                return {
+                    EditorTool::RaiseTerrain, // selectedTool
+                    false,                    // isBrushActive
+                    true,                     // isDiscardingStroke
+                    glm::vec2()               // brushPosition
+                };
+            }
+        }
+
+        // second pass - loop through each camera and determine whether the brush is active
+        for (int i = 0; i < cameraCount; i++)
+        {
+            int orbitCameraId = orbitCameraIds[i];
+            int inputControllerId =
+                world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
 
             Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
 
@@ -118,61 +172,45 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.meshRenderer.setMaterialUniformVector2(
                 terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
-            if ((state.editStatus == EditStatus::Editing
+            // the LMB must be newly pressed to start a new brush stroke
+            bool isBrushActive =
+                (currentEditStatus == EditStatus::Editing
                     && ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Left))
-                || ctx.input.isNewMouseButtonPress(inputControllerId, IO::MouseButton::Left))
-            {
-                newState.currentBrushPos = normalizedPickPoint;
-                isManipulatingTerrain = true;
-            }
+                || ctx.input.isNewMouseButtonPress(inputControllerId, IO::MouseButton::Left);
+
+            return {
+                EditorTool::RaiseTerrain, // selectedTool
+                isBrushActive,            // isBrushActive
+                false,                    // isDiscardingStroke
+                normalizedPickPoint       // brushPosition
+            };
         }
 
-        if (state.editStatus == EditStatus::Idle)
+        return {
+            EditorTool::RaiseTerrain, // selectedTool
+            false,                    // isBrushActive
+            false,                    // isDiscardingStroke
+            glm::vec2()               // brushPosition
+        };
+    }
+
+    EditStatus SceneWorld::getNextEditStatus(
+        EditStatus currentEditStatus, bool isBrushActive, bool isDiscardingStroke)
+    {
+        switch (currentEditStatus)
         {
-            if (isManipulatingTerrain)
-            {
-                newState.editStatus = EditStatus::Editing;
-            }
-        }
-        else if (state.editStatus == EditStatus::Editing)
-        {
-            if (isDiscardingStroke)
-            {
-                newState.editStatus = EditStatus::Discarding;
-            }
-            else if (!isManipulatingTerrain)
-            {
-                newState.editStatus = EditStatus::Committing;
-            }
-        }
-        else if (state.editStatus == EditStatus::Committing)
-        {
-            newState.editStatus =
-                isManipulatingTerrain ? EditStatus::Editing : EditStatus::Idle;
-        }
-        else if (state.editStatus == EditStatus::Discarding)
-        {
-            newState.editStatus = EditStatus::Committing;
+        case EditStatus::Committing:
+        case EditStatus::Idle:
+            return isBrushActive ? EditStatus::Editing : EditStatus::Idle;
+        case EditStatus::Editing:
+            return isDiscardingStroke
+                ? EditStatus::Discarding
+                : (isBrushActive ? EditStatus::Editing : EditStatus::Committing);
+        case EditStatus::Discarding:
+            return EditStatus::Committing;
         }
 
-        if (state.editStatus != EditStatus::Idle)
-        {
-            // update terrain collider with composited heightmap texture
-            ctx.renderer.getTexturePixels(
-                heightmapTextureHandle, heightmapTextureDataTempBuffer);
-            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
-                2048, 2048,
-                static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
-        }
-
-        newState.currentTool =
-            isMovingCamera ? EditorTool::MoveCamera : EditorTool::RaiseTerrain;
-        world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            terrainMeshRendererInstanceId, "brushHighlightStrength",
-            newState.currentTool == EditorTool::MoveCamera ? 0.0f : 0.4f);
-        world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            terrainMeshRendererInstanceId, "brushHighlightRadius",
-            state.brushRadius / 2048.0f);
+        return currentEditStatus;
     }
 
     void SceneWorld::render(EngineViewContext &vctx)
