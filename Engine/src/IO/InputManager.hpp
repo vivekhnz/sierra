@@ -8,14 +8,15 @@
 #include "MouseInputState.hpp"
 #include "Key.hpp"
 #include "MouseButton.hpp"
+#include "MouseCaptureMode.hpp"
 
 namespace Terrain { namespace Engine { namespace IO {
     class EXPORT InputManager
     {
         AppContext &ctx;
 
-        bool shouldCaptureMouse;
-        bool wasMouseCaptured;
+        MouseCaptureMode newMouseCaptureMode;
+        MouseCaptureMode prevMouseCaptureMode;
 
         struct InputState
         {
@@ -68,7 +69,7 @@ namespace Terrain { namespace Engine { namespace IO {
         }
 
         void addInputController();
-        void captureMouse();
+        void captureMouse(bool retainCursorPos);
         void update();
     };
 }}}

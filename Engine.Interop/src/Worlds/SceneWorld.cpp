@@ -84,7 +84,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
     {
-        if (state.editStatus != EditStatus::Idle)
+        if (state.heightmapStatus != HeightmapStatus::Idle)
         {
             // update terrain collider with composited heightmap texture
             ctx.renderer.getTexturePixels(
@@ -97,19 +97,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.update(deltaTime);
 
         // determine the current operation being performed
-        OperationState operation = getCurrentOperation(state.editStatus);
+        OperationState operation = getCurrentOperation(state);
 
         // update editor state
-        newState.currentTool = operation.selectedTool;
-        newState.editStatus = getNextEditStatus(
-            state.editStatus, operation.isBrushActive, operation.isDiscardingStroke);
-        if (operation.isBrushActive)
+        newState.mode = operation.mode;
+        newState.heightmapStatus = getNextHeightmapStatus(
+            state.heightmapStatus, operation.isBrushActive, operation.isDiscardingStroke);
+        newState.currentBrushPos = operation.brushPosition;
+
+        if (operation.mode == InteractionMode::ModifyBrushRadius)
         {
-            newState.currentBrushPos = operation.brushPosition;
+            ctx.input.captureMouse(true);
+            newState.brushRadius =
+                glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 512.0f);
         }
 
         // update brush highlight
-        bool isBrushHiglightVisible = operation.selectedTool != EditorTool::MoveCamera;
+        bool isBrushHiglightVisible = operation.mode != InteractionMode::MoveCamera;
         world.componentManagers.meshRenderer.setMaterialUniformVector2(
             terrainMeshRendererInstanceId, "brushHighlightPos", operation.brushPosition);
         world.componentManagers.meshRenderer.setMaterialUniformFloat(
@@ -120,7 +124,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             state.brushRadius / 2048.0f);
     }
 
-    SceneWorld::OperationState SceneWorld::getCurrentOperation(EditStatus currentEditStatus)
+    SceneWorld::OperationState SceneWorld::getCurrentOperation(const EditorState &prevState)
     {
         // first pass - loop through each camera and determine whether the camera is being
         // moved or the active brush stroke is being discarded
@@ -135,20 +139,22 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 || ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right))
             {
                 return {
-                    EditorTool::MoveCamera, // selectedTool
-                    false,                  // isBrushActive
-                    false,                  // isDiscardingStroke
-                    glm::vec2()             // brushPosition
+                    InteractionMode::MoveCamera, // mode
+                    false,                       // isBrushActive
+                    false,                       // isDiscardingStroke
+                    glm::vec2(),                 // brushPosition
+                    0.0f                         // brushRadiusIncrease
                 };
             }
-            if (currentEditStatus == EditStatus::Editing
+            if (prevState.heightmapStatus == HeightmapStatus::Editing
                 && ctx.input.isKeyDown(inputControllerId, IO::Key::Escape))
             {
                 return {
-                    EditorTool::RaiseTerrain, // selectedTool
-                    false,                    // isBrushActive
-                    true,                     // isDiscardingStroke
-                    glm::vec2()               // brushPosition
+                    InteractionMode::PaintBrushStroke, // mode
+                    false,                             // isBrushActive
+                    true,                              // isDiscardingStroke
+                    glm::vec2(),                       // brushPosition
+                    0.0f                               // brushRadiusIncrease
                 };
             }
         }
@@ -172,45 +178,63 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.meshRenderer.setMaterialUniformVector2(
                 terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
+            // if the R key is pressed, we are adjusting the brush radius
+            if (ctx.input.isKeyDown(inputControllerId, IO::Key::R))
+            {
+                IO::MouseInputState mouseState = ctx.input.getMouseState(inputControllerId);
+                float brushRadiusIncrease =
+                    mouseState.cursorOffsetX + mouseState.cursorOffsetY;
+
+                return {
+                    InteractionMode::ModifyBrushRadius, // mode
+                    false,                              // isBrushActive
+                    false,                              // isDiscardingStroke
+                    normalizedPickPoint,                // brushPosition
+                    brushRadiusIncrease                 // brushRadiusIncrease
+                };
+            }
+
             // the LMB must be newly pressed to start a new brush stroke
             bool isBrushActive =
-                (currentEditStatus == EditStatus::Editing
+                (prevState.heightmapStatus == HeightmapStatus::Editing
                     && ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Left))
                 || ctx.input.isNewMouseButtonPress(inputControllerId, IO::MouseButton::Left);
 
             return {
-                EditorTool::RaiseTerrain, // selectedTool
-                isBrushActive,            // isBrushActive
-                false,                    // isDiscardingStroke
-                normalizedPickPoint       // brushPosition
+                InteractionMode::PaintBrushStroke, // mode
+                isBrushActive,                     // isBrushActive
+                false,                             // isDiscardingStroke
+                normalizedPickPoint,               // brushPosition
+                0.0f                               // brushRadiusIncrease
             };
         }
 
         return {
-            EditorTool::RaiseTerrain, // selectedTool
-            false,                    // isBrushActive
-            false,                    // isDiscardingStroke
-            glm::vec2()               // brushPosition
+            InteractionMode::PaintBrushStroke, // mode
+            false,                             // isBrushActive
+            false,                             // isDiscardingStroke
+            glm::vec2(),                       // brushPosition
+            0.0f                               // brushRadiusIncrease
         };
     }
 
-    EditStatus SceneWorld::getNextEditStatus(
-        EditStatus currentEditStatus, bool isBrushActive, bool isDiscardingStroke)
+    HeightmapStatus SceneWorld::getNextHeightmapStatus(
+        HeightmapStatus currentHeightmapStatus, bool isBrushActive, bool isDiscardingStroke)
     {
-        switch (currentEditStatus)
+        switch (currentHeightmapStatus)
         {
-        case EditStatus::Committing:
-        case EditStatus::Idle:
-            return isBrushActive ? EditStatus::Editing : EditStatus::Idle;
-        case EditStatus::Editing:
+        case HeightmapStatus::Committing:
+        case HeightmapStatus::Idle:
+            return isBrushActive ? HeightmapStatus::Editing : HeightmapStatus::Idle;
+        case HeightmapStatus::Editing:
             return isDiscardingStroke
-                ? EditStatus::Discarding
-                : (isBrushActive ? EditStatus::Editing : EditStatus::Committing);
-        case EditStatus::Discarding:
-            return EditStatus::Committing;
+                ? HeightmapStatus::Discarding
+                : (isBrushActive ? HeightmapStatus::Editing : HeightmapStatus::Committing);
+        case HeightmapStatus::Discarding:
+            return HeightmapStatus::Committing;
         }
 
-        return currentEditStatus;
+        return currentHeightmapStatus;
     }
 
     void SceneWorld::render(EngineViewContext &vctx)

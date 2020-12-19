@@ -10,8 +10,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         int prevMousePosY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
-        bool isMouseCaptured;
-        bool wasMouseCaptured;
+        IO::MouseCaptureMode currentMouseCaptureMode;
+        IO::MouseCaptureMode prevMouseCaptureMode;
+        int capturedMousePosX;
+        int capturedMousePosY;
 
         struct InputState
         {
@@ -33,7 +35,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         const IO::MouseInputState &getMouseState(int inputControllerId) const;
         const unsigned short &getPressedMouseButtons(int inputControllerId) const;
         const unsigned long long &getPressedKeys(int inputControllerId) const;
-        void setMouseCaptureMode(bool shouldCaptureMouse);
+        void setMouseCaptureMode(IO::MouseCaptureMode mode);
 
         int addInputController();
         void onMouseScroll(double x, double y);

@@ -199,7 +199,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         float brushScale = state.brushRadius / 2048.0f;
         float brushInstanceSpacing = 0.16f * brushScale;
 
-        if (state.editStatus != EditStatus::Editing)
+        if (state.heightmapStatus != HeightmapStatus::Editing)
         {
             // don't draw any brush instances if we are not editing the heightmap
             working.brushInstanceCount = 0;
@@ -264,10 +264,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::compositeHeightmap(
         const EditorState &state, EditorState &newState)
     {
-        if (state.editStatus == EditStatus::Idle)
+        if (state.heightmapStatus == HeightmapStatus::Idle)
             return;
 
-        if (state.editStatus == EditStatus::Committing)
+        if (state.heightmapStatus == HeightmapStatus::Committing)
         {
             EngineViewContext stagingVctx = {
                 2048,                  // viewportWidth
@@ -277,13 +277,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             staging.world.render(stagingVctx);
         }
 
-        if (state.editStatus == EditStatus::Initializing)
+        if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
             // reset heightmap quad's texture back to heightmap texture resource
             const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
             ctx.assets.graphics.setMaterialTexture(working.quadMaterialHandle, 0,
                 ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
-            newState.editStatus = EditStatus::Committing;
+            newState.heightmapStatus = HeightmapStatus::Committing;
         }
 
         EngineViewContext workingVctx = {
@@ -293,7 +293,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         };
         working.world.render(workingVctx);
 
-        if (state.editStatus == EditStatus::Initializing)
+        if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
             // set heightmap quad's texture to the staging world's render target
             ctx.assets.graphics.setMaterialTexture(

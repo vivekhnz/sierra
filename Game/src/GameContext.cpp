@@ -141,9 +141,19 @@ const unsigned long long &GameContext::getPressedKeys(int inputControllerId) con
 {
     return inputState.pressedKeys[inputControllerId];
 }
-void GameContext::setMouseCaptureMode(bool shouldCaptureMouse)
+void GameContext::setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode)
 {
-    window.setMouseCaptureMode(shouldCaptureMouse);
+    switch (mode)
+    {
+    case Terrain::Engine::IO::MouseCaptureMode::DoNotCapture:
+        window.setMouseCaptureMode(false);
+        break;
+    case Terrain::Engine::IO::MouseCaptureMode::Capture:
+    case Terrain::Engine::IO::MouseCaptureMode::CaptureRetainPosition:
+        // setting the cursor position via GLFW doesn't work so we can't retain mouse pos
+        window.setMouseCaptureMode(true);
+        break;
+    }
 }
 
 // game-specific

@@ -77,7 +77,7 @@ namespace Terrain { namespace Engine {
         // capture mouse if orbit camera is being manipulated
         if (isManipulatingOrbitCamera)
         {
-            input.captureMouse();
+            input.captureMouse(false);
         }
     }
 

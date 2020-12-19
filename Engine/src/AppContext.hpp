@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "IO/MouseInputState.hpp"
+#include "IO/MouseCaptureMode.hpp"
 
 namespace Terrain { namespace Engine {
     class EXPORT AppContext
@@ -13,7 +14,7 @@ namespace Terrain { namespace Engine {
         virtual const IO::MouseInputState &getMouseState(int inputControllerId) const = 0;
         virtual const unsigned short &getPressedMouseButtons(int inputControllerId) const = 0;
         virtual const unsigned long long &getPressedKeys(int inputControllerId) const = 0;
-        virtual void setMouseCaptureMode(bool shouldCaptureMouse) = 0;
+        virtual void setMouseCaptureMode(IO::MouseCaptureMode mode) = 0;
     };
 }}
 

@@ -4,7 +4,7 @@
 
 namespace Terrain { namespace Engine { namespace Interop {
 public
-    enum class EditStatus : int
+    enum class HeightmapStatus : int
     {
         Initializing = 0,
         Idle = 1,
@@ -13,16 +13,17 @@ public
         Discarding = 4
     };
 
-    enum class EditorTool : int
+    enum class InteractionMode : int
     {
         MoveCamera = 0,
-        RaiseTerrain = 1
+        ModifyBrushRadius = 1,
+        PaintBrushStroke = 2
     };
 
     struct EditorState
     {
-        EditStatus editStatus;
-        EditorTool currentTool;
+        HeightmapStatus heightmapStatus;
+        InteractionMode mode;
         glm::vec2 currentBrushPos;
         float brushRadius;
     };

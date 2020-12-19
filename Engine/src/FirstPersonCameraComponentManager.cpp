@@ -84,7 +84,7 @@ namespace Terrain { namespace Engine {
         // capture mouse if first person camera is active
         if (isCameraActive)
         {
-            input.captureMouse();
+            input.captureMouse(false);
         }
     }
 

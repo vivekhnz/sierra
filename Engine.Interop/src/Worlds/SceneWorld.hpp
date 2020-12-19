@@ -9,10 +9,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         struct OperationState
         {
-            EditorTool selectedTool;
+            InteractionMode mode;
             bool isBrushActive;
             bool isDiscardingStroke;
             glm::vec2 brushPosition;
+            float brushRadiusIncrease;
         };
 
         EngineContext &ctx;
@@ -25,9 +26,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         void *heightmapTextureDataTempBuffer;
 
-        OperationState getCurrentOperation(EditStatus currentEditStatus);
-        EditStatus getNextEditStatus(
-            EditStatus currentEditStatus, bool isBrushActive, bool isDiscardingStroke);
+        OperationState getCurrentOperation(const EditorState &prevState);
+        HeightmapStatus getNextHeightmapStatus(HeightmapStatus currentHeightmapStatus,
+            bool isBrushActive,
+            bool isDiscardingStroke);
 
     public:
         SceneWorld(EngineContext &ctx);

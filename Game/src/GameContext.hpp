@@ -39,7 +39,7 @@ public:
     const Terrain::Engine::IO::MouseInputState &getMouseState(int inputControllerId) const;
     const unsigned short &getPressedMouseButtons(int inputControllerId) const;
     const unsigned long long &getPressedKeys(int inputControllerId) const;
-    void setMouseCaptureMode(bool shouldCaptureMouse);
+    void setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode);
 
     // game-specific
     Terrain::Engine::EngineViewContext getViewContext() const;

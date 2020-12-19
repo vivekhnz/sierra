@@ -14,16 +14,16 @@ public
         {
         }
 
-        property EditStatus CurrentEditStatus
+        property HeightmapStatus CurrentHeightmapStatus
         {
-            EditStatus get()
+            HeightmapStatus get()
             {
-                return state.editStatus;
+                return state.heightmapStatus;
             }
 
-            void set(EditStatus value)
+            void set(HeightmapStatus value)
             {
-                state.editStatus = value;
+                state.heightmapStatus = value;
             }
         }
 

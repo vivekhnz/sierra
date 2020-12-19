@@ -180,6 +180,9 @@
     <ClInclude Include="src\IO\MouseButton.hpp">
       <Filter>src\IO</Filter>
     </ClInclude>
+    <ClInclude Include="src\IO\MouseCaptureMode.hpp">
+      <Filter>src\IO</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="src">

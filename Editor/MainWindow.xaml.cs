@@ -1,6 +1,8 @@
 ﻿using Microsoft.Win32;
+using System;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Threading;
 using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
@@ -10,10 +12,19 @@ namespace Terrain.Editor
     /// </summary>
     public partial class MainWindow : Window
     {
+        DispatcherTimer updateUiTimer;
+
         public MainWindow()
         {
             EngineInterop.InitializeEngine();
             InitializeComponent();
+
+            updateUiTimer = new DispatcherTimer
+            {
+                Interval = TimeSpan.FromMilliseconds(1)
+            };
+            updateUiTimer.Tick += updateUiTimer_Tick;
+            updateUiTimer.Start();
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -35,7 +46,7 @@ namespace Terrain.Editor
                 const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
                 EngineInterop.ResourceManager.ReloadTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP,
                     ofd.FileName, true);
-                EngineInterop.State.CurrentEditStatus = EditStatus.Initializing;
+                EngineInterop.State.CurrentHeightmapStatus = HeightmapStatus.Initializing;
             }
         }
 
@@ -43,6 +54,14 @@ namespace Terrain.Editor
             RoutedPropertyChangedEventArgs<double> e)
         {
             EngineInterop.State.BrushRadius = (float)brushRadiusSlider.Value;
+        }
+
+        private void updateUiTimer_Tick(object sender, EventArgs e)
+        {
+            if (brushRadiusSlider.Value != EngineInterop.State.BrushRadius)
+            {
+                brushRadiusSlider.Value = EngineInterop.State.BrushRadius;
+            }
         }
     }
 }
