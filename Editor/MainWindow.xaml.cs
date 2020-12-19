@@ -19,9 +19,9 @@ namespace Terrain.Editor
             EngineInterop.InitializeEngine();
             InitializeComponent();
 
-            updateUiTimer = new DispatcherTimer
+            updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
-                Interval = TimeSpan.FromMilliseconds(1)
+                Interval = TimeSpan.FromMilliseconds(50)
             };
             updateUiTimer.Tick += updateUiTimer_Tick;
             updateUiTimer.Start();
