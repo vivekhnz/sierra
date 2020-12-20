@@ -14,6 +14,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             bool isDiscardingStroke;
             glm::vec2 brushPosition;
             float brushRadiusIncrease;
+            float brushFalloffIncrease;
         };
 
         EngineContext &ctx;

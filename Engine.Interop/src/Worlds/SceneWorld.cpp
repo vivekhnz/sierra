@@ -113,6 +113,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             newState.brushRadius =
                 glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 512.0f);
         }
+        else if (operation.mode == InteractionMode::ModifyBrushFalloff)
+        {
+            ctx.input.captureMouse(true);
+            newState.brushFalloff =
+                glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
+        }
 
         // update brush highlight
         bool isBrushHiglightVisible = operation.mode != InteractionMode::MoveCamera;
@@ -147,7 +153,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                     false,                       // isBrushActive
                     false,                       // isDiscardingStroke
                     glm::vec2(),                 // brushPosition
-                    0.0f                         // brushRadiusIncrease
+                    0.0f,                        // brushRadiusIncrease
+                    0.0f                         // brushFalloffIncrease
                 };
             }
             if (prevState.heightmapStatus == HeightmapStatus::Editing
@@ -158,7 +165,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                     false,                             // isBrushActive
                     true,                              // isDiscardingStroke
                     glm::vec2(),                       // brushPosition
-                    0.0f                               // brushRadiusIncrease
+                    0.0f,                              // brushRadiusIncrease
+                    0.0f                               // brushFalloffIncrease
                 };
             }
         }
@@ -182,10 +190,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.meshRenderer.setMaterialUniformVector2(
                 terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
+            IO::MouseInputState mouseState = ctx.input.getMouseState(inputControllerId);
+
             // if the R key is pressed, we are adjusting the brush radius
             if (ctx.input.isKeyDown(inputControllerId, IO::Key::R))
             {
-                IO::MouseInputState mouseState = ctx.input.getMouseState(inputControllerId);
                 float brushRadiusIncrease =
                     mouseState.cursorOffsetX + mouseState.cursorOffsetY;
 
@@ -194,7 +203,24 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                     false,                              // isBrushActive
                     false,                              // isDiscardingStroke
                     normalizedPickPoint,                // brushPosition
-                    brushRadiusIncrease                 // brushRadiusIncrease
+                    brushRadiusIncrease,                // brushRadiusIncrease
+                    0.0f                                // brushFalloffIncrease
+                };
+            }
+
+            // if the F key is pressed, we are adjusting the brush falloff
+            if (ctx.input.isKeyDown(inputControllerId, IO::Key::F))
+            {
+                float brushFalloffIncrease =
+                    (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
+
+                return {
+                    InteractionMode::ModifyBrushFalloff, // mode
+                    false,                               // isBrushActive
+                    false,                               // isDiscardingStroke
+                    normalizedPickPoint,                 // brushPosition
+                    0.0f,                                // brushRadiusIncrease
+                    brushFalloffIncrease                 // brushFalloffIncrease
                 };
             }
 
@@ -209,7 +235,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 isBrushActive,                     // isBrushActive
                 false,                             // isDiscardingStroke
                 normalizedPickPoint,               // brushPosition
-                0.0f                               // brushRadiusIncrease
+                0.0f,                              // brushRadiusIncrease
+                0.0f                               // brushFalloffIncrease
             };
         }
 
@@ -218,7 +245,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             false,                             // isBrushActive
             false,                             // isDiscardingStroke
             glm::vec2(),                       // brushPosition
-            0.0f                               // brushRadiusIncrease
+            0.0f,                              // brushRadiusIncrease
+            0.0f                               // brushFalloffIncrease
         };
     }
 

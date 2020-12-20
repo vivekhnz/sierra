@@ -17,7 +17,8 @@ public
     {
         MoveCamera = 0,
         ModifyBrushRadius = 1,
-        PaintBrushStroke = 2
+        ModifyBrushFalloff = 2,
+        PaintBrushStroke = 3
     };
 
     struct EditorState
