@@ -26,5 +26,6 @@ public
         InteractionMode mode;
         glm::vec2 currentBrushPos;
         float brushRadius;
+        float brushFalloff;
     };
 }}}

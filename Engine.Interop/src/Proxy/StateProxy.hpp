@@ -39,5 +39,18 @@ public
                 state.brushRadius = value;
             }
         }
+
+        property float BrushFalloff
+        {
+            float get()
+            {
+                return state.brushFalloff;
+            }
+
+            void set(float value)
+            {
+                state.brushFalloff = value;
+            }
+        }
     };
 }}}}

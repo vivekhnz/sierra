@@ -56,11 +56,21 @@ namespace Terrain.Editor
             EngineInterop.State.BrushRadius = (float)brushRadiusSlider.Value;
         }
 
+        private void brushFalloffSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.BrushFalloff = (float)brushFalloffSlider.Value;
+        }
+
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
             if (brushRadiusSlider.Value != EngineInterop.State.BrushRadius)
             {
                 brushRadiusSlider.Value = EngineInterop.State.BrushRadius;
+            }
+            if (brushFalloffSlider.Value != EngineInterop.State.BrushFalloff)
+            {
+                brushFalloffSlider.Value = EngineInterop.State.BrushFalloff;
             }
         }
     }

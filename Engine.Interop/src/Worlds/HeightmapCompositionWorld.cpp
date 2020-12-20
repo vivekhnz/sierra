@@ -153,11 +153,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // setup brush quad
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
-        std::vector<std::string> brushQuad_uniformNames(1);
+        std::vector<std::string> brushQuad_uniformNames(2);
         brushQuad_uniformNames[0] = "brushScale";
+        brushQuad_uniformNames[1] = "brushFalloff";
 
-        std::vector<Graphics::UniformValue> brushQuad_uniformValues(1);
+        std::vector<Graphics::UniformValue> brushQuad_uniformValues(2);
         brushQuad_uniformValues[0] = Graphics::UniformValue::forFloat(128 / 2048.0f);
+        brushQuad_uniformValues[1] = Graphics::UniformValue::forFloat(0.1f);
 
         int brushQuad_entityId = ctx.entities.create();
         working.brushQuad_meshRendererInstanceId =
@@ -196,9 +198,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::update(
         float deltaTime, const EditorState &state, EditorState &newState)
     {
-        float brushScale = state.brushRadius / 2048.0f;
-        float brushInstanceSpacing = 0.16f * brushScale;
-
         if (state.heightmapStatus != HeightmapStatus::Editing)
         {
             // don't draw any brush instances if we are not editing the heightmap
@@ -225,14 +224,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 glm::vec2 direction = glm::normalize(diff);
                 float distance = glm::length(diff);
 
-                while (distance > brushInstanceSpacing
+                const float BRUSH_INSTANCE_SPACING = 0.01f;
+                while (distance > BRUSH_INSTANCE_SPACING
                     && working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
                 {
-                    prevInstancePos += direction * brushInstanceSpacing;
+                    prevInstancePos += direction * BRUSH_INSTANCE_SPACING;
                     addBrushInstance(prevInstancePos);
                     wasInstanceAdded = true;
 
-                    distance -= brushInstanceSpacing;
+                    distance -= BRUSH_INSTANCE_SPACING;
                 }
             }
 
@@ -247,7 +247,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         working.world.componentManagers.meshRenderer.setInstanceCount(
             working.brushQuad_meshRendererInstanceId, working.brushInstanceCount);
         working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            working.brushQuad_meshRendererInstanceId, "brushScale", brushScale);
+            working.brushQuad_meshRendererInstanceId, "brushScale",
+            state.brushRadius / 2048.0f);
+        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            working.brushQuad_meshRendererInstanceId, "brushFalloff", state.brushFalloff);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);

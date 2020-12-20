@@ -3,7 +3,6 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Terrain.Editor"
         xmlns:interop="clr-namespace:Terrain.Engine.Interop;assembly=Terrain.Engine.Interop"
         mc:Ignorable="d"
         Title="Terrain Editor" Width="1280" Height="720"
@@ -33,12 +32,23 @@
                     <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
                 <Slider x:Name="brushRadiusSlider" Minimum="32" Maximum="512" Value="128"
-                        SmallChange="1" LargeChange="16" IsSnapToTickEnabled="True"
-                        ValueChanged="brushRadiusSlider_ValueChanged" />
+                        SmallChange="1" LargeChange="16" TickFrequency="1"
+                        IsSnapToTickEnabled="True" ValueChanged="brushRadiusSlider_ValueChanged" />
                 <TextBlock Text="{Binding ElementName=brushRadiusSlider, Path=Value}"
                            Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
             </Grid>
-
+            <TextBlock Text="Brush Falloff" Foreground="#888" Margin="12 12 12 8" />
+            <Grid Margin="12 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="brushFalloffSlider" Minimum="0" Maximum="0.99" Value="0.1"
+                        SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                        IsSnapToTickEnabled="True" ValueChanged="brushFalloffSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=brushFalloffSlider, Path=Value}"
+                           Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+            </Grid>
         </StackPanel>
     </Grid>
 </Window>

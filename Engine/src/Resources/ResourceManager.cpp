@@ -231,9 +231,9 @@ namespace Terrain { namespace Engine { namespace Resources {
             {TerrainResources::Shaders::TERRAIN_VERTEX,
                 TerrainResources::Shaders::TERRAIN_TESS_CTRL,
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
-                TerrainResources::Shaders::TERRAIN_FRAGMENT},    // shaderResourceIds
-            13,                                                  // uniformCount
-            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12, 17, 22, 20}, // uniformNameLengths
+                TerrainResources::Shaders::TERRAIN_FRAGMENT},        // shaderResourceIds
+            14,                                                      // uniformCount
+            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12, 17, 22, 20, 21}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "albedoTexture"
@@ -246,7 +246,8 @@ namespace Terrain { namespace Engine { namespace Resources {
             "textureScale"
             "brushHighlightPos"
             "brushHighlightStrength"
-            "brushHighlightRadius" // uniformNames
+            "brushHighlightRadius"
+            "brushHighlightFalloff" // uniformNames
         });
 
         shaderProgramResources.push_back({
@@ -284,9 +285,10 @@ namespace Terrain { namespace Engine { namespace Resources {
             2,                                       // shaderCount
             {TerrainResources::Shaders::BRUSH_VERTEX,
                 TerrainResources::Shaders::BRUSH_FRAGMENT}, // shaderResourceIds
-            1,                                              // uniformCount
-            {10},                                           // uniformNameLengths
-            "brushScale"                                    // uniformNames
+            2,                                              // uniformCount
+            {10, 12},                                       // uniformNameLengths
+            "brushScale"
+            "brushFalloff" // uniformNames
         });
 
         shaderProgramResources.push_back({
@@ -318,9 +320,9 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::DISPLACEMENT,
                 TerrainResources::Textures::AO,
                 TerrainResources::Textures::ROUGHNESS,
-            },                                   // textureResourceIds
-            9,                                   // uniformCount
-            {12, 16, 13, 13, 19, 9, 16, 17, 22}, // uniformNameLengths
+            },                                           // textureResourceIds
+            11,                                          // uniformCount
+            {12, 16, 13, 13, 19, 9, 16, 17, 22, 20, 11}, // uniformNameLengths
             "textureScale"
             "heightmapTexture"
             "albedoTexture"
@@ -330,13 +332,14 @@ namespace Terrain { namespace Engine { namespace Resources {
             "roughnessTexture"
             "brushHighlightPos"
             "brushHighlightStrength"
-            "brushHighlightRadius", // uniformNames
+            "brushHighlightRadius"
+            "brushHighlightFalloff", // uniformNames
             {Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
                 Graphics::UniformValue::forInteger(0), Graphics::UniformValue::forInteger(1),
                 Graphics::UniformValue::forInteger(2), Graphics::UniformValue::forInteger(3),
                 Graphics::UniformValue::forInteger(4), Graphics::UniformValue::forInteger(5),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
-                Graphics::UniformValue::forFloat(0.0f),
+                Graphics::UniformValue::forFloat(0.0f), Graphics::UniformValue::forFloat(0.0f),
                 Graphics::UniformValue::forFloat(0.0f)} // uniformValues
         });
 

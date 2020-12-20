@@ -21,6 +21,7 @@ uniform vec2 textureScale;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;
 uniform float brushHighlightRadius;
+uniform float brushHighlightFalloff;
 
 out vec4 FragColor;
 
@@ -45,8 +46,10 @@ void main()
     float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);
     float outlineIntensity =
         max(1 - abs((((distFromHighlight - highlightRadius) / outlineWidth) * 2) - 1), 0);
-    float highlightIntensity =
-        clamp(1 - (distFromHighlight / highlightRadius), 0, 1) + outlineIntensity;
+    float influenceAreaIntensity = ((distFromHighlight / highlightRadius) - brushHighlightFalloff)
+        / (1 - brushHighlightFalloff);
+    influenceAreaIntensity = 1 - clamp(influenceAreaIntensity, 0, 1);
+    float highlightIntensity = influenceAreaIntensity + outlineIntensity;
 
     vec3 brushHighlight = vec3(0.0f, 1.0f, 0.25f) * highlightIntensity;
     FragColor = vec4((albedo * lightingCol * ao) + (brushHighlight * brushHighlightStrength), 1.0f);
