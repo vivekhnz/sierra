@@ -103,6 +103,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // update editor state
         newState.mode = operation.mode;
+        newState.tool = operation.tool;
         newState.heightmapStatus = getNextHeightmapStatus(
             state.heightmapStatus, operation.isBrushActive, operation.isDiscardingStroke);
         newState.currentBrushPos = operation.brushPosition;
@@ -136,6 +137,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     SceneWorld::OperationState SceneWorld::getCurrentOperation(const EditorState &prevState)
     {
+        EditorTool tool = prevState.tool;
+
         // first pass - loop through each camera and determine whether the camera is being
         // moved or the active brush stroke is being discarded
         int cameraCount = orbitCameraIds.size();
@@ -150,6 +153,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             {
                 return {
                     InteractionMode::MoveCamera, // mode
+                    tool,                        // tool
                     false,                       // isBrushActive
                     false,                       // isDiscardingStroke
                     glm::vec2(),                 // brushPosition
@@ -162,6 +166,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             {
                 return {
                     InteractionMode::PaintBrushStroke, // mode
+                    tool,                              // tool
                     false,                             // isBrushActive
                     true,                              // isDiscardingStroke
                     glm::vec2(),                       // brushPosition
@@ -200,6 +205,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
                 return {
                     InteractionMode::ModifyBrushRadius, // mode
+                    tool,                               // tool
                     false,                              // isBrushActive
                     false,                              // isDiscardingStroke
                     normalizedPickPoint,                // brushPosition
@@ -216,12 +222,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
                 return {
                     InteractionMode::ModifyBrushFalloff, // mode
+                    tool,                                // tool
                     false,                               // isBrushActive
                     false,                               // isDiscardingStroke
                     normalizedPickPoint,                 // brushPosition
                     0.0f,                                // brushRadiusIncrease
                     brushFalloffIncrease                 // brushFalloffIncrease
                 };
+            }
+
+            // if a number key is pressed, change the selected tool
+            if (ctx.input.isKeyDown(inputControllerId, IO::Key::D1))
+            {
+                tool = EditorTool::RaiseTerrain;
+            }
+            else if (ctx.input.isKeyDown(inputControllerId, IO::Key::D2))
+            {
+                tool = EditorTool::LowerTerrain;
             }
 
             // the LMB must be newly pressed to start a new brush stroke
@@ -232,6 +249,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             return {
                 InteractionMode::PaintBrushStroke, // mode
+                tool,                              // tool
                 isBrushActive,                     // isBrushActive
                 false,                             // isDiscardingStroke
                 normalizedPickPoint,               // brushPosition
@@ -242,6 +260,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         return {
             InteractionMode::PaintBrushStroke, // mode
+            tool,                              // tool
             false,                             // isBrushActive
             false,                             // isDiscardingStroke
             glm::vec2(),                       // brushPosition

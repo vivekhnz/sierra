@@ -91,6 +91,19 @@ namespace Terrain.Editor
             {
                 brushFalloffSlider.Value = EngineInterop.State.BrushFalloff;
             }
+
+            foreach (var kvp in editorToolByToolButtons)
+            {
+                bool shouldBeSelected = kvp.Value == EngineInterop.State.CurrentTool;
+                if (shouldBeSelected && kvp.Key.IsChecked != true)
+                {
+                    kvp.Key.IsChecked = true;
+                }
+                else if (!shouldBeSelected && kvp.Key.IsChecked != false)
+                {
+                    kvp.Key.IsChecked = false;
+                }
+            }
         }
     }
 }

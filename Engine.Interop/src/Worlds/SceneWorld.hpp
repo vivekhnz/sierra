@@ -10,6 +10,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         struct OperationState
         {
             InteractionMode mode;
+            EditorTool tool;
             bool isBrushActive;
             bool isDiscardingStroke;
             glm::vec2 brushPosition;
