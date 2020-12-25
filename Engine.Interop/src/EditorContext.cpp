@@ -126,22 +126,9 @@ namespace Terrain { namespace Engine { namespace Interop {
                     mouseState.cursorOffsetY = actualMousePos.Y - viewportCenter_window.Y;
                 }
             }
-        }
 
-        // reset the mouse scroll offset that will be modified by the scroll wheel callback
-        nextMouseScrollOffsetX = 0;
-        nextMouseScrollOffsetY = 0;
-
-        prevMousePosX = actualMousePos.X;
-        prevMousePosY = actualMousePos.Y;
-        prevMouseCaptureMode = currentMouseCaptureMode;
-
-        // update keyboard state for focused viewport
-        if (EngineInterop::FocusedViewportContext != nullptr)
-        {
-            unsigned long long &pressedKeys =
-                inputState.pressedKeys[EngineInterop::FocusedViewportContext
-                                           ->getInputControllerId()];
+            // update keyboard state for hovered viewport
+            unsigned long long &pressedKeys = inputState.pressedKeys[inputControllerId];
 
 #define UPDATE_KEYBOARD_STATE(ENGINE_KEY, WINDOWS_KEY)                                        \
     pressedKeys |= Keyboard::IsKeyDown(WINDOWS_KEY)                                           \
@@ -209,6 +196,14 @@ namespace Terrain { namespace Engine { namespace Interop {
             UPDATE_KEYBOARD_STATE(RightCtrl, System::Windows::Input::Key::RightCtrl)
             UPDATE_KEYBOARD_STATE(RightAlt, System::Windows::Input::Key::RightAlt)
         }
+
+        // reset the mouse scroll offset that will be modified by the scroll wheel callback
+        nextMouseScrollOffsetX = 0;
+        nextMouseScrollOffsetY = 0;
+
+        prevMousePosX = actualMousePos.X;
+        prevMousePosY = actualMousePos.Y;
+        prevMouseCaptureMode = currentMouseCaptureMode;
     }
     const IO::MouseInputState &EditorContext::getMouseState(int inputControllerId) const
     {

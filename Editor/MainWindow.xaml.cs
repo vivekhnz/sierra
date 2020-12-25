@@ -1,7 +1,9 @@
 ﻿using Microsoft.Win32;
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using Terrain.Engine.Interop;
 
@@ -13,11 +15,18 @@ namespace Terrain.Editor
     public partial class MainWindow : Window
     {
         DispatcherTimer updateUiTimer;
+        Dictionary<RadioButton, EditorTool> editorToolByToolButtons;
 
         public MainWindow()
         {
             EngineInterop.InitializeEngine();
             InitializeComponent();
+
+            editorToolByToolButtons = new Dictionary<RadioButton, EditorTool>
+            {
+                [rbEditorToolRaiseTerrain] = EditorTool.RaiseTerrain,
+                [rbEditorToolLowerTerrain] = EditorTool.LowerTerrain
+            };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
@@ -60,6 +69,16 @@ namespace Terrain.Editor
             RoutedPropertyChangedEventArgs<double> e)
         {
             EngineInterop.State.BrushFalloff = (float)brushFalloffSlider.Value;
+        }
+
+        private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
+        {
+            if (editorToolByToolButtons == null) return;
+
+            var senderBtn = sender as RadioButton;
+            if (senderBtn == null) return;
+
+            EngineInterop.State.CurrentTool = editorToolByToolButtons[senderBtn];
         }
 
         private void updateUiTimer_Tick(object sender, EventArgs e)

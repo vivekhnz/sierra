@@ -153,13 +153,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // setup brush quad
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
-        std::vector<std::string> brushQuad_uniformNames(2);
+        std::vector<std::string> brushQuad_uniformNames(3);
         brushQuad_uniformNames[0] = "brushScale";
         brushQuad_uniformNames[1] = "brushFalloff";
+        brushQuad_uniformNames[2] = "brushLightness";
 
-        std::vector<Graphics::UniformValue> brushQuad_uniformValues(2);
+        std::vector<Graphics::UniformValue> brushQuad_uniformValues(3);
         brushQuad_uniformValues[0] = Graphics::UniformValue::forFloat(128 / 2048.0f);
         brushQuad_uniformValues[1] = Graphics::UniformValue::forFloat(0.1f);
+        brushQuad_uniformValues[2] = Graphics::UniformValue::forFloat(1.0f);
 
         int brushQuad_entityId = ctx.entities.create();
         working.brushQuad_meshRendererInstanceId =
@@ -251,6 +253,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             state.brushRadius / 2048.0f);
         working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
             working.brushQuad_meshRendererInstanceId, "brushFalloff", state.brushFalloff);
+
+        float brushLightness = 1.0f;
+        switch (state.tool)
+        {
+        case EditorTool::RaiseTerrain:
+            brushLightness = 1.0f;
+            break;
+        case EditorTool::LowerTerrain:
+            brushLightness = 0.0f;
+            break;
+        }
+        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            working.brushQuad_meshRendererInstanceId, "brushLightness", brushLightness);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);

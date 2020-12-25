@@ -27,6 +27,19 @@ public
             }
         }
 
+        property EditorTool CurrentTool
+        {
+            EditorTool get()
+            {
+                return state.tool;
+            }
+
+            void set(EditorTool value)
+            {
+                state.tool = value;
+            }
+        }
+
         property float BrushRadius
         {
             float get()

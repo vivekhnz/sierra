@@ -2,6 +2,7 @@
 layout(location = 0) in vec2 uv;
 
 uniform float brushFalloff;
+uniform float brushLightness;
 
 out vec4 FragColor;
 
@@ -14,5 +15,5 @@ void main()
     value = max(min(value, 1.0f), 0.0f);
     value = value * strength;
     
-    FragColor = vec4(1.0f, 1.0f, 1.0f, value);
+    FragColor = vec4(brushLightness, brushLightness, brushLightness, value);
 }
