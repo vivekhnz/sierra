@@ -285,11 +285,12 @@ namespace Terrain { namespace Engine { namespace Resources {
             2,                                       // shaderCount
             {TerrainResources::Shaders::BRUSH_VERTEX,
                 TerrainResources::Shaders::BRUSH_FRAGMENT}, // shaderResourceIds
-            3,                                              // uniformCount
-            {10, 12, 14},                                   // uniformNameLengths
+            4,                                              // uniformCount
+            {10, 12, 14, 13},                               // uniformNameLengths
             "brushScale"
             "brushFalloff"
-            "brushLightness" // uniformNames
+            "brushLightness"
+            "brushStrength" // uniformNames
         });
 
         shaderProgramResources.push_back({

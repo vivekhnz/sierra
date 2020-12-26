@@ -153,15 +153,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // setup brush quad
         const int RESOURCE_ID_MATERIAL_BRUSH = 2;
 
-        std::vector<std::string> brushQuad_uniformNames(3);
+        std::vector<std::string> brushQuad_uniformNames(4);
         brushQuad_uniformNames[0] = "brushScale";
         brushQuad_uniformNames[1] = "brushFalloff";
         brushQuad_uniformNames[2] = "brushLightness";
+        brushQuad_uniformNames[3] = "brushStrength";
 
-        std::vector<Graphics::UniformValue> brushQuad_uniformValues(3);
+        std::vector<Graphics::UniformValue> brushQuad_uniformValues(4);
         brushQuad_uniformValues[0] = Graphics::UniformValue::forFloat(128 / 2048.0f);
         brushQuad_uniformValues[1] = Graphics::UniformValue::forFloat(0.1f);
         brushQuad_uniformValues[2] = Graphics::UniformValue::forFloat(1.0f);
+        brushQuad_uniformValues[3] = Graphics::UniformValue::forFloat(0.0025f);
 
         int brushQuad_entityId = ctx.entities.create();
         working.brushQuad_meshRendererInstanceId =
@@ -226,7 +228,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 glm::vec2 direction = glm::normalize(diff);
                 float distance = glm::length(diff);
 
-                const float BRUSH_INSTANCE_SPACING = 0.01f;
+                const float BRUSH_INSTANCE_SPACING = 0.005f;
                 while (distance > BRUSH_INSTANCE_SPACING
                     && working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
                 {
@@ -266,6 +268,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
             working.brushQuad_meshRendererInstanceId, "brushLightness", brushLightness);
+
+        /*
+         * Because the spacing between brush instances is constant, higher radius brushes will
+         * result in more brush instances being drawn, meaning the terrain will be influenced
+         * more. As a result, we should decrease the brush strength as the brush radius
+         * increases to ensure the perceived brush strength remains constant.
+         */
+        float brushStrength = 0.32f / state.brushRadius;
+        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
+            working.brushQuad_meshRendererInstanceId, "brushStrength", brushStrength);
 
         working.world.update(deltaTime);
         staging.world.update(deltaTime);

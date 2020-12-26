@@ -54,7 +54,7 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
-                <Slider x:Name="brushFalloffSlider" Minimum="0" Maximum="0.99" Value="0.1"
+                <Slider x:Name="brushFalloffSlider" Minimum="0" Maximum="0.99" Value="0.75"
                         SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                         IsSnapToTickEnabled="True" ValueChanged="brushFalloffSlider_ValueChanged" />
                 <TextBlock Text="{Binding ElementName=brushFalloffSlider, Path=Value}"

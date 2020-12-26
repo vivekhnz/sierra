@@ -50,7 +50,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(0.5f, 0.5f));
         materialUniformValues[5] =
             Terrain::Engine::Graphics::UniformValue::forFloat(128 / 2048.0f);
-        materialUniformValues[6] = Terrain::Engine::Graphics::UniformValue::forFloat(0.1f);
+        materialUniformValues[6] = Terrain::Engine::Graphics::UniformValue::forFloat(0.75f);
 
         // create entity and components
         int entityId = ctx.entities.create();
