@@ -178,6 +178,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             const int count, Resources::ShaderProgramResource *resources);
         void useShaderProgram(int handle);
         void setPolygonMode(int polygonMode);
+        void setBlendMode(int equation, int srcFactor, int dstFactor);
         void setShaderProgramUniformFloat(int handle, std::string uniformName, float value);
         void setShaderProgramUniformInt(int handle, std::string uniformName, int value);
         void setShaderProgramUniforms(int handle,

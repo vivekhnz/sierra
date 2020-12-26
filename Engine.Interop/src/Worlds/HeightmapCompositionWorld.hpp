@@ -22,6 +22,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int framebufferHandle;
             int brushQuad_meshRendererInstanceId;
             int quadMaterialHandle;
+            int brushAddMaterialHandle;
+            int brushSubtractMaterialHandle;
 
             int brushQuad_instanceBufferHandle;
             float brushQuad_instanceBufferData[MAX_BRUSH_QUADS * 2];

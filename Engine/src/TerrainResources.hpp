@@ -41,8 +41,9 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
     namespace Materials {
         const int TERRAIN_TEXTURED = 0;
         const int TERRAIN_WIREFRAME = 1;
-        const int BRUSH = 2;
-        const int UI = 3;
+        const int BRUSH_ADD = 2;
+        const int BRUSH_SUBTRACT = 3;
+        const int UI = 4;
     }
 }}}
 

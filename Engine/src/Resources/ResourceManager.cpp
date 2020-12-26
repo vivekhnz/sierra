@@ -285,11 +285,10 @@ namespace Terrain { namespace Engine { namespace Resources {
             2,                                       // shaderCount
             {TerrainResources::Shaders::BRUSH_VERTEX,
                 TerrainResources::Shaders::BRUSH_FRAGMENT}, // shaderResourceIds
-            4,                                              // uniformCount
-            {10, 12, 14, 13},                               // uniformNameLengths
+            3,                                              // uniformCount
+            {10, 12, 13},                                   // uniformNameLengths
             "brushScale"
             "brushFalloff"
-            "brushLightness"
             "brushStrength" // uniformNames
         });
 
@@ -314,6 +313,9 @@ namespace Terrain { namespace Engine { namespace Resources {
             TerrainResources::Materials::TERRAIN_TEXTURED,      // id
             TerrainResources::ShaderPrograms::TERRAIN_TEXTURED, // shaderProgramResourceId
             GL_FILL,                                            // polygonMode
+            GL_FUNC_ADD,                                        // blendEquation
+            GL_SRC_ALPHA,                                       // blendSrcFactor
+            GL_ONE_MINUS_SRC_ALPHA,                             // blendDstFactor
             6,                                                  // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
@@ -349,6 +351,9 @@ namespace Terrain { namespace Engine { namespace Resources {
             TerrainResources::Materials::TERRAIN_WIREFRAME,      // id
             TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME, // shaderProgramResourceId
             GL_LINE,                                             // polygonMode
+            GL_FUNC_ADD,                                         // blendEquation
+            GL_SRC_ALPHA,                                        // blendSrcFactor
+            GL_ONE_MINUS_SRC_ALPHA,                              // blendDstFactor
             6,                                                   // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
@@ -373,9 +378,12 @@ namespace Terrain { namespace Engine { namespace Resources {
         });
 
         materialResources.push_back({
-            TerrainResources::Materials::BRUSH,      // id
+            TerrainResources::Materials::BRUSH_ADD,  // id
             TerrainResources::ShaderPrograms::BRUSH, // shaderProgramResourceId
             GL_FILL,                                 // polygonMode
+            GL_FUNC_ADD,                             // blendEquation
+            GL_SRC_ALPHA,                            // blendSrcFactor
+            GL_ONE,                                  // blendDstFactor
             0,                                       // textureCount
             {},                                      // textureResourceIds
             0,                                       // uniformCount
@@ -385,9 +393,27 @@ namespace Terrain { namespace Engine { namespace Resources {
         });
 
         materialResources.push_back({
+            TerrainResources::Materials::BRUSH_SUBTRACT, // id
+            TerrainResources::ShaderPrograms::BRUSH,     // shaderProgramResourceId
+            GL_FILL,                                     // polygonMode
+            GL_FUNC_REVERSE_SUBTRACT,                    // blendEquation
+            GL_SRC_ALPHA,                                // blendSrcFactor
+            GL_ONE,                                      // blendDstFactor
+            0,                                           // textureCount
+            {},                                          // textureResourceIds
+            0,                                           // uniformCount
+            {},                                          // uniformNameLengths
+            "",                                          // uniformNames
+            {}                                           // uniformValues
+        });
+
+        materialResources.push_back({
             TerrainResources::Materials::UI,      // id
             TerrainResources::ShaderPrograms::UI, // shaderProgramResourceId
             GL_FILL,                              // polygonMode
+            GL_FUNC_ADD,                          // blendEquation
+            GL_SRC_ALPHA,                         // blendSrcFactor
+            GL_ONE_MINUS_SRC_ALPHA,               // blendDstFactor
             0,                                    // textureCount
             {},                                   // textureResourceIds
             1,                                    // uniformCount

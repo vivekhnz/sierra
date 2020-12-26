@@ -18,6 +18,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 renderer.lookupShaderProgram(resource.shaderProgramResourceId));
             materials.polygonMode.push_back(resource.polygonMode);
 
+            materials.blendEquation.push_back(resource.blendEquation);
+            materials.blendSrcFactor.push_back(resource.blendSrcFactor);
+            materials.blendDstFactor.push_back(resource.blendDstFactor);
+
             materials.firstTextureIndex.push_back(materials.textureHandles.size());
             materials.textureCount.push_back(resource.textureCount);
             for (int t = 0; t < resource.textureCount; t++)
@@ -56,6 +60,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     int GraphicsAssetManager::createMaterial(int shaderProgramHandle,
         int polygonMode,
+        int blendEquation,
+        int blendSrcFactor,
+        int blendDstFactor,
         int textureCount,
         int *textureHandles,
         int uniformCount,
@@ -65,6 +72,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
         materials.shaderProgramHandle.push_back(shaderProgramHandle);
         materials.polygonMode.push_back(polygonMode);
+
+        materials.blendEquation.push_back(blendEquation);
+        materials.blendSrcFactor.push_back(blendSrcFactor);
+        materials.blendDstFactor.push_back(blendDstFactor);
 
         materials.firstTextureIndex.push_back(materials.textureHandles.size());
         materials.textureCount.push_back(textureCount);
@@ -110,6 +121,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         renderer.useShaderProgram(shaderProgramHandle);
         renderer.setPolygonMode(materials.polygonMode[handle]);
+        renderer.setBlendMode(materials.blendEquation[handle],
+            materials.blendSrcFactor[handle], materials.blendDstFactor[handle]);
         renderer.bindTextures(
             materials.textureHandles.data() + materials.firstTextureIndex[handle],
             materials.textureCount[handle]);

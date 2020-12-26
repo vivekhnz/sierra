@@ -292,6 +292,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
     }
 
+    void Renderer::setBlendMode(int equation, int srcFactor, int dstFactor)
+    {
+        glBlendEquation(equation);
+        glBlendFunc(srcFactor, dstFactor);
+    }
+
     void Renderer::setShaderProgramUniformFloat(
         int handle, std::string uniformName, float value)
     {

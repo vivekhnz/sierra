@@ -100,7 +100,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int uniformNameLengths[1] = {12};
         Graphics::UniformValue uniformValues[1] = {Graphics::UniformValue::forInteger(0)};
 
-        return ctx.assets.graphics.createMaterial(shaderProgramHandle, GL_FILL, 1,
-            textureHandles, 1, uniformNameLengths, "imageTexture", uniformValues);
+        return ctx.assets.graphics.createMaterial(shaderProgramHandle, GL_FILL, GL_FUNC_ADD,
+            GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 1, textureHandles, 1, uniformNameLengths,
+            "imageTexture", uniformValues);
     }
 }}}}

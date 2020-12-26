@@ -17,6 +17,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             std::vector<int> shaderProgramHandle;
             std::vector<int> polygonMode;
 
+            std::vector<int> blendEquation;
+            std::vector<int> blendSrcFactor;
+            std::vector<int> blendDstFactor;
+
             std::vector<int> firstTextureIndex;
             std::vector<int> textureCount;
             std::vector<int> textureHandles;
@@ -55,6 +59,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
         int createMaterial(int shaderProgramHandle,
             int polygonMode,
+            int blendEquation,
+            int blendSrcFactor,
+            int blendDstFactor,
             int textureCount,
             int *textureHandles,
             int uniformCount,

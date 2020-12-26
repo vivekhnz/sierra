@@ -12,6 +12,10 @@ namespace Terrain { namespace Engine { namespace Resources {
         int shaderProgramResourceId;
         int polygonMode;
 
+        int blendEquation;
+        int blendSrcFactor;
+        int blendDstFactor;
+
         int textureCount;
         int textureResourceIds[8];
 
