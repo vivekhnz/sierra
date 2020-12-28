@@ -25,20 +25,8 @@ uniform float brushHighlightFalloff;
 
 out vec4 FragColor;
 
-void main()
+vec3 calcBrushHighlight()
 {
-    float roughness = texture(roughnessTexture, texcoord).r;
-    vec3 texNormal = lighting_isNormalMapEnabled
-        ? (texture(normalTexture, texcoord).rgb * 2.0f) - 1.0f
-        : vec3(0.0f);
-    vec3 normal = normalize(vertexNormal - (texNormal * 0.5f));
-    normal = lighting_isRoughnessMapEnabled ? normalize(normal - vec3(0, roughness * 0.8f, 0)) : normal;
-    float ambientLight = 0.2f;
-    float nDotL = dot(normal, lighting_lightDir.xyz);
-    float lightingCol = lighting_isEnabled ? max(nDotL, ambientLight) : 1.0f;
-    vec3 albedo = lighting_isTextureEnabled ? texture(albedoTexture, texcoord).rgb : vec3(1.0f);
-    float ao = lighting_isAOMapEnabled ? mix(0.6f, 1.0f, texture(aoTexture, texcoord).r) : 1.0f;
-
     float highlightRadius = brushHighlightRadius * 0.5f;
     float distFromHighlight = distance(texcoord / textureScale, brushHighlightPos);
     
@@ -46,11 +34,46 @@ void main()
     float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);
     float outlineIntensity =
         max(1 - abs((((distFromHighlight - highlightRadius) / outlineWidth) * 2) - 1), 0);
-    float influenceAreaIntensity = ((distFromHighlight / highlightRadius) - brushHighlightFalloff)
+    float influenceAreaIntensity = (
+        (distFromHighlight / highlightRadius) - brushHighlightFalloff)
         / (1 - brushHighlightFalloff);
     influenceAreaIntensity = 1 - clamp(influenceAreaIntensity, 0, 1);
-    float highlightIntensity = influenceAreaIntensity + outlineIntensity;
 
-    vec3 brushHighlight = vec3(0.0f, 1.0f, 0.25f) * highlightIntensity;
-    FragColor = vec4((albedo * lightingCol * ao) + (brushHighlight * brushHighlightStrength), 1.0f);
+    float highlightIntensity = influenceAreaIntensity + outlineIntensity;
+    return vec3(0.0f, 1.0f, 0.25f) * highlightIntensity;
+}
+
+void main()
+{
+    // calculate normal
+    float roughness = texture(roughnessTexture, texcoord).r;
+    vec3 texNormal = lighting_isNormalMapEnabled
+        ? (texture(normalTexture, texcoord).rgb * 2.0f) - 1.0f
+        : vec3(0.0f);
+    vec3 normal = normalize(vertexNormal - (texNormal * 0.5f));
+    normal = lighting_isRoughnessMapEnabled
+        ? normalize(normal - vec3(0, roughness * 0.8f, 0))
+        : normal;
+
+    // sample albedo texture
+    vec3 albedo = lighting_isTextureEnabled
+        ? texture(albedoTexture, texcoord).rgb
+        : vec3(1.0f);
+
+    // calculate lighting
+    float ambientLight = 0.3f;
+    float nDotL = dot(normal, lighting_lightDir.xyz);
+    float lightingAmplitude = lighting_isEnabled
+        ? pow(max(0.5 + (nDotL * 0.5), ambientLight), 4)
+        : 1.0f;
+
+    // sample ambient occlusion texture
+    float ao = lighting_isAOMapEnabled
+        ? mix(0.6f, 1.0f, texture(aoTexture, texcoord).r)
+        : 1.0f;
+
+    // calculate final fragment color
+    vec3 terrainColor = albedo * lightingAmplitude * ao;
+    vec3 brushHighlight = calcBrushHighlight();
+    FragColor = vec4(terrainColor + (brushHighlight * brushHighlightStrength), 1.0f);
 }

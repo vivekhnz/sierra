@@ -36,13 +36,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
             sizeof(LightingState);
         glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
         LightingState lighting = {
-            glm::vec4(0.84f, 0.45f, 0.31f, 0.0f), // lightDir
-            1,                                    // isEnabled
-            1,                                    // isTextureEnabled
-            1,                                    // isNormalMapEnabled
-            1,                                    // isAOMapEnabled
-            1,                                    // isDisplacementMapEnabled
-            0                                     // isRoughnessMapEnabled
+            glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f), // lightDir
+            1,                                        // isEnabled
+            1,                                        // isTextureEnabled
+            1,                                        // isNormalMapEnabled
+            1,                                        // isAOMapEnabled
+            1,                                        // isDisplacementMapEnabled
+            0                                         // isRoughnessMapEnabled
         };
         glBufferData(GL_UNIFORM_BUFFER, lightingUboSize, &lighting, GL_DYNAMIC_DRAW);
         glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUboId, 0, lightingUboSize);
