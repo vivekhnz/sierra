@@ -31,8 +31,8 @@
   <PropertyGroup>
     <CLRSupport>NetCore</CLRSupport>
     <CharacterSet>Unicode</CharacterSet>
-    <OutDir>$(ProjectDir)bin\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\Engine.Interop\</IntDir>
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.WindowsDesktop.App.WPF" />
@@ -106,30 +106,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="src\EditorState.hpp" />
-    <ClInclude Include="src\EngineInterop.hpp" />
-    <ClInclude Include="src\EditorContext.hpp" />
-    <ClInclude Include="src\Proxy\ResourceManagerProxy.hpp" />
-    <ClInclude Include="src\Proxy\StateProxy.hpp" />
-    <ClInclude Include="src\ViewportContext.hpp" />
-    <ClInclude Include="src\Viewport.h" />
-    <ClInclude Include="src\Worlds\HeightmapCompositionWorld.hpp" />
-    <ClInclude Include="src\Worlds\HeightmapPreviewWorld.hpp" />
-    <ClInclude Include="src\Worlds\ViewportWorld.hpp" />
-    <ClInclude Include="src\Worlds\EditorWorlds.hpp" />
-    <ClInclude Include="src\Worlds\SceneWorld.hpp" />
+    <ClInclude Include="EditorState.hpp" />
+    <ClInclude Include="EngineInterop.hpp" />
+    <ClInclude Include="EditorContext.hpp" />
+    <ClInclude Include="Proxy\ResourceManagerProxy.hpp" />
+    <ClInclude Include="Proxy\StateProxy.hpp" />
+    <ClInclude Include="ViewportContext.hpp" />
+    <ClInclude Include="Viewport.h" />
+    <ClInclude Include="Worlds\HeightmapCompositionWorld.hpp" />
+    <ClInclude Include="Worlds\HeightmapPreviewWorld.hpp" />
+    <ClInclude Include="Worlds\ViewportWorld.hpp" />
+    <ClInclude Include="Worlds\EditorWorlds.hpp" />
+    <ClInclude Include="Worlds\SceneWorld.hpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\EngineInterop.cpp" />
-    <ClCompile Include="src\AssemblyInfo.cpp" />
-    <ClCompile Include="src\EditorContext.cpp" />
-    <ClCompile Include="src\Proxy\ResourceManagerProxy.cpp" />
-    <ClCompile Include="src\ViewportContext.cpp" />
-    <ClCompile Include="src\Viewport.cpp" />
-    <ClCompile Include="src\Worlds\EditorWorlds.cpp" />
-    <ClCompile Include="src\Worlds\HeightmapCompositionWorld.cpp" />
-    <ClCompile Include="src\Worlds\HeightmapPreviewWorld.cpp" />
-    <ClCompile Include="src\Worlds\SceneWorld.cpp" />
+    <ClCompile Include="EngineInterop.cpp" />
+    <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="EditorContext.cpp" />
+    <ClCompile Include="Proxy\ResourceManagerProxy.cpp" />
+    <ClCompile Include="ViewportContext.cpp" />
+    <ClCompile Include="Viewport.cpp" />
+    <ClCompile Include="Worlds\EditorWorlds.cpp" />
+    <ClCompile Include="Worlds\HeightmapCompositionWorld.cpp" />
+    <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp" />
+    <ClCompile Include="Worlds\SceneWorld.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">
@@ -137,18 +137,6 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
   </ItemGroup>
-  <PropertyGroup>
-    <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
-  </PropertyGroup>
-  <ItemGroup>
-    <DependencyFiles Include="$(EngineOutDir)\Terrain.Engine.*" />
-    <DependencyFiles Include="$(EngineOutDir)\glfw3.dll" />
-    <UpToDateCheckInput Include="@(DependencyFiles)" />
-  </ItemGroup>
-  <Target Name="CopyDependencies" AfterTargets="AfterBuild" Inputs="@(DependencyFiles)" Outputs="@(DependencyFiles->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')">
-    <Message Text="Copying dependencies..." Importance="high" />
-    <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)\%(RecursiveDir)" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../Engine/src/AppContext.hpp"
+#include "../Engine/AppContext.hpp"
 #include "ViewportContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {

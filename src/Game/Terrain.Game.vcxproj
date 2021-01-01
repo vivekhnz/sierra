@@ -43,8 +43,8 @@
   <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>$(ProjectDir)bin\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\Game\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)' == 'Release'">false</LinkIncremental>
   </PropertyGroup>
@@ -125,8 +125,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="src\GameContext.cpp" />
-    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="GameContext.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GameContext.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">
@@ -134,26 +137,6 @@
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
     </ProjectReference>
   </ItemGroup>
-  <PropertyGroup>
-    <EngineOutDir>$(SolutionDir)Engine\bin\$(Configuration)\$(Platform)\</EngineOutDir>
-  </PropertyGroup>
-  <ItemGroup>
-    <DependencyFiles Include="$(EngineOutDir)\Terrain.Engine.*" />
-    <DependencyFiles Include="$(EngineOutDir)\glfw3.dll" />
-    <DataFiles Include="$(EngineOutDir)data\**" />
-    <UpToDateCheckInput Include="@(DependencyFiles);@(DataFiles)" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="src\GameContext.hpp" />
-  </ItemGroup>
-  <Target Name="CopyDependencies" AfterTargets="AfterBuild" Inputs="@(DependencyFiles)" Outputs="@(DependencyFiles->'$(TargetDir)%(RecursiveDir)%(Filename)%(Extension)')">
-    <Message Text="Copying dependencies..." Importance="high" />
-    <Copy SourceFiles="@(DependencyFiles)" DestinationFolder="$(TargetDir)\%(RecursiveDir)" />
-  </Target>
-  <Target Name="CopyDataFiles" AfterTargets="AfterBuild" Inputs="@(DataFiles)" Outputs="@(DataFiles->'$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)')">
-    <Message Text="Copying data files..." Importance="high" />
-    <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

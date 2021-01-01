@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../../Engine/src/Graphics/GlfwManager.hpp"
-#include "../../Engine/src/EngineContext.hpp"
-#include "../../Engine/src/World.hpp"
+#include "../Engine/Graphics/GlfwManager.hpp"
+#include "../Engine/EngineContext.hpp"
+#include "../Engine/World.hpp"
 #include "EditorContext.hpp"
 #include "EditorState.hpp"
 #include "ViewportContext.hpp"

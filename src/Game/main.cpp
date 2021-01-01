@@ -1,11 +1,11 @@
 #include <iostream>
 
-#include "../../Engine/src/Graphics/GlfwManager.hpp"
-#include "../../Engine/src/Graphics/Window.hpp"
-#include "../../Engine/src/EngineContext.hpp"
-#include "../../Engine/src/World.hpp"
-#include "../../Engine/src/TerrainResources.hpp"
-#include "../../Engine/src/IO/Path.hpp"
+#include "../Engine/Graphics/GlfwManager.hpp"
+#include "../Engine/Graphics/Window.hpp"
+#include "../Engine/EngineContext.hpp"
+#include "../Engine/World.hpp"
+#include "../Engine/TerrainResources.hpp"
+#include "../Engine/IO/Path.hpp"
 #include "GameContext.hpp"
 
 int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &world)

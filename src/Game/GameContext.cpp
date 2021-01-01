@@ -1,7 +1,7 @@
 #include "GameContext.hpp"
 
-#include "../../Engine/src/IO/Key.hpp"
-#include "../../Engine/src/IO/MouseButton.hpp"
+#include "../Engine/IO/Key.hpp"
+#include "../Engine/IO/MouseButton.hpp"
 
 GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
     window(window), cameraEntityId(-1), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0),

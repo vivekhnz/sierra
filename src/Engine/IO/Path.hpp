@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine { namespace IO { namespace Path {
         GetModuleFileNameA(NULL, exePath, MAX_PATH);
 
         // build absolute path
-        return std::string(exePath) + "/../" + relativePath;
+        return std::string(exePath) + "/../../../../" + relativePath;
     }
 }}}}
 

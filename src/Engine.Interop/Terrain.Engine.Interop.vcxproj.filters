@@ -1,0 +1,61 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Proxy">
+      <UniqueIdentifier>{f1e3b91c-89b3-41d9-a59c-920660a056c1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Worlds">
+      <UniqueIdentifier>{2fd8b25b-f043-4bc8-a7a2-5b20091d04ae}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="Viewport.cpp" />
+    <ClCompile Include="EngineInterop.cpp" />
+    <ClCompile Include="EditorContext.cpp" />
+    <ClCompile Include="ViewportContext.cpp" />
+    <ClCompile Include="Proxy\ResourceManagerProxy.cpp">
+      <Filter>Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Worlds\SceneWorld.cpp">
+      <Filter>Worlds</Filter>
+    </ClCompile>
+    <ClCompile Include="Worlds\EditorWorlds.cpp">
+      <Filter>Worlds</Filter>
+    </ClCompile>
+    <ClCompile Include="Worlds\HeightmapCompositionWorld.cpp">
+      <Filter>Worlds</Filter>
+    </ClCompile>
+    <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp">
+      <Filter>Worlds</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="Viewport.h" />
+    <ClInclude Include="EngineInterop.hpp" />
+    <ClInclude Include="EditorContext.hpp" />
+    <ClInclude Include="ViewportContext.hpp" />
+    <ClInclude Include="Proxy\ResourceManagerProxy.hpp">
+      <Filter>Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Worlds\SceneWorld.hpp">
+      <Filter>Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="Worlds\EditorWorlds.hpp">
+      <Filter>Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="Worlds\ViewportWorld.hpp">
+      <Filter>Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="Worlds\HeightmapCompositionWorld.hpp">
+      <Filter>Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="Worlds\HeightmapPreviewWorld.hpp">
+      <Filter>Worlds</Filter>
+    </ClInclude>
+    <ClInclude Include="Proxy\StateProxy.hpp">
+      <Filter>Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="EditorState.hpp" />
+  </ItemGroup>
+</Project>

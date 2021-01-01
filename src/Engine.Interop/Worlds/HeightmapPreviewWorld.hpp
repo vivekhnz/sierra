@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../Engine/src/World.hpp"
+#include "../../Engine/World.hpp"
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"
 

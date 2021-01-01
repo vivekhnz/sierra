@@ -22,67 +22,67 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\deps\glad\glad.c" />
-    <ClCompile Include="..\deps\stb\stb_image.c" />
-    <ClCompile Include="src\CameraComponentManager.cpp" />
-    <ClCompile Include="src\EngineContext.cpp" />
-    <ClCompile Include="src\EntityManager.cpp" />
-    <ClCompile Include="src\FirstPersonCameraComponentManager.cpp" />
-    <ClCompile Include="src\Graphics\BindBuffer.cpp" />
-    <ClCompile Include="src\Graphics\Buffer.cpp" />
-    <ClCompile Include="src\Graphics\DebugUIRenderer.cpp" />
-    <ClCompile Include="src\Graphics\GlfwManager.cpp" />
-    <ClCompile Include="src\Graphics\GraphicsAssetManager.cpp" />
-    <ClCompile Include="src\Graphics\MeshRendererComponentManager.cpp" />
-    <ClCompile Include="src\Graphics\Renderer.cpp" />
-    <ClCompile Include="src\Graphics\Window.cpp" />
-    <ClCompile Include="src\OrbitCameraComponentManager.cpp" />
-    <ClCompile Include="src\OrthographicCameraComponentManager.cpp" />
-    <ClCompile Include="src\Physics\TerrainColliderComponentManager.cpp" />
-    <ClCompile Include="src\Resources\ResourceManager.cpp" />
-    <ClCompile Include="src\TerrainRendererComponentManager.cpp" />
-    <ClCompile Include="src\World.cpp" />
-    <ClCompile Include="src\IO\InputManager.cpp" />
-    <ClCompile Include="src\IO\OpenFile.cpp" />
+    <ClCompile Include="..\..\deps\glad\glad.c" />
+    <ClCompile Include="..\..\deps\stb\stb_image.c" />
+    <ClCompile Include="CameraComponentManager.cpp" />
+    <ClCompile Include="EngineContext.cpp" />
+    <ClCompile Include="EntityManager.cpp" />
+    <ClCompile Include="FirstPersonCameraComponentManager.cpp" />
+    <ClCompile Include="Graphics\BindBuffer.cpp" />
+    <ClCompile Include="Graphics\Buffer.cpp" />
+    <ClCompile Include="Graphics\DebugUIRenderer.cpp" />
+    <ClCompile Include="Graphics\GlfwManager.cpp" />
+    <ClCompile Include="Graphics\GraphicsAssetManager.cpp" />
+    <ClCompile Include="Graphics\MeshRendererComponentManager.cpp" />
+    <ClCompile Include="Graphics\Renderer.cpp" />
+    <ClCompile Include="Graphics\Window.cpp" />
+    <ClCompile Include="IO\InputManager.cpp" />
+    <ClCompile Include="IO\OpenFile.cpp" />
+    <ClCompile Include="OrbitCameraComponentManager.cpp" />
+    <ClCompile Include="OrthographicCameraComponentManager.cpp" />
+    <ClCompile Include="Physics\TerrainColliderComponentManager.cpp" />
+    <ClCompile Include="Resources\ResourceManager.cpp" />
+    <ClCompile Include="TerrainRendererComponentManager.cpp" />
+    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\AppContext.hpp" />
-    <ClInclude Include="src\CameraComponentManager.hpp" />
-    <ClInclude Include="src\Common.hpp" />
-    <ClInclude Include="src\EngineContext.hpp" />
-    <ClInclude Include="src\EngineViewContext.hpp" />
-    <ClInclude Include="src\EntityManager.hpp" />
-    <ClInclude Include="src\FirstPersonCameraComponentManager.hpp" />
-    <ClInclude Include="src\Graphics\BindBuffer.hpp" />
-    <ClInclude Include="src\Graphics\Buffer.hpp" />
-    <ClInclude Include="src\Graphics\DebugUIRenderer.hpp" />
-    <ClInclude Include="src\Graphics\GlfwManager.hpp" />
-    <ClInclude Include="src\Graphics\GraphicsAssetManager.hpp" />
-    <ClInclude Include="src\Graphics\MeshRendererComponentManager.hpp" />
-    <ClInclude Include="src\Graphics\Renderer.hpp" />
-    <ClInclude Include="src\Graphics\UniformValue.hpp" />
-    <ClInclude Include="src\Graphics\VertexBufferDescription.hpp" />
-    <ClInclude Include="src\Graphics\Window.hpp" />
-    <ClInclude Include="src\IO\Key.hpp" />
-    <ClInclude Include="src\IO\MouseButton.hpp" />
-    <ClInclude Include="src\IO\MouseCaptureMode.hpp" />
-    <ClInclude Include="src\IO\MouseInputState.hpp" />
-    <ClInclude Include="src\OrbitCameraComponentManager.hpp" />
-    <ClInclude Include="src\OrthographicCameraComponentManager.hpp" />
-    <ClInclude Include="src\Physics\Ray.hpp" />
-    <ClInclude Include="src\Physics\TerrainColliderComponentManager.hpp" />
-    <ClInclude Include="src\Resources\MaterialResource.hpp" />
-    <ClInclude Include="src\Resources\ResourceManager.hpp" />
-    <ClInclude Include="src\Resources\ShaderProgramResource.hpp" />
-    <ClInclude Include="src\Resources\ShaderResource.hpp" />
-    <ClInclude Include="src\Resources\TextureLoader.hpp" />
-    <ClInclude Include="src\Resources\TextureResource.hpp" />
-    <ClInclude Include="src\TerrainRendererComponentManager.hpp" />
-    <ClInclude Include="src\TerrainResources.hpp" />
-    <ClInclude Include="src\World.hpp" />
-    <ClInclude Include="src\IO\InputManager.hpp" />
-    <ClInclude Include="src\IO\OpenFile.hpp" />
-    <ClInclude Include="src\IO\Path.hpp" />
+    <ClInclude Include="AppContext.hpp" />
+    <ClInclude Include="CameraComponentManager.hpp" />
+    <ClInclude Include="Common.hpp" />
+    <ClInclude Include="EngineContext.hpp" />
+    <ClInclude Include="EngineViewContext.hpp" />
+    <ClInclude Include="EntityManager.hpp" />
+    <ClInclude Include="FirstPersonCameraComponentManager.hpp" />
+    <ClInclude Include="Graphics\BindBuffer.hpp" />
+    <ClInclude Include="Graphics\Buffer.hpp" />
+    <ClInclude Include="Graphics\DebugUIRenderer.hpp" />
+    <ClInclude Include="Graphics\GlfwManager.hpp" />
+    <ClInclude Include="Graphics\GraphicsAssetManager.hpp" />
+    <ClInclude Include="Graphics\MeshRendererComponentManager.hpp" />
+    <ClInclude Include="Graphics\Renderer.hpp" />
+    <ClInclude Include="Graphics\UniformValue.hpp" />
+    <ClInclude Include="Graphics\VertexBufferDescription.hpp" />
+    <ClInclude Include="Graphics\Window.hpp" />
+    <ClInclude Include="IO\InputManager.hpp" />
+    <ClInclude Include="IO\Key.hpp" />
+    <ClInclude Include="IO\MouseButton.hpp" />
+    <ClInclude Include="IO\MouseCaptureMode.hpp" />
+    <ClInclude Include="IO\MouseInputState.hpp" />
+    <ClInclude Include="IO\OpenFile.hpp" />
+    <ClInclude Include="IO\Path.hpp" />
+    <ClInclude Include="OrbitCameraComponentManager.hpp" />
+    <ClInclude Include="OrthographicCameraComponentManager.hpp" />
+    <ClInclude Include="Physics\Ray.hpp" />
+    <ClInclude Include="Physics\TerrainColliderComponentManager.hpp" />
+    <ClInclude Include="Resources\MaterialResource.hpp" />
+    <ClInclude Include="Resources\ResourceManager.hpp" />
+    <ClInclude Include="Resources\ShaderProgramResource.hpp" />
+    <ClInclude Include="Resources\ShaderResource.hpp" />
+    <ClInclude Include="Resources\TextureLoader.hpp" />
+    <ClInclude Include="Resources\TextureResource.hpp" />
+    <ClInclude Include="TerrainRendererComponentManager.hpp" />
+    <ClInclude Include="TerrainResources.hpp" />
+    <ClInclude Include="World.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -110,8 +110,8 @@
   <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup>
-    <OutDir>$(ProjectDir)bin\$(Configuration)\$(Platform)\</OutDir>
-    <IntDir>$(ProjectDir)obj\$(Configuration)\$(Platform)\</IntDir>
+    <OutDir>$(SolutionDir)bin\$(Configuration)\$(Platform)\</OutDir>
+    <IntDir>$(SolutionDir)obj\$(Configuration)\$(Platform)\Engine\</IntDir>
     <LinkIncremental>true</LinkIncremental>
     <LinkIncremental Condition="'$(Configuration)' == 'Release'">false</LinkIncremental>
   </PropertyGroup>
@@ -187,31 +187,16 @@
       <AdditionalDependencies>Opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
-  <ItemGroup>
-    <DataFiles Include="$(ProjectDir)data\**" />
-    <UpToDateCheckInput Include="@(DataFiles)" />
-  </ItemGroup>
-  <Target Name="CopyDataFiles" AfterTargets="AfterBuild" Inputs="@(DataFiles)" Outputs="@(DataFiles->'$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)')">
-    <ItemGroup>
-      <ReadTLogLines Include="^%(DataFiles.Identity)" />
-      <WriteTLogLines Include="^%(DataFiles.Identity)%0a$(TargetDir)data\%(RecursiveDir)%(Filename)%(Extension)" />
-    </ItemGroup>
-    <!-- write .tlog files so incremental build works -->
-    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.read.1u.tlog" Lines="@(ReadTLogLines->'%(Identity)')" Encoding="Unicode" Overwrite="true" />
-    <WriteLinesToFile File="$(TLogLocation)CopyDataFiles.write.1u.tlog" Lines="@(WriteTLogLines->'%(Identity)')" Encoding="Unicode" Overwrite="true" />
-    <Message Text="Copying data files..." Importance="high" />
-    <Copy SourceFiles="@(DataFiles)" DestinationFolder="$(TargetDir)data\%(RecursiveDir)" />
-  </Target>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\deps\nuget\glfw.3.3.2\build\native\glfw.targets" Condition="Exists('..\deps\nuget\glfw.3.3.2\build\native\glfw.targets')" />
-    <Import Project="..\deps\nuget\glm.0.9.9.700\build\native\glm.targets" Condition="Exists('..\deps\nuget\glm.0.9.9.700\build\native\glm.targets')" />
+    <Import Project="$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\glfw.targets" Condition="Exists('$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\glfw.targets')" />
+    <Import Project="$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\glm.targets" Condition="Exists('$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\glm.targets')" />
   </ImportGroup>
   <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
     <PropertyGroup>
       <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
     </PropertyGroup>
-    <Error Condition="!Exists('..\deps\nuget\glfw.3.3.2\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\deps\nuget\glfw.3.3.2\build\native\glfw.targets'))" />
-    <Error Condition="!Exists('..\deps\nuget\glm.0.9.9.700\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\deps\nuget\glm.0.9.9.700\build\native\glm.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\glfw.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)deps\nuget\glfw.3.3.2\build\native\glfw.targets'))" />
+    <Error Condition="!Exists('$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\glm.targets')" Text="$([System.String]::Format('$(ErrorText)', '$(SolutionDir)deps\nuget\glm.0.9.9.700\build\native\glm.targets'))" />
   </Target>
 </Project>

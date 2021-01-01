@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../../../Engine/src/Resources/ResourceManager.hpp"
+#include "../../Engine/Resources/ResourceManager.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Proxy {
 public

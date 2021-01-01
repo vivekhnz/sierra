@@ -1,10 +1,10 @@
 #ifndef GAMECONTEXT_HPP
 #define GAMECONTEXT_HPP
 
-#include "../Engine/src/AppContext.hpp"
-#include "../Engine/src/EngineViewContext.hpp"
-#include "../Engine/src/Graphics/Window.hpp"
-#include "../Engine/src/IO/MouseInputState.hpp"
+#include "../Engine/AppContext.hpp"
+#include "../Engine/EngineViewContext.hpp"
+#include "../Engine/Graphics/Window.hpp"
+#include "../Engine/IO/MouseInputState.hpp"
 #include <vector>
 
 class GameContext : public Terrain::Engine::AppContext
