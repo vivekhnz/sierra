@@ -52,12 +52,7 @@ float textureCLod(sampler2D texture, vec2 uv, float mip)
 }
 float height(vec2 uv, float mip)
 {
-    float baseHeight = textureCLod(heightmapTexture, uv, max(mip, 2.0f));
-    float scaledMip = mip + log2(textureScale.x);
-    float displacement =
-        ((textureCLod(displacementTexture, uv * textureScale, scaledMip) * 2.0f) - 1.0f)
-        * (lighting_isDisplacementMapEnabled ? 0.002f : 0.0f);
-    return baseHeight + displacement;
+    return textureCLod(heightmapTexture, uv, max(mip, 2.0f));
 }
 
 void main()
@@ -75,15 +70,24 @@ void main()
     );
     float mip = mipValues[int(mipIndex)];
 
-    vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
-    pos.y = height(hUV, mip) * terrainHeight;
-    gl_Position = camera_transform * vec4(pos, 1.0f);
+    texcoord = hUV * textureScale;
 
     float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y), mip);
     float hR = height(vec2(hUV.x + normalSampleOffset.x, hUV.y), mip);
     float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y), mip);
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y), mip);
     normal = normalize(vec3(hR - hL, 0.1f, hD - hU));
-    texcoord = hUV * textureScale;
+    
+    vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
+    pos.y = height(hUV, mip) * terrainHeight;
+    if (lighting_isDisplacementMapEnabled)
+    {
+        float scaledMip = mip + log2(textureScale.x);
+        float displacement =
+            ((textureCLod(displacementTexture, texcoord, scaledMip) * 2.0f) - 1.0f);
+        pos += normal * displacement * 0.075f;
+    }
+    
+    gl_Position = camera_transform * vec4(pos, 1.0f);
 }

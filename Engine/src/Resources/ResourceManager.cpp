@@ -257,12 +257,13 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::WIREFRAME_TESS_CTRL,
                 TerrainResources::Shaders::WIREFRAME_TESS_EVAL,
                 TerrainResources::Shaders::WIREFRAME_FRAGMENT}, // shaderResourceIds
-            6,                                                  // uniformCount
-            {13, 16, 19, 13, 12, 5},                            // uniformNameLengths
+            7,                                                  // uniformCount
+            {13, 16, 19, 13, 18, 12, 5},                        // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "displacementTexture"
             "terrainHeight"
+            "normalSampleOffset"
             "textureScale"
             "color" // uniformNames
         });

@@ -192,13 +192,13 @@ int main()
             if (isLightingStateUpdated)
             {
                 Terrain::Engine::Graphics::Renderer::LightingState lighting = {
-                    glm::vec4(0.84f, 0.45f, 0.31f, 0.0f), // lightDir
-                    isLightingEnabled ? 1 : 0,            // isEnabled
-                    isAlbedoEnabled ? 1 : 0,              // isTextureEnabled
-                    isNormalMapEnabled ? 1 : 0,           // isNormalMapEnabled
-                    isAOMapEnabled ? 1 : 0,               // isAOMapEnabled
-                    isDisplacementMapEnabled ? 1 : 0,     // isDisplacementMapEnabled
-                    isRoughnessMapEnabled ? 1 : 0         // isRoughnessMapEnabled
+                    glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f), // lightDir
+                    isLightingEnabled ? 1 : 0,                // isEnabled
+                    isAlbedoEnabled ? 1 : 0,                  // isTextureEnabled
+                    isNormalMapEnabled ? 1 : 0,               // isNormalMapEnabled
+                    isAOMapEnabled ? 1 : 0,                   // isAOMapEnabled
+                    isDisplacementMapEnabled ? 1 : 0,         // isDisplacementMapEnabled
+                    isRoughnessMapEnabled ? 1 : 0             // isRoughnessMapEnabled
                 };
                 ctx.renderer.updateUniformBuffer(
                     Terrain::Engine::Graphics::Renderer::UniformBuffer::Lighting, &lighting);
