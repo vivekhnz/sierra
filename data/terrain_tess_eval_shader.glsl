@@ -29,7 +29,7 @@ uniform vec2 normalSampleOffset;
 uniform vec2 textureScale;
 
 layout(location = 0) out vec3 normal;
-layout(location = 1) out vec2 texcoord;
+layout(location = 1) out vec3 texcoord;
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -55,8 +55,18 @@ float height(vec2 uv, float mip)
     return textureCLod(heightmapTexture, uv, max(mip, 2.0f));
 }
 
+vec3 calcTriplanarBlend(vec3 normal)
+{
+    // bias towards Y-axis
+    vec3 blend = vec3(pow(abs(normal.x), 6), pow(abs(normal.y), 1), pow(abs(normal.z), 6));
+    blend = normalize(max(blend, 0.00001));
+    blend /= blend.x + blend.y + blend.z;
+    return blend;
+}
+
 void main()
 {
+    // calculate mip level
     float centerMip = lerp1D(in_edgeMips.x, in_edgeMips.y, in_edgeMips.z, in_edgeMips.w);
     float mipValues[9] = float[9]
     (
@@ -70,23 +80,41 @@ void main()
     );
     float mip = mipValues[int(mipIndex)];
 
+    // calculate normal
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
-    texcoord = hUV * textureScale;
-
     float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y), mip);
     float hR = height(vec2(hUV.x + normalSampleOffset.x, hUV.y), mip);
     float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y), mip);
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y), mip);
-    normal = normalize(vec3(hR - hL, 0.1f, hD - hU));
+    normal = normalize(vec3(hR - hL, normalSampleOffset.x * 2, hD - hU));
+
+    // calculate texture coordinates    
+    float heightNormalised = height(hUV, mip);
+    vec3 triplanarBlend = calcTriplanarBlend(normal);
+    vec3 triplanarAxisSign = sign(normal);
+    texcoord = vec3(hUV.x * textureScale.x, heightNormalised * -9.375f, hUV.y * textureScale.y);
+    vec2 texcoord_x = vec2(texcoord.z * triplanarAxisSign.x, texcoord.y);
+    vec2 texcoord_y = vec2(texcoord.x * triplanarAxisSign.y, texcoord.z);
+    vec2 texcoord_z = vec2(texcoord.x * triplanarAxisSign.z, texcoord.y);
     
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
-    pos.y = height(hUV, mip) * terrainHeight;
+    pos.y = heightNormalised * terrainHeight;
     if (lighting_isDisplacementMapEnabled)
     {
         float scaledMip = mip + log2(textureScale.x);
-        float displacement =
-            ((textureCLod(displacementTexture, texcoord, scaledMip) * 2.0f) - 1.0f);
-        pos += normal * displacement * 0.075f;
+        
+        vec3 displacement_x = vec3(textureCLod(displacementTexture, texcoord_x, scaledMip), 0, 0);
+        vec3 displacement_y = vec3(0, textureCLod(displacementTexture, texcoord_y, scaledMip), 0);
+        vec3 displacement_z = vec3(0, 0, textureCLod(displacementTexture, texcoord_z, scaledMip));
+
+        displacement_x.x *= -triplanarAxisSign.x;
+        displacement_y.y *= triplanarAxisSign.y;
+        displacement_z.z *= triplanarAxisSign.z;
+        
+        vec3 displacement = (displacement_x * triplanarBlend.x)
+            + (displacement_y * triplanarBlend.y)
+            + (displacement_z * triplanarBlend.z);
+        pos += ((displacement * 2) - 1) * 0.1;
     }
     
     gl_Position = camera_transform * vec4(pos, 1.0f);
