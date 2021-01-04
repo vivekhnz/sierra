@@ -88,18 +88,6 @@ namespace Terrain { namespace Engine { namespace Resources {
             TextureLoader::loadTexture(TerrainResources::Textures::AO,
                 IO::Path::getAbsolutePath("data/ground_ao.tga"), false));
 
-        textureResourceDescriptions.push_back({
-            TerrainResources::Textures::ROUGHNESS, // id
-            GL_R8,                                 // internalFormat
-            GL_RED,                                // format
-            GL_UNSIGNED_BYTE,                      // type
-            GL_REPEAT,                             // wrapMode
-            GL_LINEAR_MIPMAP_LINEAR                // filterMode
-        });
-        textureResourceData.push_back(
-            TextureLoader::loadTexture(TerrainResources::Textures::ROUGHNESS,
-                IO::Path::getAbsolutePath("data/ground_roughness.tga"), false));
-
         int textureCount = textureResourceDescriptions.size();
         ctx.onTexturesLoaded(
             textureCount, textureResourceDescriptions.data(), textureResourceData.data());
@@ -218,29 +206,32 @@ namespace Terrain { namespace Engine { namespace Resources {
         shaderProgramResources.push_back({
             TerrainResources::ShaderPrograms::QUAD, // id
             2,                                      // shaderCount
-            {TerrainResources::Shaders::TEXTURE_VERTEX,
-                TerrainResources::Shaders::TEXTURE_FRAGMENT}, // shaderResourceIds
-            1,                                                // uniformCount
-            {12},                                             // uniformNameLengths
-            "imageTexture"                                    // uniformNames
+            {
+                TerrainResources::Shaders::TEXTURE_VERTEX,
+                TerrainResources::Shaders::TEXTURE_FRAGMENT,
+            },             // shaderResourceIds
+            1,             // uniformCount
+            {12},          // uniformNameLengths
+            "imageTexture" // uniformNames
         });
 
         shaderProgramResources.push_back({
             TerrainResources::ShaderPrograms::TERRAIN_TEXTURED, // id
             4,                                                  // shaderCount
-            {TerrainResources::Shaders::TERRAIN_VERTEX,
+            {
+                TerrainResources::Shaders::TERRAIN_VERTEX,
                 TerrainResources::Shaders::TERRAIN_TESS_CTRL,
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
-                TerrainResources::Shaders::TERRAIN_FRAGMENT},        // shaderResourceIds
-            14,                                                      // uniformCount
-            {13, 16, 13, 13, 19, 9, 16, 13, 18, 12, 17, 22, 20, 21}, // uniformNameLengths
+                TerrainResources::Shaders::TERRAIN_FRAGMENT,
+            },                                                   // shaderResourceIds
+            13,                                                  // uniformCount
+            {13, 16, 13, 13, 19, 9, 13, 18, 12, 17, 22, 20, 21}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "albedoTexture"
             "normalTexture"
             "displacementTexture"
             "aoTexture"
-            "roughnessTexture"
             "terrainHeight"
             "normalSampleOffset"
             "textureScale"
@@ -253,12 +244,14 @@ namespace Terrain { namespace Engine { namespace Resources {
         shaderProgramResources.push_back({
             TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME, // id
             4,                                                   // shaderCount
-            {TerrainResources::Shaders::WIREFRAME_VERTEX,
+            {
+                TerrainResources::Shaders::WIREFRAME_VERTEX,
                 TerrainResources::Shaders::WIREFRAME_TESS_CTRL,
                 TerrainResources::Shaders::WIREFRAME_TESS_EVAL,
-                TerrainResources::Shaders::WIREFRAME_FRAGMENT}, // shaderResourceIds
-            7,                                                  // uniformCount
-            {13, 16, 19, 13, 18, 12, 5},                        // uniformNameLengths
+                TerrainResources::Shaders::WIREFRAME_FRAGMENT,
+            },                           // shaderResourceIds
+            7,                           // uniformCount
+            {13, 16, 19, 13, 18, 12, 5}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "displacementTexture"
@@ -284,10 +277,12 @@ namespace Terrain { namespace Engine { namespace Resources {
         shaderProgramResources.push_back({
             TerrainResources::ShaderPrograms::BRUSH, // id
             2,                                       // shaderCount
-            {TerrainResources::Shaders::BRUSH_VERTEX,
-                TerrainResources::Shaders::BRUSH_FRAGMENT}, // shaderResourceIds
-            3,                                              // uniformCount
-            {10, 12, 13},                                   // uniformNameLengths
+            {
+                TerrainResources::Shaders::BRUSH_VERTEX,
+                TerrainResources::Shaders::BRUSH_FRAGMENT,
+            },            // shaderResourceIds
+            3,            // uniformCount
+            {10, 12, 13}, // uniformNameLengths
             "brushScale"
             "brushFalloff"
             "brushStrength" // uniformNames
@@ -296,10 +291,12 @@ namespace Terrain { namespace Engine { namespace Resources {
         shaderProgramResources.push_back({
             TerrainResources::ShaderPrograms::UI, // id
             2,                                    // shaderCount
-            {TerrainResources::Shaders::UI_VERTEX,
-                TerrainResources::Shaders::UI_FRAGMENT}, // shaderResourceIds
-            2,                                           // uniformCount
-            {9, 5},                                      // uniformNameLengths
+            {
+                TerrainResources::Shaders::UI_VERTEX,
+                TerrainResources::Shaders::UI_FRAGMENT,
+            },      // shaderResourceIds
+            2,      // uniformCount
+            {9, 5}, // uniformNameLengths
             "transform"
             "color" // uniformNames
         });
@@ -317,35 +314,39 @@ namespace Terrain { namespace Engine { namespace Resources {
             GL_FUNC_ADD,                                        // blendEquation
             GL_SRC_ALPHA,                                       // blendSrcFactor
             GL_ONE_MINUS_SRC_ALPHA,                             // blendDstFactor
-            6,                                                  // textureCount
+            5,                                                  // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
                 TerrainResources::Textures::ALBEDO,
                 TerrainResources::Textures::NORMAL,
                 TerrainResources::Textures::DISPLACEMENT,
                 TerrainResources::Textures::AO,
-                TerrainResources::Textures::ROUGHNESS,
-            },                                           // textureResourceIds
-            11,                                          // uniformCount
-            {12, 16, 13, 13, 19, 9, 16, 17, 22, 20, 11}, // uniformNameLengths
+            },                                       // textureResourceIds
+            10,                                      // uniformCount
+            {12, 16, 13, 13, 19, 9, 17, 22, 20, 11}, // uniformNameLengths
             "textureScale"
             "heightmapTexture"
             "albedoTexture"
             "normalTexture"
             "displacementTexture"
             "aoTexture"
-            "roughnessTexture"
             "brushHighlightPos"
             "brushHighlightStrength"
             "brushHighlightRadius"
             "brushHighlightFalloff", // uniformNames
-            {Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
-                Graphics::UniformValue::forInteger(0), Graphics::UniformValue::forInteger(1),
-                Graphics::UniformValue::forInteger(2), Graphics::UniformValue::forInteger(3),
-                Graphics::UniformValue::forInteger(4), Graphics::UniformValue::forInteger(5),
+            {
+                Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
+                Graphics::UniformValue::forInteger(0),
+                Graphics::UniformValue::forInteger(1),
+                Graphics::UniformValue::forInteger(2),
+                Graphics::UniformValue::forInteger(3),
+                Graphics::UniformValue::forInteger(4),
+                Graphics::UniformValue::forInteger(5),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
-                Graphics::UniformValue::forFloat(0.0f), Graphics::UniformValue::forFloat(0.0f),
-                Graphics::UniformValue::forFloat(0.0f)} // uniformValues
+                Graphics::UniformValue::forFloat(0.0f),
+                Graphics::UniformValue::forFloat(0.0f),
+                Graphics::UniformValue::forFloat(0.0f),
+            } // uniformValues
         });
 
         materialResources.push_back({
@@ -355,14 +356,13 @@ namespace Terrain { namespace Engine { namespace Resources {
             GL_FUNC_ADD,                                         // blendEquation
             GL_SRC_ALPHA,                                        // blendSrcFactor
             GL_ONE_MINUS_SRC_ALPHA,                              // blendDstFactor
-            6,                                                   // textureCount
+            5,                                                   // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
                 TerrainResources::Textures::ALBEDO,
                 TerrainResources::Textures::NORMAL,
                 TerrainResources::Textures::DISPLACEMENT,
                 TerrainResources::Textures::AO,
-                TerrainResources::Textures::ROUGHNESS,
             },               // textureResourceIds
             4,               // uniformCount
             {5, 16, 19, 12}, // uniformNameLengths

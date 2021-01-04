@@ -131,7 +131,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int isNormalMapEnabled;
             int isAOMapEnabled;
             int isDisplacementMapEnabled;
-            int isRoughnessMapEnabled;
         };
 
         Renderer();

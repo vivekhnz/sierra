@@ -8,7 +8,6 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
         const int NORMAL = 2;
         const int DISPLACEMENT = 3;
         const int AO = 4;
-        const int ROUGHNESS = 5;
     }
 
     namespace Shaders {

@@ -41,8 +41,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             1,                                        // isTextureEnabled
             1,                                        // isNormalMapEnabled
             1,                                        // isAOMapEnabled
-            1,                                        // isDisplacementMapEnabled
-            0                                         // isRoughnessMapEnabled
+            1                                         // isDisplacementMapEnabled
         };
         glBufferData(GL_UNIFORM_BUFFER, lightingUboSize, &lighting, GL_DYNAMIC_DRAW);
         glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUboId, 0, lightingUboSize);

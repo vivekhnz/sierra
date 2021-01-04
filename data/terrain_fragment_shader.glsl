@@ -10,13 +10,11 @@ layout (std140, binding = 1) uniform Lighting
     bool lighting_isNormalMapEnabled;
     bool lighting_isAOMapEnabled;
     bool lighting_isDisplacementMapEnabled;
-    bool lighting_isRoughnessMapEnabled;
 };
 
 uniform sampler2D albedoTexture;
 uniform sampler2D normalTexture;
 uniform sampler2D aoTexture;
-uniform sampler2D roughnessTexture;
 uniform vec2 textureScale;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;

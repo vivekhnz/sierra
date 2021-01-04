@@ -19,7 +19,6 @@ layout (std140, binding = 1) uniform Lighting
     bool lighting_isNormalMapEnabled;
     bool lighting_isAOMapEnabled;
     bool lighting_isDisplacementMapEnabled;
-    bool lighting_isRoughnessMapEnabled;
 };
 
 uniform sampler2D heightmapTexture;

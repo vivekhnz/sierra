@@ -108,7 +108,6 @@ int main()
         bool isNormalMapEnabled = true;
         bool isAOMapEnabled = true;
         bool isDisplacementMapEnabled = true;
-        bool isRoughnessMapEnabled = false;
 
         bool isLightingStateUpdated = false;
 
@@ -167,13 +166,6 @@ int main()
                 isLightingStateUpdated = true;
             }
 
-            // toggle roughness texture when R key is pressed
-            if (ctx.input.isNewKeyPress(0, Terrain::Engine::IO::Key::R))
-            {
-                isRoughnessMapEnabled = !isRoughnessMapEnabled;
-                isLightingStateUpdated = true;
-            }
-
             // load a different heightmap when H is pressed
             if (ctx.input.isNewKeyPress(0, Terrain::Engine::IO::Key::H))
             {
@@ -197,8 +189,7 @@ int main()
                     isAlbedoEnabled ? 1 : 0,                  // isTextureEnabled
                     isNormalMapEnabled ? 1 : 0,               // isNormalMapEnabled
                     isAOMapEnabled ? 1 : 0,                   // isAOMapEnabled
-                    isDisplacementMapEnabled ? 1 : 0,         // isDisplacementMapEnabled
-                    isRoughnessMapEnabled ? 1 : 0             // isRoughnessMapEnabled
+                    isDisplacementMapEnabled ? 1 : 0          // isDisplacementMapEnabled
                 };
                 ctx.renderer.updateUniformBuffer(
                     Terrain::Engine::Graphics::Renderer::UniformBuffer::Lighting, &lighting);

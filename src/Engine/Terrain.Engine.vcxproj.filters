@@ -4,12 +4,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\deps\glad\glad.c">
-      <Filter>deps</Filter>
-    </ClCompile>
-    <ClCompile Include="..\deps\stb\stb_image.c">
-      <Filter>deps</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\BindBuffer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -53,6 +47,12 @@
     <ClCompile Include="OrthographicCameraComponentManager.cpp" />
     <ClCompile Include="Graphics\DebugUIRenderer.cpp">
       <Filter>Graphics</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deps\glad\glad.c">
+      <Filter>deps</Filter>
+    </ClCompile>
+    <ClCompile Include="..\..\deps\stb\stb_image.c">
+      <Filter>deps</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
