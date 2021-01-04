@@ -36,5 +36,6 @@ public
         glm::vec2 currentBrushPos;
         float brushRadius;
         float brushFalloff;
+        float lightDirection;
     };
 }}}

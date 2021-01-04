@@ -14,6 +14,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState = new EditorState();
         newEditorState->brushRadius = 128.0f;
         newEditorState->brushFalloff = 0.1f;
+        newEditorState->lightDirection = 0.5f;
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
         worlds = new Worlds::EditorWorlds(*ctx);

@@ -34,8 +34,14 @@
         </StackPanel>
         <interop:Viewport x:Name="sceneViewport" Grid.Row="2" World="Scene" />
         <StackPanel Orientation="Vertical" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2">
+            <Border Background="#222" Padding="8 4" BorderThickness="0 1" BorderBrush="#111">
+                <TextBlock Text="HEIGHTMAP" Foreground="#888" FontWeight="Bold" />
+            </Border>
             <interop:Viewport x:Name="heightmapPreviewViewport" Width="300" Height="300"
                               World="HeightmapPreview" />
+            <Border Background="#222" Padding="8 4" BorderThickness="0 1" BorderBrush="#111">
+                <TextBlock Text="BRUSH" Foreground="#888" FontWeight="Bold" />
+            </Border>
             <TextBlock Text="Brush Radius" Foreground="#888" Margin="12 12 12 8" />
             <Grid Margin="12 0">
                 <Grid.ColumnDefinitions>
@@ -49,7 +55,7 @@
                            Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
             </Grid>
             <TextBlock Text="Brush Falloff" Foreground="#888" Margin="12 12 12 8" />
-            <Grid Margin="12 0">
+            <Grid Margin="12 0 12 12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
@@ -58,6 +64,21 @@
                         SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                         IsSnapToTickEnabled="True" ValueChanged="brushFalloffSlider_ValueChanged" />
                 <TextBlock Text="{Binding ElementName=brushFalloffSlider, Path=Value}"
+                           Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+            </Grid>
+            <Border Background="#222" Padding="8 4" BorderThickness="0 1" BorderBrush="#111">
+                <TextBlock Text="SCENE" Foreground="#888" FontWeight="Bold" />
+            </Border>
+            <TextBlock Text="Light Direction" Foreground="#888" Margin="12 12 12 8" />
+            <Grid Margin="12 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="lightDirectionSlider" Minimum="-1" Maximum="1" Value="0.5"
+                        SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                        IsSnapToTickEnabled="True" ValueChanged="lightDirectionSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=lightDirectionSlider, Path=Value}"
                            Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
             </Grid>
         </StackPanel>

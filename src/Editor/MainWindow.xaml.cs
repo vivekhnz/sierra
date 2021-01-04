@@ -71,6 +71,12 @@ namespace Terrain.Editor
             EngineInterop.State.BrushFalloff = (float)brushFalloffSlider.Value;
         }
 
+        private void lightDirectionSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.LightDirection = (float)lightDirectionSlider.Value;
+        }
+
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
         {
             if (editorToolByToolButtons == null) return;

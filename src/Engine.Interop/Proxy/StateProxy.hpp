@@ -65,5 +65,18 @@ public
                 state.brushFalloff = value;
             }
         }
+
+        property float LightDirection
+        {
+            float get()
+            {
+                return state.lightDirection;
+            }
+
+            void set(float value)
+            {
+                state.lightDirection = value;
+            }
+        }
     };
 }}}}

@@ -1,4 +1,5 @@
 #include "SceneWorld.hpp"
+#include <glm/gtc/type_ptr.hpp>
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     SceneWorld::SceneWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
@@ -133,6 +134,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             state.brushRadius / 2048.0f);
         world.componentManagers.meshRenderer.setMaterialUniformFloat(
             terrainMeshRendererInstanceId, "brushHighlightFalloff", state.brushFalloff);
+
+        // update scene lighting
+        glm::vec4 lightDir = glm::vec4(0);
+        lightDir.x = sin(state.lightDirection * glm::pi<float>() * -0.5);
+        lightDir.y = cos(state.lightDirection * glm::pi<float>() * 0.5);
+        lightDir.z = 0.2f;
+
+        Terrain::Engine::Graphics::Renderer::LightingState lighting = {
+            lightDir, // lightDir
+            1,        // isEnabled
+            1,        // isTextureEnabled
+            1,        // isNormalMapEnabled
+            1,        // isAOMapEnabled
+            1         // isDisplacementMapEnabled
+        };
+        ctx.renderer.updateUniformBuffer(
+            Terrain::Engine::Graphics::Renderer::UniformBuffer::Lighting, &lighting);
     }
 
     SceneWorld::OperationState SceneWorld::getCurrentOperation(const EditorState &prevState)
