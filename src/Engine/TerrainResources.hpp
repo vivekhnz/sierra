@@ -4,10 +4,14 @@
 namespace Terrain { namespace Engine { namespace TerrainResources {
     namespace Textures {
         const int HEIGHTMAP = 0;
-        const int ALBEDO = 1;
-        const int NORMAL = 2;
-        const int DISPLACEMENT = 3;
-        const int AO = 4;
+        const int GROUND_ALBEDO = 1;
+        const int GROUND_NORMAL = 2;
+        const int GROUND_DISPLACEMENT = 3;
+        const int GROUND_AO = 4;
+        const int ROCK_ALBEDO = 5;
+        const int ROCK_NORMAL = 6;
+        const int ROCK_DISPLACEMENT = 7;
+        const int ROCK_AO = 8;
     }
 
     namespace Shaders {
