@@ -23,9 +23,8 @@ layout (std140, binding = 1) uniform Lighting
 
 uniform sampler2D heightmapTexture;
 uniform sampler2D displacementTexture;
-uniform float terrainHeight;
-uniform vec2 normalSampleOffset;
-uniform vec2 textureScale;
+uniform vec3 terrainDimensions;
+uniform vec2 textureSizeInWorldUnits;
 
 layout(location = 0) out vec3 normal;
 layout(location = 1) out vec3 texcoord;
@@ -81,6 +80,7 @@ void main()
 
     // calculate normal
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
+    vec2 normalSampleOffset = 1 / terrainDimensions.xz;
     float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y), mip);
     float hR = height(vec2(hUV.x + normalSampleOffset.x, hUV.y), mip);
     float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y), mip);
@@ -91,16 +91,19 @@ void main()
     float heightNormalised = height(hUV, mip);
     vec3 triplanarBlend = calcTriplanarBlend(normal);
     vec3 triplanarAxisSign = sign(normal);
-    texcoord = vec3(hUV.x * textureScale.x, heightNormalised * -9.375f, hUV.y * textureScale.y);
+    texcoord = vec3(
+        hUV.x * terrainDimensions.x / textureSizeInWorldUnits.x,
+        -heightNormalised * terrainDimensions.y / textureSizeInWorldUnits.y,
+        hUV.y * terrainDimensions.z / textureSizeInWorldUnits.y);
     vec2 texcoord_x = vec2(texcoord.z * triplanarAxisSign.x, texcoord.y);
     vec2 texcoord_y = vec2(texcoord.x * triplanarAxisSign.y, texcoord.z);
     vec2 texcoord_z = vec2(texcoord.x * triplanarAxisSign.z, texcoord.y);
     
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
-    pos.y = heightNormalised * terrainHeight;
+    pos.y = heightNormalised * terrainDimensions.y;
     if (lighting_isDisplacementMapEnabled)
     {
-        float scaledMip = mip + log2(textureScale.x);
+        float scaledMip = mip + log2(terrainDimensions.x / textureSizeInWorldUnits.x);
         
         vec3 displacement_x = vec3(textureCLod(displacementTexture, texcoord_x, scaledMip), 0, 0);
         vec3 displacement_y = vec3(0, textureCLod(displacementTexture, texcoord_y, scaledMip), 0);

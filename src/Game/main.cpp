@@ -16,18 +16,15 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
     float terrainHeight = 25.0f;
 
     // build material uniforms
-    std::vector<std::string> materialUniformNames(3);
-    materialUniformNames[0] = "terrainHeight";
-    materialUniformNames[1] = "heightmapSize";
-    materialUniformNames[2] = "normalSampleOffset";
+    std::vector<std::string> materialUniformNames(2);
+    materialUniformNames[0] = "heightmapSize";
+    materialUniformNames[1] = "terrainDimensions";
 
-    std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(3);
+    std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(2);
     materialUniformValues[0] =
-        Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
-    materialUniformValues[1] =
         Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
-    materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forVector2(
-        glm::vec2(1.0f / (patchSize * terrainColumns), 1.0f / (patchSize * terrainRows)));
+    materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
+        glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));
 
     // create entity and components
     int entityId = ctx.entities.create();

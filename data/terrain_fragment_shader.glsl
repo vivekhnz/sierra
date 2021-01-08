@@ -15,7 +15,8 @@ layout (std140, binding = 1) uniform Lighting
 uniform sampler2D albedoTexture;
 uniform sampler2D normalTexture;
 uniform sampler2D aoTexture;
-uniform vec2 textureScale;
+uniform vec3 terrainDimensions;
+uniform vec2 textureSizeInWorldUnits;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;
 uniform float brushHighlightRadius;
@@ -26,7 +27,8 @@ out vec4 FragColor;
 vec3 calcBrushHighlight()
 {
     float highlightRadius = brushHighlightRadius * 0.5f;
-    float distFromHighlight = distance(texcoord.xz / textureScale, brushHighlightPos);
+    vec2 normalizedUV = texcoord.xz * textureSizeInWorldUnits.xy / terrainDimensions.xz;
+    float distFromHighlight = distance(normalizedUV, brushHighlightPos);
     
     // outline thickness is based on depth
     float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);

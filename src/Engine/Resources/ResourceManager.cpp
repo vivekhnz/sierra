@@ -272,18 +272,17 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::TERRAIN_TESS_CTRL,
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
                 TerrainResources::Shaders::TERRAIN_FRAGMENT,
-            },                                                   // shaderResourceIds
-            13,                                                  // uniformCount
-            {13, 16, 13, 13, 19, 9, 13, 18, 12, 17, 22, 20, 21}, // uniformNameLengths
+            },                                               // shaderResourceIds
+            12,                                              // uniformCount
+            {13, 16, 13, 13, 19, 9, 17, 23, 17, 22, 20, 21}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "albedoTexture"
             "normalTexture"
             "displacementTexture"
             "aoTexture"
-            "terrainHeight"
-            "normalSampleOffset"
-            "textureScale"
+            "terrainDimensions"
+            "textureSizeInWorldUnits"
             "brushHighlightPos"
             "brushHighlightStrength"
             "brushHighlightRadius"
@@ -298,15 +297,14 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::WIREFRAME_TESS_CTRL,
                 TerrainResources::Shaders::WIREFRAME_TESS_EVAL,
                 TerrainResources::Shaders::WIREFRAME_FRAGMENT,
-            },                           // shaderResourceIds
-            7,                           // uniformCount
-            {13, 16, 19, 13, 18, 12, 5}, // uniformNameLengths
+            },                       // shaderResourceIds
+            6,                       // uniformCount
+            {13, 16, 19, 17, 23, 5}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "displacementTexture"
-            "terrainHeight"
-            "normalSampleOffset"
-            "textureScale"
+            "terrainDimensions"
+            "textureSizeInWorldUnits"
             "color" // uniformNames
         });
 
@@ -372,8 +370,8 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::GROUND_AO,
             },                                       // textureResourceIds
             10,                                      // uniformCount
-            {12, 16, 13, 13, 19, 9, 17, 22, 20, 11}, // uniformNameLengths
-            "textureScale"
+            {23, 16, 13, 13, 19, 9, 17, 22, 20, 11}, // uniformNameLengths
+            "textureSizeInWorldUnits"
             "heightmapTexture"
             "albedoTexture"
             "normalTexture"
@@ -384,7 +382,7 @@ namespace Terrain { namespace Engine { namespace Resources {
             "brushHighlightRadius"
             "brushHighlightFalloff", // uniformNames
             {
-                Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
+                Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
                 Graphics::UniformValue::forInteger(0),
                 Graphics::UniformValue::forInteger(1),
                 Graphics::UniformValue::forInteger(2),
@@ -414,16 +412,16 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::GROUND_AO,
             },               // textureResourceIds
             4,               // uniformCount
-            {5, 16, 19, 12}, // uniformNameLengths
+            {5, 16, 19, 23}, // uniformNameLengths
             "color"
             "heightmapTexture"
             "displacementTexture"
-            "textureScale", // uniformNames
+            "textureSizeInWorldUnits", // uniformNames
             {
                 Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)),
                 Graphics::UniformValue::forInteger(0),
                 Graphics::UniformValue::forInteger(3),
-                Graphics::UniformValue::forVector2(glm::vec2(48.0f, 48.0f)),
+                Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
             } // uniformValues
         });
 

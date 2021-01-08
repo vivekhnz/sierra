@@ -30,28 +30,25 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
-        std::vector<std::string> materialUniformNames(7);
-        materialUniformNames[0] = "terrainHeight";
-        materialUniformNames[1] = "heightmapSize";
-        materialUniformNames[2] = "normalSampleOffset";
-        materialUniformNames[3] = "brushHighlightStrength";
-        materialUniformNames[4] = "brushHighlightPos";
-        materialUniformNames[5] = "brushHighlightRadius";
-        materialUniformNames[6] = "brushHighlightFalloff";
+        std::vector<std::string> materialUniformNames(6);
+        materialUniformNames[0] = "heightmapSize";
+        materialUniformNames[1] = "terrainDimensions";
+        materialUniformNames[2] = "brushHighlightStrength";
+        materialUniformNames[3] = "brushHighlightPos";
+        materialUniformNames[4] = "brushHighlightRadius";
+        materialUniformNames[5] = "brushHighlightFalloff";
 
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(7);
+        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(6);
         materialUniformValues[0] =
-            Terrain::Engine::Graphics::UniformValue::forFloat(terrainHeight);
-        materialUniformValues[1] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
-        materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forVector2(
-            glm::vec2(1.0f / (patchSize * terrainColumns), 1.0f / (patchSize * terrainRows)));
-        materialUniformValues[3] = Terrain::Engine::Graphics::UniformValue::forFloat(0.4f);
-        materialUniformValues[4] =
+        materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
+            glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));
+        materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forFloat(0.4f);
+        materialUniformValues[3] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(0.5f, 0.5f));
-        materialUniformValues[5] =
+        materialUniformValues[4] =
             Terrain::Engine::Graphics::UniformValue::forFloat(128 / 2048.0f);
-        materialUniformValues[6] = Terrain::Engine::Graphics::UniformValue::forFloat(0.75f);
+        materialUniformValues[5] = Terrain::Engine::Graphics::UniformValue::forFloat(0.75f);
 
         // create entity and components
         int entityId = ctx.entities.create();
