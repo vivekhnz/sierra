@@ -16,6 +16,19 @@ namespace Terrain.Editor
     {
         DispatcherTimer updateUiTimer;
         Dictionary<RadioButton, EditorTool> editorToolByToolButtons;
+        Dictionary<ComboBox, int> terrainMaterialTextureSlotByTextureDropdowns;
+
+        private static Dictionary<string, int> textureIdMap = new Dictionary<string, int>
+        {
+            ["ground_albedo"] = 1,
+            ["ground_normal"] = 2,
+            ["ground_displacement"] = 3,
+            ["ground_ao"] = 4,
+            ["rock_albedo"] = 5,
+            ["rock_normal"] = 6,
+            ["rock_displacement"] = 7,
+            ["rock_ao"] = 8
+        };
 
         public MainWindow()
         {
@@ -27,6 +40,13 @@ namespace Terrain.Editor
                 [rbEditorToolRaiseTerrain] = EditorTool.RaiseTerrain,
                 [rbEditorToolLowerTerrain] = EditorTool.LowerTerrain
             };
+            terrainMaterialTextureSlotByTextureDropdowns = new Dictionary<ComboBox, int>
+            {
+                [cbMaterialAlbedoTexture] = 1,
+                [cbMaterialNormalTexture] = 2,
+                [cbMaterialDisplacementTexture] = 3,
+                [cbMaterialAOTexture] = 4
+            };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
@@ -34,6 +54,16 @@ namespace Terrain.Editor
             };
             updateUiTimer.Tick += updateUiTimer_Tick;
             updateUiTimer.Start();
+
+            cbMaterialAlbedoTexture.ItemsSource = textureIdMap.Keys;
+            cbMaterialNormalTexture.ItemsSource = textureIdMap.Keys;
+            cbMaterialAOTexture.ItemsSource = textureIdMap.Keys;
+            cbMaterialDisplacementTexture.ItemsSource = textureIdMap.Keys;
+
+            cbMaterialAlbedoTexture.SelectedItem = "ground_albedo";
+            cbMaterialNormalTexture.SelectedItem = "ground_normal";
+            cbMaterialAOTexture.SelectedItem = "ground_ao";
+            cbMaterialDisplacementTexture.SelectedItem = "ground_displacement";
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -91,6 +121,24 @@ namespace Terrain.Editor
             if (senderBtn == null) return;
 
             EngineInterop.State.CurrentTool = editorToolByToolButtons[senderBtn];
+        }
+
+        private void OnMaterialTextureComboBoxSelectionChanged(object sender,
+            SelectionChangedEventArgs e)
+        {
+            if (!(sender is ComboBox dropdown)) return;
+
+            if (!terrainMaterialTextureSlotByTextureDropdowns.TryGetValue(
+                dropdown, out int slot)) return;
+
+            string textureIdAlias = dropdown.SelectedItem.ToString();
+            if (!textureIdMap.TryGetValue(textureIdAlias, out int textureId)) return;
+
+            const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
+            int materialHandle = EngineInterop.GraphicsAssetManager.LookupMaterial(
+                RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
+            EngineInterop.GraphicsAssetManager.SetMaterialTexture(materialHandle, slot,
+                EngineInterop.Renderer.LookupTexture(textureId));
         }
 
         private void updateUiTimer_Tick(object sender, EventArgs e)

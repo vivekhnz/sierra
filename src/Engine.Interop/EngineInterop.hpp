@@ -8,6 +8,8 @@
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "Proxy/ResourceManagerProxy.hpp"
+#include "Proxy/RendererProxy.hpp"
+#include "Proxy/GraphicsAssetManagerProxy.hpp"
 #include "Proxy/StateProxy.hpp"
 #include "Worlds/EditorWorlds.hpp"
 
@@ -37,6 +39,8 @@ public
         static Worlds::EditorWorlds *worlds;
 
         static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
+        static Proxy::RendererProxy ^ rendererProxy;
+        static Proxy::GraphicsAssetManagerProxy ^ graphicsAssetManagerProxy;
         static Proxy::StateProxy ^ stateProxy;
 
         static ViewportContext *focusedViewportCtx = nullptr;
@@ -83,6 +87,24 @@ public
             Proxy::ResourceManagerProxy^ get()
             {
                 return resourceManagerProxy;
+            }
+        }
+
+        static property Proxy::RendererProxy^ Renderer
+        {
+        public:
+            Proxy::RendererProxy^ get()
+            {
+                return rendererProxy;
+            }
+        }
+
+        static property Proxy::GraphicsAssetManagerProxy^ GraphicsAssetManager
+        {
+        public:
+            Proxy::GraphicsAssetManagerProxy^ get()
+            {
+                return graphicsAssetManagerProxy;
             }
         }
 

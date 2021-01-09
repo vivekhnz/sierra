@@ -87,7 +87,7 @@ void main()
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y), mip);
     normal = normalize(vec3(hR - hL, normalSampleOffset.x * 2, hD - hU));
 
-    // calculate texture coordinates    
+    // calculate texture coordinates
     float heightNormalised = height(hUV, mip);
     vec3 triplanarBlend = calcTriplanarBlend(normal);
     vec3 triplanarAxisSign = sign(normal);

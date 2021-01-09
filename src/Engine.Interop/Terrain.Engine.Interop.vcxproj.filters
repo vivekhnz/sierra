@@ -29,6 +29,12 @@
     <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
+    <ClCompile Include="Proxy\RendererProxy.cpp">
+      <Filter>Proxy</Filter>
+    </ClCompile>
+    <ClCompile Include="Proxy\GraphicsAssetManagerProxy.cpp">
+      <Filter>Proxy</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Viewport.h" />
@@ -57,5 +63,11 @@
       <Filter>Proxy</Filter>
     </ClInclude>
     <ClInclude Include="EditorState.hpp" />
+    <ClInclude Include="Proxy\RendererProxy.hpp">
+      <Filter>Proxy</Filter>
+    </ClInclude>
+    <ClInclude Include="Proxy\GraphicsAssetManagerProxy.hpp">
+      <Filter>Proxy</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
