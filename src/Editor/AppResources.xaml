@@ -1,0 +1,57 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <Style x:Key="SidebarExpanderStyle" TargetType="{x:Type Expander}">
+        <Setter Property="HeaderTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <TextBlock Text="{Binding}" Foreground="#AAA" FontWeight="Bold"
+                               FontSize="11" />
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Expander">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="27" />
+                            <RowDefinition Name="ContentRow" Height="0" />
+                        </Grid.RowDefinitions>
+                        <Border Background="#222" BorderThickness="0 0 0 1" CornerRadius="0"
+                                Padding="8 0" BorderBrush="#111">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Path Name="ArrowGlyph" Data="M 0,0 5,5 0,10" Stroke="#AAA"
+                                      StrokeThickness="1.5" VerticalAlignment="Center"
+                                      Margin="0 0 6 0" RenderTransformOrigin="0.5 0.5" />
+                                <ContentPresenter Grid.Column="1" Margin="0" ContentSource="Header"
+                                                  RecognizesAccessKey="True"
+                                                  VerticalAlignment="Center" />
+                            </Grid>
+                        </Border>
+                        <ToggleButton Grid.Row="0"
+                                      IsChecked="{Binding Path=IsExpanded, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}"
+                                      Background="Transparent" Opacity="0" Cursor="Hand" />
+                        <ContentPresenter x:Name="Content" Grid.Row="1" />
+                    </Grid>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsExpanded" Value="True">
+                            <Setter TargetName="ContentRow" Property="Height"
+                                    Value="{Binding Height, ElementName=Content}" />
+                            <Setter TargetName="ArrowGlyph" Property="RenderTransform">
+                                <Setter.Value>
+                                    <RotateTransform Angle="90" />
+                                </Setter.Value>
+                            </Setter>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+</ResourceDictionary>
