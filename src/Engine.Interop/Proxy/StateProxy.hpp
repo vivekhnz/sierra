@@ -78,5 +78,18 @@ public
                 state.lightDirection = value;
             }
         }
+
+        property float TextureSize
+        {
+            float get()
+            {
+                return state.textureSize;
+            }
+
+            void set(float value)
+            {
+                state.textureSize = value;
+            }
+        }
     };
 }}}}

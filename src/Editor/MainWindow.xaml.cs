@@ -77,6 +77,12 @@ namespace Terrain.Editor
             EngineInterop.State.LightDirection = (float)lightDirectionSlider.Value;
         }
 
+        private void textureSizeSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.TextureSize = (float)textureSizeSlider.Value;
+        }
+
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
         {
             if (editorToolByToolButtons == null) return;

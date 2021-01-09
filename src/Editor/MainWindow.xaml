@@ -70,7 +70,7 @@
                 <TextBlock Text="SCENE" Foreground="#888" FontWeight="Bold" />
             </Border>
             <TextBlock Text="Light Direction" Foreground="#888" Margin="12 12 12 8" />
-            <Grid Margin="12 0">
+            <Grid Margin="12 0 12 12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
@@ -79,6 +79,21 @@
                         SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                         IsSnapToTickEnabled="True" ValueChanged="lightDirectionSlider_ValueChanged" />
                 <TextBlock Text="{Binding ElementName=lightDirectionSlider, Path=Value}"
+                           Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+            </Grid>
+            <Border Background="#222" Padding="8 4" BorderThickness="0 1" BorderBrush="#111">
+                <TextBlock Text="MATERIAL" Foreground="#888" FontWeight="Bold" />
+            </Border>
+            <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="12 12 12 8" />
+            <Grid Margin="12 0">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Slider x:Name="textureSizeSlider" Minimum="0.1" Maximum="16" Value="2.5"
+                        SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                        IsSnapToTickEnabled="True" ValueChanged="textureSizeSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=textureSizeSlider, Path=Value}"
                            Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
             </Grid>
         </StackPanel>
