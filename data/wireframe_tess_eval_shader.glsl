@@ -22,7 +22,7 @@ layout (std140, binding = 1) uniform Lighting
 };
 
 uniform sampler2D heightmapTexture;
-uniform sampler2D displacementTexture;
+uniform sampler2D mat1_displacement;
 uniform vec3 terrainDimensions;
 uniform vec2 textureSizeInWorldUnits;
 
@@ -81,7 +81,7 @@ void main()
     {
         float scaledMip = mip + log2(terrainDimensions.x / textureSizeInWorldUnits.x);
         float displacement =
-            ((textureCLod(displacementTexture, texcoord, scaledMip) * 2.0f) - 1.0f);
+            ((textureCLod(mat1_displacement, texcoord, scaledMip) * 2.0f) - 1.0f);
         pos += normal * displacement * 0.1f;
     }
     

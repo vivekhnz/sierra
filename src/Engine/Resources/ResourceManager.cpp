@@ -272,15 +272,20 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::TERRAIN_TESS_CTRL,
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
                 TerrainResources::Shaders::TERRAIN_FRAGMENT,
-            },                                               // shaderResourceIds
-            12,                                              // uniformCount
-            {13, 16, 13, 13, 19, 9, 17, 23, 17, 22, 20, 21}, // uniformNameLengths
+            },  // shaderResourceIds
+            16, // uniformCount
+            {13, 16, 11, 11, 17, 7, 11, 11, 17, 7, 17, 23, 17, 22, 20,
+                21}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
-            "albedoTexture"
-            "normalTexture"
-            "displacementTexture"
-            "aoTexture"
+            "mat1_albedo"
+            "mat1_normal"
+            "mat1_displacement"
+            "mat1_ao"
+            "mat2_albedo"
+            "mat2_normal"
+            "mat2_displacement"
+            "mat2_ao"
             "terrainDimensions"
             "textureSizeInWorldUnits"
             "brushHighlightPos"
@@ -297,12 +302,13 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::WIREFRAME_TESS_CTRL,
                 TerrainResources::Shaders::WIREFRAME_TESS_EVAL,
                 TerrainResources::Shaders::WIREFRAME_FRAGMENT,
-            },                       // shaderResourceIds
-            6,                       // uniformCount
-            {13, 16, 19, 17, 23, 5}, // uniformNameLengths
+            },                           // shaderResourceIds
+            7,                           // uniformCount
+            {13, 16, 17, 17, 17, 23, 5}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
-            "displacementTexture"
+            "mat1_displacement"
+            "mat2_displacement"
             "terrainDimensions"
             "textureSizeInWorldUnits"
             "color" // uniformNames
@@ -361,22 +367,30 @@ namespace Terrain { namespace Engine { namespace Resources {
             GL_FUNC_ADD,                                        // blendEquation
             GL_SRC_ALPHA,                                       // blendSrcFactor
             GL_ONE_MINUS_SRC_ALPHA,                             // blendDstFactor
-            5,                                                  // textureCount
+            9,                                                  // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
                 TerrainResources::Textures::GROUND_ALBEDO,
                 TerrainResources::Textures::GROUND_NORMAL,
                 TerrainResources::Textures::GROUND_DISPLACEMENT,
                 TerrainResources::Textures::GROUND_AO,
-            },                                       // textureResourceIds
-            10,                                      // uniformCount
-            {23, 16, 13, 13, 19, 9, 17, 22, 20, 11}, // uniformNameLengths
+                TerrainResources::Textures::ROCK_ALBEDO,
+                TerrainResources::Textures::ROCK_NORMAL,
+                TerrainResources::Textures::ROCK_DISPLACEMENT,
+                TerrainResources::Textures::ROCK_AO,
+            },                                                      // textureResourceIds
+            14,                                                     // uniformCount
+            {23, 16, 11, 11, 17, 7, 11, 11, 17, 7, 17, 22, 20, 11}, // uniformNameLengths
             "textureSizeInWorldUnits"
             "heightmapTexture"
-            "albedoTexture"
-            "normalTexture"
-            "displacementTexture"
-            "aoTexture"
+            "mat1_albedo"
+            "mat1_normal"
+            "mat1_displacement"
+            "mat1_ao"
+            "mat2_albedo"
+            "mat2_normal"
+            "mat2_displacement"
+            "mat2_ao"
             "brushHighlightPos"
             "brushHighlightStrength"
             "brushHighlightRadius"
@@ -389,6 +403,10 @@ namespace Terrain { namespace Engine { namespace Resources {
                 Graphics::UniformValue::forInteger(3),
                 Graphics::UniformValue::forInteger(4),
                 Graphics::UniformValue::forInteger(5),
+                Graphics::UniformValue::forInteger(6),
+                Graphics::UniformValue::forInteger(7),
+                Graphics::UniformValue::forInteger(8),
+                Graphics::UniformValue::forInteger(9),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
                 Graphics::UniformValue::forFloat(0.0f),
                 Graphics::UniformValue::forFloat(0.0f),
@@ -403,24 +421,30 @@ namespace Terrain { namespace Engine { namespace Resources {
             GL_FUNC_ADD,                                         // blendEquation
             GL_SRC_ALPHA,                                        // blendSrcFactor
             GL_ONE_MINUS_SRC_ALPHA,                              // blendDstFactor
-            5,                                                   // textureCount
+            9,                                                   // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
                 TerrainResources::Textures::GROUND_ALBEDO,
                 TerrainResources::Textures::GROUND_NORMAL,
                 TerrainResources::Textures::GROUND_DISPLACEMENT,
                 TerrainResources::Textures::GROUND_AO,
-            },               // textureResourceIds
-            4,               // uniformCount
-            {5, 16, 19, 23}, // uniformNameLengths
+                TerrainResources::Textures::ROCK_ALBEDO,
+                TerrainResources::Textures::ROCK_NORMAL,
+                TerrainResources::Textures::ROCK_DISPLACEMENT,
+                TerrainResources::Textures::ROCK_AO,
+            },                   // textureResourceIds
+            5,                   // uniformCount
+            {5, 16, 17, 17, 23}, // uniformNameLengths
             "color"
             "heightmapTexture"
-            "displacementTexture"
+            "mat1_displacement"
+            "mat2_displacement"
             "textureSizeInWorldUnits", // uniformNames
             {
                 Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)),
                 Graphics::UniformValue::forInteger(0),
                 Graphics::UniformValue::forInteger(3),
+                Graphics::UniformValue::forInteger(7),
                 Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
             } // uniformValues
         });

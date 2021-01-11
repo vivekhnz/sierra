@@ -40,6 +40,7 @@ namespace Terrain.Editor
                 [rbEditorToolRaiseTerrain] = EditorTool.RaiseTerrain,
                 [rbEditorToolLowerTerrain] = EditorTool.LowerTerrain
             };
+            /*
             terrainMaterialTextureSlotByTextureDropdowns = new Dictionary<ComboBox, int>
             {
                 [cbMaterialAlbedoTexture] = 1,
@@ -47,6 +48,7 @@ namespace Terrain.Editor
                 [cbMaterialDisplacementTexture] = 3,
                 [cbMaterialAOTexture] = 4
             };
+            */
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
@@ -55,6 +57,7 @@ namespace Terrain.Editor
             updateUiTimer.Tick += updateUiTimer_Tick;
             updateUiTimer.Start();
 
+            /*
             cbMaterialAlbedoTexture.ItemsSource = textureIdMap.Keys;
             cbMaterialNormalTexture.ItemsSource = textureIdMap.Keys;
             cbMaterialAOTexture.ItemsSource = textureIdMap.Keys;
@@ -64,6 +67,7 @@ namespace Terrain.Editor
             cbMaterialNormalTexture.SelectedItem = "ground_normal";
             cbMaterialAOTexture.SelectedItem = "ground_ao";
             cbMaterialDisplacementTexture.SelectedItem = "ground_displacement";
+            */
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)

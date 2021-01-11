@@ -17,7 +17,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         int blendDstFactor;
 
         int textureCount;
-        int textureResourceIds[8];
+        int textureResourceIds[16];
 
         int uniformCount;
         int uniformNameLengths[64];
