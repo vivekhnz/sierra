@@ -19,7 +19,8 @@ uniform sampler2D mat2_albedo;
 uniform sampler2D mat2_normal;
 uniform sampler2D mat2_ao;
 uniform vec3 terrainDimensions;
-uniform vec2 textureSizeInWorldUnits;
+uniform vec2 mat1_textureSizeInWorldUnits;
+uniform vec2 mat2_textureSizeInWorldUnits;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;
 uniform float brushHighlightRadius;
@@ -30,7 +31,7 @@ out vec4 FragColor;
 vec3 calcBrushHighlight()
 {
     float highlightRadius = brushHighlightRadius * 0.5f;
-    vec2 normalizedUV = texcoord.xz * textureSizeInWorldUnits.xy / terrainDimensions.xz;
+    vec2 normalizedUV = texcoord.xz / terrainDimensions.xz;
     float distFromHighlight = distance(normalizedUV, brushHighlightPos);
     
     // outline thickness is based on depth
@@ -71,10 +72,18 @@ void main()
 
     vec3 triBlend = calcTriplanarBlend(vertexNormal);
     vec3 triAxisSign = sign(vertexNormal);
+    
+    vec2 base_texcoord_x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
+    vec2 base_texcoord_y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
+    vec2 base_texcoord_z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
 
-    vec2 texcoord_x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
-    vec2 texcoord_y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
-    vec2 texcoord_z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
+    vec2 mat1_texcoord_x = base_texcoord_x / mat1_textureSizeInWorldUnits.yy;
+    vec2 mat1_texcoord_y = base_texcoord_y / mat1_textureSizeInWorldUnits.xy;
+    vec2 mat1_texcoord_z = base_texcoord_z / mat1_textureSizeInWorldUnits.xy;
+
+    vec2 mat2_texcoord_x = base_texcoord_x / mat2_textureSizeInWorldUnits.yy;
+    vec2 mat2_texcoord_y = base_texcoord_y / mat2_textureSizeInWorldUnits.xy;
+    vec2 mat2_texcoord_z = base_texcoord_z / mat2_textureSizeInWorldUnits.xy;
 
     // sample normal map
     vec3 texNormal = vec3(0);
@@ -82,14 +91,14 @@ void main()
     {
         // flip normals to correct for the flipped UVs
         vec3 texNormal_mat1 = triplanar3D(
-            ((texture(mat1_normal, texcoord_x).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
-            ((texture(mat1_normal, texcoord_y).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
-            ((texture(mat1_normal, texcoord_z).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
+            ((texture(mat1_normal, mat1_texcoord_x).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
+            ((texture(mat1_normal, mat1_texcoord_y).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
+            ((texture(mat1_normal, mat1_texcoord_z).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
             triBlend);
         vec3 texNormal_mat2 = triplanar3D(
-            ((texture(mat2_normal, texcoord_x / 2).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
-            ((texture(mat2_normal, texcoord_y / 2).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
-            ((texture(mat2_normal, texcoord_z / 2).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
+            ((texture(mat2_normal, mat2_texcoord_x).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
+            ((texture(mat2_normal, mat2_texcoord_y).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
+            ((texture(mat2_normal, mat2_texcoord_z).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
             triBlend);
         texNormal = mix(texNormal_mat2, texNormal_mat1, slope);
     }
@@ -100,14 +109,14 @@ void main()
     if (lighting_isTextureEnabled)
     {
         vec3 albedo_mat1 = triplanar3D(
-            texture(mat1_albedo, texcoord_x).rgb,
-            texture(mat1_albedo, texcoord_y).rgb,
-            texture(mat1_albedo, texcoord_z).rgb,
+            texture(mat1_albedo, mat1_texcoord_x).rgb,
+            texture(mat1_albedo, mat1_texcoord_y).rgb,
+            texture(mat1_albedo, mat1_texcoord_z).rgb,
             triBlend);
         vec3 albedo_mat2 = triplanar3D(
-            texture(mat2_albedo, texcoord_x / 2).rgb,
-            texture(mat2_albedo, texcoord_y / 2).rgb,
-            texture(mat2_albedo, texcoord_z / 2).rgb,
+            texture(mat2_albedo, mat2_texcoord_x).rgb,
+            texture(mat2_albedo, mat2_texcoord_y).rgb,
+            texture(mat2_albedo, mat2_texcoord_z).rgb,
             triBlend);
         albedo = mix(albedo_mat2, albedo_mat1, slope);
     }
@@ -124,14 +133,14 @@ void main()
     if (lighting_isAOMapEnabled)
     {
         float ao_mat1 = triplanar1D(
-            texture(mat1_ao, texcoord_x).r,
-            texture(mat1_ao, texcoord_y).r,
-            texture(mat1_ao, texcoord_z).r,
+            texture(mat1_ao, mat1_texcoord_x).r,
+            texture(mat1_ao, mat1_texcoord_y).r,
+            texture(mat1_ao, mat1_texcoord_z).r,
             triBlend);
         float ao_mat2 = triplanar1D(
-            texture(mat2_ao, texcoord_x / 2).r,
-            texture(mat2_ao, texcoord_y / 2).r,
-            texture(mat2_ao, texcoord_z / 2).r,
+            texture(mat2_ao, mat2_texcoord_x).r,
+            texture(mat2_ao, mat2_texcoord_y).r,
+            texture(mat2_ao, mat2_texcoord_z).r,
             triBlend);
         ao = mix(0.6, 1.0, mix(ao_mat2, ao_mat1, slope));
     }

@@ -37,6 +37,7 @@ public
         float brushRadius;
         float brushFalloff;
         float lightDirection;
-        float textureSize;
+        float mat1_textureSize;
+        float mat2_textureSize;
     };
 }}}

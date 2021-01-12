@@ -24,7 +24,7 @@ layout (std140, binding = 1) uniform Lighting
 uniform sampler2D heightmapTexture;
 uniform sampler2D mat1_displacement;
 uniform vec3 terrainDimensions;
-uniform vec2 textureSizeInWorldUnits;
+uniform vec2 mat1_textureSizeInWorldUnits;
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -66,7 +66,7 @@ void main()
     float mip = mipValues[int(mipIndex)];
 
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
-    vec2 texcoord = hUV.xy * terrainDimensions.xz / textureSizeInWorldUnits.xy;
+    vec2 texcoord = hUV.xy * terrainDimensions.xz / mat1_textureSizeInWorldUnits.xy;
 
     vec2 normalSampleOffset = 1 / terrainDimensions.xz;
     float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y), mip);
@@ -79,7 +79,7 @@ void main()
     pos.y = height(hUV, mip) * terrainDimensions.y;
     if (lighting_isDisplacementMapEnabled)
     {
-        float scaledMip = mip + log2(terrainDimensions.x / textureSizeInWorldUnits.x);
+        float scaledMip = mip + log2(terrainDimensions.x / mat1_textureSizeInWorldUnits.x);
         float displacement =
             ((textureCLod(mat1_displacement, texcoord, scaledMip) * 2.0f) - 1.0f);
         pos += normal * displacement * 0.1f;

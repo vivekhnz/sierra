@@ -25,7 +25,8 @@ uniform sampler2D heightmapTexture;
 uniform sampler2D mat1_displacement;
 uniform sampler2D mat2_displacement;
 uniform vec3 terrainDimensions;
-uniform vec2 textureSizeInWorldUnits;
+uniform vec2 mat1_textureSizeInWorldUnits;
+uniform vec2 mat2_textureSizeInWorldUnits;
 
 layout(location = 0) out vec3 normal;
 layout(location = 1) out vec3 texcoord;
@@ -97,28 +98,38 @@ void main()
     vec3 triBlend = calcTriplanarBlend(normal);
     vec3 triAxisSign = sign(normal);
     texcoord = vec3(
-        hUV.x * terrainDimensions.x / textureSizeInWorldUnits.x,
-        -heightNormalised * terrainDimensions.y / textureSizeInWorldUnits.y,
-        hUV.y * terrainDimensions.z / textureSizeInWorldUnits.y);
-    vec2 texcoord_x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
-    vec2 texcoord_y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
-    vec2 texcoord_z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
+        hUV.x * terrainDimensions.x,
+        -heightNormalised * terrainDimensions.y,
+        hUV.y * terrainDimensions.z);
+
+    vec2 base_texcoord_x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
+    vec2 base_texcoord_y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
+    vec2 base_texcoord_z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
+
+    vec2 mat1_texcoord_x = base_texcoord_x / mat1_textureSizeInWorldUnits.yy;
+    vec2 mat1_texcoord_y = base_texcoord_y / mat1_textureSizeInWorldUnits.xy;
+    vec2 mat1_texcoord_z = base_texcoord_z / mat1_textureSizeInWorldUnits.xy;
+
+    vec2 mat2_texcoord_x = base_texcoord_x / mat2_textureSizeInWorldUnits.yy;
+    vec2 mat2_texcoord_y = base_texcoord_y / mat2_textureSizeInWorldUnits.xy;
+    vec2 mat2_texcoord_z = base_texcoord_z / mat2_textureSizeInWorldUnits.xy;
     
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     pos.y = heightNormalised * terrainDimensions.y;
     if (lighting_isDisplacementMapEnabled)
     {
-        float scaledMip = mip + log2(terrainDimensions.x / textureSizeInWorldUnits.x);
+        float mat1_scaledMip = mip + log2(terrainDimensions.x / mat1_textureSizeInWorldUnits.x);
+        float mat2_scaledMip = mip + log2(terrainDimensions.x / mat2_textureSizeInWorldUnits.x);
 
         vec3 displacement_mat1 = triplanar3D(
-            vec3(textureCLod(mat1_displacement, texcoord_x, scaledMip) * -triAxisSign.x, 0, 0),
-            vec3(0, textureCLod(mat1_displacement, texcoord_y, scaledMip) * triAxisSign.y, 0),
-            vec3(0, 0, textureCLod(mat1_displacement, texcoord_z, scaledMip) * triAxisSign.z),
+            vec3(textureCLod(mat1_displacement, mat1_texcoord_x, mat1_scaledMip) * -triAxisSign.x, 0, 0),
+            vec3(0, textureCLod(mat1_displacement, mat1_texcoord_y, mat1_scaledMip) * triAxisSign.y, 0),
+            vec3(0, 0, textureCLod(mat1_displacement, mat1_texcoord_z, mat1_scaledMip) * triAxisSign.z),
             triBlend);
         vec3 displacement_mat2 = triplanar3D(
-            vec3(textureCLod(mat2_displacement, texcoord_x / 3, scaledMip) * -triAxisSign.x, 0, 0),
-            vec3(0, textureCLod(mat2_displacement, texcoord_y / 3, scaledMip) * triAxisSign.y, 0),
-            vec3(0, 0, textureCLod(mat2_displacement, texcoord_z / 3, scaledMip) * triAxisSign.z),
+            vec3(textureCLod(mat2_displacement, mat2_texcoord_x, mat2_scaledMip) * -triAxisSign.x, 0, 0),
+            vec3(0, textureCLod(mat2_displacement, mat2_texcoord_y, mat2_scaledMip) * triAxisSign.y, 0),
+            vec3(0, 0, textureCLod(mat2_displacement, mat2_texcoord_z, mat2_scaledMip) * triAxisSign.z),
             triBlend);
 
         vec3 displacement = mix(displacement_mat2, displacement_mat1, slope);

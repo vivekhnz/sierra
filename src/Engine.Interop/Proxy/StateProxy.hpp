@@ -79,16 +79,29 @@ public
             }
         }
 
-        property float TextureSize
+        property float Material1TextureSize
         {
             float get()
             {
-                return state.textureSize;
+                return state.mat1_textureSize;
             }
 
             void set(float value)
             {
-                state.textureSize = value;
+                state.mat1_textureSize = value;
+            }
+        }
+
+        property float Material2TextureSize
+        {
+            float get()
+            {
+                return state.mat2_textureSize;
+            }
+
+            void set(float value)
+            {
+                state.mat2_textureSize = value;
             }
         }
     };

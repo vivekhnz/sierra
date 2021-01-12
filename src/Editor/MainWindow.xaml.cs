@@ -111,10 +111,16 @@ namespace Terrain.Editor
             EngineInterop.State.LightDirection = (float)lightDirectionSlider.Value;
         }
 
-        private void textureSizeSlider_ValueChanged(object sender,
+        private void mat1TextureSizeSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
-            EngineInterop.State.TextureSize = (float)textureSizeSlider.Value;
+            EngineInterop.State.Material1TextureSize = (float)mat1TextureSizeSlider.Value;
+        }
+
+        private void mat2TextureSizeSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.Material2TextureSize = (float)mat2TextureSizeSlider.Value;
         }
 
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)

@@ -136,16 +136,32 @@
                         </Grid>
                         <Rectangle Height="1" Stroke="#222" Margin="0 0 0 12" SnapsToDevicePixels="True" />
                         -->
+                        <TextBlock Text="Material 1" Foreground="#AAA" Margin="0 0 0 8"
+                                   FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
                         <Grid>
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="textureSizeSlider" Minimum="0.1" Maximum="16" Value="2.5"
+                            <Slider x:Name="mat1TextureSizeSlider" Minimum="0.1" Maximum="16" Value="2.5"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True" ValueChanged="textureSizeSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=textureSizeSlider, Path=Value}"
+                                    IsSnapToTickEnabled="True" ValueChanged="mat1TextureSizeSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=mat1TextureSizeSlider, Path=Value}"
+                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                        </Grid>
+                        <TextBlock Text="Material 2" Foreground="#AAA" Margin="0 12 0 8"
+                                   FontWeight="SemiBold" FontSize="14" />
+                        <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
+                            <Slider x:Name="mat2TextureSizeSlider" Minimum="0.1" Maximum="16" Value="7.5"
+                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                                    IsSnapToTickEnabled="True" ValueChanged="mat2TextureSizeSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=mat2TextureSizeSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                     </StackPanel>
