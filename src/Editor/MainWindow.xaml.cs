@@ -14,6 +14,7 @@ namespace Terrain.Editor
     /// </summary>
     public partial class MainWindow : Window
     {
+        bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
         Dictionary<RadioButton, EditorTool> editorToolByToolButtons;
         Dictionary<ComboBox, int> terrainMaterialTextureSlotByTextureDropdowns;
@@ -68,6 +69,8 @@ namespace Terrain.Editor
             cbMaterialAOTexture.SelectedItem = "ground_ao";
             cbMaterialDisplacementTexture.SelectedItem = "ground_displacement";
             */
+
+            isUiInitialized = true;
         }
 
         private void Window_Closing(object sender, CancelEventArgs e)
@@ -121,6 +124,18 @@ namespace Terrain.Editor
             RoutedPropertyChangedEventArgs<double> e)
         {
             EngineInterop.State.Material2TextureSize = (float)mat2TextureSizeSlider.Value;
+        }
+
+        private void mat2RampParamsSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!isUiInitialized) return;
+
+            var ramp = EngineInterop.State.Material2RampParams;
+            ramp.SlopeStart = (float)mat2SlopeStartSlider.Value;
+            ramp.SlopeEnd = (float)mat2SlopeEndSlider.Value;
+            ramp.AltitudeStart = (float)mat2AltitudeStartSlider.Value;
+            ramp.AltitudeEnd = (float)mat2AltitudeEndSlider.Value;
         }
 
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)

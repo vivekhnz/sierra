@@ -56,6 +56,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void setMaterial(int i, int materialResourceId);
         void setMaterialUniformFloat(int i, std::string uniformName, float value);
         void setMaterialUniformVector2(int i, std::string uniformName, glm::vec2 value);
+        void setMaterialUniformVector4(int i, std::string uniformName, glm::vec4 value);
         void setMaterialUniformMatrix4x4(int i, std::string uniformName, glm::mat4 value);
         void setInstanceCount(int i, int instanceCount);
     };

@@ -28,6 +28,14 @@ public
         LowerTerrain = 1
     };
 
+    struct RampParams
+    {
+        float slopeStart;
+        float slopeEnd;
+        float altitudeStart;
+        float altitudeEnd;
+    };
+
     struct EditorState
     {
         HeightmapStatus heightmapStatus;
@@ -39,5 +47,6 @@ public
         float lightDirection;
         float mat1_textureSize;
         float mat2_textureSize;
+        RampParams mat2_rampParams;
     };
 }}}

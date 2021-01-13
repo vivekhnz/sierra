@@ -27,6 +27,7 @@ uniform sampler2D mat2_displacement;
 uniform vec3 terrainDimensions;
 uniform vec2 mat1_textureSizeInWorldUnits;
 uniform vec2 mat2_textureSizeInWorldUnits;
+uniform vec4 mat2_rampParams;
 
 layout(location = 0) out vec3 normal;
 layout(location = 1) out vec3 texcoord;
@@ -85,21 +86,25 @@ void main()
 
     // calculate normal
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
+    float altitude = height(hUV, mip);
     vec2 normalSampleOffset = 1 / terrainDimensions.xz;
     float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y), mip);
     float hR = height(vec2(hUV.x + normalSampleOffset.x, hUV.y), mip);
     float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y), mip);
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y), mip);
     normal = normalize(vec3(hR - hL, normalSampleOffset.x * 2, hD - hU));
-    float slope = normal.y;
+        
+    // calculate material blending
+    float slope = 1 - normal.y;
+    float mat2_blend = clamp((slope - mat2_rampParams.x) / (mat2_rampParams.y - mat2_rampParams.x), 0, 1);
+    mat2_blend *= clamp((altitude - mat2_rampParams.z) / (mat2_rampParams.w - mat2_rampParams.z), 0, 1);
 
     // calculate texture coordinates
-    float heightNormalised = height(hUV, mip);
     vec3 triBlend = calcTriplanarBlend(normal);
     vec3 triAxisSign = sign(normal);
     texcoord = vec3(
         hUV.x * terrainDimensions.x,
-        -heightNormalised * terrainDimensions.y,
+        -altitude * terrainDimensions.y,
         hUV.y * terrainDimensions.z);
 
     vec2 base_texcoord_x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
@@ -115,7 +120,7 @@ void main()
     vec2 mat2_texcoord_z = base_texcoord_z / mat2_textureSizeInWorldUnits.xy;
     
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
-    pos.y = heightNormalised * terrainDimensions.y;
+    pos.y = altitude * terrainDimensions.y;
     if (lighting_isDisplacementMapEnabled)
     {
         float mat1_scaledMip = mip + log2(terrainDimensions.x / mat1_textureSizeInWorldUnits.x);
@@ -132,7 +137,7 @@ void main()
             vec3(0, 0, textureCLod(mat2_displacement, mat2_texcoord_z, mat2_scaledMip) * triAxisSign.z),
             triBlend);
 
-        vec3 displacement = mix(displacement_mat2, displacement_mat1, slope);
+        vec3 displacement = mix(displacement_mat1, displacement_mat2, mat2_blend);
         pos += ((displacement * 2) - 1) * 0.1;
     }
     

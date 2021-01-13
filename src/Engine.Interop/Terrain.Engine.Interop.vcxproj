@@ -74,6 +74,7 @@
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="EditorContext.hpp" />
     <ClInclude Include="Proxy\GraphicsAssetManagerProxy.hpp" />
+    <ClInclude Include="Proxy\RampParamsProxy.hpp" />
     <ClInclude Include="Proxy\RendererProxy.hpp" />
     <ClInclude Include="Proxy\ResourceManagerProxy.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />

@@ -21,6 +21,7 @@ uniform sampler2D mat2_ao;
 uniform vec3 terrainDimensions;
 uniform vec2 mat1_textureSizeInWorldUnits;
 uniform vec2 mat2_textureSizeInWorldUnits;
+uniform vec4 mat2_rampParams;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;
 uniform float brushHighlightRadius;
@@ -68,7 +69,10 @@ vec3 triplanar3D(vec3 xVal, vec3 yVal, vec3 zVal, vec3 blend)
 
 void main()
 {
-    float slope = vertexNormal.y;
+    float altitude = texcoord.y / -terrainDimensions.y;
+    float slope = 1 - vertexNormal.y;
+    float mat2_blend = clamp((slope - mat2_rampParams.x) / (mat2_rampParams.y - mat2_rampParams.x), 0, 1);
+    mat2_blend *= clamp((altitude - mat2_rampParams.z) / (mat2_rampParams.w - mat2_rampParams.z), 0, 1);
 
     vec3 triBlend = calcTriplanarBlend(vertexNormal);
     vec3 triAxisSign = sign(vertexNormal);
@@ -100,7 +104,7 @@ void main()
             ((texture(mat2_normal, mat2_texcoord_y).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
             ((texture(mat2_normal, mat2_texcoord_z).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
             triBlend);
-        texNormal = mix(texNormal_mat2, texNormal_mat1, slope);
+        texNormal = mix(texNormal_mat1, texNormal_mat2, mat2_blend);
     }
     vec3 normal = normalize(vertexNormal - (texNormal * 0.5f));
 
@@ -118,7 +122,7 @@ void main()
             texture(mat2_albedo, mat2_texcoord_y).rgb,
             texture(mat2_albedo, mat2_texcoord_z).rgb,
             triBlend);
-        albedo = mix(albedo_mat2, albedo_mat1, slope);
+        albedo = mix(albedo_mat1, albedo_mat2, mat2_blend);
     }
 
     // calculate lighting
@@ -142,7 +146,7 @@ void main()
             texture(mat2_ao, mat2_texcoord_y).r,
             texture(mat2_ao, mat2_texcoord_z).r,
             triBlend);
-        ao = mix(0.6, 1.0, mix(ao_mat2, ao_mat1, slope));
+        ao = mix(0.6, 1.0, mix(ao_mat1, ao_mat2, mat2_blend));
     }
 
     // calculate final fragment color

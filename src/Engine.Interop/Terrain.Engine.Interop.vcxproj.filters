@@ -69,5 +69,8 @@
     <ClInclude Include="Proxy\GraphicsAssetManagerProxy.hpp">
       <Filter>Proxy</Filter>
     </ClInclude>
+    <ClInclude Include="Proxy\RampParamsProxy.hpp">
+      <Filter>Proxy</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

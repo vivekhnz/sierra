@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../EditorState.hpp"
+#include "RampParamsProxy.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Proxy {
 public
@@ -8,10 +8,18 @@ public
     {
     private:
         EditorState &state;
+        RampParamsProxy ^ mat2_rampParams;
 
     public:
         StateProxy(EditorState &state) : state(state)
         {
+            mat2_rampParams = gcnew RampParamsProxy(state.mat2_rampParams);
+        }
+
+        ~StateProxy()
+        {
+            delete mat2_rampParams;
+            mat2_rampParams = nullptr;
         }
 
         property HeightmapStatus CurrentHeightmapStatus
@@ -104,5 +112,8 @@ public
                 state.mat2_textureSize = value;
             }
         }
+
+        property RampParamsProxy
+            ^ Material2RampParams { RampParamsProxy ^ get() { return mat2_rampParams; } }
     };
 }}}}

@@ -273,8 +273,8 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
                 TerrainResources::Shaders::TERRAIN_FRAGMENT,
             },  // shaderResourceIds
-            17, // uniformCount
-            {13, 16, 11, 11, 17, 7, 11, 11, 17, 7, 28, 28, 17, 17, 22, 20,
+            18, // uniformCount
+            {13, 16, 11, 11, 17, 7, 11, 11, 17, 7, 28, 28, 15, 17, 17, 22, 20,
                 21}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
@@ -288,6 +288,7 @@ namespace Terrain { namespace Engine { namespace Resources {
             "mat2_ao"
             "mat1_textureSizeInWorldUnits"
             "mat2_textureSizeInWorldUnits"
+            "mat2_rampParams"
             "terrainDimensions"
             "brushHighlightPos"
             "brushHighlightStrength"
@@ -380,9 +381,10 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::ROCK_NORMAL,
                 TerrainResources::Textures::ROCK_DISPLACEMENT,
                 TerrainResources::Textures::ROCK_AO,
-            },                                                          // textureResourceIds
-            15,                                                         // uniformCount
-            {16, 11, 11, 17, 7, 11, 11, 17, 7, 28, 28, 17, 22, 20, 11}, // uniformNameLengths
+            },  // textureResourceIds
+            16, // uniformCount
+            {16, 11, 11, 17, 7, 11, 11, 17, 7, 28, 28, 15, 17, 22, 20,
+                11}, // uniformNameLengths
             "heightmapTexture"
             "mat1_albedo"
             "mat1_normal"
@@ -394,6 +396,7 @@ namespace Terrain { namespace Engine { namespace Resources {
             "mat2_ao"
             "mat1_textureSizeInWorldUnits"
             "mat2_textureSizeInWorldUnits"
+            "mat2_rampParams"
             "brushHighlightPos"
             "brushHighlightStrength"
             "brushHighlightRadius"
@@ -410,6 +413,7 @@ namespace Terrain { namespace Engine { namespace Resources {
                 Graphics::UniformValue::forInteger(8),
                 Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
                 Graphics::UniformValue::forVector2(glm::vec2(7.5f, 7.5f)),
+                Graphics::UniformValue::forVector4(glm::vec4(0.6f, 0.8f, 0, 0.001f)),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
                 Graphics::UniformValue::forFloat(0.0f),
                 Graphics::UniformValue::forFloat(0.0f),

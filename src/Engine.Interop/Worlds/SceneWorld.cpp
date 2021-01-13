@@ -30,7 +30,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
-        std::vector<std::string> materialUniformNames(8);
+        std::vector<std::string> materialUniformNames(9);
         materialUniformNames[0] = "heightmapSize";
         materialUniformNames[1] = "terrainDimensions";
         materialUniformNames[2] = "brushHighlightStrength";
@@ -39,8 +39,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         materialUniformNames[5] = "brushHighlightFalloff";
         materialUniformNames[6] = "mat1_textureSizeInWorldUnits";
         materialUniformNames[7] = "mat2_textureSizeInWorldUnits";
+        materialUniformNames[8] = "mat2_rampParams";
 
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(8);
+        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(9);
         materialUniformValues[0] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
         materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
@@ -55,6 +56,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
         materialUniformValues[7] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(7.5f, 7.5f));
+        materialUniformValues[8] = Terrain::Engine::Graphics::UniformValue::forVector4(
+            glm::vec4(0.6f, 0.8f, 0, 0.001f));
 
         // create entity and components
         int entityId = ctx.entities.create();
@@ -145,6 +148,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         world.componentManagers.meshRenderer.setMaterialUniformVector2(
             terrainMeshRendererInstanceId, "mat2_textureSizeInWorldUnits",
             glm::vec2(state.mat2_textureSize, state.mat2_textureSize));
+        world.componentManagers.meshRenderer.setMaterialUniformVector4(
+            terrainMeshRendererInstanceId, "mat2_rampParams",
+            glm::vec4(state.mat2_rampParams.slopeStart, state.mat2_rampParams.slopeEnd,
+                state.mat2_rampParams.altitudeStart, state.mat2_rampParams.altitudeEnd));
 
         // update scene lighting
         glm::vec4 lightDir = glm::vec4(0);

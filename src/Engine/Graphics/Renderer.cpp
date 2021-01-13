@@ -345,6 +345,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             case UniformType::Vector3:
                 glProgramUniform3fv(id, loc, 1, glm::value_ptr(val.vec3));
                 break;
+            case UniformType::Vector4:
+                glProgramUniform4fv(id, loc, 1, glm::value_ptr(val.vec4));
+                break;
             case UniformType::Matrix4x4:
                 glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(val.mat4));
                 break;
