@@ -15,9 +15,11 @@ layout (std140, binding = 1) uniform Lighting
 uniform sampler2D mat1_albedo;
 uniform sampler2D mat1_normal;
 uniform sampler2D mat1_ao;
+uniform sampler2D mat1_displacement;
 uniform sampler2D mat2_albedo;
 uniform sampler2D mat2_normal;
 uniform sampler2D mat2_ao;
+uniform sampler2D mat2_displacement;
 uniform vec3 terrainDimensions;
 uniform vec2 mat1_textureSizeInWorldUnits;
 uniform vec2 mat2_textureSizeInWorldUnits;
@@ -69,11 +71,7 @@ vec3 triplanar3D(vec3 xVal, vec3 yVal, vec3 zVal, vec3 blend)
 
 void main()
 {
-    float altitude = texcoord.y / -terrainDimensions.y;
-    float slope = 1 - vertexNormal.y;
-    float mat2_blend = clamp((slope - mat2_rampParams.x) / (mat2_rampParams.y - mat2_rampParams.x), 0, 1);
-    mat2_blend *= clamp((altitude - mat2_rampParams.z) / (mat2_rampParams.w - mat2_rampParams.z), 0, 1);
-
+    // calculate triplanar texture coordinates
     vec3 triBlend = calcTriplanarBlend(vertexNormal);
     vec3 triAxisSign = sign(vertexNormal);
     
@@ -88,6 +86,27 @@ void main()
     vec2 mat2_texcoord_x = base_texcoord_x / mat2_textureSizeInWorldUnits.yy;
     vec2 mat2_texcoord_y = base_texcoord_y / mat2_textureSizeInWorldUnits.xy;
     vec2 mat2_texcoord_z = base_texcoord_z / mat2_textureSizeInWorldUnits.xy;
+
+    // blend materials based on slope and altitude
+    float altitude = texcoord.y / -terrainDimensions.y;
+    float slope = 1 - vertexNormal.y;
+    float mat2_blend = clamp((slope - mat2_rampParams.x) / (mat2_rampParams.y - mat2_rampParams.x), 0, 1);
+    mat2_blend *= clamp((altitude - mat2_rampParams.z) / (mat2_rampParams.w - mat2_rampParams.z), 0, 1);
+    
+    // blend materials based on height
+    vec3 displacement_mat1 = triplanar3D(
+        vec3(texture(mat1_displacement, mat1_texcoord_x).r * -triAxisSign.x, 0, 0),
+        vec3(0, texture(mat1_displacement, mat1_texcoord_y).r * triAxisSign.y, 0),
+        vec3(0, 0, texture(mat1_displacement, mat1_texcoord_z).r * triAxisSign.z),
+        triBlend);
+    vec3 displacement_mat2 = triplanar3D(
+        vec3(texture(mat2_displacement, mat2_texcoord_x).r * -triAxisSign.x, 0, 0),
+        vec3(0, texture(mat2_displacement, mat2_texcoord_y).r * triAxisSign.y, 0),
+        vec3(0, 0, texture(mat2_displacement, mat2_texcoord_z).r * triAxisSign.z),
+        triBlend);
+    float mat1_height = displacement_mat1.y * (1 - mat2_blend);
+    float mat2_height = displacement_mat2.y * mat2_blend;
+    mat2_blend = mat2_height / (mat1_height + mat2_height);
 
     // sample normal map
     vec3 texNormal = vec3(0);
