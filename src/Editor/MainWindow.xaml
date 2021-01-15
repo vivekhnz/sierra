@@ -158,7 +158,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat2TextureSizeSlider" Minimum="0.1" Maximum="16" Value="7.5"
+                            <Slider x:Name="mat2TextureSizeSlider" Minimum="0.1" Maximum="16" Value="13"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                                     IsSnapToTickEnabled="True" ValueChanged="mat2TextureSizeSlider_ValueChanged" />
                             <TextBlock Text="{Binding ElementName=mat2TextureSizeSlider, Path=Value}"

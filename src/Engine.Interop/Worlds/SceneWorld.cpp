@@ -55,7 +55,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         materialUniformValues[6] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
         materialUniformValues[7] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(7.5f, 7.5f));
+            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f));
         materialUniformValues[8] = Terrain::Engine::Graphics::UniformValue::forVector4(
             glm::vec4(0.6f, 0.8f, 0, 0.001f));
 

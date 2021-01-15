@@ -138,7 +138,7 @@ void main()
             triBlend);
 
         vec3 displacement = mix(displacement_mat1, displacement_mat2, mat2_blend);
-        pos += ((displacement * 2) - 1) * 0.1;
+        pos += ((displacement * 2) - 1) * 0.1 * 4;
     }
     
     gl_Position = camera_transform * vec4(pos, 1.0f);

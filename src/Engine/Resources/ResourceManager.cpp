@@ -91,31 +91,31 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         TextureResourceDescription textureDesc_rockAlbedo = {};
         textureDesc_rockAlbedo.id = TerrainResources::Textures::ROCK_ALBEDO;
-        textureDesc_rockAlbedo.internalFormat = GL_RGBA;
-        textureDesc_rockAlbedo.format = GL_RGBA;
+        textureDesc_rockAlbedo.internalFormat = GL_RGB;
+        textureDesc_rockAlbedo.format = GL_RGB;
         textureDesc_rockAlbedo.type = GL_UNSIGNED_BYTE;
         textureDesc_rockAlbedo.wrapMode = GL_REPEAT;
         textureDesc_rockAlbedo.filterMode = GL_LINEAR_MIPMAP_LINEAR;
         textureResourceDescriptions.push_back(textureDesc_rockAlbedo);
         textureResourceData.push_back(
             TextureLoader::loadTexture(TerrainResources::Textures::ROCK_ALBEDO,
-                IO::Path::getAbsolutePath("data/rock_albedo.png"), false));
+                IO::Path::getAbsolutePath("data/rock_albedo.jpg"), false));
 
         TextureResourceDescription textureDesc_rockNormal = {};
         textureDesc_rockNormal.id = TerrainResources::Textures::ROCK_NORMAL;
-        textureDesc_rockNormal.internalFormat = GL_RGBA;
-        textureDesc_rockNormal.format = GL_RGBA;
+        textureDesc_rockNormal.internalFormat = GL_RGB;
+        textureDesc_rockNormal.format = GL_RGB;
         textureDesc_rockNormal.type = GL_UNSIGNED_BYTE;
         textureDesc_rockNormal.wrapMode = GL_REPEAT;
         textureDesc_rockNormal.filterMode = GL_LINEAR_MIPMAP_LINEAR;
         textureResourceDescriptions.push_back(textureDesc_rockNormal);
         textureResourceData.push_back(
             TextureLoader::loadTexture(TerrainResources::Textures::ROCK_NORMAL,
-                IO::Path::getAbsolutePath("data/rock_normal.png"), false));
+                IO::Path::getAbsolutePath("data/rock_normal.jpg"), false));
 
         TextureResourceDescription textureDesc_rockDisplacement = {};
         textureDesc_rockDisplacement.id = TerrainResources::Textures::ROCK_DISPLACEMENT;
-        textureDesc_rockDisplacement.internalFormat = GL_RGBA;
+        textureDesc_rockDisplacement.internalFormat = GL_RGB;
         textureDesc_rockDisplacement.format = GL_RED;
         textureDesc_rockDisplacement.type = GL_UNSIGNED_BYTE;
         textureDesc_rockDisplacement.wrapMode = GL_REPEAT;
@@ -123,11 +123,11 @@ namespace Terrain { namespace Engine { namespace Resources {
         textureResourceDescriptions.push_back(textureDesc_rockDisplacement);
         textureResourceData.push_back(
             TextureLoader::loadTexture(TerrainResources::Textures::ROCK_DISPLACEMENT,
-                IO::Path::getAbsolutePath("data/rock_displacement.png"), false));
+                IO::Path::getAbsolutePath("data/rock_displacement.jpg"), false));
 
         TextureResourceDescription textureDesc_rockAO = {};
         textureDesc_rockAO.id = TerrainResources::Textures::ROCK_AO;
-        textureDesc_rockAO.internalFormat = GL_RGBA;
+        textureDesc_rockAO.internalFormat = GL_RGB;
         textureDesc_rockAO.format = GL_RED;
         textureDesc_rockAO.type = GL_UNSIGNED_BYTE;
         textureDesc_rockAO.wrapMode = GL_REPEAT;
@@ -135,7 +135,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         textureResourceDescriptions.push_back(textureDesc_rockAO);
         textureResourceData.push_back(
             TextureLoader::loadTexture(TerrainResources::Textures::ROCK_AO,
-                IO::Path::getAbsolutePath("data/rock_ao.png"), false));
+                IO::Path::getAbsolutePath("data/rock_ao.jpg"), false));
 
         int textureCount = textureResourceDescriptions.size();
         ctx.onTexturesLoaded(
@@ -412,7 +412,7 @@ namespace Terrain { namespace Engine { namespace Resources {
                 Graphics::UniformValue::forInteger(7),
                 Graphics::UniformValue::forInteger(8),
                 Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
-                Graphics::UniformValue::forVector2(glm::vec2(7.5f, 7.5f)),
+                Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f)),
                 Graphics::UniformValue::forVector4(glm::vec4(0.6f, 0.8f, 0, 0.001f)),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
                 Graphics::UniformValue::forFloat(0.0f),
@@ -454,7 +454,7 @@ namespace Terrain { namespace Engine { namespace Resources {
                 Graphics::UniformValue::forInteger(3),
                 Graphics::UniformValue::forInteger(7),
                 Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
-                Graphics::UniformValue::forVector2(glm::vec2(7.5f, 7.5f)),
+                Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f)),
             } // uniformValues
         });
 
