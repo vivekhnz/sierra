@@ -137,6 +137,54 @@ namespace Terrain { namespace Engine { namespace Resources {
             TextureLoader::loadTexture(TerrainResources::Textures::ROCK_AO,
                 IO::Path::getAbsolutePath("data/rock_ao.jpg"), false));
 
+        TextureResourceDescription textureDesc_snowAlbedo = {};
+        textureDesc_snowAlbedo.id = TerrainResources::Textures::SNOW_ALBEDO;
+        textureDesc_snowAlbedo.internalFormat = GL_RGB;
+        textureDesc_snowAlbedo.format = GL_RGB;
+        textureDesc_snowAlbedo.type = GL_UNSIGNED_BYTE;
+        textureDesc_snowAlbedo.wrapMode = GL_REPEAT;
+        textureDesc_snowAlbedo.filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        textureResourceDescriptions.push_back(textureDesc_snowAlbedo);
+        textureResourceData.push_back(
+            TextureLoader::loadTexture(TerrainResources::Textures::SNOW_ALBEDO,
+                IO::Path::getAbsolutePath("data/snow_albedo.jpg"), false));
+
+        TextureResourceDescription textureDesc_snowNormal = {};
+        textureDesc_snowNormal.id = TerrainResources::Textures::SNOW_NORMAL;
+        textureDesc_snowNormal.internalFormat = GL_RGB;
+        textureDesc_snowNormal.format = GL_RGB;
+        textureDesc_snowNormal.type = GL_UNSIGNED_BYTE;
+        textureDesc_snowNormal.wrapMode = GL_REPEAT;
+        textureDesc_snowNormal.filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        textureResourceDescriptions.push_back(textureDesc_snowNormal);
+        textureResourceData.push_back(
+            TextureLoader::loadTexture(TerrainResources::Textures::SNOW_NORMAL,
+                IO::Path::getAbsolutePath("data/snow_normal.jpg"), false));
+
+        TextureResourceDescription textureDesc_snowDisplacement = {};
+        textureDesc_snowDisplacement.id = TerrainResources::Textures::SNOW_DISPLACEMENT;
+        textureDesc_snowDisplacement.internalFormat = GL_RGB;
+        textureDesc_snowDisplacement.format = GL_RED;
+        textureDesc_snowDisplacement.type = GL_UNSIGNED_BYTE;
+        textureDesc_snowDisplacement.wrapMode = GL_REPEAT;
+        textureDesc_snowDisplacement.filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        textureResourceDescriptions.push_back(textureDesc_snowDisplacement);
+        textureResourceData.push_back(
+            TextureLoader::loadTexture(TerrainResources::Textures::SNOW_DISPLACEMENT,
+                IO::Path::getAbsolutePath("data/snow_displacement.jpg"), false));
+
+        TextureResourceDescription textureDesc_snowAO = {};
+        textureDesc_snowAO.id = TerrainResources::Textures::SNOW_AO;
+        textureDesc_snowAO.internalFormat = GL_RGB;
+        textureDesc_snowAO.format = GL_RED;
+        textureDesc_snowAO.type = GL_UNSIGNED_BYTE;
+        textureDesc_snowAO.wrapMode = GL_REPEAT;
+        textureDesc_snowAO.filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        textureResourceDescriptions.push_back(textureDesc_snowAO);
+        textureResourceData.push_back(
+            TextureLoader::loadTexture(TerrainResources::Textures::SNOW_AO,
+                IO::Path::getAbsolutePath("data/snow_ao.jpg"), false));
+
         int textureCount = textureResourceDescriptions.size();
         ctx.onTexturesLoaded(
             textureCount, textureResourceDescriptions.data(), textureResourceData.data());
@@ -273,22 +321,28 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::TERRAIN_TESS_EVAL,
                 TerrainResources::Shaders::TERRAIN_FRAGMENT,
             },  // shaderResourceIds
-            18, // uniformCount
-            {13, 16, 11, 11, 17, 7, 11, 11, 17, 7, 28, 28, 15, 17, 17, 22, 20,
-                21}, // uniformNameLengths
+            24, // uniformCount
+            {13, 16, 11, 11, 17, 7, 28, 11, 11, 17, 7, 28, 15, 11, 11, 17, 7, 28, 15, 17, 17,
+                22, 20, 21}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "mat1_albedo"
             "mat1_normal"
             "mat1_displacement"
             "mat1_ao"
+            "mat1_textureSizeInWorldUnits"
             "mat2_albedo"
             "mat2_normal"
             "mat2_displacement"
             "mat2_ao"
-            "mat1_textureSizeInWorldUnits"
             "mat2_textureSizeInWorldUnits"
             "mat2_rampParams"
+            "mat3_albedo"
+            "mat3_normal"
+            "mat3_displacement"
+            "mat3_ao"
+            "mat3_textureSizeInWorldUnits"
+            "mat3_rampParams"
             "terrainDimensions"
             "brushHighlightPos"
             "brushHighlightStrength"
@@ -304,15 +358,13 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Shaders::WIREFRAME_TESS_CTRL,
                 TerrainResources::Shaders::WIREFRAME_TESS_EVAL,
                 TerrainResources::Shaders::WIREFRAME_FRAGMENT,
-            },                               // shaderResourceIds
-            8,                               // uniformCount
-            {13, 16, 17, 17, 28, 28, 17, 5}, // uniformNameLengths
+            },                       // shaderResourceIds
+            6,                       // uniformCount
+            {13, 16, 17, 28, 17, 5}, // uniformNameLengths
             "heightmapSize"
             "heightmapTexture"
             "mat1_displacement"
-            "mat2_displacement"
             "mat1_textureSizeInWorldUnits"
-            "mat2_textureSizeInWorldUnits"
             "terrainDimensions"
             "color" // uniformNames
         });
@@ -370,7 +422,7 @@ namespace Terrain { namespace Engine { namespace Resources {
             GL_FUNC_ADD,                                        // blendEquation
             GL_SRC_ALPHA,                                       // blendSrcFactor
             GL_ONE_MINUS_SRC_ALPHA,                             // blendDstFactor
-            9,                                                  // textureCount
+            13,                                                 // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
                 TerrainResources::Textures::GROUND_ALBEDO,
@@ -381,22 +433,32 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::ROCK_NORMAL,
                 TerrainResources::Textures::ROCK_DISPLACEMENT,
                 TerrainResources::Textures::ROCK_AO,
+                TerrainResources::Textures::SNOW_ALBEDO,
+                TerrainResources::Textures::SNOW_NORMAL,
+                TerrainResources::Textures::SNOW_DISPLACEMENT,
+                TerrainResources::Textures::SNOW_AO,
             },  // textureResourceIds
-            16, // uniformCount
-            {16, 11, 11, 17, 7, 11, 11, 17, 7, 28, 28, 15, 17, 22, 20,
-                11}, // uniformNameLengths
+            22, // uniformCount
+            {16, 11, 11, 17, 7, 28, 11, 11, 17, 7, 28, 15, 11, 11, 17, 7, 28, 15, 17, 22, 20,
+                21}, // uniformNameLengths
             "heightmapTexture"
             "mat1_albedo"
             "mat1_normal"
             "mat1_displacement"
             "mat1_ao"
+            "mat1_textureSizeInWorldUnits"
             "mat2_albedo"
             "mat2_normal"
             "mat2_displacement"
             "mat2_ao"
-            "mat1_textureSizeInWorldUnits"
             "mat2_textureSizeInWorldUnits"
             "mat2_rampParams"
+            "mat3_albedo"
+            "mat3_normal"
+            "mat3_displacement"
+            "mat3_ao"
+            "mat3_textureSizeInWorldUnits"
+            "mat3_rampParams"
             "brushHighlightPos"
             "brushHighlightStrength"
             "brushHighlightRadius"
@@ -407,13 +469,19 @@ namespace Terrain { namespace Engine { namespace Resources {
                 Graphics::UniformValue::forInteger(2),
                 Graphics::UniformValue::forInteger(3),
                 Graphics::UniformValue::forInteger(4),
+                Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
                 Graphics::UniformValue::forInteger(5),
                 Graphics::UniformValue::forInteger(6),
                 Graphics::UniformValue::forInteger(7),
                 Graphics::UniformValue::forInteger(8),
-                Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
                 Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f)),
                 Graphics::UniformValue::forVector4(glm::vec4(0.6f, 0.8f, 0, 0.001f)),
+                Graphics::UniformValue::forInteger(9),
+                Graphics::UniformValue::forInteger(10),
+                Graphics::UniformValue::forInteger(11),
+                Graphics::UniformValue::forInteger(12),
+                Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f)),
+                Graphics::UniformValue::forVector4(glm::vec4(0.8f, 0.75f, 0.25f, 0.28f)),
                 Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
                 Graphics::UniformValue::forFloat(0.0f),
                 Graphics::UniformValue::forFloat(0.0f),
@@ -428,7 +496,7 @@ namespace Terrain { namespace Engine { namespace Resources {
             GL_FUNC_ADD,                                         // blendEquation
             GL_SRC_ALPHA,                                        // blendSrcFactor
             GL_ONE_MINUS_SRC_ALPHA,                              // blendDstFactor
-            9,                                                   // textureCount
+            13,                                                  // textureCount
             {
                 TerrainResources::Textures::HEIGHTMAP,
                 TerrainResources::Textures::GROUND_ALBEDO,
@@ -439,22 +507,22 @@ namespace Terrain { namespace Engine { namespace Resources {
                 TerrainResources::Textures::ROCK_NORMAL,
                 TerrainResources::Textures::ROCK_DISPLACEMENT,
                 TerrainResources::Textures::ROCK_AO,
-            },                       // textureResourceIds
-            6,                       // uniformCount
-            {5, 16, 17, 17, 28, 28}, // uniformNameLengths
+                TerrainResources::Textures::SNOW_ALBEDO,
+                TerrainResources::Textures::SNOW_NORMAL,
+                TerrainResources::Textures::SNOW_DISPLACEMENT,
+                TerrainResources::Textures::SNOW_AO,
+            },               // textureResourceIds
+            4,               // uniformCount
+            {5, 16, 17, 28}, // uniformNameLengths
             "color"
             "heightmapTexture"
             "mat1_displacement"
-            "mat2_displacement"
-            "mat1_textureSizeInWorldUnits"
-            "mat2_textureSizeInWorldUnits", // uniformNames
+            "mat1_textureSizeInWorldUnits", // uniformNames
             {
                 Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)),
                 Graphics::UniformValue::forInteger(0),
                 Graphics::UniformValue::forInteger(3),
-                Graphics::UniformValue::forInteger(7),
                 Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
-                Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f)),
             } // uniformValues
         });
 

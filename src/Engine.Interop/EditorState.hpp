@@ -48,5 +48,7 @@ public
         float mat1_textureSize;
         float mat2_textureSize;
         RampParams mat2_rampParams;
+        float mat3_textureSize;
+        RampParams mat3_rampParams;
     };
 }}}

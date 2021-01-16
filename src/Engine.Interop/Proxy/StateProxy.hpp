@@ -9,17 +9,22 @@ public
     private:
         EditorState &state;
         RampParamsProxy ^ mat2_rampParams;
+        RampParamsProxy ^ mat3_rampParams;
 
     public:
         StateProxy(EditorState &state) : state(state)
         {
             mat2_rampParams = gcnew RampParamsProxy(state.mat2_rampParams);
+            mat3_rampParams = gcnew RampParamsProxy(state.mat3_rampParams);
         }
 
         ~StateProxy()
         {
             delete mat2_rampParams;
             mat2_rampParams = nullptr;
+
+            delete mat3_rampParams;
+            mat3_rampParams = nullptr;
         }
 
         property HeightmapStatus CurrentHeightmapStatus
@@ -115,5 +120,21 @@ public
 
         property RampParamsProxy
             ^ Material2RampParams { RampParamsProxy ^ get() { return mat2_rampParams; } }
+
+            property float Material3TextureSize
+        {
+            float get()
+            {
+                return state.mat3_textureSize;
+            }
+
+            void set(float value)
+            {
+                state.mat3_textureSize = value;
+            }
+        }
+
+        property RampParamsProxy
+            ^ Material3RampParams { RampParamsProxy ^ get() { return mat3_rampParams; } }
     };
 }}}}

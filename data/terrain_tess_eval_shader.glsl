@@ -22,15 +22,28 @@ layout (std140, binding = 1) uniform Lighting
 };
 
 uniform sampler2D heightmapTexture;
-uniform sampler2D mat1_displacement;
-uniform sampler2D mat2_displacement;
 uniform vec3 terrainDimensions;
+
+uniform sampler2D mat1_displacement;
 uniform vec2 mat1_textureSizeInWorldUnits;
+
+uniform sampler2D mat2_displacement;
 uniform vec2 mat2_textureSizeInWorldUnits;
 uniform vec4 mat2_rampParams;
 
+uniform sampler2D mat3_displacement;
+uniform vec2 mat3_textureSizeInWorldUnits;
+uniform vec4 mat3_rampParams;
+
 layout(location = 0) out vec3 normal;
 layout(location = 1) out vec3 texcoord;
+
+struct TriplanarTextureCoordinates
+{
+    vec2 x;
+    vec2 y;
+    vec2 z;
+};
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -93,12 +106,24 @@ void main()
     float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y), mip);
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y), mip);
     normal = normalize(vec3(hR - hL, normalSampleOffset.x * 2, hD - hU));
-        
-    // calculate material blending
     float slope = 1 - normal.y;
-    float mat2_blend = clamp((slope - mat2_rampParams.x) / (mat2_rampParams.y - mat2_rampParams.x), 0, 1);
-    mat2_blend *= clamp((altitude - mat2_rampParams.z) / (mat2_rampParams.w - mat2_rampParams.z), 0, 1);
+    
+    // setup material arrays
+    vec2 materialTextureSizes[3];
+    materialTextureSizes[0] = mat1_textureSizeInWorldUnits;
+    materialTextureSizes[1] = mat2_textureSizeInWorldUnits;
+    materialTextureSizes[2] = mat3_textureSizeInWorldUnits;
 
+    vec4 materialRampParams[2];
+    materialRampParams[0] = mat2_rampParams;
+    materialRampParams[1] = mat3_rampParams;
+
+    float materialScaledMips[3];
+    for (int i = 0; i < 3; i++)
+    {
+        materialScaledMips[i] = mip + log2(terrainDimensions.x / materialTextureSizes[i].x);
+    }
+    
     // calculate texture coordinates
     vec3 triBlend = calcTriplanarBlend(normal);
     vec3 triAxisSign = sign(normal);
@@ -107,37 +132,49 @@ void main()
         -altitude * terrainDimensions.y,
         hUV.y * terrainDimensions.z);
 
-    vec2 base_texcoord_x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
-    vec2 base_texcoord_y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
-    vec2 base_texcoord_z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
-
-    vec2 mat1_texcoord_x = base_texcoord_x / mat1_textureSizeInWorldUnits.yy;
-    vec2 mat1_texcoord_y = base_texcoord_y / mat1_textureSizeInWorldUnits.xy;
-    vec2 mat1_texcoord_z = base_texcoord_z / mat1_textureSizeInWorldUnits.xy;
-
-    vec2 mat2_texcoord_x = base_texcoord_x / mat2_textureSizeInWorldUnits.yy;
-    vec2 mat2_texcoord_y = base_texcoord_y / mat2_textureSizeInWorldUnits.xy;
-    vec2 mat2_texcoord_z = base_texcoord_z / mat2_textureSizeInWorldUnits.xy;
+    TriplanarTextureCoordinates baseTexcoords;
+    baseTexcoords.x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
+    baseTexcoords.y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
+    baseTexcoords.z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
+    
+    TriplanarTextureCoordinates materialTexcoords[3];
+    for (int i = 0; i < 3; i++)
+    {
+        materialTexcoords[i].x = baseTexcoords.x / materialTextureSizes[i].yy;
+        materialTexcoords[i].y = baseTexcoords.y / materialTextureSizes[i].xy;
+        materialTexcoords[i].z = baseTexcoords.z / materialTextureSizes[i].xy;
+    }
     
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     pos.y = altitude * terrainDimensions.y;
+
     if (lighting_isDisplacementMapEnabled)
     {
-        float mat1_scaledMip = mip + log2(terrainDimensions.x / mat1_textureSizeInWorldUnits.x);
-        float mat2_scaledMip = mip + log2(terrainDimensions.x / mat2_textureSizeInWorldUnits.x);
-
         vec3 displacement_mat1 = triplanar3D(
-            vec3(textureCLod(mat1_displacement, mat1_texcoord_x, mat1_scaledMip) * -triAxisSign.x, 0, 0),
-            vec3(0, textureCLod(mat1_displacement, mat1_texcoord_y, mat1_scaledMip) * triAxisSign.y, 0),
-            vec3(0, 0, textureCLod(mat1_displacement, mat1_texcoord_z, mat1_scaledMip) * triAxisSign.z),
+            vec3(textureCLod(mat1_displacement, materialTexcoords[0].x, materialScaledMips[0]) * -triAxisSign.x, 0, 0),
+            vec3(0, textureCLod(mat1_displacement, materialTexcoords[0].y, materialScaledMips[0]) * triAxisSign.y, 0),
+            vec3(0, 0, textureCLod(mat1_displacement, materialTexcoords[0].z, materialScaledMips[0]) * triAxisSign.z),
             triBlend);
-        vec3 displacement_mat2 = triplanar3D(
-            vec3(textureCLod(mat2_displacement, mat2_texcoord_x, mat2_scaledMip) * -triAxisSign.x, 0, 0),
-            vec3(0, textureCLod(mat2_displacement, mat2_texcoord_y, mat2_scaledMip) * triAxisSign.y, 0),
-            vec3(0, 0, textureCLod(mat2_displacement, mat2_texcoord_z, mat2_scaledMip) * triAxisSign.z),
-            triBlend);
+        vec3 displacement = displacement_mat1;
 
-        vec3 displacement = mix(displacement_mat1, displacement_mat2, mat2_blend);
+        vec3 displacement_mat2 = triplanar3D(
+            vec3(textureCLod(mat2_displacement, materialTexcoords[1].x, materialScaledMips[1]) * -triAxisSign.x, 0, 0),
+            vec3(0, textureCLod(mat2_displacement, materialTexcoords[1].y, materialScaledMips[1]) * triAxisSign.y, 0),
+            vec3(0, 0, textureCLod(mat2_displacement, materialTexcoords[1].z, materialScaledMips[1]) * triAxisSign.z),
+            triBlend);
+        float mat2_blend = clamp((slope - materialRampParams[0].x) / (materialRampParams[0].y - materialRampParams[0].x), 0, 1);
+        mat2_blend *= clamp((altitude - materialRampParams[0].z) / (materialRampParams[0].w - materialRampParams[0].z), 0, 1);
+        displacement = mix(displacement, displacement_mat2, mat2_blend);
+
+        vec3 displacement_mat3 = triplanar3D(
+            vec3(textureCLod(mat3_displacement, materialTexcoords[2].x, materialScaledMips[2]) * -triAxisSign.x, 0, 0),
+            vec3(0, textureCLod(mat3_displacement, materialTexcoords[2].y, materialScaledMips[2]) * triAxisSign.y, 0),
+            vec3(0, 0, textureCLod(mat3_displacement, materialTexcoords[2].z, materialScaledMips[2]) * triAxisSign.z),
+            triBlend);
+        float mat3_blend = clamp((slope - materialRampParams[1].x) / (materialRampParams[1].y - materialRampParams[1].x), 0, 1);
+        mat3_blend *= clamp((altitude - materialRampParams[1].z) / (materialRampParams[1].w - materialRampParams[1].z), 0, 1);
+        displacement = mix(displacement, displacement_mat3, mat3_blend);
+
         pos += displacement * 0.8;
     }
     

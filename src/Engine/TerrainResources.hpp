@@ -12,6 +12,10 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
         const int ROCK_NORMAL = 6;
         const int ROCK_DISPLACEMENT = 7;
         const int ROCK_AO = 8;
+        const int SNOW_ALBEDO = 9;
+        const int SNOW_NORMAL = 10;
+        const int SNOW_DISPLACEMENT = 11;
+        const int SNOW_AO = 12;
     }
 
     namespace Shaders {

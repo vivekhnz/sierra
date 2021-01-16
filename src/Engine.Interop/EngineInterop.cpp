@@ -21,6 +21,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->mat2_rampParams.slopeEnd = 0.8f;
         newEditorState->mat2_rampParams.altitudeStart = 0;
         newEditorState->mat2_rampParams.altitudeEnd = 0.001f;
+        newEditorState->mat3_textureSize = 2.0f;
+        newEditorState->mat3_rampParams.slopeStart = 0.8f;
+        newEditorState->mat3_rampParams.slopeEnd = 0.75f;
+        newEditorState->mat3_rampParams.altitudeStart = 0.25f;
+        newEditorState->mat3_rampParams.altitudeEnd = 0.28f;
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
         worlds = new Worlds::EditorWorlds(*ctx);

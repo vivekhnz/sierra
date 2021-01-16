@@ -138,6 +138,24 @@ namespace Terrain.Editor
             ramp.AltitudeEnd = (float)mat2AltitudeEndSlider.Value;
         }
 
+        private void mat3TextureSizeSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.Material3TextureSize = (float)mat3TextureSizeSlider.Value;
+        }
+
+        private void mat3RampParamsSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!isUiInitialized) return;
+
+            var ramp = EngineInterop.State.Material3RampParams;
+            ramp.SlopeStart = (float)mat3SlopeStartSlider.Value;
+            ramp.SlopeEnd = (float)mat3SlopeEndSlider.Value;
+            ramp.AltitudeStart = (float)mat3AltitudeStartSlider.Value;
+            ramp.AltitudeEnd = (float)mat3AltitudeEndSlider.Value;
+        }
+
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
         {
             if (editorToolByToolButtons == null) return;

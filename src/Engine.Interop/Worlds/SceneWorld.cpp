@@ -30,7 +30,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
-        std::vector<std::string> materialUniformNames(9);
+        std::vector<std::string> materialUniformNames(11);
         materialUniformNames[0] = "heightmapSize";
         materialUniformNames[1] = "terrainDimensions";
         materialUniformNames[2] = "brushHighlightStrength";
@@ -40,8 +40,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         materialUniformNames[6] = "mat1_textureSizeInWorldUnits";
         materialUniformNames[7] = "mat2_textureSizeInWorldUnits";
         materialUniformNames[8] = "mat2_rampParams";
+        materialUniformNames[9] = "mat3_textureSizeInWorldUnits";
+        materialUniformNames[10] = "mat3_rampParams";
 
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(9);
+        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(11);
         materialUniformValues[0] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
         materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
@@ -58,6 +60,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f));
         materialUniformValues[8] = Terrain::Engine::Graphics::UniformValue::forVector4(
             glm::vec4(0.6f, 0.8f, 0, 0.001f));
+        materialUniformValues[9] =
+            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f));
+        materialUniformValues[10] = Terrain::Engine::Graphics::UniformValue::forVector4(
+            glm::vec4(0.8f, 0.75f, 0.25f, 0.28f));
 
         // create entity and components
         int entityId = ctx.entities.create();
@@ -152,6 +158,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             terrainMeshRendererInstanceId, "mat2_rampParams",
             glm::vec4(state.mat2_rampParams.slopeStart, state.mat2_rampParams.slopeEnd,
                 state.mat2_rampParams.altitudeStart, state.mat2_rampParams.altitudeEnd));
+        world.componentManagers.meshRenderer.setMaterialUniformVector2(
+            terrainMeshRendererInstanceId, "mat3_textureSizeInWorldUnits",
+            glm::vec2(state.mat3_textureSize, state.mat3_textureSize));
+        world.componentManagers.meshRenderer.setMaterialUniformVector4(
+            terrainMeshRendererInstanceId, "mat3_rampParams",
+            glm::vec4(state.mat3_rampParams.slopeStart, state.mat3_rampParams.slopeEnd,
+                state.mat3_rampParams.altitudeStart, state.mat3_rampParams.altitudeEnd));
 
         // update scene lighting
         glm::vec4 lightDir = glm::vec4(0);
