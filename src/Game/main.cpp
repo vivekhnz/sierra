@@ -16,11 +16,11 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
     float terrainHeight = 25.0f;
 
     // build material uniforms
-    std::vector<std::string> materialUniformNames(2);
+    const char *materialUniformNames[2];
     materialUniformNames[0] = "heightmapSize";
     materialUniformNames[1] = "terrainDimensions";
 
-    std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(2);
+    Terrain::Engine::Graphics::UniformValue materialUniformValues[2];
     materialUniformValues[0] =
         Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
     materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
@@ -39,8 +39,8 @@ int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &w
         world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
     int &materialHandle = ctx.assets.graphics.lookupMaterial(
         Terrain::Engine::TerrainResources::Materials::TERRAIN_TEXTURED);
-    world.componentManagers.meshRenderer.create(
-        entityId, meshHandle, materialHandle, materialUniformNames, materialUniformValues, 1);
+    world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle, 2,
+        materialUniformNames, materialUniformValues, 1);
 
     return terrainRendererInstanceId;
 }

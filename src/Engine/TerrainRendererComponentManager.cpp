@@ -16,6 +16,19 @@ namespace Terrain { namespace Engine {
     void TerrainRendererComponentManager::onShaderProgramsLoaded(
         const int count, Resources::ShaderProgramResource *resources)
     {
+        const char *uniformNames[2];
+        uniformNames[0] = "targetTriangleSize";
+        uniformNames[1] = "heightmapTexture";
+
+        Graphics::UniformValue uniformValues[2];
+        uniformValues[0] = Graphics::UniformValue::forFloat(0.015f);
+        uniformValues[1] = Graphics::UniformValue::forInteger(0);
+
+        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
+        shaderProgramState.uniforms.count = 2;
+        shaderProgramState.uniforms.names = uniformNames;
+        shaderProgramState.uniforms.values = uniformValues;
+
         for (int i = 0; i < count; i++)
         {
             Resources::ShaderProgramResource &resource = resources[i];
@@ -24,10 +37,8 @@ namespace Terrain { namespace Engine {
 
             calcTessLevelsShaderProgramHandle = renderer.lookupShaderProgram(
                 TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL);
-            renderer.setShaderProgramUniformFloat(
-                calcTessLevelsShaderProgramHandle, "targetTriangleSize", 0.015f);
-            renderer.setShaderProgramUniformInt(
-                calcTessLevelsShaderProgramHandle, "heightmapTexture", 0);
+            renderer.setShaderProgramState(
+                calcTessLevelsShaderProgramHandle, shaderProgramState);
             break;
         }
     }
@@ -133,19 +144,32 @@ namespace Terrain { namespace Engine {
         if (calcTessLevelsShaderProgramHandle == -1)
             return;
 
+        const char *uniformNames[3];
+        uniformNames[0] = "horizontalEdgeCount";
+        uniformNames[1] = "columnCount";
+        uniformNames[2] = "terrainHeight";
+
+        Graphics::UniformValue uniformValues[3];
+        int textureHandles[1];
+
+        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
+        shaderProgramState.uniforms.count = 3;
+        shaderProgramState.uniforms.names = uniformNames;
+        shaderProgramState.uniforms.values = uniformValues;
+        shaderProgramState.textures.count = 1;
+        shaderProgramState.textures.handles = textureHandles;
+
         for (int i = 0; i < data.count; i++)
         {
             int &rows = data.rows[i];
             int &columns = data.columns[i];
 
-            int textureHandles[1] = {data.heightmapTextureHandle[i]};
-            renderer.bindTextures(textureHandles, 1);
-            renderer.setShaderProgramUniformInt(calcTessLevelsShaderProgramHandle,
-                "horizontalEdgeCount", rows * (columns - 1));
-            renderer.setShaderProgramUniformInt(
-                calcTessLevelsShaderProgramHandle, "columnCount", columns);
-            renderer.setShaderProgramUniformFloat(
-                calcTessLevelsShaderProgramHandle, "terrainHeight", data.terrainHeight[i]);
+            textureHandles[0] = data.heightmapTextureHandle[i];
+            uniformValues[0] = Graphics::UniformValue::forInteger(rows * (columns - 1));
+            uniformValues[1] = Graphics::UniformValue::forInteger(columns);
+            uniformValues[2] = Graphics::UniformValue::forFloat(data.terrainHeight[i]);
+            renderer.setShaderProgramState(
+                calcTessLevelsShaderProgramHandle, shaderProgramState);
 
             int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
 

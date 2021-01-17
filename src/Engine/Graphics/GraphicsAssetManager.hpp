@@ -27,7 +27,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
             std::vector<int> firstUniformIndex;
             std::vector<int> uniformCount;
-            std::vector<std::string> uniformNames;
+            std::vector<const char *> uniformNames;
             std::vector<UniformValue> uniformValues;
 
             std::map<int, int> resourceIdToHandle;
@@ -55,6 +55,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     public:
         GraphicsAssetManager(Renderer &renderer);
+        GraphicsAssetManager(const GraphicsAssetManager &that) = delete;
+        GraphicsAssetManager &operator=(const GraphicsAssetManager &that) = delete;
+        GraphicsAssetManager(GraphicsAssetManager &&) = delete;
+        GraphicsAssetManager &operator=(GraphicsAssetManager &&) = delete;
 
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
         int createMaterial(int shaderProgramHandle,
@@ -83,6 +87,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int &getMeshVertexArrayHandle(int handle);
         int &getMeshElementCount(int handle);
         unsigned int &getMeshPrimitiveType(int handle);
+
+        ~GraphicsAssetManager();
     };
 }}}
 

@@ -46,12 +46,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 char *uniformName = new char[uniformNameLength + 1];
                 memcpy(
                     uniformName, &resource.uniformNames[uniformNameStart], uniformNameLength);
-                uniformName[uniformNameLength] = '\0';
+                uniformName[uniformNameLength] = 0;
                 uniformNameStart += uniformNameLength;
 
                 materials.uniformNames[idx] = uniformName;
                 materials.uniformValues[idx] = resource.uniformValues[u];
-                delete[] uniformName;
             }
 
             materials.resourceIdToHandle[resource.id] = materials.count++;
@@ -99,12 +98,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int uniformNameLength = uniformNameLengths[u];
             char *uniformName = new char[uniformNameLength + 1];
             memcpy(uniformName, &uniformNames[uniformNameStart], uniformNameLength);
-            uniformName[uniformNameLength] = '\0';
+            uniformName[uniformNameLength] = 0;
             uniformNameStart += uniformNameLength;
 
             materials.uniformNames[idx] = uniformName;
             materials.uniformValues[idx] = uniformValues[u];
-            delete[] uniformName;
         }
 
         return materials.count++;
@@ -118,18 +116,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void GraphicsAssetManager::useMaterial(int handle)
     {
         int &shaderProgramHandle = materials.shaderProgramHandle[handle];
+        int firstUniformIndex = materials.firstUniformIndex[handle];
 
         renderer.useShaderProgram(shaderProgramHandle);
         renderer.setPolygonMode(materials.polygonMode[handle]);
         renderer.setBlendMode(materials.blendEquation[handle],
             materials.blendSrcFactor[handle], materials.blendDstFactor[handle]);
-        renderer.bindTextures(
-            materials.textureHandles.data() + materials.firstTextureIndex[handle],
-            materials.textureCount[handle]);
 
-        renderer.setShaderProgramUniforms(shaderProgramHandle, materials.uniformCount[handle],
-            materials.firstUniformIndex[handle], materials.uniformNames,
-            materials.uniformValues);
+        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
+        shaderProgramState.uniforms.count = materials.uniformCount[handle];
+        shaderProgramState.uniforms.names = materials.uniformNames.data() + firstUniformIndex;
+        shaderProgramState.uniforms.values =
+            materials.uniformValues.data() + firstUniformIndex;
+        shaderProgramState.textures.count = materials.textureCount[handle];
+        shaderProgramState.textures.handles =
+            materials.textureHandles.data() + materials.firstTextureIndex[handle];
+        renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
     }
 
     void GraphicsAssetManager::setMaterialTexture(
@@ -218,5 +220,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
     unsigned int &GraphicsAssetManager::getMeshPrimitiveType(int handle)
     {
         return meshes.primitiveType[handle];
+    }
+
+    GraphicsAssetManager::~GraphicsAssetManager()
+    {
+        for (int i = 0; i < materials.uniformNames.size(); i++)
+        {
+            delete[] materials.uniformNames[i];
+        }
     }
 }}}

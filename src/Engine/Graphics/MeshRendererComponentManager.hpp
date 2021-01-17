@@ -22,7 +22,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
             std::vector<int> firstUniformIndex;
             std::vector<int> uniformCount;
-            std::vector<std::string> uniformNames;
+            std::vector<const char *> uniformNames;
             std::vector<UniformValue> uniformValues;
 
             std::vector<int> instanceCount;
@@ -43,8 +43,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int create(int entityId,
             int meshHandle,
             int materialHandle,
-            std::vector<std::string> uniformNames,
-            std::vector<UniformValue> uniformValues,
+            int uniformCount,
+            const char **uniformNames,
+            UniformValue *uniformValues,
             int instanceCount);
 
         int lookup(int entityId) const

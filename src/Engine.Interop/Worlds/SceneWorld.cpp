@@ -30,7 +30,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
 
         // build material uniforms
-        std::vector<std::string> materialUniformNames(11);
+        const char *materialUniformNames[11];
         materialUniformNames[0] = "heightmapSize";
         materialUniformNames[1] = "terrainDimensions";
         materialUniformNames[2] = "brushHighlightStrength";
@@ -43,7 +43,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         materialUniformNames[9] = "mat3_textureSizeInWorldUnits";
         materialUniformNames[10] = "mat3_rampParams";
 
-        std::vector<Terrain::Engine::Graphics::UniformValue> materialUniformValues(11);
+        Graphics::UniformValue materialUniformValues[11];
         materialUniformValues[0] =
             Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
         materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
@@ -74,7 +74,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int &meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
         terrainMeshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
-            meshHandle, materialHandle, materialUniformNames, materialUniformValues, 1);
+            meshHandle, materialHandle, 11, materialUniformNames, materialUniformValues, 1);
 
         terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);

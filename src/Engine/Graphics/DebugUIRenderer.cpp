@@ -99,18 +99,21 @@ namespace Terrain { namespace Engine { namespace Graphics {
         renderer.bindVertexArray(graphicsAssets.getMeshVertexArrayHandle(quadMeshHandle));
 
         // update point scale transform
-        std::vector<std::string> uniformNames;
-        uniformNames.push_back("transform");
+        const char *uniformNames[1];
+        uniformNames[0] = "transform";
 
-        std::vector<Graphics::UniformValue> uniformValues;
+        Graphics::UniformValue uniformValues[1];
         const float POINT_SIZE = 3.0f;
         glm::vec3 pointScale =
             glm::vec3(POINT_SIZE / vctx.viewportWidth, POINT_SIZE / vctx.viewportHeight, 1.0f);
-        uniformValues.push_back(Graphics::UniformValue::forMatrix4x4(
-            glm::scale(glm::identity<glm::mat4>(), pointScale)));
+        uniformValues[0] = Graphics::UniformValue::forMatrix4x4(
+            glm::scale(glm::identity<glm::mat4>(), pointScale));
 
-        renderer.setShaderProgramUniforms(
-            shaderProgramHandle, 1, 0, uniformNames, uniformValues);
+        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
+        shaderProgramState.uniforms.count = 1;
+        shaderProgramState.uniforms.names = uniformNames;
+        shaderProgramState.uniforms.values = uniformValues;
+        renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
 
         // draw mesh instances
         glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, points.count);

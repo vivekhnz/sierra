@@ -92,8 +92,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             int count;
             std::vector<unsigned int> id;
+            std::vector<int> firstUniformIndex;
+            std::vector<int> uniformCount;
 
-            std::map<std::pair<unsigned int, std::string>, unsigned int> uniformNameToLocation;
+            std::vector<const char *> uniformNames;
+            std::vector<unsigned int> uniformLocations;
+
             std::map<int, int> resourceIdToHandle;
 
             ShaderPrograms() : count(0)
@@ -133,6 +137,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int isDisplacementMapEnabled;
         };
 
+        struct ShaderProgramState
+        {
+            struct
+            {
+                int count;
+                const char **names;
+                UniformValue *values;
+            } uniforms;
+
+            struct
+            {
+                int count;
+                int *handles;
+            } textures;
+        };
+
         Renderer();
         Renderer(const Renderer &that) = delete;
         Renderer &operator=(const Renderer &that) = delete;
@@ -153,7 +173,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Resources::TextureResourceDescription *descriptions,
             Resources::TextureResourceData *data);
         void onTextureReloaded(Resources::TextureResourceData &resource);
-        void bindTextures(int *textureHandles, int count);
         void getTexturePixels(int handle, void *out_data);
         int lookupTexture(int resourceId)
         {
@@ -178,13 +197,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void useShaderProgram(int handle);
         void setPolygonMode(int polygonMode);
         void setBlendMode(int equation, int srcFactor, int dstFactor);
-        void setShaderProgramUniformFloat(int handle, std::string uniformName, float value);
-        void setShaderProgramUniformInt(int handle, std::string uniformName, int value);
-        void setShaderProgramUniforms(int handle,
-            int uniformCount,
-            int uniformOffset,
-            const std::vector<std::string> &uniformNames,
-            const std::vector<UniformValue> &uniformValues);
+        void setShaderProgramState(int handle, ShaderProgramState &state);
         int lookupShaderProgram(int resourceId)
         {
             return shaderPrograms.resourceIdToHandle[resourceId];

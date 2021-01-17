@@ -87,9 +87,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             createQuadMaterial(ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
 
         int heightmapQuad_entityId = ctx.entities.create();
-        working.world.componentManagers.meshRenderer.create(heightmapQuad_entityId,
-            quadMeshHandle, working.quadMaterialHandle, std::vector<std::string>(),
-            std::vector<Graphics::UniformValue>(), 1);
+        working.world.componentManagers.meshRenderer.create(
+            heightmapQuad_entityId, quadMeshHandle, working.quadMaterialHandle, 0, 0, 0, 1);
 
         // create brush quad mesh
         std::vector<float> brushQuadVertices(16);
@@ -159,12 +158,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         working.brushSubtractMaterialHandle =
             ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH_SUBTRACT);
 
-        std::vector<std::string> brushQuad_uniformNames(3);
+        const char *brushQuad_uniformNames[3];
         brushQuad_uniformNames[0] = "brushScale";
         brushQuad_uniformNames[1] = "brushFalloff";
         brushQuad_uniformNames[2] = "brushStrength";
 
-        std::vector<Graphics::UniformValue> brushQuad_uniformValues(3);
+        Graphics::UniformValue brushQuad_uniformValues[3];
         brushQuad_uniformValues[0] = Graphics::UniformValue::forFloat(128 / 2048.0f);
         brushQuad_uniformValues[1] = Graphics::UniformValue::forFloat(0.1f);
         brushQuad_uniformValues[2] = Graphics::UniformValue::forFloat(0.0025f);
@@ -172,7 +171,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int brushQuad_entityId = ctx.entities.create();
         working.brushQuad_meshRendererInstanceId =
             working.world.componentManagers.meshRenderer.create(brushQuad_entityId,
-                brushQuadMeshHandle, working.brushAddMaterialHandle, brushQuad_uniformNames,
+                brushQuadMeshHandle, working.brushAddMaterialHandle, 3, brushQuad_uniformNames,
                 brushQuad_uniformValues, 0);
     }
 
@@ -197,9 +196,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         staging.quadMaterialHandle = createQuadMaterial(working.renderTextureHandle);
 
         int stagingQuad_entityId = ctx.entities.create();
-        staging.world.componentManagers.meshRenderer.create(stagingQuad_entityId,
-            quadMeshHandle, staging.quadMaterialHandle, std::vector<std::string>(),
-            std::vector<Graphics::UniformValue>(), 1);
+        staging.world.componentManagers.meshRenderer.create(
+            stagingQuad_entityId, quadMeshHandle, staging.quadMaterialHandle, 0, 0, 0, 1);
     }
 
     void HeightmapCompositionWorld::update(

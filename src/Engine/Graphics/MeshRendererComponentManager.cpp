@@ -14,21 +14,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
     int MeshRendererComponentManager::create(int entityId,
         int meshHandle,
         int materialHandle,
-        std::vector<std::string> uniformNames,
-        std::vector<UniformValue> uniformValues,
+        int uniformCount,
+        const char **uniformNames,
+        UniformValue *uniformValues,
         int instanceCount)
     {
         data.entityId.push_back(entityId);
         data.meshHandle.push_back(meshHandle);
         data.materialHandle.push_back(materialHandle);
 
-        int uniformCount = uniformNames.size();
         data.firstUniformIndex.push_back(data.uniformNames.size());
         data.uniformCount.push_back(uniformCount);
-        data.uniformNames.insert(
-            data.uniformNames.end(), uniformNames.begin(), uniformNames.end());
-        data.uniformValues.insert(
-            data.uniformValues.end(), uniformValues.begin(), uniformValues.end());
+        for (int i = 0; i < uniformCount; i++)
+        {
+            data.uniformNames.push_back(uniformNames[i]);
+            data.uniformValues.push_back(uniformValues[i]);
+        }
 
         data.instanceCount.push_back(instanceCount);
 
@@ -41,6 +42,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         for (int i = 0; i < data.count; i++)
         {
             int &materialHandle = data.materialHandle[i];
+            int firstUniformIndex = data.firstUniformIndex[i];
 
             // bind material data
             int &shaderProgramHandle =
@@ -54,8 +56,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             renderer.bindVertexArray(graphicsAssets.getMeshVertexArrayHandle(meshHandle));
 
             // set per-instance material uniforms
-            renderer.setShaderProgramUniforms(shaderProgramHandle, data.uniformCount[i],
-                data.firstUniformIndex[i], data.uniformNames, data.uniformValues);
+            Graphics::Renderer::ShaderProgramState shaderProgramState = {};
+            shaderProgramState.uniforms.count = data.uniformCount[i];
+            shaderProgramState.uniforms.names = data.uniformNames.data() + firstUniformIndex;
+            shaderProgramState.uniforms.values = data.uniformValues.data() + firstUniformIndex;
+            renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
 
             // draw mesh instances
             glDrawElementsInstanced(

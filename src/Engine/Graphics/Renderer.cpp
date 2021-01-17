@@ -133,15 +133,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    void Renderer::bindTextures(int *textureHandles, int count)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, textures.id[textureHandles[i]]);
-        }
-    }
-
     void Renderer::getTexturePixels(int handle, void *out_data)
     {
         glActiveTexture(GL_TEXTURE0);
@@ -261,6 +252,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
 
             // calculate uniform locations
+            shaderPrograms.firstUniformIndex.push_back(shaderPrograms.uniformNames.size());
+            shaderPrograms.uniformCount.push_back(resource.uniformCount);
+
             int uniformNameStart = 0;
             for (int u = 0; u < resource.uniformCount; u++)
             {
@@ -268,12 +262,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 char *uniformName = new char[uniformNameLength + 1];
                 memcpy(
                     uniformName, &resource.uniformNames[uniformNameStart], uniformNameLength);
-                uniformName[uniformNameLength] = '\0';
+                uniformName[uniformNameLength] = 0;
                 uniformNameStart += uniformNameLength;
 
-                shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)] =
-                    glGetUniformLocation(id, uniformName);
-                delete[] uniformName;
+                shaderPrograms.uniformNames.push_back(uniformName);
+                shaderPrograms.uniformLocations.push_back(
+                    glGetUniformLocation(id, uniformName));
             }
 
             shaderPrograms.id.push_back(id);
@@ -297,40 +291,34 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glBlendFunc(srcFactor, dstFactor);
     }
 
-    void Renderer::setShaderProgramUniformFloat(
-        int handle, std::string uniformName, float value)
+    void Renderer::setShaderProgramState(int handle, ShaderProgramState &state)
     {
         unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc =
-            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
-        glProgramUniform1f(id, loc, value);
-    }
+        int shaderProgramFirstUniformIndex = shaderPrograms.firstUniformIndex[handle];
+        int shaderProgramUniformCount = shaderPrograms.uniformCount[handle];
 
-    void Renderer::setShaderProgramUniformInt(int handle, std::string uniformName, int value)
-    {
-        unsigned int id = shaderPrograms.id[handle];
-        unsigned int loc =
-            shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
-        glProgramUniform1i(id, loc, value);
-    }
-
-    void Renderer::setShaderProgramUniforms(int handle,
-        int uniformCount,
-        int uniformOffset,
-        const std::vector<std::string> &uniformNames,
-        const std::vector<UniformValue> &uniformValues)
-    {
-        unsigned int id = shaderPrograms.id[handle];
-
-        for (int u = 0; u < uniformCount; u++)
+        // set uniforms
+        for (int i = 0; i < state.uniforms.count; i++)
         {
-            int i = uniformOffset + u;
+            const char *uniformName = state.uniforms.names[i];
 
-            const std::string &uniformName = uniformNames[i];
-            unsigned int loc =
-                shaderPrograms.uniformNameToLocation[std::make_pair(id, uniformName)];
+            // look up shader uniform location
+            bool foundUniform = false;
+            unsigned int loc = 0;
+            for (int u = 0; u < shaderProgramUniformCount; u++)
+            {
+                int idx = shaderProgramFirstUniformIndex + u;
+                if (strcmp(shaderPrograms.uniformNames[idx], uniformName) == 0)
+                {
+                    loc = shaderPrograms.uniformLocations[idx];
+                    foundUniform = true;
+                    break;
+                }
+            }
+            if (!foundUniform)
+                continue;
 
-            const UniformValue &val = uniformValues[i];
+            const UniformValue &val = state.uniforms.values[i];
             switch (val.type)
             {
             case UniformType::Float:
@@ -352,6 +340,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(val.mat4));
                 break;
             }
+        }
+
+        // bind textures
+        for (int i = 0; i < state.textures.count; i++)
+        {
+            glActiveTexture(GL_TEXTURE0 + i);
+            glBindTexture(GL_TEXTURE_2D, textures.id[state.textures.handles[i]]);
         }
     }
 
@@ -401,5 +396,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glDeleteProgram(shaderPrograms.id[i]);
         }
         glDeleteFramebuffers(framebuffers.count, framebuffers.id.data());
+
+        for (int i = 0; i < shaderPrograms.uniformNames.size(); i++)
+        {
+            delete[] shaderPrograms.uniformNames[i];
+        }
     }
 }}}
