@@ -29,12 +29,12 @@
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
-    <ClCompile Include="IO\OpenFile.cpp" />
     <ClCompile Include="OrbitCameraComponentManager.cpp" />
     <ClCompile Include="OrthographicCameraComponentManager.cpp" />
     <ClCompile Include="Physics\TerrainColliderComponentManager.cpp" />
     <ClCompile Include="Resources\ResourceManager.cpp" />
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
+    <ClCompile Include="win32_platform.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -60,7 +60,6 @@
     <ClInclude Include="IO\MouseButton.hpp" />
     <ClInclude Include="IO\MouseCaptureMode.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp" />
-    <ClInclude Include="IO\OpenFile.hpp" />
     <ClInclude Include="IO\Path.hpp" />
     <ClInclude Include="OrbitCameraComponentManager.hpp" />
     <ClInclude Include="OrthographicCameraComponentManager.hpp" />
@@ -74,6 +73,7 @@
     <ClInclude Include="Resources\TextureResource.hpp" />
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="TerrainResources.hpp" />
+    <ClInclude Include="win32_platform.h" />
     <ClInclude Include="World.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

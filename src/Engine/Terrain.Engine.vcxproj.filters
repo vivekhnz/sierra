@@ -19,9 +19,6 @@
     <ClCompile Include="IO\InputManager.cpp">
       <Filter>IO</Filter>
     </ClCompile>
-    <ClCompile Include="IO\OpenFile.cpp">
-      <Filter>IO</Filter>
-    </ClCompile>
     <ClCompile Include="World.cpp" />
     <ClCompile Include="OrbitCameraComponentManager.cpp" />
     <ClCompile Include="CameraComponentManager.cpp" />
@@ -54,6 +51,7 @@
     <ClCompile Include="..\..\deps\stb\stb_image.c">
       <Filter>deps</Filter>
     </ClCompile>
+    <ClCompile Include="win32_platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\BindBuffer.hpp">
@@ -69,9 +67,6 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="IO\InputManager.hpp">
-      <Filter>IO</Filter>
-    </ClInclude>
-    <ClInclude Include="IO\OpenFile.hpp">
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="IO\Path.hpp">
@@ -143,6 +138,7 @@
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="AppContext.hpp" />
+    <ClInclude Include="win32_platform.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Graphics">
