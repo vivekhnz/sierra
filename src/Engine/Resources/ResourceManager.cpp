@@ -152,6 +152,8 @@ namespace Terrain { namespace Engine { namespace Resources {
         TextureLoader::loadTexture(TerrainResources::Textures::SNOW_AO,
             IO::Path::getAbsolutePath("data/snow_ao.jpg"), false, ++textureData);
 
+        assert(textureDesc == textureResourceDescriptions + (textureCount - 1));
+        assert(textureData == textureResourceData + (textureCount - 1));
         ctx.onTexturesLoaded(textureCount, textureResourceDescriptions, textureResourceData);
         for (int i = 0; i < textureCount; i++)
         {
@@ -223,6 +225,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         shader->type = GL_FRAGMENT_SHADER;
         shader->src = readFileText("data/ui_fragment_shader.glsl");
 
+        assert(shader == shaderResources + (shaderCount - 1));
         ctx.onShadersLoaded(shaderCount, shaderResources);
         for (int i = 0; i < shaderCount; i++)
         {
@@ -315,6 +318,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         shaderProgram->uniformNames = "transform\0"
                                       "color";
 
+        assert(shaderProgram == shaderProgramResources + (shaderProgramCount - 1));
         ctx.onShaderProgramsLoaded(shaderProgramCount, shaderProgramResources);
 
         // load materials
