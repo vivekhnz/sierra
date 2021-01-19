@@ -8,21 +8,20 @@
 #include "TextureResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources { namespace TextureLoader {
-    static TextureResourceData loadTexture(int resourceId, std::string path, bool is16Bit)
+    static void loadTexture(
+        int resourceId, std::string path, bool is16Bit, TextureResourceData *resource)
     {
+        int channels;
         int width;
         int height;
-        int channels;
         void *data = is16Bit
             ? (void *)stbi_load_16(path.c_str(), &width, &height, &channels, 0)
             : (void *)stbi_load(path.c_str(), &width, &height, &channels, 0);
 
-        return {
-            resourceId, // id
-            width,      // width
-            height,     // height
-            data        // data
-        };
+        resource->id = resourceId;
+        resource->width = width;
+        resource->height = height;
+        resource->data = data;
     }
 
     static void unloadTexture(TextureResourceData &resource)

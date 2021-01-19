@@ -255,19 +255,25 @@ namespace Terrain { namespace Engine { namespace Graphics {
             shaderPrograms.firstUniformIndex.push_back(shaderPrograms.uniformNames.size());
             shaderPrograms.uniformCount.push_back(resource.uniformCount);
 
-            int uniformNameStart = 0;
-            for (int u = 0; u < resource.uniformCount; u++)
+            // resource.uniformNames is a contiguous set of null-terminated strings
+            int uniformsRemaining = resource.uniformCount;
+            const char *srcStartCursor = resource.uniformNames;
+            const char *srcEndCursor = srcStartCursor;
+            while (uniformsRemaining > 0)
             {
-                int uniformNameLength = resource.uniformNameLengths[u];
-                char *uniformName = new char[uniformNameLength + 1];
-                memcpy(
-                    uniformName, &resource.uniformNames[uniformNameStart], uniformNameLength);
-                uniformName[uniformNameLength] = 0;
-                uniformNameStart += uniformNameLength;
+                if (!(*srcEndCursor++))
+                {
+                    int nameLength = srcEndCursor - srcStartCursor;
+                    char *uniformName = new char[nameLength];
+                    memcpy(uniformName, srcStartCursor, nameLength);
 
-                shaderPrograms.uniformNames.push_back(uniformName);
-                shaderPrograms.uniformLocations.push_back(
-                    glGetUniformLocation(id, uniformName));
+                    shaderPrograms.uniformNames.push_back(uniformName);
+                    shaderPrograms.uniformLocations.push_back(
+                        glGetUniformLocation(id, uniformName));
+
+                    srcStartCursor = srcEndCursor;
+                    uniformsRemaining--;
+                }
             }
 
             shaderPrograms.id.push_back(id);
