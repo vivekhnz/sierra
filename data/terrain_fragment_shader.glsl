@@ -18,23 +18,23 @@ uniform float brushHighlightStrength;
 uniform float brushHighlightRadius;
 uniform float brushHighlightFalloff;
 
-uniform sampler2D mat1_albedo;
-uniform sampler2D mat1_normal;
-uniform sampler2D mat1_ao;
-uniform sampler2D mat1_displacement;
+layout(binding = 1) uniform sampler2D mat1_albedo;
+layout(binding = 2) uniform sampler2D mat1_normal;
+layout(binding = 4) uniform sampler2D mat1_ao;
+layout(binding = 3) uniform sampler2D mat1_displacement;
 uniform vec2 mat1_textureSizeInWorldUnits;
 
-uniform sampler2D mat2_albedo;
-uniform sampler2D mat2_normal;
-uniform sampler2D mat2_ao;
-uniform sampler2D mat2_displacement;
+layout(binding = 5) uniform sampler2D mat2_albedo;
+layout(binding = 6) uniform sampler2D mat2_normal;
+layout(binding = 8) uniform sampler2D mat2_ao;
+layout(binding = 7) uniform sampler2D mat2_displacement;
 uniform vec2 mat2_textureSizeInWorldUnits;
 uniform vec4 mat2_rampParams;
 
-uniform sampler2D mat3_albedo;
-uniform sampler2D mat3_normal;
-uniform sampler2D mat3_ao;
-uniform sampler2D mat3_displacement;
+layout(binding = 9) uniform sampler2D mat3_albedo;
+layout(binding = 10) uniform sampler2D mat3_normal;
+layout(binding = 12) uniform sampler2D mat3_ao;
+layout(binding = 11) uniform sampler2D mat3_displacement;
 uniform vec2 mat3_textureSizeInWorldUnits;
 uniform vec4 mat3_rampParams;
 

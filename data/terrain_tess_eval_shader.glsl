@@ -21,17 +21,17 @@ layout (std140, binding = 1) uniform Lighting
     bool lighting_isDisplacementMapEnabled;
 };
 
-uniform sampler2D heightmapTexture;
+layout(binding = 0) uniform sampler2D heightmapTexture;
 uniform vec3 terrainDimensions;
 
-uniform sampler2D mat1_displacement;
+layout(binding = 3) uniform sampler2D mat1_displacement;
 uniform vec2 mat1_textureSizeInWorldUnits;
 
-uniform sampler2D mat2_displacement;
+layout(binding = 7) uniform sampler2D mat2_displacement;
 uniform vec2 mat2_textureSizeInWorldUnits;
 uniform vec4 mat2_rampParams;
 
-uniform sampler2D mat3_displacement;
+layout(binding = 11) uniform sampler2D mat3_displacement;
 uniform vec2 mat3_textureSizeInWorldUnits;
 uniform vec4 mat3_rampParams;
 

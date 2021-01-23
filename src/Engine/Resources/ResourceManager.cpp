@@ -259,8 +259,8 @@ namespace Terrain { namespace Engine { namespace Resources {
         program->shaderCount = 2;
         program->shaderResourceIds[0] = TerrainResources::Shaders::TEXTURE_VERTEX;
         program->shaderResourceIds[1] = TerrainResources::Shaders::TEXTURE_FRAGMENT;
-        program->uniformCount = 1;
-        program->uniformNames = "imageTexture";
+        program->uniformCount = 0;
+        program->uniformNames = "";
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
         program->shaderCount = 4;
@@ -268,24 +268,11 @@ namespace Terrain { namespace Engine { namespace Resources {
         program->shaderResourceIds[1] = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
         program->shaderResourceIds[2] = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
         program->shaderResourceIds[3] = TerrainResources::Shaders::TERRAIN_FRAGMENT;
-        program->uniformCount = 24;
+        program->uniformCount = 11;
         program->uniformNames = "heightmapSize\0"
-                                "heightmapTexture\0"
-                                "mat1_albedo\0"
-                                "mat1_normal\0"
-                                "mat1_displacement\0"
-                                "mat1_ao\0"
                                 "mat1_textureSizeInWorldUnits\0"
-                                "mat2_albedo\0"
-                                "mat2_normal\0"
-                                "mat2_displacement\0"
-                                "mat2_ao\0"
                                 "mat2_textureSizeInWorldUnits\0"
                                 "mat2_rampParams\0"
-                                "mat3_albedo\0"
-                                "mat3_normal\0"
-                                "mat3_displacement\0"
-                                "mat3_ao\0"
                                 "mat3_textureSizeInWorldUnits\0"
                                 "mat3_rampParams\0"
                                 "terrainDimensions\0"
@@ -300,10 +287,8 @@ namespace Terrain { namespace Engine { namespace Resources {
         program->shaderResourceIds[1] = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
         program->shaderResourceIds[2] = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
         program->shaderResourceIds[3] = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
-        program->uniformCount = 6;
+        program->uniformCount = 4;
         program->uniformNames = "heightmapSize\0"
-                                "heightmapTexture\0"
-                                "mat1_displacement\0"
                                 "mat1_textureSizeInWorldUnits\0"
                                 "terrainDimensions\0"
                                 "color";
@@ -311,12 +296,11 @@ namespace Terrain { namespace Engine { namespace Resources {
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL;
         program->shaderCount = 1;
         program->shaderResourceIds[0] = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
-        program->uniformCount = 5;
+        program->uniformCount = 4;
         program->uniformNames = "horizontalEdgeCount\0"
                                 "columnCount\0"
                                 "targetTriangleSize\0"
-                                "terrainHeight\0"
-                                "heightmapTexture";
+                                "terrainHeight";
 
         (++program)->id = TerrainResources::ShaderPrograms::BRUSH;
         program->shaderCount = 2;
@@ -363,56 +347,28 @@ namespace Terrain { namespace Engine { namespace Resources {
         material->textureResourceIds[10] = TerrainResources::Textures::SNOW_NORMAL;
         material->textureResourceIds[11] = TerrainResources::Textures::SNOW_DISPLACEMENT;
         material->textureResourceIds[12] = TerrainResources::Textures::SNOW_AO;
-        material->uniformCount = 22;
-        material->uniformNames = "heightmapTexture\0"
-                                 "mat1_albedo\0"
-                                 "mat1_normal\0"
-                                 "mat1_displacement\0"
-                                 "mat1_ao\0"
-                                 "mat1_textureSizeInWorldUnits\0"
-                                 "mat2_albedo\0"
-                                 "mat2_normal\0"
-                                 "mat2_displacement\0"
-                                 "mat2_ao\0"
+        material->uniformCount = 9;
+        material->uniformNames = "mat1_textureSizeInWorldUnits\0"
                                  "mat2_textureSizeInWorldUnits\0"
                                  "mat2_rampParams\0"
-                                 "mat3_albedo\0"
-                                 "mat3_normal\0"
-                                 "mat3_displacement\0"
-                                 "mat3_ao\0"
                                  "mat3_textureSizeInWorldUnits\0"
                                  "mat3_rampParams\0"
                                  "brushHighlightPos\0"
                                  "brushHighlightStrength\0"
                                  "brushHighlightRadius\0"
                                  "brushHighlightFalloff";
-        material->uniformValues[0] = Graphics::UniformValue::forInteger(0);
-        material->uniformValues[1] = Graphics::UniformValue::forInteger(1);
-        material->uniformValues[2] = Graphics::UniformValue::forInteger(2);
-        material->uniformValues[3] = Graphics::UniformValue::forInteger(3);
-        material->uniformValues[4] = Graphics::UniformValue::forInteger(4);
-        material->uniformValues[5] = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
-        material->uniformValues[6] = Graphics::UniformValue::forInteger(5);
-        material->uniformValues[7] = Graphics::UniformValue::forInteger(6);
-        material->uniformValues[8] = Graphics::UniformValue::forInteger(7);
-        material->uniformValues[9] = Graphics::UniformValue::forInteger(8);
-        material->uniformValues[10] =
+        material->uniformValues[0] = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
+        material->uniformValues[1] =
             Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f));
-        material->uniformValues[11] =
+        material->uniformValues[2] =
             Graphics::UniformValue::forVector4(glm::vec4(0.6f, 0.8f, 0, 0.001f));
-        material->uniformValues[12] = Graphics::UniformValue::forInteger(9);
-        material->uniformValues[13] = Graphics::UniformValue::forInteger(10);
-        material->uniformValues[14] = Graphics::UniformValue::forInteger(11);
-        material->uniformValues[15] = Graphics::UniformValue::forInteger(12);
-        material->uniformValues[16] =
-            Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f));
-        material->uniformValues[17] =
+        material->uniformValues[3] = Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f));
+        material->uniformValues[4] =
             Graphics::UniformValue::forVector4(glm::vec4(0.8f, 0.75f, 0.25f, 0.28f));
-        material->uniformValues[18] =
-            Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f));
-        material->uniformValues[19] = Graphics::UniformValue::forFloat(0.0f);
-        material->uniformValues[20] = Graphics::UniformValue::forFloat(0.0f);
-        material->uniformValues[21] = Graphics::UniformValue::forFloat(0.0f);
+        material->uniformValues[5] = Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f));
+        material->uniformValues[6] = Graphics::UniformValue::forFloat(0.0f);
+        material->uniformValues[7] = Graphics::UniformValue::forFloat(0.0f);
+        material->uniformValues[8] = Graphics::UniformValue::forFloat(0.0f);
 
         (++material)->id = TerrainResources::Materials::TERRAIN_WIREFRAME;
         material->shaderProgramResourceId =
@@ -435,16 +391,12 @@ namespace Terrain { namespace Engine { namespace Resources {
         material->textureResourceIds[10] = TerrainResources::Textures::SNOW_NORMAL;
         material->textureResourceIds[11] = TerrainResources::Textures::SNOW_DISPLACEMENT;
         material->textureResourceIds[12] = TerrainResources::Textures::SNOW_AO;
-        material->uniformCount = 4;
+        material->uniformCount = 2;
         material->uniformNames = "color\0"
-                                 "heightmapTexture\0"
-                                 "mat1_displacement\0"
                                  "mat1_textureSizeInWorldUnits";
         material->uniformValues[0] =
             Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f));
-        material->uniformValues[1] = Graphics::UniformValue::forInteger(0);
-        material->uniformValues[2] = Graphics::UniformValue::forInteger(3);
-        material->uniformValues[3] = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
+        material->uniformValues[1] = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
 
         (++material)->id = TerrainResources::Materials::BRUSH_ADD;
         material->shaderProgramResourceId = TerrainResources::ShaderPrograms::BRUSH;

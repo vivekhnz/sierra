@@ -69,7 +69,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int textureCount,
             int *textureHandles,
             int uniformCount,
-            int *uniformNameLengths,
             const char *uniformNames,
             Graphics::UniformValue *uniformValues);
         int &getMaterialShaderProgramHandle(int handle);

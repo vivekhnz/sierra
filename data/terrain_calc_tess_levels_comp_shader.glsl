@@ -33,7 +33,7 @@ uniform int horizontalEdgeCount;
 uniform int columnCount;
 uniform float targetTriangleSize;
 uniform float terrainHeight;
-uniform sampler2D heightmapTexture;
+layout(binding = 0) uniform sampler2D heightmapTexture;
 
 vec3 worldToScreen(vec3 p)
 {

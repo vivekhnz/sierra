@@ -16,16 +16,14 @@ namespace Terrain { namespace Engine {
     void TerrainRendererComponentManager::onShaderProgramsLoaded(
         const int count, Resources::ShaderProgramResource *resources)
     {
-        const char *uniformNames[2];
+        const char *uniformNames[1];
         uniformNames[0] = "targetTriangleSize";
-        uniformNames[1] = "heightmapTexture";
 
-        Graphics::UniformValue uniformValues[2];
+        Graphics::UniformValue uniformValues[1];
         uniformValues[0] = Graphics::UniformValue::forFloat(0.015f);
-        uniformValues[1] = Graphics::UniformValue::forInteger(0);
 
         Graphics::Renderer::ShaderProgramState shaderProgramState = {};
-        shaderProgramState.uniforms.count = 2;
+        shaderProgramState.uniforms.count = 1;
         shaderProgramState.uniforms.names = uniformNames;
         shaderProgramState.uniforms.values = uniformValues;
 

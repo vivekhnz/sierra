@@ -65,7 +65,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int textureCount,
         int *textureHandles,
         int uniformCount,
-        int *uniformNameLengths,
         const char *uniformNames,
         Graphics::UniformValue *uniformValues)
     {
@@ -83,26 +82,27 @@ namespace Terrain { namespace Engine { namespace Graphics {
             materials.textureHandles.push_back(textureHandles[t]);
         }
 
-        int currentUniformCount = materials.uniformNames.size();
-        int newUniformCount = currentUniformCount + uniformCount;
-        materials.firstUniformIndex.push_back(currentUniformCount);
+        materials.firstUniformIndex.push_back(materials.uniformNames.size());
         materials.uniformCount.push_back(uniformCount);
-        materials.uniformNames.resize(newUniformCount);
-        materials.uniformValues.resize(newUniformCount);
 
-        int uniformNameStart = 0;
-        for (int u = 0; u < uniformCount; u++)
+        // uniformNames is a contiguous set of null-terminated strings
+        const char *srcStartCursor = uniformNames;
+        const char *srcEndCursor = srcStartCursor;
+        int u = 0;
+        while (u < uniformCount)
         {
-            int idx = currentUniformCount + u;
+            if (!(*srcEndCursor++))
+            {
+                int nameLength = srcEndCursor - srcStartCursor;
+                char *uniformName = new char[nameLength];
+                memcpy(uniformName, srcStartCursor, nameLength);
 
-            int uniformNameLength = uniformNameLengths[u];
-            char *uniformName = new char[uniformNameLength + 1];
-            memcpy(uniformName, &uniformNames[uniformNameStart], uniformNameLength);
-            uniformName[uniformNameLength] = 0;
-            uniformNameStart += uniformNameLength;
+                materials.uniformNames.push_back(uniformName);
+                materials.uniformValues.push_back(uniformValues[u]);
 
-            materials.uniformNames[idx] = uniformName;
-            materials.uniformValues[idx] = uniformValues[u];
+                srcStartCursor = srcEndCursor;
+                u++;
+            }
         }
 
         return materials.count++;
