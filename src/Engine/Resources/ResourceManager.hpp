@@ -16,6 +16,11 @@ namespace Terrain { namespace Engine { namespace Resources {
     private:
         EngineContext &ctx;
 
+        void loadTextures();
+        void loadShaders();
+        void loadShaderPrograms();
+        void loadMaterials();
+
     public:
         ResourceManager(EngineContext &ctx);
 

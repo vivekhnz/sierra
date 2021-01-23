@@ -17,11 +17,11 @@ namespace Terrain { namespace Engine { namespace Resources {
         int blendDstFactor;
 
         int textureCount;
-        int textureResourceIds[16];
+        int *textureResourceIds;
 
         int uniformCount;
         const char *uniformNames;
-        Graphics::UniformValue uniformValues[32];
+        Graphics::UniformValue *uniformValues;
     };
 }}}
 

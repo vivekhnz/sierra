@@ -9,7 +9,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         int id;
 
         int shaderCount;
-        int shaderResourceIds[256];
+        int *shaderResourceIds;
 
         int uniformCount;
         const char *uniformNames;
