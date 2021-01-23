@@ -152,8 +152,8 @@ namespace Terrain { namespace Engine { namespace Resources {
         TextureLoader::loadTexture(TerrainResources::Textures::SNOW_AO,
             IO::Path::getAbsolutePath("data/snow_ao.jpg"), false, ++textureData);
 
-        assert(textureDesc == textureResourceDescriptions + (textureCount - 1));
-        assert(textureData == textureResourceData + (textureCount - 1));
+        assert(textureDesc + 1 == textureResourceDescriptions + textureCount);
+        assert(textureData + 1 == textureResourceData + textureCount);
         ctx.onTexturesLoaded(textureCount, textureResourceDescriptions, textureResourceData);
         for (int i = 0; i < textureCount; i++)
         {
@@ -225,7 +225,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         shader->type = GL_FRAGMENT_SHADER;
         shader->src = readFileText("data/ui_fragment_shader.glsl");
 
-        assert(shader == shaderResources + (shaderCount - 1));
+        assert(shader + 1 == shaderResources + shaderCount);
         ctx.onShadersLoaded(shaderCount, shaderResources);
         for (int i = 0; i < shaderCount; i++)
         {
@@ -235,252 +235,233 @@ namespace Terrain { namespace Engine { namespace Resources {
         // load shader program resources
         const int shaderProgramCount = 6;
         ShaderProgramResource shaderProgramResources[shaderProgramCount];
-        ShaderProgramResource *shaderProgram = shaderProgramResources;
+        ShaderProgramResource *program = shaderProgramResources;
 
-        shaderProgram->id = TerrainResources::ShaderPrograms::QUAD;
-        shaderProgram->shaderCount = 2;
-        shaderProgram->shaderResourceIds[0] = TerrainResources::Shaders::TEXTURE_VERTEX;
-        shaderProgram->shaderResourceIds[1] = TerrainResources::Shaders::TEXTURE_FRAGMENT;
-        shaderProgram->uniformCount = 1;
-        shaderProgram->uniformNames = "imageTexture";
+        program->id = TerrainResources::ShaderPrograms::QUAD;
+        program->shaderCount = 2;
+        program->shaderResourceIds[0] = TerrainResources::Shaders::TEXTURE_VERTEX;
+        program->shaderResourceIds[1] = TerrainResources::Shaders::TEXTURE_FRAGMENT;
+        program->uniformCount = 1;
+        program->uniformNames = "imageTexture";
 
-        (++shaderProgram)->id = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
-        shaderProgram->shaderCount = 4;
-        shaderProgram->shaderResourceIds[0] = TerrainResources::Shaders::TERRAIN_VERTEX;
-        shaderProgram->shaderResourceIds[1] = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
-        shaderProgram->shaderResourceIds[2] = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
-        shaderProgram->shaderResourceIds[3] = TerrainResources::Shaders::TERRAIN_FRAGMENT;
-        shaderProgram->uniformCount = 24;
-        shaderProgram->uniformNames = "heightmapSize\0"
-                                      "heightmapTexture\0"
-                                      "mat1_albedo\0"
-                                      "mat1_normal\0"
-                                      "mat1_displacement\0"
-                                      "mat1_ao\0"
-                                      "mat1_textureSizeInWorldUnits\0"
-                                      "mat2_albedo\0"
-                                      "mat2_normal\0"
-                                      "mat2_displacement\0"
-                                      "mat2_ao\0"
-                                      "mat2_textureSizeInWorldUnits\0"
-                                      "mat2_rampParams\0"
-                                      "mat3_albedo\0"
-                                      "mat3_normal\0"
-                                      "mat3_displacement\0"
-                                      "mat3_ao\0"
-                                      "mat3_textureSizeInWorldUnits\0"
-                                      "mat3_rampParams\0"
-                                      "terrainDimensions\0"
-                                      "brushHighlightPos\0"
-                                      "brushHighlightStrength\0"
-                                      "brushHighlightRadius\0"
-                                      "brushHighlightFalloff";
+        (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
+        program->shaderCount = 4;
+        program->shaderResourceIds[0] = TerrainResources::Shaders::TERRAIN_VERTEX;
+        program->shaderResourceIds[1] = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
+        program->shaderResourceIds[2] = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
+        program->shaderResourceIds[3] = TerrainResources::Shaders::TERRAIN_FRAGMENT;
+        program->uniformCount = 24;
+        program->uniformNames = "heightmapSize\0"
+                                "heightmapTexture\0"
+                                "mat1_albedo\0"
+                                "mat1_normal\0"
+                                "mat1_displacement\0"
+                                "mat1_ao\0"
+                                "mat1_textureSizeInWorldUnits\0"
+                                "mat2_albedo\0"
+                                "mat2_normal\0"
+                                "mat2_displacement\0"
+                                "mat2_ao\0"
+                                "mat2_textureSizeInWorldUnits\0"
+                                "mat2_rampParams\0"
+                                "mat3_albedo\0"
+                                "mat3_normal\0"
+                                "mat3_displacement\0"
+                                "mat3_ao\0"
+                                "mat3_textureSizeInWorldUnits\0"
+                                "mat3_rampParams\0"
+                                "terrainDimensions\0"
+                                "brushHighlightPos\0"
+                                "brushHighlightStrength\0"
+                                "brushHighlightRadius\0"
+                                "brushHighlightFalloff";
 
-        (++shaderProgram)->id = TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
-        shaderProgram->shaderCount = 4;
-        shaderProgram->shaderResourceIds[0] = TerrainResources::Shaders::WIREFRAME_VERTEX;
-        shaderProgram->shaderResourceIds[1] = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
-        shaderProgram->shaderResourceIds[2] = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
-        shaderProgram->shaderResourceIds[3] = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
-        shaderProgram->uniformCount = 6;
-        shaderProgram->uniformNames = "heightmapSize\0"
-                                      "heightmapTexture\0"
-                                      "mat1_displacement\0"
-                                      "mat1_textureSizeInWorldUnits\0"
-                                      "terrainDimensions\0"
-                                      "color";
+        (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
+        program->shaderCount = 4;
+        program->shaderResourceIds[0] = TerrainResources::Shaders::WIREFRAME_VERTEX;
+        program->shaderResourceIds[1] = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
+        program->shaderResourceIds[2] = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
+        program->shaderResourceIds[3] = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
+        program->uniformCount = 6;
+        program->uniformNames = "heightmapSize\0"
+                                "heightmapTexture\0"
+                                "mat1_displacement\0"
+                                "mat1_textureSizeInWorldUnits\0"
+                                "terrainDimensions\0"
+                                "color";
 
-        (++shaderProgram)->id = TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL;
-        shaderProgram->shaderCount = 1;
-        shaderProgram->shaderResourceIds[0] =
-            TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
-        shaderProgram->uniformCount = 5;
-        shaderProgram->uniformNames = "horizontalEdgeCount\0"
-                                      "columnCount\0"
-                                      "targetTriangleSize\0"
-                                      "terrainHeight\0"
-                                      "heightmapTexture";
+        (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL;
+        program->shaderCount = 1;
+        program->shaderResourceIds[0] = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
+        program->uniformCount = 5;
+        program->uniformNames = "horizontalEdgeCount\0"
+                                "columnCount\0"
+                                "targetTriangleSize\0"
+                                "terrainHeight\0"
+                                "heightmapTexture";
 
-        (++shaderProgram)->id = TerrainResources::ShaderPrograms::BRUSH;
-        shaderProgram->shaderCount = 2;
-        shaderProgram->shaderResourceIds[0] = TerrainResources::Shaders::BRUSH_VERTEX;
-        shaderProgram->shaderResourceIds[1] = TerrainResources::Shaders::BRUSH_FRAGMENT;
-        shaderProgram->uniformCount = 3;
-        shaderProgram->uniformNames = "brushScale\0"
-                                      "brushFalloff\0"
-                                      "brushStrength";
+        (++program)->id = TerrainResources::ShaderPrograms::BRUSH;
+        program->shaderCount = 2;
+        program->shaderResourceIds[0] = TerrainResources::Shaders::BRUSH_VERTEX;
+        program->shaderResourceIds[1] = TerrainResources::Shaders::BRUSH_FRAGMENT;
+        program->uniformCount = 3;
+        program->uniformNames = "brushScale\0"
+                                "brushFalloff\0"
+                                "brushStrength";
 
-        (++shaderProgram)->id = TerrainResources::ShaderPrograms::UI;
-        shaderProgram->shaderCount = 2;
-        shaderProgram->shaderResourceIds[0] = TerrainResources::Shaders::UI_VERTEX;
-        shaderProgram->shaderResourceIds[1] = TerrainResources::Shaders::UI_FRAGMENT;
-        shaderProgram->uniformCount = 2;
-        shaderProgram->uniformNames = "transform\0"
-                                      "color";
+        (++program)->id = TerrainResources::ShaderPrograms::UI;
+        program->shaderCount = 2;
+        program->shaderResourceIds[0] = TerrainResources::Shaders::UI_VERTEX;
+        program->shaderResourceIds[1] = TerrainResources::Shaders::UI_FRAGMENT;
+        program->uniformCount = 2;
+        program->uniformNames = "transform\0"
+                                "color";
 
-        assert(shaderProgram == shaderProgramResources + (shaderProgramCount - 1));
+        assert(program + 1 == shaderProgramResources + shaderProgramCount);
         ctx.onShaderProgramsLoaded(shaderProgramCount, shaderProgramResources);
 
         // load materials
-        std::vector<MaterialResource> materialResources;
+        const int materialCount = 5;
+        MaterialResource materialResources[materialCount];
+        MaterialResource *material = materialResources;
 
-        materialResources.push_back({
-            TerrainResources::Materials::TERRAIN_TEXTURED,      // id
-            TerrainResources::ShaderPrograms::TERRAIN_TEXTURED, // shaderProgramResourceId
-            GL_FILL,                                            // polygonMode
-            GL_FUNC_ADD,                                        // blendEquation
-            GL_SRC_ALPHA,                                       // blendSrcFactor
-            GL_ONE_MINUS_SRC_ALPHA,                             // blendDstFactor
-            13,                                                 // textureCount
-            {
-                TerrainResources::Textures::HEIGHTMAP,
-                TerrainResources::Textures::GROUND_ALBEDO,
-                TerrainResources::Textures::GROUND_NORMAL,
-                TerrainResources::Textures::GROUND_DISPLACEMENT,
-                TerrainResources::Textures::GROUND_AO,
-                TerrainResources::Textures::ROCK_ALBEDO,
-                TerrainResources::Textures::ROCK_NORMAL,
-                TerrainResources::Textures::ROCK_DISPLACEMENT,
-                TerrainResources::Textures::ROCK_AO,
-                TerrainResources::Textures::SNOW_ALBEDO,
-                TerrainResources::Textures::SNOW_NORMAL,
-                TerrainResources::Textures::SNOW_DISPLACEMENT,
-                TerrainResources::Textures::SNOW_AO,
-            },  // textureResourceIds
-            22, // uniformCount
-            {16, 11, 11, 17, 7, 28, 11, 11, 17, 7, 28, 15, 11, 11, 17, 7, 28, 15, 17, 22, 20,
-                21}, // uniformNameLengths
-            "heightmapTexture"
-            "mat1_albedo"
-            "mat1_normal"
-            "mat1_displacement"
-            "mat1_ao"
-            "mat1_textureSizeInWorldUnits"
-            "mat2_albedo"
-            "mat2_normal"
-            "mat2_displacement"
-            "mat2_ao"
-            "mat2_textureSizeInWorldUnits"
-            "mat2_rampParams"
-            "mat3_albedo"
-            "mat3_normal"
-            "mat3_displacement"
-            "mat3_ao"
-            "mat3_textureSizeInWorldUnits"
-            "mat3_rampParams"
-            "brushHighlightPos"
-            "brushHighlightStrength"
-            "brushHighlightRadius"
-            "brushHighlightFalloff", // uniformNames
-            {
-                Graphics::UniformValue::forInteger(0),
-                Graphics::UniformValue::forInteger(1),
-                Graphics::UniformValue::forInteger(2),
-                Graphics::UniformValue::forInteger(3),
-                Graphics::UniformValue::forInteger(4),
-                Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
-                Graphics::UniformValue::forInteger(5),
-                Graphics::UniformValue::forInteger(6),
-                Graphics::UniformValue::forInteger(7),
-                Graphics::UniformValue::forInteger(8),
-                Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f)),
-                Graphics::UniformValue::forVector4(glm::vec4(0.6f, 0.8f, 0, 0.001f)),
-                Graphics::UniformValue::forInteger(9),
-                Graphics::UniformValue::forInteger(10),
-                Graphics::UniformValue::forInteger(11),
-                Graphics::UniformValue::forInteger(12),
-                Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f)),
-                Graphics::UniformValue::forVector4(glm::vec4(0.8f, 0.75f, 0.25f, 0.28f)),
-                Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f)),
-                Graphics::UniformValue::forFloat(0.0f),
-                Graphics::UniformValue::forFloat(0.0f),
-                Graphics::UniformValue::forFloat(0.0f),
-            } // uniformValues
-        });
+        material->id = TerrainResources::Materials::TERRAIN_TEXTURED;
+        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
+        material->polygonMode = GL_FILL;
+        material->blendEquation = GL_FUNC_ADD;
+        material->blendSrcFactor = GL_SRC_ALPHA;
+        material->blendDstFactor = GL_ONE_MINUS_SRC_ALPHA;
+        material->textureCount = 13;
+        material->textureResourceIds[0] = TerrainResources::Textures::HEIGHTMAP;
+        material->textureResourceIds[1] = TerrainResources::Textures::GROUND_ALBEDO;
+        material->textureResourceIds[2] = TerrainResources::Textures::GROUND_NORMAL;
+        material->textureResourceIds[3] = TerrainResources::Textures::GROUND_DISPLACEMENT;
+        material->textureResourceIds[4] = TerrainResources::Textures::GROUND_AO;
+        material->textureResourceIds[5] = TerrainResources::Textures::ROCK_ALBEDO;
+        material->textureResourceIds[6] = TerrainResources::Textures::ROCK_NORMAL;
+        material->textureResourceIds[7] = TerrainResources::Textures::ROCK_DISPLACEMENT;
+        material->textureResourceIds[8] = TerrainResources::Textures::ROCK_AO;
+        material->textureResourceIds[9] = TerrainResources::Textures::SNOW_ALBEDO;
+        material->textureResourceIds[10] = TerrainResources::Textures::SNOW_NORMAL;
+        material->textureResourceIds[11] = TerrainResources::Textures::SNOW_DISPLACEMENT;
+        material->textureResourceIds[12] = TerrainResources::Textures::SNOW_AO;
+        material->uniformCount = 22;
+        material->uniformNames = "heightmapTexture\0"
+                                 "mat1_albedo\0"
+                                 "mat1_normal\0"
+                                 "mat1_displacement\0"
+                                 "mat1_ao\0"
+                                 "mat1_textureSizeInWorldUnits\0"
+                                 "mat2_albedo\0"
+                                 "mat2_normal\0"
+                                 "mat2_displacement\0"
+                                 "mat2_ao\0"
+                                 "mat2_textureSizeInWorldUnits\0"
+                                 "mat2_rampParams\0"
+                                 "mat3_albedo\0"
+                                 "mat3_normal\0"
+                                 "mat3_displacement\0"
+                                 "mat3_ao\0"
+                                 "mat3_textureSizeInWorldUnits\0"
+                                 "mat3_rampParams\0"
+                                 "brushHighlightPos\0"
+                                 "brushHighlightStrength\0"
+                                 "brushHighlightRadius\0"
+                                 "brushHighlightFalloff";
+        material->uniformValues[0] = Graphics::UniformValue::forInteger(0);
+        material->uniformValues[1] = Graphics::UniformValue::forInteger(1);
+        material->uniformValues[2] = Graphics::UniformValue::forInteger(2);
+        material->uniformValues[3] = Graphics::UniformValue::forInteger(3);
+        material->uniformValues[4] = Graphics::UniformValue::forInteger(4);
+        material->uniformValues[5] = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
+        material->uniformValues[6] = Graphics::UniformValue::forInteger(5);
+        material->uniformValues[7] = Graphics::UniformValue::forInteger(6);
+        material->uniformValues[8] = Graphics::UniformValue::forInteger(7);
+        material->uniformValues[9] = Graphics::UniformValue::forInteger(8);
+        material->uniformValues[10] =
+            Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f));
+        material->uniformValues[11] =
+            Graphics::UniformValue::forVector4(glm::vec4(0.6f, 0.8f, 0, 0.001f));
+        material->uniformValues[12] = Graphics::UniformValue::forInteger(9);
+        material->uniformValues[13] = Graphics::UniformValue::forInteger(10);
+        material->uniformValues[14] = Graphics::UniformValue::forInteger(11);
+        material->uniformValues[15] = Graphics::UniformValue::forInteger(12);
+        material->uniformValues[16] =
+            Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f));
+        material->uniformValues[17] =
+            Graphics::UniformValue::forVector4(glm::vec4(0.8f, 0.75f, 0.25f, 0.28f));
+        material->uniformValues[18] =
+            Graphics::UniformValue::forVector2(glm::vec2(0.0f, 0.0f));
+        material->uniformValues[19] = Graphics::UniformValue::forFloat(0.0f);
+        material->uniformValues[20] = Graphics::UniformValue::forFloat(0.0f);
+        material->uniformValues[21] = Graphics::UniformValue::forFloat(0.0f);
 
-        materialResources.push_back({
-            TerrainResources::Materials::TERRAIN_WIREFRAME,      // id
-            TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME, // shaderProgramResourceId
-            GL_LINE,                                             // polygonMode
-            GL_FUNC_ADD,                                         // blendEquation
-            GL_SRC_ALPHA,                                        // blendSrcFactor
-            GL_ONE_MINUS_SRC_ALPHA,                              // blendDstFactor
-            13,                                                  // textureCount
-            {
-                TerrainResources::Textures::HEIGHTMAP,
-                TerrainResources::Textures::GROUND_ALBEDO,
-                TerrainResources::Textures::GROUND_NORMAL,
-                TerrainResources::Textures::GROUND_DISPLACEMENT,
-                TerrainResources::Textures::GROUND_AO,
-                TerrainResources::Textures::ROCK_ALBEDO,
-                TerrainResources::Textures::ROCK_NORMAL,
-                TerrainResources::Textures::ROCK_DISPLACEMENT,
-                TerrainResources::Textures::ROCK_AO,
-                TerrainResources::Textures::SNOW_ALBEDO,
-                TerrainResources::Textures::SNOW_NORMAL,
-                TerrainResources::Textures::SNOW_DISPLACEMENT,
-                TerrainResources::Textures::SNOW_AO,
-            },               // textureResourceIds
-            4,               // uniformCount
-            {5, 16, 17, 28}, // uniformNameLengths
-            "color"
-            "heightmapTexture"
-            "mat1_displacement"
-            "mat1_textureSizeInWorldUnits", // uniformNames
-            {
-                Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f)),
-                Graphics::UniformValue::forInteger(0),
-                Graphics::UniformValue::forInteger(3),
-                Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f)),
-            } // uniformValues
-        });
+        (++material)->id = TerrainResources::Materials::TERRAIN_WIREFRAME;
+        material->shaderProgramResourceId =
+            TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
+        material->polygonMode = GL_LINE;
+        material->blendEquation = GL_FUNC_ADD;
+        material->blendSrcFactor = GL_SRC_ALPHA;
+        material->blendDstFactor = GL_ONE_MINUS_SRC_ALPHA;
+        material->textureCount = 13;
+        material->textureResourceIds[0] = TerrainResources::Textures::HEIGHTMAP;
+        material->textureResourceIds[1] = TerrainResources::Textures::GROUND_ALBEDO;
+        material->textureResourceIds[2] = TerrainResources::Textures::GROUND_NORMAL;
+        material->textureResourceIds[3] = TerrainResources::Textures::GROUND_DISPLACEMENT;
+        material->textureResourceIds[4] = TerrainResources::Textures::GROUND_AO;
+        material->textureResourceIds[5] = TerrainResources::Textures::ROCK_ALBEDO;
+        material->textureResourceIds[6] = TerrainResources::Textures::ROCK_NORMAL;
+        material->textureResourceIds[7] = TerrainResources::Textures::ROCK_DISPLACEMENT;
+        material->textureResourceIds[8] = TerrainResources::Textures::ROCK_AO;
+        material->textureResourceIds[9] = TerrainResources::Textures::SNOW_ALBEDO;
+        material->textureResourceIds[10] = TerrainResources::Textures::SNOW_NORMAL;
+        material->textureResourceIds[11] = TerrainResources::Textures::SNOW_DISPLACEMENT;
+        material->textureResourceIds[12] = TerrainResources::Textures::SNOW_AO;
+        material->uniformCount = 4;
+        material->uniformNames = "color\0"
+                                 "heightmapTexture\0"
+                                 "mat1_displacement\0"
+                                 "mat1_textureSizeInWorldUnits";
+        material->uniformValues[0] =
+            Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f));
+        material->uniformValues[1] = Graphics::UniformValue::forInteger(0);
+        material->uniformValues[2] = Graphics::UniformValue::forInteger(3);
+        material->uniformValues[3] = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
 
-        materialResources.push_back({
-            TerrainResources::Materials::BRUSH_ADD,  // id
-            TerrainResources::ShaderPrograms::BRUSH, // shaderProgramResourceId
-            GL_FILL,                                 // polygonMode
-            GL_FUNC_ADD,                             // blendEquation
-            GL_SRC_ALPHA,                            // blendSrcFactor
-            GL_ONE,                                  // blendDstFactor
-            0,                                       // textureCount
-            {},                                      // textureResourceIds
-            0,                                       // uniformCount
-            {},                                      // uniformNameLengths
-            "",                                      // uniformNames
-            {}                                       // uniformValues
-        });
+        (++material)->id = TerrainResources::Materials::BRUSH_ADD;
+        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::BRUSH;
+        material->polygonMode = GL_FILL;
+        material->blendEquation = GL_FUNC_ADD;
+        material->blendSrcFactor = GL_SRC_ALPHA;
+        material->blendDstFactor = GL_ONE;
+        material->textureCount = 0;
+        material->uniformCount = 0;
+        material->uniformNames = "";
 
-        materialResources.push_back({
-            TerrainResources::Materials::BRUSH_SUBTRACT, // id
-            TerrainResources::ShaderPrograms::BRUSH,     // shaderProgramResourceId
-            GL_FILL,                                     // polygonMode
-            GL_FUNC_REVERSE_SUBTRACT,                    // blendEquation
-            GL_SRC_ALPHA,                                // blendSrcFactor
-            GL_ONE,                                      // blendDstFactor
-            0,                                           // textureCount
-            {},                                          // textureResourceIds
-            0,                                           // uniformCount
-            {},                                          // uniformNameLengths
-            "",                                          // uniformNames
-            {}                                           // uniformValues
-        });
+        (++material)->id = TerrainResources::Materials::BRUSH_SUBTRACT;
+        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::BRUSH;
+        material->polygonMode = GL_FILL;
+        material->blendEquation = GL_FUNC_REVERSE_SUBTRACT;
+        material->blendSrcFactor = GL_SRC_ALPHA;
+        material->blendDstFactor = GL_ONE;
+        material->textureCount = 0;
+        material->uniformCount = 0;
+        material->uniformNames = "";
 
-        materialResources.push_back({
-            TerrainResources::Materials::UI,      // id
-            TerrainResources::ShaderPrograms::UI, // shaderProgramResourceId
-            GL_FILL,                              // polygonMode
-            GL_FUNC_ADD,                          // blendEquation
-            GL_SRC_ALPHA,                         // blendSrcFactor
-            GL_ONE_MINUS_SRC_ALPHA,               // blendDstFactor
-            0,                                    // textureCount
-            {},                                   // textureResourceIds
-            1,                                    // uniformCount
-            {5},                                  // uniformNameLengths
-            "color",                              // uniformNames
-            {Graphics::UniformValue::forVector3(glm::vec3(1.0f, 1.0f, 1.0f))} // uniformValues
-        });
+        (++material)->id = TerrainResources::Materials::UI;
+        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::UI;
+        material->polygonMode = GL_FILL;
+        material->blendEquation = GL_FUNC_ADD;
+        material->blendSrcFactor = GL_SRC_ALPHA;
+        material->blendDstFactor = GL_ONE_MINUS_SRC_ALPHA;
+        material->textureCount = 0;
+        material->uniformCount = 1;
+        material->uniformNames = "color";
+        material->uniformValues[0] =
+            Graphics::UniformValue::forVector3(glm::vec3(1.0f, 1.0f, 1.0f));
 
-        ctx.onMaterialsLoaded(materialResources.size(), materialResources.data());
+        assert(material + 1 == materialResources + materialCount);
+        ctx.onMaterialsLoaded(materialCount, materialResources);
     }
 
     void ResourceManager::reloadTexture(int resourceId, std::string path, bool is16Bit)

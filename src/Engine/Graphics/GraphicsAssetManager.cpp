@@ -30,27 +30,27 @@ namespace Terrain { namespace Engine { namespace Graphics {
                     renderer.lookupTexture(resource.textureResourceIds[t]));
             }
 
-            int currentUniformCount = materials.uniformNames.size();
-            int newUniformCount = currentUniformCount + resource.uniformCount;
-            materials.firstUniformIndex.push_back(currentUniformCount);
+            materials.firstUniformIndex.push_back(materials.uniformNames.size());
             materials.uniformCount.push_back(resource.uniformCount);
-            materials.uniformNames.resize(newUniformCount);
-            materials.uniformValues.resize(newUniformCount);
 
-            int uniformNameStart = 0;
-            for (int u = 0; u < resource.uniformCount; u++)
+            // resource.uniformNames is a contiguous set of null-terminated strings
+            const char *srcStartCursor = resource.uniformNames;
+            const char *srcEndCursor = srcStartCursor;
+            int u = 0;
+            while (u < resource.uniformCount)
             {
-                int idx = currentUniformCount + u;
+                if (!(*srcEndCursor++))
+                {
+                    int nameLength = srcEndCursor - srcStartCursor;
+                    char *uniformName = new char[nameLength];
+                    memcpy(uniformName, srcStartCursor, nameLength);
 
-                int uniformNameLength = resource.uniformNameLengths[u];
-                char *uniformName = new char[uniformNameLength + 1];
-                memcpy(
-                    uniformName, &resource.uniformNames[uniformNameStart], uniformNameLength);
-                uniformName[uniformNameLength] = 0;
-                uniformNameStart += uniformNameLength;
+                    materials.uniformNames.push_back(uniformName);
+                    materials.uniformValues.push_back(resource.uniformValues[u]);
 
-                materials.uniformNames[idx] = uniformName;
-                materials.uniformValues[idx] = resource.uniformValues[u];
+                    srcStartCursor = srcEndCursor;
+                    u++;
+                }
             }
 
             materials.resourceIdToHandle[resource.id] = materials.count++;

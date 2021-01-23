@@ -256,10 +256,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             shaderPrograms.uniformCount.push_back(resource.uniformCount);
 
             // resource.uniformNames is a contiguous set of null-terminated strings
-            int uniformsRemaining = resource.uniformCount;
             const char *srcStartCursor = resource.uniformNames;
             const char *srcEndCursor = srcStartCursor;
-            while (uniformsRemaining > 0)
+            int u = 0;
+            while (u < resource.uniformCount)
             {
                 if (!(*srcEndCursor++))
                 {
@@ -272,7 +272,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
                         glGetUniformLocation(id, uniformName));
 
                     srcStartCursor = srcEndCursor;
-                    uniformsRemaining--;
+                    u++;
                 }
             }
 

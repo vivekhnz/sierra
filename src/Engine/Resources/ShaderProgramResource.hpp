@@ -12,7 +12,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         int shaderResourceIds[256];
 
         int uniformCount;
-        const char *uniformNames; // max 64 uniforms * 128-char name
+        const char *uniformNames;
     };
 }}}
 
