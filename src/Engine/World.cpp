@@ -37,6 +37,7 @@ namespace Terrain { namespace Engine {
 
     void World::onTexturesLoaded(const int count,
         Resources::TextureResourceDescription *descriptions,
+        Resources::TextureResourceUsage *usages,
         Resources::TextureResourceData *data)
     {
     }

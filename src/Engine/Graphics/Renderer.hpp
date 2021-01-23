@@ -171,6 +171,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int filterMode);
         void onTexturesLoaded(const int count,
             Resources::TextureResourceDescription *descriptions,
+            Resources::TextureResourceUsage *usages,
             Resources::TextureResourceData *data);
         void onTextureReloaded(Resources::TextureResourceData &resource);
         void getTexturePixels(int handle, void *out_data);

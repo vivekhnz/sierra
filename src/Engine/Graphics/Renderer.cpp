@@ -84,6 +84,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Renderer::onTexturesLoaded(const int count,
         Resources::TextureResourceDescription *descriptions,
+        Resources::TextureResourceUsage *usages,
         Resources::TextureResourceData *data)
     {
         if (count < 1)
@@ -96,21 +97,22 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             unsigned int &id = ids[i];
             Resources::TextureResourceDescription &desc = descriptions[i];
+            Resources::TextureResourceUsage &usage = usages[i];
             Resources::TextureResourceData &resourceData = data[i];
 
             glBindTexture(GL_TEXTURE_2D, id);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, desc.wrapMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, desc.wrapMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, desc.filterMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, desc.filterMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, usage.wrapMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, usage.wrapMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, usage.filterMode);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, usage.filterMode);
             glTexImage2D(GL_TEXTURE_2D, 0, desc.internalFormat, resourceData.width,
-                resourceData.height, 0, desc.format, desc.type, resourceData.data);
+                resourceData.height, 0, usage.format, desc.type, resourceData.data);
             glGenerateMipmap(GL_TEXTURE_2D);
 
             textures.id.push_back(id);
             textures.resourceId.push_back(desc.id);
             textures.internalFormat.push_back(desc.internalFormat);
-            textures.format.push_back(desc.format);
+            textures.format.push_back(usage.format);
             textures.type.push_back(desc.type);
 
             textures.resourceIdToHandle[desc.id] = textures.count++;

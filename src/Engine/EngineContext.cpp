@@ -15,12 +15,13 @@ namespace Terrain { namespace Engine {
 
     void EngineContext::onTexturesLoaded(const int count,
         Resources::TextureResourceDescription *descriptions,
+        Resources::TextureResourceUsage *usages,
         Resources::TextureResourceData *data)
     {
-        renderer.onTexturesLoaded(count, descriptions, data);
+        renderer.onTexturesLoaded(count, descriptions, usages, data);
         for (World *world : worlds)
         {
-            world->onTexturesLoaded(count, descriptions, data);
+            world->onTexturesLoaded(count, descriptions, usages, data);
         }
     }
     void EngineContext::onShadersLoaded(const int count, Resources::ShaderResource *resources)

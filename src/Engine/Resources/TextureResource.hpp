@@ -8,8 +8,13 @@ namespace Terrain { namespace Engine { namespace Resources {
     {
         int id;
         int internalFormat;
-        int format;
         int type;
+    };
+
+    struct EXPORT TextureResourceUsage
+    {
+        int id;
+        int format;
         int wrapMode;
         int filterMode;
     };

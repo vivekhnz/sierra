@@ -28,15 +28,19 @@ namespace Terrain { namespace Engine { namespace Resources {
         // load texture resources
         const int textureCount = 13;
         TextureResourceDescription textureResourceDescriptions[textureCount];
+        TextureResourceUsage textureResourceUsages[textureCount];
         TextureResourceData textureResourceData[textureCount];
 
         TextureResourceDescription *textureDesc = textureResourceDescriptions;
         textureDesc->id = TerrainResources::Textures::HEIGHTMAP;
         textureDesc->internalFormat = GL_R16;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_SHORT;
-        textureDesc->wrapMode = GL_MIRRORED_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+
+        TextureResourceUsage *textureUsage = textureResourceUsages;
+        textureUsage->id = TerrainResources::Textures::HEIGHTMAP;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_MIRRORED_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
 
         TextureResourceData *textureData = textureResourceData;
         textureData->id = TerrainResources::Textures::HEIGHTMAP;
@@ -46,115 +50,129 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         (++textureDesc)->id = TerrainResources::Textures::GROUND_ALBEDO;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RGB;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::GROUND_ALBEDO;
+        textureUsage->format = GL_RGB;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::GROUND_ALBEDO,
             IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::GROUND_NORMAL;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RGB;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::GROUND_NORMAL;
+        textureUsage->format = GL_RGB;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::GROUND_NORMAL,
             IO::Path::getAbsolutePath("data/ground_normal.bmp"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::GROUND_DISPLACEMENT;
         textureDesc->internalFormat = GL_R16;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_SHORT;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::GROUND_DISPLACEMENT;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::GROUND_DISPLACEMENT,
             IO::Path::getAbsolutePath("data/ground_displacement.tga"), true, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::GROUND_AO;
         textureDesc->internalFormat = GL_R8;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::GROUND_AO;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::GROUND_AO,
             IO::Path::getAbsolutePath("data/ground_ao.tga"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::ROCK_ALBEDO;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RGB;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::ROCK_ALBEDO;
+        textureUsage->format = GL_RGB;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::ROCK_ALBEDO,
             IO::Path::getAbsolutePath("data/rock_albedo.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::ROCK_NORMAL;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RGB;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::ROCK_NORMAL;
+        textureUsage->format = GL_RGB;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::ROCK_NORMAL,
             IO::Path::getAbsolutePath("data/rock_normal.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::ROCK_DISPLACEMENT;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::ROCK_DISPLACEMENT;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::ROCK_DISPLACEMENT,
             IO::Path::getAbsolutePath("data/rock_displacement.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::ROCK_AO;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::ROCK_AO;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::ROCK_AO,
             IO::Path::getAbsolutePath("data/rock_ao.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::SNOW_ALBEDO;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RGB;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::SNOW_ALBEDO;
+        textureUsage->format = GL_RGB;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::SNOW_ALBEDO,
             IO::Path::getAbsolutePath("data/snow_albedo.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::SNOW_NORMAL;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RGB;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::SNOW_NORMAL;
+        textureUsage->format = GL_RGB;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::SNOW_NORMAL,
             IO::Path::getAbsolutePath("data/snow_normal.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::SNOW_DISPLACEMENT;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::SNOW_DISPLACEMENT;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::SNOW_DISPLACEMENT,
             IO::Path::getAbsolutePath("data/snow_displacement.jpg"), false, ++textureData);
 
         (++textureDesc)->id = TerrainResources::Textures::SNOW_AO;
         textureDesc->internalFormat = GL_RGB;
-        textureDesc->format = GL_RED;
         textureDesc->type = GL_UNSIGNED_BYTE;
-        textureDesc->wrapMode = GL_REPEAT;
-        textureDesc->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+        (++textureUsage)->id = TerrainResources::Textures::SNOW_AO;
+        textureUsage->format = GL_RED;
+        textureUsage->wrapMode = GL_REPEAT;
+        textureUsage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
         TextureLoader::loadTexture(TerrainResources::Textures::SNOW_AO,
             IO::Path::getAbsolutePath("data/snow_ao.jpg"), false, ++textureData);
 
         assert(textureDesc + 1 == textureResourceDescriptions + textureCount);
+        assert(textureUsage + 1 == textureResourceUsages + textureCount);
         assert(textureData + 1 == textureResourceData + textureCount);
-        ctx.onTexturesLoaded(textureCount, textureResourceDescriptions, textureResourceData);
+        ctx.onTexturesLoaded(textureCount, textureResourceDescriptions, textureResourceUsages,
+            textureResourceData);
         for (int i = 0; i < textureCount; i++)
         {
             TextureLoader::unloadTexture(textureResourceData[i]);
