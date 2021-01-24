@@ -1,4 +1,5 @@
 #include "HeightmapPreviewWorld.hpp"
+#include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     HeightmapPreviewWorld::HeightmapPreviewWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
@@ -55,13 +56,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             false                                       // isPerInstance
         };
 
-        int quadMesh_meshHandle =
-            ctx.assets.graphics.createMesh(GL_TRIANGLES, vertexBuffers, quadIndices);
-        int quadMaterialHandle = createQuadMaterial(heightmapTextureHandle);
+        meshHandle = ctx.assets.graphics.createMesh(GL_TRIANGLES, vertexBuffers, quadIndices);
 
-        int heightmapQuad_entityId = ctx.entities.create();
-        world.componentManagers.meshRenderer.create(
-            heightmapQuad_entityId, quadMesh_meshHandle, quadMaterialHandle, 0, 0, 0, 1);
+        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
+        shaderProgramHandle =
+            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
+        this->heightmapTextureHandle = heightmapTextureHandle;
     }
 
     void HeightmapPreviewWorld::linkViewport(ViewportContext &vctx)
@@ -86,18 +86,30 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void HeightmapPreviewWorld::render(EngineViewContext &vctx)
     {
-        world.render(vctx);
-    }
+        if (vctx.cameraEntityId == -1 || vctx.viewportWidth == 0 || vctx.viewportHeight == 0)
+            return;
 
-    int HeightmapPreviewWorld::createQuadMaterial(int textureHandle)
-    {
-        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
+        world.componentManagers.orthographicCamera.calculateCameraTransforms(vctx);
+        world.componentManagers.camera.bindTransform(vctx);
 
-        int shaderProgramHandle =
-            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
-        int textureHandles[1] = {textureHandle};
+        rendererSetViewportSize(vctx.viewportWidth, vctx.viewportHeight);
+        rendererClearBackBuffer(0, 0, 0, 1);
 
-        return ctx.assets.graphics.createMaterial(shaderProgramHandle, GL_FILL, GL_FUNC_ADD,
-            GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 1, textureHandles, 0, "", 0);
+        // render quad
+        ctx.renderer.useShaderProgram(shaderProgramHandle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
+        shaderProgramState.uniforms.count = 0;
+        shaderProgramState.uniforms.names = 0;
+        shaderProgramState.uniforms.values = 0;
+        shaderProgramState.textures.count = 1;
+        shaderProgramState.textures.handles = &heightmapTextureHandle;
+        ctx.renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
+
+#define QUAD_ELEMENT_COUNT 6
+        ctx.renderer.bindVertexArray(ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
+        rendererDrawElementsInstanced(GL_TRIANGLES, QUAD_ELEMENT_COUNT, 1);
     }
 }}}}

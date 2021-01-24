@@ -18,7 +18,7 @@ namespace Terrain { namespace Engine {
 
     void World::render(EngineViewContext &vctx)
     {
-        if (vctx.cameraEntityId == -1)
+        if (vctx.cameraEntityId == -1 || vctx.viewportWidth == 0 || vctx.viewportHeight == 0)
             return;
 
         componentManagers.orbitCamera.calculateCameraTransforms(vctx);
@@ -32,7 +32,7 @@ namespace Terrain { namespace Engine {
 
         debugUI.render(vctx);
 
-        componentManagers.camera.finalizeRender(vctx);
+        componentManagers.camera.finalizeFramebuffer(vctx);
     }
 
     void World::onTexturesLoaded(const int count,

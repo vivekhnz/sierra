@@ -1,6 +1,7 @@
 #include "GraphicsAssetManager.hpp"
 
 #include <glad/glad.h>
+#include "../terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     GraphicsAssetManager::GraphicsAssetManager(Renderer &renderer) : renderer(renderer)
@@ -119,9 +120,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int firstUniformIndex = materials.firstUniformIndex[handle];
 
         renderer.useShaderProgram(shaderProgramHandle);
-        renderer.setPolygonMode(materials.polygonMode[handle]);
-        renderer.setBlendMode(materials.blendEquation[handle],
-            materials.blendSrcFactor[handle], materials.blendDstFactor[handle]);
+        rendererSetPolygonMode(materials.polygonMode[handle]);
+        rendererSetBlendMode(materials.blendEquation[handle], materials.blendSrcFactor[handle],
+            materials.blendDstFactor[handle]);
 
         Graphics::Renderer::ShaderProgramState shaderProgramState = {};
         shaderProgramState.uniforms.count = materials.uniformCount[handle];

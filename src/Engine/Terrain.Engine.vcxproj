@@ -34,6 +34,7 @@
     <ClCompile Include="Physics\TerrainColliderComponentManager.cpp" />
     <ClCompile Include="Resources\ResourceManager.cpp" />
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
+    <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="win32_platform.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -73,6 +74,7 @@
     <ClInclude Include="Resources\TextureResource.hpp" />
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="TerrainResources.hpp" />
+    <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="win32_platform.h" />
     <ClInclude Include="World.hpp" />
   </ItemGroup>

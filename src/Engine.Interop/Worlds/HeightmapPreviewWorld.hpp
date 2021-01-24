@@ -10,6 +10,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineContext &ctx;
         Engine::World world;
 
+        int meshHandle;
+        int shaderProgramHandle;
+        int heightmapTextureHandle;
+
     public:
         HeightmapPreviewWorld(EngineContext &ctx);
 
@@ -17,7 +21,5 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void linkViewport(ViewportContext &vctx);
         void update(float deltaTime, const EditorState &state, EditorState &newState);
         void render(EngineViewContext &vctx);
-
-        int createQuadMaterial(int textureHandle);
     };
 }}}}

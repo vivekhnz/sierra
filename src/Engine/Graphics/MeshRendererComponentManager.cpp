@@ -3,6 +3,8 @@
 #include <iterator>
 #include <glad/glad.h>
 
+#include "../terrain_renderer.h"
+
 namespace Terrain { namespace Engine { namespace Graphics {
     MeshRendererComponentManager::MeshRendererComponentManager(
         GraphicsAssetManager &graphicsAssets, Renderer &renderer) :
@@ -63,8 +65,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
 
             // draw mesh instances
-            glDrawElementsInstanced(
-                primitiveType, elementCount, GL_UNSIGNED_INT, 0, data.instanceCount[i]);
+            rendererDrawElementsInstanced(primitiveType, elementCount, data.instanceCount[i]);
         }
     }
 

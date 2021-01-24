@@ -4,6 +4,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../TerrainResources.hpp"
 
+#include "../terrain_renderer.h"
+
 namespace Terrain { namespace Engine { namespace Graphics {
     DebugUIRenderer::DebugUIRenderer(
         GraphicsAssetManager &graphicsAssets, Renderer &renderer) :
@@ -116,7 +118,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
 
         // draw mesh instances
-        glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, points.count);
+        rendererDrawElementsInstanced(primitiveType, elementCount, points.count);
 
         points.count = 0;
     }

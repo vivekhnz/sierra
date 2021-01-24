@@ -288,17 +288,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glUseProgram(shaderPrograms.id[handle]);
     }
 
-    void Renderer::setPolygonMode(int polygonMode)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
-    }
-
-    void Renderer::setBlendMode(int equation, int srcFactor, int dstFactor)
-    {
-        glBlendEquation(equation);
-        glBlendFunc(srcFactor, dstFactor);
-    }
-
     void Renderer::setShaderProgramState(int handle, ShaderProgramState &state)
     {
         unsigned int id = shaderPrograms.id[handle];
@@ -372,20 +361,16 @@ namespace Terrain { namespace Engine { namespace Graphics {
         return framebuffers.count++;
     }
 
-    void Renderer::clearBackBuffer(
-        int width, int height, glm::vec4 clearColor, int framebufferHandle)
+    void Renderer::useFramebuffer(int handle)
     {
-        glBindFramebuffer(
-            GL_FRAMEBUFFER, framebufferHandle == -1 ? 0 : framebuffers.id[framebufferHandle]);
-        glViewport(0, 0, width, height);
-        glClearColor(clearColor.x, clearColor.y, clearColor.z, clearColor.w);
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.id[handle]);
     }
 
     void Renderer::finalizeFramebuffer(int handle)
     {
         glBindTexture(GL_TEXTURE_2D, textures.id[framebuffers.textureHandle[handle]]);
         glGenerateMipmap(GL_TEXTURE_2D);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     Renderer::~Renderer()

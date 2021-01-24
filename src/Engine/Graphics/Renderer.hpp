@@ -196,8 +196,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);
         void useShaderProgram(int handle);
-        void setPolygonMode(int polygonMode);
-        void setBlendMode(int equation, int srcFactor, int dstFactor);
         void setShaderProgramState(int handle, ShaderProgramState &state);
         int lookupShaderProgram(int resourceId)
         {
@@ -206,8 +204,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         int createFramebuffer(int textureHandle);
 
-        void clearBackBuffer(
-            int width, int height, glm::vec4 clearColor, int framebufferHandle);
+        void useFramebuffer(int handle);
         void finalizeFramebuffer(int handle);
 
         ~Renderer();

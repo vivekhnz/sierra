@@ -52,6 +52,7 @@
       <Filter>deps</Filter>
     </ClCompile>
     <ClCompile Include="win32_platform.cpp" />
+    <ClCompile Include="terrain_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\BindBuffer.hpp">
@@ -139,6 +140,7 @@
     </ClInclude>
     <ClInclude Include="AppContext.hpp" />
     <ClInclude Include="win32_platform.h" />
+    <ClInclude Include="terrain_renderer.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Graphics">
