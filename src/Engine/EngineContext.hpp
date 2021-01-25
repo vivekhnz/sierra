@@ -35,11 +35,12 @@ namespace Terrain { namespace Engine {
             }
         } assets;
 
-        EngineContext(AppContext &ctx) : resources(*this), input(ctx), assets(renderer)
+        EngineContext(AppContext &ctx, EngineMemory *memory) :
+            memory(memory), resources(*this), input(ctx), renderer(memory), assets(renderer)
         {
         }
 
-        void initialize(EngineMemory *memory);
+        void initialize();
 
         void registerWorld(World &world);
 

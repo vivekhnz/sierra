@@ -102,7 +102,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindTexture(ctx.memory, heightmapTextureHandle, 0);
 
 #define QUAD_ELEMENT_COUNT 6
-        ctx.renderer.bindVertexArray(ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
+        rendererBindVertexArray(
+            ctx.memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
         rendererDrawElementsInstanced(GL_TRIANGLES, QUAD_ELEMENT_COUNT, 1);
     }
 }}}}

@@ -59,8 +59,8 @@ int main()
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         window.makePrimary();
         GameContext appCtx(window);
-        Terrain::Engine::EngineContext ctx(appCtx);
-        ctx.initialize(&memory);
+        Terrain::Engine::EngineContext ctx(appCtx, &memory);
+        ctx.initialize();
         ctx.input.addInputController();
 
         Terrain::Engine::World world(ctx);

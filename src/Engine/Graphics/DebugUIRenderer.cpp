@@ -98,7 +98,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         // bind mesh data
         int elementCount = graphicsAssets.getMeshElementCount(quadMeshHandle);
         unsigned int primitiveType = graphicsAssets.getMeshPrimitiveType(quadMeshHandle);
-        renderer.bindVertexArray(graphicsAssets.getMeshVertexArrayHandle(quadMeshHandle));
+        rendererBindVertexArray(
+            renderer.memory, graphicsAssets.getMeshVertexArrayHandle(quadMeshHandle));
 
         // update point scale transform
         const char *uniformNames[1];

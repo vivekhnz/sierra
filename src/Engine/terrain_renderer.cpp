@@ -33,12 +33,25 @@ void rendererBindTexture(EngineMemory *memory, int handle, int slot)
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
-void rendererDestroyTextures(EngineMemory *memory)
+int rendererCreateVertexArray(EngineMemory *memory)
 {
     assert(memory->size >= sizeof(RendererState));
     RendererState *state = (RendererState *)memory->address;
 
-    glDeleteTextures(state->textureCount, state->textureIds);
+    assert(state->vertexArrayCount < RENDERER_MAX_VERTEX_ARRAYS);
+    glGenVertexArrays(1, state->vertexArrayIds + state->vertexArrayCount);
+    return state->vertexArrayCount++;
+}
+
+void rendererBindVertexArray(EngineMemory *memory, int handle)
+{
+    assert(memory->size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->address;
+
+    assert(handle < state->vertexArrayCount);
+    unsigned int id = state->vertexArrayIds[handle];
+
+    glBindVertexArray(id);
 }
 
 void rendererSetViewportSize(int width, int height)
@@ -68,4 +81,13 @@ void rendererDrawElementsInstanced(
     unsigned int primitiveType, int elementCount, int instanceCount)
 {
     glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount);
+}
+
+void rendererDestroyResources(EngineMemory *memory)
+{
+    assert(memory->size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->address;
+
+    glDeleteTextures(state->textureCount, state->textureIds);
+    glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
 }

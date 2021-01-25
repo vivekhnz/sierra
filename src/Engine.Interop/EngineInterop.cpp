@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();
-        ctx = new EngineContext(*appCtx);
+        ctx = new EngineContext(*appCtx, memory);
         viewportContexts = new std::vector<ViewportContext *>();
 
         currentEditorState = new EditorState();
@@ -87,8 +87,7 @@ namespace Terrain { namespace Engine { namespace Interop {
              * window.
              */
             vctx->makePrimary();
-
-            ctx->initialize(memory);
+            ctx->initialize();
 
             ctx->resources.loadResources();
             worlds->initialize();

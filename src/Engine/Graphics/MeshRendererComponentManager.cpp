@@ -55,7 +55,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             int &meshHandle = data.meshHandle[i];
             int elementCount = graphicsAssets.getMeshElementCount(meshHandle);
             unsigned int primitiveType = graphicsAssets.getMeshPrimitiveType(meshHandle);
-            renderer.bindVertexArray(graphicsAssets.getMeshVertexArrayHandle(meshHandle));
+            rendererBindVertexArray(
+                renderer.memory, graphicsAssets.getMeshVertexArrayHandle(meshHandle));
 
             // set per-instance material uniforms
             Graphics::Renderer::ShaderProgramState shaderProgramState = {};

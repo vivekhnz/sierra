@@ -3,10 +3,9 @@
 #include "World.hpp"
 
 namespace Terrain { namespace Engine {
-    void EngineContext::initialize(EngineMemory *memory)
+    void EngineContext::initialize()
     {
-        this->memory = memory;
-        renderer.initialize(memory);
+        renderer.initialize();
     }
 
     void EngineContext::registerWorld(World &world)

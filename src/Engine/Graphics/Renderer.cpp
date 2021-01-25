@@ -7,14 +7,12 @@
 #include "../terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Renderer::Renderer()
+    Renderer::Renderer(EngineMemory *memory) : memory(memory)
     {
     }
 
-    void Renderer::initialize(EngineMemory *memory)
+    void Renderer::initialize()
     {
-        engineMemory = memory;
-
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
@@ -66,8 +64,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int wrapMode,
         int filterMode)
     {
-        int handle = rendererCreateTexture(engineMemory);
-        unsigned int id = rendererGetTextureId(engineMemory, handle);
+        int handle = rendererCreateTexture(memory);
+        unsigned int id = rendererGetTextureId(memory, handle);
 
         glBindTexture(GL_TEXTURE_2D, id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
@@ -95,8 +93,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         for (int i = 0; i < count; i++)
         {
-            int handle = rendererCreateTexture(engineMemory);
-            unsigned int id = rendererGetTextureId(engineMemory, handle);
+            int handle = rendererCreateTexture(memory);
+            unsigned int id = rendererGetTextureId(memory, handle);
 
             Resources::TextureResourceDescription &desc = descriptions[i];
             Resources::TextureResourceUsage &usage = usages[i];
@@ -127,7 +125,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             if (textures.resourceId[i] != resource.id)
                 continue;
 
-            unsigned int id = rendererGetTextureId(engineMemory, i);
+            unsigned int id = rendererGetTextureId(memory, i);
             glBindTexture(GL_TEXTURE_2D, id);
             glTexImage2D(GL_TEXTURE_2D, 0, textures.internalFormat[i], resource.width,
                 resource.height, 0, textures.format[i], textures.type[i], resource.data);
@@ -137,7 +135,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Renderer::getTexturePixels(int handle, void *out_data)
     {
-        unsigned int id = rendererGetTextureId(engineMemory, handle);
+        unsigned int id = rendererGetTextureId(memory, handle);
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, id);
         glGetTexImage(
@@ -184,20 +182,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     unsigned int Renderer::getElementBufferId(int handle) const
     {
         return elementBuffers.id[handle];
-    }
-
-    int Renderer::createVertexArray()
-    {
-        unsigned int id;
-        glGenVertexArrays(1, &id);
-
-        vertexArrays.id.push_back(id);
-        return vertexArrays.count++;
-    }
-
-    void Renderer::bindVertexArray(int handle)
-    {
-        glBindVertexArray(vertexArrays.id[handle]);
     }
 
     void Renderer::onShadersLoaded(const int count, Resources::ShaderResource *resources)
@@ -301,13 +285,13 @@ namespace Terrain { namespace Engine { namespace Graphics {
         // bind textures
         for (int i = 0; i < state.textures.count; i++)
         {
-            rendererBindTexture(engineMemory, state.textures.handles[i], i);
+            rendererBindTexture(memory, state.textures.handles[i], i);
         }
     }
 
     int Renderer::createFramebuffer(int textureHandle)
     {
-        unsigned int id = rendererGetTextureId(engineMemory, textureHandle);
+        unsigned int id = rendererGetTextureId(memory, textureHandle);
 
         unsigned int framebufferId;
         glGenFramebuffers(1, &framebufferId);
@@ -327,8 +311,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Renderer::finalizeFramebuffer(int handle)
     {
-        unsigned int id =
-            rendererGetTextureId(engineMemory, framebuffers.textureHandle[handle]);
+        unsigned int id = rendererGetTextureId(memory, framebuffers.textureHandle[handle]);
         glBindTexture(GL_TEXTURE_2D, id);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -336,11 +319,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     Renderer::~Renderer()
     {
-        rendererDestroyTextures(engineMemory);
+        rendererDestroyResources(memory);
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
         glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
         glDeleteBuffers(elementBuffers.count, elementBuffers.id.data());
-        glDeleteVertexArrays(vertexArrays.count, vertexArrays.id.data());
         for (int i = 0; i < shaders.count; i++)
         {
             glDeleteShader(shaders.id[i]);

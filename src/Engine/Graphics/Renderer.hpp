@@ -66,16 +66,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } elementBuffers;
 
-        struct VertexArrays
-        {
-            int count;
-            std::vector<unsigned int> id;
-
-            VertexArrays() : count(0)
-            {
-            }
-        } vertexArrays;
-
         struct Shaders
         {
             int count;
@@ -110,8 +100,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             {
             }
         } framebuffers;
-
-        EngineMemory *engineMemory;
 
     public:
         enum class UniformBuffer : unsigned int
@@ -150,13 +138,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
             } textures;
         };
 
-        Renderer();
+        EngineMemory *memory;
+
+        Renderer(EngineMemory *memory);
         Renderer(const Renderer &that) = delete;
         Renderer &operator=(const Renderer &that) = delete;
         Renderer(Renderer &&) = delete;
         Renderer &operator=(Renderer &&) = delete;
 
-        void initialize(EngineMemory *memory);
+        void initialize();
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
         int createTexture(int width,
@@ -184,9 +174,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int createElementBuffer(unsigned int usage);
         void updateElementBuffer(int handle, int size, const void *data);
         unsigned int getElementBufferId(int handle) const;
-
-        int createVertexArray();
-        void bindVertexArray(int handle);
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
 

@@ -152,8 +152,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             elementBufferHandle, indices.size() * sizeof(unsigned int), indices.data());
 
         // create VAO
-        int vertexArrayHandle = renderer.createVertexArray();
-        renderer.bindVertexArray(vertexArrayHandle);
+        int vertexArrayHandle = rendererCreateVertexArray(renderer.memory);
+        rendererBindVertexArray(renderer.memory, vertexArrayHandle);
         glBindBuffer(
             GL_ELEMENT_ARRAY_BUFFER, renderer.getElementBufferId(elementBufferHandle));
         meshes.firstVertexBufferHandle.push_back(meshes.vertexBufferHandles.size());
