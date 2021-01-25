@@ -10,6 +10,7 @@
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class EditorWorlds
     {
+        EngineContext *ctx;
         SceneWorld sceneWorld;
         HeightmapCompositionWorld heightmapCompositionWorld;
         HeightmapPreviewWorld heightmapPreviewWorld;

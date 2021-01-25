@@ -8,18 +8,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class HeightmapPreviewWorld
     {
         EngineContext &ctx;
-        Engine::World world;
 
         int meshHandle;
         int shaderProgramHandle;
         int heightmapTextureHandle;
+        glm::mat4 cameraTransform;
 
     public:
         HeightmapPreviewWorld(EngineContext &ctx);
 
         void initialize(int heightmapTextureHandle);
-        void linkViewport(ViewportContext &vctx);
-        void update(float deltaTime, const EditorState &state, EditorState &newState);
-        void render(EngineViewContext &vctx);
+        void render(EngineMemory *memory, int viewportWidth, int viewportHeight);
     };
 }}}}

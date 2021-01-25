@@ -2,7 +2,7 @@
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     EditorWorlds::EditorWorlds(EngineContext &ctx) :
-        sceneWorld(ctx), heightmapCompositionWorld(ctx), heightmapPreviewWorld(ctx)
+        ctx(&ctx), sceneWorld(ctx), heightmapCompositionWorld(ctx), heightmapPreviewWorld(ctx)
     {
     }
 
@@ -22,9 +22,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         case ViewportWorld::Scene:
             sceneWorld.linkViewport(vctx);
             break;
-        case ViewportWorld::HeightmapPreview:
-            heightmapPreviewWorld.linkViewport(vctx);
-            break;
         }
     }
 
@@ -32,7 +29,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         sceneWorld.update(deltaTime, state, newState);
         heightmapCompositionWorld.update(deltaTime, state, newState);
-        heightmapPreviewWorld.update(deltaTime, state, newState);
         heightmapCompositionWorld.compositeHeightmap(state, newState);
     }
 
@@ -45,7 +41,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             sceneWorld.render(view);
             break;
         case ViewportWorld::HeightmapPreview:
-            heightmapPreviewWorld.render(view);
+            heightmapPreviewWorld.render(ctx->memory, view.viewportWidth, view.viewportHeight);
             break;
         }
     }

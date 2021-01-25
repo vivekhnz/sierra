@@ -1,8 +1,10 @@
+#include <glm/gtc/type_ptr.hpp>
+
 #include "HeightmapPreviewWorld.hpp"
 #include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    HeightmapPreviewWorld::HeightmapPreviewWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
+    HeightmapPreviewWorld::HeightmapPreviewWorld(EngineContext &ctx) : ctx(ctx)
     {
     }
 
@@ -62,48 +64,33 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         shaderProgramHandle =
             ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
         this->heightmapTextureHandle = heightmapTextureHandle;
+
+        cameraTransform = glm::identity<glm::mat4>();
+        cameraTransform = glm::scale(cameraTransform, glm::vec3(2.0f, -2.0f, 1.0f));
+        cameraTransform = glm::translate(cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
     }
 
-    void HeightmapPreviewWorld::linkViewport(ViewportContext &vctx)
+    void HeightmapPreviewWorld::render(
+        EngineMemory *memory, int viewportWidth, int viewportHeight)
     {
-        int cameraEntityId = ctx.entities.create();
-        world.componentManagers.camera.create(
-            cameraEntityId, glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), -1);
-
-        int orthographicCameraId =
-            world.componentManagers.orthographicCamera.create(cameraEntityId, false);
-        world.componentManagers.orthographicCamera.setInputControllerId(
-            orthographicCameraId, vctx.getInputControllerId());
-
-        vctx.setCameraEntityId(cameraEntityId);
-    }
-
-    void HeightmapPreviewWorld::update(
-        float deltaTime, const EditorState &state, EditorState &newState)
-    {
-        world.update(deltaTime);
-    }
-
-    void HeightmapPreviewWorld::render(EngineViewContext &vctx)
-    {
-        if (vctx.cameraEntityId == -1 || vctx.viewportWidth == 0 || vctx.viewportHeight == 0)
+        if (viewportWidth == 0 || viewportHeight == 0)
             return;
 
-        world.componentManagers.orthographicCamera.calculateCameraTransforms(vctx);
-        world.componentManagers.camera.bindTransform(vctx);
+        Graphics::Renderer::CameraState cameraState = {cameraTransform};
+        ctx.renderer.updateUniformBuffer(
+            Graphics::Renderer::UniformBuffer::Camera, &cameraState);
 
-        rendererSetViewportSize(vctx.viewportWidth, vctx.viewportHeight);
+        rendererSetViewportSize(viewportWidth, viewportHeight);
         rendererClearBackBuffer(0, 0, 0, 1);
 
         // render quad
+#define QUAD_ELEMENT_COUNT 6
         ctx.renderer.useShaderProgram(shaderProgramHandle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        rendererBindTexture(ctx.memory, heightmapTextureHandle, 0);
-
-#define QUAD_ELEMENT_COUNT 6
+        rendererBindTexture(memory, heightmapTextureHandle, 0);
         rendererBindVertexArray(
-            ctx.memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
+            memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
         rendererDrawElementsInstanced(GL_TRIANGLES, QUAD_ELEMENT_COUNT, 1);
     }
 }}}}
