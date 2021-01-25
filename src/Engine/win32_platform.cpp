@@ -1,14 +1,17 @@
-#include <windows.h>
-
 #include "win32_platform.h"
 
-#if _DEBUG
-#define assert(expr)                                                                          \
-    if (!(expr))                                                                              \
-        *(int *)0 = 0;
-#else
-#define assert(expr)
-#endif
+void *win32AllocateMemory(unsigned int size)
+{
+    return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+}
+
+void win32FreeMemory(void *data)
+{
+    if (!data)
+        return;
+
+    VirtualFree(data, 0, MEM_RELEASE);
+}
 
 void win32GetAbsolutePath(const char *relativePath, char *absolutePath)
 {
@@ -69,7 +72,7 @@ Win32ReadFileResult win32ReadFile(const char *path)
     if (GetFileSizeEx(handle, &size))
     {
         result.size = size.QuadPart;
-        result.data = VirtualAlloc(0, result.size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        result.data = win32AllocateMemory(result.size);
         if (result.data)
         {
             DWORD bytesRead;
@@ -85,12 +88,4 @@ Win32ReadFileResult win32ReadFile(const char *path)
     CloseHandle(handle);
 
     return result;
-}
-
-void win32FreeMemory(void *data)
-{
-    if (!data)
-        return;
-
-    VirtualFree(data, 0, MEM_RELEASE);
 }

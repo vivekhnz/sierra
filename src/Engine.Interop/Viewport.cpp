@@ -7,6 +7,9 @@ using namespace System;
 using namespace System::Runtime::InteropServices;
 using namespace System::Windows;
 using namespace System::Windows::Controls;
+using namespace System::Windows::Input;
+using namespace System::Windows::Media;
+using namespace System::Windows::Media::Imaging;
 
 namespace Terrain { namespace Engine { namespace Interop {
     Viewport::Viewport() : isInitialized(false)

@@ -2,33 +2,25 @@
 
 #include "ViewportContext.hpp"
 
-using namespace System;
-using namespace System::Windows;
-using namespace System::Windows::Controls;
-using namespace System::Windows::Input;
-using namespace System::Windows::Media;
-using namespace System::Windows::Media::Imaging;
-using namespace System::Windows::Threading;
-
 namespace Terrain { namespace Engine { namespace Interop {
 public
-    ref class Viewport : UserControl
+    ref class Viewport : System::Windows::Controls::UserControl
     {
         delegate void RenderCallbackManaged();
 
         ViewportContext *vctx;
         Worlds::ViewportWorld world;
 
-        Grid ^ layoutRoot;
-        Image ^ image;
-        WriteableBitmap ^ bitmap;
-        Border ^ focusBorder;
-        Border ^ hoverBorder;
+        System::Windows::Controls::Grid ^ layoutRoot;
+        System::Windows::Controls::Image ^ image;
+        System::Windows::Media::Imaging::WriteableBitmap ^ bitmap;
+        System::Windows::Controls::Border ^ focusBorder;
+        System::Windows::Controls::Border ^ hoverBorder;
 
         bool isInitialized;
         bool isInDesignMode;
-        SolidColorBrush ^ unfocusedBrush;
-        SolidColorBrush ^ focusedBrush;
+        System::Windows::Media::SolidColorBrush ^ unfocusedBrush;
+        System::Windows::Media::SolidColorBrush ^ focusedBrush;
         RenderCallbackManaged ^ onRenderCallback;
 
         void UpdateImage();
@@ -52,11 +44,11 @@ public
             }
         }
 
-        void OnRenderSizeChanged(SizeChangedInfo ^ info) override;
-        void OnMouseEnter(MouseEventArgs ^ args) override;
-        void OnMouseLeave(MouseEventArgs ^ args) override;
-        void OnMouseDown(MouseButtonEventArgs ^ args) override;
-        void OnGotFocus(RoutedEventArgs ^ args) override;
-        void OnLostFocus(RoutedEventArgs ^ args) override;
+        void OnRenderSizeChanged(System::Windows::SizeChangedInfo ^ info) override;
+        void OnMouseEnter(System::Windows::Input::MouseEventArgs ^ args) override;
+        void OnMouseLeave(System::Windows::Input::MouseEventArgs ^ args) override;
+        void OnMouseDown(System::Windows::Input::MouseButtonEventArgs ^ args) override;
+        void OnGotFocus(System::Windows::RoutedEventArgs ^ args) override;
+        void OnLostFocus(System::Windows::RoutedEventArgs ^ args) override;
     };
 }}}

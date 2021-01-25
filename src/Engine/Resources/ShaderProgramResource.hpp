@@ -10,9 +10,6 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         int shaderCount;
         int *shaderResourceIds;
-
-        int uniformCount;
-        const char *uniformNames;
     };
 }}}
 

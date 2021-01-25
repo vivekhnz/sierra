@@ -8,6 +8,7 @@
 #include <map>
 #include <string>
 
+#include "../terrain_foundation.h"
 #include "../Resources/TextureResource.hpp"
 #include "../Resources/ShaderResource.hpp"
 #include "../Resources/ShaderProgramResource.hpp"
@@ -31,7 +32,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         struct Textures
         {
             int count;
-            std::vector<unsigned int> id;
             std::vector<int> resourceId;
             std::vector<int> internalFormat;
             std::vector<int> format;
@@ -92,11 +92,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             int count;
             std::vector<unsigned int> id;
-            std::vector<int> firstUniformIndex;
-            std::vector<int> uniformCount;
-
-            std::vector<const char *> uniformNames;
-            std::vector<unsigned int> uniformLocations;
 
             std::map<int, int> resourceIdToHandle;
 
@@ -115,6 +110,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             {
             }
         } framebuffers;
+
+        EngineMemory *engineMemory;
 
     public:
         enum class UniformBuffer : unsigned int
@@ -159,7 +156,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         Renderer(Renderer &&) = delete;
         Renderer &operator=(Renderer &&) = delete;
 
-        void initialize();
+        void initialize(EngineMemory *memory);
         void updateUniformBuffer(UniformBuffer buffer, void *data);
 
         int createTexture(int width,

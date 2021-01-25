@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "../Engine/win32_platform.h"
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/EngineContext.hpp"
@@ -49,12 +50,17 @@ int main()
 {
     try
     {
+#define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
+        EngineMemory memory;
+        memory.address = win32AllocateMemory(ENGINE_MEMORY_SIZE);
+        memory.size = ENGINE_MEMORY_SIZE;
+
         Terrain::Engine::Graphics::GlfwManager glfw;
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         window.makePrimary();
         GameContext appCtx(window);
         Terrain::Engine::EngineContext ctx(appCtx);
-        ctx.initialize();
+        ctx.initialize(&memory);
         ctx.input.addInputController();
 
         Terrain::Engine::World world(ctx);

@@ -4,13 +4,17 @@
 #include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
+#include "../terrain_renderer.h"
+
 namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::Renderer()
     {
     }
 
-    void Renderer::initialize()
+    void Renderer::initialize(EngineMemory *memory)
     {
+        engineMemory = memory;
+
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LEQUAL);
         glEnable(GL_BLEND);
@@ -62,8 +66,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int wrapMode,
         int filterMode)
     {
-        unsigned int id;
-        glGenTextures(1, &id);
+        int handle = rendererCreateTexture(engineMemory);
+        unsigned int id = rendererGetTextureId(engineMemory, handle);
 
         glBindTexture(GL_TEXTURE_2D, id);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
@@ -73,7 +77,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, NULL);
         glGenerateMipmap(GL_TEXTURE_2D);
 
-        textures.id.push_back(id);
         textures.resourceId.push_back(-1);
         textures.internalFormat.push_back(internalFormat);
         textures.format.push_back(format);
@@ -90,12 +93,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         if (count < 1)
             return;
 
-        unsigned int *ids = new unsigned int[count];
-        glGenTextures(count, ids);
-
         for (int i = 0; i < count; i++)
         {
-            unsigned int &id = ids[i];
+            int handle = rendererCreateTexture(engineMemory);
+            unsigned int id = rendererGetTextureId(engineMemory, handle);
+
             Resources::TextureResourceDescription &desc = descriptions[i];
             Resources::TextureResourceUsage &usage = usages[i];
             Resources::TextureResourceData &resourceData = data[i];
@@ -109,7 +111,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
                 resourceData.height, 0, usage.format, desc.type, resourceData.data);
             glGenerateMipmap(GL_TEXTURE_2D);
 
-            textures.id.push_back(id);
             textures.resourceId.push_back(desc.id);
             textures.internalFormat.push_back(desc.internalFormat);
             textures.format.push_back(usage.format);
@@ -117,8 +118,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
             textures.resourceIdToHandle[desc.id] = textures.count++;
         }
-
-        delete[] ids;
     }
 
     void Renderer::onTextureReloaded(Resources::TextureResourceData &resource)
@@ -128,7 +127,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             if (textures.resourceId[i] != resource.id)
                 continue;
 
-            glBindTexture(GL_TEXTURE_2D, textures.id[i]);
+            unsigned int id = rendererGetTextureId(engineMemory, i);
+            glBindTexture(GL_TEXTURE_2D, id);
             glTexImage2D(GL_TEXTURE_2D, 0, textures.internalFormat[i], resource.width,
                 resource.height, 0, textures.format[i], textures.type[i], resource.data);
             glGenerateMipmap(GL_TEXTURE_2D);
@@ -137,8 +137,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Renderer::getTexturePixels(int handle, void *out_data)
     {
+        unsigned int id = rendererGetTextureId(engineMemory, handle);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, textures.id[handle]);
+        glBindTexture(GL_TEXTURE_2D, id);
         glGetTexImage(
             GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
     }
@@ -253,31 +254,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
                     id, shaders.id[shaders.resourceIdToHandle[resource.shaderResourceIds[s]]]);
             }
 
-            // calculate uniform locations
-            shaderPrograms.firstUniformIndex.push_back(shaderPrograms.uniformNames.size());
-            shaderPrograms.uniformCount.push_back(resource.uniformCount);
-
-            // resource.uniformNames is a contiguous set of null-terminated strings
-            const char *srcStartCursor = resource.uniformNames;
-            const char *srcEndCursor = srcStartCursor;
-            int u = 0;
-            while (u < resource.uniformCount)
-            {
-                if (!(*srcEndCursor++))
-                {
-                    int nameLength = srcEndCursor - srcStartCursor;
-                    char *uniformName = new char[nameLength];
-                    memcpy(uniformName, srcStartCursor, nameLength);
-
-                    shaderPrograms.uniformNames.push_back(uniformName);
-                    shaderPrograms.uniformLocations.push_back(
-                        glGetUniformLocation(id, uniformName));
-
-                    srcStartCursor = srcEndCursor;
-                    u++;
-                }
-            }
-
             shaderPrograms.id.push_back(id);
             shaderPrograms.resourceIdToHandle[resource.id] = shaderPrograms.count++;
         }
@@ -291,29 +267,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void Renderer::setShaderProgramState(int handle, ShaderProgramState &state)
     {
         unsigned int id = shaderPrograms.id[handle];
-        int shaderProgramFirstUniformIndex = shaderPrograms.firstUniformIndex[handle];
-        int shaderProgramUniformCount = shaderPrograms.uniformCount[handle];
 
         // set uniforms
         for (int i = 0; i < state.uniforms.count; i++)
         {
             const char *uniformName = state.uniforms.names[i];
-
-            // look up shader uniform location
-            bool foundUniform = false;
-            unsigned int loc = 0;
-            for (int u = 0; u < shaderProgramUniformCount; u++)
-            {
-                int idx = shaderProgramFirstUniformIndex + u;
-                if (strcmp(shaderPrograms.uniformNames[idx], uniformName) == 0)
-                {
-                    loc = shaderPrograms.uniformLocations[idx];
-                    foundUniform = true;
-                    break;
-                }
-            }
-            if (!foundUniform)
-                continue;
+            unsigned int loc = glGetUniformLocation(id, uniformName);
 
             const UniformValue &val = state.uniforms.values[i];
             switch (val.type)
@@ -342,18 +301,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
         // bind textures
         for (int i = 0; i < state.textures.count; i++)
         {
-            glActiveTexture(GL_TEXTURE0 + i);
-            glBindTexture(GL_TEXTURE_2D, textures.id[state.textures.handles[i]]);
+            rendererBindTexture(engineMemory, state.textures.handles[i], i);
         }
     }
 
     int Renderer::createFramebuffer(int textureHandle)
     {
+        unsigned int id = rendererGetTextureId(engineMemory, textureHandle);
+
         unsigned int framebufferId;
         glGenFramebuffers(1, &framebufferId);
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D,
-            textures.id[textureHandle], 0);
+        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         framebuffers.id.push_back(framebufferId);
@@ -368,15 +327,17 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void Renderer::finalizeFramebuffer(int handle)
     {
-        glBindTexture(GL_TEXTURE_2D, textures.id[framebuffers.textureHandle[handle]]);
+        unsigned int id =
+            rendererGetTextureId(engineMemory, framebuffers.textureHandle[handle]);
+        glBindTexture(GL_TEXTURE_2D, id);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
     Renderer::~Renderer()
     {
+        rendererDestroyTextures(engineMemory);
         glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
-        glDeleteTextures(textures.count, textures.id.data());
         glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
         glDeleteBuffers(elementBuffers.count, elementBuffers.id.data());
         glDeleteVertexArrays(vertexArrays.count, vertexArrays.id.data());
@@ -389,10 +350,5 @@ namespace Terrain { namespace Engine { namespace Graphics {
             glDeleteProgram(shaderPrograms.id[i]);
         }
         glDeleteFramebuffers(framebuffers.count, framebuffers.id.data());
-
-        for (int i = 0; i < shaderPrograms.uniformNames.size(); i++)
-        {
-            delete[] shaderPrograms.uniformNames[i];
-        }
     }
 }}}

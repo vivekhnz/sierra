@@ -2,23 +2,62 @@
 
 #include "terrain_renderer.h"
 
-EXPORT void rendererSetViewportSize(int width, int height)
+int rendererCreateTexture(EngineMemory *memory)
+{
+    assert(memory->size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->address;
+
+    assert(state->textureCount < RENDERER_MAX_TEXTURES);
+    glGenTextures(1, state->textureIds + state->textureCount);
+    return state->textureCount++;
+}
+
+unsigned int rendererGetTextureId(EngineMemory *memory, int handle)
+{
+    assert(memory->size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->address;
+
+    assert(handle < state->textureCount);
+    return state->textureIds[handle];
+}
+
+void rendererBindTexture(EngineMemory *memory, int handle, int slot)
+{
+    assert(memory->size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->address;
+
+    assert(handle < state->textureCount);
+    unsigned int id = state->textureIds[handle];
+
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D, id);
+}
+
+void rendererDestroyTextures(EngineMemory *memory)
+{
+    assert(memory->size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->address;
+
+    glDeleteTextures(state->textureCount, state->textureIds);
+}
+
+void rendererSetViewportSize(int width, int height)
 {
     glViewport(0, 0, width, height);
 }
 
-EXPORT void rendererClearBackBuffer(float r, float g, float b, float a)
+void rendererClearBackBuffer(float r, float g, float b, float a)
 {
     glClearColor(r, g, b, a);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-EXPORT void rendererSetPolygonMode(unsigned int polygonMode)
+void rendererSetPolygonMode(unsigned int polygonMode)
 {
     glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
 }
 
-EXPORT void rendererSetBlendMode(
+void rendererSetBlendMode(
     unsigned int equation, unsigned int srcFactor, unsigned int dstFactor)
 {
     glBlendEquation(equation);

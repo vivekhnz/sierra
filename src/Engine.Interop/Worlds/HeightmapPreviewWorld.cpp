@@ -99,14 +99,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ctx.renderer.useShaderProgram(shaderProgramHandle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
-        shaderProgramState.uniforms.count = 0;
-        shaderProgramState.uniforms.names = 0;
-        shaderProgramState.uniforms.values = 0;
-        shaderProgramState.textures.count = 1;
-        shaderProgramState.textures.handles = &heightmapTextureHandle;
-        ctx.renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
+        rendererBindTexture(ctx.memory, heightmapTextureHandle, 0);
 
 #define QUAD_ELEMENT_COUNT 6
         ctx.renderer.bindVertexArray(ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));

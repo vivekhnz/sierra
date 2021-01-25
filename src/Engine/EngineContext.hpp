@@ -18,6 +18,8 @@ namespace Terrain { namespace Engine {
         std::vector<World *> worlds;
 
     public:
+        EngineMemory *memory;
+
         EntityManager entities;
         Resources::ResourceManager resources;
         IO::InputManager input;
@@ -37,7 +39,8 @@ namespace Terrain { namespace Engine {
         {
         }
 
-        void initialize();
+        void initialize(EngineMemory *memory);
+
         void registerWorld(World &world);
 
         void onTexturesLoaded(const int count,

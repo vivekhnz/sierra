@@ -13,11 +13,6 @@
 #include "Proxy/StateProxy.hpp"
 #include "Worlds/EditorWorlds.hpp"
 
-using namespace System;
-using namespace System::Collections::Generic;
-using namespace System::Windows::Input;
-using namespace System::Windows::Threading;
-
 typedef void(__stdcall *RenderCallbackUnmanaged)();
 
 namespace Terrain { namespace Engine { namespace Interop {
@@ -25,6 +20,8 @@ public
     ref class EngineInterop
     {
     private:
+        static EngineMemory *memory = nullptr;
+
         static Graphics::GlfwManager *glfw = nullptr;
         static EditorContext *appCtx = nullptr;
         static EngineContext *ctx = nullptr;
@@ -45,11 +42,12 @@ public
 
         static ViewportContext *focusedViewportCtx = nullptr;
         static ViewportContext *hoveredViewportCtx = nullptr;
-        static DispatcherTimer ^ renderTimer = nullptr;
-        static DateTime lastTickTime;
+        static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
+        static System::DateTime lastTickTime;
 
-        static void OnTick(Object ^ sender, EventArgs ^ e);
-        static void OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args);
+        static void OnTick(Object ^ sender, System::EventArgs ^ e);
+        static void OnMouseWheel(
+            Object ^ sender, System::Windows::Input::MouseWheelEventArgs ^ args);
 
         // internal members
         internal : static property ViewportContext *FocusedViewportContext

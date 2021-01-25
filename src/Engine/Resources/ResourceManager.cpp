@@ -274,8 +274,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         program->shaderResourceIds = shaderResourceId;
         *shaderResourceId++ = TerrainResources::Shaders::TEXTURE_VERTEX;
         *shaderResourceId++ = TerrainResources::Shaders::TEXTURE_FRAGMENT;
-        program->uniformCount = 0;
-        program->uniformNames = "";
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
         program->shaderCount = 4;
@@ -284,18 +282,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
         *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
         *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_FRAGMENT;
-        program->uniformCount = 11;
-        program->uniformNames = "heightmapSize\0"
-                                "mat1_textureSizeInWorldUnits\0"
-                                "mat2_textureSizeInWorldUnits\0"
-                                "mat2_rampParams\0"
-                                "mat3_textureSizeInWorldUnits\0"
-                                "mat3_rampParams\0"
-                                "terrainDimensions\0"
-                                "brushHighlightPos\0"
-                                "brushHighlightStrength\0"
-                                "brushHighlightRadius\0"
-                                "brushHighlightFalloff";
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
         program->shaderCount = 4;
@@ -304,40 +290,23 @@ namespace Terrain { namespace Engine { namespace Resources {
         *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
         *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
         *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
-        program->uniformCount = 4;
-        program->uniformNames = "heightmapSize\0"
-                                "mat1_textureSizeInWorldUnits\0"
-                                "terrainDimensions\0"
-                                "color";
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL;
         program->shaderCount = 1;
         program->shaderResourceIds = shaderResourceId;
         *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
-        program->uniformCount = 4;
-        program->uniformNames = "horizontalEdgeCount\0"
-                                "columnCount\0"
-                                "targetTriangleSize\0"
-                                "terrainHeight";
 
         (++program)->id = TerrainResources::ShaderPrograms::BRUSH;
         program->shaderCount = 2;
         program->shaderResourceIds = shaderResourceId;
         *shaderResourceId++ = TerrainResources::Shaders::BRUSH_VERTEX;
         *shaderResourceId++ = TerrainResources::Shaders::BRUSH_FRAGMENT;
-        program->uniformCount = 3;
-        program->uniformNames = "brushScale\0"
-                                "brushFalloff\0"
-                                "brushStrength";
 
         (++program)->id = TerrainResources::ShaderPrograms::UI;
         program->shaderCount = 2;
         program->shaderResourceIds = shaderResourceId;
         *shaderResourceId++ = TerrainResources::Shaders::UI_VERTEX;
         *shaderResourceId++ = TerrainResources::Shaders::UI_FRAGMENT;
-        program->uniformCount = 2;
-        program->uniformNames = "transform\0"
-                                "color";
 
         assert(program + 1 == resources + resourceCount);
         assert(shaderResourceId == shaderResourceIds + shaderResourceIdCount);

@@ -1,10 +1,22 @@
 #include "EngineInterop.hpp"
 
+#include <windows.h>
 #include <msclr\lock.h>
+
+using namespace System;
+using namespace System::Windows;
+using namespace System::Windows::Input;
+using namespace System::Windows::Threading;
 
 namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
+#define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
+        memory = new EngineMemory();
+        memory->address =
+            VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+        memory->size = ENGINE_MEMORY_SIZE;
+
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();
         ctx = new EngineContext(*appCtx);
@@ -75,7 +87,8 @@ namespace Terrain { namespace Engine { namespace Interop {
              * window.
              */
             vctx->makePrimary();
-            ctx->initialize();
+
+            ctx->initialize(memory);
 
             ctx->resources.loadResources();
             worlds->initialize();
@@ -211,5 +224,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         delete glfw;
         glfw = nullptr;
+
+        delete memory;
+        memory = nullptr;
     }
 }}}
