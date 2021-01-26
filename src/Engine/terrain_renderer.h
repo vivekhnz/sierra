@@ -1,19 +1,19 @@
 #ifndef TERRAIN_RENDERER_H
 #define TERRAIN_RENDERER_H
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "terrain_foundation.h"
 
-#define RENDERER_MAX_TEXTURES 128
-#define RENDERER_MAX_VERTEX_ARRAYS 128
-
-struct RendererState
-{
-    int textureCount;
-    unsigned int textureIds[RENDERER_MAX_TEXTURES];
-
-    int vertexArrayCount;
-    unsigned int vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
-};
+EXPORT void rendererCreateUniformBuffers(EngineMemory *memory);
+EXPORT void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform);
+EXPORT void rendererUpdateLightingState(EngineMemory *memory,
+    glm::vec4 *lightDir,
+    bool isLightingEnabled,
+    bool isTextureEnabled,
+    bool isNormalMapEnabled,
+    bool isAOMapEnabled,
+    bool isDisplacementMapEnabled);
 
 EXPORT int rendererCreateTexture(EngineMemory *memory);
 EXPORT unsigned int rendererGetTextureId(EngineMemory *memory, int handle);

@@ -76,10 +76,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (viewportWidth == 0 || viewportHeight == 0)
             return;
 
-        Graphics::Renderer::CameraState cameraState = {cameraTransform};
-        ctx.renderer.updateUniformBuffer(
-            Graphics::Renderer::UniformBuffer::Camera, &cameraState);
-
+        rendererUpdateCameraState(memory, &cameraTransform);
         rendererSetViewportSize(viewportWidth, viewportHeight);
         rendererClearBackBuffer(0, 0, 0, 1);
 

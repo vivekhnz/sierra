@@ -23,8 +23,7 @@ namespace Terrain { namespace Engine {
     void CameraComponentManager::bindTransform(EngineViewContext &vctx)
     {
         int i = entityIdToInstanceId[vctx.cameraEntityId];
-        Graphics::Renderer::CameraState cameraState = {data.transform[i]};
-        renderer.updateUniformBuffer(Graphics::Renderer::UniformBuffer::Camera, &cameraState);
+        rendererUpdateCameraState(renderer.memory, &data.transform[i]);
     }
 
     void CameraComponentManager::clearBackBuffer(EngineViewContext &vctx)

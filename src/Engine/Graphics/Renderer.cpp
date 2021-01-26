@@ -20,40 +20,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glEnable(GL_CULL_FACE);
         glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-        glGenBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
-
-        // create uniform buffer for camera state
-        unsigned int cameraUboEnumUint = static_cast<unsigned int>(UniformBuffer::Camera);
-        unsigned int &cameraUboId = uniformBuffers.id[cameraUboEnumUint];
-        unsigned int cameraUboSize = uniformBuffers.size[cameraUboEnumUint] =
-            sizeof(CameraState);
-        glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
-        glBufferData(GL_UNIFORM_BUFFER, cameraUboSize, NULL, GL_DYNAMIC_DRAW);
-        glBindBufferRange(GL_UNIFORM_BUFFER, 0, cameraUboId, 0, cameraUboSize);
-
-        // create uniform buffer for lighting state
-        unsigned int lightingUboEnumUint = static_cast<unsigned int>(UniformBuffer::Lighting);
-        unsigned int &lightingUboId = uniformBuffers.id[lightingUboEnumUint];
-        unsigned int lightingUboSize = uniformBuffers.size[lightingUboEnumUint] =
-            sizeof(LightingState);
-        glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
-        LightingState lighting = {
-            glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f), // lightDir
-            1,                                        // isEnabled
-            1,                                        // isTextureEnabled
-            1,                                        // isNormalMapEnabled
-            1,                                        // isAOMapEnabled
-            1                                         // isDisplacementMapEnabled
-        };
-        glBufferData(GL_UNIFORM_BUFFER, lightingUboSize, &lighting, GL_DYNAMIC_DRAW);
-        glBindBufferRange(GL_UNIFORM_BUFFER, 1, lightingUboId, 0, lightingUboSize);
-    }
-
-    void Renderer::updateUniformBuffer(UniformBuffer buffer, void *data)
-    {
-        unsigned int uboEnumUint = static_cast<unsigned int>(buffer);
-        glBindBuffer(GL_UNIFORM_BUFFER, uniformBuffers.id[uboEnumUint]);
-        glBufferSubData(GL_UNIFORM_BUFFER, 0, uniformBuffers.size[uboEnumUint], data);
+        rendererCreateUniformBuffers(memory);
     }
 
     int Renderer::createTexture(int width,
@@ -320,7 +287,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::~Renderer()
     {
         rendererDestroyResources(memory);
-        glDeleteBuffers(UNIFORM_BUFFER_COUNT, uniformBuffers.id);
         glDeleteBuffers(vertexBuffers.count, vertexBuffers.id.data());
         glDeleteBuffers(elementBuffers.count, elementBuffers.id.data());
         for (int i = 0; i < shaders.count; i++)

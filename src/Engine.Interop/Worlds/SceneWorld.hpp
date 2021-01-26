@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../Engine/terrain_renderer.h"
 #include "../../Engine/World.hpp"
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"

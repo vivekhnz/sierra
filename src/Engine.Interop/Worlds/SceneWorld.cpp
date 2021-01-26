@@ -171,17 +171,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         lightDir.x = sin(state.lightDirection * glm::pi<float>() * -0.5);
         lightDir.y = cos(state.lightDirection * glm::pi<float>() * 0.5);
         lightDir.z = 0.2f;
-
-        Terrain::Engine::Graphics::Renderer::LightingState lighting = {
-            lightDir, // lightDir
-            1,        // isEnabled
-            1,        // isTextureEnabled
-            1,        // isNormalMapEnabled
-            1,        // isAOMapEnabled
-            1         // isDisplacementMapEnabled
-        };
-        ctx.renderer.updateUniformBuffer(
-            Terrain::Engine::Graphics::Renderer::UniformBuffer::Lighting, &lighting);
+        rendererUpdateLightingState(ctx.memory, &lightDir, true, true, true, true, true);
     }
 
     SceneWorld::OperationState SceneWorld::getCurrentOperation(const EditorState &prevState)

@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "../Engine/win32_platform.h"
+#include "../Engine/terrain_renderer.h"
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/EngineContext.hpp"
@@ -106,6 +107,7 @@ int main()
 
         bool isOrbitCameraMode = false;
 
+        glm::vec4 lightDir = glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f);
         bool isLightingEnabled = true;
         bool isAlbedoEnabled = true;
         bool isNormalMapEnabled = true;
@@ -186,16 +188,9 @@ int main()
 
             if (isLightingStateUpdated)
             {
-                Terrain::Engine::Graphics::Renderer::LightingState lighting = {
-                    glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f), // lightDir
-                    isLightingEnabled ? 1 : 0,                // isEnabled
-                    isAlbedoEnabled ? 1 : 0,                  // isTextureEnabled
-                    isNormalMapEnabled ? 1 : 0,               // isNormalMapEnabled
-                    isAOMapEnabled ? 1 : 0,                   // isAOMapEnabled
-                    isDisplacementMapEnabled ? 1 : 0          // isDisplacementMapEnabled
-                };
-                ctx.renderer.updateUniformBuffer(
-                    Terrain::Engine::Graphics::Renderer::UniformBuffer::Lighting, &lighting);
+                rendererUpdateLightingState(&memory, &lightDir, isLightingEnabled,
+                    isAlbedoEnabled, isNormalMapEnabled, isAOMapEnabled,
+                    isDisplacementMapEnabled);
                 isLightingStateUpdated = false;
             }
 

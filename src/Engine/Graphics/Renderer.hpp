@@ -18,17 +18,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
     {
     private:
-        static const int UNIFORM_BUFFER_COUNT = 2;
-        struct UniformBuffers
-        {
-            unsigned int id[UNIFORM_BUFFER_COUNT];
-            unsigned int size[UNIFORM_BUFFER_COUNT];
-
-            UniformBuffers() : id(), size()
-            {
-            }
-        } uniformBuffers;
-
         struct Textures
         {
             int count;
@@ -147,7 +136,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         Renderer &operator=(Renderer &&) = delete;
 
         void initialize();
-        void updateUniformBuffer(UniformBuffer buffer, void *data);
 
         int createTexture(int width,
             int height,
