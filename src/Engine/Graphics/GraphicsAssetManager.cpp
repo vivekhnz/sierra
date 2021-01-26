@@ -154,11 +154,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
         // create VAO
         int vertexArrayHandle = rendererCreateVertexArray(renderer.memory);
         rendererBindVertexArray(renderer.memory, vertexArrayHandle);
-        glBindBuffer(
-            GL_ELEMENT_ARRAY_BUFFER, renderer.getElementBufferId(elementBufferHandle));
+        rendererBindElementBufferRaw(renderer.getElementBufferId(elementBufferHandle));
         meshes.firstVertexBufferHandle.push_back(meshes.vertexBufferHandles.size());
 
-        int attributeIdx = 0;
+        unsigned int attributeIdx = 0;
         int vertexBufferCount = vertexBuffers.size();
         for (int i = 0; i < vertexBufferCount; i++)
         {
@@ -179,22 +178,19 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
 
             // bind vertex attributes
-            glBindBuffer(GL_ARRAY_BUFFER, renderer.getVertexBufferId(vertexBufferHandle));
-            int offset = 0;
-            int attributeDivisor = vertexBufferDesc.isPerInstance ? 1 : 0;
+            rendererBindVertexBufferRaw(renderer.getVertexBufferId(vertexBufferHandle));
+            unsigned int offset = 0;
             for (int j = 0; j < vertexBufferDesc.attributeCount; j++)
             {
                 const VertexAttribute &attr = vertexBufferDesc.attributes[j];
-                glVertexAttribPointer(attributeIdx, attr.count, attr.type, attr.isNormalized,
-                    stride, (void *)offset);
-                glEnableVertexAttribArray(attributeIdx);
-                glVertexAttribDivisor(attributeIdx, attributeDivisor);
+                rendererBindVertexAttribute(attributeIdx, attr.type, attr.isNormalized,
+                    attr.count, stride, offset, vertexBufferDesc.isPerInstance);
                 offset += attr.count * attr.typeSize;
                 attributeIdx++;
             }
         }
 
-        glBindVertexArray(0);
+        rendererUnbindVertexArray();
 
         // create component data
         meshes.vertexArrayHandle.push_back(vertexArrayHandle);

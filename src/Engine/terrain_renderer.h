@@ -21,6 +21,18 @@ EXPORT void rendererBindTexture(EngineMemory *memory, int handle, int slot);
 
 EXPORT int rendererCreateVertexArray(EngineMemory *memory);
 EXPORT void rendererBindVertexArray(EngineMemory *memory, int handle);
+EXPORT void rendererUnbindVertexArray();
+
+EXPORT void rendererBindElementBufferRaw(unsigned int id);
+
+EXPORT void rendererBindVertexBufferRaw(unsigned int id);
+EXPORT void rendererBindVertexAttribute(unsigned int index,
+    unsigned int elementType,
+    bool isNormalized,
+    unsigned int elementCount,
+    unsigned int stride,
+    unsigned int offset,
+    bool isPerInstance);
 
 EXPORT void rendererSetViewportSize(int width, int height);
 EXPORT void rendererClearBackBuffer(float r, float g, float b, float a);

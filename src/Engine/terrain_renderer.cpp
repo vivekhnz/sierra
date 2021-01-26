@@ -148,6 +148,35 @@ void rendererBindVertexArray(EngineMemory *memory, int handle)
     glBindVertexArray(id);
 }
 
+void rendererUnbindVertexArray()
+{
+    glBindVertexArray(0);
+}
+
+void rendererBindElementBufferRaw(unsigned int id)
+{
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+}
+
+void rendererBindVertexBufferRaw(unsigned int id)
+{
+    glBindBuffer(GL_ARRAY_BUFFER, id);
+}
+
+void rendererBindVertexAttribute(unsigned int index,
+    unsigned int elementType,
+    bool isNormalized,
+    unsigned int elementCount,
+    unsigned int stride,
+    unsigned int offset,
+    bool isPerInstance)
+{
+    glVertexAttribPointer(
+        index, elementCount, elementType, isNormalized, stride, (void *)offset);
+    glEnableVertexAttribArray(index);
+    glVertexAttribDivisor(index, isPerInstance);
+}
+
 void rendererSetViewportSize(int width, int height)
 {
     glViewport(0, 0, width, height);
