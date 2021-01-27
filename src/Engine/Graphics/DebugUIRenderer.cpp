@@ -86,8 +86,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void DebugUIRenderer::render(EngineViewContext &vctx)
     {
         // update point instance buffer
-        renderer.updateVertexBuffer(
-            points.instanceBufferHandle, Points::SIZE, points.instanceBufferData);
+        rendererUpdateBuffer(renderer.memory, points.instanceBufferHandle, Points::SIZE,
+            points.instanceBufferData);
 
         // bind material data
         int &materialHandle = graphicsAssets.lookupMaterial(TerrainResources::Materials::UI);

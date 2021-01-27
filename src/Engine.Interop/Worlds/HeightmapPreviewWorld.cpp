@@ -20,18 +20,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         unsigned int vertexBufferStride = 5 * sizeof(float);
         unsigned int quadIndices[6] = {0, 2, 1, 0, 3, 2};
 
-        int vertexBufferHandle = ctx.renderer.createVertexBuffer(GL_STATIC_DRAW);
-        ctx.renderer.updateVertexBuffer(
-            vertexBufferHandle, sizeof(quadVertices), &quadVertices);
+        int vertexBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(
+            ctx.memory, vertexBufferHandle, sizeof(quadVertices), &quadVertices);
 
-        int elementBufferHandle = ctx.renderer.createElementBuffer(GL_STATIC_DRAW);
-        ctx.renderer.updateElementBuffer(
-            elementBufferHandle, sizeof(quadIndices), &quadIndices);
+        int elementBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(
+            ctx.memory, elementBufferHandle, sizeof(quadIndices), &quadIndices);
 
         vertexArrayHandle = rendererCreateVertexArray(ctx.memory);
         rendererBindVertexArray(ctx.memory, vertexArrayHandle);
-        rendererBindElementBufferRaw(ctx.renderer.getElementBufferId(elementBufferHandle));
-        rendererBindVertexBufferRaw(ctx.renderer.getVertexBufferId(vertexBufferHandle));
+        rendererBindBuffer(ctx.memory, elementBufferHandle);
+        rendererBindBuffer(ctx.memory, vertexBufferHandle);
         rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
         rendererBindVertexAttribute(
             1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);

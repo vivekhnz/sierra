@@ -33,28 +33,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } textures;
 
-        struct VertexBuffers
-        {
-            int count;
-            std::vector<unsigned int> id;
-            std::vector<unsigned int> usage;
-
-            VertexBuffers() : count(0)
-            {
-            }
-        } vertexBuffers;
-
-        struct ElementBuffers
-        {
-            int count;
-            std::vector<unsigned int> id;
-            std::vector<unsigned int> usage;
-
-            ElementBuffers() : count(0)
-            {
-            }
-        } elementBuffers;
-
         struct Shaders
         {
             int count;
@@ -91,26 +69,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         } framebuffers;
 
     public:
-        enum class UniformBuffer : unsigned int
-        {
-            Camera = 0,
-            Lighting = 1
-        };
-
-        struct CameraState
-        {
-            glm::mat4 transform;
-        };
-        struct LightingState
-        {
-            glm::vec4 lightDir;
-            int isEnabled;
-            int isTextureEnabled;
-            int isNormalMapEnabled;
-            int isAOMapEnabled;
-            int isDisplacementMapEnabled;
-        };
-
         struct ShaderProgramState
         {
             struct
@@ -154,14 +112,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             return textures.resourceIdToHandle[resourceId];
         }
-
-        int createVertexBuffer(unsigned int usage);
-        void updateVertexBuffer(int handle, int size, const void *data);
-        unsigned int getVertexBufferId(int handle) const;
-
-        int createElementBuffer(unsigned int usage);
-        void updateElementBuffer(int handle, int size, const void *data);
-        unsigned int getElementBufferId(int handle) const;
 
         void onShadersLoaded(const int count, Resources::ShaderResource *resources);
 

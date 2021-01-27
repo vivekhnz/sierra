@@ -4,6 +4,7 @@
 
 #define RENDERER_MAX_TEXTURES 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
+#define RENDERER_MAX_BUFFERS 128
 
 enum RendererUniformBuffer
 {
@@ -22,6 +23,11 @@ struct RendererState
 
     int vertexArrayCount;
     unsigned int vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
+
+    int bufferCount;
+    unsigned int bufferIds[RENDERER_MAX_BUFFERS];
+    RendererBufferType bufferTypes[RENDERER_MAX_BUFFERS];
+    unsigned int bufferUsages[RENDERER_MAX_BUFFERS];
 };
 
 struct GpuCameraState
@@ -43,6 +49,21 @@ RendererState *getState(EngineMemory *memory)
     assert(memory->size >= sizeof(RendererState));
     RendererState *state = (RendererState *)memory->address;
     return state;
+}
+
+unsigned int getOpenGLBufferType(RendererBufferType type)
+{
+    unsigned int bufferType = 0;
+    if (type == RENDERER_VERTEX_BUFFER)
+    {
+        bufferType = GL_ARRAY_BUFFER;
+    }
+    else if (type == RENDERER_ELEMENT_BUFFER)
+    {
+        bufferType = GL_ELEMENT_ARRAY_BUFFER;
+    }
+    assert(bufferType);
+    return bufferType;
 }
 
 void rendererCreateUniformBuffers(EngineMemory *memory)
@@ -153,14 +174,35 @@ void rendererUnbindVertexArray()
     glBindVertexArray(0);
 }
 
-void rendererBindElementBufferRaw(unsigned int id)
+int rendererCreateBuffer(EngineMemory *memory, RendererBufferType type, unsigned int usage)
 {
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, id);
+    RendererState *state = getState(memory);
+    assert(state->bufferCount < RENDERER_MAX_BUFFERS);
+    glGenBuffers(1, state->bufferIds + state->bufferCount);
+    state->bufferTypes[state->bufferCount] = type;
+    state->bufferUsages[state->bufferCount] = usage;
+    return state->bufferCount++;
 }
 
-void rendererBindVertexBufferRaw(unsigned int id)
+void rendererBindBuffer(EngineMemory *memory, int handle)
 {
-    glBindBuffer(GL_ARRAY_BUFFER, id);
+    RendererState *state = getState(memory);
+    assert(handle < state->bufferCount);
+    unsigned int id = state->bufferIds[handle];
+
+    unsigned int openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
+    glBindBuffer(openGLType, id);
+}
+
+void rendererUpdateBuffer(EngineMemory *memory, int handle, int size, void *data)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->bufferCount);
+    unsigned int id = state->bufferIds[handle];
+
+    unsigned int openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
+    glBindBuffer(openGLType, id);
+    glBufferData(openGLType, size, data, state->bufferUsages[handle]);
 }
 
 void rendererBindVertexAttribute(unsigned int index,
@@ -175,6 +217,15 @@ void rendererBindVertexAttribute(unsigned int index,
         index, elementCount, elementType, isNormalized, stride, (void *)offset);
     glEnableVertexAttribArray(index);
     glVertexAttribDivisor(index, isPerInstance);
+}
+
+void rendererBindShaderStorageBuffer(EngineMemory *memory, int handle, int slot)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->bufferCount);
+    unsigned int id = state->bufferIds[handle];
+
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, id);
 }
 
 void rendererSetViewportSize(int width, int height)
@@ -212,4 +263,5 @@ void rendererDestroyResources(EngineMemory *memory)
     glDeleteBuffers(RENDERER_UNIFORM_BUFFER_COUNT, state->uniformBufferIds);
     glDeleteTextures(state->textureCount, state->textureIds);
     glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
+    glDeleteBuffers(state->bufferCount, state->bufferIds);
 }

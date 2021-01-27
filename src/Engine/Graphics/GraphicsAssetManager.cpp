@@ -147,14 +147,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
         const std::vector<unsigned int> &indices)
     {
         // create element buffer
-        int elementBufferHandle = renderer.createElementBuffer(GL_STATIC_DRAW);
-        renderer.updateElementBuffer(
-            elementBufferHandle, indices.size() * sizeof(unsigned int), indices.data());
+        int elementBufferHandle =
+            rendererCreateBuffer(renderer.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(renderer.memory, elementBufferHandle,
+            indices.size() * sizeof(unsigned int), (void *)indices.data());
 
         // create VAO
         int vertexArrayHandle = rendererCreateVertexArray(renderer.memory);
         rendererBindVertexArray(renderer.memory, vertexArrayHandle);
-        rendererBindElementBufferRaw(renderer.getElementBufferId(elementBufferHandle));
+        rendererBindBuffer(renderer.memory, elementBufferHandle);
         meshes.firstVertexBufferHandle.push_back(meshes.vertexBufferHandles.size());
 
         unsigned int attributeIdx = 0;
@@ -164,9 +165,10 @@ namespace Terrain { namespace Engine { namespace Graphics {
             const VertexBufferDescription &vertexBufferDesc = vertexBuffers[i];
 
             // create vertex buffer
-            int vertexBufferHandle = renderer.createVertexBuffer(GL_STATIC_DRAW);
-            renderer.updateVertexBuffer(
-                vertexBufferHandle, vertexBufferDesc.size, vertexBufferDesc.data);
+            int vertexBufferHandle =
+                rendererCreateBuffer(renderer.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+            rendererUpdateBuffer(renderer.memory, vertexBufferHandle, vertexBufferDesc.size,
+                vertexBufferDesc.data);
             meshes.vertexBufferHandles.push_back(vertexBufferHandle);
 
             // calculate stride
@@ -178,7 +180,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
 
             // bind vertex attributes
-            rendererBindVertexBufferRaw(renderer.getVertexBufferId(vertexBufferHandle));
+            rendererBindBuffer(renderer.memory, vertexBufferHandle);
             unsigned int offset = 0;
             for (int j = 0; j < vertexBufferDesc.attributeCount; j++)
             {

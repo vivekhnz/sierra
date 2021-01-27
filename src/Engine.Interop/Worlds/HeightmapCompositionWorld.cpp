@@ -1,5 +1,6 @@
 #include "HeightmapCompositionWorld.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) :
@@ -244,7 +245,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             // update brush quad instance buffer
             if (wasInstanceAdded)
             {
-                ctx.renderer.updateVertexBuffer(working.brushQuad_instanceBufferHandle,
+                rendererUpdateBuffer(ctx.memory, working.brushQuad_instanceBufferHandle,
                     WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
                     working.brushQuad_instanceBufferData);
             }

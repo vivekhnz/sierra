@@ -1,6 +1,7 @@
 #include "TerrainRendererComponentManager.hpp"
 
 #include "TerrainResources.hpp"
+#include "terrain_renderer.h"
 
 namespace Terrain { namespace Engine {
     TerrainRendererComponentManager::TerrainRendererComponentManager(
@@ -173,8 +174,8 @@ namespace Terrain { namespace Engine {
 
             glBindBufferBase(
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
-            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1,
-                renderer.getVertexBufferId(data.meshVertexBufferHandle[i]));
+            rendererBindShaderStorageBuffer(
+                renderer.memory, data.meshVertexBufferHandle[i], 1);
             renderer.useShaderProgram(calcTessLevelsShaderProgramHandle);
             glDispatchCompute(meshEdgeCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);

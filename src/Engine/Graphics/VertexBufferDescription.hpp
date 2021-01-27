@@ -26,7 +26,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     struct VertexBufferDescription
     {
-        const void *data;
+        void *data;
         int size;
         const VertexAttribute *attributes;
         int attributeCount;

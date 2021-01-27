@@ -5,6 +5,12 @@
 
 #include "terrain_foundation.h"
 
+enum RendererBufferType
+{
+    RENDERER_VERTEX_BUFFER,
+    RENDERER_ELEMENT_BUFFER
+};
+
 EXPORT void rendererCreateUniformBuffers(EngineMemory *memory);
 EXPORT void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform);
 EXPORT void rendererUpdateLightingState(EngineMemory *memory,
@@ -23,9 +29,11 @@ EXPORT int rendererCreateVertexArray(EngineMemory *memory);
 EXPORT void rendererBindVertexArray(EngineMemory *memory, int handle);
 EXPORT void rendererUnbindVertexArray();
 
-EXPORT void rendererBindElementBufferRaw(unsigned int id);
+EXPORT int rendererCreateBuffer(
+    EngineMemory *memory, RendererBufferType type, unsigned int usage);
+EXPORT void rendererBindBuffer(EngineMemory *memory, int handle);
+EXPORT void rendererUpdateBuffer(EngineMemory *memory, int handle, int size, void *data);
 
-EXPORT void rendererBindVertexBufferRaw(unsigned int id);
 EXPORT void rendererBindVertexAttribute(unsigned int index,
     unsigned int elementType,
     bool isNormalized,
@@ -33,6 +41,7 @@ EXPORT void rendererBindVertexAttribute(unsigned int index,
     unsigned int stride,
     unsigned int offset,
     bool isPerInstance);
+EXPORT void rendererBindShaderStorageBuffer(EngineMemory *memory, int handle, int slot);
 
 EXPORT void rendererSetViewportSize(int width, int height);
 EXPORT void rendererClearBackBuffer(float r, float g, float b, float a);
