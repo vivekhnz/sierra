@@ -24,7 +24,8 @@ enum ShaderAssets
     ASSET_SHADER_COUNT
 };
 
-EXPORT void assetsOnShaderLoaded(MemoryBlock *memory, int assetId, uint32 handle);
-EXPORT uint32 assetsGetShader(MemoryBlock *memory, int assetId);
+EXPORT void assetsLoadShader(
+    MemoryBlock *memory, int32 assetId, uint32 shaderType, const char *relativePath);
+EXPORT uint32 assetsGetShader(MemoryBlock *memory, int32 assetId);
 
 #endif

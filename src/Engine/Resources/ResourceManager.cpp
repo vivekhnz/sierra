@@ -189,83 +189,36 @@ namespace Terrain { namespace Engine { namespace Resources {
 
     void ResourceManager::loadShaders()
     {
-        char *src;
-        uint32 handle;
-
-        src = readFileText("data/texture_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TEXTURE_VERTEX, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/texture_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TEXTURE_FRAGMENT, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/terrain_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_VERTEX, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/terrain_tess_ctrl_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_TESS_CTRL, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/terrain_tess_eval_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_TESS_EVAL, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/terrain_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_FRAGMENT, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_COMPUTE_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/wireframe_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_VERTEX, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/wireframe_tess_ctrl_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_CTRL, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/wireframe_tess_eval_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_EVAL, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/wireframe_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_FRAGMENT, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/brush_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_BRUSH_VERTEX, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/brush_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_BRUSH_FRAGMENT, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/ui_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_UI_VERTEX, handle);
-        win32FreeMemory(src);
-
-        src = readFileText("data/ui_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
-        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_UI_FRAGMENT, handle);
-        win32FreeMemory(src);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_VERTEX, GL_VERTEX_SHADER,
+            "data/texture_vertex_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_FRAGMENT, GL_FRAGMENT_SHADER,
+            "data/texture_fragment_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_VERTEX, GL_VERTEX_SHADER,
+            "data/terrain_vertex_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_CTRL, GL_TESS_CONTROL_SHADER,
+            "data/terrain_tess_ctrl_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_EVAL, GL_TESS_EVALUATION_SHADER,
+            "data/terrain_tess_eval_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_FRAGMENT, GL_FRAGMENT_SHADER,
+            "data/terrain_fragment_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL,
+            GL_COMPUTE_SHADER, "data/terrain_calc_tess_levels_comp_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_VERTEX, GL_VERTEX_SHADER,
+            "data/wireframe_vertex_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_CTRL, GL_TESS_CONTROL_SHADER,
+            "data/wireframe_tess_ctrl_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_EVAL,
+            GL_TESS_EVALUATION_SHADER, "data/wireframe_tess_eval_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_FRAGMENT, GL_FRAGMENT_SHADER,
+            "data/wireframe_fragment_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_VERTEX, GL_VERTEX_SHADER,
+            "data/brush_vertex_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_FRAGMENT, GL_FRAGMENT_SHADER,
+            "data/brush_fragment_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_VERTEX, GL_VERTEX_SHADER,
+            "data/ui_vertex_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_FRAGMENT, GL_FRAGMENT_SHADER,
+            "data/ui_fragment_shader.glsl");
     }
 
     void ResourceManager::loadShaderPrograms()
