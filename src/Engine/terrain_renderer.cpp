@@ -16,8 +16,6 @@ enum RendererUniformBuffer
 
 struct RendererState
 {
-    uint32 uniformBufferIds[RENDERER_UNIFORM_BUFFER_COUNT];
-
     uint32 textureCount;
     uint32 textureIds[RENDERER_MAX_TEXTURES];
 
@@ -71,10 +69,14 @@ uint32 getOpenGLBufferType(RendererBufferType type)
 void rendererCreateUniformBuffers(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
-    glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, state->uniformBufferIds);
+
+    // note: we assume that this is called before any vertex or element buffers are created
+    assert(state->bufferCount == 0);
+    glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, state->bufferIds);
+    state->bufferCount = RENDERER_UNIFORM_BUFFER_COUNT;
 
     // initialize camera state
-    uint32 cameraUboId = state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
+    uint32 cameraUboId = state->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
     glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuCameraState), 0, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_CAMERA, cameraUboId, 0,
@@ -89,7 +91,7 @@ void rendererCreateUniformBuffers(EngineMemory *memory)
     lighting.isAOMapEnabled = true;
     lighting.isDisplacementMapEnabled = true;
 
-    uint32 lightingUboId = state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
+    uint32 lightingUboId = state->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
@@ -103,7 +105,7 @@ void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform)
     GpuCameraState camera;
     camera.transform = *transform;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+    glBindBuffer(GL_UNIFORM_BUFFER, state->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
 }
 
@@ -125,7 +127,7 @@ void rendererUpdateLightingState(EngineMemory *memory,
     lighting.isAOMapEnabled = isAOMapEnabled;
     lighting.isDisplacementMapEnabled = isDisplacementMapEnabled;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING]);
+    glBindBuffer(GL_UNIFORM_BUFFER, state->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING]);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
@@ -261,7 +263,6 @@ void rendererDrawElementsInstanced(
 void rendererDestroyResources(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
-    glDeleteBuffers(RENDERER_UNIFORM_BUFFER_COUNT, state->uniformBufferIds);
     glDeleteTextures(state->textureCount, state->textureIds);
     glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
     glDeleteBuffers(state->bufferCount, state->bufferIds);
