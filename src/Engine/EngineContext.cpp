@@ -12,8 +12,16 @@ namespace Terrain { namespace Engine {
 
         uint8 *baseAddress = static_cast<uint8 *>(memoryBlock->baseAddress);
         uint64 offset = sizeof(EngineMemory);
+
         memory->renderer.baseAddress = baseAddress + offset;
-        memory->renderer.size = memoryBlock->size - offset;
+        memory->renderer.size = 1024 * 1024;
+        offset += memory->renderer.size;
+
+        memory->assets.baseAddress = baseAddress + offset;
+        memory->assets.size = memoryBlock->size - offset;
+        offset += memory->assets.size;
+
+        assert(offset == memoryBlock->size);
     }
 
     void EngineContext::initialize()

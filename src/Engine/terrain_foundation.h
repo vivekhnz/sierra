@@ -31,6 +31,7 @@ EXPORT struct MemoryBlock
 struct EngineMemory
 {
     MemoryBlock renderer;
+    MemoryBlock assets;
 };
 
 #endif

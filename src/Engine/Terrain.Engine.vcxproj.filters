@@ -53,6 +53,7 @@
     </ClCompile>
     <ClCompile Include="win32_platform.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
+    <ClCompile Include="terrain_assets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\BindBuffer.hpp">
@@ -142,6 +143,7 @@
     <ClInclude Include="win32_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_foundation.h" />
+    <ClInclude Include="terrain_assets.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Graphics">

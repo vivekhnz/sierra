@@ -7,6 +7,7 @@
 #include "../IO/Path.hpp"
 #include "../win32_platform.h"
 #include "../terrain_renderer.h"
+#include "../terrain_assets.h"
 #include "TextureLoader.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources {
@@ -188,91 +189,83 @@ namespace Terrain { namespace Engine { namespace Resources {
 
     void ResourceManager::loadShaders()
     {
-        const int count = 15;
-        int resourceIds[count];
-        int *resourceId = resourceIds;
-        uint32 handles[count];
-        uint32 *handle = handles;
         char *src;
+        uint32 handle;
 
-        *resourceId++ = TerrainResources::Shaders::TEXTURE_VERTEX;
         src = readFileText("data/texture_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TEXTURE_VERTEX, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::TEXTURE_FRAGMENT;
         src = readFileText("data/texture_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TEXTURE_FRAGMENT, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::TERRAIN_VERTEX;
         src = readFileText("data/terrain_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_VERTEX, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
         src = readFileText("data/terrain_tess_ctrl_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_TESS_CTRL, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
         src = readFileText("data/terrain_tess_eval_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_TESS_EVAL, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::TERRAIN_FRAGMENT;
         src = readFileText("data/terrain_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_FRAGMENT, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
         src = readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_COMPUTE_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_COMPUTE_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::WIREFRAME_VERTEX;
         src = readFileText("data/wireframe_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_VERTEX, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
         src = readFileText("data/wireframe_tess_ctrl_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_CTRL, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
         src = readFileText("data/wireframe_tess_eval_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_EVAL, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
         src = readFileText("data/wireframe_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_WIREFRAME_FRAGMENT, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::BRUSH_VERTEX;
         src = readFileText("data/brush_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_BRUSH_VERTEX, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::BRUSH_FRAGMENT;
         src = readFileText("data/brush_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_BRUSH_FRAGMENT, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::UI_VERTEX;
         src = readFileText("data/ui_vertex_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_UI_VERTEX, handle);
         win32FreeMemory(src);
 
-        *resourceId++ = TerrainResources::Shaders::UI_FRAGMENT;
         src = readFileText("data/ui_fragment_shader.glsl");
-        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, &handle));
+        assetsOnShaderLoaded(ctx.memory, ASSET_SHADER_UI_FRAGMENT, handle);
         win32FreeMemory(src);
-
-        assert(resourceId == resourceIds + count);
-        assert(handle == handles + count);
-        ctx.renderer.onShadersLoaded(count, resourceIds, handles);
     }
 
     void ResourceManager::loadShaderPrograms()
@@ -288,41 +281,41 @@ namespace Terrain { namespace Engine { namespace Resources {
         program->id = TerrainResources::ShaderPrograms::QUAD;
         program->shaderCount = 2;
         program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = TerrainResources::Shaders::TEXTURE_VERTEX;
-        *shaderResourceId++ = TerrainResources::Shaders::TEXTURE_FRAGMENT;
+        *shaderResourceId++ = ASSET_SHADER_TEXTURE_VERTEX;
+        *shaderResourceId++ = ASSET_SHADER_TEXTURE_FRAGMENT;
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
         program->shaderCount = 4;
         program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_VERTEX;
-        *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
-        *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
-        *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_FRAGMENT;
+        *shaderResourceId++ = ASSET_SHADER_TERRAIN_VERTEX;
+        *shaderResourceId++ = ASSET_SHADER_TERRAIN_TESS_CTRL;
+        *shaderResourceId++ = ASSET_SHADER_TERRAIN_TESS_EVAL;
+        *shaderResourceId++ = ASSET_SHADER_TERRAIN_FRAGMENT;
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
         program->shaderCount = 4;
         program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_VERTEX;
-        *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
-        *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
-        *shaderResourceId++ = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
+        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_VERTEX;
+        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_TESS_CTRL;
+        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_TESS_EVAL;
+        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_FRAGMENT;
 
         (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL;
         program->shaderCount = 1;
         program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
+        *shaderResourceId++ = ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL;
 
         (++program)->id = TerrainResources::ShaderPrograms::BRUSH;
         program->shaderCount = 2;
         program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = TerrainResources::Shaders::BRUSH_VERTEX;
-        *shaderResourceId++ = TerrainResources::Shaders::BRUSH_FRAGMENT;
+        *shaderResourceId++ = ASSET_SHADER_BRUSH_VERTEX;
+        *shaderResourceId++ = ASSET_SHADER_BRUSH_FRAGMENT;
 
         (++program)->id = TerrainResources::ShaderPrograms::UI;
         program->shaderCount = 2;
         program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = TerrainResources::Shaders::UI_VERTEX;
-        *shaderResourceId++ = TerrainResources::Shaders::UI_FRAGMENT;
+        *shaderResourceId++ = ASSET_SHADER_UI_VERTEX;
+        *shaderResourceId++ = ASSET_SHADER_UI_FRAGMENT;
 
         assert(program + 1 == resources + resourceCount);
         assert(shaderResourceId == shaderResourceIds + shaderResourceIdCount);

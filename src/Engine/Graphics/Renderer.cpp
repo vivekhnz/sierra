@@ -5,6 +5,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "../terrain_renderer.h"
+#include "../terrain_assets.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::Renderer(MemoryBlock *memory) : memory(memory)
@@ -109,14 +110,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
     }
 
-    void Renderer::onShadersLoaded(const int count, int *resourceIds, uint32 *handles)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            shaders.resourceIdToHandle[resourceIds[i]] = handles[i];
-        }
-    }
-
     void Renderer::onShaderProgramsLoaded(
         const int count, Resources::ShaderProgramResource *resources)
     {
@@ -130,7 +123,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             for (int s = 0; s < resource.shaderCount; s++)
             {
                 rendererAttachShader(
-                    memory, id, shaders.resourceIdToHandle[resource.shaderResourceIds[s]]);
+                    memory, id, assetsGetShader(memory, resource.shaderResourceIds[s]));
             }
             glLinkProgram(id);
             int success;
@@ -144,7 +137,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             for (int s = 0; s < resource.shaderCount; s++)
             {
                 rendererDetachShader(
-                    memory, id, shaders.resourceIdToHandle[resource.shaderResourceIds[s]]);
+                    memory, id, assetsGetShader(memory, resource.shaderResourceIds[s]));
             }
 
             shaderPrograms.id.push_back(id);
