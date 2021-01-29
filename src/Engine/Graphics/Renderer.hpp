@@ -106,7 +106,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return textures.resourceIdToHandle[resourceId];
         }
 
-        void onShadersLoaded(const int count, Resources::ShaderResource *resources);
+        void onShadersLoaded(const int count, int *resourceIds, uint32 *handles);
 
         void onShaderProgramsLoaded(
             const int count, Resources::ShaderProgramResource *resources);

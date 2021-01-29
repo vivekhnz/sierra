@@ -6,6 +6,7 @@
 #include "../EngineContext.hpp"
 #include "../IO/Path.hpp"
 #include "../win32_platform.h"
+#include "../terrain_renderer.h"
 #include "TextureLoader.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources {
@@ -188,75 +189,90 @@ namespace Terrain { namespace Engine { namespace Resources {
     void ResourceManager::loadShaders()
     {
         const int count = 15;
-        ShaderResource resources[count];
-        ShaderResource *shader = resources;
+        int resourceIds[count];
+        int *resourceId = resourceIds;
+        uint32 handles[count];
+        uint32 *handle = handles;
+        char *src;
 
-        shader->id = TerrainResources::Shaders::TEXTURE_VERTEX;
-        shader->type = GL_VERTEX_SHADER;
-        shader->src = readFileText("data/texture_vertex_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TEXTURE_VERTEX;
+        src = readFileText("data/texture_vertex_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::TEXTURE_FRAGMENT;
-        shader->type = GL_FRAGMENT_SHADER;
-        shader->src = readFileText("data/texture_fragment_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TEXTURE_FRAGMENT;
+        src = readFileText("data/texture_fragment_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::TERRAIN_VERTEX;
-        shader->type = GL_VERTEX_SHADER;
-        shader->src = readFileText("data/terrain_vertex_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TERRAIN_VERTEX;
+        src = readFileText("data/terrain_vertex_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
-        shader->type = GL_TESS_CONTROL_SHADER;
-        shader->src = readFileText("data/terrain_tess_ctrl_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TERRAIN_TESS_CTRL;
+        src = readFileText("data/terrain_tess_ctrl_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
-        shader->type = GL_TESS_EVALUATION_SHADER;
-        shader->src = readFileText("data/terrain_tess_eval_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TERRAIN_TESS_EVAL;
+        src = readFileText("data/terrain_tess_eval_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::TERRAIN_FRAGMENT;
-        shader->type = GL_FRAGMENT_SHADER;
-        shader->src = readFileText("data/terrain_fragment_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TERRAIN_FRAGMENT;
+        src = readFileText("data/terrain_fragment_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
-        shader->type = GL_COMPUTE_SHADER;
-        shader->src = readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::TERRAIN_COMPUTE_TESS_LEVEL;
+        src = readFileText("data/terrain_calc_tess_levels_comp_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_COMPUTE_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::WIREFRAME_VERTEX;
-        shader->type = GL_VERTEX_SHADER;
-        shader->src = readFileText("data/wireframe_vertex_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::WIREFRAME_VERTEX;
+        src = readFileText("data/wireframe_vertex_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
-        shader->type = GL_TESS_CONTROL_SHADER;
-        shader->src = readFileText("data/wireframe_tess_ctrl_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_CTRL;
+        src = readFileText("data/wireframe_tess_ctrl_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_TESS_CONTROL_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
-        shader->type = GL_TESS_EVALUATION_SHADER;
-        shader->src = readFileText("data/wireframe_tess_eval_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::WIREFRAME_TESS_EVAL;
+        src = readFileText("data/wireframe_tess_eval_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_TESS_EVALUATION_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
-        shader->type = GL_FRAGMENT_SHADER;
-        shader->src = readFileText("data/wireframe_fragment_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::WIREFRAME_FRAGMENT;
+        src = readFileText("data/wireframe_fragment_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::BRUSH_VERTEX;
-        shader->type = GL_VERTEX_SHADER;
-        shader->src = readFileText("data/brush_vertex_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::BRUSH_VERTEX;
+        src = readFileText("data/brush_vertex_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::BRUSH_FRAGMENT;
-        shader->type = GL_FRAGMENT_SHADER;
-        shader->src = readFileText("data/brush_fragment_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::BRUSH_FRAGMENT;
+        src = readFileText("data/brush_fragment_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::UI_VERTEX;
-        shader->type = GL_VERTEX_SHADER;
-        shader->src = readFileText("data/ui_vertex_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::UI_VERTEX;
+        src = readFileText("data/ui_vertex_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_VERTEX_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        (++shader)->id = TerrainResources::Shaders::UI_FRAGMENT;
-        shader->type = GL_FRAGMENT_SHADER;
-        shader->src = readFileText("data/ui_fragment_shader.glsl");
+        *resourceId++ = TerrainResources::Shaders::UI_FRAGMENT;
+        src = readFileText("data/ui_fragment_shader.glsl");
+        assert(rendererCreateShader(ctx.memory, GL_FRAGMENT_SHADER, src, handle++));
+        win32FreeMemory(src);
 
-        assert(shader + 1 == resources + count);
-        ctx.onShadersLoaded(count, resources);
-        for (int i = 0; i < count; i++)
-        {
-            win32FreeMemory((void *)resources[i].src);
-        }
+        assert(resourceId == resourceIds + count);
+        assert(handle == handles + count);
+        ctx.renderer.onShadersLoaded(count, resourceIds, handles);
     }
 
     void ResourceManager::loadShaderPrograms()

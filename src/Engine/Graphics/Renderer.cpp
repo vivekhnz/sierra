@@ -109,15 +109,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
             GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
     }
 
-    void Renderer::onShadersLoaded(const int count, Resources::ShaderResource *resources)
+    void Renderer::onShadersLoaded(const int count, int *resourceIds, uint32 *handles)
     {
         for (int i = 0; i < count; i++)
         {
-            Resources::ShaderResource &resource = resources[i];
-
-            uint32 handle;
-            assert(rendererCreateShader(memory, resource.type, resource.src, &handle));
-            shaders.resourceIdToHandle[resource.id] = handle;
+            shaders.resourceIdToHandle[resourceIds[i]] = handles[i];
         }
     }
 

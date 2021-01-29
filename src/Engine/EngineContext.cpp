@@ -24,10 +24,6 @@ namespace Terrain { namespace Engine {
             world->onTexturesLoaded(count, descriptions, usages, data);
         }
     }
-    void EngineContext::onShadersLoaded(const int count, Resources::ShaderResource *resources)
-    {
-        renderer.onShadersLoaded(count, resources);
-    }
     void EngineContext::onShaderProgramsLoaded(
         const int count, Resources::ShaderProgramResource *resources)
     {
