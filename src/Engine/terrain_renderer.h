@@ -25,6 +25,11 @@ EXPORT uint32 rendererCreateTexture(EngineMemory *memory);
 EXPORT uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle);
 EXPORT void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot);
 
+EXPORT bool rendererCreateShader(
+    EngineMemory *memory, uint32 type, char *src, uint32 *out_handle);
+EXPORT void rendererAttachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle);
+EXPORT void rendererDetachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle);
+
 EXPORT uint32 rendererCreateVertexArray(EngineMemory *memory);
 EXPORT void rendererBindVertexArray(EngineMemory *memory, uint32 handle);
 EXPORT void rendererUnbindVertexArray();

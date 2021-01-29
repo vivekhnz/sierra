@@ -3,6 +3,7 @@
 #include "terrain_renderer.h"
 
 #define RENDERER_MAX_TEXTURES 128
+#define RENDERER_MAX_SHADERS 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
 #define RENDERER_MAX_BUFFERS 128
 
@@ -18,6 +19,9 @@ struct RendererState
 {
     uint32 textureCount;
     uint32 textureIds[RENDERER_MAX_TEXTURES];
+
+    uint32 shaderCount;
+    uint32 shaderIds[RENDERER_MAX_SHADERS];
 
     uint32 vertexArrayCount;
     uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
@@ -156,6 +160,51 @@ void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
+bool rendererCreateShader(EngineMemory *memory, uint32 type, char *src, uint32 *out_handle)
+{
+    RendererState *state = getState(memory);
+    assert(state->shaderCount < RENDERER_MAX_SHADERS);
+
+    uint32 id = glCreateShader(type);
+    glShaderSource(id, 1, &src, NULL);
+
+    glCompileShader(id);
+    int succeeded;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
+    if (succeeded)
+    {
+        state->shaderIds[state->shaderCount] = id;
+        *out_handle = state->shaderCount++;
+        return 1;
+    }
+    else
+    {
+        char infoLog[512];
+        glGetShaderInfoLog(id, 512, NULL, infoLog);
+        // todo: log out error
+
+        return 0;
+    }
+}
+
+void rendererAttachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderCount);
+    uint32 shaderId = state->shaderIds[handle];
+
+    glAttachShader(shaderProgramId, shaderId);
+}
+
+void rendererDetachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderCount);
+    uint32 shaderId = state->shaderIds[handle];
+
+    glDetachShader(shaderProgramId, shaderId);
+}
+
 uint32 rendererCreateVertexArray(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
@@ -264,6 +313,10 @@ void rendererDestroyResources(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     glDeleteTextures(state->textureCount, state->textureIds);
+    for (int i = 0; i < state->shaderCount; i++)
+    {
+        glDeleteShader(state->shaderIds[i]);
+    }
     glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
     glDeleteBuffers(state->bufferCount, state->bufferIds);
 }

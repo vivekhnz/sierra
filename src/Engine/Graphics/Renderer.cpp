@@ -115,21 +115,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             Resources::ShaderResource &resource = resources[i];
 
-            unsigned int id = glCreateShader(resource.type);
-            glShaderSource(id, 1, &resource.src, NULL);
-
-            glCompileShader(id);
-            int success;
-            glGetShaderiv(id, GL_COMPILE_STATUS, &success);
-            if (!success)
-            {
-                char infoLog[512];
-                glGetShaderInfoLog(id, 512, NULL, infoLog);
-                throw std::runtime_error("Shader compilation failed: " + std::string(infoLog));
-            }
-
-            shaders.id.push_back(id);
-            shaders.resourceIdToHandle[resource.id] = shaders.count++;
+            uint32 handle;
+            assert(rendererCreateShader(memory, resource.type, resource.src, &handle));
+            shaders.resourceIdToHandle[resource.id] = handle;
         }
     }
 
@@ -145,8 +133,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             // link shader program
             for (int s = 0; s < resource.shaderCount; s++)
             {
-                glAttachShader(
-                    id, shaders.id[shaders.resourceIdToHandle[resource.shaderResourceIds[s]]]);
+                rendererAttachShader(
+                    memory, id, shaders.resourceIdToHandle[resource.shaderResourceIds[s]]);
             }
             glLinkProgram(id);
             int success;
@@ -159,8 +147,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
             for (int s = 0; s < resource.shaderCount; s++)
             {
-                glDetachShader(
-                    id, shaders.id[shaders.resourceIdToHandle[resource.shaderResourceIds[s]]]);
+                rendererDetachShader(
+                    memory, id, shaders.resourceIdToHandle[resource.shaderResourceIds[s]]);
             }
 
             shaderPrograms.id.push_back(id);
@@ -245,10 +233,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::~Renderer()
     {
         rendererDestroyResources(memory);
-        for (int i = 0; i < shaders.count; i++)
-        {
-            glDeleteShader(shaders.id[i]);
-        }
         for (int i = 0; i < shaderPrograms.count; i++)
         {
             glDeleteProgram(shaderPrograms.id[i]);

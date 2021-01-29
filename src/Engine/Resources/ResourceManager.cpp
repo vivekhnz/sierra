@@ -13,14 +13,14 @@ namespace Terrain { namespace Engine { namespace Resources {
     {
     }
 
-    const char *readFileText(const char *relativePath)
+    char *readFileText(const char *relativePath)
     {
         char absolutePath[MAX_PATH];
         win32GetAbsolutePath(relativePath, absolutePath);
 
         Win32ReadFileResult result = win32ReadFile(absolutePath);
         assert(result.data != 0);
-        return static_cast<const char *>(result.data);
+        return static_cast<char *>(result.data);
     }
 
     void ResourceManager::loadResources()

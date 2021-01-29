@@ -8,7 +8,7 @@ namespace Terrain { namespace Engine { namespace Resources {
     {
         int id;
         unsigned int type;
-        const char *src;
+        char *src;
     };
 }}}
 
