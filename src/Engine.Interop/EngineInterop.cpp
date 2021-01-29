@@ -12,8 +12,8 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
 #define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
-        memory = new EngineMemory();
-        memory->address =
+        memory = new MemoryBlock();
+        memory->baseAddress =
             VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
         memory->size = ENGINE_MEMORY_SIZE;
 
@@ -159,7 +159,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::RenderView(ViewportContext &vctx)
     {
         vctx.makeCurrent();
-        worlds->render(vctx);
+        worlds->render(memory, vctx);
         vctx.render();
     }
 

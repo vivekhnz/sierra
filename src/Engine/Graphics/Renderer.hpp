@@ -78,9 +78,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             } textures;
         };
 
-        EngineMemory *memory;
+        MemoryBlock *memory;
 
-        Renderer(EngineMemory *memory);
+        Renderer(MemoryBlock *memory);
         Renderer(const Renderer &that) = delete;
         Renderer &operator=(const Renderer &that) = delete;
         Renderer(Renderer &&) = delete;

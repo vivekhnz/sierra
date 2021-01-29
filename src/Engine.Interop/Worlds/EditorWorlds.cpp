@@ -32,7 +32,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         heightmapCompositionWorld.compositeHeightmap(state, newState);
     }
 
-    void EditorWorlds::render(ViewportContext &vctx)
+    void EditorWorlds::render(MemoryBlock *memory, ViewportContext &vctx)
     {
         EngineViewContext view = vctx.getViewContext();
         switch (vctx.getWorld())
@@ -41,7 +41,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             sceneWorld.render(view);
             break;
         case ViewportWorld::HeightmapPreview:
-            heightmapPreviewWorld.render(ctx->memory, view.viewportWidth, view.viewportHeight);
+            heightmapPreviewWorld.render(memory, view.viewportWidth, view.viewportHeight);
             break;
         }
     }

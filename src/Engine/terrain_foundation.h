@@ -22,10 +22,15 @@ typedef uint64_t uint64;
 #define assert(expr)
 #endif
 
-EXPORT struct EngineMemory
+EXPORT struct MemoryBlock
 {
-    void *address;
+    void *baseAddress;
     uint64 size;
+};
+
+struct EngineMemory
+{
+    MemoryBlock renderer;
 };
 
 #endif

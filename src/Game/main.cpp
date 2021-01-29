@@ -52,8 +52,8 @@ int main()
     try
     {
 #define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
-        EngineMemory memory;
-        memory.address = win32AllocateMemory(ENGINE_MEMORY_SIZE);
+        MemoryBlock memory;
+        memory.baseAddress = win32AllocateMemory(ENGINE_MEMORY_SIZE);
         memory.size = ENGINE_MEMORY_SIZE;
 
         Terrain::Engine::Graphics::GlfwManager glfw;

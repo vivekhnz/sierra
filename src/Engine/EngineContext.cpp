@@ -3,6 +3,19 @@
 #include "World.hpp"
 
 namespace Terrain { namespace Engine {
+    EngineContext::EngineContext(AppContext &ctx, MemoryBlock *memoryBlock) :
+        memory(memoryBlock), resources(*this), input(ctx), renderer(memoryBlock),
+        assets(renderer)
+    {
+        assert(memoryBlock->size >= sizeof(EngineMemory));
+        EngineMemory *memory = static_cast<EngineMemory *>(memoryBlock->baseAddress);
+
+        uint8 *baseAddress = static_cast<uint8 *>(memoryBlock->baseAddress);
+        uint64 offset = sizeof(EngineMemory);
+        memory->renderer.baseAddress = baseAddress + offset;
+        memory->renderer.size = memoryBlock->size - offset;
+    }
+
     void EngineContext::initialize()
     {
         renderer.initialize();

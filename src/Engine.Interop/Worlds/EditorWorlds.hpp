@@ -21,6 +21,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void initialize();
         void linkViewport(ViewportWorld viewportWorld, ViewportContext &vctx);
         void update(float deltaTime, const EditorState &state, EditorState &newState);
-        void render(ViewportContext &vctx);
+        void render(MemoryBlock *memory, ViewportContext &vctx);
     };
 }}}}

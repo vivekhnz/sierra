@@ -18,6 +18,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         HeightmapPreviewWorld(EngineContext &ctx);
 
         void initialize(uint32 heightmapTextureHandle);
-        void render(EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight);
+        void render(MemoryBlock *memory, uint32 viewportWidth, uint32 viewportHeight);
     };
 }}}}
