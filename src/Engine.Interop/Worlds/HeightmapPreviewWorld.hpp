@@ -9,15 +9,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         EngineContext &ctx;
 
-        int vertexArrayHandle;
-        int shaderProgramHandle;
-        int heightmapTextureHandle;
+        uint32 vertexArrayHandle;
+        uint32 shaderProgramHandle;
+        uint32 heightmapTextureHandle;
         glm::mat4 cameraTransform;
 
     public:
         HeightmapPreviewWorld(EngineContext &ctx);
 
-        void initialize(int heightmapTextureHandle);
-        void render(EngineMemory *memory, int viewportWidth, int viewportHeight);
+        void initialize(uint32 heightmapTextureHandle);
+        void render(EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight);
     };
 }}}}

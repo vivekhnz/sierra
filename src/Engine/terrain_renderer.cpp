@@ -16,18 +16,18 @@ enum RendererUniformBuffer
 
 struct RendererState
 {
-    unsigned int uniformBufferIds[RENDERER_UNIFORM_BUFFER_COUNT];
+    uint32 uniformBufferIds[RENDERER_UNIFORM_BUFFER_COUNT];
 
-    int textureCount;
-    unsigned int textureIds[RENDERER_MAX_TEXTURES];
+    uint32 textureCount;
+    uint32 textureIds[RENDERER_MAX_TEXTURES];
 
-    int vertexArrayCount;
-    unsigned int vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
+    uint32 vertexArrayCount;
+    uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
 
-    int bufferCount;
-    unsigned int bufferIds[RENDERER_MAX_BUFFERS];
+    uint32 bufferCount;
+    uint32 bufferIds[RENDERER_MAX_BUFFERS];
     RendererBufferType bufferTypes[RENDERER_MAX_BUFFERS];
-    unsigned int bufferUsages[RENDERER_MAX_BUFFERS];
+    uint32 bufferUsages[RENDERER_MAX_BUFFERS];
 };
 
 struct GpuCameraState
@@ -37,11 +37,13 @@ struct GpuCameraState
 struct GpuLightingState
 {
     glm::vec4 lightDir;
-    int isEnabled;
-    int isTextureEnabled;
-    int isNormalMapEnabled;
-    int isAOMapEnabled;
-    int isDisplacementMapEnabled;
+
+    // todo: pack these into a single uint8
+    uint32 isEnabled;
+    uint32 isTextureEnabled;
+    uint32 isNormalMapEnabled;
+    uint32 isAOMapEnabled;
+    uint32 isDisplacementMapEnabled;
 };
 
 RendererState *getState(EngineMemory *memory)
@@ -51,9 +53,9 @@ RendererState *getState(EngineMemory *memory)
     return state;
 }
 
-unsigned int getOpenGLBufferType(RendererBufferType type)
+uint32 getOpenGLBufferType(RendererBufferType type)
 {
-    unsigned int bufferType = 0;
+    uint32 bufferType = 0;
     if (type == RENDERER_VERTEX_BUFFER)
     {
         bufferType = GL_ARRAY_BUFFER;
@@ -72,7 +74,7 @@ void rendererCreateUniformBuffers(EngineMemory *memory)
     glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, state->uniformBufferIds);
 
     // initialize camera state
-    unsigned int cameraUboId = state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
+    uint32 cameraUboId = state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
     glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuCameraState), 0, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_CAMERA, cameraUboId, 0,
@@ -87,7 +89,7 @@ void rendererCreateUniformBuffers(EngineMemory *memory)
     lighting.isAOMapEnabled = true;
     lighting.isDisplacementMapEnabled = true;
 
-    unsigned int lightingUboId = state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
+    uint32 lightingUboId = state->uniformBufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
@@ -127,7 +129,7 @@ void rendererUpdateLightingState(EngineMemory *memory,
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
-int rendererCreateTexture(EngineMemory *memory)
+uint32 rendererCreateTexture(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     assert(state->textureCount < RENDERER_MAX_TEXTURES);
@@ -135,24 +137,24 @@ int rendererCreateTexture(EngineMemory *memory)
     return state->textureCount++;
 }
 
-unsigned int rendererGetTextureId(EngineMemory *memory, int handle)
+uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->textureCount);
     return state->textureIds[handle];
 }
 
-void rendererBindTexture(EngineMemory *memory, int handle, int slot)
+void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
 {
     RendererState *state = getState(memory);
     assert(handle < state->textureCount);
-    unsigned int id = state->textureIds[handle];
+    uint32 id = state->textureIds[handle];
 
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
-int rendererCreateVertexArray(EngineMemory *memory)
+uint32 rendererCreateVertexArray(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     assert(state->vertexArrayCount < RENDERER_MAX_VERTEX_ARRAYS);
@@ -160,11 +162,11 @@ int rendererCreateVertexArray(EngineMemory *memory)
     return state->vertexArrayCount++;
 }
 
-void rendererBindVertexArray(EngineMemory *memory, int handle)
+void rendererBindVertexArray(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->vertexArrayCount);
-    unsigned int id = state->vertexArrayIds[handle];
+    uint32 id = state->vertexArrayIds[handle];
 
     glBindVertexArray(id);
 }
@@ -174,7 +176,7 @@ void rendererUnbindVertexArray()
     glBindVertexArray(0);
 }
 
-int rendererCreateBuffer(EngineMemory *memory, RendererBufferType type, unsigned int usage)
+uint32 rendererCreateBuffer(EngineMemory *memory, RendererBufferType type, uint32 usage)
 {
     RendererState *state = getState(memory);
     assert(state->bufferCount < RENDERER_MAX_BUFFERS);
@@ -184,33 +186,33 @@ int rendererCreateBuffer(EngineMemory *memory, RendererBufferType type, unsigned
     return state->bufferCount++;
 }
 
-void rendererBindBuffer(EngineMemory *memory, int handle)
+void rendererBindBuffer(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->bufferCount);
-    unsigned int id = state->bufferIds[handle];
+    uint32 id = state->bufferIds[handle];
 
-    unsigned int openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
+    uint32 openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
     glBindBuffer(openGLType, id);
 }
 
-void rendererUpdateBuffer(EngineMemory *memory, int handle, int size, void *data)
+void rendererUpdateBuffer(EngineMemory *memory, uint32 handle, uint64 size, void *data)
 {
     RendererState *state = getState(memory);
     assert(handle < state->bufferCount);
-    unsigned int id = state->bufferIds[handle];
+    uint32 id = state->bufferIds[handle];
 
-    unsigned int openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
+    uint32 openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
     glBindBuffer(openGLType, id);
     glBufferData(openGLType, size, data, state->bufferUsages[handle]);
 }
 
-void rendererBindVertexAttribute(unsigned int index,
-    unsigned int elementType,
+void rendererBindVertexAttribute(uint8 index,
+    uint32 elementType,
     bool isNormalized,
-    unsigned int elementCount,
-    unsigned int stride,
-    unsigned int offset,
+    uint8 elementCount,
+    uint32 stride,
+    uint32 offset,
     bool isPerInstance)
 {
     glVertexAttribPointer(
@@ -219,16 +221,16 @@ void rendererBindVertexAttribute(unsigned int index,
     glVertexAttribDivisor(index, isPerInstance);
 }
 
-void rendererBindShaderStorageBuffer(EngineMemory *memory, int handle, int slot)
+void rendererBindShaderStorageBuffer(EngineMemory *memory, uint32 handle, uint8 slot)
 {
     RendererState *state = getState(memory);
     assert(handle < state->bufferCount);
-    unsigned int id = state->bufferIds[handle];
+    uint32 id = state->bufferIds[handle];
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, id);
 }
 
-void rendererSetViewportSize(int width, int height)
+void rendererSetViewportSize(uint32 width, uint32 height)
 {
     glViewport(0, 0, width, height);
 }
@@ -239,20 +241,19 @@ void rendererClearBackBuffer(float r, float g, float b, float a)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void rendererSetPolygonMode(unsigned int polygonMode)
+void rendererSetPolygonMode(uint32 polygonMode)
 {
     glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
 }
 
-void rendererSetBlendMode(
-    unsigned int equation, unsigned int srcFactor, unsigned int dstFactor)
+void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFactor)
 {
     glBlendEquation(equation);
     glBlendFunc(srcFactor, dstFactor);
 }
 
 void rendererDrawElementsInstanced(
-    unsigned int primitiveType, int elementCount, int instanceCount)
+    uint32 primitiveType, uint32 elementCount, uint32 instanceCount)
 {
     glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount);
 }

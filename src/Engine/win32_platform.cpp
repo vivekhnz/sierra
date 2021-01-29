@@ -1,6 +1,6 @@
 #include "win32_platform.h"
 
-void *win32AllocateMemory(unsigned int size)
+void *win32AllocateMemory(uint64 size)
 {
     return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }

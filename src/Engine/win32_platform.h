@@ -7,11 +7,11 @@
 
 struct Win32ReadFileResult
 {
-    LONGLONG size;
+    uint64 size;
     void *data;
 };
 
-EXPORT void *win32AllocateMemory(unsigned int size);
+EXPORT void *win32AllocateMemory(uint64 size);
 void win32FreeMemory(void *data);
 void win32GetAbsolutePath(const char *relativePath, char *absolutePath);
 Win32ReadFileResult win32ReadFile(const char *path);

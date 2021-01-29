@@ -8,7 +8,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
     }
 
-    void HeightmapPreviewWorld::initialize(int heightmapTextureHandle)
+    void HeightmapPreviewWorld::initialize(uint32 heightmapTextureHandle)
     {
         // create quad mesh
         float quadVertices[20] = {
@@ -17,15 +17,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             1, 1, 0, 1, 1, //
             0, 1, 0, 0, 1  //
         };
-        unsigned int vertexBufferStride = 5 * sizeof(float);
-        unsigned int quadIndices[6] = {0, 2, 1, 0, 3, 2};
+        uint32 vertexBufferStride = 5 * sizeof(float);
+        uint32 quadIndices[6] = {0, 2, 1, 0, 3, 2};
 
-        int vertexBufferHandle =
+        uint32 vertexBufferHandle =
             rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
         rendererUpdateBuffer(
             ctx.memory, vertexBufferHandle, sizeof(quadVertices), &quadVertices);
 
-        int elementBufferHandle =
+        uint32 elementBufferHandle =
             rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
         rendererUpdateBuffer(
             ctx.memory, elementBufferHandle, sizeof(quadIndices), &quadIndices);
@@ -50,7 +50,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     }
 
     void HeightmapPreviewWorld::render(
-        EngineMemory *memory, int viewportWidth, int viewportHeight)
+        EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight)
     {
         if (viewportWidth == 0 || viewportHeight == 0)
             return;

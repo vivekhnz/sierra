@@ -21,35 +21,34 @@ EXPORT void rendererUpdateLightingState(EngineMemory *memory,
     bool isAOMapEnabled,
     bool isDisplacementMapEnabled);
 
-EXPORT int rendererCreateTexture(EngineMemory *memory);
-EXPORT unsigned int rendererGetTextureId(EngineMemory *memory, int handle);
-EXPORT void rendererBindTexture(EngineMemory *memory, int handle, int slot);
+EXPORT uint32 rendererCreateTexture(EngineMemory *memory);
+EXPORT uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle);
+EXPORT void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot);
 
-EXPORT int rendererCreateVertexArray(EngineMemory *memory);
-EXPORT void rendererBindVertexArray(EngineMemory *memory, int handle);
+EXPORT uint32 rendererCreateVertexArray(EngineMemory *memory);
+EXPORT void rendererBindVertexArray(EngineMemory *memory, uint32 handle);
 EXPORT void rendererUnbindVertexArray();
 
-EXPORT int rendererCreateBuffer(
-    EngineMemory *memory, RendererBufferType type, unsigned int usage);
-EXPORT void rendererBindBuffer(EngineMemory *memory, int handle);
-EXPORT void rendererUpdateBuffer(EngineMemory *memory, int handle, int size, void *data);
+EXPORT uint32 rendererCreateBuffer(
+    EngineMemory *memory, RendererBufferType type, uint32 usage);
+EXPORT void rendererBindBuffer(EngineMemory *memory, uint32 handle);
+EXPORT void rendererUpdateBuffer(EngineMemory *memory, uint32 handle, uint64 size, void *data);
 
-EXPORT void rendererBindVertexAttribute(unsigned int index,
-    unsigned int elementType,
+EXPORT void rendererBindVertexAttribute(uint8 index,
+    uint32 elementType,
     bool isNormalized,
-    unsigned int elementCount,
-    unsigned int stride,
-    unsigned int offset,
+    uint8 elementCount,
+    uint32 stride,
+    uint32 offset,
     bool isPerInstance);
-EXPORT void rendererBindShaderStorageBuffer(EngineMemory *memory, int handle, int slot);
+EXPORT void rendererBindShaderStorageBuffer(EngineMemory *memory, uint32 handle, uint8 slot);
 
-EXPORT void rendererSetViewportSize(int width, int height);
+EXPORT void rendererSetViewportSize(uint32 width, uint32 height);
 EXPORT void rendererClearBackBuffer(float r, float g, float b, float a);
-EXPORT void rendererSetPolygonMode(unsigned int polygonMode);
-EXPORT void rendererSetBlendMode(
-    unsigned int equation, unsigned int srcFactor, unsigned int dstFactor);
+EXPORT void rendererSetPolygonMode(uint32 polygonMode);
+EXPORT void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFactor);
 EXPORT void rendererDrawElementsInstanced(
-    unsigned int primitiveType, int elementCount, int instanceCount);
+    uint32 primitiveType, uint32 elementCount, uint32 instanceCount);
 
 EXPORT void rendererDestroyResources(EngineMemory *memory);
 
