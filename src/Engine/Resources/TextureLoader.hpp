@@ -5,23 +5,31 @@
 
 #include <string>
 #include <stb/stb_image.h>
+#include "../win32_platform.h"
 #include "TextureResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources { namespace TextureLoader {
     static void loadTexture(
         int resourceId, std::string path, bool is16Bit, TextureResourceData *resource)
     {
-        int channels;
-        int width;
-        int height;
-        void *data = is16Bit
-            ? (void *)stbi_load_16(path.c_str(), &width, &height, &channels, 0)
-            : (void *)stbi_load(path.c_str(), &width, &height, &channels, 0);
+        Win32ReadFileResult result = win32ReadFile(path.c_str());
+        assert(result.data != 0);
 
+        const stbi_uc *rawData = static_cast<stbi_uc *>(result.data);
+        int channels;
+        if (is16Bit)
+        {
+            resource->data = stbi_load_16_from_memory(
+                rawData, result.size, &resource->width, &resource->height, &channels, 0);
+        }
+        else
+        {
+            resource->data = stbi_load_from_memory(
+                rawData, result.size, &resource->width, &resource->height, &channels, 0);
+        }
         resource->id = resourceId;
-        resource->width = width;
-        resource->height = height;
-        resource->data = data;
+
+        win32FreeMemory(result.data);
     }
 
     static void unloadTexture(TextureResourceData &resource)
