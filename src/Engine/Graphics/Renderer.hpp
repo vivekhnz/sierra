@@ -34,14 +34,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         struct ShaderPrograms
         {
-            int count;
-            std::vector<unsigned int> id;
-
             std::map<int, int> resourceIdToHandle;
-
-            ShaderPrograms() : count(0)
-            {
-            }
         } shaderPrograms;
 
         struct Framebuffers

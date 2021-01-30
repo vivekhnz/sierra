@@ -10,7 +10,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineContext &ctx;
 
         uint32 vertexArrayHandle;
-        uint32 shaderProgramHandle;
         uint32 heightmapTextureHandle;
         glm::mat4 cameraTransform;
 

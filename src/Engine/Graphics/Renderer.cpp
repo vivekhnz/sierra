@@ -117,71 +117,55 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             Resources::ShaderProgramResource &resource = resources[i];
 
-            unsigned int id = glCreateProgram();
-
-            // link shader program
+            std::vector<uint32> shaderHandles;
             for (int s = 0; s < resource.shaderCount; s++)
             {
                 ShaderAsset *shader = assetsGetShader(memory, resource.shaderResourceIds[s]);
                 assert(shader);
-                rendererAttachShader(memory, id, shader->handle);
-            }
-            glLinkProgram(id);
-            int success;
-            glGetProgramiv(id, GL_LINK_STATUS, &success);
-            if (!success)
-            {
-                char infoLog[512];
-                glGetProgramInfoLog(id, 512, NULL, infoLog);
-                throw std::runtime_error("Shader linking failed: " + std::string(infoLog));
-            }
-            for (int s = 0; s < resource.shaderCount; s++)
-            {
-                ShaderAsset *shader = assetsGetShader(memory, resource.shaderResourceIds[s]);
-                assert(shader);
-                rendererDetachShader(memory, id, shader->handle);
+                shaderHandles.push_back(shader->handle);
             }
 
-            shaderPrograms.id.push_back(id);
-            shaderPrograms.resourceIdToHandle[resource.id] = shaderPrograms.count++;
+            uint32 handle;
+            rendererCreateShaderProgram(
+                memory, resource.shaderCount, shaderHandles.data(), &handle);
+
+            shaderPrograms.resourceIdToHandle[resource.id] = handle;
         }
     }
 
     void Renderer::useShaderProgram(int handle)
     {
-        glUseProgram(shaderPrograms.id[handle]);
+        rendererUseShaderProgram(memory, handle);
     }
 
     void Renderer::setShaderProgramState(int handle, ShaderProgramState &state)
     {
-        unsigned int id = shaderPrograms.id[handle];
-
         // set uniforms
         for (int i = 0; i < state.uniforms.count; i++)
         {
             const char *uniformName = state.uniforms.names[i];
-            unsigned int loc = glGetUniformLocation(id, uniformName);
 
             const UniformValue &val = state.uniforms.values[i];
             switch (val.type)
             {
             case UniformType::Float:
-                glProgramUniform1f(id, loc, val.f);
+                rendererSetShaderProgramUniformFloat(memory, handle, uniformName, val.f);
                 break;
             case UniformType::Integer:
-                glProgramUniform1i(id, loc, val.i);
+                rendererSetShaderProgramUniformInteger(memory, handle, uniformName, val.i);
                 break;
             case UniformType::Vector2:
-                glProgramUniform2fv(id, loc, 1, glm::value_ptr(val.vec2));
+                rendererSetShaderProgramUniformVector2(memory, handle, uniformName, val.vec2);
                 break;
             case UniformType::Vector3:
-                glProgramUniform3fv(id, loc, 1, glm::value_ptr(val.vec3));
+                rendererSetShaderProgramUniformVector3(memory, handle, uniformName, val.vec3);
                 break;
             case UniformType::Vector4:
-                glProgramUniform4fv(id, loc, 1, glm::value_ptr(val.vec4));
+                rendererSetShaderProgramUniformVector4(memory, handle, uniformName, val.vec4);
                 break;
             case UniformType::Matrix4x4:
-                glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(val.mat4));
+                rendererSetShaderProgramUniformMatrix4x4(
+                    memory, handle, uniformName, val.mat4);
                 break;
             }
         }
@@ -224,10 +208,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     Renderer::~Renderer()
     {
         rendererDestroyResources(memory);
-        for (int i = 0; i < shaderPrograms.count; i++)
-        {
-            glDeleteProgram(shaderPrograms.id[i]);
-        }
         glDeleteFramebuffers(framebuffers.count, framebuffers.id.data());
     }
 }}}

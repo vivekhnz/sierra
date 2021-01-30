@@ -27,8 +27,22 @@ EXPORT void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
 
 EXPORT bool rendererCreateShader(
     EngineMemory *memory, uint32 type, char *src, uint32 *out_handle);
-EXPORT void rendererAttachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle);
-EXPORT void rendererDetachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle);
+
+EXPORT bool rendererCreateShaderProgram(
+    EngineMemory *memory, int shaderCount, uint32 *shaderHandles, uint32 *out_handle);
+EXPORT void rendererUseShaderProgram(EngineMemory *memory, uint32 handle);
+EXPORT void rendererSetShaderProgramUniformFloat(
+    EngineMemory *memory, uint32 handle, const char* uniformName, float value);
+EXPORT void rendererSetShaderProgramUniformInteger(
+    EngineMemory *memory, uint32 handle, const char* uniformName, int32 value);
+EXPORT void rendererSetShaderProgramUniformVector2(
+    EngineMemory *memory, uint32 handle, const char* uniformName, glm::vec2 value);
+EXPORT void rendererSetShaderProgramUniformVector3(
+    EngineMemory *memory, uint32 handle, const char* uniformName, glm::vec3 value);
+EXPORT void rendererSetShaderProgramUniformVector4(
+    EngineMemory *memory, uint32 handle, const char* uniformName, glm::vec4 value);
+EXPORT void rendererSetShaderProgramUniformMatrix4x4(
+    EngineMemory *memory, uint32 handle, const char* uniformName, glm::mat4 value);
 
 EXPORT uint32 rendererCreateVertexArray(EngineMemory *memory);
 EXPORT void rendererBindVertexArray(EngineMemory *memory, uint32 handle);

@@ -10,6 +10,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void HeightmapPreviewWorld::initialize(uint32 heightmapTextureHandle)
     {
+        this->heightmapTextureHandle = heightmapTextureHandle;
+
         // create quad mesh
         float quadVertices[20] = {
             0, 0, 0, 0, 0, //
@@ -39,11 +41,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
         rendererUnbindVertexArray();
 
-        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
-        shaderProgramHandle =
-            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
-        this->heightmapTextureHandle = heightmapTextureHandle;
-
         cameraTransform = glm::identity<glm::mat4>();
         cameraTransform = glm::scale(cameraTransform, glm::vec3(2.0f, -2.0f, 1.0f));
         cameraTransform = glm::translate(cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
@@ -61,7 +58,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // render quad
 #define QUAD_ELEMENT_COUNT 6
+
+        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
+        uint32 shaderProgramHandle =
+            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
         ctx.renderer.useShaderProgram(shaderProgramHandle);
+
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         rendererBindTexture(memory, heightmapTextureHandle, 0);

@@ -4,6 +4,7 @@
 
 #define RENDERER_MAX_TEXTURES 128
 #define RENDERER_MAX_SHADERS 128
+#define RENDERER_MAX_SHADER_PROGRAMS 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
 #define RENDERER_MAX_BUFFERS 128
 
@@ -22,6 +23,9 @@ struct RendererState
 
     uint32 shaderCount;
     uint32 shaderIds[RENDERER_MAX_SHADERS];
+
+    uint32 shaderProgramCount;
+    uint32 shaderProgramIds[RENDERER_MAX_SHADER_PROGRAMS];
 
     uint32 vertexArrayCount;
     uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
@@ -187,22 +191,115 @@ bool rendererCreateShader(EngineMemory *memory, uint32 type, char *src, uint32 *
     }
 }
 
-void rendererAttachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle)
+bool rendererCreateShaderProgram(
+    EngineMemory *memory, int shaderCount, uint32 *shaderHandles, uint32 *out_handle)
 {
     RendererState *state = getState(memory);
-    assert(handle < state->shaderCount);
-    uint32 shaderId = state->shaderIds[handle];
+    assert(state->shaderProgramCount < RENDERER_MAX_SHADER_PROGRAMS);
 
-    glAttachShader(shaderProgramId, shaderId);
+    uint32 id = glCreateProgram();
+    for (int i = 0; i < shaderCount; i++)
+    {
+        glAttachShader(id, state->shaderIds[shaderHandles[i]]);
+    }
+
+    glLinkProgram(id);
+    int succeeded;
+    glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
+    if (succeeded)
+    {
+        for (int i = 0; i < shaderCount; i++)
+        {
+            glDetachShader(id, state->shaderIds[shaderHandles[i]]);
+        }
+
+        state->shaderProgramIds[state->shaderProgramCount] = id;
+        *out_handle = state->shaderProgramCount++;
+        return 1;
+    }
+    else
+    {
+        char infoLog[512];
+        glGetProgramInfoLog(id, 512, NULL, infoLog);
+        // todo: log out error
+
+        return 0;
+    }
 }
 
-void rendererDetachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle)
+void rendererUseShaderProgram(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
-    assert(handle < state->shaderCount);
-    uint32 shaderId = state->shaderIds[handle];
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
 
-    glDetachShader(shaderProgramId, shaderId);
+    glUseProgram(id);
+}
+
+void rendererSetShaderProgramUniformFloat(
+    EngineMemory *memory, uint32 handle, const char *uniformName, float value)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
+
+    uint32 loc = glGetUniformLocation(id, uniformName);
+    glProgramUniform1f(id, loc, value);
+}
+
+void rendererSetShaderProgramUniformInteger(
+    EngineMemory *memory, uint32 handle, const char *uniformName, int32 value)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
+
+    uint32 loc = glGetUniformLocation(id, uniformName);
+    glProgramUniform1i(id, loc, value);
+}
+
+void rendererSetShaderProgramUniformVector2(
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::vec2 value)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
+
+    uint32 loc = glGetUniformLocation(id, uniformName);
+    glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
+}
+
+void rendererSetShaderProgramUniformVector3(
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::vec3 value)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
+
+    uint32 loc = glGetUniformLocation(id, uniformName);
+    glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
+}
+
+void rendererSetShaderProgramUniformVector4(
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::vec4 value)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
+
+    uint32 loc = glGetUniformLocation(id, uniformName);
+    glProgramUniform4fv(id, loc, 1, glm::value_ptr(value));
+}
+
+void rendererSetShaderProgramUniformMatrix4x4(
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::mat4 value)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->shaderProgramCount);
+    uint32 id = state->shaderProgramIds[handle];
+
+    uint32 loc = glGetUniformLocation(id, uniformName);
+    glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(value));
 }
 
 uint32 rendererCreateVertexArray(EngineMemory *memory)
@@ -316,6 +413,10 @@ void rendererDestroyResources(EngineMemory *memory)
     for (int i = 0; i < state->shaderCount; i++)
     {
         glDeleteShader(state->shaderIds[i]);
+    }
+    for (int i = 0; i < state->shaderProgramCount; i++)
+    {
+        glDeleteProgram(state->shaderProgramIds[i]);
     }
     glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
     glDeleteBuffers(state->bufferCount, state->bufferIds);
