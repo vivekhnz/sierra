@@ -20,7 +20,7 @@ public
     ref class EngineInterop
     {
     private:
-        static MemoryBlock *memory = nullptr;
+        static EngineMemory *memory = nullptr;
 
         static Graphics::GlfwManager *glfw = nullptr;
         static EditorContext *appCtx = nullptr;

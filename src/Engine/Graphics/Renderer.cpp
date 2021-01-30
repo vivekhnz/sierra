@@ -8,7 +8,7 @@
 #include "../terrain_assets.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {
-    Renderer::Renderer(MemoryBlock *memory) : memory(memory)
+    Renderer::Renderer(EngineMemory *memory) : memory(memory)
     {
     }
 

@@ -2,6 +2,7 @@
 
 #include <windows.h>
 #include <msclr\lock.h>
+#include "terrain_platform_editor_win32.h"
 
 using namespace System;
 using namespace System::Windows;
@@ -12,10 +13,13 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
 #define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
-        memory = new MemoryBlock();
+        memory = new EngineMemory();
         memory->baseAddress =
             VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
         memory->size = ENGINE_MEMORY_SIZE;
+        memory->platformFreeMemory = win32FreeMemory;
+        memory->platformReadFile = win32ReadFile;
+        memory->platformLoadAsset = win32LoadAsset;
 
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();

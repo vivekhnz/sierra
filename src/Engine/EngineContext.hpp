@@ -18,7 +18,7 @@ namespace Terrain { namespace Engine {
         std::vector<World *> worlds;
 
     public:
-        MemoryBlock *memory;
+        EngineMemory *memory;
 
         EntityManager entities;
         Resources::ResourceManager resources;
@@ -35,7 +35,7 @@ namespace Terrain { namespace Engine {
             }
         } assets;
 
-        EngineContext(AppContext &ctx, MemoryBlock *memoryBlock);
+        EngineContext(AppContext &ctx, EngineMemory *memory);
 
         void initialize();
 

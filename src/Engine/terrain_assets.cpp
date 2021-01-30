@@ -93,12 +93,10 @@ ShaderInfo getShaderInfo(uint32 assetId)
     return info;
 }
 
-void onShaderLoaded(MemoryBlock *memory, uint32 assetId, PlatformReadFileResult *result)
+void onShaderLoaded(EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result)
 {
-    EngineMemory *engineMemory = static_cast<EngineMemory *>(memory->baseAddress);
-    MemoryBlock *assetsBlock = &engineMemory->assets;
-    assert(assetsBlock->size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)assetsBlock->baseAddress;
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
     ShaderInfo shaderInfo = getShaderInfo(assetId);
 
@@ -114,21 +112,17 @@ void onShaderLoaded(MemoryBlock *memory, uint32 assetId, PlatformReadFileResult 
     assetInfo->isLoaded = true;
 }
 
-ShaderAsset *assetsGetShader(MemoryBlock *memory, uint32 assetId)
+ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
 {
     assert(assetId < ASSET_SHADER_COUNT);
-
-    EngineMemory *engineMemory = static_cast<EngineMemory *>(memory->baseAddress);
-    MemoryBlock *assetsBlock = &engineMemory->assets;
-    assert(assetsBlock->size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)assetsBlock->baseAddress;
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
     AssetInfo *assetInfo = &state->assetInfos[assetId];
     if (!assetInfo->isLoaded)
     {
         ShaderInfo shaderInfo = getShaderInfo(assetId);
-        engineMemory->platformLoadAsset(
-            memory, assetId, shaderInfo.relativePath, onShaderLoaded);
+        memory->platformLoadAsset(memory, assetId, shaderInfo.relativePath, onShaderLoaded);
     }
 
     // note: we assume that the load asset call is synchronous and the assetInfo has now

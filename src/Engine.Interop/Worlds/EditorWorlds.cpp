@@ -32,7 +32,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         heightmapCompositionWorld.compositeHeightmap(state, newState);
     }
 
-    void EditorWorlds::render(MemoryBlock *memory, ViewportContext &vctx)
+    void EditorWorlds::render(EngineMemory *memory, ViewportContext &vctx)
     {
         EngineViewContext view = vctx.getViewContext();
         switch (vctx.getWorld())

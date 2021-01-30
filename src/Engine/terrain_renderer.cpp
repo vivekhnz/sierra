@@ -48,12 +48,10 @@ struct GpuLightingState
     uint32 isDisplacementMapEnabled;
 };
 
-RendererState *getState(MemoryBlock *engineMemoryBlock)
+RendererState *getState(EngineMemory *memory)
 {
-    EngineMemory *engineMemory = static_cast<EngineMemory *>(engineMemoryBlock->baseAddress);
-    MemoryBlock *rendererBlock = &engineMemory->renderer;
-    assert(rendererBlock->size >= sizeof(RendererState));
-    RendererState *state = (RendererState *)rendererBlock->baseAddress;
+    assert(memory->renderer.size >= sizeof(RendererState));
+    RendererState *state = (RendererState *)memory->renderer.baseAddress;
     return state;
 }
 
@@ -72,7 +70,7 @@ uint32 getOpenGLBufferType(RendererBufferType type)
     return bufferType;
 }
 
-void rendererCreateUniformBuffers(MemoryBlock *memory)
+void rendererCreateUniformBuffers(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
 
@@ -104,7 +102,7 @@ void rendererCreateUniformBuffers(MemoryBlock *memory)
         sizeof(lighting));
 }
 
-void rendererUpdateCameraState(MemoryBlock *memory, glm::mat4 *transform)
+void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform)
 {
     RendererState *state = getState(memory);
 
@@ -115,7 +113,7 @@ void rendererUpdateCameraState(MemoryBlock *memory, glm::mat4 *transform)
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
 }
 
-void rendererUpdateLightingState(MemoryBlock *memory,
+void rendererUpdateLightingState(EngineMemory *memory,
     glm::vec4 *lightDir,
     bool isLightingEnabled,
     bool isTextureEnabled,
@@ -137,7 +135,7 @@ void rendererUpdateLightingState(MemoryBlock *memory,
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
-uint32 rendererCreateTexture(MemoryBlock *memory)
+uint32 rendererCreateTexture(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     assert(state->textureCount < RENDERER_MAX_TEXTURES);
@@ -145,14 +143,14 @@ uint32 rendererCreateTexture(MemoryBlock *memory)
     return state->textureCount++;
 }
 
-uint32 rendererGetTextureId(MemoryBlock *memory, uint32 handle)
+uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->textureCount);
     return state->textureIds[handle];
 }
 
-void rendererBindTexture(MemoryBlock *memory, uint32 handle, uint8 slot)
+void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
 {
     RendererState *state = getState(memory);
     assert(handle < state->textureCount);
@@ -162,7 +160,7 @@ void rendererBindTexture(MemoryBlock *memory, uint32 handle, uint8 slot)
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
-bool rendererCreateShader(MemoryBlock *memory, uint32 type, char *src, uint32 *out_handle)
+bool rendererCreateShader(EngineMemory *memory, uint32 type, char *src, uint32 *out_handle)
 {
     RendererState *state = getState(memory);
     assert(state->shaderCount < RENDERER_MAX_SHADERS);
@@ -189,7 +187,7 @@ bool rendererCreateShader(MemoryBlock *memory, uint32 type, char *src, uint32 *o
     }
 }
 
-void rendererAttachShader(MemoryBlock *memory, uint32 shaderProgramId, uint32 handle)
+void rendererAttachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->shaderCount);
@@ -198,7 +196,7 @@ void rendererAttachShader(MemoryBlock *memory, uint32 shaderProgramId, uint32 ha
     glAttachShader(shaderProgramId, shaderId);
 }
 
-void rendererDetachShader(MemoryBlock *memory, uint32 shaderProgramId, uint32 handle)
+void rendererDetachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->shaderCount);
@@ -207,7 +205,7 @@ void rendererDetachShader(MemoryBlock *memory, uint32 shaderProgramId, uint32 ha
     glDetachShader(shaderProgramId, shaderId);
 }
 
-uint32 rendererCreateVertexArray(MemoryBlock *memory)
+uint32 rendererCreateVertexArray(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     assert(state->vertexArrayCount < RENDERER_MAX_VERTEX_ARRAYS);
@@ -215,7 +213,7 @@ uint32 rendererCreateVertexArray(MemoryBlock *memory)
     return state->vertexArrayCount++;
 }
 
-void rendererBindVertexArray(MemoryBlock *memory, uint32 handle)
+void rendererBindVertexArray(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->vertexArrayCount);
@@ -229,7 +227,7 @@ void rendererUnbindVertexArray()
     glBindVertexArray(0);
 }
 
-uint32 rendererCreateBuffer(MemoryBlock *memory, RendererBufferType type, uint32 usage)
+uint32 rendererCreateBuffer(EngineMemory *memory, RendererBufferType type, uint32 usage)
 {
     RendererState *state = getState(memory);
     assert(state->bufferCount < RENDERER_MAX_BUFFERS);
@@ -239,7 +237,7 @@ uint32 rendererCreateBuffer(MemoryBlock *memory, RendererBufferType type, uint32
     return state->bufferCount++;
 }
 
-void rendererBindBuffer(MemoryBlock *memory, uint32 handle)
+void rendererBindBuffer(EngineMemory *memory, uint32 handle)
 {
     RendererState *state = getState(memory);
     assert(handle < state->bufferCount);
@@ -249,7 +247,7 @@ void rendererBindBuffer(MemoryBlock *memory, uint32 handle)
     glBindBuffer(openGLType, id);
 }
 
-void rendererUpdateBuffer(MemoryBlock *memory, uint32 handle, uint64 size, void *data)
+void rendererUpdateBuffer(EngineMemory *memory, uint32 handle, uint64 size, void *data)
 {
     RendererState *state = getState(memory);
     assert(handle < state->bufferCount);
@@ -274,7 +272,7 @@ void rendererBindVertexAttribute(uint8 index,
     glVertexAttribDivisor(index, isPerInstance);
 }
 
-void rendererBindShaderStorageBuffer(MemoryBlock *memory, uint32 handle, uint8 slot)
+void rendererBindShaderStorageBuffer(EngineMemory *memory, uint32 handle, uint8 slot)
 {
     RendererState *state = getState(memory);
     assert(handle < state->bufferCount);
@@ -311,7 +309,7 @@ void rendererDrawElementsInstanced(
     glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount);
 }
 
-void rendererDestroyResources(MemoryBlock *memory)
+void rendererDestroyResources(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     glDeleteTextures(state->textureCount, state->textureIds);

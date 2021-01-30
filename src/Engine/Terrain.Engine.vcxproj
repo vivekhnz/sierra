@@ -36,7 +36,6 @@
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
-    <ClCompile Include="win32_platform.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -77,7 +76,6 @@
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
-    <ClInclude Include="win32_platform.h" />
     <ClInclude Include="World.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">

@@ -1,6 +1,5 @@
 #include <iostream>
 
-#include "../Engine/win32_platform.h"
 #include "../Engine/terrain_renderer.h"
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/Graphics/Window.hpp"
@@ -9,6 +8,7 @@
 #include "../Engine/TerrainResources.hpp"
 #include "../Engine/IO/Path.hpp"
 #include "GameContext.hpp"
+#include "terrain_platform_win32.h"
 
 int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &world)
 {
@@ -52,9 +52,12 @@ int main()
     try
     {
 #define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
-        MemoryBlock memory;
+        EngineMemory memory;
         memory.baseAddress = win32AllocateMemory(ENGINE_MEMORY_SIZE);
         memory.size = ENGINE_MEMORY_SIZE;
+        memory.platformFreeMemory = win32FreeMemory;
+        memory.platformReadFile = win32ReadFile;
+        memory.platformLoadAsset = win32LoadAsset;
 
         Terrain::Engine::Graphics::GlfwManager glfw;
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);

@@ -33,8 +33,11 @@ struct PlatformReadFileResult
     uint64 size;
     void *data;
 };
+
+struct EngineMemory;
+
 typedef void PlatformAssetLoadCallback(
-    MemoryBlock *memory, uint32 assetId, PlatformReadFileResult *result);
+    EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result);
 
 #define PLATFORM_FREE_MEMORY(name) void name(void *data)
 typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
@@ -43,12 +46,15 @@ typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
 typedef PLATFORM_READ_FILE(PlatformReadFile);
 
 #define PLATFORM_LOAD_ASSET(name)                                                             \
-    void name(MemoryBlock *memory, uint32 assetId, const char *relativePath,                  \
+    void name(EngineMemory *memory, uint32 assetId, const char *relativePath,                 \
         PlatformAssetLoadCallback onAssetLoaded)
 typedef PLATFORM_LOAD_ASSET(PlatformLoadAsset);
 
 struct EngineMemory
 {
+    void *baseAddress;
+    uint64 size;
+
     PlatformFreeMemory *platformFreeMemory;
     PlatformReadFile *platformReadFile;
     PlatformLoadAsset *platformLoadAsset;

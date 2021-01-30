@@ -11,9 +11,9 @@ enum RendererBufferType
     RENDERER_ELEMENT_BUFFER
 };
 
-EXPORT void rendererCreateUniformBuffers(MemoryBlock *memory);
-EXPORT void rendererUpdateCameraState(MemoryBlock *memory, glm::mat4 *transform);
-EXPORT void rendererUpdateLightingState(MemoryBlock *memory,
+EXPORT void rendererCreateUniformBuffers(EngineMemory *memory);
+EXPORT void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform);
+EXPORT void rendererUpdateLightingState(EngineMemory *memory,
     glm::vec4 *lightDir,
     bool isLightingEnabled,
     bool isTextureEnabled,
@@ -21,22 +21,23 @@ EXPORT void rendererUpdateLightingState(MemoryBlock *memory,
     bool isAOMapEnabled,
     bool isDisplacementMapEnabled);
 
-EXPORT uint32 rendererCreateTexture(MemoryBlock *memory);
-EXPORT uint32 rendererGetTextureId(MemoryBlock *memory, uint32 handle);
-EXPORT void rendererBindTexture(MemoryBlock *memory, uint32 handle, uint8 slot);
+EXPORT uint32 rendererCreateTexture(EngineMemory *memory);
+EXPORT uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle);
+EXPORT void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot);
 
 EXPORT bool rendererCreateShader(
-    MemoryBlock *memory, uint32 type, char *src, uint32 *out_handle);
-EXPORT void rendererAttachShader(MemoryBlock *memory, uint32 shaderProgramId, uint32 handle);
-EXPORT void rendererDetachShader(MemoryBlock *memory, uint32 shaderProgramId, uint32 handle);
+    EngineMemory *memory, uint32 type, char *src, uint32 *out_handle);
+EXPORT void rendererAttachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle);
+EXPORT void rendererDetachShader(EngineMemory *memory, uint32 shaderProgramId, uint32 handle);
 
-EXPORT uint32 rendererCreateVertexArray(MemoryBlock *memory);
-EXPORT void rendererBindVertexArray(MemoryBlock *memory, uint32 handle);
+EXPORT uint32 rendererCreateVertexArray(EngineMemory *memory);
+EXPORT void rendererBindVertexArray(EngineMemory *memory, uint32 handle);
 EXPORT void rendererUnbindVertexArray();
 
-EXPORT uint32 rendererCreateBuffer(MemoryBlock *memory, RendererBufferType type, uint32 usage);
-EXPORT void rendererBindBuffer(MemoryBlock *memory, uint32 handle);
-EXPORT void rendererUpdateBuffer(MemoryBlock *memory, uint32 handle, uint64 size, void *data);
+EXPORT uint32 rendererCreateBuffer(
+    EngineMemory *memory, RendererBufferType type, uint32 usage);
+EXPORT void rendererBindBuffer(EngineMemory *memory, uint32 handle);
+EXPORT void rendererUpdateBuffer(EngineMemory *memory, uint32 handle, uint64 size, void *data);
 
 EXPORT void rendererBindVertexAttribute(uint8 index,
     uint32 elementType,
@@ -45,7 +46,7 @@ EXPORT void rendererBindVertexAttribute(uint8 index,
     uint32 stride,
     uint32 offset,
     bool isPerInstance);
-EXPORT void rendererBindShaderStorageBuffer(MemoryBlock *memory, uint32 handle, uint8 slot);
+EXPORT void rendererBindShaderStorageBuffer(EngineMemory *memory, uint32 handle, uint8 slot);
 
 EXPORT void rendererSetViewportSize(uint32 width, uint32 height);
 EXPORT void rendererClearBackBuffer(float r, float g, float b, float a);
@@ -54,6 +55,6 @@ EXPORT void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFa
 EXPORT void rendererDrawElementsInstanced(
     uint32 primitiveType, uint32 elementCount, uint32 instanceCount);
 
-EXPORT void rendererDestroyResources(MemoryBlock *memory);
+EXPORT void rendererDestroyResources(EngineMemory *memory);
 
 #endif

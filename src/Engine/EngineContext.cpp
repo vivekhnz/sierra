@@ -1,21 +1,13 @@
 #include "EngineContext.hpp"
 
-#include "win32_platform.h"
 #include "World.hpp"
 
 namespace Terrain { namespace Engine {
-    EngineContext::EngineContext(AppContext &ctx, MemoryBlock *memoryBlock) :
-        memory(memoryBlock), resources(*this), input(ctx), renderer(memoryBlock),
-        assets(renderer)
+    EngineContext::EngineContext(AppContext &ctx, EngineMemory *memory) :
+        memory(memory), resources(*this), input(ctx), renderer(memory), assets(renderer)
     {
-        assert(memoryBlock->size >= sizeof(EngineMemory));
-        EngineMemory *memory = static_cast<EngineMemory *>(memoryBlock->baseAddress);
-
-        memory->platformFreeMemory = win32FreeMemory;
-        memory->platformReadFile = win32ReadFile;
-        memory->platformLoadAsset = win32LoadAsset;
-
-        uint8 *baseAddress = static_cast<uint8 *>(memoryBlock->baseAddress);
+        assert(memory->size >= sizeof(EngineMemory));
+        uint8 *baseAddress = static_cast<uint8 *>(memory->baseAddress);
         uint64 offset = sizeof(EngineMemory);
 
         memory->renderer.baseAddress = baseAddress + offset;
@@ -23,10 +15,10 @@ namespace Terrain { namespace Engine {
         offset += memory->renderer.size;
 
         memory->assets.baseAddress = baseAddress + offset;
-        memory->assets.size = memoryBlock->size - offset;
+        memory->assets.size = memory->size - offset;
         offset += memory->assets.size;
 
-        assert(offset == memoryBlock->size);
+        assert(offset == memory->size);
     }
 
     void EngineContext::initialize()

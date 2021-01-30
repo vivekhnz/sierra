@@ -51,7 +51,6 @@
     <ClCompile Include="..\..\deps\stb\stb_image.c">
       <Filter>deps</Filter>
     </ClCompile>
-    <ClCompile Include="win32_platform.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
   </ItemGroup>
@@ -137,7 +136,6 @@
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="AppContext.hpp" />
-    <ClInclude Include="win32_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />

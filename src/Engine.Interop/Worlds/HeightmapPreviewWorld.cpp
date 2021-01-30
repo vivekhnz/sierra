@@ -50,7 +50,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     }
 
     void HeightmapPreviewWorld::render(
-        MemoryBlock *memory, uint32 viewportWidth, uint32 viewportHeight)
+        EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight)
     {
         if (viewportWidth == 0 || viewportHeight == 0)
             return;

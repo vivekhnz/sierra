@@ -1,4 +1,4 @@
-#include "win32_platform.h"
+#include "terrain_platform_editor_win32.h"
 
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {

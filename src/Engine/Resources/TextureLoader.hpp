@@ -9,14 +9,13 @@
 #include "TextureResource.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources { namespace TextureLoader {
-    static void loadTexture(MemoryBlock *memory,
+    static void loadTexture(EngineMemory *memory,
         int resourceId,
         std::string path,
         bool is16Bit,
         TextureResourceData *resource)
     {
-        EngineMemory *engineMemory = static_cast<EngineMemory *>(memory->baseAddress);
-        PlatformReadFileResult result = engineMemory->platformReadFile(path.c_str());
+        PlatformReadFileResult result = memory->platformReadFile(path.c_str());
         assert(result.data != 0);
 
         const stbi_uc *rawData = static_cast<stbi_uc *>(result.data);
@@ -33,7 +32,7 @@ namespace Terrain { namespace Engine { namespace Resources { namespace TextureLo
         }
         resource->id = resourceId;
 
-        engineMemory->platformFreeMemory(result.data);
+        memory->platformFreeMemory(result.data);
     }
 
     static void unloadTexture(TextureResourceData &resource)

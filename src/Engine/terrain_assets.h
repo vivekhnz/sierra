@@ -29,6 +29,6 @@ struct ShaderAsset
     uint32 handle;
 };
 
-EXPORT ShaderAsset *assetsGetShader(MemoryBlock *memory, uint32 assetId);
+EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
 
 #endif
