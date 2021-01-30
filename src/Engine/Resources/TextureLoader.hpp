@@ -12,7 +12,7 @@ namespace Terrain { namespace Engine { namespace Resources { namespace TextureLo
     static void loadTexture(
         int resourceId, std::string path, bool is16Bit, TextureResourceData *resource)
     {
-        Win32ReadFileResult result = win32ReadFile(path.c_str());
+        PlatformReadFileResult result = win32ReadFile(path.c_str());
         assert(result.data != 0);
 
         const stbi_uc *rawData = static_cast<stbi_uc *>(result.data);

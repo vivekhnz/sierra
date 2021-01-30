@@ -104,23 +104,14 @@ ShaderInfo getShaderInfo(uint32 assetId)
     return info;
 }
 
-void assetsLoadShader(MemoryBlock *memory, uint32 assetId)
+void onShaderLoaded(MemoryBlock *memory, uint32 assetId, PlatformReadFileResult *result)
 {
     AssetsState *state = getState(memory);
-    assert(assetId < ASSET_SHADER_COUNT);
-
     ShaderInfo shaderInfo = getShaderInfo(assetId);
 
-    char absolutePath[MAX_PATH];
-    win32GetAbsolutePath(shaderInfo.relativePath, absolutePath);
-
-    Win32ReadFileResult result = win32ReadFile(absolutePath);
-    assert(result.data != 0);
-    char *src = static_cast<char *>(result.data);
-
+    char *src = static_cast<char *>(result->data);
     uint32 handle;
     assert(rendererCreateShader(memory, shaderInfo.type, src, &handle));
-    win32FreeMemory(src);
 
     ShaderAsset *asset = &state->shaderAssets[assetId];
     asset->handle = handle;
@@ -138,10 +129,11 @@ ShaderAsset *assetsGetShader(MemoryBlock *memory, uint32 assetId)
     AssetInfo *assetInfo = &state->assetInfos[assetId];
     if (!assetInfo->isLoaded)
     {
-        assetsLoadShader(memory, assetId);
+        ShaderInfo shaderInfo = getShaderInfo(assetId);
+        win32LoadAsset(memory, assetId, shaderInfo.relativePath, onShaderLoaded);
     }
 
-    // note: we assume that the assetsLoadShader is synchronous and the assetInfo has now
+    // note: we assume that the load asset call is synchronous and the assetInfo has now
     // been updated
     return static_cast<ShaderAsset *>(assetInfo->data);
 }

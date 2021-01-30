@@ -24,7 +24,7 @@ enum ShaderAssets
     ASSET_SHADER_COUNT
 };
 
-EXPORT struct ShaderAsset
+struct ShaderAsset
 {
     uint32 handle;
 };

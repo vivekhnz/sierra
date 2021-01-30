@@ -1,19 +1,6 @@
 #include "win32_platform.h"
 
-void *win32AllocateMemory(uint64 size)
-{
-    return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-}
-
-void win32FreeMemory(void *data)
-{
-    if (!data)
-        return;
-
-    VirtualFree(data, 0, MEM_RELEASE);
-}
-
-void win32GetAbsolutePath(const char *relativePath, char *absolutePath)
+void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
     // get path to current assembly
     CHAR exePath[MAX_PATH];
@@ -60,9 +47,22 @@ void win32GetAbsolutePath(const char *relativePath, char *absolutePath)
     *dstCursor = 0;
 }
 
-Win32ReadFileResult win32ReadFile(const char *path)
+void *win32AllocateMemory(uint64 size)
 {
-    Win32ReadFileResult result = {};
+    return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+}
+
+void win32FreeMemory(void *data)
+{
+    if (!data)
+        return;
+
+    VirtualFree(data, 0, MEM_RELEASE);
+}
+
+PlatformReadFileResult win32ReadFile(const char *path)
+{
+    PlatformReadFileResult result = {};
 
     HANDLE handle = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (handle == INVALID_HANDLE_VALUE)
@@ -87,5 +87,22 @@ Win32ReadFileResult win32ReadFile(const char *path)
     }
     CloseHandle(handle);
 
+    return result;
+}
+
+PlatformReadFileResult win32LoadAsset(MemoryBlock *memory,
+    uint32 assetId,
+    const char *relativePath,
+    AssetLoadCallback onAssetLoaded)
+{
+    char absolutePath[MAX_PATH];
+    getAbsolutePath(relativePath, absolutePath);
+
+    PlatformReadFileResult result = win32ReadFile(absolutePath);
+    assert(result.data != 0);
+
+    onAssetLoaded(memory, assetId, &result);
+
+    win32FreeMemory(result.data);
     return result;
 }

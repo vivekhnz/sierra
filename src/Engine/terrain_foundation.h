@@ -22,7 +22,7 @@ typedef uint64_t uint64;
 #define assert(expr)
 #endif
 
-EXPORT struct MemoryBlock
+struct MemoryBlock
 {
     void *baseAddress;
     uint64 size;

@@ -5,15 +5,21 @@
 
 #include "terrain_foundation.h"
 
-struct Win32ReadFileResult
+struct PlatformReadFileResult
 {
     uint64 size;
     void *data;
 };
 
+typedef void AssetLoadCallback(
+    MemoryBlock *memory, uint32 assetId, PlatformReadFileResult *result);
+
 EXPORT void *win32AllocateMemory(uint64 size);
 void win32FreeMemory(void *data);
-void win32GetAbsolutePath(const char *relativePath, char *absolutePath);
-Win32ReadFileResult win32ReadFile(const char *path);
+PlatformReadFileResult win32ReadFile(const char *path);
+PlatformReadFileResult win32LoadAsset(MemoryBlock *memory,
+    uint32 assetId,
+    const char *relativePath,
+    AssetLoadCallback onAssetLoaded);
 
 #endif
