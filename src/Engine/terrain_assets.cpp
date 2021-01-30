@@ -3,6 +3,8 @@
 #include <glad/glad.h>
 #include "terrain_renderer.h"
 
+#define MAX_SHADERS_PER_PROGRAM 8
+
 struct AssetInfo
 {
     bool isLoaded;
@@ -15,12 +17,13 @@ struct ShaderInfo
     const char *relativePath;
 };
 
-#define ASSET_COUNT ASSET_SHADER_COUNT
-
 struct AssetsState
 {
-    AssetInfo assetInfos[ASSET_COUNT];
+    AssetInfo shaderAssetInfos[ASSET_SHADER_COUNT];
     ShaderAsset shaderAssets[ASSET_SHADER_COUNT];
+
+    AssetInfo shaderProgramAssetInfos[ASSET_SHADER_PROGRAM_COUNT];
+    ShaderProgramAsset shaderProgramAssets[ASSET_SHADER_PROGRAM_COUNT];
 };
 
 ShaderInfo getShaderInfo(uint32 assetId)
@@ -93,6 +96,48 @@ ShaderInfo getShaderInfo(uint32 assetId)
     return info;
 }
 
+void getShaderProgramShaders(
+    uint32 assetId, uint32 *out_shaderCount, uint32 *out_shaderAssetIds)
+{
+    assert(assetId < ASSET_SHADER_PROGRAM_COUNT);
+    switch (assetId)
+    {
+    case ASSET_SHADER_PROGRAM_QUAD:
+        *out_shaderCount = 2;
+        *out_shaderAssetIds++ = ASSET_SHADER_TEXTURE_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_TEXTURE_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED:
+        *out_shaderCount = 4;
+        *out_shaderAssetIds++ = ASSET_SHADER_TERRAIN_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_TERRAIN_TESS_CTRL;
+        *out_shaderAssetIds++ = ASSET_SHADER_TERRAIN_TESS_EVAL;
+        *out_shaderAssetIds++ = ASSET_SHADER_TERRAIN_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_TERRAIN_WIREFRAME:
+        *out_shaderCount = 4;
+        *out_shaderAssetIds++ = ASSET_SHADER_WIREFRAME_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_WIREFRAME_TESS_CTRL;
+        *out_shaderAssetIds++ = ASSET_SHADER_WIREFRAME_TESS_EVAL;
+        *out_shaderAssetIds++ = ASSET_SHADER_WIREFRAME_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL:
+        *out_shaderCount = 1;
+        *out_shaderAssetIds++ = ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL;
+        break;
+    case ASSET_SHADER_PROGRAM_BRUSH:
+        *out_shaderCount = 2;
+        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_UI:
+        *out_shaderCount = 2;
+        *out_shaderAssetIds++ = ASSET_SHADER_UI_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_UI_FRAGMENT;
+        break;
+    }
+}
+
 void onShaderLoaded(EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
@@ -107,7 +152,7 @@ void onShaderLoaded(EngineMemory *memory, uint32 assetId, PlatformReadFileResult
     ShaderAsset *asset = &state->shaderAssets[assetId];
     asset->handle = handle;
 
-    AssetInfo *assetInfo = &state->assetInfos[assetId];
+    AssetInfo *assetInfo = &state->shaderAssetInfos[assetId];
     assetInfo->data = asset;
     assetInfo->isLoaded = true;
 }
@@ -118,7 +163,7 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    AssetInfo *assetInfo = &state->assetInfos[assetId];
+    AssetInfo *assetInfo = &state->shaderAssetInfos[assetId];
     if (!assetInfo->isLoaded)
     {
         ShaderInfo shaderInfo = getShaderInfo(assetId);
@@ -128,4 +173,39 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     // note: we assume that the load asset call is synchronous and the assetInfo has now
     // been updated
     return static_cast<ShaderAsset *>(assetInfo->data);
+}
+
+ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
+{
+    assert(assetId < ASSET_SHADER_PROGRAM_COUNT);
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    AssetInfo *assetInfo = &state->shaderProgramAssetInfos[assetId];
+    if (!assetInfo->isLoaded)
+    {
+        uint32 shaderCount;
+        uint32 shaderAssetIds[MAX_SHADERS_PER_PROGRAM];
+        getShaderProgramShaders(assetId, &shaderCount, shaderAssetIds);
+        assert(shaderCount <= MAX_SHADERS_PER_PROGRAM);
+
+        uint32 shaderHandles[MAX_SHADERS_PER_PROGRAM];
+        for (uint32 i = 0; i < shaderCount; i++)
+        {
+            ShaderAsset *shader = assetsGetShader(memory, shaderAssetIds[i]);
+            shaderHandles[i] = shader->handle;
+        }
+
+        // note: we assume that the assetsGetShader calls are synchronous
+        uint32 handle;
+        assert(rendererCreateShaderProgram(memory, shaderCount, shaderHandles, &handle));
+
+        ShaderProgramAsset *asset = &state->shaderProgramAssets[assetId];
+        asset->handle = handle;
+
+        assetInfo->data = asset;
+        assetInfo->isLoaded = true;
+    }
+
+    return static_cast<ShaderProgramAsset *>(assetInfo->data);
 }

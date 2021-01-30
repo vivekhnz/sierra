@@ -110,34 +110,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
     }
 
-    void Renderer::onShaderProgramsLoaded(
-        const int count, Resources::ShaderProgramResource *resources)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            Resources::ShaderProgramResource &resource = resources[i];
-
-            std::vector<uint32> shaderHandles;
-            for (int s = 0; s < resource.shaderCount; s++)
-            {
-                ShaderAsset *shader = assetsGetShader(memory, resource.shaderResourceIds[s]);
-                assert(shader);
-                shaderHandles.push_back(shader->handle);
-            }
-
-            uint32 handle;
-            rendererCreateShaderProgram(
-                memory, resource.shaderCount, shaderHandles.data(), &handle);
-
-            shaderPrograms.resourceIdToHandle[resource.id] = handle;
-        }
-    }
-
-    void Renderer::useShaderProgram(int handle)
-    {
-        rendererUseShaderProgram(memory, handle);
-    }
-
     void Renderer::setShaderProgramState(int handle, ShaderProgramState &state)
     {
         // set uniforms

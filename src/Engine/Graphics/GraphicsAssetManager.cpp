@@ -1,6 +1,7 @@
 #include "GraphicsAssetManager.hpp"
 
 #include <glad/glad.h>
+#include "../terrain_assets.h"
 #include "../terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {
@@ -15,8 +16,11 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             Resources::MaterialResource &resource = resources[i];
 
-            materials.shaderProgramHandle.push_back(
-                renderer.lookupShaderProgram(resource.shaderProgramResourceId));
+            ShaderProgramAsset *programAsset =
+                assetsGetShaderProgram(renderer.memory, resource.shaderProgramResourceId);
+            assert(programAsset);
+
+            materials.shaderProgramHandle.push_back(programAsset->handle);
             materials.polygonMode.push_back(resource.polygonMode);
 
             materials.blendEquation.push_back(resource.blendEquation);
@@ -119,7 +123,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
         int &shaderProgramHandle = materials.shaderProgramHandle[handle];
         int firstUniformIndex = materials.firstUniformIndex[handle];
 
-        renderer.useShaderProgram(shaderProgramHandle);
+        rendererUseShaderProgram(renderer.memory, shaderProgramHandle);
         rendererSetPolygonMode(materials.polygonMode[handle]);
         rendererSetBlendMode(materials.blendEquation[handle], materials.blendSrcFactor[handle],
             materials.blendDstFactor[handle]);

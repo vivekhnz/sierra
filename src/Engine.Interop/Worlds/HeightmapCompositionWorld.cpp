@@ -1,5 +1,6 @@
 #include "HeightmapCompositionWorld.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include "../../Engine/terrain_assets.h"
 #include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
@@ -335,13 +336,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     int HeightmapCompositionWorld::createQuadMaterial(int textureHandle)
     {
-        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
+        const int ASSET_ID_SHADER_PROGRAM_QUAD = 0;
+        ShaderProgramAsset *asset =
+            assetsGetShaderProgram(ctx.memory, ASSET_ID_SHADER_PROGRAM_QUAD);
+        assert(asset);
 
-        int shaderProgramHandle =
-            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
         int textureHandles[1] = {textureHandle};
 
-        return ctx.assets.graphics.createMaterial(shaderProgramHandle, GL_FILL, GL_FUNC_ADD,
+        return ctx.assets.graphics.createMaterial(asset->handle, GL_FILL, GL_FUNC_ADD,
             GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 1, textureHandles, 0, "", 0);
     }
 }}}}

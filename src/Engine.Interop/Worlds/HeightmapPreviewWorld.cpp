@@ -1,6 +1,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "HeightmapPreviewWorld.hpp"
+#include "../../Engine/terrain_assets.h"
 #include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
@@ -52,22 +53,22 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (viewportWidth == 0 || viewportHeight == 0)
             return;
 
+        const int ASSET_ID_SHADER_PROGRAM_QUAD = 0;
+        ShaderProgramAsset *shaderProgram =
+            assetsGetShaderProgram(memory, ASSET_ID_SHADER_PROGRAM_QUAD);
+        if (!shaderProgram)
+            return;
+
         rendererUpdateCameraState(memory, &cameraTransform);
         rendererSetViewportSize(viewportWidth, viewportHeight);
         rendererClearBackBuffer(0, 0, 0, 1);
 
         // render quad
-#define QUAD_ELEMENT_COUNT 6
-
-        const int RESOURCE_ID_SHADER_PROGRAM_QUAD = 0;
-        uint32 shaderProgramHandle =
-            ctx.renderer.lookupShaderProgram(RESOURCE_ID_SHADER_PROGRAM_QUAD);
-        ctx.renderer.useShaderProgram(shaderProgramHandle);
-
+        rendererUseShaderProgram(memory, shaderProgram->handle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         rendererBindTexture(memory, heightmapTextureHandle, 0);
         rendererBindVertexArray(memory, vertexArrayHandle);
-        rendererDrawElementsInstanced(GL_TRIANGLES, QUAD_ELEMENT_COUNT, 1);
+        rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
     }
 }}}}

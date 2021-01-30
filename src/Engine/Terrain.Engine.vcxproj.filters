@@ -101,9 +101,6 @@
     <ClInclude Include="Graphics\UniformValue.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Resources\ShaderProgramResource.hpp">
-      <Filter>Resources</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>

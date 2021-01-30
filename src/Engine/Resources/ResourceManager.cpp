@@ -17,7 +17,6 @@ namespace Terrain { namespace Engine { namespace Resources {
     void ResourceManager::loadResources()
     {
         loadTextures();
-        loadShaderPrograms();
         loadMaterials();
     }
 
@@ -175,60 +174,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         }
     }
 
-    void ResourceManager::loadShaderPrograms()
-    {
-        const int resourceCount = 6;
-        ShaderProgramResource resources[resourceCount];
-        ShaderProgramResource *program = resources;
-
-        const int shaderResourceIdCount = 15;
-        int shaderResourceIds[shaderResourceIdCount];
-        int *shaderResourceId = shaderResourceIds;
-
-        program->id = TerrainResources::ShaderPrograms::QUAD;
-        program->shaderCount = 2;
-        program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = ASSET_SHADER_TEXTURE_VERTEX;
-        *shaderResourceId++ = ASSET_SHADER_TEXTURE_FRAGMENT;
-
-        (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
-        program->shaderCount = 4;
-        program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = ASSET_SHADER_TERRAIN_VERTEX;
-        *shaderResourceId++ = ASSET_SHADER_TERRAIN_TESS_CTRL;
-        *shaderResourceId++ = ASSET_SHADER_TERRAIN_TESS_EVAL;
-        *shaderResourceId++ = ASSET_SHADER_TERRAIN_FRAGMENT;
-
-        (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
-        program->shaderCount = 4;
-        program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_VERTEX;
-        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_TESS_CTRL;
-        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_TESS_EVAL;
-        *shaderResourceId++ = ASSET_SHADER_WIREFRAME_FRAGMENT;
-
-        (++program)->id = TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL;
-        program->shaderCount = 1;
-        program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL;
-
-        (++program)->id = TerrainResources::ShaderPrograms::BRUSH;
-        program->shaderCount = 2;
-        program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = ASSET_SHADER_BRUSH_VERTEX;
-        *shaderResourceId++ = ASSET_SHADER_BRUSH_FRAGMENT;
-
-        (++program)->id = TerrainResources::ShaderPrograms::UI;
-        program->shaderCount = 2;
-        program->shaderResourceIds = shaderResourceId;
-        *shaderResourceId++ = ASSET_SHADER_UI_VERTEX;
-        *shaderResourceId++ = ASSET_SHADER_UI_FRAGMENT;
-
-        assert(program + 1 == resources + resourceCount);
-        assert(shaderResourceId == shaderResourceIds + shaderResourceIdCount);
-        ctx.onShaderProgramsLoaded(resourceCount, resources);
-    }
-
     void ResourceManager::loadMaterials()
     {
         const int count = 5;
@@ -244,7 +189,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         Graphics::UniformValue *uniformValue = uniformValues;
 
         material->id = TerrainResources::Materials::TERRAIN_TEXTURED;
-        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::TERRAIN_TEXTURED;
+        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED;
         material->polygonMode = GL_FILL;
         material->blendEquation = GL_FUNC_ADD;
         material->blendSrcFactor = GL_SRC_ALPHA;
@@ -287,8 +232,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         *uniformValue++ = Graphics::UniformValue::forFloat(0.0f);
 
         (++material)->id = TerrainResources::Materials::TERRAIN_WIREFRAME;
-        material->shaderProgramResourceId =
-            TerrainResources::ShaderPrograms::TERRAIN_WIREFRAME;
+        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_TERRAIN_WIREFRAME;
         material->polygonMode = GL_LINE;
         material->blendEquation = GL_FUNC_ADD;
         material->blendSrcFactor = GL_SRC_ALPHA;
@@ -316,7 +260,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         *uniformValue++ = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
 
         (++material)->id = TerrainResources::Materials::BRUSH_ADD;
-        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::BRUSH;
+        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_BRUSH;
         material->polygonMode = GL_FILL;
         material->blendEquation = GL_FUNC_ADD;
         material->blendSrcFactor = GL_SRC_ALPHA;
@@ -326,7 +270,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         material->uniformNames = "";
 
         (++material)->id = TerrainResources::Materials::BRUSH_SUBTRACT;
-        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::BRUSH;
+        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_BRUSH;
         material->polygonMode = GL_FILL;
         material->blendEquation = GL_FUNC_REVERSE_SUBTRACT;
         material->blendSrcFactor = GL_SRC_ALPHA;
@@ -336,7 +280,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         material->uniformNames = "";
 
         (++material)->id = TerrainResources::Materials::UI;
-        material->shaderProgramResourceId = TerrainResources::ShaderPrograms::UI;
+        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_UI;
         material->polygonMode = GL_FILL;
         material->blendEquation = GL_FUNC_ADD;
         material->blendSrcFactor = GL_SRC_ALPHA;

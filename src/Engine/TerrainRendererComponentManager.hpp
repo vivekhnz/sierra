@@ -36,15 +36,10 @@ namespace Terrain { namespace Engine {
         Graphics::MeshRendererComponentManager &meshRenderer;
         Graphics::GraphicsAssetManager &graphicsAssets;
 
-        int calcTessLevelsShaderProgramHandle;
-
     public:
         TerrainRendererComponentManager(Graphics::Renderer &renderer,
             Graphics::MeshRendererComponentManager &meshRenderer,
             Graphics::GraphicsAssetManager &graphicsAssets);
-
-        void onShaderProgramsLoaded(
-            const int count, Resources::ShaderProgramResource *resources);
 
         int create(int entityId,
             int heightmapTextureResourceId,

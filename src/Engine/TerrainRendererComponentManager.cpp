@@ -2,6 +2,7 @@
 
 #include "TerrainResources.hpp"
 #include "terrain_renderer.h"
+#include "terrain_assets.h"
 
 namespace Terrain { namespace Engine {
     TerrainRendererComponentManager::TerrainRendererComponentManager(
@@ -9,37 +10,8 @@ namespace Terrain { namespace Engine {
         Graphics::MeshRendererComponentManager &meshRenderer,
         Graphics::GraphicsAssetManager &graphicsAssets) :
         renderer(renderer),
-        meshRenderer(meshRenderer), graphicsAssets(graphicsAssets),
-        calcTessLevelsShaderProgramHandle(-1)
+        meshRenderer(meshRenderer), graphicsAssets(graphicsAssets)
     {
-    }
-
-    void TerrainRendererComponentManager::onShaderProgramsLoaded(
-        const int count, Resources::ShaderProgramResource *resources)
-    {
-        const char *uniformNames[1];
-        uniformNames[0] = "targetTriangleSize";
-
-        Graphics::UniformValue uniformValues[1];
-        uniformValues[0] = Graphics::UniformValue::forFloat(0.015f);
-
-        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
-        shaderProgramState.uniforms.count = 1;
-        shaderProgramState.uniforms.names = uniformNames;
-        shaderProgramState.uniforms.values = uniformValues;
-
-        for (int i = 0; i < count; i++)
-        {
-            Resources::ShaderProgramResource &resource = resources[i];
-            if (resource.id != TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL)
-                continue;
-
-            calcTessLevelsShaderProgramHandle = renderer.lookupShaderProgram(
-                TerrainResources::ShaderPrograms::TERRAIN_CALC_TESS_LEVEL);
-            renderer.setShaderProgramState(
-                calcTessLevelsShaderProgramHandle, shaderProgramState);
-            break;
-        }
     }
 
     int TerrainRendererComponentManager::create(int entityId,
@@ -140,35 +112,27 @@ namespace Terrain { namespace Engine {
 
     void TerrainRendererComponentManager::calculateTessellationLevels()
     {
-        if (calcTessLevelsShaderProgramHandle == -1)
+        ShaderProgramAsset *shaderProgramAsset = assetsGetShaderProgram(
+            renderer.memory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
+        if (!shaderProgramAsset)
             return;
 
-        const char *uniformNames[3];
-        uniformNames[0] = "horizontalEdgeCount";
-        uniformNames[1] = "columnCount";
-        uniformNames[2] = "terrainHeight";
-
-        Graphics::UniformValue uniformValues[3];
-        int textureHandles[1];
-
-        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
-        shaderProgramState.uniforms.count = 3;
-        shaderProgramState.uniforms.names = uniformNames;
-        shaderProgramState.uniforms.values = uniformValues;
-        shaderProgramState.textures.count = 1;
-        shaderProgramState.textures.handles = textureHandles;
+        uint32 shaderProgramHandle = shaderProgramAsset->handle;
+        rendererSetShaderProgramUniformFloat(
+            renderer.memory, shaderProgramHandle, "targetTriangleSize", 0.015f);
 
         for (int i = 0; i < data.count; i++)
         {
             int &rows = data.rows[i];
             int &columns = data.columns[i];
 
-            textureHandles[0] = data.heightmapTextureHandle[i];
-            uniformValues[0] = Graphics::UniformValue::forInteger(rows * (columns - 1));
-            uniformValues[1] = Graphics::UniformValue::forInteger(columns);
-            uniformValues[2] = Graphics::UniformValue::forFloat(data.terrainHeight[i]);
-            renderer.setShaderProgramState(
-                calcTessLevelsShaderProgramHandle, shaderProgramState);
+            rendererSetShaderProgramUniformInteger(renderer.memory, shaderProgramHandle,
+                "horizontalEdgeCount", rows * (columns - 1));
+            rendererSetShaderProgramUniformInteger(
+                renderer.memory, shaderProgramHandle, "columnCount", columns);
+            rendererSetShaderProgramUniformFloat(
+                renderer.memory, shaderProgramHandle, "terrainHeight", data.terrainHeight[i]);
+            rendererBindTexture(renderer.memory, data.heightmapTextureHandle[i], 0);
 
             int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
 
@@ -176,7 +140,7 @@ namespace Terrain { namespace Engine {
                 GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
             rendererBindShaderStorageBuffer(
                 renderer.memory, data.meshVertexBufferHandle[i], 1);
-            renderer.useShaderProgram(calcTessLevelsShaderProgramHandle);
+            rendererUseShaderProgram(renderer.memory, shaderProgramHandle);
             glDispatchCompute(meshEdgeCount, 1, 1);
             glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
         }

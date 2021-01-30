@@ -10,7 +10,6 @@
 
 #include "../terrain_platform.h"
 #include "../Resources/TextureResource.hpp"
-#include "../Resources/ShaderProgramResource.hpp"
 #include "UniformValue.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
@@ -31,11 +30,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             {
             }
         } textures;
-
-        struct ShaderPrograms
-        {
-            std::map<int, int> resourceIdToHandle;
-        } shaderPrograms;
 
         struct Framebuffers
         {
@@ -93,14 +87,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
             return textures.resourceIdToHandle[resourceId];
         }
 
-        void onShaderProgramsLoaded(
-            const int count, Resources::ShaderProgramResource *resources);
-        void useShaderProgram(int handle);
         void setShaderProgramState(int handle, ShaderProgramState &state);
-        int lookupShaderProgram(int resourceId)
-        {
-            return shaderPrograms.resourceIdToHandle[resourceId];
-        }
 
         int createFramebuffer(int textureHandle);
 

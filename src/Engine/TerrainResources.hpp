@@ -18,15 +18,6 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
         const int SNOW_AO = 12;
     }
 
-    namespace ShaderPrograms {
-        const int QUAD = 0;
-        const int TERRAIN_TEXTURED = 1;
-        const int TERRAIN_WIREFRAME = 2;
-        const int TERRAIN_CALC_TESS_LEVEL = 3;
-        const int BRUSH = 4;
-        const int UI = 5;
-    }
-
     namespace Materials {
         const int TERRAIN_TEXTURED = 0;
         const int TERRAIN_WIREFRAME = 1;

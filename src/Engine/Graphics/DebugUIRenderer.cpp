@@ -102,21 +102,12 @@ namespace Terrain { namespace Engine { namespace Graphics {
             renderer.memory, graphicsAssets.getMeshVertexArrayHandle(quadMeshHandle));
 
         // update point scale transform
-        const char *uniformNames[1];
-        uniformNames[0] = "transform";
-
-        Graphics::UniformValue uniformValues[1];
         const float POINT_SIZE = 3.0f;
         glm::vec3 pointScale =
             glm::vec3(POINT_SIZE / vctx.viewportWidth, POINT_SIZE / vctx.viewportHeight, 1.0f);
-        uniformValues[0] = Graphics::UniformValue::forMatrix4x4(
-            glm::scale(glm::identity<glm::mat4>(), pointScale));
-
-        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
-        shaderProgramState.uniforms.count = 1;
-        shaderProgramState.uniforms.names = uniformNames;
-        shaderProgramState.uniforms.values = uniformValues;
-        renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
+        glm::mat4 transform = glm::scale(glm::identity<glm::mat4>(), pointScale);
+        rendererSetShaderProgramUniformMatrix4x4(
+            renderer.memory, shaderProgramHandle, "transform", transform);
 
         // draw mesh instances
         rendererDrawElementsInstanced(primitiveType, elementCount, points.count);

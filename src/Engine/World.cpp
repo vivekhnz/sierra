@@ -41,11 +41,6 @@ namespace Terrain { namespace Engine {
         Resources::TextureResourceData *data)
     {
     }
-    void World::onShaderProgramsLoaded(
-        const int count, Resources::ShaderProgramResource *resources)
-    {
-        componentManagers.terrainRenderer.onShaderProgramsLoaded(count, resources);
-    }
     void World::onMaterialsLoaded(const int count, Resources::MaterialResource *resources)
     {
         debugUI.onMaterialsLoaded(count, resources);
