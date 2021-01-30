@@ -5,15 +5,24 @@
 #include "win32_platform.h"
 #include "terrain_renderer.h"
 
-struct AssetsState
+struct AssetInfo
 {
-    ShaderAsset shaderAssets[ASSET_SHADER_COUNT];
+    bool isLoaded;
+    void *data;
 };
 
 struct ShaderInfo
 {
     uint32 type;
     const char *relativePath;
+};
+
+#define ASSET_COUNT ASSET_SHADER_COUNT
+
+struct AssetsState
+{
+    AssetInfo assetInfos[ASSET_COUNT];
+    ShaderAsset shaderAssets[ASSET_SHADER_COUNT];
 };
 
 AssetsState *getState(MemoryBlock *engineMemoryBlock)
@@ -113,14 +122,26 @@ void assetsLoadShader(MemoryBlock *memory, uint32 assetId)
     assert(rendererCreateShader(memory, shaderInfo.type, src, &handle));
     win32FreeMemory(src);
 
-    ShaderAsset asset = {};
-    asset.handle = handle;
-    state->shaderAssets[assetId] = asset;
+    ShaderAsset *asset = &state->shaderAssets[assetId];
+    asset->handle = handle;
+
+    AssetInfo *assetInfo = &state->assetInfos[assetId];
+    assetInfo->data = asset;
+    assetInfo->isLoaded = true;
 }
 
 ShaderAsset *assetsGetShader(MemoryBlock *memory, uint32 assetId)
 {
     AssetsState *state = getState(memory);
     assert(assetId < ASSET_SHADER_COUNT);
-    return &state->shaderAssets[assetId];
+
+    AssetInfo *assetInfo = &state->assetInfos[assetId];
+    if (!assetInfo->isLoaded)
+    {
+        assetsLoadShader(memory, assetId);
+    }
+
+    // note: we assume that the assetsLoadShader is synchronous and the assetInfo has now
+    // been updated
+    return static_cast<ShaderAsset *>(assetInfo->data);
 }

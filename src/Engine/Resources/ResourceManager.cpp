@@ -17,7 +17,6 @@ namespace Terrain { namespace Engine { namespace Resources {
     void ResourceManager::loadResources()
     {
         loadTextures();
-        loadShaders();
         loadShaderPrograms();
         loadMaterials();
     }
@@ -174,25 +173,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         {
             TextureLoader::unloadTexture(resourceData[i]);
         }
-    }
-
-    void ResourceManager::loadShaders()
-    {
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_VERTEX);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_FRAGMENT);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_VERTEX);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_CTRL);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_EVAL);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_FRAGMENT);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_VERTEX);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_CTRL);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_EVAL);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_FRAGMENT);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_VERTEX);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_FRAGMENT);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_VERTEX);
-        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_FRAGMENT);
     }
 
     void ResourceManager::loadShaderPrograms()
