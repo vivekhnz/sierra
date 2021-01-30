@@ -52,7 +52,7 @@ void *win32AllocateMemory(uint64 size)
     return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
-void win32FreeMemory(void *data)
+PLATFORM_FREE_MEMORY(win32FreeMemory)
 {
     if (!data)
         return;
@@ -60,7 +60,7 @@ void win32FreeMemory(void *data)
     VirtualFree(data, 0, MEM_RELEASE);
 }
 
-PlatformReadFileResult win32ReadFile(const char *path)
+PLATFORM_READ_FILE(win32ReadFile)
 {
     PlatformReadFileResult result = {};
 
@@ -90,10 +90,7 @@ PlatformReadFileResult win32ReadFile(const char *path)
     return result;
 }
 
-PlatformReadFileResult win32LoadAsset(MemoryBlock *memory,
-    uint32 assetId,
-    const char *relativePath,
-    AssetLoadCallback onAssetLoaded)
+PLATFORM_LOAD_ASSET(win32LoadAsset)
 {
     char absolutePath[MAX_PATH];
     getAbsolutePath(relativePath, absolutePath);
@@ -104,5 +101,4 @@ PlatformReadFileResult win32LoadAsset(MemoryBlock *memory,
     onAssetLoaded(memory, assetId, &result);
 
     win32FreeMemory(result.data);
-    return result;
 }

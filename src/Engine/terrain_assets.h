@@ -1,7 +1,7 @@
 #ifndef TERRAIN_ASSETS_H
 #define TERRAIN_ASSETS_H
 
-#include "terrain_foundation.h"
+#include "terrain_platform.h"
 
 enum ShaderAssets
 {

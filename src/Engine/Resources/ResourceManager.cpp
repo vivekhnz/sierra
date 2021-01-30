@@ -52,7 +52,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::GROUND_ALBEDO,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::GROUND_ALBEDO,
             IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::GROUND_NORMAL;
@@ -62,7 +62,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::GROUND_NORMAL,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::GROUND_NORMAL,
             IO::Path::getAbsolutePath("data/ground_normal.bmp"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::GROUND_DISPLACEMENT;
@@ -72,7 +72,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RED;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::GROUND_DISPLACEMENT,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::GROUND_DISPLACEMENT,
             IO::Path::getAbsolutePath("data/ground_displacement.tga"), true, ++data);
 
         (++desc)->id = TerrainResources::Textures::GROUND_AO;
@@ -82,7 +82,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RED;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::GROUND_AO,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::GROUND_AO,
             IO::Path::getAbsolutePath("data/ground_ao.tga"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::ROCK_ALBEDO;
@@ -92,7 +92,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::ROCK_ALBEDO,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::ROCK_ALBEDO,
             IO::Path::getAbsolutePath("data/rock_albedo.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::ROCK_NORMAL;
@@ -102,7 +102,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::ROCK_NORMAL,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::ROCK_NORMAL,
             IO::Path::getAbsolutePath("data/rock_normal.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::ROCK_DISPLACEMENT;
@@ -112,7 +112,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RED;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::ROCK_DISPLACEMENT,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::ROCK_DISPLACEMENT,
             IO::Path::getAbsolutePath("data/rock_displacement.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::ROCK_AO;
@@ -122,7 +122,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RED;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::ROCK_AO,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::ROCK_AO,
             IO::Path::getAbsolutePath("data/rock_ao.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::SNOW_ALBEDO;
@@ -132,7 +132,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::SNOW_ALBEDO,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::SNOW_ALBEDO,
             IO::Path::getAbsolutePath("data/snow_albedo.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::SNOW_NORMAL;
@@ -142,7 +142,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::SNOW_NORMAL,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::SNOW_NORMAL,
             IO::Path::getAbsolutePath("data/snow_normal.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::SNOW_DISPLACEMENT;
@@ -152,7 +152,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RED;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::SNOW_DISPLACEMENT,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::SNOW_DISPLACEMENT,
             IO::Path::getAbsolutePath("data/snow_displacement.jpg"), false, ++data);
 
         (++desc)->id = TerrainResources::Textures::SNOW_AO;
@@ -162,7 +162,7 @@ namespace Terrain { namespace Engine { namespace Resources {
         usage->format = GL_RED;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-        TextureLoader::loadTexture(TerrainResources::Textures::SNOW_AO,
+        TextureLoader::loadTexture(ctx.memory, TerrainResources::Textures::SNOW_AO,
             IO::Path::getAbsolutePath("data/snow_ao.jpg"), false, ++data);
 
         assert(desc + 1 == descriptions + count);
@@ -356,7 +356,7 @@ namespace Terrain { namespace Engine { namespace Resources {
     void ResourceManager::reloadTexture(int resourceId, std::string path, bool is16Bit)
     {
         TextureResourceData resource = {};
-        TextureLoader::loadTexture(resourceId, path, is16Bit, &resource);
+        TextureLoader::loadTexture(ctx.memory, resourceId, path, is16Bit, &resource);
         ctx.onTextureReloaded(resource);
         TextureLoader::unloadTexture(resource);
     }

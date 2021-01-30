@@ -1,8 +1,6 @@
 #include "terrain_assets.h"
 
 #include <glad/glad.h>
-
-#include "win32_platform.h"
 #include "terrain_renderer.h"
 
 struct AssetInfo
@@ -24,15 +22,6 @@ struct AssetsState
     AssetInfo assetInfos[ASSET_COUNT];
     ShaderAsset shaderAssets[ASSET_SHADER_COUNT];
 };
-
-AssetsState *getState(MemoryBlock *engineMemoryBlock)
-{
-    EngineMemory *engineMemory = static_cast<EngineMemory *>(engineMemoryBlock->baseAddress);
-    MemoryBlock *assetsBlock = &engineMemory->assets;
-    assert(assetsBlock->size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)assetsBlock->baseAddress;
-    return state;
-}
 
 ShaderInfo getShaderInfo(uint32 assetId)
 {
@@ -106,7 +95,11 @@ ShaderInfo getShaderInfo(uint32 assetId)
 
 void onShaderLoaded(MemoryBlock *memory, uint32 assetId, PlatformReadFileResult *result)
 {
-    AssetsState *state = getState(memory);
+    EngineMemory *engineMemory = static_cast<EngineMemory *>(memory->baseAddress);
+    MemoryBlock *assetsBlock = &engineMemory->assets;
+    assert(assetsBlock->size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)assetsBlock->baseAddress;
+
     ShaderInfo shaderInfo = getShaderInfo(assetId);
 
     char *src = static_cast<char *>(result->data);
@@ -123,14 +116,19 @@ void onShaderLoaded(MemoryBlock *memory, uint32 assetId, PlatformReadFileResult 
 
 ShaderAsset *assetsGetShader(MemoryBlock *memory, uint32 assetId)
 {
-    AssetsState *state = getState(memory);
     assert(assetId < ASSET_SHADER_COUNT);
+
+    EngineMemory *engineMemory = static_cast<EngineMemory *>(memory->baseAddress);
+    MemoryBlock *assetsBlock = &engineMemory->assets;
+    assert(assetsBlock->size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)assetsBlock->baseAddress;
 
     AssetInfo *assetInfo = &state->assetInfos[assetId];
     if (!assetInfo->isLoaded)
     {
         ShaderInfo shaderInfo = getShaderInfo(assetId);
-        win32LoadAsset(memory, assetId, shaderInfo.relativePath, onShaderLoaded);
+        engineMemory->platformLoadAsset(
+            memory, assetId, shaderInfo.relativePath, onShaderLoaded);
     }
 
     // note: we assume that the load asset call is synchronous and the assetInfo has now

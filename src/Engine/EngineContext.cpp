@@ -1,5 +1,6 @@
 #include "EngineContext.hpp"
 
+#include "win32_platform.h"
 #include "World.hpp"
 
 namespace Terrain { namespace Engine {
@@ -9,6 +10,10 @@ namespace Terrain { namespace Engine {
     {
         assert(memoryBlock->size >= sizeof(EngineMemory));
         EngineMemory *memory = static_cast<EngineMemory *>(memoryBlock->baseAddress);
+
+        memory->platformFreeMemory = win32FreeMemory;
+        memory->platformReadFile = win32ReadFile;
+        memory->platformLoadAsset = win32LoadAsset;
 
         uint8 *baseAddress = static_cast<uint8 *>(memoryBlock->baseAddress);
         uint64 offset = sizeof(EngineMemory);

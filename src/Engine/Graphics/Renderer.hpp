@@ -8,7 +8,7 @@
 #include <map>
 #include <string>
 
-#include "../terrain_foundation.h"
+#include "../terrain_platform.h"
 #include "../Resources/TextureResource.hpp"
 #include "../Resources/ShaderProgramResource.hpp"
 #include "UniformValue.hpp"

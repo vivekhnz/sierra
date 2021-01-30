@@ -75,7 +75,7 @@
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="TerrainResources.hpp" />
     <ClInclude Include="terrain_assets.h" />
-    <ClInclude Include="terrain_foundation.h" />
+    <ClInclude Include="terrain_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="win32_platform.h" />
     <ClInclude Include="World.hpp" />

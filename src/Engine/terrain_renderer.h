@@ -3,7 +3,7 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "terrain_foundation.h"
+#include "terrain_platform.h"
 
 enum RendererBufferType
 {
@@ -34,8 +34,7 @@ EXPORT uint32 rendererCreateVertexArray(MemoryBlock *memory);
 EXPORT void rendererBindVertexArray(MemoryBlock *memory, uint32 handle);
 EXPORT void rendererUnbindVertexArray();
 
-EXPORT uint32 rendererCreateBuffer(
-    MemoryBlock *memory, RendererBufferType type, uint32 usage);
+EXPORT uint32 rendererCreateBuffer(MemoryBlock *memory, RendererBufferType type, uint32 usage);
 EXPORT void rendererBindBuffer(MemoryBlock *memory, uint32 handle);
 EXPORT void rendererUpdateBuffer(MemoryBlock *memory, uint32 handle, uint64 size, void *data);
 
