@@ -98,9 +98,6 @@
     <ClInclude Include="Resources\TextureResource.hpp">
       <Filter>Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Resources\ShaderResource.hpp">
-      <Filter>Resources</Filter>
-    </ClInclude>
     <ClInclude Include="TerrainResources.hpp" />
     <ClInclude Include="Graphics\UniformValue.hpp">
       <Filter>Graphics</Filter>

@@ -122,8 +122,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             // link shader program
             for (int s = 0; s < resource.shaderCount; s++)
             {
-                rendererAttachShader(
-                    memory, id, assetsGetShader(memory, resource.shaderResourceIds[s]));
+                ShaderAsset *shader = assetsGetShader(memory, resource.shaderResourceIds[s]);
+                assert(shader);
+                rendererAttachShader(memory, id, shader->handle);
             }
             glLinkProgram(id);
             int success;
@@ -136,8 +137,9 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
             for (int s = 0; s < resource.shaderCount; s++)
             {
-                rendererDetachShader(
-                    memory, id, assetsGetShader(memory, resource.shaderResourceIds[s]));
+                ShaderAsset *shader = assetsGetShader(memory, resource.shaderResourceIds[s]);
+                assert(shader);
+                rendererDetachShader(memory, id, shader->handle);
             }
 
             shaderPrograms.id.push_back(id);

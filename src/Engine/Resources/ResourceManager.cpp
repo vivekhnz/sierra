@@ -5,7 +5,6 @@
 #include "../TerrainResources.hpp"
 #include "../EngineContext.hpp"
 #include "../IO/Path.hpp"
-#include "../win32_platform.h"
 #include "../terrain_renderer.h"
 #include "../terrain_assets.h"
 #include "TextureLoader.hpp"
@@ -13,16 +12,6 @@
 namespace Terrain { namespace Engine { namespace Resources {
     ResourceManager::ResourceManager(EngineContext &ctx) : ctx(ctx)
     {
-    }
-
-    char *readFileText(const char *relativePath)
-    {
-        char absolutePath[MAX_PATH];
-        win32GetAbsolutePath(relativePath, absolutePath);
-
-        Win32ReadFileResult result = win32ReadFile(absolutePath);
-        assert(result.data != 0);
-        return static_cast<char *>(result.data);
     }
 
     void ResourceManager::loadResources()
@@ -189,36 +178,21 @@ namespace Terrain { namespace Engine { namespace Resources {
 
     void ResourceManager::loadShaders()
     {
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_VERTEX, GL_VERTEX_SHADER,
-            "data/texture_vertex_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_FRAGMENT, GL_FRAGMENT_SHADER,
-            "data/texture_fragment_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_VERTEX, GL_VERTEX_SHADER,
-            "data/terrain_vertex_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_CTRL, GL_TESS_CONTROL_SHADER,
-            "data/terrain_tess_ctrl_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_EVAL, GL_TESS_EVALUATION_SHADER,
-            "data/terrain_tess_eval_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_FRAGMENT, GL_FRAGMENT_SHADER,
-            "data/terrain_fragment_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL,
-            GL_COMPUTE_SHADER, "data/terrain_calc_tess_levels_comp_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_VERTEX, GL_VERTEX_SHADER,
-            "data/wireframe_vertex_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_CTRL, GL_TESS_CONTROL_SHADER,
-            "data/wireframe_tess_ctrl_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_EVAL,
-            GL_TESS_EVALUATION_SHADER, "data/wireframe_tess_eval_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_FRAGMENT, GL_FRAGMENT_SHADER,
-            "data/wireframe_fragment_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_VERTEX, GL_VERTEX_SHADER,
-            "data/brush_vertex_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_FRAGMENT, GL_FRAGMENT_SHADER,
-            "data/brush_fragment_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_VERTEX, GL_VERTEX_SHADER,
-            "data/ui_vertex_shader.glsl");
-        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_FRAGMENT, GL_FRAGMENT_SHADER,
-            "data/ui_fragment_shader.glsl");
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_VERTEX);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TEXTURE_FRAGMENT);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_VERTEX);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_CTRL);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_TESS_EVAL);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_FRAGMENT);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_VERTEX);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_CTRL);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_TESS_EVAL);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_WIREFRAME_FRAGMENT);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_VERTEX);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_BRUSH_FRAGMENT);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_VERTEX);
+        assetsLoadShader(ctx.memory, ASSET_SHADER_UI_FRAGMENT);
     }
 
     void ResourceManager::loadShaderPrograms()

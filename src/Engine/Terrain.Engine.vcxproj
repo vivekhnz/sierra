@@ -70,7 +70,6 @@
     <ClInclude Include="Resources\MaterialResource.hpp" />
     <ClInclude Include="Resources\ResourceManager.hpp" />
     <ClInclude Include="Resources\ShaderProgramResource.hpp" />
-    <ClInclude Include="Resources\ShaderResource.hpp" />
     <ClInclude Include="Resources\TextureLoader.hpp" />
     <ClInclude Include="Resources\TextureResource.hpp" />
     <ClInclude Include="TerrainRendererComponentManager.hpp" />

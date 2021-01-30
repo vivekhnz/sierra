@@ -10,7 +10,6 @@
 
 #include "../terrain_foundation.h"
 #include "../Resources/TextureResource.hpp"
-#include "../Resources/ShaderResource.hpp"
 #include "../Resources/ShaderProgramResource.hpp"
 #include "UniformValue.hpp"
 
