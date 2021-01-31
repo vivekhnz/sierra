@@ -72,10 +72,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.terrainRenderer.create(entityId, -1,
                 heightmapTextureHandle, terrainRows, terrainColumns, patchSize, terrainHeight);
 
-        int &meshHandle =
+        meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-        terrainMeshRendererInstanceId = world.componentManagers.meshRenderer.create(entityId,
-            meshHandle, materialHandle, 11, materialUniformNames, materialUniformValues, 1);
+        world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle, 11,
+            materialUniformNames, materialUniformValues, 1);
 
         terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);
@@ -85,8 +85,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
         rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
             terrainColumns * terrainRows * 10 * sizeof(glm::vec4), 0);
-
-        meshVertexBufferHandle = ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
@@ -150,36 +148,24 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         // update brush highlight
-        bool isBrushHiglightVisible = operation.mode != InteractionMode::MoveCamera;
-        world.componentManagers.meshRenderer.setMaterialUniformVector2(
-            terrainMeshRendererInstanceId, "brushHighlightPos", operation.brushPosition);
-        world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            terrainMeshRendererInstanceId, "brushHighlightStrength",
-            isBrushHiglightVisible ? 0.4f : 0.0f);
-        world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            terrainMeshRendererInstanceId, "brushHighlightRadius",
-            state.brushRadius / 2048.0f);
-        world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            terrainMeshRendererInstanceId, "brushHighlightFalloff", state.brushFalloff);
+        worldState.brushPos = operation.brushPosition;
+        worldState.isBrushHighlightVisible = operation.mode != InteractionMode::MoveCamera;
+        worldState.brushRadius = state.brushRadius / 2048.0f;
+        worldState.brushFalloff = state.brushFalloff;
 
         // update material properties
-        world.componentManagers.meshRenderer.setMaterialUniformVector2(
-            terrainMeshRendererInstanceId, "mat1_textureSizeInWorldUnits",
-            glm::vec2(state.mat1_textureSize, state.mat1_textureSize));
-        world.componentManagers.meshRenderer.setMaterialUniformVector2(
-            terrainMeshRendererInstanceId, "mat2_textureSizeInWorldUnits",
-            glm::vec2(state.mat2_textureSize, state.mat2_textureSize));
-        world.componentManagers.meshRenderer.setMaterialUniformVector4(
-            terrainMeshRendererInstanceId, "mat2_rampParams",
+        worldState.mat1_textureSizeInWorldUnits =
+            glm::vec2(state.mat1_textureSize, state.mat1_textureSize);
+        worldState.mat2_textureSizeInWorldUnits =
+            glm::vec2(state.mat2_textureSize, state.mat2_textureSize);
+        worldState.mat2_rampParams =
             glm::vec4(state.mat2_rampParams.slopeStart, state.mat2_rampParams.slopeEnd,
-                state.mat2_rampParams.altitudeStart, state.mat2_rampParams.altitudeEnd));
-        world.componentManagers.meshRenderer.setMaterialUniformVector2(
-            terrainMeshRendererInstanceId, "mat3_textureSizeInWorldUnits",
-            glm::vec2(state.mat3_textureSize, state.mat3_textureSize));
-        world.componentManagers.meshRenderer.setMaterialUniformVector4(
-            terrainMeshRendererInstanceId, "mat3_rampParams",
+                state.mat2_rampParams.altitudeStart, state.mat2_rampParams.altitudeEnd);
+        worldState.mat3_textureSizeInWorldUnits =
+            glm::vec2(state.mat3_textureSize, state.mat3_textureSize);
+        worldState.mat3_rampParams =
             glm::vec4(state.mat3_rampParams.slopeStart, state.mat3_rampParams.slopeEnd,
-                state.mat3_rampParams.altitudeStart, state.mat3_rampParams.altitudeEnd));
+                state.mat3_rampParams.altitudeStart, state.mat3_rampParams.altitudeEnd);
 
         // update scene lighting
         glm::vec4 lightDir = glm::vec4(0);
@@ -300,8 +286,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             glm::vec2 normalizedPickPoint = glm::vec2(
                 (intersectionPoint.x / 127.5f) + 0.5f, (intersectionPoint.z / 127.5f) + 0.5f);
-            world.componentManagers.meshRenderer.setMaterialUniformVector2(
-                terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
             // if the R key is pressed, we are adjusting the brush radius
             if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::R))
@@ -435,26 +419,72 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetShaderProgramUniformFloat(
             memory, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
 
-        constexpr int rows = 256;
-        constexpr int columns = 256;
+        constexpr int terrainRows = 256;
+        constexpr int terrainColumns = 256;
+        constexpr float patchSize = 0.5f;
         constexpr float terrainHeight = 25.0f;
+        constexpr int heightmapWidth = 2048;
+        constexpr int heightmapHeight = 2048;
 
         rendererSetShaderProgramUniformInteger(memory, calcTessLevelShaderProgramHandle,
-            "horizontalEdgeCount", rows * (columns - 1));
+            "horizontalEdgeCount", terrainRows * (terrainColumns - 1));
         rendererSetShaderProgramUniformInteger(
-            memory, calcTessLevelShaderProgramHandle, "columnCount", columns);
+            memory, calcTessLevelShaderProgramHandle, "columnCount", terrainColumns);
         rendererSetShaderProgramUniformFloat(
             memory, calcTessLevelShaderProgramHandle, "terrainHeight", terrainHeight);
         rendererBindTexture(memory, heightmapTextureHandle, 0);
 
-        int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
+        int meshEdgeCount =
+            (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
+        uint32 meshVertexBufferHandle =
+            ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
+
         rendererBindShaderStorageBuffer(memory, tessellationLevelBufferHandle, 0);
         rendererBindShaderStorageBuffer(memory, meshVertexBufferHandle, 1);
         rendererUseShaderProgram(memory, calcTessLevelShaderProgramHandle);
         rendererDispatchCompute(meshEdgeCount, 1, 1);
         rendererShaderStorageMemoryBarrier();
 
-        // render terrain
-        world.componentManagers.meshRenderer.renderMeshes();
+        // bind material data
+        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
+        int materialHandle =
+            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
+        uint32 terrainShaderProgramHandle =
+            ctx.assets.graphics.getMaterialShaderProgramHandle(materialHandle);
+        ctx.assets.graphics.useMaterial(materialHandle);
+
+        // bind mesh data
+        int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
+        unsigned int primitiveType = ctx.assets.graphics.getMeshPrimitiveType(meshHandle);
+        rendererBindVertexArray(
+            memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
+
+        // set shader uniforms
+        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
+            "heightmapSize", glm::vec2(heightmapWidth, heightmapHeight));
+        rendererSetShaderProgramUniformVector3(memory, terrainShaderProgramHandle,
+            "terrainDimensions",
+            glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));
+        rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
+            "brushHighlightStrength", worldState.isBrushHighlightVisible ? 0.4f : 0.0f);
+        rendererSetShaderProgramUniformVector2(
+            memory, terrainShaderProgramHandle, "brushHighlightPos", worldState.brushPos);
+        rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
+            "brushHighlightRadius", worldState.brushRadius);
+        rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
+            "brushHighlightFalloff", worldState.brushFalloff);
+        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
+            "mat1_textureSizeInWorldUnits", worldState.mat1_textureSizeInWorldUnits);
+        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
+            "mat2_textureSizeInWorldUnits", worldState.mat2_textureSizeInWorldUnits);
+        rendererSetShaderProgramUniformVector4(
+            memory, terrainShaderProgramHandle, "mat2_rampParams", worldState.mat2_rampParams);
+        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
+            "mat3_textureSizeInWorldUnits", worldState.mat3_textureSizeInWorldUnits);
+        rendererSetShaderProgramUniformVector4(
+            memory, terrainShaderProgramHandle, "mat3_rampParams", worldState.mat3_rampParams);
+
+        // draw mesh
+        rendererDrawElementsInstanced(primitiveType, elementCount, 1);
     }
 }}}}

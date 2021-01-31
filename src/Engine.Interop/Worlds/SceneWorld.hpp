@@ -32,19 +32,35 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::mat4 cameraTransform;
         };
 
+        struct WorldState
+        {
+            glm::vec2 brushPos;
+            float brushRadius;
+            float brushFalloff;
+            bool isBrushHighlightVisible;
+
+            glm::vec2 mat1_textureSizeInWorldUnits;
+
+            glm::vec2 mat2_textureSizeInWorldUnits;
+            glm::vec4 mat2_rampParams;
+
+            glm::vec2 mat3_textureSizeInWorldUnits;
+            glm::vec4 mat3_rampParams;
+        };
+
         EngineContext &ctx;
         Engine::World world;
 
         int heightmapTextureHandle;
-        int terrainMeshRendererInstanceId;
         int terrainColliderInstanceId;
+        int meshHandle;
         uint32 tessellationLevelBufferHandle;
-        uint32 meshVertexBufferHandle;
 
         void *heightmapTextureDataTempBuffer;
 
         ViewState viewStates[MAX_SCENE_VIEWS];
         int viewStateCount = 0;
+        WorldState worldState;
 
         bool updateViewState(ViewState *viewState, float deltaTime);
         OperationState getCurrentOperation(const EditorState &prevState);
