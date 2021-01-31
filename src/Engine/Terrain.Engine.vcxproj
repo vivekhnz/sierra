@@ -20,8 +20,6 @@
     <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="FirstPersonCameraComponentManager.cpp" />
-    <ClCompile Include="Graphics\BindBuffer.cpp" />
-    <ClCompile Include="Graphics\Buffer.cpp" />
     <ClCompile Include="Graphics\DebugUIRenderer.cpp" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
     <ClCompile Include="Graphics\GraphicsAssetManager.cpp" />
@@ -46,8 +44,6 @@
     <ClInclude Include="EngineViewContext.hpp" />
     <ClInclude Include="EntityManager.hpp" />
     <ClInclude Include="FirstPersonCameraComponentManager.hpp" />
-    <ClInclude Include="Graphics\BindBuffer.hpp" />
-    <ClInclude Include="Graphics\Buffer.hpp" />
     <ClInclude Include="Graphics\DebugUIRenderer.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp" />

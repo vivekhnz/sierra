@@ -85,11 +85,11 @@ namespace Terrain { namespace Engine {
         data.isWireframeMode.push_back(false);
 
         // create buffer to store vertex edge data
-        data.tessellationLevelBuffer.push_back(
-            Graphics::Buffer(GL_SHADER_STORAGE_BUFFER, GL_STREAM_COPY));
-        std::vector<glm::vec4> vertEdgeData(columns * rows * 10);
-        data.tessellationLevelBuffer[data.count].fill(
-            vertEdgeData.size() * sizeof(glm::vec4), vertEdgeData.data());
+        uint32 tessLevelBufferHandle = rendererCreateBuffer(
+            renderer.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
+        rendererUpdateBuffer(renderer.memory, tessLevelBufferHandle,
+            columns * rows * 10 * sizeof(glm::vec4), 0);
+        data.tessellationLevelBufferHandle.push_back(tessLevelBufferHandle);
 
         return data.count++;
     }
@@ -136,8 +136,8 @@ namespace Terrain { namespace Engine {
 
             int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
 
-            glBindBufferBase(
-                GL_SHADER_STORAGE_BUFFER, 0, data.tessellationLevelBuffer[i].getId());
+            rendererBindShaderStorageBuffer(
+                renderer.memory, data.tessellationLevelBufferHandle[i], 0);
             rendererBindShaderStorageBuffer(
                 renderer.memory, data.meshVertexBufferHandle[i], 1);
             rendererUseShaderProgram(renderer.memory, shaderProgramHandle);

@@ -8,7 +8,8 @@
 enum RendererBufferType
 {
     RENDERER_VERTEX_BUFFER,
-    RENDERER_ELEMENT_BUFFER
+    RENDERER_ELEMENT_BUFFER,
+    RENDERER_SHADER_STORAGE_BUFFER
 };
 
 EXPORT void rendererCreateUniformBuffers(EngineMemory *memory);
@@ -32,17 +33,17 @@ EXPORT bool rendererCreateShaderProgram(
     EngineMemory *memory, int shaderCount, uint32 *shaderHandles, uint32 *out_handle);
 EXPORT void rendererUseShaderProgram(EngineMemory *memory, uint32 handle);
 EXPORT void rendererSetShaderProgramUniformFloat(
-    EngineMemory *memory, uint32 handle, const char* uniformName, float value);
+    EngineMemory *memory, uint32 handle, const char *uniformName, float value);
 EXPORT void rendererSetShaderProgramUniformInteger(
-    EngineMemory *memory, uint32 handle, const char* uniformName, int32 value);
+    EngineMemory *memory, uint32 handle, const char *uniformName, int32 value);
 EXPORT void rendererSetShaderProgramUniformVector2(
-    EngineMemory *memory, uint32 handle, const char* uniformName, glm::vec2 value);
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::vec2 value);
 EXPORT void rendererSetShaderProgramUniformVector3(
-    EngineMemory *memory, uint32 handle, const char* uniformName, glm::vec3 value);
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::vec3 value);
 EXPORT void rendererSetShaderProgramUniformVector4(
-    EngineMemory *memory, uint32 handle, const char* uniformName, glm::vec4 value);
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::vec4 value);
 EXPORT void rendererSetShaderProgramUniformMatrix4x4(
-    EngineMemory *memory, uint32 handle, const char* uniformName, glm::mat4 value);
+    EngineMemory *memory, uint32 handle, const char *uniformName, glm::mat4 value);
 
 EXPORT uint32 rendererCreateVertexArray(EngineMemory *memory);
 EXPORT void rendererBindVertexArray(EngineMemory *memory, uint32 handle);

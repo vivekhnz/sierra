@@ -4,7 +4,6 @@
 #include "Common.hpp"
 
 #include <vector>
-#include "Graphics/Buffer.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Resources/TextureResource.hpp"
@@ -25,7 +24,7 @@ namespace Terrain { namespace Engine {
             std::vector<int> columns;
             std::vector<float> terrainHeight;
             std::vector<bool> isWireframeMode;
-            std::vector<Graphics::Buffer> tessellationLevelBuffer;
+            std::vector<uint32> tessellationLevelBufferHandle;
 
             ComponentData() : count(0)
             {

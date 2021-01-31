@@ -4,12 +4,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Graphics\BindBuffer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="Graphics\Buffer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\GlfwManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -55,12 +49,6 @@
     <ClCompile Include="terrain_assets.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Graphics\BindBuffer.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Buffer.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\GlfwManager.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>

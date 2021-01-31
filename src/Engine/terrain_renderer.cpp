@@ -70,6 +70,10 @@ uint32 getOpenGLBufferType(RendererBufferType type)
     {
         bufferType = GL_ELEMENT_ARRAY_BUFFER;
     }
+    else if (type == RENDERER_SHADER_STORAGE_BUFFER)
+    {
+        bufferType = GL_SHADER_STORAGE_BUFFER;
+    }
     assert(bufferType);
     return bufferType;
 }
