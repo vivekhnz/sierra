@@ -70,6 +70,9 @@ EXPORT void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFa
 EXPORT void rendererDrawElementsInstanced(
     uint32 primitiveType, uint32 elementCount, uint32 instanceCount);
 
+EXPORT void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount);
+EXPORT void rendererShaderStorageMemoryBarrier();
+
 EXPORT void rendererDestroyResources(EngineMemory *memory);
 
 #endif

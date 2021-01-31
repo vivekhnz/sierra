@@ -410,6 +410,16 @@ void rendererDrawElementsInstanced(
     glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount);
 }
 
+void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount)
+{
+    glDispatchCompute(xCount, yCount, zCount);
+}
+
+void rendererShaderStorageMemoryBarrier()
+{
+    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+}
+
 void rendererDestroyResources(EngineMemory *memory)
 {
     RendererState *state = getState(memory);

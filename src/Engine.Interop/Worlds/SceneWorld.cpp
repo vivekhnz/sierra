@@ -1,5 +1,6 @@
 #include "SceneWorld.hpp"
 #include <glm/gtc/type_ptr.hpp>
+#include "../../Engine/terrain_assets.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     SceneWorld::SceneWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
@@ -78,6 +79,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);
+
+        // create buffer to store vertex edge data
+        tessellationLevelBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
+        rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
+            terrainColumns * terrainRows * 10 * sizeof(glm::vec4), 0);
+
+        meshVertexBufferHandle = ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
@@ -416,7 +425,36 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetViewportSize(viewportWidth, viewportHeight);
         rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
-        world.componentManagers.terrainRenderer.calculateTessellationLevels();
+        // calculate tessellation levels
+        ShaderProgramAsset *calcTessLevelShaderProgramAsset =
+            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
+        if (!calcTessLevelShaderProgramAsset)
+            return;
+
+        uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
+        rendererSetShaderProgramUniformFloat(
+            memory, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
+
+        constexpr int rows = 256;
+        constexpr int columns = 256;
+        constexpr float terrainHeight = 25.0f;
+
+        rendererSetShaderProgramUniformInteger(memory, calcTessLevelShaderProgramHandle,
+            "horizontalEdgeCount", rows * (columns - 1));
+        rendererSetShaderProgramUniformInteger(
+            memory, calcTessLevelShaderProgramHandle, "columnCount", columns);
+        rendererSetShaderProgramUniformFloat(
+            memory, calcTessLevelShaderProgramHandle, "terrainHeight", terrainHeight);
+        rendererBindTexture(memory, heightmapTextureHandle, 0);
+
+        int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
+        rendererBindShaderStorageBuffer(memory, tessellationLevelBufferHandle, 0);
+        rendererBindShaderStorageBuffer(memory, meshVertexBufferHandle, 1);
+        rendererUseShaderProgram(memory, calcTessLevelShaderProgramHandle);
+        rendererDispatchCompute(meshEdgeCount, 1, 1);
+        rendererShaderStorageMemoryBarrier();
+
+        // render terrain
         world.componentManagers.meshRenderer.renderMeshes();
     }
 }}}}

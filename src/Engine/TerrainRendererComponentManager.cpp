@@ -141,8 +141,8 @@ namespace Terrain { namespace Engine {
             rendererBindShaderStorageBuffer(
                 renderer.memory, data.meshVertexBufferHandle[i], 1);
             rendererUseShaderProgram(renderer.memory, shaderProgramHandle);
-            glDispatchCompute(meshEdgeCount, 1, 1);
-            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+            rendererDispatchCompute(meshEdgeCount, 1, 1);
+            rendererShaderStorageMemoryBarrier();
         }
     }
 

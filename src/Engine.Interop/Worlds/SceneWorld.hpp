@@ -38,6 +38,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int heightmapTextureHandle;
         int terrainMeshRendererInstanceId;
         int terrainColliderInstanceId;
+        uint32 tessellationLevelBufferHandle;
+        uint32 meshVertexBufferHandle;
 
         void *heightmapTextureDataTempBuffer;
 
