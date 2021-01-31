@@ -45,6 +45,8 @@ public
         static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
         static System::DateTime lastTickTime;
 
+        static bool isReloadingShaders = false;
+
         static void OnTick(Object ^ sender, System::EventArgs ^ e);
         static void OnMouseWheel(
             Object ^ sender, System::Windows::Input::MouseWheelEventArgs ^ args);
@@ -117,5 +119,7 @@ public
 
         static void InitializeEngine();
         static void Shutdown();
+
+        static void ReloadShaders();
     };
 }}}

@@ -209,3 +209,18 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
 
     return static_cast<ShaderProgramAsset *>(assetInfo->data);
 }
+
+void assetsInvalidateShaders(EngineMemory *memory)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    for (int i = 0; i < ASSET_SHADER_COUNT; i++)
+    {
+        state->shaderAssetInfos[i].isLoaded = false;
+    }
+    for (int i = 0; i < ASSET_SHADER_PROGRAM_COUNT; i++)
+    {
+        state->shaderProgramAssetInfos[i].isLoaded = false;
+    }
+}

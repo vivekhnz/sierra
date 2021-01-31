@@ -3,6 +3,7 @@
 #include <windows.h>
 #include <msclr\lock.h>
 #include "terrain_platform_editor_win32.h"
+#include "../Engine/terrain_assets.h"
 
 using namespace System;
 using namespace System::Windows;
@@ -142,6 +143,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!areWorldsInitialized)
             return;
 
+        if (isReloadingShaders)
+        {
+            assetsInvalidateShaders(memory);
+            isReloadingShaders = false;
+        }
+
         ctx->input.update();
 
         auto now = DateTime::UtcNow;
@@ -194,6 +201,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         {
             hoveredViewportCtx = nullptr;
         }
+    }
+
+    void EngineInterop::ReloadShaders()
+    {
+        isReloadingShaders = true;
     }
 
     void EngineInterop::Shutdown()
