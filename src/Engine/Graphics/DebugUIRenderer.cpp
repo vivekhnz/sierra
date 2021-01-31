@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../TerrainResources.hpp"
 
+#include "../terrain_assets.h"
 #include "../terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {
@@ -85,15 +86,25 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
     void DebugUIRenderer::render(EngineViewContext &vctx)
     {
+        ShaderProgramAsset *shaderProgramAsset =
+            assetsGetShaderProgram(renderer.memory, ASSET_SHADER_PROGRAM_UI);
+        if (!shaderProgramAsset)
+        {
+            points.count = 0;
+            return;
+        }
+        uint32 shaderProgramHandle = shaderProgramAsset->handle;
+
         // update point instance buffer
         rendererUpdateBuffer(renderer.memory, points.instanceBufferHandle, Points::SIZE,
             points.instanceBufferData);
 
         // bind material data
-        int &materialHandle = graphicsAssets.lookupMaterial(TerrainResources::Materials::UI);
-        int &shaderProgramHandle =
-            graphicsAssets.getMaterialShaderProgramHandle(materialHandle);
-        graphicsAssets.useMaterial(materialHandle);
+        rendererUseShaderProgram(renderer.memory, shaderProgramHandle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        rendererSetShaderProgramUniformVector3(
+            renderer.memory, shaderProgramHandle, "color", glm::vec3(1, 1, 1));
 
         // bind mesh data
         int elementCount = graphicsAssets.getMeshElementCount(quadMeshHandle);
