@@ -38,7 +38,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         switch (vctx.getWorld())
         {
         case ViewportWorld::Scene:
-            sceneWorld.render(view);
+            sceneWorld.render(
+                memory, view.viewportWidth, view.viewportHeight, view.cameraEntityId);
             break;
         case ViewportWorld::HeightmapPreview:
             heightmapPreviewWorld.render(memory, view.viewportWidth, view.viewportHeight);

@@ -68,7 +68,7 @@ namespace Terrain { namespace Engine {
                 isManipulatingOrbitCamera = true;
             }
 
-            // calcalate camera position
+            // calculate camera position
             glm::vec3 newLookDir =
                 glm::vec3(cos(yaw) * cos(pitch), sin(pitch), sin(yaw) * cos(pitch));
             position = lookAt + (newLookDir * distance);

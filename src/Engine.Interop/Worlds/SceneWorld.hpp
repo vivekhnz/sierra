@@ -5,6 +5,8 @@
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"
 
+#define MAX_SCENE_VIEWS 8
+
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class SceneWorld
     {
@@ -19,16 +21,30 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             float brushFalloffIncrease;
         };
 
+        struct ViewState
+        {
+            int inputControllerId;
+            float orbitCameraDistance;
+            float orbitCameraYaw;
+            float orbitCameraPitch;
+            glm::vec3 cameraPos;
+            glm::vec3 cameraLookAt;
+            glm::mat4 cameraTransform;
+        };
+
         EngineContext &ctx;
         Engine::World world;
 
         int heightmapTextureHandle;
         int terrainMeshRendererInstanceId;
         int terrainColliderInstanceId;
-        std::vector<int> orbitCameraIds;
 
         void *heightmapTextureDataTempBuffer;
 
+        ViewState viewStates[MAX_SCENE_VIEWS];
+        int viewStateCount = 0;
+
+        bool updateViewState(ViewState *viewState, float deltaTime);
         OperationState getCurrentOperation(const EditorState &prevState);
         HeightmapStatus getNextHeightmapStatus(HeightmapStatus currentHeightmapStatus,
             bool isBrushActive,
@@ -41,6 +57,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void initialize(int heightmapTextureHandle);
         void linkViewport(ViewportContext &vctx);
         void update(float deltaTime, const EditorState &state, EditorState &newState);
-        void render(EngineViewContext &vctx);
+        void render(
+            EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight, int32 viewId);
     };
 }}}}

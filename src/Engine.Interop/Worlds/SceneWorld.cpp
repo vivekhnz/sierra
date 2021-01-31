@@ -82,19 +82,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
     {
-        int cameraEntityId = ctx.entities.create();
-        world.componentManagers.camera.create(
-            cameraEntityId, glm::vec4(0.392f, 0.584f, 0.929f, 1.0f), -1);
+        assert(viewStateCount < MAX_SCENE_VIEWS);
 
-        int orbitCameraId = world.componentManagers.orbitCamera.create(cameraEntityId);
-        world.componentManagers.orbitCamera.setPitch(orbitCameraId, glm::radians(15.0f));
-        world.componentManagers.orbitCamera.setYaw(orbitCameraId, glm::radians(180.0f));
-        world.componentManagers.orbitCamera.setDistance(orbitCameraId, 112.5f);
-        world.componentManagers.orbitCamera.setInputControllerId(
-            orbitCameraId, vctx.getInputControllerId());
+        vctx.setCameraEntityId(viewStateCount);
 
-        vctx.setCameraEntityId(cameraEntityId);
-        orbitCameraIds.push_back(orbitCameraId);
+        ViewState *state = &viewStates[viewStateCount++];
+        state->inputControllerId = vctx.getInputControllerId();
+        state->orbitCameraDistance = 112.5f;
+        state->orbitCameraYaw = glm::radians(180.0f);
+        state->orbitCameraPitch = glm::radians(15.0f);
+        state->cameraPos = glm::vec3(0, 0, 0);
+        state->cameraLookAt = glm::vec3(0, 0, 0);
     }
 
     void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
@@ -109,7 +107,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
         }
 
-        world.update(deltaTime);
+        bool isManipulatingCamera = false;
+        for (int i = 0; i < viewStateCount; i++)
+        {
+            isManipulatingCamera |= updateViewState(&viewStates[i], deltaTime);
+        }
+        if (isManipulatingCamera)
+        {
+            ctx.input.captureMouse(false);
+        }
 
         // determine the current operation being performed
         OperationState operation = getCurrentOperation(state);
@@ -174,21 +180,67 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererUpdateLightingState(ctx.memory, &lightDir, true, true, true, true, true);
     }
 
+    bool SceneWorld::updateViewState(ViewState *viewState, float deltaTime)
+    {
+        bool isManipulatingCamera = false;
+        const IO::MouseInputState &mouseState =
+            ctx.input.getMouseState(viewState->inputControllerId);
+
+        // orbit distance is modified by scrolling the mouse wheel
+        viewState->orbitCameraDistance *= 1.0f - (glm::sign(mouseState.scrollOffsetY) * 0.05f);
+
+        if (ctx.input.isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Middle))
+        {
+            // update the look at position if the middle mouse button is pressed
+            glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
+            glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(lookDir, xDir);
+            glm::vec3 pan =
+                (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
+            float panMagnitude =
+                std::min(std::max(viewState->orbitCameraDistance, 2.5f), 300.0f);
+            viewState->cameraLookAt += pan * panMagnitude * 0.02f * deltaTime;
+
+            isManipulatingCamera = true;
+        }
+        if (ctx.input.isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Right))
+        {
+            // update yaw & pitch if the right mouse button is pressed
+            float rotateMagnitude =
+                std::min(std::max(viewState->orbitCameraDistance, 14.0f), 70.0f);
+            float rotateSensitivity = 0.05f * rotateMagnitude * deltaTime;
+            viewState->orbitCameraYaw +=
+                glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
+            viewState->orbitCameraPitch +=
+                glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
+
+            isManipulatingCamera = true;
+        }
+
+        // calculate camera position
+        glm::vec3 newLookDir =
+            glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
+                sin(viewState->orbitCameraPitch),
+                sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
+        viewState->cameraPos =
+            viewState->cameraLookAt + (newLookDir * viewState->orbitCameraDistance);
+
+        return isManipulatingCamera;
+    }
+
     SceneWorld::OperationState SceneWorld::getCurrentOperation(const EditorState &prevState)
     {
         EditorTool tool = prevState.tool;
 
         // first pass - loop through each camera and determine whether the camera is being
         // moved or the active brush stroke is being discarded
-        int cameraCount = orbitCameraIds.size();
-        for (int i = 0; i < cameraCount; i++)
+        for (int i = 0; i < viewStateCount; i++)
         {
-            int orbitCameraId = orbitCameraIds[i];
-            int inputControllerId =
-                world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
-
-            if (ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Middle)
-                || ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Right))
+            ViewState *viewState = &viewStates[i];
+            if (ctx.input.isMouseButtonDown(
+                    viewState->inputControllerId, IO::MouseButton::Middle)
+                || ctx.input.isMouseButtonDown(
+                    viewState->inputControllerId, IO::MouseButton::Right))
             {
                 return {
                     InteractionMode::MoveCamera, // mode
@@ -201,7 +253,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 };
             }
             if (prevState.heightmapStatus == HeightmapStatus::Editing
-                && ctx.input.isKeyDown(inputControllerId, IO::Key::Escape))
+                && ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::Escape))
             {
                 return {
                     InteractionMode::PaintBrushStroke, // mode
@@ -216,13 +268,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         // second pass - loop through each camera and determine whether the brush is active
-        for (int i = 0; i < cameraCount; i++)
+        for (int i = 0; i < viewStateCount; i++)
         {
-            int orbitCameraId = orbitCameraIds[i];
-            int inputControllerId =
-                world.componentManagers.orbitCamera.getInputControllerId(orbitCameraId);
+            ViewState *viewState = &viewStates[i];
+            const IO::MouseInputState &mouseState =
+                ctx.input.getMouseState(viewState->inputControllerId);
+            float mouseX = (mouseState.normalizedCursorX * 2.0f) - 1.0f;
+            float mouseY = (mouseState.normalizedCursorY * 2.0f) - 1.0f;
 
-            Physics::Ray ray = world.componentManagers.orbitCamera.getPickRay(orbitCameraId);
+            glm::mat4 inverseViewProjection = glm::inverse(viewState->cameraTransform);
+            glm::vec4 screenPos = glm::vec4(mouseX, -mouseY, 1.0f, 1.0f);
+            glm::vec4 worldPos = inverseViewProjection * screenPos;
+
+            Physics::Ray ray = {};
+            ray.origin = viewState->cameraPos;
+            ray.direction = glm::normalize(glm::vec3(worldPos));
 
             glm::vec3 intersectionPoint;
             if (!world.componentManagers.terrainCollider.intersects(
@@ -234,10 +294,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             world.componentManagers.meshRenderer.setMaterialUniformVector2(
                 terrainMeshRendererInstanceId, "brushHighlightPos", normalizedPickPoint);
 
-            IO::MouseInputState mouseState = ctx.input.getMouseState(inputControllerId);
-
             // if the R key is pressed, we are adjusting the brush radius
-            if (ctx.input.isKeyDown(inputControllerId, IO::Key::R))
+            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::R))
             {
                 float brushRadiusIncrease =
                     mouseState.cursorOffsetX + mouseState.cursorOffsetY;
@@ -254,7 +312,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             }
 
             // if the F key is pressed, we are adjusting the brush falloff
-            if (ctx.input.isKeyDown(inputControllerId, IO::Key::F))
+            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::F))
             {
                 float brushFalloffIncrease =
                     (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
@@ -271,20 +329,28 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             }
 
             // if a number key is pressed, change the selected tool
-            if (ctx.input.isKeyDown(inputControllerId, IO::Key::D1))
+            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::D1))
             {
                 tool = EditorTool::RaiseTerrain;
             }
-            else if (ctx.input.isKeyDown(inputControllerId, IO::Key::D2))
+            else if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::D2))
             {
                 tool = EditorTool::LowerTerrain;
             }
 
             // the LMB must be newly pressed to start a new brush stroke
-            bool isBrushActive =
-                (prevState.heightmapStatus == HeightmapStatus::Editing
-                    && ctx.input.isMouseButtonDown(inputControllerId, IO::MouseButton::Left))
-                || ctx.input.isNewMouseButtonPress(inputControllerId, IO::MouseButton::Left);
+            bool isBrushActive = false;
+            if (prevState.heightmapStatus == HeightmapStatus::Editing
+                && ctx.input.isMouseButtonDown(
+                    viewState->inputControllerId, IO::MouseButton::Left))
+            {
+                isBrushActive = true;
+            }
+            else if (ctx.input.isNewMouseButtonPress(
+                         viewState->inputControllerId, IO::MouseButton::Left))
+            {
+                isBrushActive = true;
+            }
 
             return {
                 InteractionMode::PaintBrushStroke, // mode
@@ -327,8 +393,30 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return currentHeightmapStatus;
     }
 
-    void SceneWorld::render(EngineViewContext &vctx)
+    void SceneWorld::render(
+        EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight, int32 viewId)
     {
-        world.render(vctx);
+        if (viewportWidth == 0 || viewportHeight == 0 || viewId == -1)
+            return;
+
+        assert(viewId < MAX_SCENE_VIEWS);
+        ViewState *viewState = &viewStates[viewId];
+
+        // calculate camera transform
+        constexpr float fov = glm::pi<float>() / 4.0f;
+        const float nearPlane = 0.1f;
+        const float farPlane = 10000.0f;
+        const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
+        const float aspectRatio = (float)viewportWidth / (float)viewportHeight;
+        glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+        viewState->cameraTransform =
+            projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
+
+        rendererUpdateCameraState(memory, &viewState->cameraTransform);
+        rendererSetViewportSize(viewportWidth, viewportHeight);
+        rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
+
+        world.componentManagers.terrainRenderer.calculateTessellationLevels();
+        world.componentManagers.meshRenderer.renderMeshes();
     }
 }}}}
