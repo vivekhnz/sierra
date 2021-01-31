@@ -23,49 +23,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         this->heightmapTextureHandle = heightmapTextureHandle;
 
-        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
-
-        // edit terrain material to point to composited heightmap texture handle
-        int &materialHandle =
-            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
-        ctx.assets.graphics.setMaterialTexture(materialHandle, 0, heightmapTextureHandle);
-
-        // build material uniforms
-        const char *materialUniformNames[11];
-        materialUniformNames[0] = "heightmapSize";
-        materialUniformNames[1] = "terrainDimensions";
-        materialUniformNames[2] = "brushHighlightStrength";
-        materialUniformNames[3] = "brushHighlightPos";
-        materialUniformNames[4] = "brushHighlightRadius";
-        materialUniformNames[5] = "brushHighlightFalloff";
-        materialUniformNames[6] = "mat1_textureSizeInWorldUnits";
-        materialUniformNames[7] = "mat2_textureSizeInWorldUnits";
-        materialUniformNames[8] = "mat2_rampParams";
-        materialUniformNames[9] = "mat3_textureSizeInWorldUnits";
-        materialUniformNames[10] = "mat3_rampParams";
-
-        Graphics::UniformValue materialUniformValues[11];
-        materialUniformValues[0] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(1.0f, 1.0f));
-        materialUniformValues[1] = Terrain::Engine::Graphics::UniformValue::forVector3(
-            glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));
-        materialUniformValues[2] = Terrain::Engine::Graphics::UniformValue::forFloat(0.4f);
-        materialUniformValues[3] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(0.5f, 0.5f));
-        materialUniformValues[4] =
-            Terrain::Engine::Graphics::UniformValue::forFloat(128 / 2048.0f);
-        materialUniformValues[5] = Terrain::Engine::Graphics::UniformValue::forFloat(0.75f);
-        materialUniformValues[6] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
-        materialUniformValues[7] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(13.0f, 13.0f));
-        materialUniformValues[8] = Terrain::Engine::Graphics::UniformValue::forVector4(
-            glm::vec4(0.6f, 0.8f, 0, 0.001f));
-        materialUniformValues[9] =
-            Terrain::Engine::Graphics::UniformValue::forVector2(glm::vec2(2.0f, 2.0f));
-        materialUniformValues[10] = Terrain::Engine::Graphics::UniformValue::forVector4(
-            glm::vec4(0.8f, 0.75f, 0.25f, 0.28f));
-
         // create entity and components
         int entityId = ctx.entities.create();
         int terrainRendererInstanceId =
@@ -74,8 +31,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-        world.componentManagers.meshRenderer.create(entityId, meshHandle, materialHandle, 11,
-            materialUniformNames, materialUniformValues, 1);
+        world.componentManagers.meshRenderer.create(entityId, meshHandle, 0, 0, 0, 0, 1);
 
         terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
             entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);
@@ -409,11 +365,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetViewportSize(viewportWidth, viewportHeight);
         rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
-        // calculate tessellation levels
+        // get shader programs
         ShaderProgramAsset *calcTessLevelShaderProgramAsset =
             assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
-        if (!calcTessLevelShaderProgramAsset)
+        ShaderProgramAsset *terrainShaderProgramAsset =
+            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
+        if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset)
             return;
+
+        // calculate tessellation levels
 
         uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
         rendererSetShaderProgramUniformFloat(
@@ -446,12 +406,49 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererShaderStorageMemoryBarrier();
 
         // bind material data
-        const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
-        int materialHandle =
-            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
-        uint32 terrainShaderProgramHandle =
-            ctx.assets.graphics.getMaterialShaderProgramHandle(materialHandle);
-        ctx.assets.graphics.useMaterial(materialHandle);
+        uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;
+        rendererUseShaderProgram(memory, terrainShaderProgramHandle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        const int RESOURCE_ID_TEXTURE_GROUND_ALBEDO = 1;
+        const int RESOURCE_ID_TEXTURE_GROUND_NORMAL = 2;
+        const int RESOURCE_ID_TEXTURE_GROUND_DISPLACEMENT = 3;
+        const int RESOURCE_ID_TEXTURE_GROUND_AO = 4;
+        const int RESOURCE_ID_TEXTURE_ROCK_ALBEDO = 5;
+        const int RESOURCE_ID_TEXTURE_ROCK_NORMAL = 6;
+        const int RESOURCE_ID_TEXTURE_ROCK_DISPLACEMENT = 7;
+        const int RESOURCE_ID_TEXTURE_ROCK_AO = 8;
+        const int RESOURCE_ID_TEXTURE_SNOW_ALBEDO = 9;
+        const int RESOURCE_ID_TEXTURE_SNOW_NORMAL = 10;
+        const int RESOURCE_ID_TEXTURE_SNOW_DISPLACEMENT = 11;
+        const int RESOURCE_ID_TEXTURE_SNOW_AO = 12;
+
+        rendererBindTexture(memory, heightmapTextureHandle, 0);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_ALBEDO), 1);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_NORMAL), 2);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_DISPLACEMENT), 3);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_AO), 4);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_ALBEDO), 5);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_NORMAL), 6);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_DISPLACEMENT), 7);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_AO), 8);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_ALBEDO), 9);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_NORMAL), 10);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_DISPLACEMENT), 11);
+        rendererBindTexture(
+            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_AO), 12);
 
         // bind mesh data
         int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
