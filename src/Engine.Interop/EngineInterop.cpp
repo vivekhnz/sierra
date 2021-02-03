@@ -143,10 +143,26 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!areWorldsInitialized)
             return;
 
-        if (isReloadingShaders)
+        uint64 assetsLastWriteTime = win32GetAssetsLastWriteTime();
+        if (assetsLastWriteTime > assetsLastUpdatedTime)
         {
-            assetsInvalidateShaders(memory);
-            isReloadingShaders = false;
+            assetsLastUpdatedTime = assetsLastWriteTime;
+        }
+
+        if (assetsLastUpdatedTime > assetsLastReloadedTime)
+        {
+            // wait ~1 second before reloading as sometimes the asset file is still locked by
+            // the application editing it
+            // todo: remove this delay once the asset load code is more error-tolerant i.e. can
+            // retry asset loads on the next frame
+            constexpr uint64 HOT_RELOAD_DELAY_100NS = 1 * 1000 * 1000 * 10;
+            uint64 currentTime = win32GetCurrentTime();
+            if (currentTime > assetsLastUpdatedTime + HOT_RELOAD_DELAY_100NS)
+            {
+                // todo: only invalidate assets that changed
+                assetsInvalidateShaders(memory);
+                assetsLastReloadedTime = currentTime;
+            }
         }
 
         ctx->input.update();
@@ -205,7 +221,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::ReloadShaders()
     {
-        isReloadingShaders = true;
     }
 
     void EngineInterop::Shutdown()

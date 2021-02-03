@@ -374,7 +374,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             return;
 
         // calculate tessellation levels
-
         uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
         rendererSetShaderProgramUniformFloat(
             memory, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);

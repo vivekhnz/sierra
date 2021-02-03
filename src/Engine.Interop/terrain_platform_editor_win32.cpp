@@ -1,5 +1,7 @@
 #include "terrain_platform_editor_win32.h"
 
+#include <windows.h>
+
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
     // get path to current assembly
@@ -66,7 +68,10 @@ PLATFORM_READ_FILE(win32ReadFile)
 
     HANDLE handle = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (handle == INVALID_HANDLE_VALUE)
+    {
+        int err = GetLastError();
         return result;
+    }
 
     LARGE_INTEGER size;
     if (GetFileSizeEx(handle, &size))
@@ -95,10 +100,54 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     char absolutePath[MAX_PATH];
     getAbsolutePath(relativePath, absolutePath);
 
+    // todo: put this request on a queue so we can retry it next frame if it fails
     PlatformReadFileResult result = win32ReadFile(absolutePath);
     assert(result.data != 0);
-
     onAssetLoaded(memory, assetId, &result);
 
     win32FreeMemory(result.data);
+}
+
+uint64 win32GetAssetsLastWriteTime()
+{
+    char assetsDirectoryPath[MAX_PATH];
+    getAbsolutePath("data\\*", assetsDirectoryPath);
+
+    WIN32_FIND_DATAA findResult;
+    HANDLE fileHandle = FindFirstFileA(assetsDirectoryPath, &findResult);
+
+    if (fileHandle == INVALID_HANDLE_VALUE)
+    {
+        return 0;
+    }
+
+    uint64 mostRecentLastWriteTime = 0;
+    do
+    {
+        if (!(findResult.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+        {
+            uint64 lastWriteTime = ((uint64)findResult.ftLastWriteTime.dwHighDateTime << 32)
+                | findResult.ftLastWriteTime.dwLowDateTime;
+            if (lastWriteTime > mostRecentLastWriteTime)
+            {
+                mostRecentLastWriteTime = lastWriteTime;
+            }
+        }
+    } while (FindNextFileA(fileHandle, &findResult));
+
+    FindClose(fileHandle);
+
+    return mostRecentLastWriteTime;
+}
+
+uint64 win32GetCurrentTime()
+{
+    SYSTEMTIME systemTime;
+    GetSystemTime(&systemTime);
+
+    FILETIME fileTime;
+    SystemTimeToFileTime(&systemTime, &fileTime);
+
+    uint64 value = ((uint64)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
+    return value;
 }
