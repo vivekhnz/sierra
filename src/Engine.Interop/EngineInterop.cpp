@@ -219,10 +219,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
     }
 
-    void EngineInterop::ReloadShaders()
-    {
-    }
-
     void EngineInterop::Shutdown()
     {
         renderTimer->Stop();

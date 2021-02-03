@@ -120,7 +120,5 @@ public
 
         static void InitializeEngine();
         static void Shutdown();
-
-        static void ReloadShaders();
     };
 }}}

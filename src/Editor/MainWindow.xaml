@@ -20,8 +20,6 @@
         <Menu Grid.ColumnSpan="2" Padding="0 4">
             <MenuItem Header="File">
                 <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
-                <Separator />
-                <MenuItem x:Name="miReloadShaders" Header="Reload Shaders" Click="miReloadShaders_Click" />
             </MenuItem>
         </Menu>
         <StackPanel Orientation="Horizontal" Grid.Row="1" Background="#CCC">

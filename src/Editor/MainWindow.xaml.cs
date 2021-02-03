@@ -96,11 +96,6 @@ namespace Terrain.Editor
             }
         }
 
-        private void miReloadShaders_Click(object sender, RoutedEventArgs e)
-        {
-            EngineInterop.ReloadShaders();
-        }
-
         private void brushRadiusSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
