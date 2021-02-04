@@ -3,8 +3,7 @@
 #include <glad/glad.h>
 
 namespace Terrain { namespace Engine {
-    World::World(EngineContext &ctx) :
-        componentManagers(ctx), debugUI(ctx.assets.graphics, ctx.renderer)
+    World::World(EngineContext &ctx) : componentManagers(ctx)
     {
         ctx.registerWorld(*this);
     }
@@ -30,20 +29,7 @@ namespace Terrain { namespace Engine {
         componentManagers.terrainRenderer.calculateTessellationLevels();
         componentManagers.meshRenderer.renderMeshes();
 
-        debugUI.render(vctx);
-
         componentManagers.camera.finalizeFramebuffer(vctx);
-    }
-
-    void World::onTexturesLoaded(const int count,
-        Resources::TextureResourceDescription *descriptions,
-        Resources::TextureResourceUsage *usages,
-        Resources::TextureResourceData *data)
-    {
-    }
-    void World::onMaterialsLoaded(const int count, Resources::MaterialResource *resources)
-    {
-        debugUI.onMaterialsLoaded(count, resources);
     }
 
     void World::onTextureReloaded(Resources::TextureResourceData &resource)

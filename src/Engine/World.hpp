@@ -8,7 +8,6 @@
 #include "OrthographicCameraComponentManager.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
 #include "Graphics/MeshRendererComponentManager.hpp"
-#include "Graphics/DebugUIRenderer.hpp"
 #include "TerrainRendererComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
@@ -35,18 +34,11 @@ namespace Terrain { namespace Engine {
             }
         };
         ComponentManagers componentManagers;
-        Graphics::DebugUIRenderer debugUI;
 
         World(EngineContext &ctx);
 
         void update(float deltaTime);
         void render(EngineViewContext &vctx);
-
-        void onTexturesLoaded(const int count,
-            Resources::TextureResourceDescription *descriptions,
-            Resources::TextureResourceUsage *usages,
-            Resources::TextureResourceData *data);
-        void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
 
         void onTextureReloaded(Resources::TextureResourceData &resource);
     };

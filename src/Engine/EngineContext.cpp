@@ -37,19 +37,11 @@ namespace Terrain { namespace Engine {
         Resources::TextureResourceData *data)
     {
         renderer.onTexturesLoaded(count, descriptions, usages, data);
-        for (World *world : worlds)
-        {
-            world->onTexturesLoaded(count, descriptions, usages, data);
-        }
     }
     void EngineContext::onMaterialsLoaded(
         const int count, Resources::MaterialResource *resources)
     {
         assets.graphics.onMaterialsLoaded(count, resources);
-        for (World *world : worlds)
-        {
-            world->onMaterialsLoaded(count, resources);
-        }
     }
 
     void EngineContext::onTextureReloaded(Resources::TextureResourceData &resource)

@@ -84,14 +84,6 @@ ShaderInfo getShaderInfo(uint32 assetId)
         info.type = GL_FRAGMENT_SHADER;
         info.relativePath = "data/brush_fragment_shader.glsl";
         break;
-    case ASSET_SHADER_UI_VERTEX:
-        info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/ui_vertex_shader.glsl";
-        break;
-    case ASSET_SHADER_UI_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/ui_fragment_shader.glsl";
-        break;
     }
     return info;
 }
@@ -129,11 +121,6 @@ void getShaderProgramShaders(
         *out_shaderCount = 2;
         *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_VERTEX;
         *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_FRAGMENT;
-        break;
-    case ASSET_SHADER_PROGRAM_UI:
-        *out_shaderCount = 2;
-        *out_shaderAssetIds++ = ASSET_SHADER_UI_VERTEX;
-        *out_shaderAssetIds++ = ASSET_SHADER_UI_FRAGMENT;
         break;
     }
 }

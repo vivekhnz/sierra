@@ -36,9 +36,6 @@
     </ClCompile>
     <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="OrthographicCameraComponentManager.cpp" />
-    <ClCompile Include="Graphics\DebugUIRenderer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\deps\glad\glad.c">
       <Filter>deps</Filter>
     </ClCompile>
@@ -104,9 +101,6 @@
     <ClInclude Include="OrthographicCameraComponentManager.hpp" />
     <ClInclude Include="Physics\Ray.hpp">
       <Filter>Physics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\DebugUIRenderer.hpp">
-      <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\VertexBufferDescription.hpp">
       <Filter>Graphics</Filter>

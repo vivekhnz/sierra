@@ -20,7 +20,6 @@
     <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="FirstPersonCameraComponentManager.cpp" />
-    <ClCompile Include="Graphics\DebugUIRenderer.cpp" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
     <ClCompile Include="Graphics\GraphicsAssetManager.cpp" />
     <ClCompile Include="Graphics\MeshRendererComponentManager.cpp" />
@@ -44,7 +43,6 @@
     <ClInclude Include="EngineViewContext.hpp" />
     <ClInclude Include="EntityManager.hpp" />
     <ClInclude Include="FirstPersonCameraComponentManager.hpp" />
-    <ClInclude Include="Graphics\DebugUIRenderer.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp" />
     <ClInclude Include="Graphics\MeshRendererComponentManager.hpp" />

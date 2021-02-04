@@ -23,7 +23,6 @@ namespace Terrain { namespace Engine { namespace TerrainResources {
         const int TERRAIN_WIREFRAME = 1;
         const int BRUSH_ADD = 2;
         const int BRUSH_SUBTRACT = 3;
-        const int UI = 4;
     }
 }}}
 
