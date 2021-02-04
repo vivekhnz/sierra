@@ -61,19 +61,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         GraphicsAssetManager &operator=(GraphicsAssetManager &&) = delete;
 
         void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
-        int createMaterial(int shaderProgramHandle,
-            int polygonMode,
-            int blendEquation,
-            int blendSrcFactor,
-            int blendDstFactor,
-            int textureCount,
-            int *textureHandles,
-            int uniformCount,
-            const char *uniformNames,
-            Graphics::UniformValue *uniformValues);
         int &getMaterialShaderProgramHandle(int handle);
         void useMaterial(int handle);
-        void setMaterialTexture(int materialHandle, int slot, int textureHandle);
         int &lookupMaterial(int resourceId)
         {
             return materials.resourceIdToHandle[resourceId];

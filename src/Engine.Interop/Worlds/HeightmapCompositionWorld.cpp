@@ -4,8 +4,7 @@
 #include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) :
-        ctx(ctx), working(ctx), staging(ctx)
+    HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) : ctx(ctx)
     {
     }
 
@@ -60,13 +59,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         };
         int quadMeshHandle =
             ctx.assets.graphics.createMesh(GL_TRIANGLES, vertexBuffers, quadIndices);
+        quadVertexArrayHandle = ctx.assets.graphics.getMeshVertexArrayHandle(quadMeshHandle);
+
+        cameraTransform = glm::identity<glm::mat4>();
+        cameraTransform = glm::scale(cameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
+        cameraTransform = glm::translate(cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
         // setup worlds
-        setupWorkingWorld(quadMeshHandle);
-        setupStagingWorld(quadMeshHandle);
+        setupWorkingWorld();
+        setupStagingWorld();
     }
 
-    void HeightmapCompositionWorld::setupWorkingWorld(int quadMeshHandle)
+    void HeightmapCompositionWorld::setupWorkingWorld()
     {
         // the working world is where the base heightmap and brush strokes will be drawn
 
@@ -75,22 +79,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         working.framebufferHandle =
             ctx.renderer.createFramebuffer(working.renderTextureHandle);
-
-        // setup camera
-        working.cameraEntityId = ctx.entities.create();
-        working.world.componentManagers.camera.create(working.cameraEntityId,
-            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), working.framebufferHandle);
-        working.world.componentManagers.orthographicCamera.create(
-            working.cameraEntityId, true);
-
-        // setup heightmap quad
-        const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-        working.quadMaterialHandle =
-            createQuadMaterial(ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
-
-        int heightmapQuad_entityId = ctx.entities.create();
-        working.world.componentManagers.meshRenderer.create(
-            heightmapQuad_entityId, quadMeshHandle, working.quadMaterialHandle, 0, 0, 0, 1);
 
         // create brush quad mesh
         std::vector<float> brushQuadVertices(16);
@@ -139,7 +127,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             false                                            // isPerInstance
         };
         brushQuadVertexBuffers[1] = {
-            working.brushQuad_instanceBufferData,          // data
+            working.brushQuadInstanceBufferData,           // data
             WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE, // size
             instanceVertexAttributes.data(),               // attributes
             (int)instanceVertexAttributes.size(),          // attributeCount
@@ -147,37 +135,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         };
         int brushQuadMeshHandle = ctx.assets.graphics.createMesh(
             GL_TRIANGLES, brushQuadVertexBuffers, brushQuadIndices);
-        working.brushQuad_instanceBufferHandle =
+        working.brushQuadVertexArrayHandle =
+            ctx.assets.graphics.getMeshVertexArrayHandle(brushQuadMeshHandle);
+        working.brushQuadInstanceBufferHandle =
             ctx.assets.graphics.getMeshVertexBufferHandle(brushQuadMeshHandle, 1);
         working.brushInstanceCount = 0;
-
-        // setup brush quad
-        const int RESOURCE_ID_MATERIAL_BRUSH_ADD = 2;
-        const int RESOURCE_ID_MATERIAL_BRUSH_SUBTRACT = 3;
-
-        working.brushAddMaterialHandle =
-            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH_ADD);
-        working.brushSubtractMaterialHandle =
-            ctx.assets.graphics.lookupMaterial(RESOURCE_ID_MATERIAL_BRUSH_SUBTRACT);
-
-        const char *brushQuad_uniformNames[3];
-        brushQuad_uniformNames[0] = "brushScale";
-        brushQuad_uniformNames[1] = "brushFalloff";
-        brushQuad_uniformNames[2] = "brushStrength";
-
-        Graphics::UniformValue brushQuad_uniformValues[3];
-        brushQuad_uniformValues[0] = Graphics::UniformValue::forFloat(128 / 2048.0f);
-        brushQuad_uniformValues[1] = Graphics::UniformValue::forFloat(0.1f);
-        brushQuad_uniformValues[2] = Graphics::UniformValue::forFloat(0.0025f);
-
-        int brushQuad_entityId = ctx.entities.create();
-        working.brushQuad_meshRendererInstanceId =
-            working.world.componentManagers.meshRenderer.create(brushQuad_entityId,
-                brushQuadMeshHandle, working.brushAddMaterialHandle, 3, brushQuad_uniformNames,
-                brushQuad_uniformValues, 0);
     }
 
-    void HeightmapCompositionWorld::setupStagingWorld(int quadMeshHandle)
+    void HeightmapCompositionWorld::setupStagingWorld()
     {
         // the staging world is a quad textured with the framebuffer of the working world
         // the resulting texture is fed back into the working world as the base heightmap
@@ -187,19 +152,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         staging.framebufferHandle =
             ctx.renderer.createFramebuffer(staging.renderTextureHandle);
-
-        // setup camera
-        staging.cameraEntityId = ctx.entities.create();
-        staging.world.componentManagers.camera.create(staging.cameraEntityId,
-            glm::vec4(0.0f, 0.0f, 0.0f, 1.0f), staging.framebufferHandle);
-        staging.world.componentManagers.orthographicCamera.create(
-            staging.cameraEntityId, true);
-
-        staging.quadMaterialHandle = createQuadMaterial(working.renderTextureHandle);
-
-        int stagingQuad_entityId = ctx.entities.create();
-        staging.world.componentManagers.meshRenderer.create(
-            stagingQuad_entityId, quadMeshHandle, staging.quadMaterialHandle, 0, 0, 0, 1);
     }
 
     void HeightmapCompositionWorld::update(
@@ -224,8 +176,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             {
                 int prevIdx = (working.brushInstanceCount - 1) * 2;
                 glm::vec2 prevInstancePos =
-                    glm::vec2(working.brushQuad_instanceBufferData[prevIdx],
-                        working.brushQuad_instanceBufferData[prevIdx + 1]);
+                    glm::vec2(working.brushQuadInstanceBufferData[prevIdx],
+                        working.brushQuadInstanceBufferData[prevIdx + 1]);
 
                 glm::vec2 diff = state.currentBrushPos - prevInstancePos;
                 glm::vec2 direction = glm::normalize(diff);
@@ -246,51 +198,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             // update brush quad instance buffer
             if (wasInstanceAdded)
             {
-                rendererUpdateBuffer(ctx.memory, working.brushQuad_instanceBufferHandle,
+                rendererUpdateBuffer(ctx.memory, working.brushQuadInstanceBufferHandle,
                     WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-                    working.brushQuad_instanceBufferData);
+                    working.brushQuadInstanceBufferData);
             }
         }
-        working.world.componentManagers.meshRenderer.setInstanceCount(
-            working.brushQuad_meshRendererInstanceId, working.brushInstanceCount);
-        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            working.brushQuad_meshRendererInstanceId, "brushScale",
-            state.brushRadius / 2048.0f);
-        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            working.brushQuad_meshRendererInstanceId, "brushFalloff", state.brushFalloff);
-
-        int brushMaterialHandle = working.brushAddMaterialHandle;
-        switch (state.tool)
-        {
-        case EditorTool::RaiseTerrain:
-            brushMaterialHandle = working.brushAddMaterialHandle;
-            break;
-        case EditorTool::LowerTerrain:
-            brushMaterialHandle = working.brushSubtractMaterialHandle;
-            break;
-        }
-        working.world.componentManagers.meshRenderer.setMaterial(
-            working.brushQuad_meshRendererInstanceId, brushMaterialHandle);
-
-        /*
-         * Because the spacing between brush instances is constant, higher radius brushes will
-         * result in more brush instances being drawn, meaning the terrain will be influenced
-         * more. As a result, we should decrease the brush strength as the brush radius
-         * increases to ensure the perceived brush strength remains constant.
-         */
-        float brushStrength = 0.028f / pow(state.brushRadius, 0.5f);
-        working.world.componentManagers.meshRenderer.setMaterialUniformFloat(
-            working.brushQuad_meshRendererInstanceId, "brushStrength", brushStrength);
-
-        working.world.update(deltaTime);
-        staging.world.update(deltaTime);
     }
 
     void HeightmapCompositionWorld::addBrushInstance(glm::vec2 pos)
     {
         int idx = working.brushInstanceCount * 2;
-        working.brushQuad_instanceBufferData[idx] = pos.x;
-        working.brushQuad_instanceBufferData[idx + 1] = pos.y;
+        working.brushQuadInstanceBufferData[idx] = pos.x;
+        working.brushQuadInstanceBufferData[idx + 1] = pos.y;
         working.brushInstanceCount++;
     }
 
@@ -300,50 +219,92 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (state.heightmapStatus == HeightmapStatus::Idle)
             return;
 
+        ShaderProgramAsset *quadShaderProgram =
+            assetsGetShaderProgram(ctx.memory, ASSET_SHADER_PROGRAM_QUAD);
+        ShaderProgramAsset *brushShaderProgram =
+            assetsGetShaderProgram(ctx.memory, ASSET_SHADER_PROGRAM_BRUSH);
+
+        if (!quadShaderProgram || !brushShaderProgram)
+            return;
+
+        rendererUpdateCameraState(ctx.memory, &cameraTransform);
+
         if (state.heightmapStatus == HeightmapStatus::Committing)
         {
-            EngineViewContext stagingVctx = {
-                2048,                  // viewportWidth
-                2048,                  // viewportHeight
-                staging.cameraEntityId // cameraEntityId
-            };
-            staging.world.render(stagingVctx);
+            // render staging world
+            ctx.renderer.useFramebuffer(staging.framebufferHandle);
+            rendererSetViewportSize(2048, 2048);
+            rendererClearBackBuffer(0, 0, 0, 1);
+
+            rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+            rendererSetPolygonMode(GL_FILL);
+            rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            rendererBindTexture(ctx.memory, working.renderTextureHandle, 0);
+            rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+            rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
+
+            ctx.renderer.finalizeFramebuffer(staging.framebufferHandle);
         }
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
             // reset heightmap quad's texture back to heightmap texture resource
             const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-            ctx.assets.graphics.setMaterialTexture(working.quadMaterialHandle, 0,
-                ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP));
+            working.baseHeightmapTextureHandle =
+                ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP);
             newState.heightmapStatus = HeightmapStatus::Committing;
         }
 
-        EngineViewContext workingVctx = {
-            2048,                  // viewportWidth
-            2048,                  // viewportHeight
-            working.cameraEntityId // cameraEntityId
-        };
-        working.world.render(workingVctx);
+        // render working world
+        ctx.renderer.useFramebuffer(working.framebufferHandle);
+        rendererSetViewportSize(2048, 2048);
+        rendererClearBackBuffer(0, 0, 0, 1);
+
+        rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        rendererBindTexture(ctx.memory, working.baseHeightmapTextureHandle, 0);
+        rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+        rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
+
+        uint32 brushBlendEquation = GL_FUNC_ADD;
+        switch (state.tool)
+        {
+        case EditorTool::RaiseTerrain:
+            brushBlendEquation = GL_FUNC_ADD;
+            break;
+        case EditorTool::LowerTerrain:
+            brushBlendEquation = GL_FUNC_REVERSE_SUBTRACT;
+            break;
+        }
+
+        rendererUseShaderProgram(ctx.memory, brushShaderProgram->handle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
+        rendererSetShaderProgramUniformFloat(
+            ctx.memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
+        rendererSetShaderProgramUniformFloat(
+            ctx.memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+
+        /*
+         * Because the spacing between brush instances is constant, higher radius brushes will
+         * result in more brush instances being drawn, meaning the terrain will be influenced
+         * more. As a result, we should decrease the brush strength as the brush radius
+         * increases to ensure the perceived brush strength remains constant.
+         */
+        float brushStrength = 0.028f / pow(state.brushRadius, 0.5f);
+        rendererSetShaderProgramUniformFloat(
+            ctx.memory, brushShaderProgram->handle, "brushStrength", brushStrength);
+
+        rendererBindVertexArray(ctx.memory, working.brushQuadVertexArrayHandle);
+        rendererDrawElementsInstanced(GL_TRIANGLES, 6, working.brushInstanceCount);
+
+        ctx.renderer.finalizeFramebuffer(working.framebufferHandle);
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
             // set heightmap quad's texture to the staging world's render target
-            ctx.assets.graphics.setMaterialTexture(
-                working.quadMaterialHandle, 0, staging.renderTextureHandle);
+            working.baseHeightmapTextureHandle = staging.renderTextureHandle;
         }
-    }
-
-    int HeightmapCompositionWorld::createQuadMaterial(int textureHandle)
-    {
-        const int ASSET_ID_SHADER_PROGRAM_QUAD = 0;
-        ShaderProgramAsset *asset =
-            assetsGetShaderProgram(ctx.memory, ASSET_ID_SHADER_PROGRAM_QUAD);
-        assert(asset);
-
-        int textureHandles[1] = {textureHandle};
-
-        return ctx.assets.graphics.createMaterial(asset->handle, GL_FILL, GL_FUNC_ADD,
-            GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, 1, textureHandles, 0, "", 0);
     }
 }}}}

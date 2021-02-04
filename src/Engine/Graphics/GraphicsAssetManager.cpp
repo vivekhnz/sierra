@@ -62,57 +62,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    int GraphicsAssetManager::createMaterial(int shaderProgramHandle,
-        int polygonMode,
-        int blendEquation,
-        int blendSrcFactor,
-        int blendDstFactor,
-        int textureCount,
-        int *textureHandles,
-        int uniformCount,
-        const char *uniformNames,
-        Graphics::UniformValue *uniformValues)
-    {
-        materials.shaderProgramHandle.push_back(shaderProgramHandle);
-        materials.polygonMode.push_back(polygonMode);
-
-        materials.blendEquation.push_back(blendEquation);
-        materials.blendSrcFactor.push_back(blendSrcFactor);
-        materials.blendDstFactor.push_back(blendDstFactor);
-
-        materials.firstTextureIndex.push_back(materials.textureHandles.size());
-        materials.textureCount.push_back(textureCount);
-        for (int t = 0; t < textureCount; t++)
-        {
-            materials.textureHandles.push_back(textureHandles[t]);
-        }
-
-        materials.firstUniformIndex.push_back(materials.uniformNames.size());
-        materials.uniformCount.push_back(uniformCount);
-
-        // uniformNames is a contiguous set of null-terminated strings
-        const char *srcStartCursor = uniformNames;
-        const char *srcEndCursor = srcStartCursor;
-        int u = 0;
-        while (u < uniformCount)
-        {
-            if (!(*srcEndCursor++))
-            {
-                int nameLength = srcEndCursor - srcStartCursor;
-                char *uniformName = new char[nameLength];
-                memcpy(uniformName, srcStartCursor, nameLength);
-
-                materials.uniformNames.push_back(uniformName);
-                materials.uniformValues.push_back(uniformValues[u]);
-
-                srcStartCursor = srcEndCursor;
-                u++;
-            }
-        }
-
-        return materials.count++;
-    }
-
     int &GraphicsAssetManager::getMaterialShaderProgramHandle(int handle)
     {
         return materials.shaderProgramHandle[handle];
@@ -137,13 +86,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         shaderProgramState.textures.handles =
             materials.textureHandles.data() + materials.firstTextureIndex[handle];
         renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
-    }
-
-    void GraphicsAssetManager::setMaterialTexture(
-        int materialHandle, int slot, int textureHandle)
-    {
-        int idx = materials.firstTextureIndex[materialHandle] + slot;
-        materials.textureHandles[idx] = textureHandle;
     }
 
     int GraphicsAssetManager::createMesh(unsigned int primitiveType,

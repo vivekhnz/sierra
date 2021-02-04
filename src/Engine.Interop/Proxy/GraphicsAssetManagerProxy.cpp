@@ -7,10 +7,4 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Proxy {
     {
         return engineObj.lookupMaterial(resourceId);
     }
-
-    void GraphicsAssetManagerProxy::SetMaterialTexture(
-        int materialHandle, int slot, int textureHandle)
-    {
-        engineObj.setMaterialTexture(materialHandle, slot, textureHandle);
-    }
 }}}}

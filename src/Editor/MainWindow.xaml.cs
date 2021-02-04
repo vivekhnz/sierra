@@ -180,8 +180,8 @@ namespace Terrain.Editor
             const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
             int materialHandle = EngineInterop.GraphicsAssetManager.LookupMaterial(
                 RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
-            EngineInterop.GraphicsAssetManager.SetMaterialTexture(materialHandle, slot,
-                EngineInterop.Renderer.LookupTexture(textureId));
+            /*EngineInterop.GraphicsAssetManager.SetMaterialTexture(materialHandle, slot,
+                EngineInterop.Renderer.LookupTexture(textureId));*/
         }
 
         private void updateUiTimer_Tick(object sender, EventArgs e)

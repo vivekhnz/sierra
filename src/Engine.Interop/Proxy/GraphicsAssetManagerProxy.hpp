@@ -16,6 +16,5 @@ public
         }
 
         int LookupMaterial(int resourceId);
-        void SetMaterialTexture(int materialHandle, int slot, int textureHandle);
     };
 }}}}

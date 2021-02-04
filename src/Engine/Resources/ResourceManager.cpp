@@ -176,7 +176,7 @@ namespace Terrain { namespace Engine { namespace Resources {
 
     void ResourceManager::loadMaterials()
     {
-        const int count = 4;
+        const int count = 2;
         MaterialResource resources[count];
         MaterialResource *material = resources;
 
@@ -258,26 +258,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         material->uniformValues = uniformValue;
         *uniformValue++ = Graphics::UniformValue::forVector3(glm::vec3(0.0f, 1.0f, 0.0f));
         *uniformValue++ = Graphics::UniformValue::forVector2(glm::vec2(2.5f, 2.5f));
-
-        (++material)->id = TerrainResources::Materials::BRUSH_ADD;
-        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_BRUSH;
-        material->polygonMode = GL_FILL;
-        material->blendEquation = GL_FUNC_ADD;
-        material->blendSrcFactor = GL_SRC_ALPHA;
-        material->blendDstFactor = GL_ONE;
-        material->textureCount = 0;
-        material->uniformCount = 0;
-        material->uniformNames = "";
-
-        (++material)->id = TerrainResources::Materials::BRUSH_SUBTRACT;
-        material->shaderProgramResourceId = ASSET_SHADER_PROGRAM_BRUSH;
-        material->polygonMode = GL_FILL;
-        material->blendEquation = GL_FUNC_REVERSE_SUBTRACT;
-        material->blendSrcFactor = GL_SRC_ALPHA;
-        material->blendDstFactor = GL_ONE;
-        material->textureCount = 0;
-        material->uniformCount = 0;
-        material->uniformNames = "";
 
         assert(material + 1 == resources + count);
         assert(textureResourceId == textureResourceIds + textureResourceIdCount);
