@@ -2,6 +2,19 @@
 
 #include <windows.h>
 
+struct Win32AssetLoadRequest
+{
+    EngineMemory *memory;
+    uint32 assetId;
+    char path[MAX_PATH];
+    PlatformAssetLoadCallback *callback;
+    bool isCompleted;
+};
+
+#define ASSET_LOAD_QUEUE_MAX_SIZE 128
+global_variable Win32AssetLoadRequest assetLoadQueue[ASSET_LOAD_QUEUE_MAX_SIZE];
+global_variable uint32 assetLoadQueueActiveRequestCount;
+
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
     // get path to current assembly
@@ -97,15 +110,33 @@ PLATFORM_READ_FILE(win32ReadFile)
 
 PLATFORM_LOAD_ASSET(win32LoadAsset)
 {
-    char absolutePath[MAX_PATH];
-    getAbsolutePath(relativePath, absolutePath);
+    assert(assetLoadQueueActiveRequestCount < ASSET_LOAD_QUEUE_MAX_SIZE);
 
-    // todo: put this request on a queue so we can retry it next frame if it fails
-    PlatformReadFileResult result = win32ReadFile(absolutePath);
-    assert(result.data != 0);
-    onAssetLoaded(memory, assetId, &result);
+    // todo: reuse space in the asset load queue instead of always appending
+    Win32AssetLoadRequest *request = &assetLoadQueue[assetLoadQueueActiveRequestCount++];
+    *request = {};
+    request->memory = memory;
+    request->assetId = assetId;
+    request->callback = onAssetLoaded;
+    getAbsolutePath(relativePath, request->path);
+}
 
-    win32FreeMemory(result.data);
+void win32LoadQueuedAssets()
+{
+    for (uint32 i = 0; i < assetLoadQueueActiveRequestCount; i++)
+    {
+        Win32AssetLoadRequest *request = &assetLoadQueue[i];
+        if (request->isCompleted)
+            continue;
+
+        PlatformReadFileResult result = win32ReadFile(request->path);
+        if (result.data)
+        {
+            request->callback(request->memory, request->assetId, &result);
+            win32FreeMemory(result.data);
+            request->isCompleted = true;
+        }
+    }
 }
 
 uint64 win32GetAssetsLastWriteTime()
@@ -138,16 +169,4 @@ uint64 win32GetAssetsLastWriteTime()
     FindClose(fileHandle);
 
     return mostRecentLastWriteTime;
-}
-
-uint64 win32GetCurrentTime()
-{
-    SYSTEMTIME systemTime;
-    GetSystemTime(&systemTime);
-
-    FILETIME fileTime;
-    SystemTimeToFileTime(&systemTime, &fileTime);
-
-    uint64 value = ((uint64)fileTime.dwHighDateTime << 32) | fileTime.dwLowDateTime;
-    return value;
 }

@@ -144,24 +144,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         uint64 assetsLastWriteTime = win32GetAssetsLastWriteTime();
         if (assetsLastWriteTime > assetsLastUpdatedTime)
         {
+            // todo: only invalidate assets that changed
+            assetsInvalidateShaders(memory);
             assetsLastUpdatedTime = assetsLastWriteTime;
         }
-
-        if (assetsLastUpdatedTime > assetsLastReloadedTime)
-        {
-            // wait ~1 second before reloading as sometimes the asset file is still locked by
-            // the application editing it
-            // todo: remove this delay once the asset load code is more error-tolerant i.e. can
-            // retry asset loads on the next frame
-            constexpr uint64 HOT_RELOAD_DELAY_100NS = 1 * 1000 * 1000 * 10;
-            uint64 currentTime = win32GetCurrentTime();
-            if (currentTime > assetsLastUpdatedTime + HOT_RELOAD_DELAY_100NS)
-            {
-                // todo: only invalidate assets that changed
-                assetsInvalidateShaders(memory);
-                assetsLastReloadedTime = currentTime;
-            }
-        }
+        win32LoadQueuedAssets();
 
         ctx->input.update();
 

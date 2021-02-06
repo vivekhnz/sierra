@@ -44,7 +44,6 @@ public
         static System::DateTime lastTickTime;
 
         static uint64 assetsLastUpdatedTime = 0;
-        static uint64 assetsLastReloadedTime = 0;
 
         static void OnTick(Object ^ sender, System::EventArgs ^ e);
         static void OnMouseWheel(

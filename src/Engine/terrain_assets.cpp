@@ -5,9 +5,16 @@
 
 #define MAX_SHADERS_PER_PROGRAM 8
 
+enum AssetLoadState
+{
+    ASSET_LOAD_STATE_UNLOADED,
+    ASSET_LOAD_STATE_QUEUED,
+    ASSET_LOAD_STATE_LOADED
+};
+
 struct AssetInfo
 {
-    bool isLoaded;
+    AssetLoadState state;
     void *data;
 };
 
@@ -141,7 +148,7 @@ void onShaderLoaded(EngineMemory *memory, uint32 assetId, PlatformReadFileResult
 
     AssetInfo *assetInfo = &state->shaderAssetInfos[assetId];
     assetInfo->data = asset;
-    assetInfo->isLoaded = true;
+    assetInfo->state = ASSET_LOAD_STATE_LOADED;
 }
 
 ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
@@ -151,15 +158,18 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
     AssetInfo *assetInfo = &state->shaderAssetInfos[assetId];
-    if (!assetInfo->isLoaded)
+    if (assetInfo->state != ASSET_LOAD_STATE_LOADED)
     {
-        ShaderInfo shaderInfo = getShaderInfo(assetId);
-        memory->platformLoadAsset(memory, assetId, shaderInfo.relativePath, onShaderLoaded);
-        // return 0;
+        if (assetInfo->state != ASSET_LOAD_STATE_QUEUED)
+        {
+            assetInfo->state = ASSET_LOAD_STATE_QUEUED;
+            ShaderInfo shaderInfo = getShaderInfo(assetId);
+            memory->platformLoadAsset(
+                memory, assetId, shaderInfo.relativePath, onShaderLoaded);
+        }
+        return 0;
     }
 
-    // note: we assume that the load asset call is synchronous and the assetInfo has now
-    // been updated
     return static_cast<ShaderAsset *>(assetInfo->data);
 }
 
@@ -170,7 +180,7 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
     AssetInfo *assetInfo = &state->shaderProgramAssetInfos[assetId];
-    if (!assetInfo->isLoaded)
+    if (assetInfo->state != ASSET_LOAD_STATE_LOADED)
     {
         uint32 shaderCount;
         uint32 shaderAssetIds[MAX_SHADERS_PER_PROGRAM];
@@ -183,7 +193,7 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
             ShaderAsset *shader = assetsGetShader(memory, shaderAssetIds[i]);
             if (!shader)
             {
-                return 0;
+                return static_cast<ShaderProgramAsset *>(assetInfo->data);
             }
             shaderHandles[i] = shader->handle;
         }
@@ -195,7 +205,7 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
         asset->handle = handle;
 
         assetInfo->data = asset;
-        assetInfo->isLoaded = true;
+        assetInfo->state = ASSET_LOAD_STATE_LOADED;
     }
 
     return static_cast<ShaderProgramAsset *>(assetInfo->data);
@@ -208,10 +218,10 @@ void assetsInvalidateShaders(EngineMemory *memory)
 
     for (int i = 0; i < ASSET_SHADER_COUNT; i++)
     {
-        state->shaderAssetInfos[i].isLoaded = false;
+        state->shaderAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
     }
     for (int i = 0; i < ASSET_SHADER_PROGRAM_COUNT; i++)
     {
-        state->shaderProgramAssetInfos[i].isLoaded = false;
+        state->shaderProgramAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
     }
 }
