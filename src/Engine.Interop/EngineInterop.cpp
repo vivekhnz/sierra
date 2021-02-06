@@ -48,8 +48,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         worlds = new Worlds::EditorWorlds(*ctx);
         resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);
         rendererProxy = gcnew Proxy::RendererProxy(ctx->renderer);
-        graphicsAssetManagerProxy =
-            gcnew Proxy::GraphicsAssetManagerProxy(ctx->assets.graphics);
         stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 
         focusedViewportCtx = nullptr;

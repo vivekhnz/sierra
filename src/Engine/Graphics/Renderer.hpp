@@ -10,7 +10,6 @@
 
 #include "../terrain_platform.h"
 #include "../Resources/TextureResource.hpp"
-#include "UniformValue.hpp"
 
 namespace Terrain { namespace Engine { namespace Graphics {
     class EXPORT Renderer
@@ -43,22 +42,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         } framebuffers;
 
     public:
-        struct ShaderProgramState
-        {
-            struct
-            {
-                int count;
-                const char **names;
-                UniformValue *values;
-            } uniforms;
-
-            struct
-            {
-                int count;
-                int *handles;
-            } textures;
-        };
-
         EngineMemory *memory;
 
         Renderer(EngineMemory *memory);
@@ -86,8 +69,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             return textures.resourceIdToHandle[resourceId];
         }
-
-        void setShaderProgramState(int handle, ShaderProgramState &state);
 
         int createFramebuffer(int textureHandle);
 

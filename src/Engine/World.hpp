@@ -4,7 +4,6 @@
 #include "Common.hpp"
 #include "EngineContext.hpp"
 #include "Physics/TerrainColliderComponentManager.hpp"
-#include "Graphics/MeshRendererComponentManager.hpp"
 #include "TerrainRendererComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
@@ -14,12 +13,9 @@ namespace Terrain { namespace Engine {
         struct ComponentManagers
         {
             Physics::TerrainColliderComponentManager terrainCollider;
-            Graphics::MeshRendererComponentManager meshRenderer;
             TerrainRendererComponentManager terrainRenderer;
 
-            ComponentManagers(EngineContext &ctx) :
-                meshRenderer(ctx.assets.graphics, ctx.renderer),
-                terrainRenderer(ctx.renderer, meshRenderer, ctx.assets.graphics)
+            ComponentManagers(EngineContext &ctx) : terrainRenderer(ctx.assets.graphics)
             {
             }
         };

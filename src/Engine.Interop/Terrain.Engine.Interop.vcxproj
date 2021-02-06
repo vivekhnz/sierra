@@ -73,7 +73,6 @@
     <ClInclude Include="EditorState.hpp" />
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="EditorContext.hpp" />
-    <ClInclude Include="Proxy\GraphicsAssetManagerProxy.hpp" />
     <ClInclude Include="Proxy\RampParamsProxy.hpp" />
     <ClInclude Include="Proxy\RendererProxy.hpp" />
     <ClInclude Include="Proxy\ResourceManagerProxy.hpp" />
@@ -91,7 +90,6 @@
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="EditorContext.cpp" />
-    <ClCompile Include="Proxy\GraphicsAssetManagerProxy.cpp" />
     <ClCompile Include="Proxy\RendererProxy.cpp" />
     <ClCompile Include="Proxy\ResourceManagerProxy.cpp" />
     <ClCompile Include="terrain_platform_editor_win32.cpp" />

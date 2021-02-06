@@ -110,45 +110,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
     }
 
-    void Renderer::setShaderProgramState(int handle, ShaderProgramState &state)
-    {
-        // set uniforms
-        for (int i = 0; i < state.uniforms.count; i++)
-        {
-            const char *uniformName = state.uniforms.names[i];
-
-            const UniformValue &val = state.uniforms.values[i];
-            switch (val.type)
-            {
-            case UniformType::Float:
-                rendererSetShaderProgramUniformFloat(memory, handle, uniformName, val.f);
-                break;
-            case UniformType::Integer:
-                rendererSetShaderProgramUniformInteger(memory, handle, uniformName, val.i);
-                break;
-            case UniformType::Vector2:
-                rendererSetShaderProgramUniformVector2(memory, handle, uniformName, val.vec2);
-                break;
-            case UniformType::Vector3:
-                rendererSetShaderProgramUniformVector3(memory, handle, uniformName, val.vec3);
-                break;
-            case UniformType::Vector4:
-                rendererSetShaderProgramUniformVector4(memory, handle, uniformName, val.vec4);
-                break;
-            case UniformType::Matrix4x4:
-                rendererSetShaderProgramUniformMatrix4x4(
-                    memory, handle, uniformName, val.mat4);
-                break;
-            }
-        }
-
-        // bind textures
-        for (int i = 0; i < state.textures.count; i++)
-        {
-            rendererBindTexture(memory, state.textures.handles[i], i);
-        }
-    }
-
     int Renderer::createFramebuffer(int textureHandle)
     {
         unsigned int id = rendererGetTextureId(memory, textureHandle);

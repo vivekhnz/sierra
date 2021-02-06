@@ -25,9 +25,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // create entity and components
         int entityId = ctx.entities.create();
-        int terrainRendererInstanceId =
-            world.componentManagers.terrainRenderer.create(entityId, -1,
-                heightmapTextureHandle, terrainRows, terrainColumns, patchSize, terrainHeight);
+        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
+            entityId, terrainRows, terrainColumns, patchSize);
 
         meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);

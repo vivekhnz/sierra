@@ -45,7 +45,6 @@ namespace Terrain { namespace Engine {
             Resources::TextureResourceDescription *descriptions,
             Resources::TextureResourceUsage *usages,
             Resources::TextureResourceData *data);
-        void onMaterialsLoaded(const int count, Resources::MaterialResource *resources);
 
         void onTextureReloaded(Resources::TextureResourceData &resource);
     };

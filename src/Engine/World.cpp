@@ -11,6 +11,5 @@ namespace Terrain { namespace Engine {
     void World::onTextureReloaded(Resources::TextureResourceData &resource)
     {
         componentManagers.terrainCollider.onTextureReloaded(resource);
-        componentManagers.terrainRenderer.onTextureReloaded(resource);
     }
 }}

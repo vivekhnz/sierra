@@ -12,25 +12,6 @@
 #include "GameContext.hpp"
 #include "terrain_platform_win32.h"
 
-int createTerrain(Terrain::Engine::EngineContext &ctx, Terrain::Engine::World &world)
-{
-    int terrainColumns = 256;
-    int terrainRows = 256;
-    float patchSize = 0.5f;
-    float terrainHeight = 25.0f;
-
-    // create entity and components
-    int entityId = ctx.entities.create();
-    int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(entityId,
-        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, -1, terrainRows,
-        terrainColumns, patchSize, terrainHeight);
-    world.componentManagers.terrainCollider.create(entityId,
-        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows, terrainColumns,
-        patchSize, terrainHeight);
-
-    return terrainRendererInstanceId;
-}
-
 int main()
 {
     try
@@ -67,7 +48,12 @@ int main()
         rendererUpdateBuffer(&memory, tessLevelBufferHandle,
             terrainColumns * terrainRows * 10 * sizeof(glm::vec4), 0);
 
-        int terrain_terrainRendererInstanceId = createTerrain(ctx, world);
+        int terrainEntityId = ctx.entities.create();
+        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
+            terrainEntityId, terrainRows, terrainColumns, terrainPatchSize);
+        world.componentManagers.terrainCollider.create(terrainEntityId,
+            Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows,
+            terrainColumns, terrainPatchSize, terrainHeight);
         ctx.resources.reloadTexture(Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
             Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
 
@@ -314,7 +300,7 @@ int main()
                 uint32 heightmapTextureHandle = ctx.renderer.lookupTexture(
                     Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
                 uint32 meshHandle = world.componentManagers.terrainRenderer.getMeshHandle(
-                    terrain_terrainRendererInstanceId);
+                    terrainRendererInstanceId);
                 uint32 meshVertexBufferHandle =
                     ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
                 uint32 meshVertexArrayHandle =

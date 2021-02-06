@@ -9,85 +9,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     {
     }
 
-    void GraphicsAssetManager::onMaterialsLoaded(
-        const int count, Resources::MaterialResource *resources)
-    {
-        for (int i = 0; i < count; i++)
-        {
-            Resources::MaterialResource &resource = resources[i];
-
-            ShaderProgramAsset *programAsset =
-                assetsGetShaderProgram(renderer.memory, resource.shaderProgramResourceId);
-            assert(programAsset);
-
-            materials.shaderProgramHandle.push_back(programAsset->handle);
-            materials.polygonMode.push_back(resource.polygonMode);
-
-            materials.blendEquation.push_back(resource.blendEquation);
-            materials.blendSrcFactor.push_back(resource.blendSrcFactor);
-            materials.blendDstFactor.push_back(resource.blendDstFactor);
-
-            materials.firstTextureIndex.push_back(materials.textureHandles.size());
-            materials.textureCount.push_back(resource.textureCount);
-            for (int t = 0; t < resource.textureCount; t++)
-            {
-                materials.textureHandles.push_back(
-                    renderer.lookupTexture(resource.textureResourceIds[t]));
-            }
-
-            materials.firstUniformIndex.push_back(materials.uniformNames.size());
-            materials.uniformCount.push_back(resource.uniformCount);
-
-            // resource.uniformNames is a contiguous set of null-terminated strings
-            const char *srcStartCursor = resource.uniformNames;
-            const char *srcEndCursor = srcStartCursor;
-            int u = 0;
-            while (u < resource.uniformCount)
-            {
-                if (!(*srcEndCursor++))
-                {
-                    int nameLength = srcEndCursor - srcStartCursor;
-                    char *uniformName = new char[nameLength];
-                    memcpy(uniformName, srcStartCursor, nameLength);
-
-                    materials.uniformNames.push_back(uniformName);
-                    materials.uniformValues.push_back(resource.uniformValues[u]);
-
-                    srcStartCursor = srcEndCursor;
-                    u++;
-                }
-            }
-
-            materials.resourceIdToHandle[resource.id] = materials.count++;
-        }
-    }
-
-    int &GraphicsAssetManager::getMaterialShaderProgramHandle(int handle)
-    {
-        return materials.shaderProgramHandle[handle];
-    }
-
-    void GraphicsAssetManager::useMaterial(int handle)
-    {
-        int &shaderProgramHandle = materials.shaderProgramHandle[handle];
-        int firstUniformIndex = materials.firstUniformIndex[handle];
-
-        rendererUseShaderProgram(renderer.memory, shaderProgramHandle);
-        rendererSetPolygonMode(materials.polygonMode[handle]);
-        rendererSetBlendMode(materials.blendEquation[handle], materials.blendSrcFactor[handle],
-            materials.blendDstFactor[handle]);
-
-        Graphics::Renderer::ShaderProgramState shaderProgramState = {};
-        shaderProgramState.uniforms.count = materials.uniformCount[handle];
-        shaderProgramState.uniforms.names = materials.uniformNames.data() + firstUniformIndex;
-        shaderProgramState.uniforms.values =
-            materials.uniformValues.data() + firstUniformIndex;
-        shaderProgramState.textures.count = materials.textureCount[handle];
-        shaderProgramState.textures.handles =
-            materials.textureHandles.data() + materials.firstTextureIndex[handle];
-        renderer.setShaderProgramState(shaderProgramHandle, shaderProgramState);
-    }
-
     int GraphicsAssetManager::createMesh(unsigned int primitiveType,
         const std::vector<Graphics::VertexBufferDescription> &vertexBuffers,
         const std::vector<unsigned int> &indices)
@@ -165,13 +86,5 @@ namespace Terrain { namespace Engine { namespace Graphics {
     unsigned int &GraphicsAssetManager::getMeshPrimitiveType(int handle)
     {
         return meshes.primitiveType[handle];
-    }
-
-    GraphicsAssetManager::~GraphicsAssetManager()
-    {
-        for (int i = 0; i < materials.uniformNames.size(); i++)
-        {
-            delete[] materials.uniformNames[i];
-        }
     }
 }}}

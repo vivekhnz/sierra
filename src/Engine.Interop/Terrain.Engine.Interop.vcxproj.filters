@@ -32,9 +32,6 @@
     <ClCompile Include="Proxy\RendererProxy.cpp">
       <Filter>Proxy</Filter>
     </ClCompile>
-    <ClCompile Include="Proxy\GraphicsAssetManagerProxy.cpp">
-      <Filter>Proxy</Filter>
-    </ClCompile>
     <ClCompile Include="terrain_platform_editor_win32.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -65,9 +62,6 @@
     </ClInclude>
     <ClInclude Include="EditorState.hpp" />
     <ClInclude Include="Proxy\RendererProxy.hpp">
-      <Filter>Proxy</Filter>
-    </ClInclude>
-    <ClInclude Include="Proxy\GraphicsAssetManagerProxy.hpp">
       <Filter>Proxy</Filter>
     </ClInclude>
     <ClInclude Include="Proxy\RampParamsProxy.hpp">

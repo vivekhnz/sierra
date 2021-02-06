@@ -18,9 +18,6 @@
     <ClCompile Include="Physics\TerrainColliderComponentManager.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\MeshRendererComponentManager.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\Renderer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -65,9 +62,6 @@
     <ClInclude Include="Physics\TerrainColliderComponentManager.hpp">
       <Filter>Physics</Filter>
     </ClInclude>
-    <ClInclude Include="Graphics\MeshRendererComponentManager.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Renderer.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -76,14 +70,8 @@
       <Filter>Resources</Filter>
     </ClInclude>
     <ClInclude Include="TerrainResources.hpp" />
-    <ClInclude Include="Graphics\UniformValue.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp">
       <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Resources\MaterialResource.hpp">
-      <Filter>Resources</Filter>
     </ClInclude>
     <ClInclude Include="Resources\ResourceManager.hpp">
       <Filter>Resources</Filter>

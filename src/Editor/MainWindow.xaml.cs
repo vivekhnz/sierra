@@ -177,10 +177,10 @@ namespace Terrain.Editor
             string textureIdAlias = dropdown.SelectedItem.ToString();
             if (!textureIdMap.TryGetValue(textureIdAlias, out int textureId)) return;
 
-            const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
+            /*const int RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED = 0;
             int materialHandle = EngineInterop.GraphicsAssetManager.LookupMaterial(
                 RESOURCE_ID_MATERIAL_TERRAIN_TEXTURED);
-            /*EngineInterop.GraphicsAssetManager.SetMaterialTexture(materialHandle, slot,
+            EngineInterop.GraphicsAssetManager.SetMaterialTexture(materialHandle, slot,
                 EngineInterop.Renderer.LookupTexture(textureId));*/
         }
 

@@ -6,21 +6,13 @@
 
 namespace Terrain { namespace Engine {
     TerrainRendererComponentManager::TerrainRendererComponentManager(
-        Graphics::Renderer &renderer,
-        Graphics::MeshRendererComponentManager &meshRenderer,
         Graphics::GraphicsAssetManager &graphicsAssets) :
-        renderer(renderer),
-        meshRenderer(meshRenderer), graphicsAssets(graphicsAssets)
+        graphicsAssets(graphicsAssets)
     {
     }
 
-    int TerrainRendererComponentManager::create(int entityId,
-        int heightmapTextureResourceId,
-        int heightmapTextureHandle,
-        int rows,
-        int columns,
-        float patchSize,
-        float terrainHeight)
+    int TerrainRendererComponentManager::create(
+        int entityId, int rows, int columns, float patchSize)
     {
         // build mesh
         std::vector<float> vertices(columns * rows * 5);
@@ -69,87 +61,10 @@ namespace Terrain { namespace Engine {
         };
 
         int meshHandle = graphicsAssets.createMesh(GL_PATCHES, vertexBuffers, indices);
-        int vertexBufferHandle = graphicsAssets.getMeshVertexBufferHandle(meshHandle, 0);
 
         data.entityId.push_back(entityId);
-        data.heightmapTextureResourceId.push_back(heightmapTextureResourceId);
-        data.heightmapTextureHandle.push_back(
-            heightmapTextureHandle == -1 && heightmapTextureResourceId != -1
-                ? renderer.lookupTexture(heightmapTextureResourceId)
-                : heightmapTextureHandle);
         data.meshHandle.push_back(meshHandle);
-        data.meshVertexBufferHandle.push_back(vertexBufferHandle);
-        data.rows.push_back(rows);
-        data.columns.push_back(columns);
-        data.terrainHeight.push_back(terrainHeight);
-        data.isWireframeMode.push_back(false);
-
-        // create buffer to store vertex edge data
-        uint32 tessLevelBufferHandle = rendererCreateBuffer(
-            renderer.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-        rendererUpdateBuffer(renderer.memory, tessLevelBufferHandle,
-            columns * rows * 10 * sizeof(glm::vec4), 0);
-        data.tessellationLevelBufferHandle.push_back(tessLevelBufferHandle);
 
         return data.count++;
-    }
-
-    void TerrainRendererComponentManager::onTextureReloaded(
-        Resources::TextureResourceData &resource)
-    {
-        for (int i = 0; i < data.count; i++)
-        {
-            if (data.heightmapTextureResourceId[i] != resource.id)
-                continue;
-
-            data.heightmapTextureHandle[i] = renderer.lookupTexture(resource.id);
-        }
-    }
-
-    void TerrainRendererComponentManager::calculateTessellationLevels()
-    {
-        ShaderProgramAsset *shaderProgramAsset = assetsGetShaderProgram(
-            renderer.memory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
-        if (!shaderProgramAsset)
-            return;
-
-        uint32 shaderProgramHandle = shaderProgramAsset->handle;
-        rendererSetShaderProgramUniformFloat(
-            renderer.memory, shaderProgramHandle, "targetTriangleSize", 0.015f);
-
-        for (int i = 0; i < data.count; i++)
-        {
-            int &rows = data.rows[i];
-            int &columns = data.columns[i];
-
-            rendererSetShaderProgramUniformInteger(renderer.memory, shaderProgramHandle,
-                "horizontalEdgeCount", rows * (columns - 1));
-            rendererSetShaderProgramUniformInteger(
-                renderer.memory, shaderProgramHandle, "columnCount", columns);
-            rendererSetShaderProgramUniformFloat(
-                renderer.memory, shaderProgramHandle, "terrainHeight", data.terrainHeight[i]);
-            rendererBindTexture(renderer.memory, data.heightmapTextureHandle[i], 0);
-
-            int meshEdgeCount = (2 * (rows * columns)) - rows - columns;
-
-            rendererBindShaderStorageBuffer(
-                renderer.memory, data.tessellationLevelBufferHandle[i], 0);
-            rendererBindShaderStorageBuffer(
-                renderer.memory, data.meshVertexBufferHandle[i], 1);
-            rendererUseShaderProgram(renderer.memory, shaderProgramHandle);
-            rendererDispatchCompute(meshEdgeCount, 1, 1);
-            rendererShaderStorageMemoryBarrier();
-        }
-    }
-
-    void TerrainRendererComponentManager::toggleWireframeMode(int i)
-    {
-        bool isWireframeMode = data.isWireframeMode[i];
-        isWireframeMode = !isWireframeMode;
-        data.isWireframeMode[i] = isWireframeMode;
-
-        meshRenderer.setMaterial(i,
-            isWireframeMode ? TerrainResources::Materials::TERRAIN_WIREFRAME
-                            : TerrainResources::Materials::TERRAIN_TEXTURED);
     }
 }}
