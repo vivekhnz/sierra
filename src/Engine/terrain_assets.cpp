@@ -155,6 +155,7 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     {
         ShaderInfo shaderInfo = getShaderInfo(assetId);
         memory->platformLoadAsset(memory, assetId, shaderInfo.relativePath, onShaderLoaded);
+        // return 0;
     }
 
     // note: we assume that the load asset call is synchronous and the assetInfo has now
@@ -180,10 +181,13 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
         for (uint32 i = 0; i < shaderCount; i++)
         {
             ShaderAsset *shader = assetsGetShader(memory, shaderAssetIds[i]);
+            if (!shader)
+            {
+                return 0;
+            }
             shaderHandles[i] = shader->handle;
         }
 
-        // note: we assume that the assetsGetShader calls are synchronous
         uint32 handle;
         assert(rendererCreateShaderProgram(memory, shaderCount, shaderHandles, &handle));
 

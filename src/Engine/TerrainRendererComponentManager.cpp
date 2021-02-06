@@ -103,10 +103,6 @@ namespace Terrain { namespace Engine {
                 continue;
 
             data.heightmapTextureHandle[i] = renderer.lookupTexture(resource.id);
-
-            // update heightmap size (used by adaptive tessellation)
-            meshRenderer.setMaterialUniformVector2(meshRenderer.lookup(data.entityId[i]),
-                "heightmapSize", glm::vec2(resource.width, resource.height));
         }
     }
 

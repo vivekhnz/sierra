@@ -14,10 +14,7 @@
       <Filter>IO</Filter>
     </ClCompile>
     <ClCompile Include="World.cpp" />
-    <ClCompile Include="OrbitCameraComponentManager.cpp" />
-    <ClCompile Include="CameraComponentManager.cpp" />
     <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="FirstPersonCameraComponentManager.cpp" />
     <ClCompile Include="Physics\TerrainColliderComponentManager.cpp">
       <Filter>Physics</Filter>
     </ClCompile>
@@ -35,7 +32,6 @@
       <Filter>Resources</Filter>
     </ClCompile>
     <ClCompile Include="EngineContext.cpp" />
-    <ClCompile Include="OrthographicCameraComponentManager.cpp" />
     <ClCompile Include="..\..\deps\glad\glad.c">
       <Filter>deps</Filter>
     </ClCompile>
@@ -62,13 +58,10 @@
     <ClInclude Include="EngineContext.hpp" />
     <ClInclude Include="EngineViewContext.hpp" />
     <ClInclude Include="World.hpp" />
-    <ClInclude Include="OrbitCameraComponentManager.hpp" />
-    <ClInclude Include="CameraComponentManager.hpp" />
     <ClInclude Include="EntityManager.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="FirstPersonCameraComponentManager.hpp" />
     <ClInclude Include="Physics\TerrainColliderComponentManager.hpp">
       <Filter>Physics</Filter>
     </ClInclude>
@@ -98,7 +91,6 @@
     <ClInclude Include="Resources\TextureLoader.hpp">
       <Filter>Resources</Filter>
     </ClInclude>
-    <ClInclude Include="OrthographicCameraComponentManager.hpp" />
     <ClInclude Include="Physics\Ray.hpp">
       <Filter>Physics</Filter>
     </ClInclude>

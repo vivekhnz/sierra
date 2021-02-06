@@ -16,18 +16,14 @@
   <ItemGroup>
     <ClCompile Include="..\..\deps\glad\glad.c" />
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
-    <ClCompile Include="CameraComponentManager.cpp" />
     <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="FirstPersonCameraComponentManager.cpp" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
     <ClCompile Include="Graphics\GraphicsAssetManager.cpp" />
     <ClCompile Include="Graphics\MeshRendererComponentManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
-    <ClCompile Include="OrbitCameraComponentManager.cpp" />
-    <ClCompile Include="OrthographicCameraComponentManager.cpp" />
     <ClCompile Include="Physics\TerrainColliderComponentManager.cpp" />
     <ClCompile Include="Resources\ResourceManager.cpp" />
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
@@ -37,12 +33,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppContext.hpp" />
-    <ClInclude Include="CameraComponentManager.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="EngineContext.hpp" />
     <ClInclude Include="EngineViewContext.hpp" />
     <ClInclude Include="EntityManager.hpp" />
-    <ClInclude Include="FirstPersonCameraComponentManager.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp" />
     <ClInclude Include="Graphics\MeshRendererComponentManager.hpp" />
@@ -56,8 +50,6 @@
     <ClInclude Include="IO\MouseCaptureMode.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp" />
     <ClInclude Include="IO\Path.hpp" />
-    <ClInclude Include="OrbitCameraComponentManager.hpp" />
-    <ClInclude Include="OrthographicCameraComponentManager.hpp" />
     <ClInclude Include="Physics\Ray.hpp" />
     <ClInclude Include="Physics\TerrainColliderComponentManager.hpp" />
     <ClInclude Include="Resources\MaterialResource.hpp" />
