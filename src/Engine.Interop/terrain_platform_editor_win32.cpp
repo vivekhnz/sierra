@@ -2,18 +2,25 @@
 
 #include <windows.h>
 
+#define ASSET_LOAD_QUEUE_MAX_SIZE 128
+
 struct Win32AssetLoadRequest
 {
     EngineMemory *memory;
     uint32 assetId;
     char path[MAX_PATH];
     PlatformAssetLoadCallback *callback;
-    bool isCompleted;
 };
 
-#define ASSET_LOAD_QUEUE_MAX_SIZE 128
-global_variable Win32AssetLoadRequest assetLoadQueue[ASSET_LOAD_QUEUE_MAX_SIZE];
-global_variable uint32 assetLoadQueueActiveRequestCount;
+struct Win32AssetLoadQueue
+{
+    bool isInitialized;
+    uint32 length;
+    Win32AssetLoadRequest data[ASSET_LOAD_QUEUE_MAX_SIZE];
+    uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];
+};
+
+global_variable Win32AssetLoadQueue assetLoadQueue;
 
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
@@ -110,31 +117,47 @@ PLATFORM_READ_FILE(win32ReadFile)
 
 PLATFORM_LOAD_ASSET(win32LoadAsset)
 {
-    assert(assetLoadQueueActiveRequestCount < ASSET_LOAD_QUEUE_MAX_SIZE);
+    if (!assetLoadQueue.isInitialized)
+    {
+        for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
+        {
+            assetLoadQueue.indices[i] = i;
+        }
+        assetLoadQueue.isInitialized = true;
+    }
 
-    // todo: reuse space in the asset load queue instead of always appending
-    Win32AssetLoadRequest *request = &assetLoadQueue[assetLoadQueueActiveRequestCount++];
+    if (assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
+    {
+        // decline the request - our asset load queue is at capacity
+        return false;
+    }
+
+    uint32 index = assetLoadQueue.indices[assetLoadQueue.length++];
+    Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
     *request = {};
     request->memory = memory;
     request->assetId = assetId;
     request->callback = onAssetLoaded;
     getAbsolutePath(relativePath, request->path);
+    return true;
 }
 
 void win32LoadQueuedAssets()
 {
-    for (uint32 i = 0; i < assetLoadQueueActiveRequestCount; i++)
+    for (uint32 i = 0; i < assetLoadQueue.length; i++)
     {
-        Win32AssetLoadRequest *request = &assetLoadQueue[i];
-        if (request->isCompleted)
-            continue;
-
+        uint32 index = assetLoadQueue.indices[i];
+        Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
             request->callback(request->memory, request->assetId, &result);
             win32FreeMemory(result.data);
-            request->isCompleted = true;
+
+            assetLoadQueue.length--;
+            assetLoadQueue.indices[i] = assetLoadQueue.indices[assetLoadQueue.length];
+            assetLoadQueue.indices[assetLoadQueue.length] = index;
+            i--;
         }
     }
 }

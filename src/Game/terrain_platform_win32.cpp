@@ -101,4 +101,6 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     onAssetLoaded(memory, assetId, &result);
 
     win32FreeMemory(result.data);
+
+    return true;
 }

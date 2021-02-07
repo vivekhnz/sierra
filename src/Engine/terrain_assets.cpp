@@ -162,10 +162,13 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     {
         if (assetInfo->state != ASSET_LOAD_STATE_QUEUED)
         {
-            assetInfo->state = ASSET_LOAD_STATE_QUEUED;
             ShaderInfo shaderInfo = getShaderInfo(assetId);
-            memory->platformLoadAsset(
-                memory, assetId, shaderInfo.relativePath, onShaderLoaded);
+            if (memory->platformLoadAsset(
+                    memory, assetId, shaderInfo.relativePath, onShaderLoaded))
+            {
+                _InterlockedCompareExchange((long *)&assetInfo->state, ASSET_LOAD_STATE_QUEUED,
+                    ASSET_LOAD_STATE_UNLOADED);
+            }
         }
         return 0;
     }

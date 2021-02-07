@@ -48,7 +48,7 @@ typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
 typedef PLATFORM_READ_FILE(PlatformReadFile);
 
 #define PLATFORM_LOAD_ASSET(name)                                                             \
-    void name(EngineMemory *memory, uint32 assetId, const char *relativePath,                 \
+    bool name(EngineMemory *memory, uint32 assetId, const char *relativePath,                 \
         PlatformAssetLoadCallback onAssetLoaded)
 typedef PLATFORM_LOAD_ASSET(PlatformLoadAsset);
 
