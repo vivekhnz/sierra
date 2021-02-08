@@ -40,8 +40,6 @@ int main()
         const int terrainRows = 256;
         const float terrainPatchSize = 0.5f;
         const float terrainHeight = 25.0f;
-        const int heightmapWidth = 2048;
-        const int heightmapHeight = 2048;
 
         uint32 tessLevelBufferHandle =
             rendererCreateBuffer(&memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
@@ -351,8 +349,6 @@ int main()
                     &memory, terrainShaderProgram->handle, "brushHighlightFalloff", 0.0f);
                 rendererSetShaderProgramUniformVector3(
                     &memory, terrainShaderProgram->handle, "color", glm::vec3(0, 1, 0));
-                rendererSetShaderProgramUniformVector2(&memory, terrainShaderProgram->handle,
-                    "heightmapSize", glm::vec2(heightmapWidth, heightmapHeight));
                 rendererSetShaderProgramUniformVector3(&memory, terrainShaderProgram->handle,
                     "terrainDimensions",
                     glm::vec3(terrainPatchSize * terrainColumns, terrainHeight,

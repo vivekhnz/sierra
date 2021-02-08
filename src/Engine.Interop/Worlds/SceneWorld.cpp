@@ -380,8 +380,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         constexpr int terrainColumns = 256;
         constexpr float patchSize = 0.5f;
         constexpr float terrainHeight = 25.0f;
-        constexpr int heightmapWidth = 2048;
-        constexpr int heightmapHeight = 2048;
 
         rendererSetShaderProgramUniformInteger(memory, calcTessLevelShaderProgramHandle,
             "horizontalEdgeCount", terrainRows * (terrainColumns - 1));
@@ -454,8 +452,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
 
         // set shader uniforms
-        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
-            "heightmapSize", glm::vec2(heightmapWidth, heightmapHeight));
         rendererSetShaderProgramUniformVector3(memory, terrainShaderProgramHandle,
             "terrainDimensions",
             glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));

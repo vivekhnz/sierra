@@ -1,14 +1,9 @@
 #version 430
 layout(local_size_x = 1) in;
 
-struct VertexEdgeData
-{
-    vec4 tessLevels;
-    vec4 uvLengths;
-};
 layout(std430, binding = 0) buffer tessellationLevelBuffer
 {
-    VertexEdgeData vertEdgeData[];
+    vec4 vertEdgeTessLevels[];
 };
 
 struct Vertex
@@ -48,8 +43,6 @@ float height(vec2 uv)
 
 float calcTessLevel(Vertex a, Vertex b)
 {
-    // we could set the tessellation level to 0 to cull patches however we can only determine
-    // whether this edge should be culled, not the entire patch
     bool cull = false;
 
     vec3 pA = vec3(a.pos_x, height(vec2(a.uv_x, a.uv_y)), a.pos_z);
@@ -108,12 +101,8 @@ void main()
         Vertex b = vertices[bIndex];
 
         float T = calcTessLevel(a, b);
-        vertEdgeData[aIndex].tessLevels.x = T;
-        vertEdgeData[bIndex].tessLevels.z = T;
-
-        float L = length(vec2(a.uv_x - b.uv_x, a.uv_y - b.uv_y));
-        vertEdgeData[aIndex].uvLengths.x = L;
-        vertEdgeData[bIndex].uvLengths.z = L;
+        vertEdgeTessLevels[aIndex].x = T;
+        vertEdgeTessLevels[bIndex].z = T;
     }
     else
     {
@@ -124,11 +113,7 @@ void main()
         Vertex b = vertices[bIndex];
 
         float T = calcTessLevel(a, b);
-        vertEdgeData[aIndex].tessLevels.y = T;
-        vertEdgeData[bIndex].tessLevels.w = T;
-
-        float L = length(vec2(a.uv_x - b.uv_x, a.uv_y - b.uv_y));
-        vertEdgeData[aIndex].uvLengths.y = L;
-        vertEdgeData[bIndex].uvLengths.w = L;
+        vertEdgeTessLevels[aIndex].y = T;
+        vertEdgeTessLevels[bIndex].w = T;
     }
 }
