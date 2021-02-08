@@ -1,4 +1,37 @@
+#include <windows.h>
+
 #include "terrain_platform_win32.h"
+#include "../Engine/terrain_assets.h"
+
+#define ASSET_LOAD_QUEUE_MAX_SIZE 128
+#define MAX_WATCHED_ASSETS 256
+
+struct Win32AssetLoadRequest
+{
+    EngineMemory *memory;
+    uint32 assetId;
+    char path[MAX_PATH];
+    PlatformAssetLoadCallback *callback;
+};
+
+struct Win32AssetLoadQueue
+{
+    bool isInitialized;
+    uint32 length;
+    Win32AssetLoadRequest data[ASSET_LOAD_QUEUE_MAX_SIZE];
+    uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];
+};
+
+struct Win32WatchedAsset
+{
+    uint32 assetId;
+    char path[MAX_PATH];
+    uint64 lastUpdatedTime;
+};
+
+global_variable Win32AssetLoadQueue assetLoadQueue;
+global_variable Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
+global_variable uint32 watchedAssetCount;
 
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
@@ -47,6 +80,19 @@ void getAbsolutePath(const char *relativePath, char *absolutePath)
     *dstCursor = 0;
 }
 
+uint64 getFileLastWriteTime(char *path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA attributes;
+    if (!GetFileAttributesExA(path, GetFileExInfoStandard, &attributes))
+    {
+        return 0;
+    }
+
+    uint64 lastWriteTime = ((uint64)attributes.ftLastWriteTime.dwHighDateTime << 32)
+        | attributes.ftLastWriteTime.dwLowDateTime;
+    return lastWriteTime;
+}
+
 void *win32AllocateMemory(uint64 size)
 {
     return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
@@ -66,7 +112,10 @@ PLATFORM_READ_FILE(win32ReadFile)
 
     HANDLE handle = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (handle == INVALID_HANDLE_VALUE)
+    {
+        int err = GetLastError();
         return result;
+    }
 
     LARGE_INTEGER size;
     if (GetFileSizeEx(handle, &size))
@@ -92,15 +141,88 @@ PLATFORM_READ_FILE(win32ReadFile)
 
 PLATFORM_LOAD_ASSET(win32LoadAsset)
 {
-    char absolutePath[MAX_PATH];
-    getAbsolutePath(relativePath, absolutePath);
+    if (!assetLoadQueue.isInitialized)
+    {
+        for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
+        {
+            assetLoadQueue.indices[i] = i;
+        }
+        assetLoadQueue.isInitialized = true;
+    }
 
-    PlatformReadFileResult result = win32ReadFile(absolutePath);
-    assert(result.data != 0);
+    if (assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
+    {
+        // decline the request - our asset load queue is at capacity
+        return false;
+    }
 
-    onAssetLoaded(memory, assetId, &result);
+    // add asset load request to queue
+    uint32 index = assetLoadQueue.indices[assetLoadQueue.length++];
+    Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
+    *request = {};
+    request->memory = memory;
+    request->assetId = assetId;
+    request->callback = onAssetLoaded;
+    getAbsolutePath(relativePath, request->path);
 
-    win32FreeMemory(result.data);
+    // add asset to watch list so we can hot reload it
+    bool isAssetAlreadyWatched = false;
+    for (int i = 0; i < watchedAssetCount; i++)
+    {
+        if (watchedAssets[i].assetId == assetId)
+        {
+            isAssetAlreadyWatched = true;
+            break;
+        }
+    }
+    if (!isAssetAlreadyWatched)
+    {
+        assert(watchedAssetCount < MAX_WATCHED_ASSETS);
+        Win32WatchedAsset *watchedAsset = &watchedAssets[watchedAssetCount++];
+        watchedAsset->assetId = assetId;
+
+        char *src = request->path;
+        char *dst = watchedAsset->path;
+        while (*src)
+        {
+            *dst++ = *src++;
+        }
+
+        watchedAsset->lastUpdatedTime = getFileLastWriteTime(request->path);
+    }
 
     return true;
+}
+
+void win32LoadQueuedAssets(EngineMemory *memory)
+{
+    // invalidate watched assets that have changed
+    for (uint32 i = 0; i < watchedAssetCount; i++)
+    {
+        Win32WatchedAsset *asset = &watchedAssets[i];
+        uint64 lastWriteTime = getFileLastWriteTime(asset->path);
+        if (lastWriteTime > asset->lastUpdatedTime)
+        {
+            asset->lastUpdatedTime = lastWriteTime;
+            assetsInvalidateShader(memory, asset->assetId);
+        }
+    }
+
+    // action any asset load requests
+    for (uint32 i = 0; i < assetLoadQueue.length; i++)
+    {
+        uint32 index = assetLoadQueue.indices[i];
+        Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
+        PlatformReadFileResult result = win32ReadFile(request->path);
+        if (result.data)
+        {
+            request->callback(request->memory, request->assetId, &result);
+            win32FreeMemory(result.data);
+
+            assetLoadQueue.length--;
+            assetLoadQueue.indices[i] = assetLoadQueue.indices[assetLoadQueue.length];
+            assetLoadQueue.indices[assetLoadQueue.length] = index;
+            i--;
+        }
+    }
 }

@@ -88,6 +88,8 @@ int main()
 
         while (!window.isRequestingClose())
         {
+            win32LoadQueuedAssets(&memory);
+
             // query input
             ctx.input.update();
 
