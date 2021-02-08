@@ -7,5 +7,4 @@ EXPORT PLATFORM_FREE_MEMORY(win32FreeMemory);
 EXPORT PLATFORM_READ_FILE(win32ReadFile);
 EXPORT PLATFORM_LOAD_ASSET(win32LoadAsset);
 
-void win32LoadQueuedAssets();
-uint64 win32GetAssetsLastWriteTime();
+void win32LoadQueuedAssets(EngineMemory *memory);

@@ -214,17 +214,31 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
     return static_cast<ShaderProgramAsset *>(assetInfo->data);
 }
 
-void assetsInvalidateShaders(EngineMemory *memory)
+void assetsInvalidateShader(EngineMemory *memory, uint32 assetId)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    for (int i = 0; i < ASSET_SHADER_COUNT; i++)
-    {
-        state->shaderAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
-    }
+    state->shaderAssetInfos[assetId].state = ASSET_LOAD_STATE_UNLOADED;
     for (int i = 0; i < ASSET_SHADER_PROGRAM_COUNT; i++)
     {
-        state->shaderProgramAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
+        uint32 shaderCount;
+        uint32 shaderAssetIds[MAX_SHADERS_PER_PROGRAM];
+        getShaderProgramShaders(i, &shaderCount, shaderAssetIds);
+
+        bool isDependentOfInvalidatedShader = false;
+        for (int j = 0; j < shaderCount; j++)
+        {
+            if (shaderAssetIds[j] == assetId)
+            {
+                isDependentOfInvalidatedShader = true;
+                break;
+            }
+        }
+
+        if (isDependentOfInvalidatedShader)
+        {
+            state->shaderProgramAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
+        }
     }
 }

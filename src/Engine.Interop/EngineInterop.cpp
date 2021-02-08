@@ -3,7 +3,6 @@
 #include <windows.h>
 #include <msclr\lock.h>
 #include "terrain_platform_editor_win32.h"
-#include "../Engine/terrain_assets.h"
 
 using namespace System;
 using namespace System::Windows;
@@ -141,14 +140,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!areWorldsInitialized)
             return;
 
-        uint64 assetsLastWriteTime = win32GetAssetsLastWriteTime();
-        if (assetsLastWriteTime > assetsLastUpdatedTime)
-        {
-            // todo: only invalidate assets that changed
-            assetsInvalidateShaders(memory);
-            assetsLastUpdatedTime = assetsLastWriteTime;
-        }
-        win32LoadQueuedAssets();
+        win32LoadQueuedAssets(memory);
 
         ctx->input.update();
 

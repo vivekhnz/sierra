@@ -43,6 +43,6 @@ struct ShaderProgramAsset
 
 EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
 EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId);
-EXPORT void assetsInvalidateShaders(EngineMemory *memory);
+EXPORT void assetsInvalidateShader(EngineMemory *memory, uint32 assetId);
 
 #endif

@@ -5,3 +5,4 @@ deps/nuget
 .vscode/settings.json
 .vs
 *.vcxproj.user
+src/Editor/Properties/launchSettings.json

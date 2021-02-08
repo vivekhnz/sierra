@@ -1,8 +1,10 @@
-#include "terrain_platform_editor_win32.h"
-
 #include <windows.h>
 
+#include "terrain_platform_editor_win32.h"
+#include "../Engine/terrain_assets.h"
+
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
+#define MAX_WATCHED_ASSETS 256
 
 struct Win32AssetLoadRequest
 {
@@ -20,7 +22,16 @@ struct Win32AssetLoadQueue
     uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];
 };
 
+struct Win32WatchedAsset
+{
+    uint32 assetId;
+    char path[MAX_PATH];
+    uint64 lastUpdatedTime;
+};
+
 global_variable Win32AssetLoadQueue assetLoadQueue;
+global_variable Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
+global_variable uint32 watchedAssetCount;
 
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
@@ -67,6 +78,19 @@ void getAbsolutePath(const char *relativePath, char *absolutePath)
         *dstCursor++ = *srcCursor;
     }
     *dstCursor = 0;
+}
+
+uint64 getFileLastWriteTime(char *path)
+{
+    WIN32_FILE_ATTRIBUTE_DATA attributes;
+    if (!GetFileAttributesExA(path, GetFileExInfoStandard, &attributes))
+    {
+        return 0;
+    }
+
+    uint64 lastWriteTime = ((uint64)attributes.ftLastWriteTime.dwHighDateTime << 32)
+        | attributes.ftLastWriteTime.dwLowDateTime;
+    return lastWriteTime;
 }
 
 void *win32AllocateMemory(uint64 size)
@@ -132,6 +156,7 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
         return false;
     }
 
+    // add asset load request to queue
     uint32 index = assetLoadQueue.indices[assetLoadQueue.length++];
     Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
     *request = {};
@@ -139,11 +164,51 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     request->assetId = assetId;
     request->callback = onAssetLoaded;
     getAbsolutePath(relativePath, request->path);
+
+    // add asset to watch list so we can hot reload it
+    bool isAssetAlreadyWatched = false;
+    for (int i = 0; i < watchedAssetCount; i++)
+    {
+        if (watchedAssets[i].assetId == assetId)
+        {
+            isAssetAlreadyWatched = true;
+            break;
+        }
+    }
+    if (!isAssetAlreadyWatched)
+    {
+        assert(watchedAssetCount < MAX_WATCHED_ASSETS);
+        Win32WatchedAsset *watchedAsset = &watchedAssets[watchedAssetCount++];
+        watchedAsset->assetId = assetId;
+
+        char *src = request->path;
+        char *dst = watchedAsset->path;
+        while (*src)
+        {
+            *dst++ = *src++;
+        }
+
+        watchedAsset->lastUpdatedTime = getFileLastWriteTime(request->path);
+    }
+
     return true;
 }
 
-void win32LoadQueuedAssets()
+void win32LoadQueuedAssets(EngineMemory *memory)
 {
+    // invalidate watched assets that have changed
+    for (uint32 i = 0; i < watchedAssetCount; i++)
+    {
+        Win32WatchedAsset *asset = &watchedAssets[i];
+        uint64 lastWriteTime = getFileLastWriteTime(asset->path);
+        if (lastWriteTime > asset->lastUpdatedTime)
+        {
+            asset->lastUpdatedTime = lastWriteTime;
+            assetsInvalidateShader(memory, asset->assetId);
+        }
+    }
+
+    // action any asset load requests
     for (uint32 i = 0; i < assetLoadQueue.length; i++)
     {
         uint32 index = assetLoadQueue.indices[i];
@@ -160,36 +225,4 @@ void win32LoadQueuedAssets()
             i--;
         }
     }
-}
-
-uint64 win32GetAssetsLastWriteTime()
-{
-    char assetsDirectoryPath[MAX_PATH];
-    getAbsolutePath("data\\*", assetsDirectoryPath);
-
-    WIN32_FIND_DATAA findResult;
-    HANDLE fileHandle = FindFirstFileA(assetsDirectoryPath, &findResult);
-
-    if (fileHandle == INVALID_HANDLE_VALUE)
-    {
-        return 0;
-    }
-
-    uint64 mostRecentLastWriteTime = 0;
-    do
-    {
-        if (!(findResult.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
-        {
-            uint64 lastWriteTime = ((uint64)findResult.ftLastWriteTime.dwHighDateTime << 32)
-                | findResult.ftLastWriteTime.dwLowDateTime;
-            if (lastWriteTime > mostRecentLastWriteTime)
-            {
-                mostRecentLastWriteTime = lastWriteTime;
-            }
-        }
-    } while (FindNextFileA(fileHandle, &findResult));
-
-    FindClose(fileHandle);
-
-    return mostRecentLastWriteTime;
 }

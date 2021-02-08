@@ -43,8 +43,6 @@ public
         static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
         static System::DateTime lastTickTime;
 
-        static uint64 assetsLastUpdatedTime = 0;
-
         static void OnTick(Object ^ sender, System::EventArgs ^ e);
         static void OnMouseWheel(
             Object ^ sender, System::Windows::Input::MouseWheelEventArgs ^ args);
