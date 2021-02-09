@@ -14,7 +14,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         free(heightmapTextureDataTempBuffer);
     }
 
-    void SceneWorld::initialize(int heightmapTextureHandle)
+    void SceneWorld::initialize(uint32 heightmapTextureHandle)
     {
         int terrainColumns = 256;
         int terrainRows = 256;

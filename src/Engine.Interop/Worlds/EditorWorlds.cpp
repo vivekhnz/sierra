@@ -9,7 +9,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void EditorWorlds::initialize()
     {
         heightmapCompositionWorld.initialize();
-        int heightmapTextureHandle = heightmapCompositionWorld.getCompositedTextureHandle();
+        uint32 heightmapTextureHandle = heightmapCompositionWorld.getCompositedTextureHandle();
 
         sceneWorld.initialize(heightmapTextureHandle);
         heightmapPreviewWorld.initialize(heightmapTextureHandle);

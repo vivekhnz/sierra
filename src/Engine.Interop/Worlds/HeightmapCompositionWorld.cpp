@@ -78,7 +78,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         working.renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
             GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         working.framebufferHandle =
-            ctx.renderer.createFramebuffer(working.renderTextureHandle);
+            rendererCreateFramebuffer(ctx.memory, working.renderTextureHandle);
 
         // create brush quad mesh
         std::vector<float> brushQuadVertices(16);
@@ -151,7 +151,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         staging.renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
             GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         staging.framebufferHandle =
-            ctx.renderer.createFramebuffer(staging.renderTextureHandle);
+            rendererCreateFramebuffer(ctx.memory, staging.renderTextureHandle);
     }
 
     void HeightmapCompositionWorld::update(
@@ -232,7 +232,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (state.heightmapStatus == HeightmapStatus::Committing)
         {
             // render staging world
-            ctx.renderer.useFramebuffer(staging.framebufferHandle);
+            rendererBindFramebuffer(ctx.memory, staging.framebufferHandle);
             rendererSetViewportSize(2048, 2048);
             rendererClearBackBuffer(0, 0, 0, 1);
 
@@ -243,7 +243,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
             rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
 
-            ctx.renderer.finalizeFramebuffer(staging.framebufferHandle);
+            rendererUnbindFramebuffer(ctx.memory, staging.framebufferHandle);
         }
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
@@ -256,7 +256,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         // render working world
-        ctx.renderer.useFramebuffer(working.framebufferHandle);
+        rendererBindFramebuffer(ctx.memory, working.framebufferHandle);
         rendererSetViewportSize(2048, 2048);
         rendererClearBackBuffer(0, 0, 0, 1);
 
@@ -299,7 +299,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindVertexArray(ctx.memory, working.brushQuadVertexArrayHandle);
         rendererDrawElementsInstanced(GL_TRIANGLES, 6, working.brushInstanceCount);
 
-        ctx.renderer.finalizeFramebuffer(working.framebufferHandle);
+        rendererUnbindFramebuffer(ctx.memory, working.framebufferHandle);
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {

@@ -3,6 +3,7 @@
 #include "terrain_renderer.h"
 
 #define RENDERER_MAX_TEXTURES 128
+#define RENDERER_MAX_FRAMEBUFFERS 128
 #define RENDERER_MAX_SHADERS 128
 #define RENDERER_MAX_SHADER_PROGRAMS 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
@@ -20,6 +21,10 @@ struct RendererState
 {
     uint32 textureCount;
     uint32 textureIds[RENDERER_MAX_TEXTURES];
+
+    uint32 framebufferCount;
+    uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
+    uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
 
     uint32 shaderCount;
     uint32 shaderIds[RENDERER_MAX_SHADERS];
@@ -166,6 +171,45 @@ void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
 
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, id);
+}
+
+uint32 rendererCreateFramebuffer(EngineMemory *memory, uint32 textureHandle)
+{
+    RendererState *state = getState(memory);
+    assert(state->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
+
+    assert(textureHandle < state->textureCount);
+    uint32 textureId = state->textureIds[textureHandle];
+
+    uint32 *framebufferId = state->framebufferIds + state->framebufferCount;
+    glGenFramebuffers(1, framebufferId);
+
+    glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    state->framebufferTextureIds[state->framebufferCount] = textureId;
+
+    return state->framebufferCount++;
+}
+
+void rendererBindFramebuffer(EngineMemory *memory, uint32 handle)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->framebufferCount);
+    uint32 id = state->framebufferIds[handle];
+
+    glBindFramebuffer(GL_FRAMEBUFFER, id);
+}
+
+void rendererUnbindFramebuffer(EngineMemory *memory, uint32 handle)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->framebufferCount);
+
+    uint32 textureId = state->framebufferTextureIds[handle];
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 bool rendererCreateShader(EngineMemory *memory, uint32 type, char *src, uint32 *out_handle)
@@ -424,6 +468,7 @@ void rendererDestroyResources(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
     glDeleteTextures(state->textureCount, state->textureIds);
+    glDeleteFramebuffers(state->framebufferCount, state->framebufferIds);
     for (int i = 0; i < state->shaderCount; i++)
     {
         glDeleteShader(state->shaderIds[i]);

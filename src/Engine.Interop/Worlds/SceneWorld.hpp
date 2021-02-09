@@ -51,7 +51,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineContext &ctx;
         Engine::World world;
 
-        int heightmapTextureHandle;
+        uint32 heightmapTextureHandle;
         int terrainColliderInstanceId;
         int meshHandle;
         uint32 tessellationLevelBufferHandle;
@@ -72,7 +72,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         SceneWorld(EngineContext &ctx);
         ~SceneWorld();
 
-        void initialize(int heightmapTextureHandle);
+        void initialize(uint32 heightmapTextureHandle);
         void linkViewport(ViewportContext &vctx);
         void update(float deltaTime, const EditorState &state, EditorState &newState);
         void render(

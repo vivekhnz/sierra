@@ -30,17 +30,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             }
         } textures;
 
-        struct Framebuffers
-        {
-            int count;
-            std::vector<unsigned int> id;
-            std::vector<int> textureHandle;
-
-            Framebuffers() : count(0)
-            {
-            }
-        } framebuffers;
-
     public:
         EngineMemory *memory;
 
@@ -69,11 +58,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         {
             return textures.resourceIdToHandle[resourceId];
         }
-
-        int createFramebuffer(int textureHandle);
-
-        void useFramebuffer(int handle);
-        void finalizeFramebuffer(int handle);
 
         ~Renderer();
     };

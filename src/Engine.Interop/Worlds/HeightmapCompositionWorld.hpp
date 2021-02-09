@@ -19,7 +19,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             static const int BRUSH_QUAD_INSTANCE_BUFFER_SIZE =
                 MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE;
 
-            int renderTextureHandle;
+            uint32 renderTextureHandle;
             int framebufferHandle;
             int baseHeightmapTextureHandle;
             uint32 brushQuadVertexArrayHandle;
@@ -31,7 +31,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         struct StagingWorld
         {
-            int renderTextureHandle;
+            uint32 renderTextureHandle;
             int framebufferHandle;
         } staging;
 
@@ -46,7 +46,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void update(float deltaTime, const EditorState &state, EditorState &newState);
         void compositeHeightmap(const EditorState &state, EditorState &newState);
 
-        int getCompositedTextureHandle() const
+        uint32 getCompositedTextureHandle() const
         {
             return working.renderTextureHandle;
         }

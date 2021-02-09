@@ -110,37 +110,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
     }
 
-    int Renderer::createFramebuffer(int textureHandle)
-    {
-        unsigned int id = rendererGetTextureId(memory, textureHandle);
-
-        unsigned int framebufferId;
-        glGenFramebuffers(1, &framebufferId);
-        glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
-        glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, id, 0);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-        framebuffers.id.push_back(framebufferId);
-        framebuffers.textureHandle.push_back(textureHandle);
-        return framebuffers.count++;
-    }
-
-    void Renderer::useFramebuffer(int handle)
-    {
-        glBindFramebuffer(GL_FRAMEBUFFER, framebuffers.id[handle]);
-    }
-
-    void Renderer::finalizeFramebuffer(int handle)
-    {
-        unsigned int id = rendererGetTextureId(memory, framebuffers.textureHandle[handle]);
-        glBindTexture(GL_TEXTURE_2D, id);
-        glGenerateMipmap(GL_TEXTURE_2D);
-        glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    }
-
     Renderer::~Renderer()
     {
         rendererDestroyResources(memory);
-        glDeleteFramebuffers(framebuffers.count, framebuffers.id.data());
     }
 }}}
