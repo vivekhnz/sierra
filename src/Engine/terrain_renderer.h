@@ -25,6 +25,11 @@ EXPORT void rendererUpdateLightingState(EngineMemory *memory,
 EXPORT uint32 rendererCreateTexture(EngineMemory *memory);
 EXPORT uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle);
 EXPORT void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot);
+EXPORT void rendererReadTexturePixels(EngineMemory *memory,
+    uint32 handle,
+    uint32 elementType,
+    uint32 gpuFormat,
+    void *out_pixels);
 
 EXPORT uint32 rendererCreateFramebuffer(EngineMemory *memory, uint32 textureHandle);
 EXPORT void rendererBindFramebuffer(EngineMemory *memory, uint32 handle);

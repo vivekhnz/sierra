@@ -101,15 +101,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         }
     }
 
-    void Renderer::getTexturePixels(int handle, void *out_data)
-    {
-        unsigned int id = rendererGetTextureId(memory, handle);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, id);
-        glGetTexImage(
-            GL_TEXTURE_2D, 0, textures.format[handle], textures.type[handle], out_data);
-    }
-
     Renderer::~Renderer()
     {
         rendererDestroyResources(memory);

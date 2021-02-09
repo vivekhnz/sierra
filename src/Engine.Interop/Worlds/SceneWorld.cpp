@@ -61,8 +61,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {
             // update terrain collider with composited heightmap texture
-            ctx.renderer.getTexturePixels(
-                heightmapTextureHandle, heightmapTextureDataTempBuffer);
+            rendererReadTexturePixels(ctx.memory, heightmapTextureHandle, GL_UNSIGNED_SHORT,
+                GL_RED, heightmapTextureDataTempBuffer);
             world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
                 2048, 2048,
                 static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));

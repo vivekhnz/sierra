@@ -53,7 +53,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Resources::TextureResourceUsage *usages,
             Resources::TextureResourceData *data);
         void onTextureReloaded(Resources::TextureResourceData &resource);
-        void getTexturePixels(int handle, void *out_data);
         int lookupTexture(int resourceId)
         {
             return textures.resourceIdToHandle[resourceId];

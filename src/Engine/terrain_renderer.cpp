@@ -173,6 +173,21 @@ void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
+void rendererReadTexturePixels(EngineMemory *memory,
+    uint32 handle,
+    uint32 elementType,
+    uint32 gpuFormat,
+    void *out_pixels)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->textureCount);
+    uint32 id = state->textureIds[handle];
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glGetTexImage(GL_TEXTURE_2D, 0, gpuFormat, elementType, out_pixels);
+}
+
 uint32 rendererCreateFramebuffer(EngineMemory *memory, uint32 textureHandle)
 {
     RendererState *state = getState(memory);
