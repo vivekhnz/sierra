@@ -16,7 +16,7 @@ int main()
 {
     try
     {
-#define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
+#define ENGINE_MEMORY_SIZE (500 * 1024 * 1024)
         EngineMemory memory;
         memory.baseAddress = win32AllocateMemory(ENGINE_MEMORY_SIZE);
         memory.size = ENGINE_MEMORY_SIZE;

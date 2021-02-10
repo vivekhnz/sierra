@@ -12,7 +12,7 @@ using namespace System::Windows::Threading;
 namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
-#define ENGINE_MEMORY_SIZE (100 * 1024 * 1024)
+#define ENGINE_MEMORY_SIZE (500 * 1024 * 1024)
         memory = new EngineMemory();
         memory->baseAddress =
             VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);

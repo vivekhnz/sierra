@@ -1,6 +1,7 @@
 #include "terrain_assets.h"
 
 #include <glad/glad.h>
+#include <stb/stb_image.h>
 #include "terrain_renderer.h"
 
 #define MAX_SHADERS_PER_PROGRAM 8
@@ -31,6 +32,8 @@ struct AssetsState
 
     AssetInfo shaderProgramAssetInfos[ASSET_SHADER_PROGRAM_COUNT];
     ShaderProgramAsset shaderProgramAssets[ASSET_SHADER_PROGRAM_COUNT];
+
+    uint64 dataStorageUsed;
 };
 
 ShaderInfo getShaderInfo(uint32 assetId)
@@ -241,4 +244,47 @@ void assetsInvalidateShader(EngineMemory *memory, uint32 assetId)
             state->shaderProgramAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
         }
     }
+}
+
+TextureAsset assetsLoadTexture(
+    EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result, bool is16Bit)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    const stbi_uc *rawData = static_cast<stbi_uc *>(result->data);
+    void *data;
+    int32 width;
+    int32 height;
+    int32 channels;
+    uint64 elementSize = 0;
+    if (is16Bit)
+    {
+        data = stbi_load_16_from_memory(rawData, result->size, &width, &height, &channels, 0);
+        elementSize = 2;
+    }
+    else
+    {
+        data = stbi_load_from_memory(rawData, result->size, &width, &height, &channels, 0);
+        elementSize = 1;
+    }
+
+    uint64 availableStorage =
+        memory->assets.size - (sizeof(AssetsState) + state->dataStorageUsed);
+    uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
+    assert(availableStorage >= requiredStorage);
+    assert(width >= 0);
+    assert(height >= 0);
+
+    TextureAsset asset = {};
+    asset.width = (uint32)width;
+    asset.height = (uint32)height;
+    asset.data =
+        (uint8 *)memory->assets.baseAddress + sizeof(AssetsState) + state->dataStorageUsed;
+    memcpy(asset.data, data, requiredStorage);
+    state->dataStorageUsed += requiredStorage;
+
+    stbi_image_free(data);
+
+    return asset;
 }

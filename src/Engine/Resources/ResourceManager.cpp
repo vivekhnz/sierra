@@ -167,10 +167,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         assert(usage + 1 == usages + count);
         assert(data + 1 == resourceData + count);
         ctx.onTexturesLoaded(count, descriptions, usages, resourceData);
-        for (int i = 0; i < count; i++)
-        {
-            TextureLoader::unloadTexture(resourceData[i]);
-        }
     }
 
     void ResourceManager::reloadTexture(int resourceId, std::string path, bool is16Bit)
@@ -178,6 +174,5 @@ namespace Terrain { namespace Engine { namespace Resources {
         TextureResourceData resource = {};
         TextureLoader::loadTexture(ctx.memory, resourceId, path, is16Bit, &resource);
         ctx.onTextureReloaded(resource);
-        TextureLoader::unloadTexture(resource);
     }
 }}}
