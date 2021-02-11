@@ -27,6 +27,7 @@
     <ClCompile Include="Resources\ResourceManager.cpp" />
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
+    <ClCompile Include="terrain_physics.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -55,6 +56,7 @@
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="TerrainResources.hpp" />
     <ClInclude Include="terrain_assets.h" />
+    <ClInclude Include="terrain_physics.h" />
     <ClInclude Include="terrain_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="World.hpp" />

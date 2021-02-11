@@ -37,6 +37,7 @@
     </ClCompile>
     <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
+    <ClCompile Include="terrain_physics.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\GlfwManager.hpp">
@@ -98,6 +99,7 @@
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />
+    <ClInclude Include="terrain_physics.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Graphics">
