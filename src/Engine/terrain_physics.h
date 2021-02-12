@@ -5,11 +5,17 @@
 
 #include "terrain_platform.h"
 
-EXPORT bool physicsIsRayIntersectingTerrain(uint32 terrainColumns,
-    uint32 terrainRows,
-    float terrainPatchSize,
-    float terrainHeight,
-    float *patchHeights,
+struct Heightfield
+{
+    uint32 columns;
+    uint32 rows;
+    float maxHeight;
+    float spacing;
+    float *heights;
+    glm::vec2 position;
+};
+
+EXPORT bool physicsIsRayIntersectingHeightfield(Heightfield *heightfield,
     glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
     glm::vec3 &out_intersectionPoint);

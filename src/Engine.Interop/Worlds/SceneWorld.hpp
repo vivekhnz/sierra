@@ -1,11 +1,14 @@
 #pragma once
 
 #include "../../Engine/terrain_renderer.h"
+#include "../../Engine/terrain_physics.h"
 #include "../../Engine/World.hpp"
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"
 
 #define MAX_SCENE_VIEWS 8
+#define HEIGHTFIELD_COLUMNS 256
+#define HEIGHTFIELD_ROWS 256
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class SceneWorld
@@ -51,8 +54,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         EngineContext &ctx;
         Engine::World world;
 
+        Heightfield heightfield;
+        float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
+
         uint32 heightmapTextureHandle;
-        int terrainColliderInstanceId;
         int meshHandle;
         uint32 tessellationLevelBufferHandle;
 

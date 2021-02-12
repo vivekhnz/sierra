@@ -127,14 +127,17 @@ namespace Terrain { namespace Engine { namespace Physics {
     bool TerrainColliderComponentManager::intersects(
         int i, Ray ray, glm::vec3 &out_intersectionPoint)
     {
-        int columns = data.columns[i];
-        int rows = data.rows[i];
-        float patchSize = data.patchSize[i];
-        int firstHeightIndex = data.firstHeightIndex[i];
-        float terrainHeight = data.terrainHeight[i];
-        float *patchHeights = &data.patchHeights[firstHeightIndex];
+        Heightfield heightfield = {};
+        heightfield.columns = data.columns[i];
+        heightfield.rows = data.rows[i];
+        heightfield.maxHeight = data.terrainHeight[i];
+        heightfield.spacing = data.patchSize[i];
+        heightfield.heights = &data.patchHeights[data.firstHeightIndex[i]];
+        heightfield.position =
+            glm::vec2((heightfield.columns - 1) * heightfield.spacing * -0.5f,
+                (heightfield.rows - 1) * heightfield.spacing * -0.5f);
 
-        return physicsIsRayIntersectingTerrain(columns, rows, patchSize, terrainHeight,
-            patchHeights, ray.origin, ray.direction, out_intersectionPoint);
+        return physicsIsRayIntersectingHeightfield(
+            &heightfield, ray.origin, ray.direction, out_intersectionPoint);
     }
 }}}

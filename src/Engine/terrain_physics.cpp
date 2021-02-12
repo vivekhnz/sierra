@@ -80,25 +80,22 @@ bool isRayIntersectingTriangle(glm::vec3 rayOrigin,
     return true;
 }
 
-bool isRayIntersectingTerrainSlice(glm::vec3 rayOrigin,
+bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
+    glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
     uint32 xStart,
     uint32 xEnd,
     uint32 yStart,
     uint32 yEnd,
-    float offsetX,
-    float offsetY,
-    uint32 columns,
-    float patchSize,
-    float terrainHeight,
-    float *patchHeights,
     float &inout_hitDistance)
 {
     // raycast a bounding box first to avoid expensive triangle raycasting
     glm::vec3 boundsTopLeft =
-        glm::vec3(offsetX + (xStart * patchSize), 0.0f, offsetY + (yStart * patchSize));
+        glm::vec3(heightfield->position.x + (xStart * heightfield->spacing), 0.0f,
+            heightfield->position.y + (yStart * heightfield->spacing));
     glm::vec3 boundsBottomRight =
-        glm::vec3(offsetX + (xEnd * patchSize), terrainHeight, offsetY + (yEnd * patchSize));
+        glm::vec3(heightfield->position.x + (xEnd * heightfield->spacing),
+            heightfield->maxHeight, heightfield->position.y + (yEnd * heightfield->spacing));
     if (!isRayIntersectingBox(rayOrigin, rayDirection, boundsTopLeft, boundsBottomRight))
     {
         return false;
@@ -110,14 +107,21 @@ bool isRayIntersectingTerrainSlice(glm::vec3 rayOrigin,
         for (uint32 x = xStart; x < xEnd; x++)
         {
             // calculate world-space corners of patch
-            glm::vec3 topLeft = glm::vec3(offsetX + (x * patchSize),
-                patchHeights[(y * columns) + x], offsetY + (y * patchSize));
-            glm::vec3 topRight = glm::vec3(offsetX + ((x + 1) * patchSize),
-                patchHeights[(y * columns) + x + 1], offsetY + (y * patchSize));
-            glm::vec3 bottomRight = glm::vec3(offsetX + ((x + 1) * patchSize),
-                patchHeights[((y + 1) * columns) + x + 1], offsetY + ((y + 1) * patchSize));
-            glm::vec3 bottomLeft = glm::vec3(offsetX + (x * patchSize),
-                patchHeights[((y + 1) * columns) + x], offsetY + ((y + 1) * patchSize));
+            glm::vec3 topLeft = glm::vec3(heightfield->position.x + (x * heightfield->spacing),
+                heightfield->heights[(y * heightfield->columns) + x],
+                heightfield->position.y + (y * heightfield->spacing));
+            glm::vec3 topRight =
+                glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
+                    heightfield->heights[(y * heightfield->columns) + x + 1],
+                    heightfield->position.y + (y * heightfield->spacing));
+            glm::vec3 bottomRight =
+                glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
+                    heightfield->heights[((y + 1) * heightfield->columns) + x + 1],
+                    heightfield->position.y + ((y + 1) * heightfield->spacing));
+            glm::vec3 bottomLeft =
+                glm::vec3(heightfield->position.x + (x * heightfield->spacing),
+                    heightfield->heights[((y + 1) * heightfield->columns) + x],
+                    heightfield->position.y + ((y + 1) * heightfield->spacing));
 
             // raycast against 2 triangles of quad
             float intersectDist;
@@ -141,38 +145,37 @@ bool isRayIntersectingTerrainSlice(glm::vec3 rayOrigin,
     return hit;
 }
 
-bool physicsIsRayIntersectingTerrain(uint32 terrainColumns,
-    uint32 terrainRows,
-    float terrainPatchSize,
-    float terrainHeight,
-    float *patchHeights,
+bool physicsIsRayIntersectingHeightfield(Heightfield *heightfield,
     glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
     glm::vec3 &out_intersectionPoint)
 {
-    float offsetX = (terrainColumns - 1) * terrainPatchSize * -0.5f;
-    float offsetY = (terrainRows - 1) * terrainPatchSize * -0.5f;
-
     float hitDistance = 999999.0f;
     bool hit = false;
 
-    // divide terrain into 64 slices (8x8) and raycast against each slice's bounding box
+    // divide heightfield into 64 slices (8x8) and raycast against each slice's bounding box
     // this lets us skip expensive triangle raycasting if we don't hit the bounding box
     constexpr uint32 sliceCount = 8;
-    uint32 colSlice = terrainColumns / sliceCount;
-    uint32 rowSlice = terrainRows / sliceCount;
+    uint32 colSlice = heightfield->columns / sliceCount;
+    uint32 rowSlice = heightfield->rows / sliceCount;
 
-    for (uint32 y = 0; y < sliceCount; y++)
+    uint32 yStart = 0;
+    uint32 yEnd = rowSlice - 1;
+    while (yEnd < heightfield->rows)
     {
-        for (uint32 x = 0; x < sliceCount; x++)
+        uint32 xStart = 0;
+        uint32 xEnd = colSlice - 1;
+        while (xEnd < heightfield->columns)
         {
-            uint32 xStart = x == 0 ? 0 : (colSlice * x) - 1;
-            uint32 yStart = y == 0 ? 0 : (rowSlice * y) - 1;
+            hit |= isRayIntersectingHeightfieldSlice(
+                heightfield, rayOrigin, rayDirection, xStart, xEnd, yStart, yEnd, hitDistance);
 
-            hit |= isRayIntersectingTerrainSlice(rayOrigin, rayDirection, xStart,
-                (colSlice * (x + 1)) - 1, yStart, (rowSlice * (y + 1)) - 1, offsetX, offsetY,
-                terrainColumns, terrainPatchSize, terrainHeight, patchHeights, hitDistance);
+            xStart = xEnd;
+            xEnd += colSlice;
         }
+
+        yStart = yEnd;
+        yEnd += rowSlice;
     }
 
     if (hit)

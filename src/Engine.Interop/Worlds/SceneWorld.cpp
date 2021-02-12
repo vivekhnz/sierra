@@ -16,29 +16,28 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::initialize(uint32 heightmapTextureHandle)
     {
-        int terrainColumns = 256;
-        int terrainRows = 256;
-        float patchSize = 0.5f;
-        float terrainHeight = 25.0f;
+        heightfield = {};
+        heightfield.columns = HEIGHTFIELD_COLUMNS;
+        heightfield.rows = HEIGHTFIELD_ROWS;
+        heightfield.spacing = 0.5f;
+        heightfield.maxHeight = 25.0f;
+        heightfield.position = glm::vec2(-63.75f, -63.75f);
+        heightfield.heights = heightfieldHeights;
 
         this->heightmapTextureHandle = heightmapTextureHandle;
 
         // create entity and components
         int entityId = ctx.entities.create();
         int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, terrainRows, terrainColumns, patchSize);
-
+            entityId, heightfield.rows, heightfield.columns, heightfield.spacing);
         meshHandle =
             world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
-
-        terrainColliderInstanceId = world.componentManagers.terrainCollider.create(
-            entityId, -1, terrainRows, terrainColumns, patchSize, terrainHeight);
 
         // create buffer to store vertex edge data
         tessellationLevelBufferHandle =
             rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
         rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
-            terrainColumns * terrainRows * 10 * sizeof(glm::vec4), 0);
+            heightfield.columns * heightfield.rows * 10 * sizeof(glm::vec4), 0);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
@@ -60,12 +59,27 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {
-            // update terrain collider with composited heightmap texture
+            // update heightfield with composited heightmap texture
             rendererReadTexturePixels(ctx.memory, heightmapTextureHandle, GL_UNSIGNED_SHORT,
                 GL_RED, heightmapTextureDataTempBuffer);
-            world.componentManagers.terrainCollider.updateHeights(terrainColliderInstanceId,
-                2048, 2048,
-                static_cast<const unsigned short *>(heightmapTextureDataTempBuffer));
+
+            uint16 heightmapWidth = 2048;
+            uint16 heightmapHeight = 2048;
+            uint16 patchTexelWidth = heightmapWidth / heightfield.columns;
+            uint16 patchTexelHeight = heightmapHeight / heightfield.rows;
+
+            uint16 *src = (uint16 *)heightmapTextureDataTempBuffer;
+            float *dst = (float *)heightfieldHeights;
+            float heightScalar = heightfield.maxHeight / (float)UINT16_MAX;
+            for (uint32 y = 0; y < heightfield.rows; y++)
+            {
+                for (uint32 x = 0; x < heightfield.columns; x++)
+                {
+                    *dst++ = *src * heightScalar;
+                    src += patchTexelWidth;
+                }
+                src += (patchTexelHeight - 1) * heightmapWidth;
+            }
         }
 
         bool isManipulatingCamera = false;
@@ -229,13 +243,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::vec4 screenPos = glm::vec4(mouseX, -mouseY, 1.0f, 1.0f);
             glm::vec4 worldPos = inverseViewProjection * screenPos;
 
-            Physics::Ray ray = {};
-            ray.origin = viewState->cameraPos;
-            ray.direction = glm::normalize(glm::vec3(worldPos));
-
             glm::vec3 intersectionPoint;
-            if (!world.componentManagers.terrainCollider.intersects(
-                    terrainColliderInstanceId, ray, intersectionPoint))
+            if (!physicsIsRayIntersectingHeightfield(&heightfield, viewState->cameraPos,
+                    glm::normalize(glm::vec3(worldPos)), intersectionPoint))
                 continue;
 
             glm::vec2 normalizedPickPoint = glm::vec2(
