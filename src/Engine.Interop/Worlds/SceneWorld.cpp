@@ -160,8 +160,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan =
                 (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
-            float panMagnitude =
-                std::min(std::max(viewState->orbitCameraDistance, 2.5f), 300.0f);
+            float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
             viewState->cameraLookAt += pan * panMagnitude * 0.02f * deltaTime;
 
             isManipulatingCamera = true;
@@ -169,8 +168,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (ctx.input.isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Right))
         {
             // update yaw & pitch if the right mouse button is pressed
-            float rotateMagnitude =
-                std::min(std::max(viewState->orbitCameraDistance, 14.0f), 70.0f);
+            float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
             float rotateSensitivity = 0.05f * rotateMagnitude * deltaTime;
             viewState->orbitCameraYaw +=
                 glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
@@ -244,7 +242,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::vec4 worldPos = inverseViewProjection * screenPos;
 
             glm::vec3 intersectionPoint;
-            if (!physicsIsRayIntersectingHeightfield(&heightfield, viewState->cameraPos,
+            if (!heightfieldIsRayIntersecting(&heightfield, viewState->cameraPos,
                     glm::normalize(glm::vec3(worldPos)), intersectionPoint))
                 continue;
 

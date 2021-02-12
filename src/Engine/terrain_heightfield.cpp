@@ -1,4 +1,45 @@
-#include "terrain_physics.h"
+#include "terrain_heightfield.h"
+
+float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
+{
+    float det = (b.z - c.z) * (a.x - c.x) + (c.x - b.x) * (a.z - c.z);
+    float l1 = ((b.z - c.z) * (x - c.x) + (c.x - b.x) * (y - c.z)) / det;
+    float l2 = ((c.z - a.z) * (x - c.x) + (a.x - c.x) * (y - c.z)) / det;
+    float l3 = 1.0f - l1 - l2;
+    return (l1 * a.y) + (l2 * b.y) + (l3 * c.y);
+}
+
+float getTerrainPatchHeight(Heightfield *heightfield, uint32 x, uint32 z)
+{
+    uint32 clampedX = glm::clamp(x, (uint32)0, heightfield->columns - 1);
+    uint32 clampedZ = glm::clamp(z, (uint32)0, heightfield->rows - 1);
+    uint32 i = (clampedZ * heightfield->columns) + clampedX;
+    return heightfield->heights[i];
+}
+
+float heightfieldGetHeight(Heightfield *heightfield, float worldX, float worldZ)
+{
+    float relativeX = worldX - heightfield->position.x;
+    float relativeZ = worldZ - heightfield->position.y;
+    float normalizedX = relativeX / heightfield->spacing;
+    float normalizedZ = relativeZ / heightfield->spacing;
+    uint32 patchX = (uint32)floor(normalizedX);
+    uint32 patchZ = (uint32)floor(normalizedZ);
+    float deltaX = normalizedX - patchX;
+    float deltaZ = normalizedZ - patchZ;
+
+    glm::vec3 topLeft = glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ), 0);
+    glm::vec3 topRight =
+        glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ), 0);
+    glm::vec3 bottomLeft =
+        glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ + 1), 1);
+    glm::vec3 bottomRight =
+        glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ + 1), 1);
+
+    return deltaX <= 1.0f - deltaZ
+        ? barycentric(topLeft, topRight, bottomLeft, deltaX, deltaZ)
+        : barycentric(topRight, bottomRight, bottomLeft, deltaX, deltaZ);
+}
 
 bool isRayIntersectingBox(
     glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 boundsMin, glm::vec3 boundsMax)
@@ -145,7 +186,7 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     return hit;
 }
 
-bool physicsIsRayIntersectingHeightfield(Heightfield *heightfield,
+bool heightfieldIsRayIntersecting(Heightfield *heightfield,
     glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
     glm::vec3 &out_intersectionPoint)

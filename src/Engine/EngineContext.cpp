@@ -42,9 +42,5 @@ namespace Terrain { namespace Engine {
     void EngineContext::onTextureReloaded(Resources::TextureResourceData &resource)
     {
         renderer.onTextureReloaded(resource);
-        for (World *world : worlds)
-        {
-            world->onTextureReloaded(resource);
-        }
     }
 }}

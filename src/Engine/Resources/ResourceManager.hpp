@@ -3,7 +3,7 @@
 
 #include "../Common.hpp"
 
-#include "../terrain_platform.h"
+#include "../terrain_assets.h"
 #include "TextureResource.hpp"
 
 namespace Terrain { namespace Engine {
@@ -23,8 +23,7 @@ namespace Terrain { namespace Engine { namespace Resources {
 
         void loadResources();
 
-        void reloadTexture(
-            PlatformReadFileResult *readFileResult, int resourceId, bool is16Bit);
+        void reloadTexture(TextureAsset *asset, int resourceId);
     };
 }}}
 

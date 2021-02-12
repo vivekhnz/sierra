@@ -6,7 +6,6 @@
 #include "../EngineContext.hpp"
 #include "../IO/Path.hpp"
 #include "../terrain_renderer.h"
-#include "../terrain_assets.h"
 #include "TextureLoader.hpp"
 
 namespace Terrain { namespace Engine { namespace Resources {
@@ -169,16 +168,12 @@ namespace Terrain { namespace Engine { namespace Resources {
         ctx.onTexturesLoaded(count, descriptions, usages, resourceData);
     }
 
-    void ResourceManager::reloadTexture(
-        PlatformReadFileResult *readFileResult, int resourceId, bool is16Bit)
+    void ResourceManager::reloadTexture(TextureAsset *asset, int resourceId)
     {
-        TextureAsset asset =
-            assetsLoadTexture(ctx.memory, resourceId, readFileResult, is16Bit);
-
         TextureResourceData resource = {};
-        resource.data = asset.data;
-        resource.width = asset.width;
-        resource.height = asset.height;
+        resource.data = asset->data;
+        resource.width = asset->width;
+        resource.height = asset->height;
         resource.id = resourceId;
 
         ctx.onTextureReloaded(resource);

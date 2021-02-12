@@ -1,5 +1,5 @@
-#ifndef TERRAIN_PHYSICS_H
-#define TERRAIN_PHYSICS_H
+#ifndef TERRAIN_HEIGHTFIELD_H
+#define TERRAIN_HEIGHTFIELD_H
 
 #include <glm/gtc/type_ptr.hpp>
 
@@ -15,7 +15,9 @@ struct Heightfield
     glm::vec2 position;
 };
 
-EXPORT bool physicsIsRayIntersectingHeightfield(Heightfield *heightfield,
+EXPORT float heightfieldGetHeight(Heightfield *heightfield, float worldX, float worldZ);
+
+EXPORT bool heightfieldIsRayIntersecting(Heightfield *heightfield,
     glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
     glm::vec3 &out_intersectionPoint);

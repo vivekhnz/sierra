@@ -45,7 +45,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
         worlds = new Worlds::EditorWorlds(*ctx);
-        resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources);
+        resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources, memory);
         rendererProxy = gcnew Proxy::RendererProxy(ctx->renderer);
         stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 

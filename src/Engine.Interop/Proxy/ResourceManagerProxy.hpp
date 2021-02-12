@@ -8,9 +8,11 @@ public
     {
     private:
         Resources::ResourceManager &engineObj;
+        EngineMemory *memory;
 
     public:
-        ResourceManagerProxy(Resources::ResourceManager &engineObj) : engineObj(engineObj)
+        ResourceManagerProxy(Resources::ResourceManager &engineObj, EngineMemory *memory) :
+            engineObj(engineObj), memory(memory)
         {
         }
 

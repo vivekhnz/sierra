@@ -3,7 +3,6 @@
 
 #include "Common.hpp"
 #include "EngineContext.hpp"
-#include "Physics/TerrainColliderComponentManager.hpp"
 #include "TerrainRendererComponentManager.hpp"
 
 namespace Terrain { namespace Engine {
@@ -12,7 +11,6 @@ namespace Terrain { namespace Engine {
     public:
         struct ComponentManagers
         {
-            Physics::TerrainColliderComponentManager terrainCollider;
             TerrainRendererComponentManager terrainRenderer;
 
             ComponentManagers(EngineContext &ctx) : terrainRenderer(ctx.assets.graphics)
@@ -22,8 +20,6 @@ namespace Terrain { namespace Engine {
         ComponentManagers componentManagers;
 
         World(EngineContext &ctx);
-
-        void onTextureReloaded(Resources::TextureResourceData &resource);
     };
 }}
 

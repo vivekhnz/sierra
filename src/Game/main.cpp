@@ -2,6 +2,7 @@
 
 #include "../Engine/terrain_assets.h"
 #include "../Engine/terrain_renderer.h"
+#include "../Engine/terrain_heightfield.h"
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/EngineContext.hpp"
@@ -12,13 +13,35 @@
 #include "GameContext.hpp"
 #include "terrain_platform_win32.h"
 
-void reloadHeightmap(Terrain::Engine::EngineContext *ctx, const char *relativePath)
+void reloadHeightmap(
+    Terrain::Engine::EngineContext *ctx, Heightfield *heightfield, const char *relativePath)
 {
     PlatformReadFileResult result = ctx->memory->platformReadFile(
         Terrain::Engine::IO::Path::getAbsolutePath(relativePath).c_str());
+    assert(result.data);
+    TextureAsset asset = assetsLoadTexture(
+        ctx->memory, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, &result, true);
 
     ctx->resources.reloadTexture(
-        &result, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, true);
+        &asset, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+
+    uint16 heightmapWidth = 2048;
+    uint16 heightmapHeight = 2048;
+    uint16 patchTexelWidth = heightmapWidth / heightfield->columns;
+    uint16 patchTexelHeight = heightmapHeight / heightfield->rows;
+
+    uint16 *src = (uint16 *)asset.data;
+    float *dst = (float *)heightfield->heights;
+    float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
+    for (uint32 y = 0; y < heightfield->rows; y++)
+    {
+        for (uint32 x = 0; x < heightfield->columns; x++)
+        {
+            *dst++ = *src * heightScalar;
+            src += patchTexelWidth;
+        }
+        src += (patchTexelHeight - 1) * heightmapWidth;
+    }
 
     ctx->memory->platformFreeMemory(result.data);
 }
@@ -46,24 +69,29 @@ int main()
         Terrain::Engine::World world(ctx);
         ctx.resources.loadResources();
 
-        // create terrain
-        const uint32 terrainColumns = 256;
-        const uint32 terrainRows = 256;
-        const float terrainPatchSize = 0.5f;
-        const float terrainHeight = 25.0f;
+// create terrain
+#define HEIGHTFIELD_ROWS 256
+#define HEIGHTFIELD_COLUMNS 256
+
+        float heightfieldHeights[HEIGHTFIELD_ROWS * HEIGHTFIELD_COLUMNS] = {0};
+
+        Heightfield heightfield = {};
+        heightfield.columns = HEIGHTFIELD_COLUMNS;
+        heightfield.rows = HEIGHTFIELD_ROWS;
+        heightfield.spacing = 0.5f;
+        heightfield.maxHeight = 25.0f;
+        heightfield.heights = heightfieldHeights;
+        heightfield.position = glm::vec2(-63.75f, -63.75f);
 
         uint32 tessLevelBufferHandle =
             rendererCreateBuffer(&memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
         rendererUpdateBuffer(&memory, tessLevelBufferHandle,
-            terrainColumns * terrainRows * sizeof(glm::vec4), 0);
+            heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
 
         int terrainEntityId = ctx.entities.create();
         int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            terrainEntityId, terrainRows, terrainColumns, terrainPatchSize);
-        world.componentManagers.terrainCollider.create(terrainEntityId,
-            Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows,
-            terrainColumns, terrainPatchSize, terrainHeight);
-        reloadHeightmap(&ctx, "data/heightmap.tga");
+            terrainEntityId, heightfield.rows, heightfield.columns, heightfield.spacing);
+        reloadHeightmap(&ctx, &heightfield, "data/heightmap.tga");
 
         // first person camera state
         float firstPersonCameraYaw = -1.57f;
@@ -150,7 +178,7 @@ int main()
             // load a different heightmap when H is pressed
             if (ctx.input.isNewKeyPress(0, Terrain::Engine::IO::Key::H))
             {
-                reloadHeightmap(&ctx, "data/heightmap2.tga");
+                reloadHeightmap(&ctx, &heightfield, "data/heightmap2.tga");
             }
 
             // toggle terrain wireframe mode when Z is pressed
@@ -263,8 +291,8 @@ int main()
                 }
 
                 // smoothly lerp Y to terrain height
-                float targetHeight = world.componentManagers.terrainCollider.getTerrainHeight(
-                                         firstPersonCameraPos.x, firstPersonCameraPos.z)
+                float targetHeight = heightfieldGetHeight(&heightfield, firstPersonCameraPos.x,
+                                         firstPersonCameraPos.z)
                     + 1.75f;
                 firstPersonCameraPos.y =
                     (firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
@@ -313,8 +341,8 @@ int main()
                     ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
                 uint32 meshVertexArrayHandle =
                     ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle);
-                uint32 meshEdgeCount =
-                    (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
+                uint32 meshEdgeCount = (2 * (heightfield.rows * heightfield.columns))
+                    - heightfield.rows - heightfield.columns;
                 uint32 elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
                 uint32 primitiveType = ctx.assets.graphics.getMeshPrimitiveType(meshHandle);
 
@@ -322,11 +350,12 @@ int main()
                     &memory, calcTessLevelShaderProgram->handle, "targetTriangleSize", 0.015f);
                 rendererSetShaderProgramUniformInteger(&memory,
                     calcTessLevelShaderProgram->handle, "horizontalEdgeCount",
-                    terrainRows * (terrainColumns - 1));
+                    heightfield.rows * (heightfield.columns - 1));
                 rendererSetShaderProgramUniformInteger(&memory,
-                    calcTessLevelShaderProgram->handle, "columnCount", terrainColumns);
+                    calcTessLevelShaderProgram->handle, "columnCount", heightfield.columns);
                 rendererSetShaderProgramUniformFloat(&memory,
-                    calcTessLevelShaderProgram->handle, "terrainHeight", terrainHeight);
+                    calcTessLevelShaderProgram->handle, "heightfield.maxHeight",
+                    heightfield.maxHeight);
                 rendererBindTexture(&memory, heightmapTextureHandle, 0);
                 rendererBindShaderStorageBuffer(&memory, tessLevelBufferHandle, 0);
                 rendererBindShaderStorageBuffer(&memory, meshVertexBufferHandle, 1);
@@ -359,8 +388,8 @@ int main()
                     &memory, terrainShaderProgram->handle, "color", glm::vec3(0, 1, 0));
                 rendererSetShaderProgramUniformVector3(&memory, terrainShaderProgram->handle,
                     "terrainDimensions",
-                    glm::vec3(terrainPatchSize * terrainColumns, terrainHeight,
-                        terrainPatchSize * terrainRows));
+                    glm::vec3(heightfield.spacing * heightfield.columns, heightfield.maxHeight,
+                        heightfield.spacing * heightfield.rows));
                 rendererBindTexture(&memory,
                     ctx.renderer.lookupTexture(
                         Terrain::Engine::TerrainResources::Textures::HEIGHTMAP),

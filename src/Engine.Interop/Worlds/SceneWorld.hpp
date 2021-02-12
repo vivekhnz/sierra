@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../../Engine/terrain_renderer.h"
-#include "../../Engine/terrain_physics.h"
+#include "../../Engine/terrain_heightfield.h"
 #include "../../Engine/World.hpp"
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"

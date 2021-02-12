@@ -23,11 +23,10 @@
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
-    <ClCompile Include="Physics\TerrainColliderComponentManager.cpp" />
     <ClCompile Include="Resources\ResourceManager.cpp" />
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
-    <ClCompile Include="terrain_physics.cpp" />
+    <ClCompile Include="terrain_heightfield.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="World.cpp" />
   </ItemGroup>
@@ -48,15 +47,13 @@
     <ClInclude Include="IO\MouseCaptureMode.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp" />
     <ClInclude Include="IO\Path.hpp" />
-    <ClInclude Include="Physics\Ray.hpp" />
-    <ClInclude Include="Physics\TerrainColliderComponentManager.hpp" />
     <ClInclude Include="Resources\ResourceManager.hpp" />
     <ClInclude Include="Resources\TextureLoader.hpp" />
     <ClInclude Include="Resources\TextureResource.hpp" />
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="TerrainResources.hpp" />
     <ClInclude Include="terrain_assets.h" />
-    <ClInclude Include="terrain_physics.h" />
+    <ClInclude Include="terrain_heightfield.h" />
     <ClInclude Include="terrain_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="World.hpp" />

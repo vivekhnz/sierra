@@ -15,9 +15,6 @@
     </ClCompile>
     <ClCompile Include="World.cpp" />
     <ClCompile Include="EntityManager.cpp" />
-    <ClCompile Include="Physics\TerrainColliderComponentManager.cpp">
-      <Filter>Physics</Filter>
-    </ClCompile>
     <ClCompile Include="Graphics\Renderer.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
@@ -37,7 +34,7 @@
     </ClCompile>
     <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
-    <ClCompile Include="terrain_physics.cpp" />
+    <ClCompile Include="terrain_heightfield.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\GlfwManager.hpp">
@@ -60,9 +57,6 @@
     <ClInclude Include="IO\MouseInputState.hpp">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="Physics\TerrainColliderComponentManager.hpp">
-      <Filter>Physics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\Renderer.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -80,9 +74,6 @@
     <ClInclude Include="Resources\TextureLoader.hpp">
       <Filter>Resources</Filter>
     </ClInclude>
-    <ClInclude Include="Physics\Ray.hpp">
-      <Filter>Physics</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\VertexBufferDescription.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -99,7 +90,7 @@
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />
-    <ClInclude Include="terrain_physics.h" />
+    <ClInclude Include="terrain_heightfield.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Graphics">
@@ -110,9 +101,6 @@
     </Filter>
     <Filter Include="IO">
       <UniqueIdentifier>{f0a2bf12-335e-45b1-b986-ceed0af6ddcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Physics">
-      <UniqueIdentifier>{18f462fe-d8f8-4fbf-8c38-f777233e61eb}</UniqueIdentifier>
     </Filter>
     <Filter Include="Resources">
       <UniqueIdentifier>{76f65739-beb1-409c-95d9-71898ce0e7ed}</UniqueIdentifier>
