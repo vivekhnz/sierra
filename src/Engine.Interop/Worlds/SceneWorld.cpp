@@ -37,7 +37,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         tessellationLevelBufferHandle =
             rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
         rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
-            heightfield.columns * heightfield.rows * 10 * sizeof(glm::vec4), 0);
+            heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)

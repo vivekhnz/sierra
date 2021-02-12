@@ -12,6 +12,17 @@
 #include "GameContext.hpp"
 #include "terrain_platform_win32.h"
 
+void reloadHeightmap(Terrain::Engine::EngineContext *ctx, const char *relativePath)
+{
+    PlatformReadFileResult result = ctx->memory->platformReadFile(
+        Terrain::Engine::IO::Path::getAbsolutePath(relativePath).c_str());
+
+    ctx->resources.reloadTexture(
+        &result, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, true);
+
+    ctx->memory->platformFreeMemory(result.data);
+}
+
 int main()
 {
     try
@@ -36,15 +47,15 @@ int main()
         ctx.resources.loadResources();
 
         // create terrain
-        const int terrainColumns = 256;
-        const int terrainRows = 256;
+        const uint32 terrainColumns = 256;
+        const uint32 terrainRows = 256;
         const float terrainPatchSize = 0.5f;
         const float terrainHeight = 25.0f;
 
         uint32 tessLevelBufferHandle =
             rendererCreateBuffer(&memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
         rendererUpdateBuffer(&memory, tessLevelBufferHandle,
-            terrainColumns * terrainRows * 10 * sizeof(glm::vec4), 0);
+            terrainColumns * terrainRows * sizeof(glm::vec4), 0);
 
         int terrainEntityId = ctx.entities.create();
         int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
@@ -52,8 +63,7 @@ int main()
         world.componentManagers.terrainCollider.create(terrainEntityId,
             Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, terrainRows,
             terrainColumns, terrainPatchSize, terrainHeight);
-        ctx.resources.reloadTexture(Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
-            Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap.tga"), true);
+        reloadHeightmap(&ctx, "data/heightmap.tga");
 
         // first person camera state
         float firstPersonCameraYaw = -1.57f;
@@ -140,9 +150,7 @@ int main()
             // load a different heightmap when H is pressed
             if (ctx.input.isNewKeyPress(0, Terrain::Engine::IO::Key::H))
             {
-                ctx.resources.reloadTexture(
-                    Terrain::Engine::TerrainResources::Textures::HEIGHTMAP,
-                    Terrain::Engine::IO::Path::getAbsolutePath("data/heightmap2.tga"), true);
+                reloadHeightmap(&ctx, "data/heightmap2.tga");
             }
 
             // toggle terrain wireframe mode when Z is pressed
@@ -305,9 +313,9 @@ int main()
                     ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
                 uint32 meshVertexArrayHandle =
                     ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle);
-                int meshEdgeCount =
+                uint32 meshEdgeCount =
                     (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
-                int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
+                uint32 elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
                 uint32 primitiveType = ctx.assets.graphics.getMeshPrimitiveType(meshHandle);
 
                 rendererSetShaderProgramUniformFloat(

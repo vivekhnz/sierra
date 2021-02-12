@@ -169,10 +169,18 @@ namespace Terrain { namespace Engine { namespace Resources {
         ctx.onTexturesLoaded(count, descriptions, usages, resourceData);
     }
 
-    void ResourceManager::reloadTexture(int resourceId, std::string path, bool is16Bit)
+    void ResourceManager::reloadTexture(
+        PlatformReadFileResult *readFileResult, int resourceId, bool is16Bit)
     {
+        TextureAsset asset =
+            assetsLoadTexture(ctx.memory, resourceId, readFileResult, is16Bit);
+
         TextureResourceData resource = {};
-        TextureLoader::loadTexture(ctx.memory, resourceId, path, is16Bit, &resource);
+        resource.data = asset.data;
+        resource.width = asset.width;
+        resource.height = asset.height;
+        resource.id = resourceId;
+
         ctx.onTextureReloaded(resource);
     }
 }}}
