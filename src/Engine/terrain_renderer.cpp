@@ -148,11 +148,29 @@ void rendererUpdateLightingState(EngineMemory *memory,
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
-uint32 rendererCreateTexture(EngineMemory *memory)
+uint32 rendererCreateTexture(EngineMemory *memory,
+    uint32 elementType,
+    uint32 cpuFormat,
+    uint32 gpuFormat,
+    uint32 width,
+    uint32 height,
+    uint32 wrapMode,
+    uint32 filterMode)
 {
     RendererState *state = getState(memory);
     assert(state->textureCount < RENDERER_MAX_TEXTURES);
-    glGenTextures(1, state->textureIds + state->textureCount);
+
+    uint32 *id = state->textureIds + state->textureCount;
+    glGenTextures(1, id);
+
+    glBindTexture(GL_TEXTURE_2D, *id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+    glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, 0);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
     return state->textureCount++;
 }
 

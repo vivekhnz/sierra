@@ -75,8 +75,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // the working world is where the base heightmap and brush strokes will be drawn
 
         // create framebuffer
-        working.renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
-            GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        working.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+
         working.framebufferHandle =
             rendererCreateFramebuffer(ctx.memory, working.renderTextureHandle);
 
@@ -148,8 +149,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // the resulting texture is fed back into the working world as the base heightmap
 
         // create framebuffer
-        staging.renderTextureHandle = ctx.renderer.createTexture(2048, 2048, GL_R16, GL_RED,
-            GL_UNSIGNED_SHORT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        staging.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         staging.framebufferHandle =
             rendererCreateFramebuffer(ctx.memory, staging.renderTextureHandle);
     }

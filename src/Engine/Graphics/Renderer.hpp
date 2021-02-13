@@ -31,13 +31,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         void initialize();
 
-        int createTexture(int width,
-            int height,
-            int internalFormat,
-            int format,
-            int type,
-            int wrapMode,
-            int filterMode);
         void onTexturesLoaded(const int count,
             Resources::TextureResourceDescription *descriptions,
             Resources::TextureResourceUsage *usages,

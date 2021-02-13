@@ -24,28 +24,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
         rendererCreateUniformBuffers(memory);
     }
 
-    int Renderer::createTexture(int width,
-        int height,
-        int internalFormat,
-        int format,
-        int type,
-        int wrapMode,
-        int filterMode)
-    {
-        int handle = rendererCreateTexture(memory);
-        unsigned int id = rendererGetTextureId(memory, handle);
-
-        glBindTexture(GL_TEXTURE_2D, id);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
-        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, format, type, NULL);
-        glGenerateMipmap(GL_TEXTURE_2D);
-
-        return handle;
-    }
-
     void Renderer::onTexturesLoaded(const int count,
         Resources::TextureResourceDescription *descriptions,
         Resources::TextureResourceUsage *usages,
@@ -56,21 +34,15 @@ namespace Terrain { namespace Engine { namespace Graphics {
 
         for (int i = 0; i < count; i++)
         {
-            int handle = rendererCreateTexture(memory);
-            unsigned int id = rendererGetTextureId(memory, handle);
-
             Resources::TextureResourceDescription &desc = descriptions[i];
             Resources::TextureResourceUsage &usage = usages[i];
             Resources::TextureResourceData &resourceData = data[i];
 
-            glBindTexture(GL_TEXTURE_2D, id);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, usage.wrapMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, usage.wrapMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, usage.filterMode);
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, usage.filterMode);
-            glTexImage2D(GL_TEXTURE_2D, 0, desc.internalFormat, resourceData.width,
-                resourceData.height, 0, usage.format, desc.type, resourceData.data);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            uint32 handle =
+                rendererCreateTexture(memory, desc.type, desc.internalFormat, usage.format,
+                    resourceData.width, resourceData.height, usage.wrapMode, usage.filterMode);
+            rendererUpdateTexture(memory, handle, desc.type, desc.internalFormat, usage.format,
+                resourceData.width, resourceData.height, resourceData.data);
 
             textures.resourceIdToHandle[desc.id] = handle;
         }
