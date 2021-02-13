@@ -4,7 +4,6 @@
 #include "../Common.hpp"
 
 #include "../terrain_assets.h"
-#include "TextureResource.hpp"
 
 namespace Terrain { namespace Engine {
     class EngineContext;
@@ -15,8 +14,6 @@ namespace Terrain { namespace Engine { namespace Resources {
     {
     private:
         EngineContext &ctx;
-
-        void loadTextures();
 
     public:
         ResourceManager(EngineContext &ctx);

@@ -30,12 +30,4 @@ namespace Terrain { namespace Engine {
     {
         worlds.push_back(&world);
     }
-
-    void EngineContext::onTexturesLoaded(const int count,
-        Resources::TextureResourceDescription *descriptions,
-        Resources::TextureResourceUsage *usages,
-        Resources::TextureResourceData *data)
-    {
-        renderer.onTexturesLoaded(count, descriptions, usages, data);
-    }
 }}

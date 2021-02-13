@@ -3,6 +3,7 @@
 
 #include "../Common.hpp"
 
+#include <vector>
 #include "Renderer.hpp"
 #include "VertexBufferDescription.hpp"
 

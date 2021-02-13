@@ -61,6 +61,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int meshHandle;
         uint32 tessellationLevelBufferHandle;
 
+        uint32 groundAlbedoTextureHandle;
+        uint32 groundNormalTextureHandle;
+        uint32 groundDisplacementTextureHandle;
+        uint32 groundAoTextureHandle;
+        uint32 rockAlbedoTextureHandle;
+        uint32 rockNormalTextureHandle;
+        uint32 rockDisplacementTextureHandle;
+        uint32 rockAoTextureHandle;
+        uint32 snowAlbedoTextureHandle;
+        uint32 snowNormalTextureHandle;
+        uint32 snowDisplacementTextureHandle;
+        uint32 snowAoTextureHandle;
+
         void *heightmapTextureDataTempBuffer;
 
         ViewState viewStates[MAX_SCENE_VIEWS];

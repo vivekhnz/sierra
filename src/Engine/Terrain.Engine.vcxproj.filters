@@ -61,9 +61,6 @@
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
-    <ClInclude Include="Resources\TextureResource.hpp">
-      <Filter>Resources</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>

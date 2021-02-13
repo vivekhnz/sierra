@@ -38,6 +38,80 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
         rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
             heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
+
+        TextureAsset *asset;
+
+        groundAlbedoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_GROUND_ALBEDO);
+        rendererUpdateTexture(ctx.memory, groundAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, asset->width, asset->height, asset->data);
+
+        groundNormalTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_GROUND_NORMAL);
+        rendererUpdateTexture(ctx.memory, groundNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, asset->data);
+
+        groundDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
+        rendererUpdateTexture(ctx.memory, groundDisplacementTextureHandle, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, asset->data);
+
+        groundAoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_R8,
+            GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_GROUND_AO);
+        rendererUpdateTexture(ctx.memory, groundAoTextureHandle, GL_UNSIGNED_BYTE, GL_R8,
+            GL_RED, 2048, 2048, asset->data);
+
+        rockAlbedoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_ROCK_ALBEDO);
+        rendererUpdateTexture(ctx.memory, rockAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, asset->data);
+
+        rockNormalTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_ROCK_NORMAL);
+        rendererUpdateTexture(ctx.memory, rockNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, asset->data);
+
+        rockDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE,
+            GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
+        rendererUpdateTexture(ctx.memory, rockDisplacementTextureHandle, GL_UNSIGNED_BYTE,
+            GL_RGB, GL_RED, 2048, 2048, asset->data);
+
+        rockAoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_ROCK_AO);
+        rendererUpdateTexture(ctx.memory, rockAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RED, 2048, 2048, asset->data);
+
+        snowAlbedoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_SNOW_ALBEDO);
+        rendererUpdateTexture(ctx.memory, snowAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, asset->data);
+
+        snowNormalTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_SNOW_NORMAL);
+        rendererUpdateTexture(ctx.memory, snowNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, asset->data);
+
+        snowDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE,
+            GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
+        rendererUpdateTexture(ctx.memory, snowDisplacementTextureHandle, GL_UNSIGNED_BYTE,
+            GL_RGB, GL_RED, 2048, 2048, asset->data);
+
+        snowAoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        asset = assetsGetTexture(ctx.memory, ASSET_TEXTURE_SNOW_AO);
+        rendererUpdateTexture(ctx.memory, snowAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RED, 2048, 2048, asset->data);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
@@ -415,23 +489,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         rendererBindTexture(memory, heightmapTextureHandle, 0);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_ALBEDO), 1);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_NORMAL), 2);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_DISPLACEMENT), 3);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_AO), 4);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_ALBEDO), 5);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_NORMAL), 6);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_DISPLACEMENT), 7);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_AO), 8);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_ALBEDO), 9);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_NORMAL), 10);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_DISPLACEMENT), 11);
-        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_AO), 12);
+        rendererBindTexture(memory, groundAlbedoTextureHandle, 1);
+        rendererBindTexture(memory, groundNormalTextureHandle, 2);
+        rendererBindTexture(memory, groundDisplacementTextureHandle, 3);
+        rendererBindTexture(memory, groundAoTextureHandle, 4);
+        rendererBindTexture(memory, rockAlbedoTextureHandle, 5);
+        rendererBindTexture(memory, rockNormalTextureHandle, 6);
+        rendererBindTexture(memory, rockDisplacementTextureHandle, 7);
+        rendererBindTexture(memory, rockAoTextureHandle, 8);
+        rendererBindTexture(memory, snowAlbedoTextureHandle, 9);
+        rendererBindTexture(memory, snowNormalTextureHandle, 10);
+        rendererBindTexture(memory, snowDisplacementTextureHandle, 11);
+        rendererBindTexture(memory, snowAoTextureHandle, 12);
 
         // bind mesh data
         int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);

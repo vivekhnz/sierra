@@ -40,11 +40,6 @@ namespace Terrain { namespace Engine {
         void initialize();
 
         void registerWorld(World &world);
-
-        void onTexturesLoaded(const int count,
-            Resources::TextureResourceDescription *descriptions,
-            Resources::TextureResourceUsage *usages,
-            Resources::TextureResourceData *data);
     };
 }}
 
