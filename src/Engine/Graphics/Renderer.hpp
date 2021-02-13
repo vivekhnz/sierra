@@ -17,17 +17,7 @@ namespace Terrain { namespace Engine { namespace Graphics {
     private:
         struct Textures
         {
-            int count;
-            std::vector<int> resourceId;
-            std::vector<int> internalFormat;
-            std::vector<int> format;
-            std::vector<int> type;
-
             std::map<int, int> resourceIdToHandle;
-
-            Textures() : count(0)
-            {
-            }
         } textures;
 
     public:
@@ -52,7 +42,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
             Resources::TextureResourceDescription *descriptions,
             Resources::TextureResourceUsage *usages,
             Resources::TextureResourceData *data);
-        void onTextureReloaded(Resources::TextureResourceData &resource);
         int lookupTexture(int resourceId)
         {
             return textures.resourceIdToHandle[resourceId];

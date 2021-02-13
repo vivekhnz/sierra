@@ -45,8 +45,6 @@ namespace Terrain { namespace Engine {
             Resources::TextureResourceDescription *descriptions,
             Resources::TextureResourceUsage *usages,
             Resources::TextureResourceData *data);
-
-        void onTextureReloaded(Resources::TextureResourceData &resource);
     };
 }}
 

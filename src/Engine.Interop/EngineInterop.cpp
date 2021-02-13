@@ -2,7 +2,9 @@
 
 #include <windows.h>
 #include <msclr\lock.h>
+#include <msclr\marshal_cppstd.h>
 #include "terrain_platform_editor_win32.h"
+#include "../Engine/TerrainResources.hpp"
 
 using namespace System;
 using namespace System::Windows;
@@ -45,8 +47,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
         worlds = new Worlds::EditorWorlds(*ctx);
-        resourceManagerProxy = gcnew Proxy::ResourceManagerProxy(ctx->resources, memory);
-        rendererProxy = gcnew Proxy::RendererProxy(ctx->renderer);
         stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 
         focusedViewportCtx = nullptr;
@@ -194,6 +194,23 @@ namespace Terrain { namespace Engine { namespace Interop {
         {
             hoveredViewportCtx = nullptr;
         }
+    }
+
+    void EngineInterop::LoadHeightmapTexture(System::String ^ path)
+    {
+        std::string pathStr = msclr::interop::marshal_as<std::string>(path);
+        PlatformReadFileResult result = win32ReadFile(pathStr.c_str());
+        assert(result.data);
+
+        TextureAsset asset = assetsLoadTexture(
+            memory, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, &result, true);
+        uint32 heightmapTextureHandle = ctx->renderer.lookupTexture(
+            Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+        rendererUpdateTexture(ctx->memory, heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16,
+            GL_RED, asset.width, asset.height, asset.data);
+        newEditorState->heightmapStatus = HeightmapStatus::Initializing;
+
+        win32FreeMemory(result.data);
     }
 
     void EngineInterop::Shutdown()

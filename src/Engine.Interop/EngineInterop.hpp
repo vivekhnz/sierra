@@ -7,8 +7,6 @@
 #include "EditorState.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
-#include "Proxy/ResourceManagerProxy.hpp"
-#include "Proxy/RendererProxy.hpp"
 #include "Proxy/StateProxy.hpp"
 #include "Worlds/EditorWorlds.hpp"
 
@@ -34,8 +32,6 @@ public
         static bool areWorldsInitialized = false;
         static Worlds::EditorWorlds *worlds;
 
-        static Proxy::ResourceManagerProxy ^ resourceManagerProxy;
-        static Proxy::RendererProxy ^ rendererProxy;
         static Proxy::StateProxy ^ stateProxy;
 
         static ViewportContext *focusedViewportCtx = nullptr;
@@ -77,24 +73,6 @@ public
         static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:
-        static property Proxy::ResourceManagerProxy^ ResourceManager
-        {
-        public:
-            Proxy::ResourceManagerProxy^ get()
-            {
-                return resourceManagerProxy;
-            }
-        }
-
-        static property Proxy::RendererProxy^ Renderer
-        {
-        public:
-            Proxy::RendererProxy^ get()
-            {
-                return rendererProxy;
-            }
-        }
-
         static property Proxy::StateProxy^ State
         {
         public:
@@ -105,6 +83,7 @@ public
         }
 
         static void InitializeEngine();
+        static void LoadHeightmapTexture(System::String ^ path);
         static void Shutdown();
     };
 }}}

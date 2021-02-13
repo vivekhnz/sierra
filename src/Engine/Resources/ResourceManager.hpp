@@ -22,8 +22,6 @@ namespace Terrain { namespace Engine { namespace Resources {
         ResourceManager(EngineContext &ctx);
 
         void loadResources();
-
-        void reloadTexture(TextureAsset *asset, int resourceId);
     };
 }}}
 

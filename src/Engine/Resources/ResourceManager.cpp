@@ -167,15 +167,4 @@ namespace Terrain { namespace Engine { namespace Resources {
         assert(data + 1 == resourceData + count);
         ctx.onTexturesLoaded(count, descriptions, usages, resourceData);
     }
-
-    void ResourceManager::reloadTexture(TextureAsset *asset, int resourceId)
-    {
-        TextureResourceData resource = {};
-        resource.data = asset->data;
-        resource.width = asset->width;
-        resource.height = asset->height;
-        resource.id = resourceId;
-
-        ctx.onTextureReloaded(resource);
-    }
 }}}

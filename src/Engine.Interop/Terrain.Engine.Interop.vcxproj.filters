@@ -14,9 +14,6 @@
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="EditorContext.cpp" />
     <ClCompile Include="ViewportContext.cpp" />
-    <ClCompile Include="Proxy\ResourceManagerProxy.cpp">
-      <Filter>Proxy</Filter>
-    </ClCompile>
     <ClCompile Include="Worlds\SceneWorld.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
@@ -29,9 +26,6 @@
     <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
-    <ClCompile Include="Proxy\RendererProxy.cpp">
-      <Filter>Proxy</Filter>
-    </ClCompile>
     <ClCompile Include="terrain_platform_editor_win32.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -39,9 +33,6 @@
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="EditorContext.hpp" />
     <ClInclude Include="ViewportContext.hpp" />
-    <ClInclude Include="Proxy\ResourceManagerProxy.hpp">
-      <Filter>Proxy</Filter>
-    </ClInclude>
     <ClInclude Include="Worlds\SceneWorld.hpp">
       <Filter>Worlds</Filter>
     </ClInclude>
@@ -61,9 +52,6 @@
       <Filter>Proxy</Filter>
     </ClInclude>
     <ClInclude Include="EditorState.hpp" />
-    <ClInclude Include="Proxy\RendererProxy.hpp">
-      <Filter>Proxy</Filter>
-    </ClInclude>
     <ClInclude Include="Proxy\RampParamsProxy.hpp">
       <Filter>Proxy</Filter>
     </ClInclude>

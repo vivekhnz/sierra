@@ -89,10 +89,7 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
-                EngineInterop.ResourceManager.ReloadTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP,
-                    ofd.FileName, true);
-                EngineInterop.State.CurrentHeightmapStatus = HeightmapStatus.Initializing;
+                EngineInterop.LoadHeightmapTexture(ofd.FileName);
             }
         }
 
