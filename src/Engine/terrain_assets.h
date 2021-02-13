@@ -31,6 +31,24 @@ enum ShaderPrograms
 
     ASSET_SHADER_PROGRAM_COUNT
 };
+enum Textures
+{
+    ASSET_TEXTURE_HEIGHTMAP,
+    ASSET_TEXTURE_GROUND_ALBEDO,
+    ASSET_TEXTURE_GROUND_NORMAL,
+    ASSET_TEXTURE_GROUND_DISPLACEMENT,
+    ASSET_TEXTURE_GROUND_AO,
+    ASSET_TEXTURE_ROCK_ALBEDO,
+    ASSET_TEXTURE_ROCK_NORMAL,
+    ASSET_TEXTURE_ROCK_DISPLACEMENT,
+    ASSET_TEXTURE_ROCK_AO,
+    ASSET_TEXTURE_SNOW_ALBEDO,
+    ASSET_TEXTURE_SNOW_NORMAL,
+    ASSET_TEXTURE_SNOW_DISPLACEMENT,
+    ASSET_TEXTURE_SNOW_AO,
+
+    ASSET_TEXTURE_COUNT
+};
 
 struct ShaderAsset
 {
@@ -51,7 +69,8 @@ EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
 EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId);
 EXPORT void assetsInvalidateShader(EngineMemory *memory, uint32 assetId);
 
-EXPORT TextureAsset assetsLoadTexture(
+EXPORT void assetsLoadTexture(
     EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result, bool is16Bit);
+EXPORT TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId);
 
 #endif

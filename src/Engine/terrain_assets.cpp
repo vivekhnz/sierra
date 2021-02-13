@@ -33,6 +33,9 @@ struct AssetsState
     AssetInfo shaderProgramAssetInfos[ASSET_SHADER_PROGRAM_COUNT];
     ShaderProgramAsset shaderProgramAssets[ASSET_SHADER_PROGRAM_COUNT];
 
+    AssetInfo textureAssetInfos[ASSET_TEXTURE_COUNT];
+    TextureAsset textureAssets[ASSET_TEXTURE_COUNT];
+
     uint64 dataStorageUsed;
 };
 
@@ -246,7 +249,7 @@ void assetsInvalidateShader(EngineMemory *memory, uint32 assetId)
     }
 }
 
-TextureAsset assetsLoadTexture(
+void assetsLoadTexture(
     EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result, bool is16Bit)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
@@ -276,15 +279,29 @@ TextureAsset assetsLoadTexture(
     assert(width >= 0);
     assert(height >= 0);
 
-    TextureAsset asset = {};
-    asset.width = (uint32)width;
-    asset.height = (uint32)height;
-    asset.data =
+    TextureAsset *asset = &state->textureAssets[assetId];
+    asset->width = (uint32)width;
+    asset->height = (uint32)height;
+    asset->data =
         (uint8 *)memory->assets.baseAddress + sizeof(AssetsState) + state->dataStorageUsed;
-    memcpy(asset.data, data, requiredStorage);
+    memcpy(asset->data, data, requiredStorage);
     state->dataStorageUsed += requiredStorage;
 
-    stbi_image_free(data);
+    AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
+    assetInfo->data = asset;
+    assetInfo->state = ASSET_LOAD_STATE_LOADED;
 
-    return asset;
+    stbi_image_free(data);
+}
+
+TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
+{
+    assert(assetId < ASSET_TEXTURE_COUNT);
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
+    assert(assetInfo->state == ASSET_LOAD_STATE_LOADED);
+
+    return static_cast<TextureAsset *>(assetInfo->data);
 }

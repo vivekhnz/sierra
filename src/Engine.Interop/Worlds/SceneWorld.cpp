@@ -414,44 +414,24 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        const int RESOURCE_ID_TEXTURE_GROUND_ALBEDO = 1;
-        const int RESOURCE_ID_TEXTURE_GROUND_NORMAL = 2;
-        const int RESOURCE_ID_TEXTURE_GROUND_DISPLACEMENT = 3;
-        const int RESOURCE_ID_TEXTURE_GROUND_AO = 4;
-        const int RESOURCE_ID_TEXTURE_ROCK_ALBEDO = 5;
-        const int RESOURCE_ID_TEXTURE_ROCK_NORMAL = 6;
-        const int RESOURCE_ID_TEXTURE_ROCK_DISPLACEMENT = 7;
-        const int RESOURCE_ID_TEXTURE_ROCK_AO = 8;
-        const int RESOURCE_ID_TEXTURE_SNOW_ALBEDO = 9;
-        const int RESOURCE_ID_TEXTURE_SNOW_NORMAL = 10;
-        const int RESOURCE_ID_TEXTURE_SNOW_DISPLACEMENT = 11;
-        const int RESOURCE_ID_TEXTURE_SNOW_AO = 12;
-
         rendererBindTexture(memory, heightmapTextureHandle, 0);
         rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_ALBEDO), 1);
+            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_ALBEDO), 1);
         rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_NORMAL), 2);
+            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_NORMAL), 2);
         rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_DISPLACEMENT), 3);
+            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_DISPLACEMENT), 3);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_AO), 4);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_ALBEDO), 5);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_NORMAL), 6);
         rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_GROUND_AO), 4);
+            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_DISPLACEMENT), 7);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_AO), 8);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_ALBEDO), 9);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_NORMAL), 10);
         rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_ALBEDO), 5);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_NORMAL), 6);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_DISPLACEMENT), 7);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_ROCK_AO), 8);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_ALBEDO), 9);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_NORMAL), 10);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_DISPLACEMENT), 11);
-        rendererBindTexture(
-            memory, ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_SNOW_AO), 12);
+            memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_DISPLACEMENT), 11);
+        rendererBindTexture(memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_AO), 12);
 
         // bind mesh data
         int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);

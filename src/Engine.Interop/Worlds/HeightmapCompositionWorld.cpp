@@ -250,9 +250,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
             // reset heightmap quad's texture back to heightmap texture resource
-            const int RESOURCE_ID_TEXTURE_HEIGHTMAP = 0;
             working.baseHeightmapTextureHandle =
-                ctx.renderer.lookupTexture(RESOURCE_ID_TEXTURE_HEIGHTMAP);
+                ctx.renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
             newState.heightmapStatus = HeightmapStatus::Committing;
         }
 

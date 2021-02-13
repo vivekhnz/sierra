@@ -4,7 +4,6 @@
 #include <msclr\lock.h>
 #include <msclr\marshal_cppstd.h>
 #include "terrain_platform_editor_win32.h"
-#include "../Engine/TerrainResources.hpp"
 
 using namespace System;
 using namespace System::Windows;
@@ -202,12 +201,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         PlatformReadFileResult result = win32ReadFile(pathStr.c_str());
         assert(result.data);
 
-        TextureAsset asset = assetsLoadTexture(
-            memory, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, &result, true);
-        uint32 heightmapTextureHandle = ctx->renderer.lookupTexture(
-            Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+        assetsLoadTexture(memory, ASSET_TEXTURE_HEIGHTMAP, &result, true);
+        TextureAsset *asset = assetsGetTexture(memory, ASSET_TEXTURE_HEIGHTMAP);
+        uint32 heightmapTextureHandle = ctx->renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
         rendererUpdateTexture(ctx->memory, heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16,
-            GL_RED, asset.width, asset.height, asset.data);
+            GL_RED, asset->width, asset->height, asset->data);
         newEditorState->heightmapStatus = HeightmapStatus::Initializing;
 
         win32FreeMemory(result.data);

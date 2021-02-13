@@ -1,6 +1,5 @@
 #include "TerrainRendererComponentManager.hpp"
 
-#include "TerrainResources.hpp"
 #include "terrain_renderer.h"
 #include "terrain_assets.h"
 

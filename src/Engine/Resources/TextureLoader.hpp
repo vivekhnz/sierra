@@ -17,10 +17,11 @@ namespace Terrain { namespace Engine { namespace Resources { namespace TextureLo
         PlatformReadFileResult result = memory->platformReadFile(path.c_str());
         assert(result.data != 0);
 
-        TextureAsset asset = assetsLoadTexture(memory, resourceId, &result, is16Bit);
-        resource->data = asset.data;
-        resource->width = asset.width;
-        resource->height = asset.height;
+        assetsLoadTexture(memory, resourceId, &result, is16Bit);
+        TextureAsset *asset = assetsGetTexture(memory, resourceId);
+        resource->data = asset->data;
+        resource->width = asset->width;
+        resource->height = asset->height;
         resource->id = resourceId;
 
         memory->platformFreeMemory(result.data);

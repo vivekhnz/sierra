@@ -7,7 +7,6 @@
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/EngineContext.hpp"
 #include "../Engine/World.hpp"
-#include "../Engine/TerrainResources.hpp"
 #include "../Engine/IO/Path.hpp"
 #include "../Engine/IO/MouseInputState.hpp"
 #include "GameContext.hpp"
@@ -19,20 +18,20 @@ void reloadHeightmap(
     PlatformReadFileResult result = ctx->memory->platformReadFile(
         Terrain::Engine::IO::Path::getAbsolutePath(relativePath).c_str());
     assert(result.data);
-    TextureAsset asset = assetsLoadTexture(
-        ctx->memory, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, &result, true);
 
-    uint32 heightmapTextureHandle =
-        ctx->renderer.lookupTexture(Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+    assetsLoadTexture(ctx->memory, ASSET_TEXTURE_HEIGHTMAP, &result, true);
+    TextureAsset *asset = assetsGetTexture(ctx->memory, ASSET_TEXTURE_HEIGHTMAP);
+
+    uint32 heightmapTextureHandle = ctx->renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
     rendererUpdateTexture(ctx->memory, heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16,
-        GL_RED, asset.width, asset.height, asset.data);
+        GL_RED, asset->width, asset->height, asset->data);
 
     uint16 heightmapWidth = 2048;
     uint16 heightmapHeight = 2048;
     uint16 patchTexelWidth = heightmapWidth / heightfield->columns;
     uint16 patchTexelHeight = heightmapHeight / heightfield->rows;
 
-    uint16 *src = (uint16 *)asset.data;
+    uint16 *src = (uint16 *)asset->data;
     float *dst = (float *)heightfield->heights;
     float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
     for (uint32 y = 0; y < heightfield->rows; y++)
@@ -335,8 +334,8 @@ int main()
                 assetsGetShaderProgram(&memory, terrainShaderProgramAssetId);
             if (calcTessLevelShaderProgram && terrainShaderProgram)
             {
-                uint32 heightmapTextureHandle = ctx.renderer.lookupTexture(
-                    Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+                uint32 heightmapTextureHandle =
+                    ctx.renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
                 uint32 meshHandle = world.componentManagers.terrainRenderer.getMeshHandle(
                     terrainRendererInstanceId);
                 uint32 meshVertexBufferHandle =
@@ -392,58 +391,32 @@ int main()
                     "terrainDimensions",
                     glm::vec3(heightfield.spacing * heightfield.columns, heightfield.maxHeight,
                         heightfield.spacing * heightfield.rows));
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::HEIGHTMAP),
-                    0);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::GROUND_ALBEDO),
-                    1);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::GROUND_NORMAL),
-                    2);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::GROUND_DISPLACEMENT),
-                    3);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::GROUND_AO),
-                    4);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::ROCK_ALBEDO),
-                    5);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::ROCK_NORMAL),
-                    6);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::ROCK_DISPLACEMENT),
-                    7);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::ROCK_AO),
-                    8);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::SNOW_ALBEDO),
-                    9);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::SNOW_NORMAL),
-                    10);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::SNOW_DISPLACEMENT),
-                    11);
-                rendererBindTexture(&memory,
-                    ctx.renderer.lookupTexture(
-                        Terrain::Engine::TerrainResources::Textures::SNOW_AO),
-                    12);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP), 0);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_ALBEDO), 1);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_NORMAL), 2);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_DISPLACEMENT), 3);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_AO), 4);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_ALBEDO), 5);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_NORMAL), 6);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_DISPLACEMENT), 7);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_ROCK_AO), 8);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_ALBEDO), 9);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_NORMAL), 10);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_DISPLACEMENT), 11);
+                rendererBindTexture(
+                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_SNOW_AO), 12);
                 rendererBindVertexArray(&memory, meshVertexArrayHandle);
                 rendererDrawElementsInstanced(primitiveType, elementCount, 1);
             }
