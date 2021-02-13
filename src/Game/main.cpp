@@ -22,8 +22,10 @@ void reloadHeightmap(
     TextureAsset asset = assetsLoadTexture(
         ctx->memory, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP, &result, true);
 
-    ctx->resources.reloadTexture(
-        &asset, Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+    uint32 heightmapTextureHandle =
+        ctx->renderer.lookupTexture(Terrain::Engine::TerrainResources::Textures::HEIGHTMAP);
+    rendererUpdateTexture(ctx->memory, heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16,
+        GL_RED, asset.width, asset.height, asset.data);
 
     uint16 heightmapWidth = 2048;
     uint16 heightmapHeight = 2048;

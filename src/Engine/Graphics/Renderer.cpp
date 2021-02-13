@@ -93,11 +93,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
             if (textures.resourceId[i] != resource.id)
                 continue;
 
-            unsigned int id = rendererGetTextureId(memory, i);
-            glBindTexture(GL_TEXTURE_2D, id);
-            glTexImage2D(GL_TEXTURE_2D, 0, textures.internalFormat[i], resource.width,
-                resource.height, 0, textures.format[i], textures.type[i], resource.data);
-            glGenerateMipmap(GL_TEXTURE_2D);
+            rendererUpdateTexture(memory, i, textures.type[i], textures.internalFormat[i],
+                textures.format[i], resource.width, resource.height, resource.data);
         }
     }
 

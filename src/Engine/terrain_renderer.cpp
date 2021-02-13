@@ -173,6 +173,25 @@ void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
+void rendererUpdateTexture(EngineMemory *memory,
+    uint32 handle,
+    uint32 elementType,
+    uint32 cpuFormat,
+    uint32 gpuFormat,
+    uint32 width,
+    uint32 height,
+    void *pixels)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->textureCount);
+    uint32 id = state->textureIds[handle];
+
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+
 void rendererReadTexturePixels(EngineMemory *memory,
     uint32 handle,
     uint32 elementType,
