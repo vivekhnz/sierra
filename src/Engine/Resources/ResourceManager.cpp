@@ -19,37 +19,25 @@ namespace Terrain { namespace Engine { namespace Resources {
 
     void ResourceManager::loadTextures()
     {
-        const int count = 13;
+        const int count = 12;
         TextureResourceDescription descriptions[count];
         TextureResourceUsage usages[count];
         TextureResourceData resourceData[count];
 
         TextureResourceDescription *desc = descriptions;
-        desc->id = ASSET_TEXTURE_HEIGHTMAP;
-        desc->internalFormat = GL_R16;
-        desc->type = GL_UNSIGNED_SHORT;
-
-        TextureResourceUsage *usage = usages;
-        usage->id = ASSET_TEXTURE_HEIGHTMAP;
-        usage->format = GL_RED;
-        usage->wrapMode = GL_MIRRORED_REPEAT;
-        usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
-
-        TextureResourceData *data = resourceData;
-        data->id = ASSET_TEXTURE_HEIGHTMAP;
-        data->width = 0;
-        data->height = 0;
-        data->data = 0;
-
-        (++desc)->id = ASSET_TEXTURE_GROUND_ALBEDO;
+        desc->id = ASSET_TEXTURE_GROUND_ALBEDO;
         desc->internalFormat = GL_RGB;
         desc->type = GL_UNSIGNED_BYTE;
-        (++usage)->id = ASSET_TEXTURE_GROUND_ALBEDO;
+
+        TextureResourceUsage *usage = usages;
+        usage->id = ASSET_TEXTURE_GROUND_ALBEDO;
         usage->format = GL_RGB;
         usage->wrapMode = GL_REPEAT;
         usage->filterMode = GL_LINEAR_MIPMAP_LINEAR;
+
+        TextureResourceData *data = resourceData;
         TextureLoader::loadTexture(ctx.memory, ASSET_TEXTURE_GROUND_ALBEDO,
-            IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false, ++data);
+            IO::Path::getAbsolutePath("data/ground_albedo.bmp"), false, data);
 
         (++desc)->id = ASSET_TEXTURE_GROUND_NORMAL;
         desc->internalFormat = GL_RGB;

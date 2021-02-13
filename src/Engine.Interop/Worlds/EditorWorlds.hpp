@@ -11,11 +11,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class EditorWorlds
     {
         EngineContext *ctx;
+
+    public:
         SceneWorld sceneWorld;
         HeightmapCompositionWorld heightmapCompositionWorld;
         HeightmapPreviewWorld heightmapPreviewWorld;
 
-    public:
         EditorWorlds(EngineContext &ctx);
 
         void initialize();

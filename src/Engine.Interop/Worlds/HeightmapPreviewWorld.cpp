@@ -57,9 +57,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetViewportSize(viewportWidth, viewportHeight);
         rendererClearBackBuffer(0, 0, 0, 1);
 
-        const int ASSET_ID_SHADER_PROGRAM_QUAD = 0;
         ShaderProgramAsset *shaderProgram =
-            assetsGetShaderProgram(memory, ASSET_ID_SHADER_PROGRAM_QUAD);
+            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_QUAD);
         if (!shaderProgram)
             return;
 

@@ -30,7 +30,6 @@ EXPORT uint32 rendererCreateTexture(EngineMemory *memory,
     uint32 height,
     uint32 wrapMode,
     uint32 filterMode);
-EXPORT uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle);
 EXPORT void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot);
 EXPORT void rendererUpdateTexture(EngineMemory *memory,
     uint32 handle,

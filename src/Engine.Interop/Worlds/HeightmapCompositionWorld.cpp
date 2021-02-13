@@ -74,10 +74,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         // the working world is where the base heightmap and brush strokes will be drawn
 
+        working.importedHeightmapTextureHandle =
+            rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
+                GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+
         // create framebuffer
         working.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
             GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-
         working.framebufferHandle =
             rendererCreateFramebuffer(ctx.memory, working.renderTextureHandle);
 
@@ -249,9 +252,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
-            // reset heightmap quad's texture back to heightmap texture resource
-            working.baseHeightmapTextureHandle =
-                ctx.renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
+            // reset heightmap quad's texture back to the imported heightmap
+            working.baseHeightmapTextureHandle = working.importedHeightmapTextureHandle;
             newState.heightmapStatus = HeightmapStatus::Committing;
         }
 
@@ -306,5 +308,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             // set heightmap quad's texture to the staging world's render target
             working.baseHeightmapTextureHandle = staging.renderTextureHandle;
         }
+    }
+
+    void HeightmapCompositionWorld::updateImportedHeightmapTexture(TextureAsset *asset)
+    {
+        rendererUpdateTexture(ctx.memory, working.importedHeightmapTextureHandle,
+            GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset->width, asset->height, asset->data);
     }
 }}}}

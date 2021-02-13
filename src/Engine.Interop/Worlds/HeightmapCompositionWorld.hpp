@@ -21,7 +21,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             uint32 renderTextureHandle;
             int framebufferHandle;
-            int baseHeightmapTextureHandle;
+            uint32 importedHeightmapTextureHandle;
+            uint32 baseHeightmapTextureHandle;
             uint32 brushQuadVertexArrayHandle;
 
             int brushQuadInstanceBufferHandle;
@@ -45,6 +46,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void initialize();
         void update(float deltaTime, const EditorState &state, EditorState &newState);
         void compositeHeightmap(const EditorState &state, EditorState &newState);
+        void updateImportedHeightmapTexture(TextureAsset *asset);
 
         uint32 getCompositedTextureHandle() const
         {

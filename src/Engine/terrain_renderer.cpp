@@ -174,13 +174,6 @@ uint32 rendererCreateTexture(EngineMemory *memory,
     return state->textureCount++;
 }
 
-uint32 rendererGetTextureId(EngineMemory *memory, uint32 handle)
-{
-    RendererState *state = getState(memory);
-    assert(handle < state->textureCount);
-    return state->textureIds[handle];
-}
-
 void rendererBindTexture(EngineMemory *memory, uint32 handle, uint8 slot)
 {
     RendererState *state = getState(memory);

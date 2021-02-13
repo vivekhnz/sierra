@@ -12,19 +12,20 @@
 #include "GameContext.hpp"
 #include "terrain_platform_win32.h"
 
-void reloadHeightmap(
-    Terrain::Engine::EngineContext *ctx, Heightfield *heightfield, const char *relativePath)
+void reloadHeightmap(Terrain::Engine::EngineContext *ctx,
+    Heightfield *heightfield,
+    uint32 textureHandle,
+    const char *relativePath)
 {
     PlatformReadFileResult result = ctx->memory->platformReadFile(
         Terrain::Engine::IO::Path::getAbsolutePath(relativePath).c_str());
     assert(result.data);
 
-    assetsLoadTexture(ctx->memory, ASSET_TEXTURE_HEIGHTMAP, &result, true);
+    assetsOnTextureLoaded(ctx->memory, ASSET_TEXTURE_HEIGHTMAP, &result, true);
     TextureAsset *asset = assetsGetTexture(ctx->memory, ASSET_TEXTURE_HEIGHTMAP);
 
-    uint32 heightmapTextureHandle = ctx->renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
-    rendererUpdateTexture(ctx->memory, heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16,
-        GL_RED, asset->width, asset->height, asset->data);
+    rendererUpdateTexture(ctx->memory, textureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+        asset->width, asset->height, asset->data);
 
     uint16 heightmapWidth = 2048;
     uint16 heightmapHeight = 2048;
@@ -92,7 +93,10 @@ int main()
         int terrainEntityId = ctx.entities.create();
         int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
             terrainEntityId, heightfield.rows, heightfield.columns, heightfield.spacing);
-        reloadHeightmap(&ctx, &heightfield, "data/heightmap.tga");
+
+        uint32 heightmapTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        reloadHeightmap(&ctx, &heightfield, heightmapTextureHandle, "data/heightmap.tga");
 
         // first person camera state
         float firstPersonCameraYaw = -1.57f;
@@ -179,7 +183,8 @@ int main()
             // load a different heightmap when H is pressed
             if (ctx.input.isNewKeyPress(0, Terrain::Engine::IO::Key::H))
             {
-                reloadHeightmap(&ctx, &heightfield, "data/heightmap2.tga");
+                reloadHeightmap(
+                    &ctx, &heightfield, heightmapTextureHandle, "data/heightmap2.tga");
             }
 
             // toggle terrain wireframe mode when Z is pressed
@@ -334,8 +339,6 @@ int main()
                 assetsGetShaderProgram(&memory, terrainShaderProgramAssetId);
             if (calcTessLevelShaderProgram && terrainShaderProgram)
             {
-                uint32 heightmapTextureHandle =
-                    ctx.renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP);
                 uint32 meshHandle = world.componentManagers.terrainRenderer.getMeshHandle(
                     terrainRendererInstanceId);
                 uint32 meshVertexBufferHandle =
@@ -391,8 +394,7 @@ int main()
                     "terrainDimensions",
                     glm::vec3(heightfield.spacing * heightfield.columns, heightfield.maxHeight,
                         heightfield.spacing * heightfield.rows));
-                rendererBindTexture(
-                    &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_HEIGHTMAP), 0);
+                rendererBindTexture(&memory, heightmapTextureHandle, 0);
                 rendererBindTexture(
                     &memory, ctx.renderer.lookupTexture(ASSET_TEXTURE_GROUND_ALBEDO), 1);
                 rendererBindTexture(
