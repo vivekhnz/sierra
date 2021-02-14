@@ -9,13 +9,8 @@
 #include "Graphics/GraphicsAssetManager.hpp"
 
 namespace Terrain { namespace Engine {
-    class World;
-
     class EXPORT EngineContext
     {
-    private:
-        std::vector<World *> worlds;
-
     public:
         EngineMemory *memory;
 
@@ -36,8 +31,6 @@ namespace Terrain { namespace Engine {
         EngineContext(AppContext &ctx, EngineMemory *memory);
 
         void initialize();
-
-        void registerWorld(World &world);
     };
 }}
 

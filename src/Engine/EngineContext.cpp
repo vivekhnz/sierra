@@ -1,7 +1,5 @@
 #include "EngineContext.hpp"
 
-#include "World.hpp"
-
 namespace Terrain { namespace Engine {
     EngineContext::EngineContext(AppContext &ctx, EngineMemory *memory) :
         memory(memory), input(ctx), renderer(memory), assets(renderer)
@@ -24,10 +22,5 @@ namespace Terrain { namespace Engine {
     void EngineContext::initialize()
     {
         renderer.initialize();
-    }
-
-    void EngineContext::registerWorld(World &world)
-    {
-        worlds.push_back(&world);
     }
 }}
