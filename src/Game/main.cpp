@@ -68,7 +68,6 @@ int main()
         ctx.input.addInputController();
 
         Terrain::Engine::World world(ctx);
-        ctx.resources.loadResources();
 
 // create terrain
 #define HEIGHTFIELD_ROWS 256

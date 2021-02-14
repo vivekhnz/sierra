@@ -68,8 +68,6 @@ EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
 EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId);
 EXPORT void assetsInvalidateShader(EngineMemory *memory, uint32 assetId);
 
-EXPORT void assetsOnTextureLoaded(
-    EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result, bool is16Bit);
 EXPORT void assetsLoadTexture(EngineMemory *memory,
     PlatformReadFileResult *result,
     bool is16Bit,

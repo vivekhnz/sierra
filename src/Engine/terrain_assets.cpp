@@ -24,6 +24,11 @@ struct ShaderInfo
     uint32 type;
     const char *relativePath;
 };
+struct TextureInfo
+{
+    const char *relativePath;
+    bool is16Bit;
+};
 
 struct AssetsState
 {
@@ -138,7 +143,65 @@ void getShaderProgramShaders(
     }
 }
 
-void onShaderLoaded(EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result)
+TextureInfo getTextureInfo(uint32 assetId)
+{
+    assert(assetId < ASSET_TEXTURE_COUNT);
+    TextureInfo info = {};
+    switch (assetId)
+    {
+    case ASSET_TEXTURE_GROUND_ALBEDO:
+        info.relativePath = "data/ground_albedo.bmp";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_GROUND_NORMAL:
+        info.relativePath = "data/ground_normal.bmp";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_GROUND_DISPLACEMENT:
+        info.relativePath = "data/ground_displacement.tga";
+        info.is16Bit = true;
+        break;
+    case ASSET_TEXTURE_GROUND_AO:
+        info.relativePath = "data/ground_ao.tga";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_ROCK_ALBEDO:
+        info.relativePath = "data/rock_albedo.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_ROCK_NORMAL:
+        info.relativePath = "data/rock_normal.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_ROCK_DISPLACEMENT:
+        info.relativePath = "data/rock_displacement.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_ROCK_AO:
+        info.relativePath = "data/rock_ao.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_SNOW_ALBEDO:
+        info.relativePath = "data/snow_albedo.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_SNOW_NORMAL:
+        info.relativePath = "data/snow_normal.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_SNOW_DISPLACEMENT:
+        info.relativePath = "data/snow_displacement.jpg";
+        info.is16Bit = false;
+        break;
+    case ASSET_TEXTURE_SNOW_AO:
+        info.relativePath = "data/snow_ao.jpg";
+        info.is16Bit = false;
+        break;
+    }
+    return info;
+}
+
+PLATFORM_ASSET_LOAD_CALLBACK(onShaderLoaded)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
@@ -249,20 +312,6 @@ void assetsInvalidateShader(EngineMemory *memory, uint32 assetId)
     }
 }
 
-void assetsOnTextureLoaded(
-    EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result, bool is16Bit)
-{
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    TextureAsset *asset = &state->textureAssets[assetId];
-    assetsLoadTexture(memory, result, is16Bit, asset);
-
-    AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
-    assetInfo->data = asset;
-    assetInfo->state = ASSET_LOAD_STATE_LOADED;
-}
-
 EXPORT void assetsLoadTexture(EngineMemory *memory,
     PlatformReadFileResult *result,
     bool is16Bit,
@@ -305,6 +354,21 @@ EXPORT void assetsLoadTexture(EngineMemory *memory,
     stbi_image_free(data);
 }
 
+PLATFORM_ASSET_LOAD_CALLBACK(onTextureLoaded)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    TextureInfo textureInfo = getTextureInfo(assetId);
+
+    TextureAsset *asset = &state->textureAssets[assetId];
+    assetsLoadTexture(memory, result, textureInfo.is16Bit, asset);
+
+    AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
+    assetInfo->data = asset;
+    assetInfo->state = ASSET_LOAD_STATE_LOADED;
+}
+
 TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
 {
     assert(assetId < ASSET_TEXTURE_COUNT);
@@ -312,7 +376,20 @@ TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
     AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
-    assert(assetInfo->state == ASSET_LOAD_STATE_LOADED);
+    if (assetInfo->state != ASSET_LOAD_STATE_LOADED)
+    {
+        if (assetInfo->state != ASSET_LOAD_STATE_QUEUED)
+        {
+            TextureInfo textureInfo = getTextureInfo(assetId);
+            if (memory->platformLoadAsset(
+                    memory, assetId, textureInfo.relativePath, onTextureLoaded))
+            {
+                _InterlockedCompareExchange((long *)&assetInfo->state, ASSET_LOAD_STATE_QUEUED,
+                    ASSET_LOAD_STATE_UNLOADED);
+            }
+        }
+        return 0;
+    }
 
     return static_cast<TextureAsset *>(assetInfo->data);
 }

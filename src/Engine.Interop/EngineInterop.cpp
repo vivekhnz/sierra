@@ -4,6 +4,7 @@
 #include <msclr\lock.h>
 #include <msclr\marshal_cppstd.h>
 #include "terrain_platform_editor_win32.h"
+#include "../Engine/terrain_assets.h"
 
 using namespace System;
 using namespace System::Windows;
@@ -89,8 +90,6 @@ namespace Terrain { namespace Engine { namespace Interop {
              */
             vctx->makePrimary();
             ctx->initialize();
-
-            ctx->resources.loadResources();
             worlds->initialize();
 
             areWorldsInitialized = true;

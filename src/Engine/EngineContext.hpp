@@ -4,7 +4,6 @@
 #include "Common.hpp"
 #include "AppContext.hpp"
 #include "EntityManager.hpp"
-#include "Resources/ResourceManager.hpp"
 #include "IO/InputManager.hpp"
 #include "Graphics/Renderer.hpp"
 #include "Graphics/GraphicsAssetManager.hpp"
@@ -21,7 +20,6 @@ namespace Terrain { namespace Engine {
         EngineMemory *memory;
 
         EntityManager entities;
-        Resources::ResourceManager resources;
         IO::InputManager input;
 
         Graphics::Renderer renderer;

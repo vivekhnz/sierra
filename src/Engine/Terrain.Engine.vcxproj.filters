@@ -22,9 +22,6 @@
     <ClCompile Include="Graphics\GraphicsAssetManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Resources\ResourceManager.cpp">
-      <Filter>Resources</Filter>
-    </ClCompile>
     <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="..\..\deps\glad\glad.c">
       <Filter>deps</Filter>
@@ -64,12 +61,6 @@
     <ClInclude Include="Graphics\GraphicsAssetManager.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="Resources\ResourceManager.hpp">
-      <Filter>Resources</Filter>
-    </ClInclude>
-    <ClInclude Include="Resources\TextureLoader.hpp">
-      <Filter>Resources</Filter>
-    </ClInclude>
     <ClInclude Include="Graphics\VertexBufferDescription.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
@@ -97,9 +88,6 @@
     </Filter>
     <Filter Include="IO">
       <UniqueIdentifier>{f0a2bf12-335e-45b1-b986-ceed0af6ddcb}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Resources">
-      <UniqueIdentifier>{76f65739-beb1-409c-95d9-71898ce0e7ed}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>

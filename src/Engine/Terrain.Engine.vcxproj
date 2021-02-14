@@ -23,7 +23,6 @@
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
-    <ClCompile Include="Resources\ResourceManager.cpp" />
     <ClCompile Include="TerrainRendererComponentManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
     <ClCompile Include="terrain_heightfield.cpp" />
@@ -47,8 +46,6 @@
     <ClInclude Include="IO\MouseCaptureMode.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp" />
     <ClInclude Include="IO\Path.hpp" />
-    <ClInclude Include="Resources\ResourceManager.hpp" />
-    <ClInclude Include="Resources\TextureLoader.hpp" />
     <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_heightfield.h" />

@@ -38,8 +38,9 @@ struct PlatformReadFileResult
 
 struct EngineMemory;
 
-typedef void PlatformAssetLoadCallback(
-    EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result);
+#define PLATFORM_ASSET_LOAD_CALLBACK(name)                                                    \
+    void name(EngineMemory *memory, uint32 assetId, PlatformReadFileResult *result)
+typedef PLATFORM_ASSET_LOAD_CALLBACK(PlatformAssetLoadCallback);
 
 #define PLATFORM_FREE_MEMORY(name) void name(void *data)
 typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
