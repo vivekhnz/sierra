@@ -97,79 +97,43 @@ int main()
             GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         reloadHeightmap(&ctx, &heightfield, heightmapTextureHandle, "data/heightmap.tga");
 
-        TextureAsset *asset;
-
         uint32 groundAlbedoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_ALBEDO);
-        rendererUpdateTexture(&memory, groundAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, asset->width, asset->height, asset->data);
-
         uint32 groundNormalTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_NORMAL);
-        rendererUpdateTexture(&memory, groundNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, asset->data);
-
         uint32 groundDisplacementTextureHandle = rendererCreateTexture(&memory,
             GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
-        rendererUpdateTexture(&memory, groundDisplacementTextureHandle, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, 2048, 2048, asset->data);
-
         uint32 groundAoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE, GL_R8,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_AO);
-        rendererUpdateTexture(&memory, groundAoTextureHandle, GL_UNSIGNED_BYTE, GL_R8, GL_RED,
-            2048, 2048, asset->data);
-
         uint32 rockAlbedoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_ALBEDO);
-        rendererUpdateTexture(&memory, rockAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, asset->data);
-
         uint32 rockNormalTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_NORMAL);
-        rendererUpdateTexture(&memory, rockNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, asset->data);
-
         uint32 rockDisplacementTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
-        rendererUpdateTexture(&memory, rockDisplacementTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RED, 2048, 2048, asset->data);
-
         uint32 rockAoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE, GL_RGB,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_AO);
-        rendererUpdateTexture(&memory, rockAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB, GL_RED,
-            2048, 2048, asset->data);
-
         uint32 snowAlbedoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_ALBEDO);
-        rendererUpdateTexture(&memory, snowAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, asset->data);
-
         uint32 snowNormalTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_NORMAL);
-        rendererUpdateTexture(&memory, snowNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, asset->data);
-
         uint32 snowDisplacementTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
-        rendererUpdateTexture(&memory, snowDisplacementTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RED, 2048, 2048, asset->data);
-
         uint32 snowAoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE, GL_RGB,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_AO);
-        rendererUpdateTexture(&memory, snowAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB, GL_RED,
-            2048, 2048, asset->data);
+
+        bool isGroundAlbedoTextureLoaded = false;
+        bool isGroundNormalTextureLoaded = false;
+        bool isGroundDisplacementTextureLoaded = false;
+        bool isGroundAoTextureLoaded = false;
+        bool isRockAlbedoTextureLoaded = false;
+        bool isRockNormalTextureLoaded = false;
+        bool isRockDisplacementTextureLoaded = false;
+        bool isRockAoTextureLoaded = false;
+        bool isSnowAlbedoTextureLoaded = false;
+        bool isSnowNormalTextureLoaded = false;
+        bool isSnowDisplacementTextureLoaded = false;
+        bool isSnowAoTextureLoaded = false;
 
         // first person camera state
         float firstPersonCameraYaw = -1.57f;
@@ -400,6 +364,92 @@ int main()
             rendererUpdateCameraState(&memory, &cameraTransform);
             rendererSetViewportSize(vctx.viewportWidth, vctx.viewportHeight);
             rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
+
+            TextureAsset *asset;
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_ALBEDO);
+            if (asset && !isGroundAlbedoTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, groundAlbedoTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RGB, asset->width, asset->height, asset->data);
+                isGroundAlbedoTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_NORMAL);
+            if (asset && !isGroundNormalTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, groundNormalTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RGB, 2048, 2048, asset->data);
+                isGroundNormalTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
+            if (asset && !isGroundDisplacementTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, groundDisplacementTextureHandle,
+                    GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, asset->data);
+                isGroundDisplacementTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_AO);
+            if (asset && !isGroundAoTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, groundAoTextureHandle, GL_UNSIGNED_BYTE, GL_R8,
+                    GL_RED, 2048, 2048, asset->data);
+                isGroundAoTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_ALBEDO);
+            if (asset && !isRockAlbedoTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, rockAlbedoTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RGB, 2048, 2048, asset->data);
+                isRockAlbedoTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_NORMAL);
+            if (asset && !isRockNormalTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, rockNormalTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RGB, 2048, 2048, asset->data);
+                isRockNormalTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
+            if (asset && !isRockDisplacementTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, rockDisplacementTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RED, 2048, 2048, asset->data);
+                isRockDisplacementTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_AO);
+            if (asset && !isRockAoTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, rockAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+                    GL_RED, 2048, 2048, asset->data);
+                isRockAoTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_ALBEDO);
+            if (asset && !isSnowAlbedoTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, snowAlbedoTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RGB, 2048, 2048, asset->data);
+                isSnowAlbedoTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_NORMAL);
+            if (asset && !isSnowNormalTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, snowNormalTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RGB, 2048, 2048, asset->data);
+                isSnowNormalTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
+            if (asset && !isSnowDisplacementTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, snowDisplacementTextureHandle, GL_UNSIGNED_BYTE,
+                    GL_RGB, GL_RED, 2048, 2048, asset->data);
+                isSnowDisplacementTextureLoaded = true;
+            }
+            asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_AO);
+            if (asset && !isSnowAoTextureLoaded)
+            {
+                rendererUpdateTexture(&memory, snowAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
+                    GL_RED, 2048, 2048, asset->data);
+                isSnowAoTextureLoaded = true;
+            }
 
             uint32 terrainShaderProgramAssetId = isWireframeMode
                 ? ASSET_SHADER_PROGRAM_TERRAIN_WIREFRAME

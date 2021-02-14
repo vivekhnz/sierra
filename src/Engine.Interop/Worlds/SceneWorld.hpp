@@ -74,6 +74,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         uint32 snowDisplacementTextureHandle;
         uint32 snowAoTextureHandle;
 
+        bool isGroundAlbedoTextureLoaded;
+        bool isGroundNormalTextureLoaded;
+        bool isGroundDisplacementTextureLoaded;
+        bool isGroundAoTextureLoaded;
+        bool isRockAlbedoTextureLoaded;
+        bool isRockNormalTextureLoaded;
+        bool isRockDisplacementTextureLoaded;
+        bool isRockAoTextureLoaded;
+        bool isSnowAlbedoTextureLoaded;
+        bool isSnowNormalTextureLoaded;
+        bool isSnowDisplacementTextureLoaded;
+        bool isSnowAoTextureLoaded;
+
         void *heightmapTextureDataTempBuffer;
 
         ViewState viewStates[MAX_SCENE_VIEWS];
