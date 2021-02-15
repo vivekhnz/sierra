@@ -121,18 +121,18 @@ int main()
         uint32 snowAoTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE, GL_RGB,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
-        bool isGroundAlbedoTextureLoaded = false;
-        bool isGroundNormalTextureLoaded = false;
-        bool isGroundDisplacementTextureLoaded = false;
-        bool isGroundAoTextureLoaded = false;
-        bool isRockAlbedoTextureLoaded = false;
-        bool isRockNormalTextureLoaded = false;
-        bool isRockDisplacementTextureLoaded = false;
-        bool isRockAoTextureLoaded = false;
-        bool isSnowAlbedoTextureLoaded = false;
-        bool isSnowNormalTextureLoaded = false;
-        bool isSnowDisplacementTextureLoaded = false;
-        bool isSnowAoTextureLoaded = false;
+        uint8 groundAlbedoTextureVersion = 0;
+        uint8 groundNormalTextureVersion = 0;
+        uint8 groundDisplacementTextureVersion = 0;
+        uint8 groundAoTextureVersion = 0;
+        uint8 rockAlbedoTextureVersion = 0;
+        uint8 rockNormalTextureVersion = 0;
+        uint8 rockDisplacementTextureVersion = 0;
+        uint8 rockAoTextureVersion = 0;
+        uint8 snowAlbedoTextureVersion = 0;
+        uint8 snowNormalTextureVersion = 0;
+        uint8 snowDisplacementTextureVersion = 0;
+        uint8 snowAoTextureVersion = 0;
 
         // first person camera state
         float firstPersonCameraYaw = -1.57f;
@@ -366,88 +366,88 @@ int main()
 
             TextureAsset *asset;
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_ALBEDO);
-            if (asset && !isGroundAlbedoTextureLoaded)
+            if (asset && asset->version > groundAlbedoTextureVersion)
             {
                 rendererUpdateTexture(&memory, groundAlbedoTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RGB, asset->width, asset->height, asset->data);
-                isGroundAlbedoTextureLoaded = true;
+                groundAlbedoTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_NORMAL);
-            if (asset && !isGroundNormalTextureLoaded)
+            if (asset && asset->version > groundNormalTextureVersion)
             {
                 rendererUpdateTexture(&memory, groundNormalTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RGB, 2048, 2048, asset->data);
-                isGroundNormalTextureLoaded = true;
+                groundNormalTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
-            if (asset && !isGroundDisplacementTextureLoaded)
+            if (asset && asset->version > groundDisplacementTextureVersion)
             {
                 rendererUpdateTexture(&memory, groundDisplacementTextureHandle,
                     GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, asset->data);
-                isGroundDisplacementTextureLoaded = true;
+                groundDisplacementTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_AO);
-            if (asset && !isGroundAoTextureLoaded)
+            if (asset && asset->version > groundAoTextureVersion)
             {
                 rendererUpdateTexture(&memory, groundAoTextureHandle, GL_UNSIGNED_BYTE, GL_R8,
                     GL_RED, 2048, 2048, asset->data);
-                isGroundAoTextureLoaded = true;
+                groundAoTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_ALBEDO);
-            if (asset && !isRockAlbedoTextureLoaded)
+            if (asset && asset->version > rockAlbedoTextureVersion)
             {
                 rendererUpdateTexture(&memory, rockAlbedoTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RGB, 2048, 2048, asset->data);
-                isRockAlbedoTextureLoaded = true;
+                rockAlbedoTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_NORMAL);
-            if (asset && !isRockNormalTextureLoaded)
+            if (asset && asset->version > rockNormalTextureVersion)
             {
                 rendererUpdateTexture(&memory, rockNormalTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RGB, 2048, 2048, asset->data);
-                isRockNormalTextureLoaded = true;
+                rockNormalTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
-            if (asset && !isRockDisplacementTextureLoaded)
+            if (asset && asset->version > rockDisplacementTextureVersion)
             {
                 rendererUpdateTexture(&memory, rockDisplacementTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RED, 2048, 2048, asset->data);
-                isRockDisplacementTextureLoaded = true;
+                rockDisplacementTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_AO);
-            if (asset && !isRockAoTextureLoaded)
+            if (asset && asset->version > rockAoTextureVersion)
             {
                 rendererUpdateTexture(&memory, rockAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
                     GL_RED, 2048, 2048, asset->data);
-                isRockAoTextureLoaded = true;
+                rockAoTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_ALBEDO);
-            if (asset && !isSnowAlbedoTextureLoaded)
+            if (asset && asset->version > snowAlbedoTextureVersion)
             {
                 rendererUpdateTexture(&memory, snowAlbedoTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RGB, 2048, 2048, asset->data);
-                isSnowAlbedoTextureLoaded = true;
+                snowAlbedoTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_NORMAL);
-            if (asset && !isSnowNormalTextureLoaded)
+            if (asset && asset->version > snowNormalTextureVersion)
             {
                 rendererUpdateTexture(&memory, snowNormalTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RGB, 2048, 2048, asset->data);
-                isSnowNormalTextureLoaded = true;
+                snowNormalTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
-            if (asset && !isSnowDisplacementTextureLoaded)
+            if (asset && asset->version > snowDisplacementTextureVersion)
             {
                 rendererUpdateTexture(&memory, snowDisplacementTextureHandle, GL_UNSIGNED_BYTE,
                     GL_RGB, GL_RED, 2048, 2048, asset->data);
-                isSnowDisplacementTextureLoaded = true;
+                snowDisplacementTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_AO);
-            if (asset && !isSnowAoTextureLoaded)
+            if (asset && asset->version > snowAoTextureVersion)
             {
                 rendererUpdateTexture(&memory, snowAoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
                     GL_RED, 2048, 2048, asset->data);
-                isSnowAoTextureLoaded = true;
+                snowAoTextureVersion = asset->version;
             }
 
             uint32 terrainShaderProgramAssetId = isWireframeMode
