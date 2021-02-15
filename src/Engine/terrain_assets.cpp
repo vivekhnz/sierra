@@ -4,6 +4,7 @@
 #include <stb/stb_image.h>
 #include "terrain_renderer.h"
 
+#define ASSET_ID_INDEX_MASK 0x0FFFFFFF
 #define MAX_SHADERS_PER_PROGRAM 8
 
 enum AssetLoadState
@@ -19,6 +20,18 @@ struct AssetInfo
     void *data;
 };
 
+struct ShaderAssetSlot
+{
+    bool isUpToDate;
+    bool isLoadQueued;
+    ShaderAsset *asset;
+};
+struct ShaderProgramAssetSlot
+{
+    ShaderProgramAsset *asset;
+    uint8 shaderVersions[MAX_SHADERS_PER_PROGRAM];
+};
+
 struct ShaderInfo
 {
     uint32 type;
@@ -32,10 +45,10 @@ struct TextureInfo
 
 struct AssetsState
 {
-    AssetInfo shaderAssetInfos[ASSET_SHADER_COUNT];
+    ShaderAssetSlot shaderAssetSlots[ASSET_SHADER_COUNT];
     ShaderAsset shaderAssets[ASSET_SHADER_COUNT];
 
-    AssetInfo shaderProgramAssetInfos[ASSET_SHADER_PROGRAM_COUNT];
+    ShaderProgramAssetSlot shaderProgramAssetSlot[ASSET_SHADER_PROGRAM_COUNT];
     ShaderProgramAsset shaderProgramAssets[ASSET_SHADER_PROGRAM_COUNT];
 
     AssetInfo textureAssetInfos[ASSET_TEXTURE_COUNT];
@@ -46,7 +59,6 @@ struct AssetsState
 
 ShaderInfo getShaderInfo(uint32 assetId)
 {
-    assert(assetId < ASSET_SHADER_COUNT);
     ShaderInfo info = {};
     switch (assetId)
     {
@@ -109,7 +121,6 @@ ShaderInfo getShaderInfo(uint32 assetId)
 void getShaderProgramShaders(
     uint32 assetId, uint32 *out_shaderCount, uint32 *out_shaderAssetIds)
 {
-    assert(assetId < ASSET_SHADER_PROGRAM_COUNT);
     switch (assetId)
     {
     case ASSET_SHADER_PROGRAM_QUAD:
@@ -145,7 +156,6 @@ void getShaderProgramShaders(
 
 TextureInfo getTextureInfo(uint32 assetId)
 {
-    assert(assetId < ASSET_TEXTURE_COUNT);
     TextureInfo info = {};
     switch (assetId)
     {
@@ -212,75 +222,88 @@ PLATFORM_ASSET_LOAD_CALLBACK(onShaderLoaded)
     uint32 handle;
     assert(rendererCreateShader(memory, shaderInfo.type, src, &handle));
 
-    ShaderAsset *asset = &state->shaderAssets[assetId];
+    uint32 assetIdx = assetId & ASSET_ID_INDEX_MASK;
+    assert(assetIdx < ASSET_SHADER_COUNT);
+
+    ShaderAsset *asset = &state->shaderAssets[assetIdx];
+    asset->version++;
     asset->handle = handle;
 
-    AssetInfo *assetInfo = &state->shaderAssetInfos[assetId];
-    assetInfo->data = asset;
-    assetInfo->state = ASSET_LOAD_STATE_LOADED;
+    ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
+    slot->asset = asset;
+    slot->isUpToDate = true;
 }
 
 ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
 {
-    assert(assetId < ASSET_SHADER_COUNT);
+    uint32 assetIdx = assetId & ASSET_ID_INDEX_MASK;
+    assert(assetIdx < ASSET_SHADER_COUNT);
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    AssetInfo *assetInfo = &state->shaderAssetInfos[assetId];
-    if (assetInfo->state != ASSET_LOAD_STATE_LOADED)
+    ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
+    if (!slot->isUpToDate && !slot->isLoadQueued)
     {
-        if (assetInfo->state != ASSET_LOAD_STATE_QUEUED)
+        ShaderInfo shaderInfo = getShaderInfo(assetId);
+        if (memory->platformLoadAsset(
+                memory, assetId, shaderInfo.relativePath, onShaderLoaded))
         {
-            ShaderInfo shaderInfo = getShaderInfo(assetId);
-            if (memory->platformLoadAsset(
-                    memory, assetId, shaderInfo.relativePath, onShaderLoaded))
-            {
-                _InterlockedCompareExchange((long *)&assetInfo->state, ASSET_LOAD_STATE_QUEUED,
-                    ASSET_LOAD_STATE_UNLOADED);
-            }
+            slot->isLoadQueued = true;
         }
-        return 0;
     }
 
-    return static_cast<ShaderAsset *>(assetInfo->data);
+    return slot->asset;
 }
 
 ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
 {
-    assert(assetId < ASSET_SHADER_PROGRAM_COUNT);
+    uint32 assetIdx = assetId & ASSET_ID_INDEX_MASK;
+    assert(assetIdx < ASSET_SHADER_PROGRAM_COUNT);
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    AssetInfo *assetInfo = &state->shaderProgramAssetInfos[assetId];
-    if (assetInfo->state != ASSET_LOAD_STATE_LOADED)
+    ShaderProgramAssetSlot *slot = &state->shaderProgramAssetSlot[assetIdx];
+
+    uint32 shaderCount;
+    uint32 shaderAssetIds[MAX_SHADERS_PER_PROGRAM];
+    getShaderProgramShaders(assetId, &shaderCount, shaderAssetIds);
+    assert(shaderCount <= MAX_SHADERS_PER_PROGRAM);
+
+    uint32 shaderHandles[MAX_SHADERS_PER_PROGRAM];
+    uint8 shaderVersions[MAX_SHADERS_PER_PROGRAM];
+    bool shouldCreateShader = false;
+    for (uint32 i = 0; i < shaderCount; i++)
     {
-        uint32 shaderCount;
-        uint32 shaderAssetIds[MAX_SHADERS_PER_PROGRAM];
-        getShaderProgramShaders(assetId, &shaderCount, shaderAssetIds);
-        assert(shaderCount <= MAX_SHADERS_PER_PROGRAM);
-
-        uint32 shaderHandles[MAX_SHADERS_PER_PROGRAM];
-        for (uint32 i = 0; i < shaderCount; i++)
+        ShaderAsset *shader = assetsGetShader(memory, shaderAssetIds[i]);
+        if (!shader)
         {
-            ShaderAsset *shader = assetsGetShader(memory, shaderAssetIds[i]);
-            if (!shader)
-            {
-                return static_cast<ShaderProgramAsset *>(assetInfo->data);
-            }
-            shaderHandles[i] = shader->handle;
+            shouldCreateShader = false;
+            break;
         }
+        if (shader && shader->version > slot->shaderVersions[i])
+        {
+            shouldCreateShader = true;
+        }
+        shaderHandles[i] = shader->handle;
+        shaderVersions[i] = shader->version;
+    }
 
+    if (shouldCreateShader)
+    {
         uint32 handle;
         assert(rendererCreateShaderProgram(memory, shaderCount, shaderHandles, &handle));
 
-        ShaderProgramAsset *asset = &state->shaderProgramAssets[assetId];
+        ShaderProgramAsset *asset = &state->shaderProgramAssets[assetIdx];
         asset->handle = handle;
 
-        assetInfo->data = asset;
-        assetInfo->state = ASSET_LOAD_STATE_LOADED;
+        slot->asset = asset;
+        for (uint32 i = 0; i < shaderCount; i++)
+        {
+            slot->shaderVersions[i] = shaderVersions[i];
+        }
     }
 
-    return static_cast<ShaderProgramAsset *>(assetInfo->data);
+    return slot->asset;
 }
 
 void assetsInvalidateShader(EngineMemory *memory, uint32 assetId)
@@ -288,28 +311,12 @@ void assetsInvalidateShader(EngineMemory *memory, uint32 assetId)
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    state->shaderAssetInfos[assetId].state = ASSET_LOAD_STATE_UNLOADED;
-    for (int i = 0; i < ASSET_SHADER_PROGRAM_COUNT; i++)
-    {
-        uint32 shaderCount;
-        uint32 shaderAssetIds[MAX_SHADERS_PER_PROGRAM];
-        getShaderProgramShaders(i, &shaderCount, shaderAssetIds);
+    uint32 assetIdx = assetId & ASSET_ID_INDEX_MASK;
+    assert(assetIdx < ASSET_SHADER_COUNT);
 
-        bool isDependentOfInvalidatedShader = false;
-        for (int j = 0; j < shaderCount; j++)
-        {
-            if (shaderAssetIds[j] == assetId)
-            {
-                isDependentOfInvalidatedShader = true;
-                break;
-            }
-        }
-
-        if (isDependentOfInvalidatedShader)
-        {
-            state->shaderProgramAssetInfos[i].state = ASSET_LOAD_STATE_UNLOADED;
-        }
-    }
+    ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
+    slot->isUpToDate = false;
+    slot->isLoadQueued = false;
 }
 
 EXPORT void assetsLoadTexture(EngineMemory *memory,
@@ -359,23 +366,28 @@ PLATFORM_ASSET_LOAD_CALLBACK(onTextureLoaded)
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
+    uint32 assetIdx = assetId & ASSET_ID_INDEX_MASK;
+    assert(assetIdx < ASSET_TEXTURE_COUNT);
+
     TextureInfo textureInfo = getTextureInfo(assetId);
 
-    TextureAsset *asset = &state->textureAssets[assetId];
+    TextureAsset *asset = &state->textureAssets[assetIdx];
     assetsLoadTexture(memory, result, textureInfo.is16Bit, asset);
 
-    AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
+    AssetInfo *assetInfo = &state->textureAssetInfos[assetIdx];
     assetInfo->data = asset;
     assetInfo->state = ASSET_LOAD_STATE_LOADED;
 }
 
 TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
 {
-    assert(assetId < ASSET_TEXTURE_COUNT);
+    uint32 assetIdx = assetId & ASSET_ID_INDEX_MASK;
+    assert(assetIdx < ASSET_TEXTURE_COUNT);
+
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    AssetInfo *assetInfo = &state->textureAssetInfos[assetId];
+    AssetInfo *assetInfo = &state->textureAssetInfos[assetIdx];
     if (assetInfo->state != ASSET_LOAD_STATE_LOADED)
     {
         if (assetInfo->state != ASSET_LOAD_STATE_QUEUED)
