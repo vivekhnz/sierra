@@ -204,7 +204,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            assetsInvalidateShader(memory, asset->assetId);
+            assetsInvalidateAsset(memory, asset->assetId);
         }
     }
 
