@@ -61,30 +61,27 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int meshHandle;
         uint32 tessellationLevelBufferHandle;
 
-        uint32 groundAlbedoTextureHandle;
-        uint32 groundNormalTextureHandle;
+        uint32 albedoTextureArrayHandle;
+        uint32 normalTextureArrayHandle;
+
         uint32 groundDisplacementTextureHandle;
         uint32 groundAoTextureHandle;
-        uint32 rockAlbedoTextureHandle;
-        uint32 rockNormalTextureHandle;
         uint32 rockDisplacementTextureHandle;
         uint32 rockAoTextureHandle;
-        uint32 snowAlbedoTextureHandle;
-        uint32 snowNormalTextureHandle;
         uint32 snowDisplacementTextureHandle;
         uint32 snowAoTextureHandle;
 
         uint8 groundAlbedoTextureVersion;
-        uint8 groundNormalTextureVersion;
-        uint8 groundDisplacementTextureVersion;
-        uint8 groundAoTextureVersion;
         uint8 rockAlbedoTextureVersion;
-        uint8 rockNormalTextureVersion;
-        uint8 rockDisplacementTextureVersion;
-        uint8 rockAoTextureVersion;
         uint8 snowAlbedoTextureVersion;
+        uint8 groundNormalTextureVersion;
+        uint8 rockNormalTextureVersion;
         uint8 snowNormalTextureVersion;
+        uint8 groundDisplacementTextureVersion;
+        uint8 rockDisplacementTextureVersion;
         uint8 snowDisplacementTextureVersion;
+        uint8 groundAoTextureVersion;
+        uint8 rockAoTextureVersion;
         uint8 snowAoTextureVersion;
 
         void *heightmapTextureDataTempBuffer;

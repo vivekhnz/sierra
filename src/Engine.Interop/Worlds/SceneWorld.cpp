@@ -39,42 +39,35 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
             heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
 
-        groundAlbedoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        groundNormalTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        albedoTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE,
+            GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        normalTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE,
+            GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+
         groundDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
             GL_R16, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         groundAoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_R8,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        rockAlbedoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        rockNormalTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         rockDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         rockAoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        snowAlbedoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        snowNormalTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
-            GL_RGB, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         snowDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         snowAoTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB,
             GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         groundAlbedoTextureVersion = 0;
-        groundNormalTextureVersion = 0;
-        groundDisplacementTextureVersion = 0;
-        groundAoTextureVersion = 0;
         rockAlbedoTextureVersion = 0;
-        rockNormalTextureVersion = 0;
-        rockDisplacementTextureVersion = 0;
-        rockAoTextureVersion = 0;
         snowAlbedoTextureVersion = 0;
+        groundNormalTextureVersion = 0;
+        rockNormalTextureVersion = 0;
         snowNormalTextureVersion = 0;
+        groundDisplacementTextureVersion = 0;
+        rockDisplacementTextureVersion = 0;
         snowDisplacementTextureVersion = 0;
+        groundAoTextureVersion = 0;
+        rockAoTextureVersion = 0;
         snowAoTextureVersion = 0;
     }
 
@@ -414,15 +407,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_ALBEDO);
         if (asset && asset->version > groundAlbedoTextureVersion)
         {
-            rendererUpdateTexture(memory, groundAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                GL_RGB, asset->width, asset->height, asset->data);
+            rendererUpdateTextureArray(memory, albedoTextureArrayHandle, GL_UNSIGNED_BYTE,
+                GL_RGB, asset->width, asset->height, 0, asset->data);
             groundAlbedoTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_NORMAL);
         if (asset && asset->version > groundNormalTextureVersion)
         {
-            rendererUpdateTexture(memory, groundNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                GL_RGB, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, normalTextureArrayHandle, GL_UNSIGNED_BYTE,
+                GL_RGB, asset->width, asset->height, 0, asset->data);
             groundNormalTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
@@ -442,15 +435,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_ALBEDO);
         if (asset && asset->version > rockAlbedoTextureVersion)
         {
-            rendererUpdateTexture(memory, rockAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                GL_RGB, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, albedoTextureArrayHandle, GL_UNSIGNED_BYTE,
+                GL_RGB, asset->width, asset->height, 1, asset->data);
             rockAlbedoTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_NORMAL);
         if (asset && asset->version > rockNormalTextureVersion)
         {
-            rendererUpdateTexture(memory, rockNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                GL_RGB, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, normalTextureArrayHandle, GL_UNSIGNED_BYTE,
+                GL_RGB, asset->width, asset->height, 1, asset->data);
             rockNormalTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
@@ -470,15 +463,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_ALBEDO);
         if (asset && asset->version > snowAlbedoTextureVersion)
         {
-            rendererUpdateTexture(memory, snowAlbedoTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                GL_RGB, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, albedoTextureArrayHandle, GL_UNSIGNED_BYTE,
+                GL_RGB, asset->width, asset->height, 2, asset->data);
             snowAlbedoTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_NORMAL);
         if (asset && asset->version > snowNormalTextureVersion)
         {
-            rendererUpdateTexture(memory, snowNormalTextureHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                GL_RGB, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, normalTextureArrayHandle, GL_UNSIGNED_BYTE,
+                GL_RGB, asset->width, asset->height, 2, asset->data);
             snowNormalTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
@@ -540,16 +533,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         rendererBindTexture(memory, heightmapTextureHandle, 0);
-        rendererBindTexture(memory, groundAlbedoTextureHandle, 1);
-        rendererBindTexture(memory, groundNormalTextureHandle, 2);
+        rendererBindTextureArray(memory, albedoTextureArrayHandle, 1);
+        rendererBindTextureArray(memory, normalTextureArrayHandle, 2);
         rendererBindTexture(memory, groundDisplacementTextureHandle, 3);
         rendererBindTexture(memory, groundAoTextureHandle, 4);
-        rendererBindTexture(memory, rockAlbedoTextureHandle, 5);
-        rendererBindTexture(memory, rockNormalTextureHandle, 6);
         rendererBindTexture(memory, rockDisplacementTextureHandle, 7);
         rendererBindTexture(memory, rockAoTextureHandle, 8);
-        rendererBindTexture(memory, snowAlbedoTextureHandle, 9);
-        rendererBindTexture(memory, snowNormalTextureHandle, 10);
         rendererBindTexture(memory, snowDisplacementTextureHandle, 11);
         rendererBindTexture(memory, snowAoTextureHandle, 12);
 

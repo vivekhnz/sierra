@@ -218,6 +218,63 @@ void rendererReadTexturePixels(EngineMemory *memory,
     glGetTexImage(GL_TEXTURE_2D, 0, gpuFormat, elementType, out_pixels);
 }
 
+uint32 rendererCreateTextureArray(EngineMemory *memory,
+    uint32 elementType,
+    uint32 cpuFormat,
+    uint32 gpuFormat,
+    uint32 width,
+    uint32 height,
+    uint32 layers,
+    uint32 wrapMode,
+    uint32 filterMode)
+{
+    RendererState *state = getState(memory);
+    assert(state->textureCount < RENDERER_MAX_TEXTURES);
+
+    uint32 *id = state->textureIds + state->textureCount;
+    glGenTextures(1, id);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, *id);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, wrapMode);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, wrapMode);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, filterMode);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, filterMode);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, cpuFormat, width, height, layers, 0, gpuFormat,
+        elementType, 0);
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+    return state->textureCount++;
+}
+
+void rendererBindTextureArray(EngineMemory *memory, uint32 handle, uint8 slot)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->textureCount);
+    uint32 id = state->textureIds[handle];
+
+    glActiveTexture(GL_TEXTURE0 + slot);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
+}
+
+void rendererUpdateTextureArray(EngineMemory *memory,
+    uint32 handle,
+    uint32 elementType,
+    uint32 gpuFormat,
+    uint32 width,
+    uint32 height,
+    uint32 layer,
+    void *pixels)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->textureCount);
+    uint32 id = state->textureIds[handle];
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
+    glTexSubImage3D(
+        GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+}
+
 uint32 rendererCreateFramebuffer(EngineMemory *memory, uint32 textureHandle)
 {
     RendererState *state = getState(memory);
@@ -280,6 +337,7 @@ bool rendererCreateShader(EngineMemory *memory, uint32 type, char *src, uint32 *
         glGetShaderInfoLog(id, 512, NULL, infoLog);
         // todo: log out error
 
+        assert(0);
         return 0;
     }
 }

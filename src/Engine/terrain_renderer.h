@@ -45,6 +45,25 @@ EXPORT void rendererReadTexturePixels(EngineMemory *memory,
     uint32 gpuFormat,
     void *out_pixels);
 
+EXPORT uint32 rendererCreateTextureArray(EngineMemory *memory,
+    uint32 elementType,
+    uint32 cpuFormat,
+    uint32 gpuFormat,
+    uint32 width,
+    uint32 height,
+    uint32 layers,
+    uint32 wrapMode,
+    uint32 filterMode);
+EXPORT void rendererBindTextureArray(EngineMemory *memory, uint32 handle, uint8 slot);
+EXPORT void rendererUpdateTextureArray(EngineMemory *memory,
+    uint32 handle,
+    uint32 elementType,
+    uint32 gpuFormat,
+    uint32 width,
+    uint32 height,
+    uint32 layer,
+    void *pixels);
+
 EXPORT uint32 rendererCreateFramebuffer(EngineMemory *memory, uint32 textureHandle);
 EXPORT void rendererBindFramebuffer(EngineMemory *memory, uint32 handle);
 EXPORT void rendererUnbindFramebuffer(EngineMemory *memory, uint32 handle);
