@@ -9,10 +9,10 @@ float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
     return (l1 * a.y) + (l2 * b.y) + (l3 * c.y);
 }
 
-float getTerrainPatchHeight(Heightfield *heightfield, uint32 x, uint32 z)
+float getTerrainPatchHeight(Heightfield *heightfield, int32 x, int32 z)
 {
-    uint32 clampedX = glm::clamp(x, (uint32)0, heightfield->columns - 1);
-    uint32 clampedZ = glm::clamp(z, (uint32)0, heightfield->rows - 1);
+    uint32 clampedX = (uint32)glm::clamp(x, 0, (int32)heightfield->columns - 1);
+    uint32 clampedZ = (uint32)glm::clamp(z, 0, (int32)heightfield->rows - 1);
     uint32 i = (clampedZ * heightfield->columns) + clampedX;
     return heightfield->heights[i];
 }
@@ -23,8 +23,8 @@ float heightfieldGetHeight(Heightfield *heightfield, float worldX, float worldZ)
     float relativeZ = worldZ - heightfield->position.y;
     float normalizedX = relativeX / heightfield->spacing;
     float normalizedZ = relativeZ / heightfield->spacing;
-    uint32 patchX = (uint32)floor(normalizedX);
-    uint32 patchZ = (uint32)floor(normalizedZ);
+    int32 patchX = (int32)floor(normalizedX);
+    int32 patchZ = (int32)floor(normalizedZ);
     float deltaX = normalizedX - patchX;
     float deltaZ = normalizedZ - patchZ;
 
