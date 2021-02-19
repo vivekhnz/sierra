@@ -179,8 +179,8 @@ TextureInfo getTextureInfo(uint32 assetId)
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_ROCK_DISPLACEMENT:
-        info.relativePath = "data/rock_displacement.jpg";
-        info.is16Bit = false;
+        info.relativePath = "data/rock_displacement.tga";
+        info.is16Bit = true;
         break;
     case ASSET_TEXTURE_ROCK_AO:
         info.relativePath = "data/rock_ao.tga";
@@ -195,8 +195,8 @@ TextureInfo getTextureInfo(uint32 assetId)
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_SNOW_DISPLACEMENT:
-        info.relativePath = "data/snow_displacement.jpg";
-        info.is16Bit = false;
+        info.relativePath = "data/snow_displacement.tga";
+        info.is16Bit = true;
         break;
     case ASSET_TEXTURE_SNOW_AO:
         info.relativePath = "data/snow_ao.tga";

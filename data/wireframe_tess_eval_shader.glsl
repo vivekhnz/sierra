@@ -19,7 +19,7 @@ layout (std140, binding = 1) uniform Lighting
 };
 
 layout(binding = 0) uniform sampler2D heightmapTexture;
-layout(binding = 3) uniform sampler2D mat1_displacement;
+layout(binding = 3) uniform sampler2DArray displacementTextures;
 uniform vec3 terrainDimensions;
 uniform vec2 mat1_textureSizeInWorldUnits;
 
@@ -35,16 +35,18 @@ float lerp1D(float a, float b, float c, float d)
 {
     return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
 }
-float textureCLod(sampler2D texture, vec2 uv, float mip)
+float getDisplacement(vec2 uv, int layerIdx, float mip)
 {
+    vec3 uvLayered = vec3(uv, layerIdx);
+
     return mix(
-        textureLod(texture, uv, floor(mip)).x,
-        textureLod(texture, uv, ceil(mip)).x,
+        textureLod(displacementTextures, uvLayered, floor(mip)).x,
+        textureLod(displacementTextures, uvLayered, ceil(mip)).x,
         fract(mip));
 }
 float height(vec2 uv)
 {
-    return textureCLod(heightmapTexture, uv, 2.0f);
+    return textureLod(heightmapTexture, uv, 2.0f).x;
 }
 
 void main()
@@ -65,7 +67,7 @@ void main()
     {
         float scaledMip = log2(terrainDimensions.x / mat1_textureSizeInWorldUnits.x);
         float displacement =
-            ((textureCLod(mat1_displacement, texcoord, scaledMip) * 2.0f) - 1.0f);
+            ((getDisplacement(texcoord, 0, scaledMip) * 2.0f) - 1.0f);
         pos += normal * displacement * 0.1f;
     }
     

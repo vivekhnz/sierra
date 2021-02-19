@@ -20,17 +20,13 @@ uniform float brushHighlightFalloff;
 
 layout(binding = 1) uniform sampler2DArray albedoTextures;
 layout(binding = 2) uniform sampler2DArray normalTextures;
-layout(binding = 3) uniform sampler2D mat1_displacement;
+layout(binding = 3) uniform sampler2DArray displacementTextures;
 layout(binding = 4) uniform sampler2DArray aoTextures;
 uniform vec2 mat1_textureSizeInWorldUnits;
 
-layout(binding = 6) uniform sampler2D mat2_normal;
-layout(binding = 7) uniform sampler2D mat2_displacement;
 uniform vec2 mat2_textureSizeInWorldUnits;
 uniform vec4 mat2_rampParams;
 
-layout(binding = 10) uniform sampler2D mat3_normal;
-layout(binding = 11) uniform sampler2D mat3_displacement;
 uniform vec2 mat3_textureSizeInWorldUnits;
 uniform vec4 mat3_rampParams;
 
@@ -172,13 +168,13 @@ void main()
     // calculate displacement of each material
     float materialDisplacements[3];
     materialDisplacements[0] = triplanar1D(
-        0, texture(mat1_displacement, materialTexcoords[0].y).r * triAxisSign.y, 0,
+        0, texture(displacementTextures, vec3(materialTexcoords[0].y, 0)).r * triAxisSign.y, 0,
         triBlend);
     materialDisplacements[1] = triplanar1D(
-        0, texture(mat2_displacement, materialTexcoords[1].y).r * triAxisSign.y, 0,
+        0, texture(displacementTextures, vec3(materialTexcoords[1].y, 1)).r * triAxisSign.y, 0,
         triBlend);
     materialDisplacements[2] = triplanar1D(
-        0, texture(mat3_displacement, materialTexcoords[2].y).r * triAxisSign.y, 0,
+        0, texture(displacementTextures, vec3(materialTexcoords[2].y, 2)).r * triAxisSign.y, 0,
         triBlend);
 
     // blend materials based on slope, altitude and height

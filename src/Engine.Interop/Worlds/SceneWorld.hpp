@@ -63,11 +63,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         uint32 albedoTextureArrayHandle;
         uint32 normalTextureArrayHandle;
+        uint32 displacementTextureArrayHandle;
         uint32 aoTextureArrayHandle;
-
-        uint32 groundDisplacementTextureHandle;
-        uint32 rockDisplacementTextureHandle;
-        uint32 snowDisplacementTextureHandle;
 
         uint8 groundAlbedoTextureVersion;
         uint8 rockAlbedoTextureVersion;

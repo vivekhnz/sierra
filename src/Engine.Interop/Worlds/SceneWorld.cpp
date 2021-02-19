@@ -43,15 +43,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         normalTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        displacementTextureArrayHandle =
+            rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048,
+                2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         aoTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_R8,
             GL_RED, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-
-        groundDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        rockDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        snowDisplacementTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         groundAlbedoTextureVersion = 0;
         rockAlbedoTextureVersion = 0;
@@ -417,8 +413,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
         if (asset && asset->version > groundDisplacementTextureVersion)
         {
-            rendererUpdateTexture(memory, groundDisplacementTextureHandle, GL_UNSIGNED_SHORT,
-                GL_R16, GL_RED, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
+                GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 0, asset->data);
             groundDisplacementTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_AO);
@@ -445,8 +441,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
         if (asset && asset->version > rockDisplacementTextureVersion)
         {
-            rendererUpdateTexture(memory, rockDisplacementTextureHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, GL_RED, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
+                GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 1, asset->data);
             rockDisplacementTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_AO);
@@ -473,8 +469,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
         if (asset && asset->version > snowDisplacementTextureVersion)
         {
-            rendererUpdateTexture(memory, snowDisplacementTextureHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, GL_RED, 2048, 2048, asset->data);
+            rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
+                GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 2, asset->data);
             snowDisplacementTextureVersion = asset->version;
         }
         asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_AO);
@@ -531,10 +527,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindTexture(memory, heightmapTextureHandle, 0);
         rendererBindTextureArray(memory, albedoTextureArrayHandle, 1);
         rendererBindTextureArray(memory, normalTextureArrayHandle, 2);
+        rendererBindTextureArray(memory, displacementTextureArrayHandle, 3);
         rendererBindTextureArray(memory, aoTextureArrayHandle, 4);
-        rendererBindTexture(memory, groundDisplacementTextureHandle, 3);
-        rendererBindTexture(memory, rockDisplacementTextureHandle, 7);
-        rendererBindTexture(memory, snowDisplacementTextureHandle, 11);
 
         // bind mesh data
         int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);

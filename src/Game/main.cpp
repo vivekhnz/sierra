@@ -97,18 +97,14 @@ int main()
         reloadHeightmap(&ctx, &heightfield, heightmapTextureHandle, "data/heightmap.tga");
 
         uint32 albedoTextureArrayHandle = rendererCreateTextureArray(&memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+            GL_RGBA, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         uint32 normalTextureArrayHandle = rendererCreateTextureArray(&memory, GL_UNSIGNED_BYTE,
             GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        uint32 displacementTextureArrayHandle =
+            rendererCreateTextureArray(&memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
+                3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         uint32 aoTextureArrayHandle = rendererCreateTextureArray(&memory, GL_UNSIGNED_BYTE,
             GL_R8, GL_RED, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-
-        uint32 groundDisplacementTextureHandle = rendererCreateTexture(&memory,
-            GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        uint32 rockDisplacementTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        uint32 snowDisplacementTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RED, 2048, 2048, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         uint8 groundAlbedoTextureVersion = 0;
         uint8 rockAlbedoTextureVersion = 0;
@@ -371,8 +367,8 @@ int main()
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
             if (asset && asset->version > groundDisplacementTextureVersion)
             {
-                rendererUpdateTexture(&memory, groundDisplacementTextureHandle,
-                    GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, asset->data);
+                rendererUpdateTextureArray(&memory, displacementTextureArrayHandle,
+                    GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 0, asset->data);
                 groundDisplacementTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_GROUND_AO);
@@ -399,8 +395,8 @@ int main()
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
             if (asset && asset->version > rockDisplacementTextureVersion)
             {
-                rendererUpdateTexture(&memory, rockDisplacementTextureHandle, GL_UNSIGNED_BYTE,
-                    GL_RGB, GL_RED, 2048, 2048, asset->data);
+                rendererUpdateTextureArray(&memory, displacementTextureArrayHandle,
+                    GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 1, asset->data);
                 rockDisplacementTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_ROCK_AO);
@@ -427,8 +423,8 @@ int main()
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
             if (asset && asset->version > snowDisplacementTextureVersion)
             {
-                rendererUpdateTexture(&memory, snowDisplacementTextureHandle, GL_UNSIGNED_BYTE,
-                    GL_RGB, GL_RED, 2048, 2048, asset->data);
+                rendererUpdateTextureArray(&memory, displacementTextureArrayHandle,
+                    GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 2, asset->data);
                 snowDisplacementTextureVersion = asset->version;
             }
             asset = assetsGetTexture(&memory, ASSET_TEXTURE_SNOW_AO);
@@ -508,10 +504,8 @@ int main()
                 rendererBindTexture(&memory, heightmapTextureHandle, 0);
                 rendererBindTextureArray(&memory, albedoTextureArrayHandle, 1);
                 rendererBindTextureArray(&memory, normalTextureArrayHandle, 2);
+                rendererBindTextureArray(&memory, displacementTextureArrayHandle, 3);
                 rendererBindTextureArray(&memory, aoTextureArrayHandle, 4);
-                rendererBindTexture(&memory, groundDisplacementTextureHandle, 3);
-                rendererBindTexture(&memory, rockDisplacementTextureHandle, 7);
-                rendererBindTexture(&memory, snowDisplacementTextureHandle, 11);
                 rendererBindVertexArray(&memory, meshVertexArrayHandle);
                 rendererDrawElementsInstanced(primitiveType, elementCount, 1);
             }
