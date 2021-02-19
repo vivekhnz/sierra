@@ -183,7 +183,7 @@ TextureInfo getTextureInfo(uint32 assetId)
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_ROCK_AO:
-        info.relativePath = "data/rock_ao.jpg";
+        info.relativePath = "data/rock_ao.tga";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_SNOW_ALBEDO:
@@ -199,7 +199,7 @@ TextureInfo getTextureInfo(uint32 assetId)
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_SNOW_AO:
-        info.relativePath = "data/snow_ao.jpg";
+        info.relativePath = "data/snow_ao.tga";
         info.is16Bit = false;
         break;
     }

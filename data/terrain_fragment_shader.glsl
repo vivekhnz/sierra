@@ -20,18 +20,16 @@ uniform float brushHighlightFalloff;
 
 layout(binding = 1) uniform sampler2DArray albedoTextures;
 layout(binding = 2) uniform sampler2DArray normalTextures;
-layout(binding = 4) uniform sampler2D mat1_ao;
 layout(binding = 3) uniform sampler2D mat1_displacement;
+layout(binding = 4) uniform sampler2DArray aoTextures;
 uniform vec2 mat1_textureSizeInWorldUnits;
 
 layout(binding = 6) uniform sampler2D mat2_normal;
-layout(binding = 8) uniform sampler2D mat2_ao;
 layout(binding = 7) uniform sampler2D mat2_displacement;
 uniform vec2 mat2_textureSizeInWorldUnits;
 uniform vec4 mat2_rampParams;
 
 layout(binding = 10) uniform sampler2D mat3_normal;
-layout(binding = 12) uniform sampler2D mat3_ao;
 layout(binding = 11) uniform sampler2D mat3_displacement;
 uniform vec2 mat3_textureSizeInWorldUnits;
 uniform vec4 mat3_rampParams;
@@ -103,7 +101,6 @@ float calcMaterialBlend(float slope, float altitude, vec4 ramp, float lowerMatDi
 
 MaterialData blendMaterial(MaterialData material, float matBlendAmt,
     vec2 texcoord_x, vec2 texcoord_y, vec2 texcoord_z, vec3 triBlend, vec3 triAxisSign,
-    sampler2DArray albedoTex, sampler2DArray normalTex, sampler2D aoTex,
     int layerIndex)
 {
     vec3 texcoord_x_layered = vec3(texcoord_x, layerIndex);
@@ -113,27 +110,27 @@ MaterialData blendMaterial(MaterialData material, float matBlendAmt,
     if (lighting_isTextureEnabled)
     {
         vec3 mat_albedo = triplanar3D(
-            texture(albedoTex, texcoord_x_layered).rgb,
-            texture(albedoTex, texcoord_y_layered).rgb,
-            texture(albedoTex, texcoord_z_layered).rgb,
+            texture(albedoTextures, texcoord_x_layered).rgb,
+            texture(albedoTextures, texcoord_y_layered).rgb,
+            texture(albedoTextures, texcoord_z_layered).rgb,
             triBlend);
         material.albedo = mix(material.albedo, mat_albedo, matBlendAmt);
     }
     if (lighting_isNormalMapEnabled)
     {
         vec3 mat_normal = triplanar3D(
-            ((texture(normalTex, texcoord_x_layered).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
-            ((texture(normalTex, texcoord_y_layered).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
-            ((texture(normalTex, texcoord_z_layered).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
+            ((texture(normalTextures, texcoord_x_layered).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
+            ((texture(normalTextures, texcoord_y_layered).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
+            ((texture(normalTextures, texcoord_z_layered).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
             triBlend);
         material.normal = mix(material.normal, mat_normal, matBlendAmt);
     }
     if (lighting_isAOMapEnabled)
     {
         float mat_ao = triplanar1D(
-            texture(aoTex, texcoord_x).r,
-            texture(aoTex, texcoord_y).r,
-            texture(aoTex, texcoord_z).r,
+            texture(aoTextures, texcoord_x_layered).r,
+            texture(aoTextures, texcoord_y_layered).r,
+            texture(aoTextures, texcoord_z_layered).r,
             triBlend);
         material.ao = mix(material.ao, mat_ao, matBlendAmt);
     }
@@ -191,18 +188,15 @@ void main()
     material.ao = 1;
 
     material = blendMaterial(material, 1,
-        materialTexcoords[0].x, materialTexcoords[0].y, materialTexcoords[0].z, triBlend, triAxisSign,
-        albedoTextures, normalTextures, mat1_ao, 0);
+        materialTexcoords[0].x, materialTexcoords[0].y, materialTexcoords[0].z, triBlend, triAxisSign, 0);
         
     float mat2_blend = calcMaterialBlend(slope, altitude, materialRampParams[0], materialDisplacements[0], materialDisplacements[1]);
     material = blendMaterial(material, mat2_blend,
-        materialTexcoords[1].x, materialTexcoords[1].y, materialTexcoords[1].z, triBlend, triAxisSign,
-        albedoTextures, normalTextures, mat2_ao, 1);
+        materialTexcoords[1].x, materialTexcoords[1].y, materialTexcoords[1].z, triBlend, triAxisSign, 1);
         
     float mat3_blend = calcMaterialBlend(slope, altitude, materialRampParams[1], materialDisplacements[1], materialDisplacements[2]);
     material = blendMaterial(material, mat3_blend,
-        materialTexcoords[2].x, materialTexcoords[2].y, materialTexcoords[2].z, triBlend, triAxisSign,
-        albedoTextures, normalTextures, mat3_ao, 2);
+        materialTexcoords[2].x, materialTexcoords[2].y, materialTexcoords[2].z, triBlend, triAxisSign, 2);
 
     // calculate lighting
     float ambientLight = 0.1f;
