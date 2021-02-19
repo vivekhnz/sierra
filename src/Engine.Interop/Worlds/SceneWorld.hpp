@@ -9,6 +9,7 @@
 #define MAX_SCENE_VIEWS 8
 #define HEIGHTFIELD_COLUMNS 256
 #define HEIGHTFIELD_ROWS 256
+#define MATERIAL_COUNT 3
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class SceneWorld
@@ -35,6 +36,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::mat4 cameraTransform;
         };
 
+        struct MaterialProperties
+        {
+            glm::vec2 textureSizeInWorldUnits;
+            glm::vec2 _padding;
+            glm::vec4 rampParams;
+        };
+
         struct WorldState
         {
             glm::vec2 brushPos;
@@ -42,13 +50,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             float brushFalloff;
             bool isBrushHighlightVisible;
 
-            glm::vec2 mat1_textureSizeInWorldUnits;
-
-            glm::vec2 mat2_textureSizeInWorldUnits;
-            glm::vec4 mat2_rampParams;
-
-            glm::vec2 mat3_textureSizeInWorldUnits;
-            glm::vec4 mat3_rampParams;
+            MaterialProperties materialProps[MATERIAL_COUNT];
         };
 
         EngineContext &ctx;
@@ -78,6 +80,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         uint8 groundAoTextureVersion;
         uint8 rockAoTextureVersion;
         uint8 snowAoTextureVersion;
+
+        uint32 materialPropsBufferHandle;
 
         void *heightmapTextureDataTempBuffer;
 

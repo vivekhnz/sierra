@@ -119,6 +119,47 @@ int main()
         uint8 rockAoTextureVersion = 0;
         uint8 snowAoTextureVersion = 0;
 
+        // material properties consist of:
+        // 1. texture size in world units (vec2)
+        // 2. padding (vec2)
+        // 3. min slope (float)
+        // 4. max slope (float)
+        // 5. min altitude (float)
+        // 6. max altitude (float)
+#define MATERIAL_COUNT 3
+        float materialProps[MATERIAL_COUNT * 8];
+        materialProps[0] = 2.5f;
+        materialProps[1] = 2.5f;
+        materialProps[2] = 0.0f;
+        materialProps[3] = 0.0f;
+        materialProps[4] = 0.0f;
+        materialProps[5] = 0.0f;
+        materialProps[6] = 0.0f;
+        materialProps[7] = 0.0f;
+
+        materialProps[8] = 13.0f;
+        materialProps[9] = 13.0f;
+        materialProps[10] = 0.0f;
+        materialProps[11] = 0.0f;
+        materialProps[12] = 0.6f;
+        materialProps[13] = 0.8f;
+        materialProps[14] = 0.0f;
+        materialProps[15] = 0.001f;
+
+        materialProps[16] = 2.0f;
+        materialProps[17] = 2.0f;
+        materialProps[18] = 0.0f;
+        materialProps[19] = 0.0f;
+        materialProps[20] = 0.8f;
+        materialProps[21] = 0.75f;
+        materialProps[22] = 0.25f;
+        materialProps[23] = 0.28f;
+
+        uint32 materialPropsBufferHandle =
+            rendererCreateBuffer(&memory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+        rendererUpdateBuffer(
+            &memory, materialPropsBufferHandle, sizeof(materialProps), materialProps);
+
         // first person camera state
         float firstPersonCameraYaw = -1.57f;
         float firstPersonCameraPitch = 0.0f;
@@ -477,16 +518,7 @@ int main()
                 rendererUseShaderProgram(&memory, terrainShaderProgram->handle);
                 rendererSetPolygonMode(terrainPolygonMode);
                 rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                rendererSetShaderProgramUniformVector2(&memory, terrainShaderProgram->handle,
-                    "mat1_textureSizeInWorldUnits", glm::vec2(2.5f, 2.5f));
-                rendererSetShaderProgramUniformVector2(&memory, terrainShaderProgram->handle,
-                    "mat2_textureSizeInWorldUnits", glm::vec2(13.0f, 13.0f));
-                rendererSetShaderProgramUniformVector4(&memory, terrainShaderProgram->handle,
-                    "mat2_rampParams", glm::vec4(0.6f, 0.8f, 0, 0.001f));
-                rendererSetShaderProgramUniformVector2(&memory, terrainShaderProgram->handle,
-                    "mat3_textureSizeInWorldUnits", glm::vec2(2.0f, 2.0f));
-                rendererSetShaderProgramUniformVector4(&memory, terrainShaderProgram->handle,
-                    "mat3_rampParams", glm::vec4(0.8f, 0.75f, 0.25f, 0.28f));
+                rendererBindShaderStorageBuffer(&memory, materialPropsBufferHandle, 1);
                 rendererSetShaderProgramUniformVector2(&memory, terrainShaderProgram->handle,
                     "brushHighlightPos", glm::vec2(0.0f, 0.0f));
                 rendererSetShaderProgramUniformFloat(

@@ -18,10 +18,20 @@ layout (std140, binding = 1) uniform Lighting
     bool lighting_isDisplacementMapEnabled;
 };
 
+uniform vec3 terrainDimensions;
+
 layout(binding = 0) uniform sampler2D heightmapTexture;
 layout(binding = 3) uniform sampler2DArray displacementTextures;
-uniform vec3 terrainDimensions;
-uniform vec2 mat1_textureSizeInWorldUnits;
+struct MaterialProperties
+{
+    vec2 textureSizeInWorldUnits;
+    vec2 _padding;
+    vec4 rampParams;
+};
+layout(std430, binding = 1) buffer materialPropsBuffer
+{
+    MaterialProperties materialProps[];
+};
 
 vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
 {
@@ -52,7 +62,8 @@ float height(vec2 uv)
 void main()
 {
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
-    vec2 texcoord = hUV.xy * terrainDimensions.xz / mat1_textureSizeInWorldUnits.xy;
+    vec2 textureSizeInWorldUnits = materialProps[0].textureSizeInWorldUnits;
+    vec2 texcoord = hUV.xy * terrainDimensions.xz / textureSizeInWorldUnits.xy;
 
     vec2 normalSampleOffset = 1 / terrainDimensions.xz;
     float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y));
@@ -65,7 +76,7 @@ void main()
     pos.y = height(hUV) * terrainDimensions.y;
     if (lighting_isDisplacementMapEnabled)
     {
-        float scaledMip = log2(terrainDimensions.x / mat1_textureSizeInWorldUnits.x);
+        float scaledMip = log2(terrainDimensions.x / textureSizeInWorldUnits.x);
         float displacement =
             ((getDisplacement(texcoord, 0, scaledMip) * 2.0f) - 1.0f);
         pos += normal * displacement * 0.1f;

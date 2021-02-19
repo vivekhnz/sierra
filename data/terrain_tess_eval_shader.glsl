@@ -22,13 +22,17 @@ layout(binding = 0) uniform sampler2D heightmapTexture;
 uniform vec3 terrainDimensions;
 
 layout(binding = 3) uniform sampler2DArray displacementTextures;
-uniform vec2 mat1_textureSizeInWorldUnits;
 
-uniform vec2 mat2_textureSizeInWorldUnits;
-uniform vec4 mat2_rampParams;
-
-uniform vec2 mat3_textureSizeInWorldUnits;
-uniform vec4 mat3_rampParams;
+struct MaterialProperties
+{
+    vec2 textureSizeInWorldUnits;
+    vec2 _padding;
+    vec4 rampParams;
+};
+layout(std430, binding = 1) buffer materialPropsBuffer
+{
+    MaterialProperties materialProps[];
+};
 
 layout(location = 0) out vec3 normal;
 layout(location = 1) out vec3 texcoord;
@@ -93,13 +97,13 @@ void main()
     
     // setup material arrays
     vec2 materialTextureSizes[3];
-    materialTextureSizes[0] = mat1_textureSizeInWorldUnits;
-    materialTextureSizes[1] = mat2_textureSizeInWorldUnits;
-    materialTextureSizes[2] = mat3_textureSizeInWorldUnits;
+    materialTextureSizes[0] = materialProps[0].textureSizeInWorldUnits;
+    materialTextureSizes[1] = materialProps[1].textureSizeInWorldUnits;
+    materialTextureSizes[2] = materialProps[2].textureSizeInWorldUnits;
 
     vec4 materialRampParams[2];
-    materialRampParams[0] = mat2_rampParams;
-    materialRampParams[1] = mat3_rampParams;
+    materialRampParams[0] = materialProps[1].rampParams;
+    materialRampParams[1] = materialProps[2].rampParams;
 
     float materialScaledMips[3];
     for (int i = 0; i < 3; i++)

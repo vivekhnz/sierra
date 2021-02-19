@@ -61,6 +61,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         groundAoTextureVersion = 0;
         rockAoTextureVersion = 0;
         snowAoTextureVersion = 0;
+
+        for (uint32 i = 0; i < MATERIAL_COUNT; i++)
+        {
+            worldState.materialProps[i] = {};
+        }
+        materialPropsBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+        rendererUpdateBuffer(
+            ctx.memory, materialPropsBufferHandle, sizeof(worldState.materialProps), 0);
     }
 
     void SceneWorld::linkViewport(ViewportContext &vctx)
@@ -145,18 +154,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.brushFalloff = state.brushFalloff;
 
         // update material properties
-        worldState.mat1_textureSizeInWorldUnits =
-            glm::vec2(state.mat1_textureSize, state.mat1_textureSize);
-        worldState.mat2_textureSizeInWorldUnits =
-            glm::vec2(state.mat2_textureSize, state.mat2_textureSize);
-        worldState.mat2_rampParams =
-            glm::vec4(state.mat2_rampParams.slopeStart, state.mat2_rampParams.slopeEnd,
-                state.mat2_rampParams.altitudeStart, state.mat2_rampParams.altitudeEnd);
-        worldState.mat3_textureSizeInWorldUnits =
-            glm::vec2(state.mat3_textureSize, state.mat3_textureSize);
-        worldState.mat3_rampParams =
-            glm::vec4(state.mat3_rampParams.slopeStart, state.mat3_rampParams.slopeEnd,
-                state.mat3_rampParams.altitudeStart, state.mat3_rampParams.altitudeEnd);
+        worldState.materialProps[0].textureSizeInWorldUnits.x = state.mat1_textureSize;
+        worldState.materialProps[0].textureSizeInWorldUnits.y = state.mat1_textureSize;
+        worldState.materialProps[1].textureSizeInWorldUnits.x = state.mat2_textureSize;
+        worldState.materialProps[1].textureSizeInWorldUnits.y = state.mat2_textureSize;
+        worldState.materialProps[1].rampParams.x = state.mat2_rampParams.slopeStart;
+        worldState.materialProps[1].rampParams.y = state.mat2_rampParams.slopeEnd;
+        worldState.materialProps[1].rampParams.z = state.mat2_rampParams.altitudeStart;
+        worldState.materialProps[1].rampParams.w = state.mat2_rampParams.altitudeEnd;
+        worldState.materialProps[2].textureSizeInWorldUnits.x = state.mat3_textureSize;
+        worldState.materialProps[2].textureSizeInWorldUnits.y = state.mat3_textureSize;
+        worldState.materialProps[2].rampParams.x = state.mat3_rampParams.slopeStart;
+        worldState.materialProps[2].rampParams.y = state.mat3_rampParams.slopeEnd;
+        worldState.materialProps[2].rampParams.z = state.mat3_rampParams.altitudeStart;
+        worldState.materialProps[2].rampParams.w = state.mat3_rampParams.altitudeEnd;
 
         // update scene lighting
         glm::vec4 lightDir = glm::vec4(0);
@@ -519,6 +530,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererShaderStorageMemoryBarrier();
 
         // bind material data
+        rendererUpdateBuffer(ctx.memory, materialPropsBufferHandle,
+            sizeof(worldState.materialProps), worldState.materialProps);
+
         uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;
         rendererUseShaderProgram(memory, terrainShaderProgramHandle);
         rendererSetPolygonMode(GL_FILL);
@@ -529,6 +543,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindTextureArray(memory, normalTextureArrayHandle, 2);
         rendererBindTextureArray(memory, displacementTextureArrayHandle, 3);
         rendererBindTextureArray(memory, aoTextureArrayHandle, 4);
+        rendererBindShaderStorageBuffer(memory, materialPropsBufferHandle, 1);
 
         // bind mesh data
         int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
@@ -548,16 +563,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             "brushHighlightRadius", worldState.brushRadius);
         rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
             "brushHighlightFalloff", worldState.brushFalloff);
-        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
-            "mat1_textureSizeInWorldUnits", worldState.mat1_textureSizeInWorldUnits);
-        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
-            "mat2_textureSizeInWorldUnits", worldState.mat2_textureSizeInWorldUnits);
-        rendererSetShaderProgramUniformVector4(
-            memory, terrainShaderProgramHandle, "mat2_rampParams", worldState.mat2_rampParams);
-        rendererSetShaderProgramUniformVector2(memory, terrainShaderProgramHandle,
-            "mat3_textureSizeInWorldUnits", worldState.mat3_textureSizeInWorldUnits);
-        rendererSetShaderProgramUniformVector4(
-            memory, terrainShaderProgramHandle, "mat3_rampParams", worldState.mat3_rampParams);
 
         // draw mesh
         rendererDrawElementsInstanced(primitiveType, elementCount, 1);
