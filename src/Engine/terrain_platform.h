@@ -45,6 +45,9 @@ typedef PLATFORM_ASSET_LOAD_CALLBACK(PlatformAssetLoadCallback);
 #define PLATFORM_FREE_MEMORY(name) void name(void *data)
 typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
 
+#define PLATFORM_LOG_MESSAGE(name) void name(char *message)
+typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
+
 #define PLATFORM_READ_FILE(name) PlatformReadFileResult name(const char *path)
 typedef PLATFORM_READ_FILE(PlatformReadFile);
 
@@ -59,6 +62,7 @@ struct EngineMemory
     uint64 size;
 
     PlatformFreeMemory *platformFreeMemory;
+    PlatformLogMessage *platformLogMessage;
     PlatformReadFile *platformReadFile;
     PlatformLoadAsset *platformLoadAsset;
 

@@ -215,18 +215,19 @@ PLATFORM_ASSET_LOAD_CALLBACK(onShaderLoaded)
 
     char *src = static_cast<char *>(result->data);
     uint32 handle;
-    assert(rendererCreateShader(memory, shaderInfo.type, src, &handle));
+    if (rendererCreateShader(memory, shaderInfo.type, src, &handle))
+    {
+        uint32 assetIdx = ASSET_GET_INDEX(assetId);
+        assert(assetIdx < ASSET_SHADER_COUNT);
 
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    assert(assetIdx < ASSET_SHADER_COUNT);
+        ShaderAsset *asset = &state->shaderAssets[assetIdx];
+        asset->version++;
+        asset->handle = handle;
 
-    ShaderAsset *asset = &state->shaderAssets[assetIdx];
-    asset->version++;
-    asset->handle = handle;
-
-    ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
-    slot->asset = asset;
-    slot->isUpToDate = true;
+        ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
+        slot->asset = asset;
+        slot->isUpToDate = true;
+    }
 }
 
 ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)

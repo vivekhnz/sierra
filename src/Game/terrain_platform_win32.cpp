@@ -106,6 +106,11 @@ PLATFORM_FREE_MEMORY(win32FreeMemory)
     VirtualFree(data, 0, MEM_RELEASE);
 }
 
+PLATFORM_LOG_MESSAGE(win32LogMessage)
+{
+    OutputDebugStringA(message);
+}
+
 PLATFORM_READ_FILE(win32ReadFile)
 {
     PlatformReadFileResult result = {};

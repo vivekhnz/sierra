@@ -323,21 +323,21 @@ bool rendererCreateShader(EngineMemory *memory, uint32 type, char *src, uint32 *
     glShaderSource(id, 1, &src, NULL);
 
     glCompileShader(id);
-    int succeeded;
+    int32 succeeded;
     glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
     if (succeeded)
     {
         state->shaderIds[state->shaderCount] = id;
         *out_handle = state->shaderCount++;
+
         return 1;
     }
     else
     {
         char infoLog[512];
         glGetShaderInfoLog(id, 512, NULL, infoLog);
-        // todo: log out error
+        memory->platformLogMessage(infoLog);
 
-        assert(0);
         return 0;
     }
 }

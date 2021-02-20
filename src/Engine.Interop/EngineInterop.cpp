@@ -20,6 +20,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
         memory->size = ENGINE_MEMORY_SIZE;
         memory->platformFreeMemory = win32FreeMemory;
+        memory->platformLogMessage = win32LogMessage;
         memory->platformReadFile = win32ReadFile;
         memory->platformLoadAsset = win32LoadAsset;
 

@@ -56,6 +56,7 @@ int main()
         memory.baseAddress = win32AllocateMemory(ENGINE_MEMORY_SIZE);
         memory.size = ENGINE_MEMORY_SIZE;
         memory.platformFreeMemory = win32FreeMemory;
+        memory.platformLogMessage = win32LogMessage;
         memory.platformReadFile = win32ReadFile;
         memory.platformLoadAsset = win32LoadAsset;
 
