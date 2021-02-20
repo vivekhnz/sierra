@@ -36,19 +36,6 @@ layout(std430, binding = 1) buffer materialPropsBuffer
 
 out vec4 FragColor;
 
-struct TriplanarTextureCoordinates
-{
-    vec2 x;
-    vec2 y;
-    vec2 z;
-};
-struct MaterialData
-{
-    vec3 albedo;
-    vec3 normal;
-    float ao;
-};
-
 vec3 calcBrushHighlight()
 {
     float highlightRadius = brushHighlightRadius * 0.5f;
@@ -87,127 +74,93 @@ vec3 triplanar3D(vec3 xVal, vec3 yVal, vec3 zVal, vec3 blend)
     return (xVal * blend.x) + (yVal * blend.y) + (zVal * blend.z);
 }
 
-float calcMaterialBlend(float slope, float altitude, vec4 ramp, float lowerMatDisplacement, float upperMatDisplacement)
-{
-    // blend based on slope and altitude
-    float blend = clamp((slope - ramp.x) / (ramp.y - ramp.x), 0, 1);
-    blend *= clamp((altitude - ramp.z) / (ramp.w - ramp.z), 0, 1);
-    
-    // blend based on material height
-    float lower_mat_height = lowerMatDisplacement * (1 - blend);
-    float upper_mat_height = upperMatDisplacement * blend;
-    return upper_mat_height / (lower_mat_height + upper_mat_height);
-}
-
-MaterialData blendMaterial(MaterialData material, float matBlendAmt,
-    vec2 texcoord_x, vec2 texcoord_y, vec2 texcoord_z, vec3 triBlend, vec3 triAxisSign,
-    int layerIndex)
-{
-    vec3 texcoord_x_layered = vec3(texcoord_x, layerIndex);
-    vec3 texcoord_y_layered = vec3(texcoord_y, layerIndex);
-    vec3 texcoord_z_layered = vec3(texcoord_z, layerIndex);
-
-    if (lighting_isTextureEnabled)
-    {
-        vec3 mat_albedo = triplanar3D(
-            texture(albedoTextures, texcoord_x_layered).rgb,
-            texture(albedoTextures, texcoord_y_layered).rgb,
-            texture(albedoTextures, texcoord_z_layered).rgb,
-            triBlend);
-        material.albedo = mix(material.albedo, mat_albedo, matBlendAmt);
-    }
-    if (lighting_isNormalMapEnabled)
-    {
-        vec3 mat_normal = triplanar3D(
-            ((texture(normalTextures, texcoord_x_layered).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
-            ((texture(normalTextures, texcoord_y_layered).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
-            ((texture(normalTextures, texcoord_z_layered).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
-            triBlend);
-        material.normal = mix(material.normal, mat_normal, matBlendAmt);
-    }
-    if (lighting_isAOMapEnabled)
-    {
-        float mat_ao = triplanar1D(
-            texture(aoTextures, texcoord_x_layered).r,
-            texture(aoTextures, texcoord_y_layered).r,
-            texture(aoTextures, texcoord_z_layered).r,
-            triBlend);
-        material.ao = mix(material.ao, mat_ao, matBlendAmt);
-    }
-    return material;
-}
-
 void main()
 {
     float altitude = texcoord.y / -terrainDimensions.y;
     float slope = 1 - vertexNormal.y;
-    
-    // setup material arrays
-    vec2 materialTextureSizes[3];
-    materialTextureSizes[0] = materialProps[0].textureSizeInWorldUnits;
-    materialTextureSizes[1] = materialProps[1].textureSizeInWorldUnits;
-    materialTextureSizes[2] = materialProps[2].textureSizeInWorldUnits;
-
-    vec4 materialRampParams[2];
-    materialRampParams[0] = materialProps[1].rampParams;
-    materialRampParams[1] = materialProps[2].rampParams;
 
     // calculate triplanar texture coordinates
     vec3 triBlend = calcTriplanarBlend(vertexNormal);
     vec3 triAxisSign = sign(vertexNormal);
     
-    TriplanarTextureCoordinates baseTexcoords;
-    baseTexcoords.x = vec2(texcoord.z * triAxisSign.x, texcoord.y);
-    baseTexcoords.y = vec2(texcoord.x * triAxisSign.y, texcoord.z);
-    baseTexcoords.z = vec2(texcoord.x * triAxisSign.z, texcoord.y);
-
-    TriplanarTextureCoordinates materialTexcoords[3];
-    for (int i = 0; i < 3; i++)
-    {
-        materialTexcoords[i].x = baseTexcoords.x / materialTextureSizes[i].yy;
-        materialTexcoords[i].y = baseTexcoords.y / materialTextureSizes[i].xy;
-        materialTexcoords[i].z = baseTexcoords.z / materialTextureSizes[i].xy;
-    }
-
-    // calculate displacement of each material
-    float materialDisplacements[3];
-    materialDisplacements[0] = triplanar1D(
-        0, texture(displacementTextures, vec3(materialTexcoords[0].y, 0)).r * triAxisSign.y, 0,
-        triBlend);
-    materialDisplacements[1] = triplanar1D(
-        0, texture(displacementTextures, vec3(materialTexcoords[1].y, 1)).r * triAxisSign.y, 0,
-        triBlend);
-    materialDisplacements[2] = triplanar1D(
-        0, texture(displacementTextures, vec3(materialTexcoords[2].y, 2)).r * triAxisSign.y, 0,
-        triBlend);
+    vec2 baseTexcoordsX = vec2(texcoord.z * triAxisSign.x, texcoord.y);
+    vec2 baseTexcoordsY = vec2(texcoord.x * triAxisSign.y, texcoord.z);
+    vec2 baseTexcoordsZ = vec2(texcoord.x * triAxisSign.z, texcoord.y);
 
     // blend materials based on slope, altitude and height
-    MaterialData material;
-    material.albedo = vec3(1);
-    material.normal = vec3(0);
-    material.ao = 1;
+    vec3 material_albedo = vec3(1);
+    vec3 material_normal = vec3(0);
+    float material_ao = 1;
 
-    material = blendMaterial(material, 1,
-        materialTexcoords[0].x, materialTexcoords[0].y, materialTexcoords[0].z, triBlend, triAxisSign, 0);
+    float prevLayerDisplacement = 0.0f;
+    int materialCount = 3;
+    for (int i = 0; i < materialCount; i++)
+    {
+        vec2 textureSizeInWorldUnits = materialProps[i].textureSizeInWorldUnits;
+        vec3 materialTexcoordsX = vec3(baseTexcoordsX / textureSizeInWorldUnits.yy, i);
+        vec3 materialTexcoordsY = vec3(baseTexcoordsY / textureSizeInWorldUnits.xy, i);
+        vec3 materialTexcoordsZ = vec3(baseTexcoordsZ / textureSizeInWorldUnits.xy, i);
+
+        float currentLayerDisplacement = triplanar1D(0,
+            texture(displacementTextures, materialTexcoordsY).r * triAxisSign.y,
+            0, triBlend);
         
-    float mat2_blend = calcMaterialBlend(slope, altitude, materialRampParams[0], materialDisplacements[0], materialDisplacements[1]);
-    material = blendMaterial(material, mat2_blend,
-        materialTexcoords[1].x, materialTexcoords[1].y, materialTexcoords[1].z, triBlend, triAxisSign, 1);
+        float blendAmount = 1;
+        if (i > 0)
+        {
+            vec4 ramp = materialProps[i].rampParams;
+
+            // blend based on slope and altitude
+            float blend = clamp((slope - ramp.x) / (ramp.y - ramp.x), 0, 1);
+            blend *= clamp((altitude - ramp.z) / (ramp.w - ramp.z), 0, 1);
+            
+            // blend based on material height
+            float prevLayerHeight = prevLayerDisplacement * (1 - blend);
+            float currentLayerHeight = currentLayerDisplacement * blend;
+            blendAmount = currentLayerHeight / (prevLayerHeight + currentLayerHeight);
+        }
+
+        if (lighting_isTextureEnabled)
+        {
+            vec3 mat_albedo = triplanar3D(
+                texture(albedoTextures, materialTexcoordsX).rgb,
+                texture(albedoTextures, materialTexcoordsY).rgb,
+                texture(albedoTextures, materialTexcoordsZ).rgb,
+                triBlend);
+            material_albedo = mix(material_albedo, mat_albedo, blendAmount);
+        }
+        if (lighting_isNormalMapEnabled)
+        {
+            vec3 mat_normal = triplanar3D(
+                ((texture(normalTextures, materialTexcoordsX).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
+                ((texture(normalTextures, materialTexcoordsY).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
+                ((texture(normalTextures, materialTexcoordsZ).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
+                triBlend);
+            material_normal = mix(material_normal, mat_normal, blendAmount);
+        }
+        if (lighting_isAOMapEnabled)
+        {
+            float mat_ao = triplanar1D(
+                texture(aoTextures, materialTexcoordsX).r,
+                texture(aoTextures, materialTexcoordsY).r,
+                texture(aoTextures, materialTexcoordsZ).r,
+                triBlend);
+            material_ao = mix(material_ao, mat_ao, blendAmount);
+        }
         
-    float mat3_blend = calcMaterialBlend(slope, altitude, materialRampParams[1], materialDisplacements[1], materialDisplacements[2]);
-    material = blendMaterial(material, mat3_blend,
-        materialTexcoords[2].x, materialTexcoords[2].y, materialTexcoords[2].z, triBlend, triAxisSign, 2);
+        prevLayerDisplacement = currentLayerDisplacement;
+    }
 
     // calculate lighting
     float ambientLight = 0.1f;
-    vec3 normal = normalize(vertexNormal - (material.normal * 0.5f));
+    vec3 normal = normalize(vertexNormal - (material_normal * 0.5f));
     float nDotL = dot(normal, lighting_lightDir.xyz);
     float lightingAmplitude = lighting_isEnabled
         ? ambientLight + pow(0.5 + (nDotL * 0.5), 2)
         : 1.0f;
 
     // calculate final fragment color
-    vec3 terrainColor = material.albedo * lightingAmplitude * mix(0.6, 1.0, material.ao);
+    vec3 terrainColor = material_albedo * lightingAmplitude * mix(0.6, 1.0, material_ao);
     vec3 brushHighlight = calcBrushHighlight();
     FragColor = vec4(terrainColor + (brushHighlight * brushHighlightStrength), 1.0f);
 }

@@ -355,7 +355,7 @@ bool rendererCreateShaderProgram(
     }
 
     glLinkProgram(id);
-    int succeeded;
+    int32 succeeded;
     glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
     if (succeeded)
     {
@@ -372,7 +372,7 @@ bool rendererCreateShaderProgram(
     {
         char infoLog[512];
         glGetProgramInfoLog(id, 512, NULL, infoLog);
-        // todo: log out error
+        memory->platformLogMessage(infoLog);
 
         return 0;
     }

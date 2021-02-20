@@ -287,15 +287,16 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
     if (shouldCreateShader)
     {
         uint32 handle;
-        assert(rendererCreateShaderProgram(memory, shaderCount, shaderHandles, &handle));
-
-        ShaderProgramAsset *asset = &state->shaderProgramAssets[assetIdx];
-        asset->handle = handle;
-
-        slot->asset = asset;
-        for (uint32 i = 0; i < shaderCount; i++)
+        if (rendererCreateShaderProgram(memory, shaderCount, shaderHandles, &handle))
         {
-            slot->shaderVersions[i] = shaderVersions[i];
+            ShaderProgramAsset *asset = &state->shaderProgramAssets[assetIdx];
+            asset->handle = handle;
+
+            slot->asset = asset;
+            for (uint32 i = 0; i < shaderCount; i++)
+            {
+                slot->shaderVersions[i] = shaderVersions[i];
+            }
         }
     }
 
