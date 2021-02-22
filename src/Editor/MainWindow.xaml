@@ -90,9 +90,18 @@
                         </Grid>
                     </StackPanel>
                 </Expander>
-                <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL"
+                <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
                           IsExpanded="True">
                     <StackPanel Orientation="Vertical" Margin="12">
+                        <ComboBox x:Name="cbMaterialSelector" Margin="0 0 0 16"
+                                  SelectionChanged="OnMaterialSelectorSelectionChanged"
+                                  SelectedIndex="0" FontSize="16">
+                            <ComboBox.Items>
+                                <ComboBoxItem Content="Layer 1 (ground)" />
+                                <ComboBoxItem Content="Layer 2 (rock)" />
+                                <ComboBoxItem Content="Layer 3 (snow)" />
+                            </ComboBox.Items>
+                        </ComboBox>
                         <!--
                         <Grid Margin="0 0 0 8">
                             <Grid.ColumnDefinitions>
@@ -136,32 +145,16 @@
                         </Grid>
                         <Rectangle Height="1" Stroke="#222" Margin="0 0 0 12" SnapsToDevicePixels="True" />
                         -->
-                        <TextBlock Text="Material 1" Foreground="#AAA" Margin="0 0 0 8"
-                                   FontWeight="SemiBold" FontSize="14" />
-                        <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat1TextureSizeSlider" Minimum="0.1" Maximum="16" Value="2.5"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True" ValueChanged="mat1TextureSizeSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat1TextureSizeSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                        </Grid>
-                        <TextBlock Text="Material 2" Foreground="#AAA" Margin="0 12 0 8"
-                                   FontWeight="SemiBold" FontSize="14" />
                         <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
                         <Grid Margin="0 0 0 8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat2TextureSizeSlider" Minimum="0.1" Maximum="16" Value="13"
+                            <Slider x:Name="materialTextureSizeSlider" Minimum="0.1" Maximum="16" Value="13"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True" ValueChanged="mat2TextureSizeSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat2TextureSizeSlider, Path=Value}"
+                                    IsSnapToTickEnabled="True" ValueChanged="materialTextureSizeSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=materialTextureSizeSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                         <TextBlock Text="Slope Start" Foreground="#888" Margin="0 0 0 8" />
@@ -170,11 +163,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat2SlopeStartSlider" Minimum="0" Maximum="1" Value="0.6"
+                            <Slider x:Name="materialSlopeStartSlider" Minimum="0" Maximum="1" Value="0.6"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                                     IsSnapToTickEnabled="True"
-                                    ValueChanged="mat2RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat2SlopeStartSlider, Path=Value}"
+                                    ValueChanged="materialRampParamsSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=materialSlopeStartSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                         <TextBlock Text="Slope End" Foreground="#888" Margin="0 0 0 8" />
@@ -183,11 +176,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat2SlopeEndSlider" Minimum="0" Maximum="1" Value="0.8"
+                            <Slider x:Name="materialSlopeEndSlider" Minimum="0" Maximum="1" Value="0.8"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                                     IsSnapToTickEnabled="True"
-                                    ValueChanged="mat2RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat2SlopeEndSlider, Path=Value}"
+                                    ValueChanged="materialRampParamsSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=materialSlopeEndSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                         <TextBlock Text="Altitude Start" Foreground="#888" Margin="0 0 0 8" />
@@ -196,11 +189,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat2AltitudeStartSlider" Minimum="0" Maximum="1" Value="0"
+                            <Slider x:Name="materialAltitudeStartSlider" Minimum="0" Maximum="1" Value="0"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                                     IsSnapToTickEnabled="True"
-                                    ValueChanged="mat2RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat2AltitudeStartSlider, Path=Value}"
+                                    ValueChanged="materialRampParamsSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=materialAltitudeStartSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                         <TextBlock Text="Altitude End" Foreground="#888" Margin="0 0 0 8" />
@@ -209,77 +202,11 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat2AltitudeEndSlider" Minimum="0" Maximum="1" Value="0.001"
+                            <Slider x:Name="materialAltitudeEndSlider" Minimum="0" Maximum="1" Value="0.001"
                                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                                     IsSnapToTickEnabled="True"
-                                    ValueChanged="mat2RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat2AltitudeEndSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                        </Grid>
-                        <TextBlock Text="Material 3" Foreground="#AAA" Margin="0 12 0 8"
-                                   FontWeight="SemiBold" FontSize="14" />
-                        <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid Margin="0 0 0 8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat3TextureSizeSlider" Minimum="0.1" Maximum="16" Value="2"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True" ValueChanged="mat3TextureSizeSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat3TextureSizeSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                        </Grid>
-                        <TextBlock Text="Slope Start" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid Margin="0 0 0 8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat3SlopeStartSlider" Minimum="0" Maximum="1" Value="0.8"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="mat3RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat3SlopeStartSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                        </Grid>
-                        <TextBlock Text="Slope End" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid Margin="0 0 0 8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat3SlopeEndSlider" Minimum="0" Maximum="1" Value="0.75"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="mat3RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat3SlopeEndSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                        </Grid>
-                        <TextBlock Text="Altitude Start" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid Margin="0 0 0 8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat3AltitudeStartSlider" Minimum="0" Maximum="1" Value="0.25"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="mat3RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat3AltitudeStartSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                        </Grid>
-                        <TextBlock Text="Altitude End" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid Margin="0 0 0 8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="32" />
-                            </Grid.ColumnDefinitions>
-                            <Slider x:Name="mat3AltitudeEndSlider" Minimum="0" Maximum="1" Value="0.28"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="mat3RampParamsSlider_ValueChanged" />
-                            <TextBlock Text="{Binding ElementName=mat3AltitudeEndSlider, Path=Value}"
+                                    ValueChanged="materialRampParamsSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=materialAltitudeEndSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                     </StackPanel>

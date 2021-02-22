@@ -6,6 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Terrain.Engine.Interop;
+using Terrain.Engine.Interop.Proxy;
 
 namespace Terrain.Editor
 {
@@ -70,6 +71,8 @@ namespace Terrain.Editor
             cbMaterialDisplacementTexture.SelectedItem = "ground_displacement";
             */
 
+            UpdateMaterialDetails(0);
+
             isUiInitialized = true;
         }
 
@@ -111,46 +114,60 @@ namespace Terrain.Editor
             EngineInterop.State.LightDirection = (float)lightDirectionSlider.Value;
         }
 
-        private void mat1TextureSizeSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            EngineInterop.State.Material1TextureSize = (float)mat1TextureSizeSlider.Value;
-        }
-
-        private void mat2TextureSizeSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            EngineInterop.State.Material2TextureSize = (float)mat2TextureSizeSlider.Value;
-        }
-
-        private void mat2RampParamsSlider_ValueChanged(object sender,
+        private void materialTextureSizeSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
             if (!isUiInitialized) return;
 
-            var ramp = EngineInterop.State.Material2RampParams;
-            ramp.SlopeStart = (float)mat2SlopeStartSlider.Value;
-            ramp.SlopeEnd = (float)mat2SlopeEndSlider.Value;
-            ramp.AltitudeStart = (float)mat2AltitudeStartSlider.Value;
-            ramp.AltitudeEnd = (float)mat2AltitudeEndSlider.Value;
+            float value = (float)materialTextureSizeSlider.Value;
+            switch (cbMaterialSelector.SelectedIndex)
+            {
+                case 0:
+                    EngineInterop.State.Material1TextureSize = value;
+                    break;
+                case 1:
+                    EngineInterop.State.Material2TextureSize = value;
+                    break;
+                case 2:
+                    EngineInterop.State.Material3TextureSize = value;
+                    break;
+            }
         }
 
-        private void mat3TextureSizeSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            EngineInterop.State.Material3TextureSize = (float)mat3TextureSizeSlider.Value;
-        }
-
-        private void mat3RampParamsSlider_ValueChanged(object sender,
+        private void materialRampParamsSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
             if (!isUiInitialized) return;
 
-            var ramp = EngineInterop.State.Material3RampParams;
-            ramp.SlopeStart = (float)mat3SlopeStartSlider.Value;
-            ramp.SlopeEnd = (float)mat3SlopeEndSlider.Value;
-            ramp.AltitudeStart = (float)mat3AltitudeStartSlider.Value;
-            ramp.AltitudeEnd = (float)mat3AltitudeEndSlider.Value;
+            RampParamsProxy ramp = null;
+            switch (cbMaterialSelector.SelectedIndex)
+            {
+                case 1:
+                    ramp = EngineInterop.State.Material2RampParams;
+                    break;
+                case 2:
+                    ramp = EngineInterop.State.Material3RampParams;
+                    break;
+            }
+
+            if (ramp == null) return;
+
+            if (sender == materialSlopeStartSlider)
+            {
+                ramp.SlopeStart = (float)materialSlopeStartSlider.Value;
+            }
+            else if (sender == materialSlopeEndSlider)
+            {
+                ramp.SlopeEnd = (float)materialSlopeEndSlider.Value;
+            }
+            else if (sender == materialAltitudeStartSlider)
+            {
+                ramp.AltitudeStart = (float)materialAltitudeStartSlider.Value;
+            }
+            else if (sender == materialAltitudeEndSlider)
+            {
+                ramp.AltitudeEnd = (float)materialAltitudeEndSlider.Value;
+            }
         }
 
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
@@ -161,6 +178,13 @@ namespace Terrain.Editor
             if (senderBtn == null) return;
 
             EngineInterop.State.CurrentTool = editorToolByToolButtons[senderBtn];
+        }
+
+        private void OnMaterialSelectorSelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (!isUiInitialized) return;
+
+            UpdateMaterialDetails(cbMaterialSelector.SelectedIndex);
         }
 
         private void OnMaterialTextureComboBoxSelectionChanged(object sender,
@@ -203,6 +227,40 @@ namespace Terrain.Editor
                 {
                     kvp.Key.IsChecked = false;
                 }
+            }
+        }
+
+        private void UpdateMaterialDetails(int selectedMaterialIndex)
+        {
+            RampParamsProxy ramp = null;
+            switch (selectedMaterialIndex)
+            {
+                case 0:
+                    materialTextureSizeSlider.Value = EngineInterop.State.Material1TextureSize;
+                    break;
+                case 1:
+                    materialTextureSizeSlider.Value = EngineInterop.State.Material2TextureSize;
+                    ramp = EngineInterop.State.Material2RampParams;
+                    break;
+                case 2:
+                    materialTextureSizeSlider.Value = EngineInterop.State.Material3TextureSize;
+                    ramp = EngineInterop.State.Material3RampParams;
+                    break;
+            }
+
+            if (ramp == null)
+            {
+                materialSlopeStartSlider.Value = 0;
+                materialSlopeEndSlider.Value = 0;
+                materialAltitudeStartSlider.Value = 0;
+                materialAltitudeEndSlider.Value = 0;
+            }
+            else
+            {
+                materialSlopeStartSlider.Value = ramp.SlopeStart;
+                materialSlopeEndSlider.Value = ramp.SlopeEnd;
+                materialAltitudeStartSlider.Value = ramp.AltitudeStart;
+                materialAltitudeEndSlider.Value = ramp.AltitudeEnd;
             }
         }
     }
