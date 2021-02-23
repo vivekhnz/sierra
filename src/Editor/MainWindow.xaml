@@ -6,7 +6,7 @@
         xmlns:interop="clr-namespace:Terrain.Engine.Interop;assembly=Terrain.Engine.Interop"
         mc:Ignorable="d"
         Title="Terrain Editor" Width="1280" Height="720"
-        Closing="Window_Closing">
+        Closing="Window_Closing" Topmost="True">
     <Grid Background="#333">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
@@ -90,18 +90,22 @@
                         </Grid>
                     </StackPanel>
                 </Expander>
+                <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
+                          IsExpanded="True">
+                    <ListBox x:Name="lbMaterials"
+                             SelectionChanged="OnMaterialSelectionChanged"
+                             SelectedIndex="0" Background="Transparent" Foreground="#CCC"
+                             FontSize="14">
+                        <ListBox.Items>
+                            <ListBoxItem Content="ground" Padding="18 2" />
+                            <ListBoxItem Content="rock" Padding="18 2" />
+                            <ListBoxItem Content="snow" Padding="18 2" />
+                        </ListBox.Items>
+                    </ListBox>
+                </Expander>
                 <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
                           IsExpanded="True">
                     <StackPanel Orientation="Vertical" Margin="12">
-                        <ComboBox x:Name="cbMaterialSelector" Margin="0 0 0 16"
-                                  SelectionChanged="OnMaterialSelectorSelectionChanged"
-                                  SelectedIndex="0" FontSize="16">
-                            <ComboBox.Items>
-                                <ComboBoxItem Content="Layer 1 (ground)" />
-                                <ComboBoxItem Content="Layer 2 (rock)" />
-                                <ComboBoxItem Content="Layer 3 (snow)" />
-                            </ComboBox.Items>
-                        </ComboBox>
                         <!--
                         <Grid Margin="0 0 0 8">
                             <Grid.ColumnDefinitions>

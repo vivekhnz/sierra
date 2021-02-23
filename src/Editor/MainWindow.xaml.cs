@@ -120,7 +120,7 @@ namespace Terrain.Editor
             if (!isUiInitialized) return;
 
             float value = (float)materialTextureSizeSlider.Value;
-            switch (cbMaterialSelector.SelectedIndex)
+            switch (lbMaterials.SelectedIndex)
             {
                 case 0:
                     EngineInterop.State.Material1TextureSize = value;
@@ -140,7 +140,7 @@ namespace Terrain.Editor
             if (!isUiInitialized) return;
 
             RampParamsProxy ramp = null;
-            switch (cbMaterialSelector.SelectedIndex)
+            switch (lbMaterials.SelectedIndex)
             {
                 case 1:
                     ramp = EngineInterop.State.Material2RampParams;
@@ -180,11 +180,11 @@ namespace Terrain.Editor
             EngineInterop.State.CurrentTool = editorToolByToolButtons[senderBtn];
         }
 
-        private void OnMaterialSelectorSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!isUiInitialized) return;
 
-            UpdateMaterialDetails(cbMaterialSelector.SelectedIndex);
+            UpdateMaterialDetails(lbMaterials.SelectedIndex);
         }
 
         private void OnMaterialTextureComboBoxSelectionChanged(object sender,
