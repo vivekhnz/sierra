@@ -13,6 +13,16 @@
 typedef void(__stdcall *RenderCallbackUnmanaged)();
 
 namespace Terrain { namespace Engine { namespace Interop {
+    public
+        value struct MaterialProps
+        {
+            float textureSizeInWorldUnits;
+            float slopeStart;
+            float slopeEnd;
+            float altitudeStart;
+            float altitudeEnd;
+        };
+
 public
     ref class EngineInterop
     {
@@ -73,6 +83,7 @@ public
         static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:
+
         static property Proxy::StateProxy^ State
         {
         public:
@@ -83,7 +94,15 @@ public
         }
 
         static void InitializeEngine();
+
         static void LoadHeightmapTexture(System::String ^ path);
+        static void SetMaterialTextureSize(int index, float value);
+        static void SetMaterialSlopeStart(int index, float value);
+        static void SetMaterialSlopeEnd(int index, float value);
+        static void SetMaterialAltitudeStart(int index, float value);
+        static void SetMaterialAltitudeEnd(int index, float value);
+        static MaterialProps GetMaterialProperties(int index);
+
         static void Shutdown();
     };
 }}}

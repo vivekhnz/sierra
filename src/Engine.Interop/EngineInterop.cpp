@@ -34,17 +34,21 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->brushRadius = 128.0f;
         newEditorState->brushFalloff = 0.1f;
         newEditorState->lightDirection = 0.5f;
-        newEditorState->mat1_textureSize = 2.5f;
-        newEditorState->mat2_textureSize = 13.0f;
-        newEditorState->mat2_rampParams.slopeStart = 0.6f;
-        newEditorState->mat2_rampParams.slopeEnd = 0.8f;
-        newEditorState->mat2_rampParams.altitudeStart = 0;
-        newEditorState->mat2_rampParams.altitudeEnd = 0.001f;
-        newEditorState->mat3_textureSize = 2.0f;
-        newEditorState->mat3_rampParams.slopeStart = 0.8f;
-        newEditorState->mat3_rampParams.slopeEnd = 0.75f;
-        newEditorState->mat3_rampParams.altitudeStart = 0.25f;
-        newEditorState->mat3_rampParams.altitudeEnd = 0.28f;
+        newEditorState->materialProps[0].textureSizeInWorldUnits = 2.5f;
+        newEditorState->materialProps[0].slopeStart = 0.0f;
+        newEditorState->materialProps[0].slopeEnd = 0.0f;
+        newEditorState->materialProps[0].altitudeStart = 0.0f;
+        newEditorState->materialProps[0].altitudeEnd = 0.0f;
+        newEditorState->materialProps[1].textureSizeInWorldUnits = 13.0f;
+        newEditorState->materialProps[1].slopeStart = 0.6f;
+        newEditorState->materialProps[1].slopeEnd = 0.8f;
+        newEditorState->materialProps[1].altitudeStart = 0;
+        newEditorState->materialProps[1].altitudeEnd = 0.001f;
+        newEditorState->materialProps[2].textureSizeInWorldUnits = 2.0f;
+        newEditorState->materialProps[2].slopeStart = 0.8f;
+        newEditorState->materialProps[2].slopeEnd = 0.75f;
+        newEditorState->materialProps[2].altitudeStart = 0.25f;
+        newEditorState->materialProps[2].altitudeEnd = 0.28f;
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
         worlds = new Worlds::EditorWorlds(*ctx);
@@ -207,6 +211,45 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->heightmapStatus = HeightmapStatus::Initializing;
 
         win32FreeMemory(result.data);
+    }
+
+    void EngineInterop::SetMaterialTextureSize(int index, float value)
+    {
+        newEditorState->materialProps[index].textureSizeInWorldUnits = value;
+    }
+
+    void EngineInterop::SetMaterialSlopeStart(int index, float value)
+    {
+        newEditorState->materialProps[index].slopeStart = value;
+    }
+
+    void EngineInterop::SetMaterialSlopeEnd(int index, float value)
+    {
+        newEditorState->materialProps[index].slopeEnd = value;
+    }
+
+    void EngineInterop::SetMaterialAltitudeStart(int index, float value)
+    {
+        newEditorState->materialProps[index].altitudeStart = value;
+    }
+
+    void EngineInterop::SetMaterialAltitudeEnd(int index, float value)
+    {
+        newEditorState->materialProps[index].altitudeEnd = value;
+    }
+
+    MaterialProps EngineInterop::GetMaterialProperties(int index)
+    {
+        MaterialProperties *state = &newEditorState->materialProps[index];
+
+        MaterialProps result = {};
+        result.textureSizeInWorldUnits = state->textureSizeInWorldUnits;
+        result.slopeStart = state->slopeStart;
+        result.slopeEnd = state->slopeEnd;
+        result.altitudeStart = state->altitudeStart;
+        result.altitudeEnd = state->altitudeEnd;
+
+        return result;
     }
 
     void EngineInterop::Shutdown()

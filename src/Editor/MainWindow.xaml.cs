@@ -117,56 +117,32 @@ namespace Terrain.Editor
         private void materialTextureSizeSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
-            if (!isUiInitialized) return;
+            if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
 
             float value = (float)materialTextureSizeSlider.Value;
-            switch (lbMaterials.SelectedIndex)
-            {
-                case 0:
-                    EngineInterop.State.Material1TextureSize = value;
-                    break;
-                case 1:
-                    EngineInterop.State.Material2TextureSize = value;
-                    break;
-                case 2:
-                    EngineInterop.State.Material3TextureSize = value;
-                    break;
-            }
+            EngineInterop.SetMaterialTextureSize(lbMaterials.SelectedIndex, value);
         }
 
         private void materialRampParamsSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
-            if (!isUiInitialized) return;
-
-            RampParamsProxy ramp = null;
-            switch (lbMaterials.SelectedIndex)
-            {
-                case 1:
-                    ramp = EngineInterop.State.Material2RampParams;
-                    break;
-                case 2:
-                    ramp = EngineInterop.State.Material3RampParams;
-                    break;
-            }
-
-            if (ramp == null) return;
+            if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
 
             if (sender == materialSlopeStartSlider)
             {
-                ramp.SlopeStart = (float)materialSlopeStartSlider.Value;
+                EngineInterop.SetMaterialSlopeStart(lbMaterials.SelectedIndex, (float)materialSlopeStartSlider.Value);
             }
             else if (sender == materialSlopeEndSlider)
             {
-                ramp.SlopeEnd = (float)materialSlopeEndSlider.Value;
+                EngineInterop.SetMaterialSlopeEnd(lbMaterials.SelectedIndex, (float)materialSlopeEndSlider.Value);
             }
             else if (sender == materialAltitudeStartSlider)
             {
-                ramp.AltitudeStart = (float)materialAltitudeStartSlider.Value;
+                EngineInterop.SetMaterialAltitudeStart(lbMaterials.SelectedIndex, (float)materialAltitudeStartSlider.Value);
             }
             else if (sender == materialAltitudeEndSlider)
             {
-                ramp.AltitudeEnd = (float)materialAltitudeEndSlider.Value;
+                EngineInterop.SetMaterialAltitudeEnd(lbMaterials.SelectedIndex, (float)materialAltitudeEndSlider.Value);
             }
         }
 
@@ -182,7 +158,7 @@ namespace Terrain.Editor
 
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!isUiInitialized) return;
+            if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
 
             UpdateMaterialDetails(lbMaterials.SelectedIndex);
         }
@@ -232,23 +208,10 @@ namespace Terrain.Editor
 
         private void UpdateMaterialDetails(int selectedMaterialIndex)
         {
-            RampParamsProxy ramp = null;
-            switch (selectedMaterialIndex)
-            {
-                case 0:
-                    materialTextureSizeSlider.Value = EngineInterop.State.Material1TextureSize;
-                    break;
-                case 1:
-                    materialTextureSizeSlider.Value = EngineInterop.State.Material2TextureSize;
-                    ramp = EngineInterop.State.Material2RampParams;
-                    break;
-                case 2:
-                    materialTextureSizeSlider.Value = EngineInterop.State.Material3TextureSize;
-                    ramp = EngineInterop.State.Material3RampParams;
-                    break;
-            }
+            var props = EngineInterop.GetMaterialProperties(selectedMaterialIndex);
 
-            if (ramp == null)
+            materialTextureSizeSlider.Value = props.textureSizeInWorldUnits;
+            if (selectedMaterialIndex == 0)
             {
                 materialSlopeStartSlider.IsEnabled = false;
                 materialSlopeStartSlider.Opacity = 0.2;
@@ -270,19 +233,19 @@ namespace Terrain.Editor
             {
                 materialSlopeStartSlider.IsEnabled = true;
                 materialSlopeStartSlider.Opacity = 1;
-                materialSlopeStartSlider.Value = ramp.SlopeStart;
+                materialSlopeStartSlider.Value = props.slopeStart;
 
                 materialSlopeEndSlider.IsEnabled = true;
                 materialSlopeEndSlider.Opacity = 1;
-                materialSlopeEndSlider.Value = ramp.SlopeEnd;
+                materialSlopeEndSlider.Value = props.slopeEnd;
 
                 materialAltitudeStartSlider.IsEnabled = true;
                 materialAltitudeStartSlider.Opacity = 1;
-                materialAltitudeStartSlider.Value = ramp.AltitudeStart;
+                materialAltitudeStartSlider.Value = props.altitudeStart;
 
                 materialAltitudeEndSlider.IsEnabled = true;
                 materialAltitudeEndSlider.Opacity = 1;
-                materialAltitudeEndSlider.Value = ramp.AltitudeEnd;
+                materialAltitudeEndSlider.Value = props.altitudeEnd;
             }
         }
     }

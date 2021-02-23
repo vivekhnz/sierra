@@ -36,7 +36,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::mat4 cameraTransform;
         };
 
-        struct MaterialProperties
+        struct GpuMaterialProperties
         {
             glm::vec2 textureSizeInWorldUnits;
             glm::vec2 _padding;
@@ -50,7 +50,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             float brushFalloff;
             bool isBrushHighlightVisible;
 
-            MaterialProperties materialProps[MATERIAL_COUNT];
+            GpuMaterialProperties materialProps[MATERIAL_COUNT];
         };
 
         EngineContext &ctx;

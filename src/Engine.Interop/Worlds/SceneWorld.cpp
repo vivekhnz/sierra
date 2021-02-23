@@ -154,20 +154,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.brushFalloff = state.brushFalloff;
 
         // update material properties
-        worldState.materialProps[0].textureSizeInWorldUnits.x = state.mat1_textureSize;
-        worldState.materialProps[0].textureSizeInWorldUnits.y = state.mat1_textureSize;
-        worldState.materialProps[1].textureSizeInWorldUnits.x = state.mat2_textureSize;
-        worldState.materialProps[1].textureSizeInWorldUnits.y = state.mat2_textureSize;
-        worldState.materialProps[1].rampParams.x = state.mat2_rampParams.slopeStart;
-        worldState.materialProps[1].rampParams.y = state.mat2_rampParams.slopeEnd;
-        worldState.materialProps[1].rampParams.z = state.mat2_rampParams.altitudeStart;
-        worldState.materialProps[1].rampParams.w = state.mat2_rampParams.altitudeEnd;
-        worldState.materialProps[2].textureSizeInWorldUnits.x = state.mat3_textureSize;
-        worldState.materialProps[2].textureSizeInWorldUnits.y = state.mat3_textureSize;
-        worldState.materialProps[2].rampParams.x = state.mat3_rampParams.slopeStart;
-        worldState.materialProps[2].rampParams.y = state.mat3_rampParams.slopeEnd;
-        worldState.materialProps[2].rampParams.z = state.mat3_rampParams.altitudeStart;
-        worldState.materialProps[2].rampParams.w = state.mat3_rampParams.altitudeEnd;
+        for (uint32 i = 0; i < MATERIAL_COUNT; i++)
+        {
+            const MaterialProperties *stateProps = &state.materialProps[i];
+            GpuMaterialProperties *gpuProps = &worldState.materialProps[i];
+
+            gpuProps->textureSizeInWorldUnits.x = stateProps->textureSizeInWorldUnits;
+            gpuProps->textureSizeInWorldUnits.y = stateProps->textureSizeInWorldUnits;
+            gpuProps->rampParams.x = stateProps->slopeStart;
+            gpuProps->rampParams.y = stateProps->slopeEnd;
+            gpuProps->rampParams.z = stateProps->altitudeStart;
+            gpuProps->rampParams.w = stateProps->altitudeEnd;
+        }
 
         // update scene lighting
         glm::vec4 lightDir = glm::vec4(0);

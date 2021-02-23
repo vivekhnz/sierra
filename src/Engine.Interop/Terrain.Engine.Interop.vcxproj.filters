@@ -52,9 +52,6 @@
       <Filter>Proxy</Filter>
     </ClInclude>
     <ClInclude Include="EditorState.hpp" />
-    <ClInclude Include="Proxy\RampParamsProxy.hpp">
-      <Filter>Proxy</Filter>
-    </ClInclude>
     <ClInclude Include="terrain_platform_editor_win32.h" />
   </ItemGroup>
 </Project>

@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#define MATERIAL_COUNT 3
+
 namespace Terrain { namespace Engine { namespace Interop {
 public
     enum class HeightmapStatus : int
@@ -28,8 +30,10 @@ public
         LowerTerrain = 1
     };
 
-    struct RampParams
+    struct MaterialProperties
     {
+        float textureSizeInWorldUnits;
+
         float slopeStart;
         float slopeEnd;
         float altitudeStart;
@@ -45,10 +49,6 @@ public
         float brushRadius;
         float brushFalloff;
         float lightDirection;
-        float mat1_textureSize;
-        float mat2_textureSize;
-        RampParams mat2_rampParams;
-        float mat3_textureSize;
-        RampParams mat3_rampParams;
+        MaterialProperties materialProps[MATERIAL_COUNT];
     };
 }}}

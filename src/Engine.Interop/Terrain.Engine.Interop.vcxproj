@@ -73,7 +73,6 @@
     <ClInclude Include="EditorState.hpp" />
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="EditorContext.hpp" />
-    <ClInclude Include="Proxy\RampParamsProxy.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />
     <ClInclude Include="terrain_platform_editor_win32.h" />
     <ClInclude Include="ViewportContext.hpp" />
