@@ -250,16 +250,38 @@ namespace Terrain.Editor
 
             if (ramp == null)
             {
+                materialSlopeStartSlider.IsEnabled = false;
+                materialSlopeStartSlider.Opacity = 0.2;
                 materialSlopeStartSlider.Value = 0;
+
+                materialSlopeEndSlider.IsEnabled = false;
+                materialSlopeEndSlider.Opacity = 0.2;
                 materialSlopeEndSlider.Value = 0;
+
+                materialAltitudeStartSlider.IsEnabled = false;
+                materialAltitudeStartSlider.Opacity = 0.2;
                 materialAltitudeStartSlider.Value = 0;
+
+                materialAltitudeEndSlider.IsEnabled = false;
+                materialAltitudeEndSlider.Opacity = 0.2;
                 materialAltitudeEndSlider.Value = 0;
             }
             else
             {
+                materialSlopeStartSlider.IsEnabled = true;
+                materialSlopeStartSlider.Opacity = 1;
                 materialSlopeStartSlider.Value = ramp.SlopeStart;
+
+                materialSlopeEndSlider.IsEnabled = true;
+                materialSlopeEndSlider.Opacity = 1;
                 materialSlopeEndSlider.Value = ramp.SlopeEnd;
+
+                materialAltitudeStartSlider.IsEnabled = true;
+                materialAltitudeStartSlider.Opacity = 1;
                 materialAltitudeStartSlider.Value = ramp.AltitudeStart;
+
+                materialAltitudeEndSlider.IsEnabled = true;
+                materialAltitudeEndSlider.Opacity = 1;
                 materialAltitudeEndSlider.Value = ramp.AltitudeEnd;
             }
         }
