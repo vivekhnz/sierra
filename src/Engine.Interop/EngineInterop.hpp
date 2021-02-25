@@ -13,15 +13,20 @@
 typedef void(__stdcall *RenderCallbackUnmanaged)();
 
 namespace Terrain { namespace Engine { namespace Interop {
-    public
-        value struct MaterialProps
-        {
-            float textureSizeInWorldUnits;
-            float slopeStart;
-            float slopeEnd;
-            float altitudeStart;
-            float altitudeEnd;
-        };
+public
+    value struct MaterialProps
+    {
+        uint32 albedoTextureAssetId;
+        uint32 normalTextureAssetId;
+        uint32 displacementTextureAssetId;
+        uint32 aoTextureAssetId;
+        float textureSizeInWorldUnits;
+
+        float slopeStart;
+        float slopeEnd;
+        float altitudeStart;
+        float altitudeEnd;
+    };
 
 public
     ref class EngineInterop
@@ -83,7 +88,6 @@ public
         static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:
-
         static property Proxy::StateProxy^ State
         {
         public:
@@ -96,6 +100,10 @@ public
         static void InitializeEngine();
 
         static void LoadHeightmapTexture(System::String ^ path);
+        static void SetMaterialAlbedoTexture(int index, uint32 assetId);
+        static void SetMaterialNormalTexture(int index, uint32 assetId);
+        static void SetMaterialDisplacementTexture(int index, uint32 assetId);
+        static void SetMaterialAoTexture(int index, uint32 assetId);
         static void SetMaterialTextureSize(int index, float value);
         static void SetMaterialSlopeStart(int index, float value);
         static void SetMaterialSlopeEnd(int index, float value);

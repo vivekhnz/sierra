@@ -232,6 +232,7 @@ PLATFORM_ASSET_LOAD_CALLBACK(onShaderLoaded)
 
 ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
 {
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < ASSET_SHADER_COUNT);
     assert(memory->assets.size >= sizeof(AssetsState));
@@ -253,6 +254,7 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
 
 ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
 {
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER_PROGRAM);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < ASSET_SHADER_PROGRAM_COUNT);
     assert(memory->assets.size >= sizeof(AssetsState));
@@ -366,6 +368,7 @@ PLATFORM_ASSET_LOAD_CALLBACK(onTextureLoaded)
 
 TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
 {
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_TEXTURE);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < ASSET_TEXTURE_COUNT);
 

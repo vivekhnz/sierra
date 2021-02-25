@@ -2,6 +2,8 @@
 
 #include <glm/glm.hpp>
 
+#include "../Engine/terrain_platform.h"
+
 #define MATERIAL_COUNT 3
 
 namespace Terrain { namespace Engine { namespace Interop {
@@ -32,6 +34,10 @@ public
 
     struct MaterialProperties
     {
+        uint32 albedoTextureAssetId;
+        uint32 normalTextureAssetId;
+        uint32 displacementTextureAssetId;
+        uint32 aoTextureAssetId;
         float textureSizeInWorldUnits;
 
         float slopeStart;

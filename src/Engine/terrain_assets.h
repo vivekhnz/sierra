@@ -5,7 +5,7 @@
 
 enum AssetTypes
 {
-    ASSET_TYPE_SHADER,
+    ASSET_TYPE_SHADER = 1,
     ASSET_TYPE_SHADER_PROGRAM,
     ASSET_TYPE_TEXTURE
 };

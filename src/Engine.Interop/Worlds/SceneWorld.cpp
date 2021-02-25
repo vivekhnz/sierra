@@ -49,22 +49,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         aoTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_R8,
             GL_RED, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
-        groundAlbedoTextureVersion = 0;
-        rockAlbedoTextureVersion = 0;
-        snowAlbedoTextureVersion = 0;
-        groundNormalTextureVersion = 0;
-        rockNormalTextureVersion = 0;
-        snowNormalTextureVersion = 0;
-        groundDisplacementTextureVersion = 0;
-        rockDisplacementTextureVersion = 0;
-        snowDisplacementTextureVersion = 0;
-        groundAoTextureVersion = 0;
-        rockAoTextureVersion = 0;
-        snowAoTextureVersion = 0;
-
         for (uint32 i = 0; i < MATERIAL_COUNT; i++)
         {
             worldState.materialProps[i] = {};
+            worldState.albedoTextureAssetIds[i] = {};
+            worldState.normalTextureAssetIds[i] = {};
+            worldState.displacementTextureAssetIds[i] = {};
+            worldState.aoTextureAssetIds[i] = {};
+
+            albedoTextures[i] = {};
+            normalTextures[i] = {};
+            displacementTextures[i] = {};
+            aoTextures[i] = {};
         }
         materialPropsBufferHandle =
             rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
@@ -165,6 +161,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             gpuProps->rampParams.y = stateProps->slopeEnd;
             gpuProps->rampParams.z = stateProps->altitudeStart;
             gpuProps->rampParams.w = stateProps->altitudeEnd;
+
+            worldState.albedoTextureAssetIds[i] = stateProps->albedoTextureAssetId;
+            worldState.normalTextureAssetIds[i] = stateProps->normalTextureAssetId;
+            worldState.displacementTextureAssetIds[i] = stateProps->displacementTextureAssetId;
+            worldState.aoTextureAssetIds[i] = stateProps->aoTextureAssetId;
         }
 
         // update scene lighting
@@ -404,90 +405,74 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
         // get textures
-        TextureAsset *asset;
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_ALBEDO);
-        if (asset && asset->version > groundAlbedoTextureVersion)
+        for (uint32 layerIdx = 0; layerIdx < MATERIAL_COUNT; layerIdx++)
         {
-            rendererUpdateTextureArray(memory, albedoTextureArrayHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, asset->width, asset->height, 0, asset->data);
-            groundAlbedoTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_NORMAL);
-        if (asset && asset->version > groundNormalTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, normalTextureArrayHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, asset->width, asset->height, 0, asset->data);
-            groundNormalTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_DISPLACEMENT);
-        if (asset && asset->version > groundDisplacementTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
-                GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 0, asset->data);
-            groundDisplacementTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_GROUND_AO);
-        if (asset && asset->version > groundAoTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED,
-                asset->width, asset->height, 0, asset->data);
-            groundAoTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_ALBEDO);
-        if (asset && asset->version > rockAlbedoTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, albedoTextureArrayHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, asset->width, asset->height, 1, asset->data);
-            rockAlbedoTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_NORMAL);
-        if (asset && asset->version > rockNormalTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, normalTextureArrayHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, asset->width, asset->height, 1, asset->data);
-            rockNormalTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_DISPLACEMENT);
-        if (asset && asset->version > rockDisplacementTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
-                GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 1, asset->data);
-            rockDisplacementTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_ROCK_AO);
-        if (asset && asset->version > rockAoTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED,
-                asset->width, asset->height, 1, asset->data);
-            rockAoTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_ALBEDO);
-        if (asset && asset->version > snowAlbedoTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, albedoTextureArrayHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, asset->width, asset->height, 2, asset->data);
-            snowAlbedoTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_NORMAL);
-        if (asset && asset->version > snowNormalTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, normalTextureArrayHandle, GL_UNSIGNED_BYTE,
-                GL_RGB, asset->width, asset->height, 2, asset->data);
-            snowNormalTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_DISPLACEMENT);
-        if (asset && asset->version > snowDisplacementTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
-                GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, 2, asset->data);
-            snowDisplacementTextureVersion = asset->version;
-        }
-        asset = assetsGetTexture(memory, ASSET_TEXTURE_SNOW_AO);
-        if (asset && asset->version > snowAoTextureVersion)
-        {
-            rendererUpdateTextureArray(memory, aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED,
-                asset->width, asset->height, 2, asset->data);
-            snowAoTextureVersion = asset->version;
+            uint32 assetId;
+            TextureAsset *asset;
+            TextureAssetBinding *binding;
+
+            assetId = worldState.albedoTextureAssetIds[layerIdx];
+            if (assetId)
+            {
+                binding = &albedoTextures[layerIdx];
+                asset = assetsGetTexture(memory, assetId);
+                if (asset
+                    && (assetId != binding->assetId || asset->version > binding->version))
+                {
+                    rendererUpdateTextureArray(memory, albedoTextureArrayHandle,
+                        GL_UNSIGNED_BYTE, GL_RGB, asset->width, asset->height, layerIdx,
+                        asset->data);
+                    binding->assetId = assetId;
+                    binding->version = asset->version;
+                }
+            }
+
+            assetId = worldState.normalTextureAssetIds[layerIdx];
+            if (assetId)
+            {
+                binding = &normalTextures[layerIdx];
+                asset = assetsGetTexture(memory, assetId);
+                if (asset
+                    && (assetId != binding->assetId || asset->version > binding->version))
+                {
+                    rendererUpdateTextureArray(memory, normalTextureArrayHandle,
+                        GL_UNSIGNED_BYTE, GL_RGB, asset->width, asset->height, layerIdx,
+                        asset->data);
+                    binding->assetId = assetId;
+                    binding->version = asset->version;
+                }
+            }
+
+            assetId = worldState.displacementTextureAssetIds[layerIdx];
+            if (assetId)
+            {
+                binding = &displacementTextures[layerIdx];
+                asset = assetsGetTexture(memory, assetId);
+                if (asset
+                    && (assetId != binding->assetId || asset->version > binding->version))
+                {
+                    rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
+                        GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, layerIdx,
+                        asset->data);
+                    binding->assetId = assetId;
+                    binding->version = asset->version;
+                }
+            }
+
+            assetId = worldState.aoTextureAssetIds[layerIdx];
+            if (assetId)
+            {
+                binding = &aoTextures[layerIdx];
+                asset = assetsGetTexture(memory, assetId);
+                if (asset
+                    && (assetId != binding->assetId || asset->version > binding->version))
+                {
+                    rendererUpdateTextureArray(memory, aoTextureArrayHandle, GL_UNSIGNED_BYTE,
+                        GL_RED, asset->width, asset->height, layerIdx, asset->data);
+                    binding->assetId = assetId;
+                    binding->version = asset->version;
+                }
+            }
         }
 
         // get shader programs

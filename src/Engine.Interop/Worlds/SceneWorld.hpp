@@ -51,6 +51,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             bool isBrushHighlightVisible;
 
             GpuMaterialProperties materialProps[MATERIAL_COUNT];
+            uint32 albedoTextureAssetIds[MATERIAL_COUNT];
+            uint32 normalTextureAssetIds[MATERIAL_COUNT];
+            uint32 displacementTextureAssetIds[MATERIAL_COUNT];
+            uint32 aoTextureAssetIds[MATERIAL_COUNT];
+        };
+
+        struct TextureAssetBinding
+        {
+            uint32 assetId;
+            uint8 version;
         };
 
         EngineContext &ctx;
@@ -68,18 +78,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         uint32 displacementTextureArrayHandle;
         uint32 aoTextureArrayHandle;
 
-        uint8 groundAlbedoTextureVersion;
-        uint8 rockAlbedoTextureVersion;
-        uint8 snowAlbedoTextureVersion;
-        uint8 groundNormalTextureVersion;
-        uint8 rockNormalTextureVersion;
-        uint8 snowNormalTextureVersion;
-        uint8 groundDisplacementTextureVersion;
-        uint8 rockDisplacementTextureVersion;
-        uint8 snowDisplacementTextureVersion;
-        uint8 groundAoTextureVersion;
-        uint8 rockAoTextureVersion;
-        uint8 snowAoTextureVersion;
+        TextureAssetBinding albedoTextures[MATERIAL_COUNT];
+        TextureAssetBinding normalTextures[MATERIAL_COUNT];
+        TextureAssetBinding displacementTextures[MATERIAL_COUNT];
+        TextureAssetBinding aoTextures[MATERIAL_COUNT];
 
         uint32 materialPropsBufferHandle;
 

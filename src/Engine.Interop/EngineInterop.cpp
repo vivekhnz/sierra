@@ -34,21 +34,40 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->brushRadius = 128.0f;
         newEditorState->brushFalloff = 0.1f;
         newEditorState->lightDirection = 0.5f;
-        newEditorState->materialProps[0].textureSizeInWorldUnits = 2.5f;
-        newEditorState->materialProps[0].slopeStart = 0.0f;
-        newEditorState->materialProps[0].slopeEnd = 0.0f;
-        newEditorState->materialProps[0].altitudeStart = 0.0f;
-        newEditorState->materialProps[0].altitudeEnd = 0.0f;
-        newEditorState->materialProps[1].textureSizeInWorldUnits = 13.0f;
-        newEditorState->materialProps[1].slopeStart = 0.6f;
-        newEditorState->materialProps[1].slopeEnd = 0.8f;
-        newEditorState->materialProps[1].altitudeStart = 0;
-        newEditorState->materialProps[1].altitudeEnd = 0.001f;
-        newEditorState->materialProps[2].textureSizeInWorldUnits = 2.0f;
-        newEditorState->materialProps[2].slopeStart = 0.8f;
-        newEditorState->materialProps[2].slopeEnd = 0.75f;
-        newEditorState->materialProps[2].altitudeStart = 0.25f;
-        newEditorState->materialProps[2].altitudeEnd = 0.28f;
+
+        MaterialProperties *material = &newEditorState->materialProps[0];
+        material->albedoTextureAssetId = ASSET_TEXTURE_GROUND_ALBEDO;
+        material->normalTextureAssetId = ASSET_TEXTURE_GROUND_NORMAL;
+        material->displacementTextureAssetId = ASSET_TEXTURE_GROUND_DISPLACEMENT;
+        material->aoTextureAssetId = ASSET_TEXTURE_GROUND_AO;
+        material->textureSizeInWorldUnits = 2.5f;
+        material->slopeStart = 0.0f;
+        material->slopeEnd = 0.0f;
+        material->altitudeStart = 0.0f;
+        material->altitudeEnd = 0.0f;
+
+        material = &newEditorState->materialProps[1];
+        material->albedoTextureAssetId = ASSET_TEXTURE_ROCK_ALBEDO;
+        material->normalTextureAssetId = ASSET_TEXTURE_ROCK_NORMAL;
+        material->displacementTextureAssetId = ASSET_TEXTURE_ROCK_DISPLACEMENT;
+        material->aoTextureAssetId = ASSET_TEXTURE_ROCK_AO;
+        material->textureSizeInWorldUnits = 13.0f;
+        material->slopeStart = 0.6f;
+        material->slopeEnd = 0.8f;
+        material->altitudeStart = 0;
+        material->altitudeEnd = 0.001f;
+
+        material = &newEditorState->materialProps[2];
+        material->albedoTextureAssetId = ASSET_TEXTURE_SNOW_ALBEDO;
+        material->normalTextureAssetId = ASSET_TEXTURE_SNOW_NORMAL;
+        material->displacementTextureAssetId = ASSET_TEXTURE_SNOW_DISPLACEMENT;
+        material->aoTextureAssetId = ASSET_TEXTURE_SNOW_AO;
+        material->textureSizeInWorldUnits = 2.0f;
+        material->slopeStart = 0.8f;
+        material->slopeEnd = 0.75f;
+        material->altitudeStart = 0.25f;
+        material->altitudeEnd = 0.28f;
+
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
         worlds = new Worlds::EditorWorlds(*ctx);
@@ -213,6 +232,26 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32FreeMemory(result.data);
     }
 
+    void EngineInterop::SetMaterialAlbedoTexture(int index, uint32 assetId)
+    {
+        newEditorState->materialProps[index].albedoTextureAssetId = assetId;
+    }
+
+    void EngineInterop::SetMaterialNormalTexture(int index, uint32 assetId)
+    {
+        newEditorState->materialProps[index].normalTextureAssetId = assetId;
+    }
+
+    void EngineInterop::SetMaterialDisplacementTexture(int index, uint32 assetId)
+    {
+        newEditorState->materialProps[index].displacementTextureAssetId = assetId;
+    }
+
+    void EngineInterop::SetMaterialAoTexture(int index, uint32 assetId)
+    {
+        newEditorState->materialProps[index].aoTextureAssetId = assetId;
+    }
+
     void EngineInterop::SetMaterialTextureSize(int index, float value)
     {
         newEditorState->materialProps[index].textureSizeInWorldUnits = value;
@@ -243,7 +282,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         MaterialProperties *state = &newEditorState->materialProps[index];
 
         MaterialProps result = {};
+
+        result.albedoTextureAssetId = state->albedoTextureAssetId;
+        result.normalTextureAssetId = state->normalTextureAssetId;
+        result.displacementTextureAssetId = state->displacementTextureAssetId;
+        result.aoTextureAssetId = state->aoTextureAssetId;
         result.textureSizeInWorldUnits = state->textureSizeInWorldUnits;
+
         result.slopeStart = state->slopeStart;
         result.slopeEnd = state->slopeEnd;
         result.altitudeStart = state->altitudeStart;
