@@ -90,19 +90,26 @@
                         </Grid>
                     </StackPanel>
                 </Expander>
-                <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
+                <Grid>
+                    <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
                           IsExpanded="True">
-                    <ListBox x:Name="lbMaterials"
+                        <ListBox x:Name="lbMaterials"
                              SelectionChanged="OnMaterialSelectionChanged"
                              SelectedIndex="0" Background="Transparent" Foreground="#CCC"
                              FontSize="14">
-                        <ListBox.Items>
-                            <ListBoxItem Content="ground" Padding="18 2" />
-                            <ListBoxItem Content="rock" Padding="18 2" />
-                            <ListBoxItem Content="snow" Padding="18 2" />
-                        </ListBox.Items>
-                    </ListBox>
-                </Expander>
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="Padding" Value="18 2" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                        </ListBox>
+                    </Expander>
+                    <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
+                                HorizontalAlignment="Right">
+                        <Button x:Name="btnAddMaterial" Content="+" Width="27" FontSize="16"
+                                FontWeight="Bold" VerticalContentAlignment="Top" Click="btnAddMaterial_Click" />
+                    </StackPanel>
+                </Grid>
                 <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
                           IsExpanded="True">
                     <StackPanel Orientation="Vertical" Margin="12">

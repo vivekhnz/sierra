@@ -34,39 +34,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState->brushRadius = 128.0f;
         newEditorState->brushFalloff = 0.1f;
         newEditorState->lightDirection = 0.5f;
-
-        MaterialProperties *material = &newEditorState->materialProps[0];
-        material->albedoTextureAssetId = ASSET_TEXTURE_GROUND_ALBEDO;
-        material->normalTextureAssetId = ASSET_TEXTURE_GROUND_NORMAL;
-        material->displacementTextureAssetId = ASSET_TEXTURE_GROUND_DISPLACEMENT;
-        material->aoTextureAssetId = ASSET_TEXTURE_GROUND_AO;
-        material->textureSizeInWorldUnits = 2.5f;
-        material->slopeStart = 0.0f;
-        material->slopeEnd = 0.0f;
-        material->altitudeStart = 0.0f;
-        material->altitudeEnd = 0.0f;
-
-        material = &newEditorState->materialProps[1];
-        material->albedoTextureAssetId = ASSET_TEXTURE_ROCK_ALBEDO;
-        material->normalTextureAssetId = ASSET_TEXTURE_ROCK_NORMAL;
-        material->displacementTextureAssetId = ASSET_TEXTURE_ROCK_DISPLACEMENT;
-        material->aoTextureAssetId = ASSET_TEXTURE_ROCK_AO;
-        material->textureSizeInWorldUnits = 13.0f;
-        material->slopeStart = 0.6f;
-        material->slopeEnd = 0.8f;
-        material->altitudeStart = 0;
-        material->altitudeEnd = 0.001f;
-
-        material = &newEditorState->materialProps[2];
-        material->albedoTextureAssetId = ASSET_TEXTURE_SNOW_ALBEDO;
-        material->normalTextureAssetId = ASSET_TEXTURE_SNOW_NORMAL;
-        material->displacementTextureAssetId = ASSET_TEXTURE_SNOW_DISPLACEMENT;
-        material->aoTextureAssetId = ASSET_TEXTURE_SNOW_AO;
-        material->textureSizeInWorldUnits = 2.0f;
-        material->slopeStart = 0.8f;
-        material->slopeEnd = 0.75f;
-        material->altitudeStart = 0.25f;
-        material->altitudeEnd = 0.28f;
+        newEditorState->materialCount = 0;
 
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
@@ -232,53 +200,80 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32FreeMemory(result.data);
     }
 
+    void EngineInterop::AddMaterial(MaterialProps props)
+    {
+        assert(newEditorState->materialCount < MAX_MATERIAL_COUNT);
+        uint32 index = newEditorState->materialCount++;
+
+        MaterialProperties *material = &newEditorState->materialProps[index];
+        material->albedoTextureAssetId = props.albedoTextureAssetId;
+        material->normalTextureAssetId = props.normalTextureAssetId;
+        material->displacementTextureAssetId = props.displacementTextureAssetId;
+        material->aoTextureAssetId = props.aoTextureAssetId;
+        material->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
+        material->slopeStart = props.slopeStart;
+        material->slopeEnd = props.slopeEnd;
+        material->altitudeStart = props.altitudeStart;
+        material->altitudeEnd = props.altitudeEnd;
+    }
+
     void EngineInterop::SetMaterialAlbedoTexture(int index, uint32 assetId)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].albedoTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialNormalTexture(int index, uint32 assetId)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].normalTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialDisplacementTexture(int index, uint32 assetId)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].displacementTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialAoTexture(int index, uint32 assetId)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].aoTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialTextureSize(int index, float value)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].textureSizeInWorldUnits = value;
     }
 
     void EngineInterop::SetMaterialSlopeStart(int index, float value)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].slopeStart = value;
     }
 
     void EngineInterop::SetMaterialSlopeEnd(int index, float value)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].slopeEnd = value;
     }
 
     void EngineInterop::SetMaterialAltitudeStart(int index, float value)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].altitudeStart = value;
     }
 
     void EngineInterop::SetMaterialAltitudeEnd(int index, float value)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         newEditorState->materialProps[index].altitudeEnd = value;
     }
 
     MaterialProps EngineInterop::GetMaterialProperties(int index)
     {
+        assert(index < MAX_MATERIAL_COUNT);
         MaterialProperties *state = &newEditorState->materialProps[index];
 
         MaterialProps result = {};

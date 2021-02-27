@@ -9,7 +9,6 @@
 #define MAX_SCENE_VIEWS 8
 #define HEIGHTFIELD_COLUMNS 256
 #define HEIGHTFIELD_ROWS 256
-#define MATERIAL_COUNT 3
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class SceneWorld
@@ -50,11 +49,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             float brushFalloff;
             bool isBrushHighlightVisible;
 
-            GpuMaterialProperties materialProps[MATERIAL_COUNT];
-            uint32 albedoTextureAssetIds[MATERIAL_COUNT];
-            uint32 normalTextureAssetIds[MATERIAL_COUNT];
-            uint32 displacementTextureAssetIds[MATERIAL_COUNT];
-            uint32 aoTextureAssetIds[MATERIAL_COUNT];
+            uint32 materialCount;
+            GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
+            uint32 albedoTextureAssetIds[MAX_MATERIAL_COUNT];
+            uint32 normalTextureAssetIds[MAX_MATERIAL_COUNT];
+            uint32 displacementTextureAssetIds[MAX_MATERIAL_COUNT];
+            uint32 aoTextureAssetIds[MAX_MATERIAL_COUNT];
         };
 
         struct TextureAssetBinding
@@ -78,10 +78,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         uint32 displacementTextureArrayHandle;
         uint32 aoTextureArrayHandle;
 
-        TextureAssetBinding albedoTextures[MATERIAL_COUNT];
-        TextureAssetBinding normalTextures[MATERIAL_COUNT];
-        TextureAssetBinding displacementTextures[MATERIAL_COUNT];
-        TextureAssetBinding aoTextures[MATERIAL_COUNT];
+        TextureAssetBinding albedoTextures[MAX_MATERIAL_COUNT];
+        TextureAssetBinding normalTextures[MAX_MATERIAL_COUNT];
+        TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
+        TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 
         uint32 materialPropsBufferHandle;
 

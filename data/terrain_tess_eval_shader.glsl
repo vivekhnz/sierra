@@ -18,9 +18,10 @@ layout (std140, binding = 1) uniform Lighting
     bool lighting_isDisplacementMapEnabled;
 };
 
-layout(binding = 0) uniform sampler2D heightmapTexture;
+uniform int materialCount;
 uniform vec3 terrainDimensions;
 
+layout(binding = 0) uniform sampler2D heightmapTexture;
 layout(binding = 3) uniform sampler2DArray displacementTextures;
 
 struct MaterialProperties
@@ -106,7 +107,6 @@ void main()
     if (lighting_isDisplacementMapEnabled)
     {
         vec3 displacement = vec3(0);
-        int materialCount = 3;
         for (int i = 0; i < materialCount; i++)
         {
             vec2 textureSizeInWorldUnits = materialProps[i].textureSizeInWorldUnits;

@@ -39,17 +39,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
             heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
 
-        albedoTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        normalTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        albedoTextureArrayHandle =
+            rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048,
+                2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        normalTextureArrayHandle =
+            rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048,
+                2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         displacementTextureArrayHandle =
             rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048,
-                2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+                2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         aoTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_R8,
-            GL_RED, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+            GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
-        for (uint32 i = 0; i < MATERIAL_COUNT; i++)
+        worldState.materialCount = 0;
+        for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
         {
             worldState.materialProps[i] = {};
             worldState.albedoTextureAssetIds[i] = {};
@@ -150,7 +153,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.brushFalloff = state.brushFalloff;
 
         // update material properties
-        for (uint32 i = 0; i < MATERIAL_COUNT; i++)
+        worldState.materialCount = state.materialCount;
+        for (uint32 i = 0; i < worldState.materialCount; i++)
         {
             const MaterialProperties *stateProps = &state.materialProps[i];
             GpuMaterialProperties *gpuProps = &worldState.materialProps[i];
@@ -405,7 +409,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
         // get textures
-        for (uint32 layerIdx = 0; layerIdx < MATERIAL_COUNT; layerIdx++)
+        for (uint32 layerIdx = 0; layerIdx < worldState.materialCount; layerIdx++)
         {
             uint32 assetId;
             TextureAsset *asset;
@@ -535,6 +539,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
 
         // set shader uniforms
+        rendererSetShaderProgramUniformInteger(
+            memory, terrainShaderProgramHandle, "materialCount", worldState.materialCount);
         rendererSetShaderProgramUniformVector3(memory, terrainShaderProgramHandle,
             "terrainDimensions",
             glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));

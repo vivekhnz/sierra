@@ -97,15 +97,17 @@ int main()
             GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         reloadHeightmap(&ctx, &heightfield, heightmapTextureHandle, "data/heightmap.tga");
 
+#define MATERIAL_COUNT 3
+
         uint32 albedoTextureArrayHandle = rendererCreateTextureArray(&memory, GL_UNSIGNED_BYTE,
-            GL_RGBA, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+            GL_RGBA, GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         uint32 normalTextureArrayHandle = rendererCreateTextureArray(&memory, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RGB, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+            GL_RGB, GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         uint32 displacementTextureArrayHandle =
             rendererCreateTextureArray(&memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-                3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+                MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         uint32 aoTextureArrayHandle = rendererCreateTextureArray(&memory, GL_UNSIGNED_BYTE,
-            GL_R8, GL_RED, 2048, 2048, 3, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+            GL_R8, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         uint8 groundAlbedoTextureVersion = 0;
         uint8 rockAlbedoTextureVersion = 0;
@@ -127,7 +129,6 @@ int main()
         // 4. max slope (float)
         // 5. min altitude (float)
         // 6. max altitude (float)
-#define MATERIAL_COUNT 3
         float materialProps[MATERIAL_COUNT * 8];
         materialProps[0] = 2.5f;
         materialProps[1] = 2.5f;
@@ -507,7 +508,7 @@ int main()
                 rendererSetShaderProgramUniformInteger(&memory,
                     calcTessLevelShaderProgram->handle, "columnCount", heightfield.columns);
                 rendererSetShaderProgramUniformFloat(&memory,
-                    calcTessLevelShaderProgram->handle, "heightfield.maxHeight",
+                    calcTessLevelShaderProgram->handle, "terrainHeight",
                     heightfield.maxHeight);
                 rendererBindTexture(&memory, heightmapTextureHandle, 0);
                 rendererBindShaderStorageBuffer(&memory, tessLevelBufferHandle, 0);
@@ -534,6 +535,8 @@ int main()
                     "terrainDimensions",
                     glm::vec3(heightfield.spacing * heightfield.columns, heightfield.maxHeight,
                         heightfield.spacing * heightfield.rows));
+                rendererSetShaderProgramUniformInteger(
+                    &memory, terrainShaderProgram->handle, "materialCount", MATERIAL_COUNT);
                 rendererBindTexture(&memory, heightmapTextureHandle, 0);
                 rendererBindTextureArray(&memory, albedoTextureArrayHandle, 1);
                 rendererBindTextureArray(&memory, normalTextureArrayHandle, 2);

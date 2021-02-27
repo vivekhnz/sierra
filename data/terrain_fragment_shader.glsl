@@ -12,6 +12,7 @@ layout (std140, binding = 1) uniform Lighting
     bool lighting_isDisplacementMapEnabled;
 };
 
+uniform int materialCount;
 uniform vec3 terrainDimensions;
 uniform vec2 brushHighlightPos;
 uniform float brushHighlightStrength;
@@ -93,7 +94,6 @@ void main()
     float material_ao = 1;
 
     float prevLayerDisplacement = 0.0f;
-    int materialCount = 3;
     for (int i = 0; i < materialCount; i++)
     {
         vec2 textureSizeInWorldUnits = materialProps[i].textureSizeInWorldUnits;

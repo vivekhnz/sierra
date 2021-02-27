@@ -4,7 +4,7 @@
 
 #include "../Engine/terrain_platform.h"
 
-#define MATERIAL_COUNT 3
+#define MAX_MATERIAL_COUNT 8
 
 namespace Terrain { namespace Engine { namespace Interop {
 public
@@ -55,6 +55,7 @@ public
         float brushRadius;
         float brushFalloff;
         float lightDirection;
-        MaterialProperties materialProps[MATERIAL_COUNT];
+        uint32 materialCount;
+        MaterialProperties materialProps[MAX_MATERIAL_COUNT];
     };
 }}}
