@@ -166,6 +166,44 @@ namespace Terrain.Editor
             lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
         }
 
+        private void btnDeleteMaterial_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedMaterialIndex = lbMaterials.SelectedIndex;
+            if (selectedMaterialIndex < 0) return;
+
+            EngineInterop.DeleteMaterial(selectedMaterialIndex);
+            lbMaterials.Items.RemoveAt(selectedMaterialIndex);
+
+            if (lbMaterials.Items.Count > 0)
+            {
+                lbMaterials.SelectedIndex = selectedMaterialIndex;
+            }
+        }
+
+        private void btnMoveMaterialUp_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedMaterialIndex = lbMaterials.SelectedIndex;
+            if (selectedMaterialIndex < 0) return;
+
+            EngineInterop.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex - 1);
+            var temp = lbMaterials.Items[selectedMaterialIndex];
+            lbMaterials.Items[selectedMaterialIndex] = lbMaterials.Items[selectedMaterialIndex - 1];
+            lbMaterials.Items[selectedMaterialIndex - 1] = temp;
+            lbMaterials.SelectedIndex = selectedMaterialIndex - 1;
+        }
+
+        private void btnMoveMaterialDown_Click(object sender, RoutedEventArgs e)
+        {
+            int selectedMaterialIndex = lbMaterials.SelectedIndex;
+            if (selectedMaterialIndex < 0) return;
+
+            EngineInterop.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex + 1);
+            var temp = lbMaterials.Items[selectedMaterialIndex];
+            lbMaterials.Items[selectedMaterialIndex] = lbMaterials.Items[selectedMaterialIndex + 1];
+            lbMaterials.Items[selectedMaterialIndex + 1] = temp;
+            lbMaterials.SelectedIndex = selectedMaterialIndex + 1;
+        }
+
         private void materialTextureSizeSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
@@ -281,47 +319,52 @@ namespace Terrain.Editor
         {
             var props = EngineInterop.GetMaterialProperties(selectedMaterialIndex);
 
+            bool isFirstMaterial = selectedMaterialIndex == 0;
+            bool isLastMaterial = selectedMaterialIndex == lbMaterials.Items.Count - 1;
+
+            btnMoveMaterialUp.IsEnabled = !isFirstMaterial;
+            btnMoveMaterialUp.Opacity = btnMoveMaterialUp.IsEnabled ? 1 : 0.2;
+            btnMoveMaterialDown.IsEnabled = !isLastMaterial;
+            btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
+
             cbMaterialAlbedoTexture.SelectedItem = textureAssetIdToFilename[props.albedoTextureAssetId];
             cbMaterialNormalTexture.SelectedItem = textureAssetIdToFilename[props.normalTextureAssetId];
             cbMaterialDisplacementTexture.SelectedItem = textureAssetIdToFilename[props.displacementTextureAssetId];
             cbMaterialAoTexture.SelectedItem = textureAssetIdToFilename[props.aoTextureAssetId];
             materialTextureSizeSlider.Value = props.textureSizeInWorldUnits;
 
+            materialSlopeStartSlider.Value = props.slopeStart;
+            materialSlopeEndSlider.Value = props.slopeEnd;
+            materialAltitudeStartSlider.Value = props.altitudeStart;
+            materialAltitudeEndSlider.Value = props.altitudeEnd;
+
             if (selectedMaterialIndex == 0)
             {
                 materialSlopeStartSlider.IsEnabled = false;
                 materialSlopeStartSlider.Opacity = 0.2;
-                materialSlopeStartSlider.Value = 0;
 
                 materialSlopeEndSlider.IsEnabled = false;
                 materialSlopeEndSlider.Opacity = 0.2;
-                materialSlopeEndSlider.Value = 0;
 
                 materialAltitudeStartSlider.IsEnabled = false;
                 materialAltitudeStartSlider.Opacity = 0.2;
-                materialAltitudeStartSlider.Value = 0;
 
                 materialAltitudeEndSlider.IsEnabled = false;
                 materialAltitudeEndSlider.Opacity = 0.2;
-                materialAltitudeEndSlider.Value = 0;
             }
             else
             {
                 materialSlopeStartSlider.IsEnabled = true;
                 materialSlopeStartSlider.Opacity = 1;
-                materialSlopeStartSlider.Value = props.slopeStart;
 
                 materialSlopeEndSlider.IsEnabled = true;
                 materialSlopeEndSlider.Opacity = 1;
-                materialSlopeEndSlider.Value = props.slopeEnd;
 
                 materialAltitudeStartSlider.IsEnabled = true;
                 materialAltitudeStartSlider.Opacity = 1;
-                materialAltitudeStartSlider.Value = props.altitudeStart;
 
                 materialAltitudeEndSlider.IsEnabled = true;
                 materialAltitudeEndSlider.Opacity = 1;
-                materialAltitudeEndSlider.Value = props.altitudeEnd;
             }
         }
     }

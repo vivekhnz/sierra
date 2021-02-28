@@ -93,16 +93,37 @@
                 <Grid>
                     <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
                           IsExpanded="True">
-                        <ListBox x:Name="lbMaterials"
-                             SelectionChanged="OnMaterialSelectionChanged"
-                             SelectedIndex="0" Background="Transparent" Foreground="#CCC"
-                             FontSize="14">
-                            <ListBox.ItemContainerStyle>
-                                <Style TargetType="ListBoxItem">
-                                    <Setter Property="Padding" Value="18 2" />
-                                </Style>
-                            </ListBox.ItemContainerStyle>
-                        </ListBox>
+                        <Grid Margin="0 0 0 8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="24" />
+                            </Grid.RowDefinitions>
+                            <ListBox x:Name="lbMaterials"
+                                     SelectionChanged="OnMaterialSelectionChanged"
+                                     SelectedIndex="0" Background="Transparent"
+                                     Foreground="#CCC" FontSize="14"
+                                     Grid.ColumnSpan="3" Margin="0 0 0 8">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="Padding" Value="18 2" />
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                            </ListBox>
+                            <Button x:Name="btnDeleteMaterial" Content="Delete"
+                                    Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
+                                    Click="btnDeleteMaterial_Click" />
+                            <Button x:Name="btnMoveMaterialUp" Content="Move Up"
+                                    Grid.Column="1" Grid.Row="1" Margin="12 0"
+                                    Click="btnMoveMaterialUp_Click" />
+                            <Button x:Name="btnMoveMaterialDown" Content="Move Down"
+                                    Grid.Column="2" Grid.Row="1" Margin="0 0 12 0"
+                                    Click="btnMoveMaterialDown_Click" />
+                        </Grid>
                     </Expander>
                     <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
                                 HorizontalAlignment="Right">

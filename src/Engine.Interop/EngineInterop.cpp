@@ -217,6 +217,27 @@ namespace Terrain { namespace Engine { namespace Interop {
         material->altitudeEnd = props.altitudeEnd;
     }
 
+    void EngineInterop::DeleteMaterial(int index)
+    {
+        assert(index < MAX_MATERIAL_COUNT);
+
+        newEditorState->materialCount--;
+        for (uint32 i = index; i < newEditorState->materialCount; i++)
+        {
+            newEditorState->materialProps[i] = newEditorState->materialProps[i + 1];
+        }
+    }
+
+    void EngineInterop::SwapMaterial(int indexA, int indexB)
+    {
+        assert(indexA < MAX_MATERIAL_COUNT);
+        assert(indexB < MAX_MATERIAL_COUNT);
+
+        MaterialProperties temp = newEditorState->materialProps[indexA];
+        newEditorState->materialProps[indexA] = newEditorState->materialProps[indexB];
+        newEditorState->materialProps[indexB] = temp;
+    }
+
     void EngineInterop::SetMaterialAlbedoTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);

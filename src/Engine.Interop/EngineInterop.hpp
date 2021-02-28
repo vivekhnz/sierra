@@ -101,6 +101,8 @@ public
 
         static void LoadHeightmapTexture(System::String ^ path);
         static void AddMaterial(MaterialProps props);
+        static void DeleteMaterial(int index);
+        static void SwapMaterial(int indexA, int indexB);
         static void SetMaterialAlbedoTexture(int index, uint32 assetId);
         static void SetMaterialNormalTexture(int index, uint32 assetId);
         static void SetMaterialDisplacementTexture(int index, uint32 assetId);
