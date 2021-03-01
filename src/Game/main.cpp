@@ -511,6 +511,7 @@ int main()
                     calcTessLevelShaderProgram->handle, "terrainHeight",
                     heightfield.maxHeight);
                 rendererBindTexture(&memory, heightmapTextureHandle, 0);
+                rendererBindTexture(&memory, heightmapTextureHandle, 5);
                 rendererBindShaderStorageBuffer(&memory, tessLevelBufferHandle, 0);
                 rendererBindShaderStorageBuffer(&memory, meshVertexBufferHandle, 1);
                 rendererUseShaderProgram(&memory, calcTessLevelShaderProgram->handle);
@@ -542,8 +543,9 @@ int main()
                 rendererBindTextureArray(&memory, normalTextureArrayHandle, 2);
                 rendererBindTextureArray(&memory, displacementTextureArrayHandle, 3);
                 rendererBindTextureArray(&memory, aoTextureArrayHandle, 4);
+                rendererBindTexture(&memory, heightmapTextureHandle, 5);
                 rendererBindVertexArray(&memory, meshVertexArrayHandle);
-                rendererDrawElementsInstanced(primitiveType, elementCount, 1);
+                rendererDrawElements(primitiveType, elementCount);
             }
 
             appCtx.render();

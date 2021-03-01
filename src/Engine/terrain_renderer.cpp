@@ -551,10 +551,16 @@ void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFactor)
     glBlendFunc(srcFactor, dstFactor);
 }
 
-void rendererDrawElementsInstanced(
-    uint32 primitiveType, uint32 elementCount, uint32 instanceCount)
+void rendererDrawElements(uint32 primitiveType, uint32 elementCount)
 {
-    glDrawElementsInstanced(primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount);
+    glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
+}
+
+void rendererDrawElementsInstanced(
+    uint32 primitiveType, uint32 elementCount, uint32 instanceCount, uint32 instanceOffset)
+{
+    glDrawElementsInstancedBaseInstance(
+        primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount, instanceOffset);
 }
 
 void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount)

@@ -68,6 +68,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // setup worlds
         setupWorkingWorld();
         setupStagingWorld();
+        setupPreviewWorld();
     }
 
     void HeightmapCompositionWorld::setupWorkingWorld()
@@ -158,23 +159,39 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererCreateFramebuffer(ctx.memory, staging.renderTextureHandle);
     }
 
+    void HeightmapCompositionWorld::setupPreviewWorld()
+    {
+        /*
+        The preview world is a quad textured with the framebuffer of the working world as well
+        as a single brush instance quad at the current mouse position to preview the result of
+        the current operation
+        */
+
+        // create framebuffer
+        preview.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        preview.framebufferHandle =
+            rendererCreateFramebuffer(ctx.memory, preview.renderTextureHandle);
+    }
+
     void HeightmapCompositionWorld::update(
         float deltaTime, const EditorState &state, EditorState &newState)
     {
+        // the last brush instance is reserved for previewing the result of the current
+        // operation
+#define MAX_ALLOWED_BRUSH_INSTANCES (WorkingWorld::MAX_BRUSH_QUADS - 1)
+
         if (state.heightmapStatus != HeightmapStatus::Editing)
         {
             // don't draw any brush instances if we are not editing the heightmap
             working.brushInstanceCount = 0;
         }
-        else if (working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
+        else if (working.brushInstanceCount < MAX_ALLOWED_BRUSH_INSTANCES - 1)
         {
             int idx = working.brushInstanceCount * 2;
-            bool wasInstanceAdded = false;
-
             if (working.brushInstanceCount == 0)
             {
                 addBrushInstance(state.currentBrushPos);
-                wasInstanceAdded = true;
             }
             else
             {
@@ -189,29 +206,29 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
                 const float BRUSH_INSTANCE_SPACING = 0.005f;
                 while (distance > BRUSH_INSTANCE_SPACING
-                    && working.brushInstanceCount < WorkingWorld::MAX_BRUSH_QUADS - 1)
+                    && working.brushInstanceCount < MAX_ALLOWED_BRUSH_INSTANCES - 1)
                 {
                     prevInstancePos += direction * BRUSH_INSTANCE_SPACING;
                     addBrushInstance(prevInstancePos);
-                    wasInstanceAdded = true;
-
                     distance -= BRUSH_INSTANCE_SPACING;
                 }
             }
-
-            // update brush quad instance buffer
-            if (wasInstanceAdded)
-            {
-                rendererUpdateBuffer(ctx.memory, working.brushQuadInstanceBufferHandle,
-                    WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-                    working.brushQuadInstanceBufferData);
-            }
         }
+
+        // update preview brush quad instance
+        uint32 previewQuadIdx = MAX_ALLOWED_BRUSH_INSTANCES * 2;
+        working.brushQuadInstanceBufferData[previewQuadIdx] = state.currentBrushPos.x;
+        working.brushQuadInstanceBufferData[previewQuadIdx + 1] = state.currentBrushPos.y;
+
+        // update brush quad instance buffer
+        rendererUpdateBuffer(ctx.memory, working.brushQuadInstanceBufferHandle,
+            WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+            working.brushQuadInstanceBufferData);
     }
 
     void HeightmapCompositionWorld::addBrushInstance(glm::vec2 pos)
     {
-        int idx = working.brushInstanceCount * 2;
+        uint32 idx = working.brushInstanceCount * 2;
         working.brushQuadInstanceBufferData[idx] = pos.x;
         working.brushQuadInstanceBufferData[idx + 1] = pos.y;
         working.brushInstanceCount++;
@@ -220,14 +237,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void HeightmapCompositionWorld::compositeHeightmap(
         const EditorState &state, EditorState &newState)
     {
-        if (state.heightmapStatus == HeightmapStatus::Idle)
-            return;
-
         ShaderProgramAsset *quadShaderProgram =
             assetsGetShaderProgram(ctx.memory, ASSET_SHADER_PROGRAM_QUAD);
         ShaderProgramAsset *brushShaderProgram =
             assetsGetShaderProgram(ctx.memory, ASSET_SHADER_PROGRAM_BRUSH);
-
         if (!quadShaderProgram || !brushShaderProgram)
             return;
 
@@ -245,7 +258,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             rendererBindTexture(ctx.memory, working.renderTextureHandle, 0);
             rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
-            rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
+            rendererDrawElements(GL_TRIANGLES, 6);
 
             rendererUnbindFramebuffer(ctx.memory, staging.framebufferHandle);
         }
@@ -256,18 +269,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             working.baseHeightmapTextureHandle = working.importedHeightmapTextureHandle;
             newState.heightmapStatus = HeightmapStatus::Committing;
         }
-
-        // render working world
-        rendererBindFramebuffer(ctx.memory, working.framebufferHandle);
-        rendererSetViewportSize(2048, 2048);
-        rendererClearBackBuffer(0, 0, 0, 1);
-
-        rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
-        rendererSetPolygonMode(GL_FILL);
-        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        rendererBindTexture(ctx.memory, working.baseHeightmapTextureHandle, 0);
-        rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
-        rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
 
         uint32 brushBlendEquation = GL_FUNC_ADD;
         switch (state.tool)
@@ -280,14 +281,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             break;
         }
 
-        rendererUseShaderProgram(ctx.memory, brushShaderProgram->handle);
-        rendererSetPolygonMode(GL_FILL);
-        rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
-        rendererSetShaderProgramUniformFloat(
-            ctx.memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
-        rendererSetShaderProgramUniformFloat(
-            ctx.memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
-
         /*
          * Because the spacing between brush instances is constant, higher radius brushes will
          * result in more brush instances being drawn, meaning the terrain will be influenced
@@ -295,13 +288,61 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
          * increases to ensure the perceived brush strength remains constant.
          */
         float brushStrength = 0.028f / pow(state.brushRadius, 0.5f);
+
+        if (state.heightmapStatus != HeightmapStatus::Idle)
+        {
+            // render working world
+            rendererBindFramebuffer(ctx.memory, working.framebufferHandle);
+            rendererSetViewportSize(2048, 2048);
+            rendererClearBackBuffer(0, 0, 0, 1);
+
+            rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+            rendererSetPolygonMode(GL_FILL);
+            rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            rendererBindTexture(ctx.memory, working.baseHeightmapTextureHandle, 0);
+            rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+            rendererDrawElements(GL_TRIANGLES, 6);
+
+            rendererUseShaderProgram(ctx.memory, brushShaderProgram->handle);
+            rendererSetPolygonMode(GL_FILL);
+            rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
+            rendererSetShaderProgramUniformFloat(ctx.memory, brushShaderProgram->handle,
+                "brushScale", state.brushRadius / 2048.0f);
+            rendererSetShaderProgramUniformFloat(
+                ctx.memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+            rendererSetShaderProgramUniformFloat(
+                ctx.memory, brushShaderProgram->handle, "brushStrength", brushStrength);
+            rendererBindVertexArray(ctx.memory, working.brushQuadVertexArrayHandle);
+            rendererDrawElementsInstanced(GL_TRIANGLES, 6, working.brushInstanceCount, 0);
+
+            rendererUnbindFramebuffer(ctx.memory, working.framebufferHandle);
+        }
+
+        // render preview world
+        rendererBindFramebuffer(ctx.memory, preview.framebufferHandle);
+        rendererSetViewportSize(2048, 2048);
+        rendererClearBackBuffer(0, 0, 0, 1);
+
+        rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        rendererBindTexture(ctx.memory, working.renderTextureHandle, 0);
+        rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+        rendererDrawElements(GL_TRIANGLES, 6);
+
+        rendererUseShaderProgram(ctx.memory, brushShaderProgram->handle);
+        rendererSetPolygonMode(GL_FILL);
+        rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
+        rendererSetShaderProgramUniformFloat(
+            ctx.memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
+        rendererSetShaderProgramUniformFloat(
+            ctx.memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
         rendererSetShaderProgramUniformFloat(
             ctx.memory, brushShaderProgram->handle, "brushStrength", brushStrength);
-
         rendererBindVertexArray(ctx.memory, working.brushQuadVertexArrayHandle);
-        rendererDrawElementsInstanced(GL_TRIANGLES, 6, working.brushInstanceCount);
+        rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1, WorkingWorld::MAX_BRUSH_QUADS - 1);
 
-        rendererUnbindFramebuffer(ctx.memory, working.framebufferHandle);
+        rendererUnbindFramebuffer(ctx.memory, preview.framebufferHandle);
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {

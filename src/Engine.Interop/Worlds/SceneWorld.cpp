@@ -14,7 +14,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         free(heightmapTextureDataTempBuffer);
     }
 
-    void SceneWorld::initialize(uint32 heightmapTextureHandle)
+    void SceneWorld::initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle)
     {
         heightfield = {};
         heightfield.columns = HEIGHTFIELD_COLUMNS;
@@ -25,6 +25,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         heightfield.heights = heightfieldHeights;
 
         this->heightmapTextureHandle = heightmapTextureHandle;
+        this->previewTextureHandle = previewTextureHandle;
 
         // create entity and components
         int entityId = ctx.entities.create();
@@ -504,6 +505,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetShaderProgramUniformFloat(
             memory, calcTessLevelShaderProgramHandle, "terrainHeight", terrainHeight);
         rendererBindTexture(memory, heightmapTextureHandle, 0);
+        rendererBindTexture(memory, previewTextureHandle, 5);
 
         int meshEdgeCount =
             (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
@@ -530,6 +532,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindTextureArray(memory, normalTextureArrayHandle, 2);
         rendererBindTextureArray(memory, displacementTextureArrayHandle, 3);
         rendererBindTextureArray(memory, aoTextureArrayHandle, 4);
+        rendererBindTexture(memory, previewTextureHandle, 5);
         rendererBindShaderStorageBuffer(memory, materialPropsBufferHandle, 1);
 
         // bind mesh data
@@ -545,7 +548,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             "terrainDimensions",
             glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));
         rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
-            "brushHighlightStrength", worldState.isBrushHighlightVisible ? 0.4f : 0.0f);
+            "brushHighlightStrength", worldState.isBrushHighlightVisible ? 1 : 0);
         rendererSetShaderProgramUniformVector2(
             memory, terrainShaderProgramHandle, "brushHighlightPos", worldState.brushPos);
         rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
@@ -554,6 +557,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             "brushHighlightFalloff", worldState.brushFalloff);
 
         // draw mesh
-        rendererDrawElementsInstanced(primitiveType, elementCount, 1);
+        rendererDrawElements(primitiveType, elementCount);
     }
 }}}}

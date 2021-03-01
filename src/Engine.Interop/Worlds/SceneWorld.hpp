@@ -70,6 +70,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
 
         uint32 heightmapTextureHandle;
+        uint32 previewTextureHandle;
         int meshHandle;
         uint32 tessellationLevelBufferHandle;
 
@@ -101,7 +102,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         SceneWorld(EngineContext &ctx);
         ~SceneWorld();
 
-        void initialize(uint32 heightmapTextureHandle);
+        void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);
         void linkViewport(ViewportContext &vctx);
         void update(float deltaTime, const EditorState &state, EditorState &newState);
         void render(

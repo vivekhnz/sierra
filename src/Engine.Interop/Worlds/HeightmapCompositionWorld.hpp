@@ -37,8 +37,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int framebufferHandle;
         } staging;
 
+        struct PreviewWorld
+        {
+            uint32 renderTextureHandle;
+            int framebufferHandle;
+        } preview;
+
         void setupWorkingWorld();
         void setupStagingWorld();
+        void setupPreviewWorld();
         void addBrushInstance(glm::vec2 pos);
 
     public:
@@ -52,6 +59,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         uint32 getCompositedTextureHandle() const
         {
             return working.renderTextureHandle;
+        }
+        uint32 getPreviewTextureHandle() const
+        {
+            return preview.renderTextureHandle;
         }
     };
 }}}}

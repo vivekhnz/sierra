@@ -1,6 +1,7 @@
 #version 430 core
 layout(location = 0) in vec3 vertexNormal;
 layout(location = 1) in vec3 texcoord;
+layout(location = 2) in vec2 heights;
 
 layout (std140, binding = 1) uniform Lighting
 {
@@ -37,23 +38,9 @@ layout(std430, binding = 1) buffer materialPropsBuffer
 
 out vec4 FragColor;
 
-vec3 calcBrushHighlight()
+float calcRingOpacity(float radius, float width, float distFromCenter)
 {
-    float highlightRadius = brushHighlightRadius * 0.5f;
-    vec2 normalizedUV = texcoord.xz / terrainDimensions.xz;
-    float distFromHighlight = distance(normalizedUV, brushHighlightPos);
-    
-    // outline thickness is based on depth
-    float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);
-    float outlineIntensity =
-        max(1 - abs((((distFromHighlight - highlightRadius) / outlineWidth) * 2) - 1), 0);
-    float influenceAreaIntensity = (
-        (distFromHighlight / highlightRadius) - brushHighlightFalloff)
-        / (1 - brushHighlightFalloff);
-    influenceAreaIntensity = 1 - clamp(influenceAreaIntensity, 0, 1);
-
-    float highlightIntensity = influenceAreaIntensity + outlineIntensity;
-    return vec3(0.0f, 1.0f, 0.25f) * highlightIntensity;
+    return max(1 - abs((((distFromCenter - radius) / width) * 2) - 1), 0);
 }
 
 vec3 calcTriplanarBlend(vec3 normal)
@@ -77,6 +64,9 @@ vec3 triplanar3D(vec3 xVal, vec3 yVal, vec3 zVal, vec3 blend)
 
 void main()
 {
+    float actualHeight = heights.x;
+    float previewHeight = heights.y;
+
     float altitude = texcoord.y / -terrainDimensions.y;
     float slope = 1 - vertexNormal.y;
 
@@ -158,9 +148,26 @@ void main()
     float lightingAmplitude = lighting_isEnabled
         ? ambientLight + pow(0.5 + (nDotL * 0.5), 2)
         : 1.0f;
-
-    // calculate final fragment color
     vec3 terrainColor = material_albedo * lightingAmplitude * mix(0.6, 1.0, material_ao);
-    vec3 brushHighlight = calcBrushHighlight();
-    FragColor = vec4(terrainColor + (brushHighlight * brushHighlightStrength), 1.0f);
+    
+    float outerRadius = brushHighlightRadius * 0.5f;
+    float innerRadius = outerRadius * brushHighlightFalloff;
+    
+    vec2 normalizedUV = texcoord.xz / terrainDimensions.xz;
+    float distFromCenter = distance(normalizedUV, brushHighlightPos);
+    
+    // outline thickness is based on depth
+    float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);
+    float outlineIntensity = 0;
+    outlineIntensity += calcRingOpacity(outerRadius, outlineWidth, distFromCenter);
+    outlineIntensity += calcRingOpacity(innerRadius, outlineWidth, distFromCenter);
+    
+    float heightDelta = previewHeight - actualHeight;
+    vec3 highlightColor = heightDelta > 0 ? vec3(0, 1, 0.25f) : vec3(1, 0, 0.1f);
+    
+    float highlightIntensity = min(abs(heightDelta) / 0.001f, 1) * 0.25;
+    highlightIntensity += outlineIntensity * 0.75;
+    highlightIntensity *= brushHighlightStrength;
+
+    FragColor = vec4(terrainColor + (highlightColor * highlightIntensity), 1);
 }

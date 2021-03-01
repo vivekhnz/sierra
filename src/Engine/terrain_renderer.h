@@ -109,8 +109,9 @@ EXPORT void rendererSetViewportSize(uint32 width, uint32 height);
 EXPORT void rendererClearBackBuffer(float r, float g, float b, float a);
 EXPORT void rendererSetPolygonMode(uint32 polygonMode);
 EXPORT void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFactor);
+EXPORT void rendererDrawElements(uint32 primitiveType, uint32 elementCount);
 EXPORT void rendererDrawElementsInstanced(
-    uint32 primitiveType, uint32 elementCount, uint32 instanceCount);
+    uint32 primitiveType, uint32 elementCount, uint32 instanceCount, uint32 instanceOffset);
 
 EXPORT void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount);
 EXPORT void rendererShaderStorageMemoryBarrier();

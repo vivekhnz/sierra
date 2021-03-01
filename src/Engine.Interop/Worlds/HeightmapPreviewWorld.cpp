@@ -68,6 +68,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         rendererBindTexture(memory, heightmapTextureHandle, 0);
         rendererBindVertexArray(memory, vertexArrayHandle);
-        rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1);
+        rendererDrawElements(GL_TRIANGLES, 6);
     }
 }}}}
