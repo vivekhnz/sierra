@@ -64,6 +64,19 @@ public
             }
         }
 
+        property float BrushStrength
+        {
+            float get()
+            {
+                return state.brushStrength;
+            }
+
+            void set(float value)
+            {
+                state.brushStrength = value;
+            }
+        }
+
         property float LightDirection
         {
             float get()

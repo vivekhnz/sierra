@@ -58,7 +58,7 @@
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                         <TextBlock Text="Brush Falloff" Foreground="#888" Margin="0 0 0 8" />
-                        <Grid>
+                        <Grid Margin="0 0 0 8">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
@@ -68,6 +68,19 @@
                                     IsSnapToTickEnabled="True"
                                     ValueChanged="brushFalloffSlider_ValueChanged" />
                             <TextBlock Text="{Binding ElementName=brushFalloffSlider, Path=Value}"
+                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                        </Grid>
+                        <TextBlock Text="Brush Strength" Foreground="#888" Margin="0 0 0 8" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
+                            <Slider x:Name="brushStrengthSlider" Minimum="0.01" Maximum="1" Value="0.12"
+                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                                    IsSnapToTickEnabled="True"
+                                    ValueChanged="brushStrengthSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=brushStrengthSlider, Path=Value}"
                                        Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                         </Grid>
                     </StackPanel>

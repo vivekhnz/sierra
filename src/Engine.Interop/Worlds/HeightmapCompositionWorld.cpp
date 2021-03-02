@@ -287,7 +287,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
          * more. As a result, we should decrease the brush strength as the brush radius
          * increases to ensure the perceived brush strength remains constant.
          */
-        float brushStrength = 0.028f / pow(state.brushRadius, 0.5f);
+        float brushStrength = 0.01f + (0.15f * state.brushStrength);
+        brushStrength /= pow(state.brushRadius, 0.5f);
 
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {

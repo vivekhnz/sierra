@@ -157,7 +157,7 @@ void main()
     float distFromCenter = distance(normalizedUV, brushHighlightPos);
     
     // outline thickness is based on depth
-    float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.003), 0.0005);
+    float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.002), 0.0005);
     float outlineIntensity = 0;
     outlineIntensity += calcRingOpacity(outerRadius, outlineWidth, distFromCenter);
     outlineIntensity += calcRingOpacity(innerRadius, outlineWidth, distFromCenter);

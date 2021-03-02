@@ -33,6 +33,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         newEditorState = new EditorState();
         newEditorState->brushRadius = 128.0f;
         newEditorState->brushFalloff = 0.1f;
+        newEditorState->brushStrength = 0.12f;
         newEditorState->lightDirection = 0.5f;
         newEditorState->materialCount = 0;
 

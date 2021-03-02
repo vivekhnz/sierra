@@ -143,6 +143,12 @@ namespace Terrain.Editor
             EngineInterop.State.BrushFalloff = (float)brushFalloffSlider.Value;
         }
 
+        private void brushStrengthSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            EngineInterop.State.BrushStrength = (float)brushStrengthSlider.Value;
+        }
+
         private void lightDirectionSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {

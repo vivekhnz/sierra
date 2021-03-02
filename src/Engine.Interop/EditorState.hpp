@@ -54,6 +54,7 @@ public
         glm::vec2 currentBrushPos;
         float brushRadius;
         float brushFalloff;
+        float brushStrength;
         float lightDirection;
         uint32 materialCount;
         MaterialProperties materialProps[MAX_MATERIAL_COUNT];
