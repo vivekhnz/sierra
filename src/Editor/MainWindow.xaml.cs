@@ -298,6 +298,10 @@ namespace Terrain.Editor
             {
                 brushFalloffSlider.Value = EngineInterop.State.BrushFalloff;
             }
+            if (brushStrengthSlider.Value != EngineInterop.State.BrushStrength)
+            {
+                brushStrengthSlider.Value = EngineInterop.State.BrushStrength;
+            }
 
             foreach (var kvp in editorToolByToolButtons)
             {

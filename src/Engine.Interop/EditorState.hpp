@@ -22,7 +22,8 @@ public
         MoveCamera = 0,
         ModifyBrushRadius = 1,
         ModifyBrushFalloff = 2,
-        PaintBrushStroke = 3
+        ModifyBrushStrength = 3,
+        PaintBrushStroke = 4
     };
 
 public

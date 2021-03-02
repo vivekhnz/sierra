@@ -146,6 +146,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             newState.brushFalloff =
                 glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
         }
+        else if (operation.mode == InteractionMode::ModifyBrushStrength)
+        {
+            ctx.input.captureMouse(true);
+            newState.brushStrength =
+                glm::clamp(state.brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
+        }
 
         // update brush highlight
         worldState.brushPos = operation.brushPosition;
@@ -241,28 +247,30 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 || ctx.input.isMouseButtonDown(
                     viewState->inputControllerId, IO::MouseButton::Right))
             {
-                return {
-                    InteractionMode::MoveCamera, // mode
-                    tool,                        // tool
-                    false,                       // isBrushActive
-                    false,                       // isDiscardingStroke
-                    glm::vec2(),                 // brushPosition
-                    0.0f,                        // brushRadiusIncrease
-                    0.0f                         // brushFalloffIncrease
-                };
+                OperationState op = {};
+                op.mode = InteractionMode::MoveCamera;
+                op.tool = tool;
+                op.isBrushActive = false;
+                op.isDiscardingStroke = false;
+                op.brushPosition = glm::vec2();
+                op.brushRadiusIncrease = 0.0f;
+                op.brushFalloffIncrease = 0.0f;
+                op.brushStrengthIncrease = 0.0f;
+                return op;
             }
             if (prevState.heightmapStatus == HeightmapStatus::Editing
                 && ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::Escape))
             {
-                return {
-                    InteractionMode::PaintBrushStroke, // mode
-                    tool,                              // tool
-                    false,                             // isBrushActive
-                    true,                              // isDiscardingStroke
-                    glm::vec2(),                       // brushPosition
-                    0.0f,                              // brushRadiusIncrease
-                    0.0f                               // brushFalloffIncrease
-                };
+                OperationState op = {};
+                op.mode = InteractionMode::PaintBrushStroke;
+                op.tool = tool;
+                op.isBrushActive = false;
+                op.isDiscardingStroke = true;
+                op.brushPosition = glm::vec2();
+                op.brushRadiusIncrease = 0.0f;
+                op.brushFalloffIncrease = 0.0f;
+                op.brushStrengthIncrease = 0.0f;
+                return op;
             }
         }
 
@@ -293,15 +301,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 float brushRadiusIncrease =
                     mouseState.cursorOffsetX + mouseState.cursorOffsetY;
 
-                return {
-                    InteractionMode::ModifyBrushRadius, // mode
-                    tool,                               // tool
-                    false,                              // isBrushActive
-                    false,                              // isDiscardingStroke
-                    normalizedPickPoint,                // brushPosition
-                    brushRadiusIncrease,                // brushRadiusIncrease
-                    0.0f                                // brushFalloffIncrease
-                };
+                OperationState op = {};
+                op.mode = InteractionMode::ModifyBrushRadius;
+                op.tool = tool;
+                op.isBrushActive = false;
+                op.isDiscardingStroke = false;
+                op.brushPosition = normalizedPickPoint;
+                op.brushRadiusIncrease = brushRadiusIncrease;
+                op.brushFalloffIncrease = 0.0f;
+                op.brushStrengthIncrease = 0.0f;
+                return op;
             }
 
             // if the F key is pressed, we are adjusting the brush falloff
@@ -310,15 +319,34 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 float brushFalloffIncrease =
                     (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
 
-                return {
-                    InteractionMode::ModifyBrushFalloff, // mode
-                    tool,                                // tool
-                    false,                               // isBrushActive
-                    false,                               // isDiscardingStroke
-                    normalizedPickPoint,                 // brushPosition
-                    0.0f,                                // brushRadiusIncrease
-                    brushFalloffIncrease                 // brushFalloffIncrease
-                };
+                OperationState op = {};
+                op.mode = InteractionMode::ModifyBrushFalloff;
+                op.tool = tool;
+                op.isBrushActive = false;
+                op.isDiscardingStroke = false;
+                op.brushPosition = normalizedPickPoint;
+                op.brushRadiusIncrease = 0.0f;
+                op.brushFalloffIncrease = brushFalloffIncrease;
+                op.brushStrengthIncrease = 0.0f;
+                return op;
+            }
+
+            // if the S key is pressed, we are adjusting the brush strength
+            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::S))
+            {
+                float brushStrengthIncrease =
+                    (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
+
+                OperationState op = {};
+                op.mode = InteractionMode::ModifyBrushStrength;
+                op.tool = tool;
+                op.isBrushActive = false;
+                op.isDiscardingStroke = false;
+                op.brushPosition = normalizedPickPoint;
+                op.brushRadiusIncrease = 0.0f;
+                op.brushFalloffIncrease = 0.0f;
+                op.brushStrengthIncrease = brushStrengthIncrease;
+                return op;
             }
 
             // if a number key is pressed, change the selected tool
@@ -345,26 +373,28 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 isBrushActive = true;
             }
 
-            return {
-                InteractionMode::PaintBrushStroke, // mode
-                tool,                              // tool
-                isBrushActive,                     // isBrushActive
-                false,                             // isDiscardingStroke
-                normalizedPickPoint,               // brushPosition
-                0.0f,                              // brushRadiusIncrease
-                0.0f                               // brushFalloffIncrease
-            };
+            OperationState op = {};
+            op.mode = InteractionMode::PaintBrushStroke;
+            op.tool = tool;
+            op.isBrushActive = isBrushActive;
+            op.isDiscardingStroke = false;
+            op.brushPosition = normalizedPickPoint;
+            op.brushRadiusIncrease = 0.0f;
+            op.brushFalloffIncrease = 0.0f;
+            op.brushStrengthIncrease = 0.0f;
+            return op;
         }
 
-        return {
-            InteractionMode::PaintBrushStroke, // mode
-            tool,                              // tool
-            false,                             // isBrushActive
-            false,                             // isDiscardingStroke
-            glm::vec2(),                       // brushPosition
-            0.0f,                              // brushRadiusIncrease
-            0.0f                               // brushFalloffIncrease
-        };
+        OperationState op = {};
+        op.mode = InteractionMode::PaintBrushStroke;
+        op.tool = tool;
+        op.isBrushActive = false;
+        op.isDiscardingStroke = false;
+        op.brushPosition = glm::vec2();
+        op.brushRadiusIncrease = 0.0f;
+        op.brushFalloffIncrease = 0.0f;
+        op.brushStrengthIncrease = 0.0f;
+        return op;
     }
 
     HeightmapStatus SceneWorld::getNextHeightmapStatus(

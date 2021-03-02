@@ -22,6 +22,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             glm::vec2 brushPosition;
             float brushRadiusIncrease;
             float brushFalloffIncrease;
+            float brushStrengthIncrease;
         };
 
         struct ViewState
