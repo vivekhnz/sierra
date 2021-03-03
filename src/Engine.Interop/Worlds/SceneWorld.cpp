@@ -134,23 +134,27 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             state.heightmapStatus, operation.isBrushActive, operation.isDiscardingStroke);
         newState.currentBrushPos = operation.brushPosition;
 
+        worldState.isPreviewingChanges = false;
         if (operation.mode == InteractionMode::ModifyBrushRadius)
         {
             ctx.input.captureMouse(true);
             newState.brushRadius =
                 glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 512.0f);
+            worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushFalloff)
         {
             ctx.input.captureMouse(true);
             newState.brushFalloff =
                 glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
+            worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushStrength)
         {
             ctx.input.captureMouse(true);
             newState.brushStrength =
                 glm::clamp(state.brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
+            worldState.isPreviewingChanges = true;
         }
 
         // update brush highlight
@@ -562,7 +566,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindTextureArray(memory, normalTextureArrayHandle, 2);
         rendererBindTextureArray(memory, displacementTextureArrayHandle, 3);
         rendererBindTextureArray(memory, aoTextureArrayHandle, 4);
-        rendererBindTexture(memory, previewTextureHandle, 5);
+        rendererBindTexture(memory,
+            worldState.isPreviewingChanges ? previewTextureHandle : heightmapTextureHandle, 5);
         rendererBindShaderStorageBuffer(memory, materialPropsBufferHandle, 1);
 
         // bind mesh data

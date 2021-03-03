@@ -49,6 +49,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             float brushRadius;
             float brushFalloff;
             bool isBrushHighlightVisible;
+            bool isPreviewingChanges;
 
             uint32 materialCount;
             GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];

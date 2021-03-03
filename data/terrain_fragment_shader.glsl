@@ -163,7 +163,15 @@ void main()
     outlineIntensity += calcRingOpacity(innerRadius, outlineWidth, distFromCenter);
     
     float heightDelta = previewHeight - actualHeight;
-    vec3 highlightColor = heightDelta > 0 ? vec3(0, 1, 0.25f) : vec3(1, 0, 0.1f);
+    vec3 highlightColor = vec3(0.5, 0.5, 0.5);
+    if (heightDelta > 0)
+    {
+        highlightColor = vec3(0, 1, 0.25f);
+    }
+    else if (heightDelta < 0)
+    {
+        highlightColor = vec3(1, 0, 0.1f);
+    }
     
     float highlightIntensity = min(abs(heightDelta) / 0.001f, 1) * 0.25;
     highlightIntensity += outlineIntensity * 0.75;
