@@ -79,7 +79,7 @@ void main()
     vec2 baseTexcoordsZ = vec2(texcoord.x * triAxisSign.z, texcoord.y);
 
     // blend materials based on slope, altitude and height
-    vec3 material_albedo = vec3(1);
+    vec3 material_albedo = vec3(0.5);
     vec3 material_normal = vec3(0);
     float material_ao = 1;
 

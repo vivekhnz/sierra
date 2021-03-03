@@ -50,7 +50,7 @@
                                 <ColumnDefinition Width="*" />
                                 <ColumnDefinition Width="32" />
                             </Grid.ColumnDefinitions>
-                            <Slider x:Name="brushRadiusSlider" Minimum="32" Maximum="512" Value="128"
+                            <Slider x:Name="brushRadiusSlider" Minimum="32" Maximum="2048" Value="128"
                                     SmallChange="1" LargeChange="16" TickFrequency="1"
                                     IsSnapToTickEnabled="True"
                                     ValueChanged="brushRadiusSlider_ValueChanged" />

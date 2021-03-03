@@ -139,7 +139,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         {
             ctx.input.captureMouse(true);
             newState.brushRadius =
-                glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 512.0f);
+                glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushFalloff)
