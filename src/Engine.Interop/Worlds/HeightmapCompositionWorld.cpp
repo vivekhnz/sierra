@@ -4,62 +4,38 @@
 #include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    HeightmapCompositionWorld::HeightmapCompositionWorld(EngineContext &ctx) : ctx(ctx)
+    HeightmapCompositionWorld::HeightmapCompositionWorld(EngineMemory *memory) : memory(memory)
     {
     }
 
     void HeightmapCompositionWorld::initialize()
     {
         // create quad mesh
-        std::vector<float> quadVertices(20);
-
-        quadVertices[0] = 0.0f;
-        quadVertices[1] = 0.0f;
-        quadVertices[2] = 0.0f;
-        quadVertices[3] = 0.0f;
-        quadVertices[4] = 0.0f;
-
-        quadVertices[5] = 1.0f;
-        quadVertices[6] = 0.0f;
-        quadVertices[7] = 0.0f;
-        quadVertices[8] = 1.0f;
-        quadVertices[9] = 0.0f;
-
-        quadVertices[10] = 1.0f;
-        quadVertices[11] = 1.0f;
-        quadVertices[12] = 0.0f;
-        quadVertices[13] = 1.0f;
-        quadVertices[14] = 1.0f;
-
-        quadVertices[15] = 0.0f;
-        quadVertices[16] = 1.0f;
-        quadVertices[17] = 0.0f;
-        quadVertices[18] = 0.0f;
-        quadVertices[19] = 1.0f;
-
-        std::vector<unsigned int> quadIndices(6);
-        quadIndices[0] = 0;
-        quadIndices[1] = 1;
-        quadIndices[2] = 2;
-        quadIndices[3] = 0;
-        quadIndices[4] = 2;
-        quadIndices[5] = 3;
-
-        std::vector<Graphics::VertexAttribute> vertexAttributes(2);
-        vertexAttributes[0] = Graphics::VertexAttribute::forFloat(3, false);
-        vertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
-
-        std::vector<Graphics::VertexBufferDescription> vertexBuffers(1);
-        vertexBuffers[0] = {
-            quadVertices.data(),                        // data
-            (int)(quadVertices.size() * sizeof(float)), // size
-            vertexAttributes.data(),                    // attributes
-            (int)vertexAttributes.size(),               // attributeCount
-            false                                       // isPerInstance
+        float quadVertices[20] = {
+            0, 0, 0, 0, 0, //
+            1, 0, 0, 1, 0, //
+            1, 1, 0, 1, 1, //
+            0, 1, 0, 0, 1  //
         };
-        int quadMeshHandle =
-            ctx.assets.graphics.createMesh(GL_TRIANGLES, vertexBuffers, quadIndices);
-        quadVertexArrayHandle = ctx.assets.graphics.getMeshVertexArrayHandle(quadMeshHandle);
+        uint32 vertexBufferStride = 5 * sizeof(float);
+        uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
+
+        uint32 vertexBufferHandle =
+            rendererCreateBuffer(memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, vertexBufferHandle, sizeof(quadVertices), &quadVertices);
+
+        uint32 elementBufferHandle =
+            rendererCreateBuffer(memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, elementBufferHandle, sizeof(quadIndices), &quadIndices);
+
+        quadVertexArrayHandle = rendererCreateVertexArray(memory);
+        rendererBindVertexArray(memory, quadVertexArrayHandle);
+        rendererBindBuffer(memory, elementBufferHandle);
+        rendererBindBuffer(memory, vertexBufferHandle);
+        rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
+        rendererBindVertexAttribute(
+            1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
+        rendererUnbindVertexArray();
 
         cameraTransform = glm::identity<glm::mat4>();
         cameraTransform = glm::scale(cameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
@@ -76,74 +52,50 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // the working world is where the base heightmap and brush strokes will be drawn
 
         working.importedHeightmapTextureHandle =
-            rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
+            rendererCreateTexture(memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
                 GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
         // create framebuffer
-        working.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        working.renderTextureHandle = rendererCreateTexture(memory, GL_UNSIGNED_SHORT, GL_R16,
+            GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         working.framebufferHandle =
-            rendererCreateFramebuffer(ctx.memory, working.renderTextureHandle);
+            rendererCreateFramebuffer(memory, working.renderTextureHandle);
 
         // create brush quad mesh
-        std::vector<float> brushQuadVertices(16);
-
-        brushQuadVertices[0] = -0.5f;
-        brushQuadVertices[1] = -0.5f;
-        brushQuadVertices[2] = 0.0f;
-        brushQuadVertices[3] = 0.0f;
-
-        brushQuadVertices[4] = 0.5f;
-        brushQuadVertices[5] = -0.5f;
-        brushQuadVertices[6] = 1.0f;
-        brushQuadVertices[7] = 0.0f;
-
-        brushQuadVertices[8] = 0.5f;
-        brushQuadVertices[9] = 0.5f;
-        brushQuadVertices[10] = 1.0f;
-        brushQuadVertices[11] = 1.0f;
-
-        brushQuadVertices[12] = -0.5f;
-        brushQuadVertices[13] = 0.5f;
-        brushQuadVertices[14] = 0.0f;
-        brushQuadVertices[15] = 1.0f;
-
-        std::vector<unsigned int> brushQuadIndices(6);
-        brushQuadIndices[0] = 0;
-        brushQuadIndices[1] = 1;
-        brushQuadIndices[2] = 2;
-        brushQuadIndices[3] = 0;
-        brushQuadIndices[4] = 2;
-        brushQuadIndices[5] = 3;
-
-        std::vector<Graphics::VertexAttribute> meshVertexAttributes(2);
-        meshVertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
-        meshVertexAttributes[1] = Graphics::VertexAttribute::forFloat(2, false);
-
-        std::vector<Graphics::VertexAttribute> instanceVertexAttributes(1);
-        instanceVertexAttributes[0] = Graphics::VertexAttribute::forFloat(2, false);
-
-        std::vector<Graphics::VertexBufferDescription> brushQuadVertexBuffers(2);
-        brushQuadVertexBuffers[0] = {
-            brushQuadVertices.data(),                        // data
-            (int)(brushQuadVertices.size() * sizeof(float)), // size
-            meshVertexAttributes.data(),                     // attributes
-            (int)meshVertexAttributes.size(),                // attributeCount
-            false                                            // isPerInstance
+        float quadVertices[16] = {
+            -0.5f, -0.5f, 0.0f, 0.0f, //
+            +0.5f, -0.5f, 1.0f, 0.0f, //
+            +0.5f, +0.5f, 1.0f, 1.0f, //
+            -0.5f, +0.5f, 0.0f, 1.0f  //
         };
-        brushQuadVertexBuffers[1] = {
-            working.brushQuadInstanceBufferData,           // data
-            WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE, // size
-            instanceVertexAttributes.data(),               // attributes
-            (int)instanceVertexAttributes.size(),          // attributeCount
-            true                                           // isPerInstance
-        };
-        int brushQuadMeshHandle = ctx.assets.graphics.createMesh(
-            GL_TRIANGLES, brushQuadVertexBuffers, brushQuadIndices);
-        working.brushQuadVertexArrayHandle =
-            ctx.assets.graphics.getMeshVertexArrayHandle(brushQuadMeshHandle);
+        uint32 vertexBufferStride = 4 * sizeof(float);
+        uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
+
+        uint32 elementBufferHandle =
+            rendererCreateBuffer(memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, elementBufferHandle, sizeof(quadIndices), &quadIndices);
+
+        uint32 vertexBufferHandle =
+            rendererCreateBuffer(memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, vertexBufferHandle, sizeof(quadVertices), &quadVertices);
+
         working.brushQuadInstanceBufferHandle =
-            ctx.assets.graphics.getMeshVertexBufferHandle(brushQuadMeshHandle, 1);
+            rendererCreateBuffer(memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, working.brushQuadInstanceBufferHandle,
+            sizeof(working.brushQuadInstanceBufferData), &working.brushQuadInstanceBufferData);
+        uint32 instanceBufferStride = 2 * sizeof(float);
+
+        working.brushQuadVertexArrayHandle = rendererCreateVertexArray(memory);
+        rendererBindVertexArray(memory, working.brushQuadVertexArrayHandle);
+        rendererBindBuffer(memory, elementBufferHandle);
+        rendererBindBuffer(memory, vertexBufferHandle);
+        rendererBindVertexAttribute(0, GL_FLOAT, false, 2, vertexBufferStride, 0, false);
+        rendererBindVertexAttribute(
+            1, GL_FLOAT, false, 2, vertexBufferStride, 2 * sizeof(float), false);
+        rendererBindBuffer(memory, working.brushQuadInstanceBufferHandle);
+        rendererBindVertexAttribute(2, GL_FLOAT, false, 2, instanceBufferStride, 0, true);
+        rendererUnbindVertexArray();
+
         working.brushInstanceCount = 0;
     }
 
@@ -153,10 +105,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         // the resulting texture is fed back into the working world as the base heightmap
 
         // create framebuffer
-        staging.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        staging.renderTextureHandle = rendererCreateTexture(memory, GL_UNSIGNED_SHORT, GL_R16,
+            GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         staging.framebufferHandle =
-            rendererCreateFramebuffer(ctx.memory, staging.renderTextureHandle);
+            rendererCreateFramebuffer(memory, staging.renderTextureHandle);
     }
 
     void HeightmapCompositionWorld::setupPreviewWorld()
@@ -168,10 +120,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         */
 
         // create framebuffer
-        preview.renderTextureHandle = rendererCreateTexture(ctx.memory, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        preview.renderTextureHandle = rendererCreateTexture(memory, GL_UNSIGNED_SHORT, GL_R16,
+            GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         preview.framebufferHandle =
-            rendererCreateFramebuffer(ctx.memory, preview.renderTextureHandle);
+            rendererCreateFramebuffer(memory, preview.renderTextureHandle);
     }
 
     void HeightmapCompositionWorld::update(
@@ -221,7 +173,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         working.brushQuadInstanceBufferData[previewQuadIdx + 1] = state.currentBrushPos.y;
 
         // update brush quad instance buffer
-        rendererUpdateBuffer(ctx.memory, working.brushQuadInstanceBufferHandle,
+        rendererUpdateBuffer(memory, working.brushQuadInstanceBufferHandle,
             WorkingWorld::BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
             working.brushQuadInstanceBufferData);
     }
@@ -238,29 +190,29 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         const EditorState &state, EditorState &newState)
     {
         ShaderProgramAsset *quadShaderProgram =
-            assetsGetShaderProgram(ctx.memory, ASSET_SHADER_PROGRAM_QUAD);
+            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_QUAD);
         ShaderProgramAsset *brushShaderProgram =
-            assetsGetShaderProgram(ctx.memory, ASSET_SHADER_PROGRAM_BRUSH);
+            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_BRUSH);
         if (!quadShaderProgram || !brushShaderProgram)
             return;
 
-        rendererUpdateCameraState(ctx.memory, &cameraTransform);
+        rendererUpdateCameraState(memory, &cameraTransform);
 
         if (state.heightmapStatus == HeightmapStatus::Committing)
         {
             // render staging world
-            rendererBindFramebuffer(ctx.memory, staging.framebufferHandle);
+            rendererBindFramebuffer(memory, staging.framebufferHandle);
             rendererSetViewportSize(2048, 2048);
             rendererClearBackBuffer(0, 0, 0, 1);
 
-            rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+            rendererUseShaderProgram(memory, quadShaderProgram->handle);
             rendererSetPolygonMode(GL_FILL);
             rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            rendererBindTexture(ctx.memory, working.renderTextureHandle, 0);
-            rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+            rendererBindTexture(memory, working.renderTextureHandle, 0);
+            rendererBindVertexArray(memory, quadVertexArrayHandle);
             rendererDrawElements(GL_TRIANGLES, 6);
 
-            rendererUnbindFramebuffer(ctx.memory, staging.framebufferHandle);
+            rendererUnbindFramebuffer(memory, staging.framebufferHandle);
         }
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
@@ -293,57 +245,57 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {
             // render working world
-            rendererBindFramebuffer(ctx.memory, working.framebufferHandle);
+            rendererBindFramebuffer(memory, working.framebufferHandle);
             rendererSetViewportSize(2048, 2048);
             rendererClearBackBuffer(0, 0, 0, 1);
 
-            rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+            rendererUseShaderProgram(memory, quadShaderProgram->handle);
             rendererSetPolygonMode(GL_FILL);
             rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            rendererBindTexture(ctx.memory, working.baseHeightmapTextureHandle, 0);
-            rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+            rendererBindTexture(memory, working.baseHeightmapTextureHandle, 0);
+            rendererBindVertexArray(memory, quadVertexArrayHandle);
             rendererDrawElements(GL_TRIANGLES, 6);
 
-            rendererUseShaderProgram(ctx.memory, brushShaderProgram->handle);
+            rendererUseShaderProgram(memory, brushShaderProgram->handle);
             rendererSetPolygonMode(GL_FILL);
             rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
-            rendererSetShaderProgramUniformFloat(ctx.memory, brushShaderProgram->handle,
-                "brushScale", state.brushRadius / 2048.0f);
             rendererSetShaderProgramUniformFloat(
-                ctx.memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+                memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
             rendererSetShaderProgramUniformFloat(
-                ctx.memory, brushShaderProgram->handle, "brushStrength", brushStrength);
-            rendererBindVertexArray(ctx.memory, working.brushQuadVertexArrayHandle);
+                memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+            rendererSetShaderProgramUniformFloat(
+                memory, brushShaderProgram->handle, "brushStrength", brushStrength);
+            rendererBindVertexArray(memory, working.brushQuadVertexArrayHandle);
             rendererDrawElementsInstanced(GL_TRIANGLES, 6, working.brushInstanceCount, 0);
 
-            rendererUnbindFramebuffer(ctx.memory, working.framebufferHandle);
+            rendererUnbindFramebuffer(memory, working.framebufferHandle);
         }
 
         // render preview world
-        rendererBindFramebuffer(ctx.memory, preview.framebufferHandle);
+        rendererBindFramebuffer(memory, preview.framebufferHandle);
         rendererSetViewportSize(2048, 2048);
         rendererClearBackBuffer(0, 0, 0, 1);
 
-        rendererUseShaderProgram(ctx.memory, quadShaderProgram->handle);
+        rendererUseShaderProgram(memory, quadShaderProgram->handle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        rendererBindTexture(ctx.memory, working.renderTextureHandle, 0);
-        rendererBindVertexArray(ctx.memory, quadVertexArrayHandle);
+        rendererBindTexture(memory, working.renderTextureHandle, 0);
+        rendererBindVertexArray(memory, quadVertexArrayHandle);
         rendererDrawElements(GL_TRIANGLES, 6);
 
-        rendererUseShaderProgram(ctx.memory, brushShaderProgram->handle);
+        rendererUseShaderProgram(memory, brushShaderProgram->handle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
         rendererSetShaderProgramUniformFloat(
-            ctx.memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
+            memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
         rendererSetShaderProgramUniformFloat(
-            ctx.memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+            memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
         rendererSetShaderProgramUniformFloat(
-            ctx.memory, brushShaderProgram->handle, "brushStrength", brushStrength);
-        rendererBindVertexArray(ctx.memory, working.brushQuadVertexArrayHandle);
+            memory, brushShaderProgram->handle, "brushStrength", brushStrength);
+        rendererBindVertexArray(memory, working.brushQuadVertexArrayHandle);
         rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1, WorkingWorld::MAX_BRUSH_QUADS - 1);
 
-        rendererUnbindFramebuffer(ctx.memory, preview.framebufferHandle);
+        rendererUnbindFramebuffer(memory, preview.framebufferHandle);
 
         if (state.heightmapStatus == HeightmapStatus::Initializing)
         {
@@ -354,7 +306,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void HeightmapCompositionWorld::updateImportedHeightmapTexture(TextureAsset *asset)
     {
-        rendererUpdateTexture(ctx.memory, working.importedHeightmapTextureHandle,
+        rendererUpdateTexture(memory, working.importedHeightmapTextureHandle,
             GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset->width, asset->height, asset->data);
     }
 }}}}

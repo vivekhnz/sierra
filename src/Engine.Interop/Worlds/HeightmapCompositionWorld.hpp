@@ -8,7 +8,7 @@
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class HeightmapCompositionWorld
     {
-        EngineContext &ctx;
+        EngineMemory *memory;
 
         glm::mat4 cameraTransform;
         uint32 quadVertexArrayHandle;
@@ -49,7 +49,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void addBrushInstance(glm::vec2 pos);
 
     public:
-        HeightmapCompositionWorld(EngineContext &ctx);
+        HeightmapCompositionWorld(EngineMemory *memory);
 
         void initialize();
         void update(float deltaTime, const EditorState &state, EditorState &newState);
