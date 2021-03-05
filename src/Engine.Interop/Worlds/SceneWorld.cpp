@@ -3,7 +3,7 @@
 #include "../../Engine/terrain_assets.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    SceneWorld::SceneWorld(EngineContext &ctx) : ctx(ctx), world(ctx)
+    SceneWorld::SceneWorld(EngineContext &ctx) : ctx(ctx)
     {
         // allocate a buffer that heightmap texture data can be copied into
         heightmapTextureDataTempBuffer = malloc(2048 * 2048 * 2);
@@ -27,12 +27,64 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         this->heightmapTextureHandle = heightmapTextureHandle;
         this->previewTextureHandle = previewTextureHandle;
 
-        // create entity and components
-        int entityId = ctx.entities.create();
-        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            entityId, heightfield.rows, heightfield.columns, heightfield.spacing);
-        meshHandle =
-            world.componentManagers.terrainRenderer.getMeshHandle(terrainRendererInstanceId);
+        // create terrain mesh
+        terrainMesh = {};
+        terrainMesh.elementCount = (heightfield.rows - 1) * (heightfield.columns - 1) * 4;
+
+        uint32 vertexBufferStride = 5 * sizeof(float);
+        uint32 vertexBufferSize = heightfield.columns * heightfield.rows * vertexBufferStride;
+        float *vertices = (float *)malloc(vertexBufferSize);
+
+        uint32 elementBufferSize = sizeof(uint32) * terrainMesh.elementCount;
+        uint32 *indices = (uint32 *)malloc(elementBufferSize);
+
+        float offsetX = (heightfield.columns - 1) * heightfield.spacing * -0.5f;
+        float offsetY = (heightfield.rows - 1) * heightfield.spacing * -0.5f;
+        glm::vec2 uvSize =
+            glm::vec2(1.0f / (heightfield.columns - 1), 1.0f / (heightfield.rows - 1));
+
+        float *currentVertex = vertices;
+        uint32 *currentIndex = indices;
+        for (uint32 y = 0; y < heightfield.rows; y++)
+        {
+            for (uint32 x = 0; x < heightfield.columns; x++)
+            {
+                *currentVertex++ = (x * heightfield.spacing) + offsetX;
+                *currentVertex++ = 0;
+                *currentVertex++ = (y * heightfield.spacing) + offsetY;
+                *currentVertex++ = uvSize.x * x;
+                *currentVertex++ = uvSize.y * y;
+
+                if (y < heightfield.rows - 1 && x < heightfield.columns - 1)
+                {
+                    uint32 patchIndex = (y * heightfield.columns) + x;
+                    *currentIndex++ = patchIndex;
+                    *currentIndex++ = patchIndex + heightfield.columns;
+                    *currentIndex++ = patchIndex + heightfield.columns + 1;
+                    *currentIndex++ = patchIndex + 1;
+                }
+            }
+        }
+
+        terrainMesh.vertexBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(
+            ctx.memory, terrainMesh.vertexBufferHandle, vertexBufferSize, vertices);
+        free(vertices);
+
+        uint32 elementBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(ctx.memory, elementBufferHandle, elementBufferSize, indices);
+        free(indices);
+
+        terrainMesh.vertexArrayHandle = rendererCreateVertexArray(ctx.memory);
+        rendererBindVertexArray(ctx.memory, terrainMesh.vertexArrayHandle);
+        rendererBindBuffer(ctx.memory, elementBufferHandle);
+        rendererBindBuffer(ctx.memory, terrainMesh.vertexBufferHandle);
+        rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
+        rendererBindVertexAttribute(
+            1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
+        rendererUnbindVertexArray();
 
         // create buffer to store vertex edge data
         tessellationLevelBufferHandle =
@@ -134,7 +186,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             state.heightmapStatus, operation.isBrushActive, operation.isDiscardingStroke);
         newState.currentBrushPos = operation.brushPosition;
 
-        worldState.isPreviewingChanges = false;
+        worldState.isPreviewingChanges = operation.isBrushActive;
         if (operation.mode == InteractionMode::ModifyBrushRadius)
         {
             ctx.input.captureMouse(true);
@@ -527,27 +579,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetShaderProgramUniformFloat(
             memory, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
 
-        constexpr int terrainRows = 256;
-        constexpr int terrainColumns = 256;
-        constexpr float patchSize = 0.5f;
-        constexpr float terrainHeight = 25.0f;
-
         rendererSetShaderProgramUniformInteger(memory, calcTessLevelShaderProgramHandle,
-            "horizontalEdgeCount", terrainRows * (terrainColumns - 1));
+            "horizontalEdgeCount", heightfield.rows * (heightfield.columns - 1));
         rendererSetShaderProgramUniformInteger(
-            memory, calcTessLevelShaderProgramHandle, "columnCount", terrainColumns);
+            memory, calcTessLevelShaderProgramHandle, "columnCount", heightfield.columns);
         rendererSetShaderProgramUniformFloat(
-            memory, calcTessLevelShaderProgramHandle, "terrainHeight", terrainHeight);
+            memory, calcTessLevelShaderProgramHandle, "terrainHeight", heightfield.maxHeight);
         rendererBindTexture(memory, heightmapTextureHandle, 0);
         rendererBindTexture(memory, previewTextureHandle, 5);
 
-        int meshEdgeCount =
-            (2 * (terrainRows * terrainColumns)) - terrainRows - terrainColumns;
-        uint32 meshVertexBufferHandle =
-            ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
+        uint32 meshEdgeCount = (2 * (heightfield.rows * heightfield.columns))
+            - heightfield.rows - heightfield.columns;
 
         rendererBindShaderStorageBuffer(memory, tessellationLevelBufferHandle, 0);
-        rendererBindShaderStorageBuffer(memory, meshVertexBufferHandle, 1);
+        rendererBindShaderStorageBuffer(memory, terrainMesh.vertexBufferHandle, 1);
         rendererUseShaderProgram(memory, calcTessLevelShaderProgramHandle);
         rendererDispatchCompute(meshEdgeCount, 1, 1);
         rendererShaderStorageMemoryBarrier();
@@ -571,17 +616,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererBindShaderStorageBuffer(memory, materialPropsBufferHandle, 1);
 
         // bind mesh data
-        int elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
-        unsigned int primitiveType = ctx.assets.graphics.getMeshPrimitiveType(meshHandle);
-        rendererBindVertexArray(
-            memory, ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle));
+        rendererBindVertexArray(memory, terrainMesh.vertexArrayHandle);
 
         // set shader uniforms
         rendererSetShaderProgramUniformInteger(
             memory, terrainShaderProgramHandle, "materialCount", worldState.materialCount);
         rendererSetShaderProgramUniformVector3(memory, terrainShaderProgramHandle,
             "terrainDimensions",
-            glm::vec3(patchSize * terrainColumns, terrainHeight, patchSize * terrainRows));
+            glm::vec3(heightfield.spacing * heightfield.columns, heightfield.maxHeight,
+                heightfield.spacing * heightfield.rows));
         rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
             "brushHighlightStrength", worldState.isBrushHighlightVisible ? 1 : 0);
         rendererSetShaderProgramUniformVector2(
@@ -592,6 +635,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             "brushHighlightFalloff", worldState.brushFalloff);
 
         // draw mesh
-        rendererDrawElements(primitiveType, elementCount);
+        rendererDrawElements(GL_PATCHES, terrainMesh.elementCount);
     }
 }}}}

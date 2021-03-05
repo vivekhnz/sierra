@@ -1,5 +1,3 @@
-#include <glad/glad.h>
-
 #include "terrain_renderer.h"
 
 #define RENDERER_MAX_TEXTURES 128

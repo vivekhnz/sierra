@@ -2,7 +2,7 @@
 
 #include "../../Engine/terrain_renderer.h"
 #include "../../Engine/terrain_heightfield.h"
-#include "../../Engine/World.hpp"
+#include "../../Engine/EngineContext.hpp"
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"
 
@@ -59,6 +59,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             uint32 aoTextureAssetIds[MAX_MATERIAL_COUNT];
         };
 
+        struct TerrainMesh
+        {
+            uint32 elementCount;
+            uint32 vertexBufferHandle;
+            uint32 vertexArrayHandle;
+        };
+
         struct TextureAssetBinding
         {
             uint32 assetId;
@@ -66,14 +73,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         };
 
         EngineContext &ctx;
-        Engine::World world;
 
         Heightfield heightfield;
         float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
 
         uint32 heightmapTextureHandle;
         uint32 previewTextureHandle;
-        int meshHandle;
+
+        TerrainMesh terrainMesh;
+
         uint32 tessellationLevelBufferHandle;
 
         uint32 albedoTextureArrayHandle;

@@ -1,6 +1,7 @@
 #ifndef TERRAIN_RENDERER_H
 #define TERRAIN_RENDERER_H
 
+#include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
 
 #include "terrain_platform.h"

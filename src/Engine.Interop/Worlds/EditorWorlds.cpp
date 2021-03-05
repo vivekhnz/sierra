@@ -3,7 +3,7 @@
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     EditorWorlds::EditorWorlds(EngineContext &ctx) :
         ctx(&ctx), sceneWorld(ctx), heightmapCompositionWorld(ctx.memory),
-        heightmapPreviewWorld(ctx)
+        heightmapPreviewWorld(ctx.memory)
     {
     }
 

@@ -1,20 +1,19 @@
 #pragma once
 
-#include "../../Engine/World.hpp"
 #include "../EditorState.hpp"
 #include "../ViewportContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class HeightmapPreviewWorld
     {
-        EngineContext &ctx;
+        EngineMemory *memory;
 
         uint32 vertexArrayHandle;
         uint32 heightmapTextureHandle;
         glm::mat4 cameraTransform;
 
     public:
-        HeightmapPreviewWorld(EngineContext &ctx);
+        HeightmapPreviewWorld(EngineMemory *memory);
 
         void initialize(uint32 heightmapTextureHandle);
         void render(EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight);

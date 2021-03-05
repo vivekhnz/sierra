@@ -1,6 +1,5 @@
 #include "Renderer.hpp"
 
-#include <glad/glad.h>
 #include "../terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Graphics {

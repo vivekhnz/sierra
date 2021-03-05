@@ -5,7 +5,7 @@
 #include "../../Engine/terrain_renderer.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    HeightmapPreviewWorld::HeightmapPreviewWorld(EngineContext &ctx) : ctx(ctx)
+    HeightmapPreviewWorld::HeightmapPreviewWorld(EngineMemory *memory) : memory(memory)
     {
     }
 
@@ -24,19 +24,17 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         uint32 quadIndices[6] = {0, 2, 1, 0, 3, 2};
 
         uint32 vertexBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-        rendererUpdateBuffer(
-            ctx.memory, vertexBufferHandle, sizeof(quadVertices), &quadVertices);
+            rendererCreateBuffer(memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, vertexBufferHandle, sizeof(quadVertices), &quadVertices);
 
         uint32 elementBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-        rendererUpdateBuffer(
-            ctx.memory, elementBufferHandle, sizeof(quadIndices), &quadIndices);
+            rendererCreateBuffer(memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, elementBufferHandle, sizeof(quadIndices), &quadIndices);
 
-        vertexArrayHandle = rendererCreateVertexArray(ctx.memory);
-        rendererBindVertexArray(ctx.memory, vertexArrayHandle);
-        rendererBindBuffer(ctx.memory, elementBufferHandle);
-        rendererBindBuffer(ctx.memory, vertexBufferHandle);
+        vertexArrayHandle = rendererCreateVertexArray(memory);
+        rendererBindVertexArray(memory, vertexArrayHandle);
+        rendererBindBuffer(memory, elementBufferHandle);
+        rendererBindBuffer(memory, vertexBufferHandle);
         rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
         rendererBindVertexAttribute(
             1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);

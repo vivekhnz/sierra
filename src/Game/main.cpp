@@ -6,7 +6,6 @@
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/EngineContext.hpp"
-#include "../Engine/World.hpp"
 #include "../Engine/IO/Path.hpp"
 #include "../Engine/IO/MouseInputState.hpp"
 #include "GameContext.hpp"
@@ -68,8 +67,6 @@ int main()
         ctx.initialize();
         ctx.input.addInputController();
 
-        Terrain::Engine::World world(ctx);
-
 // create terrain
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTFIELD_COLUMNS 256
@@ -89,9 +86,65 @@ int main()
         rendererUpdateBuffer(&memory, tessLevelBufferHandle,
             heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
 
-        int terrainEntityId = ctx.entities.create();
-        int terrainRendererInstanceId = world.componentManagers.terrainRenderer.create(
-            terrainEntityId, heightfield.rows, heightfield.columns, heightfield.spacing);
+        // create terrain mesh
+        uint32 terrainMeshElementCount =
+            (heightfield.rows - 1) * (heightfield.columns - 1) * 4;
+
+        uint32 vertexBufferStride = 5 * sizeof(float);
+        uint32 vertexBufferSize = heightfield.columns * heightfield.rows * vertexBufferStride;
+        float *vertices = (float *)malloc(vertexBufferSize);
+
+        uint32 elementBufferSize = sizeof(uint32) * terrainMeshElementCount;
+        uint32 *indices = (uint32 *)malloc(elementBufferSize);
+
+        float offsetX = (heightfield.columns - 1) * heightfield.spacing * -0.5f;
+        float offsetY = (heightfield.rows - 1) * heightfield.spacing * -0.5f;
+        glm::vec2 uvSize =
+            glm::vec2(1.0f / (heightfield.columns - 1), 1.0f / (heightfield.rows - 1));
+
+        float *currentVertex = vertices;
+        uint32 *currentIndex = indices;
+        for (uint32 y = 0; y < heightfield.rows; y++)
+        {
+            for (uint32 x = 0; x < heightfield.columns; x++)
+            {
+                *currentVertex++ = (x * heightfield.spacing) + offsetX;
+                *currentVertex++ = 0;
+                *currentVertex++ = (y * heightfield.spacing) + offsetY;
+                *currentVertex++ = uvSize.x * x;
+                *currentVertex++ = uvSize.y * y;
+
+                if (y < heightfield.rows - 1 && x < heightfield.columns - 1)
+                {
+                    uint32 patchIndex = (y * heightfield.columns) + x;
+                    *currentIndex++ = patchIndex;
+                    *currentIndex++ = patchIndex + heightfield.columns;
+                    *currentIndex++ = patchIndex + heightfield.columns + 1;
+                    *currentIndex++ = patchIndex + 1;
+                }
+            }
+        }
+
+        uint32 terrainMeshVertexBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(
+            ctx.memory, terrainMeshVertexBufferHandle, vertexBufferSize, vertices);
+        free(vertices);
+
+        uint32 terrainMeshElementBufferHandle =
+            rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(
+            ctx.memory, terrainMeshElementBufferHandle, elementBufferSize, indices);
+        free(indices);
+
+        uint32 terrainMeshVertexArrayHandle = rendererCreateVertexArray(ctx.memory);
+        rendererBindVertexArray(ctx.memory, terrainMeshVertexArrayHandle);
+        rendererBindBuffer(ctx.memory, terrainMeshElementBufferHandle);
+        rendererBindBuffer(ctx.memory, terrainMeshVertexBufferHandle);
+        rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
+        rendererBindVertexAttribute(
+            1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
+        rendererUnbindVertexArray();
 
         uint32 heightmapTextureHandle = rendererCreateTexture(&memory, GL_UNSIGNED_SHORT,
             GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
@@ -489,16 +542,8 @@ int main()
                 assetsGetShaderProgram(&memory, terrainShaderProgramAssetId);
             if (calcTessLevelShaderProgram && terrainShaderProgram)
             {
-                uint32 meshHandle = world.componentManagers.terrainRenderer.getMeshHandle(
-                    terrainRendererInstanceId);
-                uint32 meshVertexBufferHandle =
-                    ctx.assets.graphics.getMeshVertexBufferHandle(meshHandle, 0);
-                uint32 meshVertexArrayHandle =
-                    ctx.assets.graphics.getMeshVertexArrayHandle(meshHandle);
                 uint32 meshEdgeCount = (2 * (heightfield.rows * heightfield.columns))
                     - heightfield.rows - heightfield.columns;
-                uint32 elementCount = ctx.assets.graphics.getMeshElementCount(meshHandle);
-                uint32 primitiveType = ctx.assets.graphics.getMeshPrimitiveType(meshHandle);
 
                 rendererSetShaderProgramUniformFloat(
                     &memory, calcTessLevelShaderProgram->handle, "targetTriangleSize", 0.015f);
@@ -513,7 +558,7 @@ int main()
                 rendererBindTexture(&memory, heightmapTextureHandle, 0);
                 rendererBindTexture(&memory, heightmapTextureHandle, 5);
                 rendererBindShaderStorageBuffer(&memory, tessLevelBufferHandle, 0);
-                rendererBindShaderStorageBuffer(&memory, meshVertexBufferHandle, 1);
+                rendererBindShaderStorageBuffer(&memory, terrainMeshVertexBufferHandle, 1);
                 rendererUseShaderProgram(&memory, calcTessLevelShaderProgram->handle);
                 rendererDispatchCompute(meshEdgeCount, 1, 1);
                 rendererShaderStorageMemoryBarrier();
@@ -544,8 +589,8 @@ int main()
                 rendererBindTextureArray(&memory, displacementTextureArrayHandle, 3);
                 rendererBindTextureArray(&memory, aoTextureArrayHandle, 4);
                 rendererBindTexture(&memory, heightmapTextureHandle, 5);
-                rendererBindVertexArray(&memory, meshVertexArrayHandle);
-                rendererDrawElements(primitiveType, elementCount);
+                rendererBindVertexArray(&memory, terrainMeshVertexArrayHandle);
+                rendererDrawElements(GL_PATCHES, terrainMeshElementCount);
             }
 
             appCtx.render();

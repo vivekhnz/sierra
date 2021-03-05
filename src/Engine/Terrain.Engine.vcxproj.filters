@@ -13,13 +13,7 @@
     <ClCompile Include="IO\InputManager.cpp">
       <Filter>IO</Filter>
     </ClCompile>
-    <ClCompile Include="World.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
-    <ClCompile Include="TerrainRendererComponentManager.cpp" />
-    <ClCompile Include="Graphics\GraphicsAssetManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
     <ClCompile Include="EngineContext.cpp" />
@@ -49,19 +43,10 @@
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="EngineContext.hpp" />
     <ClInclude Include="EngineViewContext.hpp" />
-    <ClInclude Include="World.hpp" />
-    <ClInclude Include="EntityManager.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp">
       <Filter>IO</Filter>
     </ClInclude>
     <ClInclude Include="Graphics\Renderer.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="TerrainRendererComponentManager.hpp" />
-    <ClInclude Include="Graphics\GraphicsAssetManager.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\VertexBufferDescription.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="IO\Key.hpp">

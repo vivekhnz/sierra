@@ -17,28 +17,21 @@
     <ClCompile Include="..\..\deps\glad\glad.c" />
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
     <ClCompile Include="EngineContext.cpp" />
-    <ClCompile Include="EntityManager.cpp" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
-    <ClCompile Include="Graphics\GraphicsAssetManager.cpp" />
     <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
-    <ClCompile Include="TerrainRendererComponentManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
     <ClCompile Include="terrain_heightfield.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
-    <ClCompile Include="World.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppContext.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="EngineContext.hpp" />
     <ClInclude Include="EngineViewContext.hpp" />
-    <ClInclude Include="EntityManager.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
-    <ClInclude Include="Graphics\GraphicsAssetManager.hpp" />
     <ClInclude Include="Graphics\Renderer.hpp" />
-    <ClInclude Include="Graphics\VertexBufferDescription.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
     <ClInclude Include="IO\InputManager.hpp" />
     <ClInclude Include="IO\Key.hpp" />
@@ -46,12 +39,10 @@
     <ClInclude Include="IO\MouseCaptureMode.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp" />
     <ClInclude Include="IO\Path.hpp" />
-    <ClInclude Include="TerrainRendererComponentManager.hpp" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_heightfield.h" />
     <ClInclude Include="terrain_platform.h" />
     <ClInclude Include="terrain_renderer.h" />
-    <ClInclude Include="World.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

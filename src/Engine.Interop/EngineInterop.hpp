@@ -2,7 +2,6 @@
 
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/EngineContext.hpp"
-#include "../Engine/World.hpp"
 #include "EditorContext.hpp"
 #include "EditorState.hpp"
 #include "ViewportContext.hpp"
