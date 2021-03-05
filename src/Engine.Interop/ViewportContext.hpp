@@ -11,7 +11,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         char *imgBuffer;
         std::function<void()> onRenderCallback;
         Worlds::ViewportWorld world;
-        int cameraEntityId;
+        uint32 contextId;
         int inputControllerId;
 
         std::tuple<int, int> location;
@@ -34,8 +34,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         void makePrimary();
         void makeCurrent();
         void setWorld(Worlds::ViewportWorld world);
-        void setCameraEntityId(int cameraEntityId);
-        void setInputControllerId(int cameraEntityId);
+        void setContextId(uint32 contextId);
+        void setInputControllerId(int inputControllerId);
 
         void detach();
         void reattach(char *imgBuffer, std::function<void()> onRenderCallback);

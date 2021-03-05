@@ -78,9 +78,9 @@ namespace Terrain { namespace Engine { namespace Interop {
             auto [viewportX_window, viewportY_window] =
                 EngineInterop::HoveredViewportContext->getViewportLocation();
             mouseState.normalizedCursorX =
-                (virtualMousePos.X - viewportX_window) / (float)view.viewportWidth;
+                (virtualMousePos.X - viewportX_window) / (float)view.width;
             mouseState.normalizedCursorY =
-                (virtualMousePos.Y - viewportY_window) / (float)view.viewportHeight;
+                (virtualMousePos.Y - viewportY_window) / (float)view.height;
 
             // use the mouse scroll offset set by the scroll wheel callback
             mouseState.scrollOffsetX = nextMouseScrollOffsetX;
@@ -104,8 +104,8 @@ namespace Terrain { namespace Engine { namespace Interop {
                 }
 
                 // calculate the center of the hovered viewport relative to the window
-                auto viewportCenter_window = Point(viewportX_window + (view.viewportWidth / 2),
-                    viewportY_window + (view.viewportHeight / 2));
+                auto viewportCenter_window = Point(
+                    viewportX_window + (view.width / 2), viewportY_window + (view.height / 2));
 
                 // convert the viewport center to screen space and move the cursor to it
                 auto viewportCenter_screen = appWindow->PointToScreen(viewportCenter_window);

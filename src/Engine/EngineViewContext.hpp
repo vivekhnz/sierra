@@ -2,13 +2,14 @@
 #define ENGINEVIEWCONTEXT_HPP
 
 #include "Common.hpp"
+#include "terrain_platform.h"
 
 namespace Terrain { namespace Engine {
     struct EXPORT EngineViewContext
     {
-        int viewportWidth;
-        int viewportHeight;
-        int cameraEntityId;
+        uint32 contextId;
+        uint32 width;
+        uint32 height;
     };
 }}
 

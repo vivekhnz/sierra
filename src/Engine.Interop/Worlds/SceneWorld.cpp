@@ -124,19 +124,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             ctx.memory, materialPropsBufferHandle, sizeof(worldState.materialProps), 0);
     }
 
-    void SceneWorld::linkViewport(ViewportContext &vctx)
+    uint32 SceneWorld::linkViewport(int inputControllerId)
     {
         assert(viewStateCount < MAX_SCENE_VIEWS);
 
-        vctx.setCameraEntityId(viewStateCount);
+        uint32 contextId = viewStateCount++;
 
-        ViewState *state = &viewStates[viewStateCount++];
-        state->inputControllerId = vctx.getInputControllerId();
+        ViewState *state = &viewStates[contextId];
+        state->inputControllerId = inputControllerId;
         state->orbitCameraDistance = 112.5f;
         state->orbitCameraYaw = glm::radians(180.0f);
         state->orbitCameraPitch = glm::radians(15.0f);
         state->cameraPos = glm::vec3(0, 0, 0);
         state->cameraLookAt = glm::vec3(0, 0, 0);
+
+        return contextId;
     }
 
     void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
@@ -472,27 +474,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return currentHeightmapStatus;
     }
 
-    void SceneWorld::render(
-        EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight, int32 viewId)
+    void SceneWorld::render(EngineMemory *memory, EngineViewContext *vctx)
     {
-        if (viewportWidth == 0 || viewportHeight == 0 || viewId == -1)
-            return;
-
-        assert(viewId < MAX_SCENE_VIEWS);
-        ViewState *viewState = &viewStates[viewId];
+        assert(vctx->contextId < MAX_SCENE_VIEWS);
+        ViewState *viewState = &viewStates[vctx->contextId];
 
         // calculate camera transform
         constexpr float fov = glm::pi<float>() / 4.0f;
         const float nearPlane = 0.1f;
         const float farPlane = 10000.0f;
         const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        const float aspectRatio = (float)viewportWidth / (float)viewportHeight;
+        const float aspectRatio = (float)vctx->width / (float)vctx->height;
         glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
         viewState->cameraTransform =
             projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
 
         rendererUpdateCameraState(memory, &viewState->cameraTransform);
-        rendererSetViewportSize(viewportWidth, viewportHeight);
+        rendererSetViewportSize(vctx->width, vctx->height);
         rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
         // get textures

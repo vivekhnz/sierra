@@ -433,7 +433,7 @@ int main()
             const float nearPlane = 0.1f;
             const float farPlane = 10000.0f;
             const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-            const float aspectRatio = (float)vctx.viewportWidth / (float)vctx.viewportHeight;
+            const float aspectRatio = (float)vctx.width / (float)vctx.height;
 
             glm::vec3 *cameraPos = isOrbitCameraMode ? &orbitCameraPos : &firstPersonCameraPos;
             glm::vec3 *cameraLookAt =
@@ -442,7 +442,7 @@ int main()
                 * glm::lookAt(*cameraPos, *cameraLookAt, up);
 
             rendererUpdateCameraState(&memory, &cameraTransform);
-            rendererSetViewportSize(vctx.viewportWidth, vctx.viewportHeight);
+            rendererSetViewportSize(vctx.width, vctx.height);
             rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
             TextureAsset *asset;

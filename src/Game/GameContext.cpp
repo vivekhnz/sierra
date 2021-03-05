@@ -4,7 +4,7 @@
 #include "../Engine/IO/MouseButton.hpp"
 
 GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
-    window(window), cameraEntityId(-1), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0),
+    window(window), isFirstMouseInput(true), prevMouseX(0), prevMouseY(0),
     nextMouseScrollOffsetX(0), nextMouseScrollOffsetY(0)
 {
     window.addMouseScrollHandler(std::bind(
@@ -160,11 +160,12 @@ void GameContext::setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode
 Terrain::Engine::EngineViewContext GameContext::getViewContext() const
 {
     auto [w, h] = window.getSize();
-    return {w, h, cameraEntityId};
-}
-void GameContext::setCameraEntityId(int cameraEntityId)
-{
-    this->cameraEntityId = cameraEntityId;
+
+    Terrain::Engine::EngineViewContext result = {};
+    result.width = w;
+    result.height = h;
+    result.contextId = 0;
+    return result;
 }
 void GameContext::render()
 {

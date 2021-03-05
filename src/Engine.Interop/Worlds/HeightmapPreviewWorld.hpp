@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../EditorState.hpp"
-#include "../ViewportContext.hpp"
+#include "../../Engine/EngineViewContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class HeightmapPreviewWorld
@@ -16,6 +16,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         HeightmapPreviewWorld(EngineMemory *memory);
 
         void initialize(uint32 heightmapTextureHandle);
-        void render(EngineMemory *memory, uint32 viewportWidth, uint32 viewportHeight);
+        void render(EngineMemory *memory, EngineViewContext *vctx);
     };
 }}}}

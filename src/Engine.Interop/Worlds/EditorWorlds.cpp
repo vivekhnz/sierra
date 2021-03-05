@@ -17,14 +17,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         heightmapPreviewWorld.initialize(heightmapTextureHandle);
     }
 
-    void EditorWorlds::linkViewport(ViewportWorld viewportWorld, ViewportContext &vctx)
+    void EditorWorlds::linkViewport(ViewportWorld viewportWorld, ViewportContext *vctx)
     {
+        uint32 contextId = 0;
+        int inputControllerId = vctx->getInputControllerId();
+
         switch (viewportWorld)
         {
         case ViewportWorld::Scene:
-            sceneWorld.linkViewport(vctx);
+            contextId = sceneWorld.linkViewport(inputControllerId);
             break;
         }
+
+        vctx->setContextId(contextId);
     }
 
     void EditorWorlds::update(float deltaTime, const EditorState &state, EditorState &newState)
@@ -37,14 +42,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     void EditorWorlds::render(EngineMemory *memory, ViewportContext &vctx)
     {
         EngineViewContext view = vctx.getViewContext();
+        if (view.width == 0 || view.height == 0)
+            return;
+
         switch (vctx.getWorld())
         {
         case ViewportWorld::Scene:
-            sceneWorld.render(
-                memory, view.viewportWidth, view.viewportHeight, view.cameraEntityId);
+            sceneWorld.render(memory, &view);
             break;
         case ViewportWorld::HeightmapPreview:
-            heightmapPreviewWorld.render(memory, view.viewportWidth, view.viewportHeight);
+            heightmapPreviewWorld.render(memory, &view);
             break;
         }
     }

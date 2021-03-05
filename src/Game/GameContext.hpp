@@ -10,7 +10,6 @@
 class GameContext : public Terrain::Engine::AppContext
 {
     Terrain::Engine::Graphics::Window &window;
-    int cameraEntityId;
     bool isFirstMouseInput;
     double prevMouseX;
     double prevMouseY;
@@ -43,7 +42,6 @@ public:
 
     // game-specific
     Terrain::Engine::EngineViewContext getViewContext() const;
-    void setCameraEntityId(int cameraEntityId);
     void render();
 };
 
