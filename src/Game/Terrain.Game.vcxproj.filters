@@ -2,13 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="GameContext.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="terrain_platform_win32.cpp" />
     <ClCompile Include="game.cpp" />
+    <ClCompile Include="win32_game.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GameContext.hpp" />
-    <ClInclude Include="terrain_platform_win32.h" />
     <ClInclude Include="game.h" />
   </ItemGroup>
 </Project>

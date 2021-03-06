@@ -19,9 +19,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory->baseAddress =
             VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
         memory->size = ENGINE_MEMORY_SIZE;
-        memory->platformFreeMemory = win32FreeMemory;
         memory->platformLogMessage = win32LogMessage;
-        memory->platformReadFile = win32ReadFile;
         memory->platformLoadAsset = win32LoadAsset;
 
         glfw = new Graphics::GlfwManager();
@@ -190,11 +188,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
     {
         std::string pathStr = msclr::interop::marshal_as<std::string>(path);
-        PlatformReadFileResult result = win32ReadFile(pathStr.c_str());
+        Win32ReadFileResult result = win32ReadFile(pathStr.c_str());
         assert(result.data);
 
         TextureAsset asset;
-        assetsLoadTexture(memory, &result, true, &asset);
+        assetsLoadTexture(memory, result.data, result.size, true, &asset);
         worlds->heightmapCompositionWorld.updateImportedHeightmapTexture(&asset);
         newEditorState->heightmapStatus = HeightmapStatus::Initializing;
 

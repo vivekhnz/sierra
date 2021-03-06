@@ -77,10 +77,8 @@ struct TextureAsset
 EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
 EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId);
 
-EXPORT void assetsLoadTexture(EngineMemory *memory,
-    PlatformReadFileResult *result,
-    bool is16Bit,
-    TextureAsset *out_asset);
+EXPORT void assetsLoadTexture(
+    EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset);
 EXPORT TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId);
 
 EXPORT void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId);

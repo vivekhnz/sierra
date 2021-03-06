@@ -62,14 +62,29 @@ struct GameState
     uint32 materialPropsBufferHandle;
 };
 
+struct PlatformReadFileResult
+{
+    uint64 size;
+    void *data;
+};
+
+#define PLATFORM_READ_FILE(name) PlatformReadFileResult name(const char *path)
+typedef PLATFORM_READ_FILE(PlatformReadFile);
+
+#define PLATFORM_FREE_MEMORY(name) void name(void *data)
+typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
+
 struct GameMemory
 {
     bool isInitialized;
 
-    EngineMemory *engine;
-    Terrain::Engine::IO::InputManager *input;
+    PlatformReadFile *platformReadFile;
+    PlatformFreeMemory *platformFreeMemory;
 
     GameState state;
+
+    EngineMemory engine;
+    Terrain::Engine::IO::InputManager *input;
 };
 
 struct Viewport

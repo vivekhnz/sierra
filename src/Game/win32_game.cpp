@@ -1,37 +1,11 @@
-#include <windows.h>
+#include <iostream>
 
-#include "terrain_platform_win32.h"
+#include "win32_game.h"
+#include "../Engine/Graphics/Window.hpp"
 #include "../Engine/terrain_assets.h"
+#include "GameContext.hpp"
 
-#define ASSET_LOAD_QUEUE_MAX_SIZE 128
-#define MAX_WATCHED_ASSETS 256
-
-struct Win32AssetLoadRequest
-{
-    EngineMemory *memory;
-    uint32 assetId;
-    char path[MAX_PATH];
-    PlatformAssetLoadCallback *callback;
-};
-
-struct Win32AssetLoadQueue
-{
-    bool isInitialized;
-    uint32 length;
-    Win32AssetLoadRequest data[ASSET_LOAD_QUEUE_MAX_SIZE];
-    uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];
-};
-
-struct Win32WatchedAsset
-{
-    uint32 assetId;
-    char path[MAX_PATH];
-    uint64 lastUpdatedTime;
-};
-
-global_variable Win32AssetLoadQueue assetLoadQueue;
-global_variable Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
-global_variable uint32 watchedAssetCount;
+global_variable Win32PlatformMemory *platformMemory;
 
 void getAbsolutePath(const char *relativePath, char *absolutePath)
 {
@@ -146,24 +120,25 @@ PLATFORM_READ_FILE(win32ReadFile)
 
 PLATFORM_LOAD_ASSET(win32LoadAsset)
 {
-    if (!assetLoadQueue.isInitialized)
+    if (!platformMemory->assetLoadQueue.isInitialized)
     {
         for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
         {
-            assetLoadQueue.indices[i] = i;
+            platformMemory->assetLoadQueue.indices[i] = i;
         }
-        assetLoadQueue.isInitialized = true;
+        platformMemory->assetLoadQueue.isInitialized = true;
     }
 
-    if (assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
+    if (platformMemory->assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
     {
         // decline the request - our asset load queue is at capacity
         return false;
     }
 
     // add asset load request to queue
-    uint32 index = assetLoadQueue.indices[assetLoadQueue.length++];
-    Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
+    uint32 index =
+        platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length++];
+    Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
     *request = {};
     request->memory = memory;
     request->assetId = assetId;
@@ -172,9 +147,9 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
 
     // add asset to watch list so we can hot reload it
     bool isAssetAlreadyWatched = false;
-    for (int i = 0; i < watchedAssetCount; i++)
+    for (int i = 0; i < platformMemory->watchedAssetCount; i++)
     {
-        if (watchedAssets[i].assetId == assetId)
+        if (platformMemory->watchedAssets[i].assetId == assetId)
         {
             isAssetAlreadyWatched = true;
             break;
@@ -182,8 +157,9 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     }
     if (!isAssetAlreadyWatched)
     {
-        assert(watchedAssetCount < MAX_WATCHED_ASSETS);
-        Win32WatchedAsset *watchedAsset = &watchedAssets[watchedAssetCount++];
+        assert(platformMemory->watchedAssetCount < MAX_WATCHED_ASSETS);
+        Win32WatchedAsset *watchedAsset =
+            &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
         watchedAsset->assetId = assetId;
 
         char *src = request->path;
@@ -202,9 +178,9 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
 void win32LoadQueuedAssets(EngineMemory *memory)
 {
     // invalidate watched assets that have changed
-    for (uint32 i = 0; i < watchedAssetCount; i++)
+    for (uint32 i = 0; i < platformMemory->watchedAssetCount; i++)
     {
-        Win32WatchedAsset *asset = &watchedAssets[i];
+        Win32WatchedAsset *asset = &platformMemory->watchedAssets[i];
         uint64 lastWriteTime = getFileLastWriteTime(asset->path);
         if (lastWriteTime > asset->lastUpdatedTime)
         {
@@ -214,20 +190,90 @@ void win32LoadQueuedAssets(EngineMemory *memory)
     }
 
     // action any asset load requests
-    for (uint32 i = 0; i < assetLoadQueue.length; i++)
+    Win32AssetLoadQueue *assetLoadQueue = &platformMemory->assetLoadQueue;
+    for (uint32 i = 0; i < assetLoadQueue->length; i++)
     {
-        uint32 index = assetLoadQueue.indices[i];
-        Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
+        uint32 index = assetLoadQueue->indices[i];
+        Win32AssetLoadRequest *request = &assetLoadQueue->data[index];
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            request->callback(request->memory, request->assetId, &result);
+            request->callback(request->memory, request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
-            assetLoadQueue.length--;
-            assetLoadQueue.indices[i] = assetLoadQueue.indices[assetLoadQueue.length];
-            assetLoadQueue.indices[assetLoadQueue.length] = index;
+            assetLoadQueue->length--;
+            assetLoadQueue->indices[i] = assetLoadQueue->indices[assetLoadQueue->length];
+            assetLoadQueue->indices[assetLoadQueue->length] = index;
             i--;
         }
+    }
+}
+
+int32 main()
+{
+    try
+    {
+#define APP_MEMORY_SIZE (500 * 1024 * 1024)
+        uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
+        platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
+        *platformMemory = {};
+
+        platformMemory->game.platformReadFile = win32ReadFile;
+        platformMemory->game.platformFreeMemory = win32FreeMemory;
+
+        platformMemory->game.engine.baseAddress =
+            memoryBaseAddress + sizeof(Win32PlatformMemory);
+        platformMemory->game.engine.size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
+        platformMemory->game.engine.platformLogMessage = win32LogMessage;
+        platformMemory->game.engine.platformLoadAsset = win32LoadAsset;
+
+        Terrain::Engine::Graphics::GlfwManager glfw;
+        Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
+        window.makePrimary();
+        GameContext appCtx(window);
+        Terrain::Engine::EngineContext ctx(appCtx, &platformMemory->game.engine);
+        ctx.input.addInputController();
+        platformMemory->game.input = &ctx.input;
+
+        float lastTickTime = glfw.getCurrentTime();
+
+        while (!window.isRequestingClose())
+        {
+            win32LoadQueuedAssets(&platformMemory->game.engine);
+
+            // query input
+            ctx.input.update();
+
+            float now = glfw.getCurrentTime();
+            float deltaTime = now - lastTickTime;
+            lastTickTime = now;
+
+            auto [viewportWidth, viewportHeight] = window.getSize();
+            Viewport viewport = {viewportWidth, viewportHeight};
+
+            gameUpdateAndRender(&platformMemory->game, viewport, deltaTime);
+
+            if (ctx.input.isKeyDown(0, Terrain::Engine::IO::Key::Escape))
+            {
+                window.close();
+            }
+
+            window.refresh();
+            glfw.processEvents();
+        }
+
+        gameShutdown(&platformMemory->game);
+
+        return 0;
+    }
+    catch (const std::runtime_error &e)
+    {
+        std::cerr << e.what() << std::endl;
+        return 1;
+    }
+    catch (...)
+    {
+        std::cerr << "Unhandled exception thrown." << std::endl;
+        return 1;
     }
 }

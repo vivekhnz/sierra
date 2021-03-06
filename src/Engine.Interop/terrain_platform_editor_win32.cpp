@@ -98,7 +98,7 @@ void *win32AllocateMemory(uint64 size)
     return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
-PLATFORM_FREE_MEMORY(win32FreeMemory)
+void win32FreeMemory(void *data)
 {
     if (!data)
         return;
@@ -111,9 +111,9 @@ PLATFORM_LOG_MESSAGE(win32LogMessage)
     OutputDebugStringA(message);
 }
 
-PLATFORM_READ_FILE(win32ReadFile)
+Win32ReadFileResult win32ReadFile(const char *path)
 {
-    PlatformReadFileResult result = {};
+    Win32ReadFileResult result = {};
 
     HANDLE handle = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (handle == INVALID_HANDLE_VALUE)
@@ -218,10 +218,10 @@ void win32LoadQueuedAssets(EngineMemory *memory)
     {
         uint32 index = assetLoadQueue.indices[i];
         Win32AssetLoadRequest *request = &assetLoadQueue.data[index];
-        PlatformReadFileResult result = win32ReadFile(request->path);
+        Win32ReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            request->callback(request->memory, request->assetId, &result);
+            request->callback(request->memory, request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue.length--;

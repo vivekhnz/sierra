@@ -81,13 +81,11 @@
   <ItemGroup>
     <ClCompile Include="game.cpp" />
     <ClCompile Include="GameContext.cpp" />
-    <ClCompile Include="main.cpp" />
-    <ClCompile Include="terrain_platform_win32.cpp" />
+    <ClCompile Include="win32_game.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="game.h" />
     <ClInclude Include="GameContext.hpp" />
-    <ClInclude Include="terrain_platform_win32.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">

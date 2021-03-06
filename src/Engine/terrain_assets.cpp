@@ -212,7 +212,7 @@ PLATFORM_ASSET_LOAD_CALLBACK(onShaderLoaded)
 
     ShaderInfo shaderInfo = getShaderInfo(assetId);
 
-    char *src = static_cast<char *>(result->data);
+    char *src = static_cast<char *>(data);
     uint32 handle;
     if (rendererCreateShader(memory, shaderInfo.type, src, &handle))
     {
@@ -304,28 +304,26 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
     return slot->asset;
 }
 
-EXPORT void assetsLoadTexture(EngineMemory *memory,
-    PlatformReadFileResult *result,
-    bool is16Bit,
-    TextureAsset *out_asset)
+EXPORT void assetsLoadTexture(
+    EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
-    const stbi_uc *rawData = static_cast<stbi_uc *>(result->data);
-    void *data;
+    const stbi_uc *rawData = static_cast<stbi_uc *>(data);
+    void *loadedData;
     int32 width;
     int32 height;
     int32 channels;
     uint64 elementSize = 0;
     if (is16Bit)
     {
-        data = stbi_load_16_from_memory(rawData, result->size, &width, &height, &channels, 0);
+        loadedData = stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
         elementSize = 2;
     }
     else
     {
-        data = stbi_load_from_memory(rawData, result->size, &width, &height, &channels, 0);
+        loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
         elementSize = 1;
     }
 
@@ -340,10 +338,10 @@ EXPORT void assetsLoadTexture(EngineMemory *memory,
     out_asset->height = (uint32)height;
     out_asset->data =
         (uint8 *)memory->assets.baseAddress + sizeof(AssetsState) + state->dataStorageUsed;
-    memcpy(out_asset->data, data, requiredStorage);
+    memcpy(out_asset->data, loadedData, requiredStorage);
     state->dataStorageUsed += requiredStorage;
 
-    stbi_image_free(data);
+    stbi_image_free(loadedData);
 }
 
 PLATFORM_ASSET_LOAD_CALLBACK(onTextureLoaded)
@@ -357,7 +355,7 @@ PLATFORM_ASSET_LOAD_CALLBACK(onTextureLoaded)
     TextureInfo textureInfo = getTextureInfo(assetId);
 
     TextureAsset *asset = &state->textureAssets[assetIdx];
-    assetsLoadTexture(memory, result, textureInfo.is16Bit, asset);
+    assetsLoadTexture(memory, data, size, textureInfo.is16Bit, asset);
     asset->version++;
 
     TextureAssetSlot *slot = &state->textureAssetSlots[assetIdx];
