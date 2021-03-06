@@ -2,7 +2,7 @@
 
 namespace Terrain { namespace Engine {
     EngineContext::EngineContext(AppContext &ctx, EngineMemory *memory) :
-        memory(memory), input(ctx), renderer(memory)
+        memory(memory), input(ctx)
     {
         assert(memory->size >= sizeof(EngineMemory));
         uint8 *baseAddress = static_cast<uint8 *>(memory->baseAddress);
@@ -17,10 +17,5 @@ namespace Terrain { namespace Engine {
         offset += memory->assets.size;
 
         assert(offset == memory->size);
-    }
-
-    void EngineContext::initialize()
-    {
-        renderer.initialize();
     }
 }}

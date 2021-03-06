@@ -64,7 +64,7 @@ int main()
         window.makePrimary();
         GameContext appCtx(window);
         Terrain::Engine::EngineContext ctx(appCtx, &memory);
-        ctx.initialize();
+        rendererInitialize(&memory);
         ctx.input.addInputController();
 
 // create terrain
@@ -126,21 +126,21 @@ int main()
         }
 
         uint32 terrainMeshVertexBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+            rendererCreateBuffer(&memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
         rendererUpdateBuffer(
-            ctx.memory, terrainMeshVertexBufferHandle, vertexBufferSize, vertices);
+            &memory, terrainMeshVertexBufferHandle, vertexBufferSize, vertices);
         free(vertices);
 
         uint32 terrainMeshElementBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+            rendererCreateBuffer(&memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
         rendererUpdateBuffer(
-            ctx.memory, terrainMeshElementBufferHandle, elementBufferSize, indices);
+            &memory, terrainMeshElementBufferHandle, elementBufferSize, indices);
         free(indices);
 
-        uint32 terrainMeshVertexArrayHandle = rendererCreateVertexArray(ctx.memory);
-        rendererBindVertexArray(ctx.memory, terrainMeshVertexArrayHandle);
-        rendererBindBuffer(ctx.memory, terrainMeshElementBufferHandle);
-        rendererBindBuffer(ctx.memory, terrainMeshVertexBufferHandle);
+        uint32 terrainMeshVertexArrayHandle = rendererCreateVertexArray(&memory);
+        rendererBindVertexArray(&memory, terrainMeshVertexArrayHandle);
+        rendererBindBuffer(&memory, terrainMeshElementBufferHandle);
+        rendererBindBuffer(&memory, terrainMeshVertexBufferHandle);
         rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
         rendererBindVertexAttribute(
             1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
@@ -598,6 +598,8 @@ int main()
             // process events
             glfw.processEvents();
         }
+
+        rendererDestroyResources(&memory);
 
         return 0;
     }

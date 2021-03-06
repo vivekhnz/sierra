@@ -82,7 +82,7 @@ namespace Terrain { namespace Engine { namespace Interop {
              * window.
              */
             vctx->makePrimary();
-            ctx->initialize();
+            rendererInitialize(memory);
             worlds->initialize();
 
             areWorldsInitialized = true;
@@ -336,6 +336,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         delete newEditorState;
         newEditorState = nullptr;
+
+        rendererDestroyResources(memory);
 
         delete ctx;
         ctx = nullptr;

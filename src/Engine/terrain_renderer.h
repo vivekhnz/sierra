@@ -13,7 +13,7 @@ enum RendererBufferType
     RENDERER_SHADER_STORAGE_BUFFER
 };
 
-EXPORT void rendererCreateUniformBuffers(EngineMemory *memory);
+EXPORT void rendererInitialize(EngineMemory *memory);
 EXPORT void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform);
 EXPORT void rendererUpdateLightingState(EngineMemory *memory,
     glm::vec4 *lightDir,

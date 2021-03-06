@@ -18,7 +18,6 @@
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
     <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
-    <ClCompile Include="Graphics\Renderer.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
@@ -30,7 +29,6 @@
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="EngineContext.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
-    <ClInclude Include="Graphics\Renderer.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
     <ClInclude Include="IO\InputManager.hpp" />
     <ClInclude Include="IO\Key.hpp" />

@@ -81,9 +81,14 @@ uint32 getOpenGLBufferType(RendererBufferType type)
     return bufferType;
 }
 
-void rendererCreateUniformBuffers(EngineMemory *memory)
+void rendererInitialize(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // note: we assume that this is called before any vertex or element buffers are created
     assert(state->bufferCount == 0);
