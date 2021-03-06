@@ -215,7 +215,26 @@ void initializeGame(GameMemory *memory)
         sizeof(materialProps), materialProps);
 }
 
-void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
+bool isKeyDown(GameInput *input, Terrain::Engine::IO::Key key)
+{
+    uint64 keyVal = static_cast<uint64>(key);
+    return input->pressedKeys & keyVal;
+}
+
+bool isNewKeyPress(GameInput *input, Terrain::Engine::IO::Key key)
+{
+    uint64 keyVal = static_cast<uint64>(key);
+    return (input->pressedKeys & keyVal) && !(input->prevPressedKeys & keyVal);
+}
+
+bool isMouseButtonDown(GameInput *input, Terrain::Engine::IO::MouseButton button)
+{
+    uint8 btnVal = static_cast<uint8>(button);
+    return input->pressedMouseButtons & btnVal;
+}
+
+void gameUpdateAndRender(
+    GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime)
 {
     if (!memory->isInitialized)
     {
@@ -223,62 +242,66 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
         memory->isInitialized = true;
     }
 
-    Terrain::Engine::IO::InputManager *input = memory->input;
     GameState *state = &memory->state;
 
     bool isLightingStateUpdated = false;
     glm::vec4 lightDir = glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f);
 
+    if (isKeyDown(input, Terrain::Engine::IO::Key::Escape))
+    {
+        memory->platformExitGame();
+    }
+
     // swap camera mode when C key is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::C))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::C))
     {
         state->isOrbitCameraMode = !state->isOrbitCameraMode;
     }
 
     // toggle lighting when L key is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::L))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::L))
     {
         state->isLightingEnabled = !state->isLightingEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle albedo texture when T key is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::T))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::T))
     {
         state->isAlbedoEnabled = !state->isAlbedoEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle normal map texture when N key is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::N))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::N))
     {
         state->isNormalMapEnabled = !state->isNormalMapEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle displacement map texture when B key is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::B))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::B))
     {
         state->isDisplacementMapEnabled = !state->isDisplacementMapEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle ambient occlusion texture when O key is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::O))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::O))
     {
         state->isAOMapEnabled = !state->isAOMapEnabled;
         isLightingStateUpdated = true;
     }
 
     // load a different heightmap when H is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::H))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::H))
     {
         reloadHeightmap(
             memory, &state->heightfield, state->heightmapTextureHandle, "data/heightmap2.tga");
     }
 
     // toggle terrain wireframe mode when Z is pressed
-    if (input->isNewKeyPress(0, Terrain::Engine::IO::Key::Z))
+    if (isNewKeyPress(input, Terrain::Engine::IO::Key::Z))
     {
         state->isWireframeMode = !state->isWireframeMode;
     }
@@ -294,20 +317,19 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
     if (state->isOrbitCameraMode)
     {
         bool isManipulatingOrbitCamera = false;
-        const Terrain::Engine::IO::MouseInputState &mouseState = input->getMouseState(0);
 
         // orbit distance is modified by scrolling the mouse wheel
-        state->orbitCameraDistance *= 1.0f - (glm::sign(mouseState.scrollOffsetY) * 0.05f);
+        state->orbitCameraDistance *= 1.0f - (glm::sign(input->mouseScrollOffset) * 0.05f);
 
         // only update the look at position if the middle mouse button is pressed
-        if (input->isMouseButtonDown(0, Terrain::Engine::IO::MouseButton::Middle))
+        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Middle))
         {
             glm::vec3 lookDir =
                 glm::normalize(state->orbitCameraLookAt - state->orbitCameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan =
-                (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
+                (xDir * input->mouseCursorOffset.x) + (yDir * input->mouseCursorOffset.y);
             state->orbitCameraLookAt +=
                 pan * clamp(state->orbitCameraDistance, 2.5f, 300.0f) * 0.02f * deltaTime;
 
@@ -315,14 +337,14 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
         }
 
         // only update yaw & pitch if the right mouse button is pressed
-        if (input->isMouseButtonDown(0, Terrain::Engine::IO::MouseButton::Right))
+        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Right))
         {
             float rotateSensitivity =
                 0.05f * clamp(state->orbitCameraDistance, 14.0f, 70.0f) * deltaTime;
             state->orbitCameraYaw +=
-                glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
+                glm::radians(input->mouseCursorOffset.x * rotateSensitivity);
             state->orbitCameraPitch +=
-                glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
+                glm::radians(input->mouseCursorOffset.y * rotateSensitivity);
 
             isManipulatingOrbitCamera = true;
         }
@@ -338,7 +360,7 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
         // capture mouse if orbit camera is being manipulated
         if (isManipulatingOrbitCamera)
         {
-            input->captureMouse(false);
+            memory->platformCaptureMouse();
         }
     }
     else
@@ -347,12 +369,10 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
         const float moveSpeed = 4.0 * deltaTime;
         const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
 
-        const Terrain::Engine::IO::MouseInputState &mouseState = input->getMouseState(0);
-
         // rotate camera by moving mouse cursor
-        state->firstPersonCameraYaw += mouseState.cursorOffsetX * lookSensitivity;
+        state->firstPersonCameraYaw += input->mouseCursorOffset.x * lookSensitivity;
         state->firstPersonCameraPitch = clamp(state->firstPersonCameraPitch
-                - ((float)mouseState.cursorOffsetY * lookSensitivity),
+                - ((float)input->mouseCursorOffset.y * lookSensitivity),
             -1.55f, 1.55f);
         glm::vec3 lookDir =
             glm::vec3(cos(state->firstPersonCameraYaw) * cos(state->firstPersonCameraPitch),
@@ -362,19 +382,19 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
         // move camera on XZ axis using WASD keys
         glm::vec3 moveDir = glm::vec3(
             cos(state->firstPersonCameraYaw), 0.0f, sin(state->firstPersonCameraYaw));
-        if (input->isKeyDown(0, Terrain::Engine::IO::Key::A))
+        if (isKeyDown(input, Terrain::Engine::IO::Key::A))
         {
             state->firstPersonCameraPos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
         }
-        if (input->isKeyDown(0, Terrain::Engine::IO::Key::D))
+        if (isKeyDown(input, Terrain::Engine::IO::Key::D))
         {
             state->firstPersonCameraPos += glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
         }
-        if (input->isKeyDown(0, Terrain::Engine::IO::Key::W))
+        if (isKeyDown(input, Terrain::Engine::IO::Key::W))
         {
             state->firstPersonCameraPos += moveDir * moveSpeed;
         }
-        if (input->isKeyDown(0, Terrain::Engine::IO::Key::S))
+        if (isKeyDown(input, Terrain::Engine::IO::Key::S))
         {
             state->firstPersonCameraPos -= moveDir * moveSpeed;
         }
@@ -389,7 +409,7 @@ void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime)
         state->firstPersonCameraLookAt = state->firstPersonCameraPos + lookDir;
 
         // capture mouse if first person camera is active
-        input->captureMouse(false);
+        memory->platformCaptureMouse();
     }
 
     // render world

@@ -10,62 +10,56 @@ GameContext::GameContext(Terrain::Engine::Graphics::Window &window) :
     window.addMouseScrollHandler(std::bind(
         &GameContext::onMouseScroll, this, std::placeholders::_1, std::placeholders::_2));
 
-    // todo: add support for more than one input controller
-    inputState.count = 1;
-    inputState.mouse.push_back({});
-    inputState.pressedMouseButtons.push_back(0);
-    inputState.pressedKeys.push_back(0);
+    inputState.mouse = {};
+    inputState.pressedMouseButtons = 0;
+    inputState.pressedKeys = 0;
 }
 
 // input
 void GameContext::updateInputState()
 {
     // update mouse button state
-    unsigned short &pressedButtons = inputState.pressedMouseButtons[0];
-    pressedButtons = 0;
-    pressedButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)
-        * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Left);
-    pressedButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
-        * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Middle);
-    pressedButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)
-        * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Right);
+    inputState.pressedMouseButtons = 0;
+    inputState.pressedMouseButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_LEFT)
+        * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Left);
+    inputState.pressedMouseButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_MIDDLE)
+        * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Middle);
+    inputState.pressedMouseButtons |= window.isMouseButtonPressed(GLFW_MOUSE_BUTTON_RIGHT)
+        * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Right);
 
     // update mouse cursor position
-    Terrain::Engine::IO::MouseInputState &mouseState = inputState.mouse[0];
     auto [mouseX, mouseY] = window.getMousePosition();
     auto [w, h] = window.getSize();
-    mouseState.normalizedCursorX = mouseX / (float)w;
-    mouseState.normalizedCursorY = mouseY / (float)h;
+    inputState.mouse.normalizedCursorX = mouseX / (float)w;
+    inputState.mouse.normalizedCursorY = mouseY / (float)h;
 
     // update mouse cursor offset
     if (isFirstMouseInput)
     {
         isFirstMouseInput = false;
-        mouseState.cursorOffsetX = 0;
-        mouseState.cursorOffsetY = 0;
+        inputState.mouse.cursorOffsetX = 0;
+        inputState.mouse.cursorOffsetY = 0;
     }
     else
     {
-        mouseState.cursorOffsetX = mouseX - prevMouseX;
-        mouseState.cursorOffsetY = mouseY - prevMouseY;
+        inputState.mouse.cursorOffsetX = mouseX - prevMouseX;
+        inputState.mouse.cursorOffsetY = mouseY - prevMouseY;
     }
     prevMouseX = mouseX;
     prevMouseY = mouseY;
 
     // update mouse scroll offset
-    mouseState.scrollOffsetX = nextMouseScrollOffsetX;
-    mouseState.scrollOffsetY = nextMouseScrollOffsetY;
+    inputState.mouse.scrollOffsetX = nextMouseScrollOffsetX;
+    inputState.mouse.scrollOffsetY = nextMouseScrollOffsetY;
     nextMouseScrollOffsetX = 0;
     nextMouseScrollOffsetY = 0;
 
     // update keyboard state
-    unsigned long long &pressedKeys = inputState.pressedKeys[0];
-
 #define UPDATE_KEYBOARD_STATE(ENGINE_KEY, GLFW_KEY)                                           \
-    pressedKeys |= window.isKeyPressed(GLFW_KEY)                                              \
-        * static_cast<unsigned long long>(Terrain::Engine::IO::Key::ENGINE_KEY)
+    inputState.pressedKeys |= window.isKeyPressed(GLFW_KEY)                                   \
+        * static_cast<uint64>(Terrain::Engine::IO::Key::ENGINE_KEY)
 
-    pressedKeys = 0;
+    inputState.pressedKeys = 0;
     UPDATE_KEYBOARD_STATE(Space, GLFW_KEY_SPACE);
     UPDATE_KEYBOARD_STATE(D0, GLFW_KEY_0);
     UPDATE_KEYBOARD_STATE(D1, GLFW_KEY_1);
@@ -131,15 +125,15 @@ void GameContext::updateInputState()
 const Terrain::Engine::IO::MouseInputState &GameContext::getMouseState(
     int inputControllerId) const
 {
-    return inputState.mouse[inputControllerId];
+    return inputState.mouse;
 }
-const unsigned short &GameContext::getPressedMouseButtons(int inputControllerId) const
+const uint8 &GameContext::getPressedMouseButtons(int inputControllerId) const
 {
-    return inputState.pressedMouseButtons[inputControllerId];
+    return inputState.pressedMouseButtons;
 }
-const unsigned long long &GameContext::getPressedKeys(int inputControllerId) const
+const uint64 &GameContext::getPressedKeys(int inputControllerId) const
 {
-    return inputState.pressedKeys[inputControllerId];
+    return inputState.pressedKeys;
 }
 void GameContext::setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode)
 {

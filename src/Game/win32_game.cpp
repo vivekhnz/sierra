@@ -175,6 +175,16 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     return true;
 }
 
+PLATFORM_EXIT_GAME(win32ExitGame)
+{
+    platformMemory->shouldExitGame = true;
+}
+
+PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
+{
+    platformMemory->shouldCaptureMouse = true;
+}
+
 void win32LoadQueuedAssets(EngineMemory *memory)
 {
     // invalidate watched assets that have changed
@@ -214,35 +224,72 @@ int32 main()
     try
     {
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
+#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
         uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
         platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
         *platformMemory = {};
 
         platformMemory->game.platformReadFile = win32ReadFile;
         platformMemory->game.platformFreeMemory = win32FreeMemory;
+        platformMemory->game.platformExitGame = win32ExitGame;
+        platformMemory->game.platformCaptureMouse = win32CaptureMouse;
 
-        platformMemory->game.engine.baseAddress =
-            memoryBaseAddress + sizeof(Win32PlatformMemory);
-        platformMemory->game.engine.size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
-        platformMemory->game.engine.platformLogMessage = win32LogMessage;
-        platformMemory->game.engine.platformLoadAsset = win32LoadAsset;
+        EngineMemory *engine = &platformMemory->game.engine;
+        engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
+        engine->size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
+        engine->platformLogMessage = win32LogMessage;
+        engine->platformLoadAsset = win32LoadAsset;
+
+        uint64 engineMemoryOffset = 0;
+        engine->renderer.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
+        engine->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+        engineMemoryOffset += engine->renderer.size;
+        engine->assets.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
+        engine->assets.size = engine->size - engineMemoryOffset;
+        engineMemoryOffset += engine->assets.size;
+        assert(engineMemoryOffset == engine->size);
 
         Terrain::Engine::Graphics::GlfwManager glfw;
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
         window.makePrimary();
         GameContext appCtx(window);
-        Terrain::Engine::EngineContext ctx(appCtx, &platformMemory->game.engine);
-        ctx.input.addInputController();
-        platformMemory->game.input = &ctx.input;
 
         float lastTickTime = glfw.getCurrentTime();
+
+        GameInput input = {};
+        glm::vec2 prevMousePos = glm::vec2(0, 0);
+        bool wasMouseCursorTeleported = true;
 
         while (!window.isRequestingClose())
         {
             win32LoadQueuedAssets(&platformMemory->game.engine);
 
             // query input
-            ctx.input.update();
+            appCtx.updateInputState();
+            input.prevPressedKeys = input.pressedKeys;
+            input.prevPressedMouseButtons = input.pressedMouseButtons;
+            input.pressedKeys = appCtx.getPressedKeys(0);
+            input.pressedMouseButtons = appCtx.getPressedMouseButtons(0);
+
+            auto [mouseX, mouseY] = window.getMousePosition();
+            if (wasMouseCursorTeleported)
+            {
+                input.mouseCursorOffset = glm::vec2(0);
+                wasMouseCursorTeleported = false;
+            }
+            else
+            {
+                input.mouseCursorOffset.x = mouseX - prevMousePos.x;
+                input.mouseCursorOffset.y = mouseY - prevMousePos.y;
+            }
+            prevMousePos.x = mouseX;
+            prevMousePos.y = mouseY;
+
+            Terrain::Engine::IO::MouseInputState mouseState = appCtx.getMouseState(0);
+            input.mouseScrollOffset = mouseState.scrollOffsetY;
+
+            bool wasMouseCaptured = platformMemory->shouldCaptureMouse;
+            platformMemory->shouldCaptureMouse = false;
 
             float now = glfw.getCurrentTime();
             float deltaTime = now - lastTickTime;
@@ -251,11 +298,16 @@ int32 main()
             auto [viewportWidth, viewportHeight] = window.getSize();
             Viewport viewport = {viewportWidth, viewportHeight};
 
-            gameUpdateAndRender(&platformMemory->game, viewport, deltaTime);
+            gameUpdateAndRender(&platformMemory->game, &input, viewport, deltaTime);
 
-            if (ctx.input.isKeyDown(0, Terrain::Engine::IO::Key::Escape))
+            if (platformMemory->shouldExitGame)
             {
                 window.close();
+            }
+            if (platformMemory->shouldCaptureMouse != wasMouseCaptured)
+            {
+                window.setMouseCaptureMode(platformMemory->shouldCaptureMouse);
+                wasMouseCursorTeleported = true;
             }
 
             window.refresh();

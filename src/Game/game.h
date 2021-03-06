@@ -74,17 +74,36 @@ typedef PLATFORM_READ_FILE(PlatformReadFile);
 #define PLATFORM_FREE_MEMORY(name) void name(void *data)
 typedef PLATFORM_FREE_MEMORY(PlatformFreeMemory);
 
+#define PLATFORM_EXIT_GAME(name) void name()
+typedef PLATFORM_EXIT_GAME(PlatformExitGame);
+
+#define PLATFORM_CAPTURE_MOUSE(name) void name()
+typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
+
 struct GameMemory
 {
     bool isInitialized;
 
     PlatformReadFile *platformReadFile;
     PlatformFreeMemory *platformFreeMemory;
+    PlatformExitGame *platformExitGame;
+    PlatformCaptureMouse *platformCaptureMouse;
 
     GameState state;
 
     EngineMemory engine;
-    Terrain::Engine::IO::InputManager *input;
+};
+
+struct GameInput
+{
+    uint64 pressedKeys;
+    uint64 prevPressedKeys;
+
+    uint8 pressedMouseButtons;
+    uint8 prevPressedMouseButtons;
+
+    glm::vec2 mouseCursorOffset;
+    float mouseScrollOffset;
 };
 
 struct Viewport
@@ -93,7 +112,8 @@ struct Viewport
     uint32 height;
 };
 
-void gameUpdateAndRender(GameMemory *memory, Viewport viewport, float deltaTime);
+void gameUpdateAndRender(
+    GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime);
 void gameShutdown(GameMemory *memory);
 
 #endif

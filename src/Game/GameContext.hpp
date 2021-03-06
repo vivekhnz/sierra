@@ -4,7 +4,7 @@
 #include "../Engine/AppContext.hpp"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/IO/MouseInputState.hpp"
-#include <vector>
+#include "../Engine/terrain_platform.h"
 
 class GameContext : public Terrain::Engine::AppContext
 {
@@ -17,14 +17,9 @@ class GameContext : public Terrain::Engine::AppContext
 
     struct InputState
     {
-        int count;
-        std::vector<Terrain::Engine::IO::MouseInputState> mouse;
-        std::vector<unsigned short> pressedMouseButtons;
-        std::vector<unsigned long long> pressedKeys;
-
-        InputState() : count(0)
-        {
-        }
+        Terrain::Engine::IO::MouseInputState mouse;
+        uint8 pressedMouseButtons;
+        uint64 pressedKeys;
     } inputState;
 
     void onMouseScroll(double x, double y);
@@ -35,8 +30,8 @@ public:
     // input
     void updateInputState();
     const Terrain::Engine::IO::MouseInputState &getMouseState(int inputControllerId) const;
-    const unsigned short &getPressedMouseButtons(int inputControllerId) const;
-    const unsigned long long &getPressedKeys(int inputControllerId) const;
+    const uint8 &getPressedMouseButtons(int inputControllerId) const;
+    const uint64 &getPressedKeys(int inputControllerId) const;
     void setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode);
 };
 

@@ -66,30 +66,30 @@ namespace Terrain { namespace Engine { namespace Interop {
             int inputControllerId =
                 EngineInterop::HoveredViewportContext->getInputControllerId();
 
-            unsigned short &pressedButtons = inputState.pressedMouseButtons[inputControllerId];
-            pressedButtons |= (Mouse::LeftButton == MouseButtonState::Pressed)
-                * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Left);
-            pressedButtons |= (Mouse::MiddleButton == MouseButtonState::Pressed)
-                * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Middle);
-            pressedButtons |= (Mouse::RightButton == MouseButtonState::Pressed)
-                * static_cast<unsigned short>(Terrain::Engine::IO::MouseButton::Right);
+            uint8 *pressedButtons = &inputState.pressedMouseButtons[inputControllerId];
+            *pressedButtons |= (Mouse::LeftButton == MouseButtonState::Pressed)
+                * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Left);
+            *pressedButtons |= (Mouse::MiddleButton == MouseButtonState::Pressed)
+                * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Middle);
+            *pressedButtons |= (Mouse::RightButton == MouseButtonState::Pressed)
+                * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Right);
 
-            IO::MouseInputState &mouseState = inputState.mouse[inputControllerId];
+            IO::MouseInputState *mouseState = &inputState.mouse[inputControllerId];
             auto [viewportX_window, viewportY_window] =
                 EngineInterop::HoveredViewportContext->getViewportLocation();
-            mouseState.normalizedCursorX =
+            mouseState->normalizedCursorX =
                 (virtualMousePos.X - viewportX_window) / (float)view.width;
-            mouseState.normalizedCursorY =
+            mouseState->normalizedCursorY =
                 (virtualMousePos.Y - viewportY_window) / (float)view.height;
 
             // use the mouse scroll offset set by the scroll wheel callback
-            mouseState.scrollOffsetX = nextMouseScrollOffsetX;
-            mouseState.scrollOffsetY = nextMouseScrollOffsetY;
+            mouseState->scrollOffsetX = nextMouseScrollOffsetX;
+            mouseState->scrollOffsetY = nextMouseScrollOffsetY;
 
             if (currentMouseCaptureMode == IO::MouseCaptureMode::DoNotCapture)
             {
-                mouseState.cursorOffsetX = actualMousePos.X - prevMousePosX;
-                mouseState.cursorOffsetY = actualMousePos.Y - prevMousePosY;
+                mouseState->cursorOffsetX = actualMousePos.X - prevMousePosX;
+                mouseState->cursorOffsetY = actualMousePos.Y - prevMousePosY;
                 appWindow->Cursor = nullptr;
             }
             else
@@ -116,25 +116,25 @@ namespace Terrain { namespace Engine { namespace Interop {
                     // don't set the mouse offset on the first frame after we capture the mouse
                     // or there will be a big jump from the initial cursor position to the
                     // center of the viewport
-                    mouseState.cursorOffsetX = 0;
-                    mouseState.cursorOffsetY = 0;
+                    mouseState->cursorOffsetX = 0;
+                    mouseState->cursorOffsetY = 0;
                     appWindow->Cursor = Cursors::None;
                 }
                 else
                 {
-                    mouseState.cursorOffsetX = actualMousePos.X - viewportCenter_window.X;
-                    mouseState.cursorOffsetY = actualMousePos.Y - viewportCenter_window.Y;
+                    mouseState->cursorOffsetX = actualMousePos.X - viewportCenter_window.X;
+                    mouseState->cursorOffsetY = actualMousePos.Y - viewportCenter_window.Y;
                 }
             }
 
             // update keyboard state for hovered viewport
             if (appWindow->IsKeyboardFocusWithin)
             {
-                unsigned long long &pressedKeys = inputState.pressedKeys[inputControllerId];
+                uint64 *pressedKeys = &inputState.pressedKeys[inputControllerId];
 
 #define UPDATE_KEYBOARD_STATE(ENGINE_KEY, WINDOWS_KEY)                                        \
-    pressedKeys |= Keyboard::IsKeyDown(WINDOWS_KEY)                                           \
-        * static_cast<unsigned long long>(Terrain::Engine::IO::Key::ENGINE_KEY)
+    *pressedKeys |= Keyboard::IsKeyDown(WINDOWS_KEY)                                          \
+        * static_cast<uint64>(Terrain::Engine::IO::Key::ENGINE_KEY)
 
                 UPDATE_KEYBOARD_STATE(Space, System::Windows::Input::Key::Space);
                 UPDATE_KEYBOARD_STATE(D0, System::Windows::Input::Key::D0);
@@ -212,11 +212,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         return inputState.mouse[inputControllerId];
     }
-    const unsigned short &EditorContext::getPressedMouseButtons(int inputControllerId) const
+    const uint8 &EditorContext::getPressedMouseButtons(int inputControllerId) const
     {
         return inputState.pressedMouseButtons[inputControllerId];
     }
-    const unsigned long long &EditorContext::getPressedKeys(int inputControllerId) const
+    const uint64 &EditorContext::getPressedKeys(int inputControllerId) const
     {
         return inputState.pressedKeys[inputControllerId];
     }

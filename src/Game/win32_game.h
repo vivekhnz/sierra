@@ -38,6 +38,9 @@ struct Win32PlatformMemory
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
 
+    bool shouldExitGame;
+    bool shouldCaptureMouse;
+
     GameMemory game;
 };
 

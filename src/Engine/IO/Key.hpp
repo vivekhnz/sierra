@@ -2,9 +2,10 @@
 #define IO_KEY_HPP
 
 #include "../Common.hpp"
+#include "../terrain_platform.h"
 
 namespace Terrain { namespace Engine { namespace IO {
-    enum class Key : unsigned long long
+    enum class Key : uint64
     {
         Space = 1ULL << 0,
         D0 = 1ULL << 1,
