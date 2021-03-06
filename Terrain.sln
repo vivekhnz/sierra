@@ -15,7 +15,18 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain.Engine.Interop", "src\Engine.Interop\Terrain.Engine.Interop.vcxproj", "{29BFE0D0-933E-403B-A573-8F1CA164124E}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain.Game", "src\Game\Terrain.Game.vcxproj", "{5C732A0F-F75A-4213-A3E7-70DCDFE05F3F}"
+Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "win32_terrain", "C:\temp\terrain_mirror\bin\Debug\x64\win32_terrain.exe", "{248AFB8D-80C2-400A-A339-22D037480CEE}"
+	ProjectSection(DebuggerProjectSystem) = preProject
+		PortSupplier = 00000000-0000-0000-0000-000000000000
+		Executable = C:\temp\terrain_mirror\bin\Debug\x64\win32_terrain.exe
+		RemoteMachine = 
+		StartingDirectory = C:\temp\terrain_mirror\bin\Debug\x64
+		Environment = Default
+		LaunchingEngine = 00000000-0000-0000-0000-000000000000
+		UseLegacyDebugEngines = No
+		LaunchSQLEngine = No
+		AttachLaunchAction = No
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -35,10 +46,8 @@ Global
 		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x64.Build.0 = Debug|x64
 		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x64.ActiveCfg = Release|x64
 		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x64.Build.0 = Release|x64
-		{5C732A0F-F75A-4213-A3E7-70DCDFE05F3F}.Debug|x64.ActiveCfg = Debug|x64
-		{5C732A0F-F75A-4213-A3E7-70DCDFE05F3F}.Debug|x64.Build.0 = Debug|x64
-		{5C732A0F-F75A-4213-A3E7-70DCDFE05F3F}.Release|x64.ActiveCfg = Release|x64
-		{5C732A0F-F75A-4213-A3E7-70DCDFE05F3F}.Release|x64.Build.0 = Release|x64
+		{248AFB8D-80C2-400A-A339-22D037480CEE}.Debug|x64.ActiveCfg = Release|x64
+		{248AFB8D-80C2-400A-A339-22D037480CEE}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -376,7 +376,9 @@ int32 main()
             lastTickTime = now;
 
             auto [viewportWidth, viewportHeight] = window.getSize();
-            Viewport viewport = {viewportWidth, viewportHeight};
+            Viewport viewport = {};
+            viewport.width = viewportWidth;
+            viewport.height = viewportHeight;
 
             gameUpdateAndRender(&platformMemory->game, &input, viewport, deltaTime);
 
