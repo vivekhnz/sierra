@@ -40,6 +40,7 @@ struct Win32PlatformMemory
 
     bool shouldExitGame;
     bool shouldCaptureMouse;
+    float mouseScrollOffset;
 
     GameMemory game;
 };

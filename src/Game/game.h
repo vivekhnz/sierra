@@ -5,7 +5,7 @@
 
 #include "../Engine/terrain_platform.h"
 #include "../Engine/terrain_heightfield.h"
-#include "../Engine/IO/InputManager.hpp"
+#include "game_input.h"
 
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTFIELD_COLUMNS 256
@@ -92,18 +92,6 @@ struct GameMemory
     GameState state;
 
     EngineMemory engine;
-};
-
-struct GameInput
-{
-    uint64 pressedKeys;
-    uint64 prevPressedKeys;
-
-    uint8 pressedMouseButtons;
-    uint8 prevPressedMouseButtons;
-
-    glm::vec2 mouseCursorOffset;
-    float mouseScrollOffset;
 };
 
 struct Viewport

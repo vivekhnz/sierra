@@ -215,22 +215,14 @@ void initializeGame(GameMemory *memory)
         sizeof(materialProps), materialProps);
 }
 
-bool isKeyDown(GameInput *input, Terrain::Engine::IO::Key key)
+bool isButtonDown(GameInput *input, GameInputButtons button)
 {
-    uint64 keyVal = static_cast<uint64>(key);
-    return input->pressedKeys & keyVal;
+    return input->pressedButtons & button;
 }
 
-bool isNewKeyPress(GameInput *input, Terrain::Engine::IO::Key key)
+bool isNewButtonPress(GameInput *input, GameInputButtons button)
 {
-    uint64 keyVal = static_cast<uint64>(key);
-    return (input->pressedKeys & keyVal) && !(input->prevPressedKeys & keyVal);
-}
-
-bool isMouseButtonDown(GameInput *input, Terrain::Engine::IO::MouseButton button)
-{
-    uint8 btnVal = static_cast<uint8>(button);
-    return input->pressedMouseButtons & btnVal;
+    return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
 }
 
 void gameUpdateAndRender(
@@ -247,61 +239,61 @@ void gameUpdateAndRender(
     bool isLightingStateUpdated = false;
     glm::vec4 lightDir = glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f);
 
-    if (isKeyDown(input, Terrain::Engine::IO::Key::Escape))
+    if (isButtonDown(input, GAME_INPUT_KEY_ESCAPE))
     {
         memory->platformExitGame();
     }
 
     // swap camera mode when C key is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::C))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_C))
     {
         state->isOrbitCameraMode = !state->isOrbitCameraMode;
     }
 
     // toggle lighting when L key is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::L))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_L))
     {
         state->isLightingEnabled = !state->isLightingEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle albedo texture when T key is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::T))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_T))
     {
         state->isAlbedoEnabled = !state->isAlbedoEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle normal map texture when N key is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::N))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_N))
     {
         state->isNormalMapEnabled = !state->isNormalMapEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle displacement map texture when B key is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::B))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_B))
     {
         state->isDisplacementMapEnabled = !state->isDisplacementMapEnabled;
         isLightingStateUpdated = true;
     }
 
     // toggle ambient occlusion texture when O key is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::O))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_O))
     {
         state->isAOMapEnabled = !state->isAOMapEnabled;
         isLightingStateUpdated = true;
     }
 
     // load a different heightmap when H is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::H))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_H))
     {
         reloadHeightmap(
             memory, &state->heightfield, state->heightmapTextureHandle, "data/heightmap2.tga");
     }
 
     // toggle terrain wireframe mode when Z is pressed
-    if (isNewKeyPress(input, Terrain::Engine::IO::Key::Z))
+    if (isNewButtonPress(input, GAME_INPUT_KEY_Z))
     {
         state->isWireframeMode = !state->isWireframeMode;
     }
@@ -322,7 +314,7 @@ void gameUpdateAndRender(
         state->orbitCameraDistance *= 1.0f - (glm::sign(input->mouseScrollOffset) * 0.05f);
 
         // only update the look at position if the middle mouse button is pressed
-        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Middle))
+        if (isButtonDown(input, GAME_INPUT_MOUSE_MIDDLE))
         {
             glm::vec3 lookDir =
                 glm::normalize(state->orbitCameraLookAt - state->orbitCameraPos);
@@ -337,7 +329,7 @@ void gameUpdateAndRender(
         }
 
         // only update yaw & pitch if the right mouse button is pressed
-        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Right))
+        if (isButtonDown(input, GAME_INPUT_MOUSE_RIGHT))
         {
             float rotateSensitivity =
                 0.05f * clamp(state->orbitCameraDistance, 14.0f, 70.0f) * deltaTime;
@@ -382,19 +374,19 @@ void gameUpdateAndRender(
         // move camera on XZ axis using WASD keys
         glm::vec3 moveDir = glm::vec3(
             cos(state->firstPersonCameraYaw), 0.0f, sin(state->firstPersonCameraYaw));
-        if (isKeyDown(input, Terrain::Engine::IO::Key::A))
+        if (isButtonDown(input, GAME_INPUT_KEY_A))
         {
             state->firstPersonCameraPos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
         }
-        if (isKeyDown(input, Terrain::Engine::IO::Key::D))
+        if (isButtonDown(input, GAME_INPUT_KEY_D))
         {
             state->firstPersonCameraPos += glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
         }
-        if (isKeyDown(input, Terrain::Engine::IO::Key::W))
+        if (isButtonDown(input, GAME_INPUT_KEY_W))
         {
             state->firstPersonCameraPos += moveDir * moveSpeed;
         }
-        if (isKeyDown(input, Terrain::Engine::IO::Key::S))
+        if (isButtonDown(input, GAME_INPUT_KEY_S))
         {
             state->firstPersonCameraPos -= moveDir * moveSpeed;
         }
