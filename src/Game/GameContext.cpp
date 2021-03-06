@@ -157,10 +157,6 @@ void GameContext::setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode
 }
 
 // game-specific
-void GameContext::render()
-{
-    window.refresh();
-}
 void GameContext::onMouseScroll(double x, double y)
 {
     nextMouseScrollOffsetX = x;
