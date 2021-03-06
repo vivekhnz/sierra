@@ -41,7 +41,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void EditorWorlds::render(EngineMemory *memory, ViewportContext &vctx)
     {
-        EngineViewContext view = vctx.getViewContext();
+        EditorViewContext view = vctx.getViewContext();
         if (view.width == 0 || view.height == 0)
             return;
 

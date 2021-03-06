@@ -53,5 +53,6 @@
     </ClInclude>
     <ClInclude Include="EditorState.hpp" />
     <ClInclude Include="terrain_platform_editor_win32.h" />
+    <ClInclude Include="EditorViewContext.hpp" />
   </ItemGroup>
 </Project>

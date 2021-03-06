@@ -29,7 +29,6 @@
     <ClInclude Include="AppContext.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="EngineContext.hpp" />
-    <ClInclude Include="EngineViewContext.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\Renderer.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />

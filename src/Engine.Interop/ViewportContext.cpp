@@ -12,11 +12,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
     }
 
-    EngineViewContext ViewportContext::getViewContext() const
+    EditorViewContext ViewportContext::getViewContext() const
     {
         auto [w, h] = window.getSize();
 
-        EngineViewContext result = {};
+        EditorViewContext result = {};
         result.width = w;
         result.height = h;
         result.contextId = contextId;

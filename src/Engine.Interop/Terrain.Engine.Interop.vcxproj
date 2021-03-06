@@ -71,6 +71,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="EditorState.hpp" />
+    <ClInclude Include="EditorViewContext.hpp" />
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="EditorContext.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />

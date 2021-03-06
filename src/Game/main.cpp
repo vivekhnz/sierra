@@ -427,13 +427,13 @@ int main()
             }
 
             // render world
-            Terrain::Engine::EngineViewContext vctx = appCtx.getViewContext();
+            auto [viewportWidth, viewportHeight] = window.getSize();
 
             constexpr float fov = glm::pi<float>() / 4.0f;
             const float nearPlane = 0.1f;
             const float farPlane = 10000.0f;
             const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-            const float aspectRatio = (float)vctx.width / (float)vctx.height;
+            const float aspectRatio = (float)viewportWidth / (float)viewportHeight;
 
             glm::vec3 *cameraPos = isOrbitCameraMode ? &orbitCameraPos : &firstPersonCameraPos;
             glm::vec3 *cameraLookAt =
@@ -442,7 +442,7 @@ int main()
                 * glm::lookAt(*cameraPos, *cameraLookAt, up);
 
             rendererUpdateCameraState(&memory, &cameraTransform);
-            rendererSetViewportSize(vctx.width, vctx.height);
+            rendererSetViewportSize(viewportWidth, viewportHeight);
             rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
             TextureAsset *asset;

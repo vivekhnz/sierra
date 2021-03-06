@@ -45,7 +45,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         cameraTransform = glm::translate(cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
     }
 
-    void HeightmapPreviewWorld::render(EngineMemory *memory, EngineViewContext *vctx)
+    void HeightmapPreviewWorld::render(EngineMemory *memory, EditorViewContext *vctx)
     {
         rendererUpdateCameraState(memory, &cameraTransform);
         rendererSetViewportSize(vctx->width, vctx->height);

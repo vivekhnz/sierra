@@ -3,7 +3,7 @@
 #include "../../Engine/terrain_renderer.h"
 #include "../../Engine/terrain_heightfield.h"
 #include "../../Engine/EngineContext.hpp"
-#include "../../Engine/EngineViewContext.hpp"
+#include "../EditorViewContext.hpp"
 #include "../EditorState.hpp"
 
 #define MAX_SCENE_VIEWS 8
@@ -115,6 +115,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);
         uint32 linkViewport(int inputControllerId);
         void update(float deltaTime, const EditorState &state, EditorState &newState);
-        void render(EngineMemory *memory, EngineViewContext *vctx);
+        void render(EngineMemory *memory, EditorViewContext *vctx);
     };
 }}}}

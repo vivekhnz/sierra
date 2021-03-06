@@ -42,7 +42,6 @@
     </ClInclude>
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="EngineContext.hpp" />
-    <ClInclude Include="EngineViewContext.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp">
       <Filter>IO</Filter>
     </ClInclude>

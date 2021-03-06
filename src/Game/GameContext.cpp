@@ -157,16 +157,6 @@ void GameContext::setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode
 }
 
 // game-specific
-Terrain::Engine::EngineViewContext GameContext::getViewContext() const
-{
-    auto [w, h] = window.getSize();
-
-    Terrain::Engine::EngineViewContext result = {};
-    result.width = w;
-    result.height = h;
-    result.contextId = 0;
-    return result;
-}
 void GameContext::render()
 {
     window.refresh();

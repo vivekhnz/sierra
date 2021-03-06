@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../Engine/EngineViewContext.hpp"
 #include "../Engine/Graphics/Window.hpp"
+#include "EditorViewContext.hpp"
 #include "Worlds/ViewportWorld.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
@@ -23,7 +23,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             char *imgBuffer,
             std::function<void()> onRenderCallback);
 
-        EngineViewContext getViewContext() const;
+        EditorViewContext getViewContext() const;
         int getInputControllerId() const;
         Worlds::ViewportWorld getWorld() const;
         std::tuple<int, int> getViewportLocation() const;

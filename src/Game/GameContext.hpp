@@ -2,7 +2,6 @@
 #define GAMECONTEXT_HPP
 
 #include "../Engine/AppContext.hpp"
-#include "../Engine/EngineViewContext.hpp"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/IO/MouseInputState.hpp"
 #include <vector>
@@ -41,7 +40,6 @@ public:
     void setMouseCaptureMode(Terrain::Engine::IO::MouseCaptureMode mode);
 
     // game-specific
-    Terrain::Engine::EngineViewContext getViewContext() const;
     void render();
 };
 

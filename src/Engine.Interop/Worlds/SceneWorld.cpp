@@ -474,7 +474,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return currentHeightmapStatus;
     }
 
-    void SceneWorld::render(EngineMemory *memory, EngineViewContext *vctx)
+    void SceneWorld::render(EngineMemory *memory, EditorViewContext *vctx)
     {
         assert(vctx->contextId < MAX_SCENE_VIEWS);
         ViewState *viewState = &viewStates[vctx->contextId];
