@@ -4,7 +4,7 @@
 		{
 			"label": "Build Game",
 			"type": "shell",
-			"command": "${workspaceFolder}\\src\\Game\\build.bat",
+			"command": "${workspaceFolder}\\src\\Game\\build.ps1",
 			"options": {
 				"cwd": "${workspaceFolder}\\src\\Game"
 			},

@@ -1,0 +1,119 @@
+$Configuration = 'Debug'
+$Platform = 'x64'
+$IntermediateOutputPath = "..\..\obj\$Configuration\$Platform"
+$OutputPath = "..\..\bin\$Configuration\$Platform"
+
+$CommonCompilerFlags = @(
+    '/nologo',
+    '/std:c++17',
+    '/EHsc',
+    '/Z7'
+)
+$CommonLinkerFlags = @(
+    '/INCREMENTAL:NO'
+)
+
+function Initialize-Environment([string] $Platform) {
+    $envVarCacheFile = "C:\temp\terrain_build.$Platform.env"
+    $envVars = ''
+
+    $useCacheFile = $false
+    if (Test-Path $envVarCacheFile) {
+        $useCacheFile = $true
+        $cacheAge = ([DateTime]::Now - (Get-Item $envVarCacheFile).LastWriteTime)
+        if ($cacheAge.TotalHours -gt 6) {
+            Remove-Item -Path $envVarCacheFile
+            $useCacheFile = $false
+        }
+    }
+    if ($useCacheFile) {
+        $envVars = Get-Content -Path $envVarCacheFile
+    }
+    else {
+        $vcvarsall = 'C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Auxiliary\Build\vcvarsall.bat'
+        $envVars = cmd /c "`"$vcvarsall`" $Platform > nul 2>&1 && set";
+        $envVars | Out-File $envVarCacheFile
+    }
+    
+    foreach ($var in $envVars) {
+        $equalsPos = $var.IndexOf('=')
+        $varName = $var.Substring(0, $equalsPos)
+        $varValue = $var.Substring($equalsPos + 1, $var.Length - $equalsPos - 1)
+        [System.Environment]::SetEnvironmentVariable($varName, $varValue)
+    }
+}
+
+function Invoke-Compiler {
+    param
+    (
+        [Parameter(Mandatory = $true)] [string] $SourceFile,
+        [Parameter(Mandatory = $true)] [string] $OutputName,
+        [Parameter(Mandatory = $true)] [string[]] $IncludePaths,
+        [Parameter(Mandatory = $true)] [string[]] $ImportLibs,
+        [Switch] $BuildDll,
+        [Switch] $NoImportLib
+    )
+
+    $compilerFlags = @(
+        $SourceFile,
+        "/Fo$IntermediateOutputPath/"
+    )
+    $compilerFlags += ($IncludePaths | ForEach-Object { "/I $_" })
+
+    $linkerFlags = @(
+        "/PDB:$OutputPath\$OutputName.pdb"
+    )
+    $linkerFlags += $ImportLibs
+    if ($BuildDll.IsPresent) {
+        $linkerFlags +=  "/out:$OutputPath\$OutputName.dll"
+        $linkerFlags += '/DLL'
+    }
+    else {
+        $linkerFlags +=  "/out:$OutputPath\$OutputName.exe"
+    }
+    if ($NoImportLib.IsPresent) {
+        $linkerFlags += '/NOIMPLIB'
+    }
+
+    $args = $CommonCompilerFlags + $compilerFlags + '/link' + $CommonLinkerFlags + $linkerFlags
+    $proc = Start-Process cl -ArgumentList $args -NoNewWindow -PassThru
+    return $proc
+}
+
+Initialize-Environment -Platform $platform
+
+if (!(Test-Path $IntermediateOutputPath)) {
+    New-Item -Path $IntermediateOutputPath -ItemType Directory | Out-Null
+}
+if (!(Test-Path $OutputPath)) {
+    New-Item -Path $OutputPath -ItemType Directory | Out-Null
+}
+
+$procs = @()
+$procs += Invoke-Compiler -SourceFile 'game.cpp' -OutputName 'terrain_game' -BuildDll -NoImportLib `
+    -IncludePaths @(
+        '..\..\deps',
+        '..\..\deps\nuget\glm.0.9.9.700\build\native\include'
+    ) `
+    -ImportLibs @(
+        "$OutputPath\Terrain.Engine.lib"
+    )
+$procs += Invoke-Compiler -SourceFile 'win32_game.cpp' -OutputName 'win32_terrain' -NoImportLib `
+    -IncludePaths @(
+        '..\..\deps',
+        '..\..\deps\nuget\glm.0.9.9.700\build\native\include',
+        '..\..\deps\nuget\glfw.3.3.2\build\native\include'
+    ) `
+    -ImportLibs @(
+        "$OutputPath\Terrain.Engine.lib"
+    )
+$procs | Wait-Process
+
+# create a junction of the repo into 'C:\temp' so hardcoded executable paths in solution
+# files can point there
+$MirrorPath = 'C:\temp\terrain_mirror'
+if (!(Test-Path $MirrorPath)) {
+    New-Item -ItemType Junction -Path $MirrorPath -Value '..\..\' | Out-Null
+}
+
+Write-Host "Done."
