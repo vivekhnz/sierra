@@ -1,5 +1,3 @@
-#include <iostream>
-
 #include "win32_game.h"
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/terrain_assets.h"
@@ -348,137 +346,124 @@ void win32OnMouseScroll(double x, double y)
 
 int32 main()
 {
-    try
-    {
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
-        uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
-        platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
-        *platformMemory = {};
-        for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
-        {
-            platformMemory->assetLoadQueue.indices[i] = i;
-        }
-
-        platformMemory->game.platformReadFile = win32ReadFile;
-        platformMemory->game.platformFreeMemory = win32FreeMemory;
-        platformMemory->game.platformExitGame = win32ExitGame;
-        platformMemory->game.platformCaptureMouse = win32CaptureMouse;
-
-        EngineMemory *engine = &platformMemory->game.engine;
-        engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
-        engine->size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
-        engine->platformLogMessage = win32LogMessage;
-        engine->platformLoadAsset = win32LoadAsset;
-
-        uint64 engineMemoryOffset = 0;
-        engine->renderer.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
-        engine->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
-        engineMemoryOffset += engine->renderer.size;
-        engine->assets.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
-        engine->assets.size = engine->size - engineMemoryOffset;
-        engineMemoryOffset += engine->assets.size;
-        assert(engineMemoryOffset == engine->size);
-
-        Terrain::Engine::Graphics::GlfwManager glfw;
-        Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
-        window.addMouseScrollHandler(win32OnMouseScroll);
-        window.makePrimary();
-
-        float lastTickTime = glfw.getCurrentTime();
-        GameInput input = {};
-        glm::vec2 prevMousePos = glm::vec2(0, 0);
-        bool wasMouseCursorTeleported = true;
-
-        win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
-        win32GetOutputAbsolutePath(
-            "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
-        win32GetOutputAbsolutePath("build.lock", platformMemory->gameCode.buildLockFilePath);
-
-        uint32 reloadTimer = 0;
-        while (!window.isRequestingClose())
-        {
-            uint64 gameCodeDllLastWriteTime =
-                win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
-            if (gameCodeDllLastWriteTime
-                && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime
-                && !win32GetFileLastWriteTime(platformMemory->gameCode.buildLockFilePath))
-            {
-                win32UnloadGameCode(&platformMemory->gameCode);
-                win32LoadGameCode(&platformMemory->gameCode);
-                platformMemory->gameCode.dllLastWriteTime = gameCodeDllLastWriteTime;
-            }
-
-            win32LoadQueuedAssets(&platformMemory->game.engine);
-
-            // query input
-            input.prevPressedButtons = input.pressedButtons;
-            input.pressedButtons = win32GetPressedButtons(&window);
-
-            auto [mouseX, mouseY] = window.getMousePosition();
-            if (wasMouseCursorTeleported)
-            {
-                input.mouseCursorOffset = glm::vec2(0);
-                wasMouseCursorTeleported = false;
-            }
-            else
-            {
-                input.mouseCursorOffset.x = mouseX - prevMousePos.x;
-                input.mouseCursorOffset.y = mouseY - prevMousePos.y;
-            }
-            prevMousePos.x = mouseX;
-            prevMousePos.y = mouseY;
-
-            input.mouseScrollOffset = platformMemory->mouseScrollOffset;
-            platformMemory->mouseScrollOffset = 0;
-
-            bool wasMouseCaptured = platformMemory->shouldCaptureMouse;
-            platformMemory->shouldCaptureMouse = false;
-
-            float now = glfw.getCurrentTime();
-            float deltaTime = now - lastTickTime;
-            lastTickTime = now;
-
-            auto [viewportWidth, viewportHeight] = window.getSize();
-            Viewport viewport = {};
-            viewport.width = viewportWidth;
-            viewport.height = viewportHeight;
-
-            if (platformMemory->gameCode.gameUpdateAndRender)
-            {
-                platformMemory->gameCode.gameUpdateAndRender(
-                    &platformMemory->game, &input, viewport, deltaTime);
-            }
-
-            if (platformMemory->shouldExitGame)
-            {
-                window.close();
-            }
-            if (platformMemory->shouldCaptureMouse != wasMouseCaptured)
-            {
-                window.setMouseCaptureMode(platformMemory->shouldCaptureMouse);
-                wasMouseCursorTeleported = true;
-            }
-
-            window.refresh();
-            glfw.processEvents();
-        }
-
-        if (platformMemory->gameCode.gameShutdown)
-        {
-            platformMemory->gameCode.gameShutdown(&platformMemory->game);
-        }
-
-        return 0;
-    }
-    catch (const std::runtime_error &e)
+    uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
+    platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
+    *platformMemory = {};
+    for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
     {
-        std::cerr << e.what() << std::endl;
-        return 1;
+        platformMemory->assetLoadQueue.indices[i] = i;
     }
-    catch (...)
+
+    platformMemory->game.platformGetAssetAbsolutePath = win32GetAssetAbsolutePath;
+    platformMemory->game.platformReadFile = win32ReadFile;
+    platformMemory->game.platformFreeMemory = win32FreeMemory;
+    platformMemory->game.platformExitGame = win32ExitGame;
+    platformMemory->game.platformCaptureMouse = win32CaptureMouse;
+
+    EngineMemory *engine = &platformMemory->game.engine;
+    engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
+    engine->size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
+    engine->platformLogMessage = win32LogMessage;
+    engine->platformLoadAsset = win32LoadAsset;
+
+    uint64 engineMemoryOffset = 0;
+    engine->renderer.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
+    engine->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+    engineMemoryOffset += engine->renderer.size;
+    engine->assets.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
+    engine->assets.size = engine->size - engineMemoryOffset;
+    engineMemoryOffset += engine->assets.size;
+    assert(engineMemoryOffset == engine->size);
+
+    Terrain::Engine::Graphics::GlfwManager glfw;
+    Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
+    window.addMouseScrollHandler(win32OnMouseScroll);
+    window.makePrimary();
+
+    float lastTickTime = glfw.getCurrentTime();
+    GameInput input = {};
+    glm::vec2 prevMousePos = glm::vec2(0, 0);
+    bool wasMouseCursorTeleported = true;
+
+    win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
+    win32GetOutputAbsolutePath(
+        "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
+    win32GetOutputAbsolutePath("build.lock", platformMemory->gameCode.buildLockFilePath);
+
+    while (!window.isRequestingClose())
     {
-        std::cerr << "Unhandled exception thrown." << std::endl;
-        return 1;
+        uint64 gameCodeDllLastWriteTime =
+            win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
+        if (gameCodeDllLastWriteTime
+            && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime
+            && !win32GetFileLastWriteTime(platformMemory->gameCode.buildLockFilePath))
+        {
+            win32UnloadGameCode(&platformMemory->gameCode);
+            win32LoadGameCode(&platformMemory->gameCode);
+            platformMemory->gameCode.dllLastWriteTime = gameCodeDllLastWriteTime;
+        }
+
+        win32LoadQueuedAssets(&platformMemory->game.engine);
+
+        // query input
+        input.prevPressedButtons = input.pressedButtons;
+        input.pressedButtons = win32GetPressedButtons(&window);
+
+        auto [mouseX, mouseY] = window.getMousePosition();
+        if (wasMouseCursorTeleported)
+        {
+            input.mouseCursorOffset = glm::vec2(0);
+            wasMouseCursorTeleported = false;
+        }
+        else
+        {
+            input.mouseCursorOffset.x = mouseX - prevMousePos.x;
+            input.mouseCursorOffset.y = mouseY - prevMousePos.y;
+        }
+        prevMousePos.x = mouseX;
+        prevMousePos.y = mouseY;
+
+        input.mouseScrollOffset = platformMemory->mouseScrollOffset;
+        platformMemory->mouseScrollOffset = 0;
+
+        bool wasMouseCaptured = platformMemory->shouldCaptureMouse;
+        platformMemory->shouldCaptureMouse = false;
+
+        float now = glfw.getCurrentTime();
+        float deltaTime = now - lastTickTime;
+        lastTickTime = now;
+
+        auto [viewportWidth, viewportHeight] = window.getSize();
+        Viewport viewport = {};
+        viewport.width = viewportWidth;
+        viewport.height = viewportHeight;
+
+        if (platformMemory->gameCode.gameUpdateAndRender)
+        {
+            platformMemory->gameCode.gameUpdateAndRender(
+                &platformMemory->game, &input, viewport, deltaTime);
+        }
+
+        if (platformMemory->shouldExitGame)
+        {
+            window.close();
+        }
+        if (platformMemory->shouldCaptureMouse != wasMouseCaptured)
+        {
+            window.setMouseCaptureMode(platformMemory->shouldCaptureMouse);
+            wasMouseCursorTeleported = true;
+        }
+
+        window.refresh();
+        glfw.processEvents();
     }
+
+    if (platformMemory->gameCode.gameShutdown)
+    {
+        platformMemory->gameCode.gameShutdown(&platformMemory->game);
+    }
+
+    return 0;
 }

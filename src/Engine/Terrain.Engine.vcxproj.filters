@@ -33,9 +33,6 @@
     <ClInclude Include="IO\InputManager.hpp">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="IO\Path.hpp">
-      <Filter>IO</Filter>
-    </ClInclude>
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp">
       <Filter>IO</Filter>

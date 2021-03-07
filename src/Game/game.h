@@ -67,6 +67,10 @@ struct PlatformReadFileResult
     void *data;
 };
 
+#define PLATFORM_GET_ASSET_ABSOLUTE_PATH(name)                                                \
+    void name(const char *relativePath, char *absolutePath)
+typedef PLATFORM_GET_ASSET_ABSOLUTE_PATH(PlatformGetAssetAbsolutePath);
+
 #define PLATFORM_READ_FILE(name) PlatformReadFileResult name(const char *path)
 typedef PLATFORM_READ_FILE(PlatformReadFile);
 
@@ -83,6 +87,7 @@ struct GameMemory
 {
     bool isInitialized;
 
+    PlatformGetAssetAbsolutePath *platformGetAssetAbsolutePath;
     PlatformReadFile *platformReadFile;
     PlatformFreeMemory *platformFreeMemory;
     PlatformExitGame *platformExitGame;

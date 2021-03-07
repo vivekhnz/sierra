@@ -2,7 +2,8 @@
 
 #include "../Engine/terrain_renderer.h"
 #include "../Engine/terrain_assets.h"
-#include "../Engine/IO/Path.hpp"
+
+#define MAX_PATH 260
 
 float clamp(float value, float min, float max)
 {
@@ -14,8 +15,9 @@ void reloadHeightmap(GameMemory *memory,
     uint32 textureHandle,
     const char *relativePath)
 {
-    PlatformReadFileResult result = memory->platformReadFile(
-        Terrain::Engine::IO::Path::getAbsolutePath(relativePath).c_str());
+    char absolutePath[MAX_PATH];
+    memory->platformGetAssetAbsolutePath(relativePath, absolutePath);
+    PlatformReadFileResult result = memory->platformReadFile(absolutePath);
     assert(result.data);
 
     TextureAsset asset;

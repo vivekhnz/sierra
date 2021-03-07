@@ -1,14 +1,22 @@
 $Configuration = 'Debug'
 $Platform = 'x64'
-$IntermediateOutputPath = "..\..\obj\$Configuration\$Platform"
+$IntermediateOutputPath = "..\..\obj\$Configuration\$Platform\Game"
 $OutputPath = "..\..\bin\$Configuration\$Platform"
 
 $CommonCompilerFlags = @(
     '/nologo',
     '/std:c++17',
-    '/EHsc',
+    '/EHa',
     '/Z7'
 )
+if ($Configuration -eq 'Debug') {
+    $CommonCompilerFlags += '/MTd'
+    $CommonCompilerFlags += '/D _DEBUG'
+}
+else {
+    $CommonCompilerFlags += '/MT'
+}
+
 $CommonLinkerFlags = @(
     '/INCREMENTAL:NO'
 )
