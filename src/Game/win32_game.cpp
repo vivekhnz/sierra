@@ -119,15 +119,6 @@ PLATFORM_READ_FILE(win32ReadFile)
 
 PLATFORM_LOAD_ASSET(win32LoadAsset)
 {
-    if (!platformMemory->assetLoadQueue.isInitialized)
-    {
-        for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
-        {
-            platformMemory->assetLoadQueue.indices[i] = i;
-        }
-        platformMemory->assetLoadQueue.isInitialized = true;
-    }
-
     if (platformMemory->assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
     {
         // decline the request - our asset load queue is at capacity
@@ -311,6 +302,10 @@ int32 main()
         uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
         platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
         *platformMemory = {};
+        for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
+        {
+            platformMemory->assetLoadQueue.indices[i] = i;
+        }
 
         platformMemory->game.platformReadFile = win32ReadFile;
         platformMemory->game.platformFreeMemory = win32FreeMemory;
