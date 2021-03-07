@@ -209,6 +209,36 @@ void win32LoadQueuedAssets(EngineMemory *memory)
     }
 }
 
+void win32LoadGameCode(Win32GameCode *gameCode)
+{
+    // get absolute path to game code DLL
+    CHAR exePath[MAX_PATH];
+    char dllRelativePath[] = "\\..\\terrain_game.dll";
+    GetModuleFileNameA(0, exePath, MAX_PATH);
+    CHAR dllPath[MAX_PATH + sizeof(dllRelativePath)];
+    char *srcCursor = exePath;
+    char *dstCursor = dllPath;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+    srcCursor = dllRelativePath;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+    *dstCursor = 0;
+
+    // load game code DLL
+    HMODULE gameCodeDll = LoadLibraryA(dllPath);
+    if (gameCodeDll)
+    {
+        gameCode->gameUpdateAndRender =
+            (GameUpdateAndRender *)GetProcAddress(gameCodeDll, "gameUpdateAndRender");
+        gameCode->gameShutdown = (GameShutdown *)GetProcAddress(gameCodeDll, "gameShutdown");
+    }
+}
+
 uint64 getPressedButtons(Terrain::Engine::Graphics::Window *window)
 {
     uint64 buttons = 0;
@@ -333,10 +363,11 @@ int32 main()
         window.makePrimary();
 
         float lastTickTime = glfw.getCurrentTime();
-
         GameInput input = {};
         glm::vec2 prevMousePos = glm::vec2(0, 0);
         bool wasMouseCursorTeleported = true;
+
+        win32LoadGameCode(&platformMemory->gameCode);
 
         while (!window.isRequestingClose())
         {
@@ -375,7 +406,11 @@ int32 main()
             viewport.width = viewportWidth;
             viewport.height = viewportHeight;
 
-            gameUpdateAndRender(&platformMemory->game, &input, viewport, deltaTime);
+            if (platformMemory->gameCode.gameUpdateAndRender)
+            {
+                platformMemory->gameCode.gameUpdateAndRender(
+                    &platformMemory->game, &input, viewport, deltaTime);
+            }
 
             if (platformMemory->shouldExitGame)
             {
@@ -391,7 +426,10 @@ int32 main()
             glfw.processEvents();
         }
 
-        gameShutdown(&platformMemory->game);
+        if (platformMemory->gameCode.gameShutdown)
+        {
+            platformMemory->gameCode.gameShutdown(&platformMemory->game);
+        }
 
         return 0;
     }

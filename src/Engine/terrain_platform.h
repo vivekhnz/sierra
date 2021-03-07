@@ -15,6 +15,7 @@ typedef uint64_t uint64;
 #define global_variable static
 
 #define EXPORT __declspec(dllexport)
+#define API_EXPORT extern "C" __declspec(dllexport)
 
 #if _DEBUG
 #define assert(expr)                                                                          \

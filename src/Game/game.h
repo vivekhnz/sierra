@@ -177,8 +177,11 @@ enum GameInputButtons : uint64
     BUTTON(KEY_RIGHT_ALT, 63)
 };
 
-EXPORT void gameUpdateAndRender(
-    GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime);
-EXPORT void gameShutdown(GameMemory *memory);
+#define GAME_UPDATE_AND_RENDER(name)                                                          \
+    void name(GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime)
+typedef GAME_UPDATE_AND_RENDER(GameUpdateAndRender);
+
+#define GAME_SHUTDOWN(name) void name(GameMemory *memory)
+typedef GAME_SHUTDOWN(GameShutdown);
 
 #endif

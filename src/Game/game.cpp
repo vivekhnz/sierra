@@ -225,8 +225,7 @@ bool isNewButtonPress(GameInput *input, GameInputButtons button)
     return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
 }
 
-void gameUpdateAndRender(
-    GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime)
+API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 {
     if (!memory->isInitialized)
     {
@@ -573,7 +572,7 @@ void gameUpdateAndRender(
     }
 }
 
-void gameShutdown(GameMemory *memory)
+API_EXPORT GAME_SHUTDOWN(gameShutdown)
 {
     rendererDestroyResources(&memory->engine);
 }

@@ -31,11 +31,18 @@ struct Win32WatchedAsset
     uint64 lastUpdatedTime;
 };
 
+struct Win32GameCode
+{
+    GameUpdateAndRender *gameUpdateAndRender;
+    GameShutdown *gameShutdown;
+};
+
 struct Win32PlatformMemory
 {
     Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
+    Win32GameCode gameCode;
 
     bool shouldExitGame;
     bool shouldCaptureMouse;
