@@ -10,14 +10,12 @@
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class EditorWorlds
     {
-        EngineContext *ctx;
-
     public:
         SceneWorld sceneWorld;
         HeightmapCompositionWorld heightmapCompositionWorld;
         HeightmapPreviewWorld heightmapPreviewWorld;
 
-        EditorWorlds(EngineContext &ctx);
+        EditorWorlds(EngineMemory *memory, IO::InputManager *inputMgr);
 
         void initialize();
         void linkViewport(ViewportWorld viewportWorld, ViewportContext *vctx);

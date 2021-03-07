@@ -2,7 +2,7 @@
 
 #include "../../Engine/terrain_renderer.h"
 #include "../../Engine/terrain_heightfield.h"
-#include "../../Engine/EngineContext.hpp"
+#include "../../Engine/IO/InputManager.hpp"
 #include "../EditorViewContext.hpp"
 #include "../EditorState.hpp"
 
@@ -72,7 +72,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             uint8 version;
         };
 
-        EngineContext &ctx;
+        EngineMemory *memory;
+        IO::InputManager *inputMgr;
 
         Heightfield heightfield;
         float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
@@ -109,7 +110,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             bool isDiscardingStroke);
 
     public:
-        SceneWorld(EngineContext &ctx);
+        SceneWorld(EngineMemory* memory, IO::InputManager* inputMgr);
         ~SceneWorld();
 
         void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);

@@ -16,7 +16,6 @@
   <ItemGroup>
     <ClCompile Include="..\..\deps\glad\glad.c" />
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
-    <ClCompile Include="EngineContext.cpp" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="IO\InputManager.cpp" />
@@ -27,7 +26,6 @@
   <ItemGroup>
     <ClInclude Include="AppContext.hpp" />
     <ClInclude Include="Common.hpp" />
-    <ClInclude Include="EngineContext.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
     <ClInclude Include="IO\InputManager.hpp" />

@@ -3,7 +3,6 @@
 
 #include <windows.h>
 
-#include "../Engine/EngineContext.hpp"
 #include "game.h"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128

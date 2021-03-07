@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../Engine/Graphics/GlfwManager.hpp"
-#include "../Engine/EngineContext.hpp"
 #include "EditorContext.hpp"
 #include "EditorState.hpp"
 #include "ViewportContext.hpp"
@@ -35,7 +34,7 @@ public
 
         static Graphics::GlfwManager *glfw = nullptr;
         static EditorContext *appCtx = nullptr;
-        static EngineContext *ctx = nullptr;
+        static IO::InputManager *inputMgr = nullptr;
 
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();

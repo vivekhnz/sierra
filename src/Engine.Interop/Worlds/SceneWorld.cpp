@@ -3,7 +3,8 @@
 #include "../../Engine/terrain_assets.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    SceneWorld::SceneWorld(EngineContext &ctx) : ctx(ctx)
+    SceneWorld::SceneWorld(EngineMemory *memory, IO::InputManager *inputMgr) :
+        memory(memory), inputMgr(inputMgr)
     {
         // allocate a buffer that heightmap texture data can be copied into
         heightmapTextureDataTempBuffer = malloc(2048 * 2048 * 2);
@@ -67,20 +68,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         terrainMesh.vertexBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+            rendererCreateBuffer(memory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
         rendererUpdateBuffer(
-            ctx.memory, terrainMesh.vertexBufferHandle, vertexBufferSize, vertices);
+            memory, terrainMesh.vertexBufferHandle, vertexBufferSize, vertices);
         free(vertices);
 
         uint32 elementBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-        rendererUpdateBuffer(ctx.memory, elementBufferHandle, elementBufferSize, indices);
+            rendererCreateBuffer(memory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererUpdateBuffer(memory, elementBufferHandle, elementBufferSize, indices);
         free(indices);
 
-        terrainMesh.vertexArrayHandle = rendererCreateVertexArray(ctx.memory);
-        rendererBindVertexArray(ctx.memory, terrainMesh.vertexArrayHandle);
-        rendererBindBuffer(ctx.memory, elementBufferHandle);
-        rendererBindBuffer(ctx.memory, terrainMesh.vertexBufferHandle);
+        terrainMesh.vertexArrayHandle = rendererCreateVertexArray(memory);
+        rendererBindVertexArray(memory, terrainMesh.vertexArrayHandle);
+        rendererBindBuffer(memory, elementBufferHandle);
+        rendererBindBuffer(memory, terrainMesh.vertexBufferHandle);
         rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
         rendererBindVertexAttribute(
             1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
@@ -88,20 +89,18 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // create buffer to store vertex edge data
         tessellationLevelBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-        rendererUpdateBuffer(ctx.memory, tessellationLevelBufferHandle,
+            rendererCreateBuffer(memory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
+        rendererUpdateBuffer(memory, tessellationLevelBufferHandle,
             heightfield.columns * heightfield.rows * sizeof(glm::vec4), 0);
 
-        albedoTextureArrayHandle =
-            rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048,
-                2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        normalTextureArrayHandle =
-            rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048,
-                2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        albedoTextureArrayHandle = rendererCreateTextureArray(memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        normalTextureArrayHandle = rendererCreateTextureArray(memory, GL_UNSIGNED_BYTE, GL_RGB,
+            GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
         displacementTextureArrayHandle =
-            rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048,
-                2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-        aoTextureArrayHandle = rendererCreateTextureArray(ctx.memory, GL_UNSIGNED_BYTE, GL_R8,
+            rendererCreateTextureArray(memory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
+                MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        aoTextureArrayHandle = rendererCreateTextureArray(memory, GL_UNSIGNED_BYTE, GL_R8,
             GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
         worldState.materialCount = 0;
@@ -119,9 +118,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             aoTextures[i] = {};
         }
         materialPropsBufferHandle =
-            rendererCreateBuffer(ctx.memory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+            rendererCreateBuffer(memory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
         rendererUpdateBuffer(
-            ctx.memory, materialPropsBufferHandle, sizeof(worldState.materialProps), 0);
+            memory, materialPropsBufferHandle, sizeof(worldState.materialProps), 0);
     }
 
     uint32 SceneWorld::linkViewport(int inputControllerId)
@@ -146,7 +145,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {
             // update heightfield with composited heightmap texture
-            rendererReadTexturePixels(ctx.memory, heightmapTextureHandle, GL_UNSIGNED_SHORT,
+            rendererReadTexturePixels(memory, heightmapTextureHandle, GL_UNSIGNED_SHORT,
                 GL_RED, heightmapTextureDataTempBuffer);
 
             uint16 heightmapWidth = 2048;
@@ -175,7 +174,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         if (isManipulatingCamera)
         {
-            ctx.input.captureMouse(false);
+            inputMgr->captureMouse(false);
         }
 
         // determine the current operation being performed
@@ -191,21 +190,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.isPreviewingChanges = operation.isBrushActive;
         if (operation.mode == InteractionMode::ModifyBrushRadius)
         {
-            ctx.input.captureMouse(true);
+            inputMgr->captureMouse(true);
             newState.brushRadius =
                 glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushFalloff)
         {
-            ctx.input.captureMouse(true);
+            inputMgr->captureMouse(true);
             newState.brushFalloff =
                 glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushStrength)
         {
-            ctx.input.captureMouse(true);
+            inputMgr->captureMouse(true);
             newState.brushStrength =
                 glm::clamp(state.brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
             worldState.isPreviewingChanges = true;
@@ -242,19 +241,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         lightDir.x = sin(state.lightDirection * glm::pi<float>() * -0.5);
         lightDir.y = cos(state.lightDirection * glm::pi<float>() * 0.5);
         lightDir.z = 0.2f;
-        rendererUpdateLightingState(ctx.memory, &lightDir, true, true, true, true, true);
+        rendererUpdateLightingState(memory, &lightDir, true, true, true, true, true);
     }
 
     bool SceneWorld::updateViewState(ViewState *viewState, float deltaTime)
     {
         bool isManipulatingCamera = false;
         const IO::MouseInputState &mouseState =
-            ctx.input.getMouseState(viewState->inputControllerId);
+            inputMgr->getMouseState(viewState->inputControllerId);
 
         // orbit distance is modified by scrolling the mouse wheel
         viewState->orbitCameraDistance *= 1.0f - (glm::sign(mouseState.scrollOffsetY) * 0.05f);
 
-        if (ctx.input.isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Middle))
+        if (inputMgr->isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Middle))
         {
             // update the look at position if the middle mouse button is pressed
             glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
@@ -267,7 +266,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
             isManipulatingCamera = true;
         }
-        if (ctx.input.isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Right))
+        if (inputMgr->isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Right))
         {
             // update yaw & pitch if the right mouse button is pressed
             float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
@@ -300,9 +299,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         for (int i = 0; i < viewStateCount; i++)
         {
             ViewState *viewState = &viewStates[i];
-            if (ctx.input.isMouseButtonDown(
+            if (inputMgr->isMouseButtonDown(
                     viewState->inputControllerId, IO::MouseButton::Middle)
-                || ctx.input.isMouseButtonDown(
+                || inputMgr->isMouseButtonDown(
                     viewState->inputControllerId, IO::MouseButton::Right))
             {
                 OperationState op = {};
@@ -317,7 +316,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 return op;
             }
             if (prevState.heightmapStatus == HeightmapStatus::Editing
-                && ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::Escape))
+                && inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::Escape))
             {
                 OperationState op = {};
                 op.mode = InteractionMode::PaintBrushStroke;
@@ -337,7 +336,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         {
             ViewState *viewState = &viewStates[i];
             const IO::MouseInputState &mouseState =
-                ctx.input.getMouseState(viewState->inputControllerId);
+                inputMgr->getMouseState(viewState->inputControllerId);
             float mouseX = (mouseState.normalizedCursorX * 2.0f) - 1.0f;
             float mouseY = (mouseState.normalizedCursorY * 2.0f) - 1.0f;
 
@@ -354,7 +353,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 (intersectionPoint.x / 127.5f) + 0.5f, (intersectionPoint.z / 127.5f) + 0.5f);
 
             // if the R key is pressed, we are adjusting the brush radius
-            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::R))
+            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::R))
             {
                 float brushRadiusIncrease =
                     mouseState.cursorOffsetX + mouseState.cursorOffsetY;
@@ -372,7 +371,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             }
 
             // if the F key is pressed, we are adjusting the brush falloff
-            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::F))
+            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::F))
             {
                 float brushFalloffIncrease =
                     (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
@@ -390,7 +389,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             }
 
             // if the S key is pressed, we are adjusting the brush strength
-            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::S))
+            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::S))
             {
                 float brushStrengthIncrease =
                     (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
@@ -408,11 +407,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             }
 
             // if a number key is pressed, change the selected tool
-            if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::D1))
+            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::D1))
             {
                 tool = EditorTool::RaiseTerrain;
             }
-            else if (ctx.input.isKeyDown(viewState->inputControllerId, IO::Key::D2))
+            else if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::D2))
             {
                 tool = EditorTool::LowerTerrain;
             }
@@ -420,12 +419,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             // the LMB must be newly pressed to start a new brush stroke
             bool isBrushActive = false;
             if (prevState.heightmapStatus == HeightmapStatus::Editing
-                && ctx.input.isMouseButtonDown(
+                && inputMgr->isMouseButtonDown(
                     viewState->inputControllerId, IO::MouseButton::Left))
             {
                 isBrushActive = true;
             }
-            else if (ctx.input.isNewMouseButtonPress(
+            else if (inputMgr->isNewMouseButtonPress(
                          viewState->inputControllerId, IO::MouseButton::Left))
             {
                 isBrushActive = true;
@@ -596,7 +595,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererShaderStorageMemoryBarrier();
 
         // bind material data
-        rendererUpdateBuffer(ctx.memory, materialPropsBufferHandle,
+        rendererUpdateBuffer(memory, materialPropsBufferHandle,
             sizeof(worldState.materialProps), worldState.materialProps);
 
         uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;

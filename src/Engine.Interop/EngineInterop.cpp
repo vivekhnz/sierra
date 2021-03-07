@@ -14,17 +14,27 @@ using namespace System::Windows::Threading;
 namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
-#define ENGINE_MEMORY_SIZE (500 * 1024 * 1024)
-        memory = new EngineMemory();
-        memory->baseAddress =
-            VirtualAlloc(0, ENGINE_MEMORY_SIZE, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-        memory->size = ENGINE_MEMORY_SIZE;
+#define APP_MEMORY_SIZE (500 * 1024 * 1024)
+#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
+        uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
+        memory = (EngineMemory *)memoryBaseAddress;
+        memory->baseAddress = memoryBaseAddress + sizeof(EngineMemory);
+        memory->size = APP_MEMORY_SIZE - sizeof(EngineMemory);
         memory->platformLogMessage = win32LogMessage;
         memory->platformLoadAsset = win32LoadAsset;
 
+        uint64 engineMemoryOffset = 0;
+        memory->renderer.baseAddress = (uint8 *)memory->baseAddress + engineMemoryOffset;
+        memory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+        engineMemoryOffset += memory->renderer.size;
+        memory->assets.baseAddress = (uint8 *)memory->baseAddress + engineMemoryOffset;
+        memory->assets.size = memory->size - engineMemoryOffset;
+        engineMemoryOffset += memory->assets.size;
+        assert(engineMemoryOffset == memory->size);
+
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();
-        ctx = new EngineContext(*appCtx, memory);
+        inputMgr = new IO::InputManager(*appCtx);
         viewportContexts = new std::vector<ViewportContext *>();
 
         currentEditorState = new EditorState();
@@ -37,7 +47,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
-        worlds = new Worlds::EditorWorlds(*ctx);
+        worlds = new Worlds::EditorWorlds(memory, inputMgr);
         stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 
         focusedViewportCtx = nullptr;
@@ -89,7 +99,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         // create input controller
         int inputControllerId = appCtx->addInputController();
         vctx->setInputControllerId(inputControllerId);
-        ctx->input.addInputController();
+        inputMgr->addInputController();
 
         return vctx;
     }
@@ -131,7 +141,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         win32LoadQueuedAssets(memory);
 
-        ctx->input.update();
+        inputMgr->update();
 
         auto now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
@@ -337,16 +347,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         rendererDestroyResources(memory);
 
-        delete ctx;
-        ctx = nullptr;
+        delete inputMgr;
+        inputMgr = nullptr;
 
         delete appCtx;
         appCtx = nullptr;
 
         delete glfw;
         glfw = nullptr;
-
-        delete memory;
-        memory = nullptr;
     }
 }}}
