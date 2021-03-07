@@ -6,7 +6,7 @@
 
 global_variable Win32PlatformMemory *platformMemory;
 
-void getAbsolutePath(const char *relativePath, char *absolutePath)
+void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
 {
     // get path to current assembly
     CHAR exePath[MAX_PATH];
@@ -53,7 +53,34 @@ void getAbsolutePath(const char *relativePath, char *absolutePath)
     *dstCursor = 0;
 }
 
-uint64 getFileLastWriteTime(char *path)
+void win32GetOutputAbsolutePath(const char *filename, char *absolutePath)
+{
+    CHAR exePath[MAX_PATH];
+    uint64 exePathLength = GetModuleFileNameA(0, exePath, MAX_PATH);
+
+    const char *srcCursor = exePath + exePathLength;
+    uint64 outputDirPathLength = exePathLength;
+    while (*srcCursor != '\\')
+    {
+        srcCursor--;
+        outputDirPathLength--;
+    }
+
+    srcCursor = exePath;
+    char *dstCursor = absolutePath;
+    for (uint32 i = 0; i < outputDirPathLength + 1; i++)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+    srcCursor = filename;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+    *dstCursor = 0;
+}
+
+uint64 win32GetFileLastWriteTime(char *path)
 {
     WIN32_FILE_ATTRIBUTE_DATA attributes;
     if (!GetFileAttributesExA(path, GetFileExInfoStandard, &attributes))
@@ -133,7 +160,7 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     request->memory = memory;
     request->assetId = assetId;
     request->callback = onAssetLoaded;
-    getAbsolutePath(relativePath, request->path);
+    win32GetAssetAbsolutePath(relativePath, request->path);
 
     // add asset to watch list so we can hot reload it
     bool isAssetAlreadyWatched = false;
@@ -159,7 +186,7 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
             *dst++ = *src++;
         }
 
-        watchedAsset->lastUpdatedTime = getFileLastWriteTime(request->path);
+        watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(request->path);
     }
 
     return true;
@@ -181,7 +208,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
     for (uint32 i = 0; i < platformMemory->watchedAssetCount; i++)
     {
         Win32WatchedAsset *asset = &platformMemory->watchedAssets[i];
-        uint64 lastWriteTime = getFileLastWriteTime(asset->path);
+        uint64 lastWriteTime = win32GetFileLastWriteTime(asset->path);
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
@@ -211,35 +238,31 @@ void win32LoadQueuedAssets(EngineMemory *memory)
 
 void win32LoadGameCode(Win32GameCode *gameCode)
 {
-    // get absolute path to game code DLL
-    CHAR exePath[MAX_PATH];
-    char dllRelativePath[] = "\\..\\terrain_game.dll";
-    GetModuleFileNameA(0, exePath, MAX_PATH);
-    CHAR dllPath[MAX_PATH + sizeof(dllRelativePath)];
-    char *srcCursor = exePath;
-    char *dstCursor = dllPath;
-    while (*srcCursor)
-    {
-        *dstCursor++ = *srcCursor++;
-    }
-    srcCursor = dllRelativePath;
-    while (*srcCursor)
-    {
-        *dstCursor++ = *srcCursor++;
-    }
-    *dstCursor = 0;
+    if (!CopyFileA(gameCode->dllPath, gameCode->dllShadowCopyPath, false))
+        return;
 
-    // load game code DLL
-    HMODULE gameCodeDll = LoadLibraryA(dllPath);
-    if (gameCodeDll)
+    gameCode->dllModule = LoadLibraryA(gameCode->dllShadowCopyPath);
+    if (gameCode->dllModule)
     {
         gameCode->gameUpdateAndRender =
-            (GameUpdateAndRender *)GetProcAddress(gameCodeDll, "gameUpdateAndRender");
-        gameCode->gameShutdown = (GameShutdown *)GetProcAddress(gameCodeDll, "gameShutdown");
+            (GameUpdateAndRender *)GetProcAddress(gameCode->dllModule, "gameUpdateAndRender");
+        gameCode->gameShutdown =
+            (GameShutdown *)GetProcAddress(gameCode->dllModule, "gameShutdown");
     }
 }
 
-uint64 getPressedButtons(Terrain::Engine::Graphics::Window *window)
+void win32UnloadGameCode(Win32GameCode *gameCode)
+{
+    if (gameCode->dllModule)
+    {
+        FreeLibrary(gameCode->dllModule);
+        gameCode->dllModule = 0;
+        gameCode->gameUpdateAndRender = 0;
+        gameCode->gameShutdown = 0;
+    }
+}
+
+uint64 win32GetPressedButtons(Terrain::Engine::Graphics::Window *window)
 {
     uint64 buttons = 0;
 
@@ -318,7 +341,7 @@ uint64 getPressedButtons(Terrain::Engine::Graphics::Window *window)
     return buttons;
 }
 
-void onMouseScroll(double x, double y)
+void win32OnMouseScroll(double x, double y)
 {
     platformMemory->mouseScrollOffset += y;
 }
@@ -359,7 +382,7 @@ int32 main()
 
         Terrain::Engine::Graphics::GlfwManager glfw;
         Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
-        window.addMouseScrollHandler(onMouseScroll);
+        window.addMouseScrollHandler(win32OnMouseScroll);
         window.makePrimary();
 
         float lastTickTime = glfw.getCurrentTime();
@@ -367,15 +390,30 @@ int32 main()
         glm::vec2 prevMousePos = glm::vec2(0, 0);
         bool wasMouseCursorTeleported = true;
 
-        win32LoadGameCode(&platformMemory->gameCode);
+        win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
+        win32GetOutputAbsolutePath(
+            "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
+        win32GetOutputAbsolutePath("build.lock", platformMemory->gameCode.buildLockFilePath);
 
+        uint32 reloadTimer = 0;
         while (!window.isRequestingClose())
         {
+            uint64 gameCodeDllLastWriteTime =
+                win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
+            if (gameCodeDllLastWriteTime
+                && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime
+                && !win32GetFileLastWriteTime(platformMemory->gameCode.buildLockFilePath))
+            {
+                win32UnloadGameCode(&platformMemory->gameCode);
+                win32LoadGameCode(&platformMemory->gameCode);
+                platformMemory->gameCode.dllLastWriteTime = gameCodeDllLastWriteTime;
+            }
+
             win32LoadQueuedAssets(&platformMemory->game.engine);
 
             // query input
             input.prevPressedButtons = input.pressedButtons;
-            input.pressedButtons = getPressedButtons(&window);
+            input.pressedButtons = win32GetPressedButtons(&window);
 
             auto [mouseX, mouseY] = window.getMousePosition();
             if (wasMouseCursorTeleported)

@@ -33,6 +33,11 @@ struct Win32WatchedAsset
 
 struct Win32GameCode
 {
+    char dllPath[MAX_PATH];
+    char dllShadowCopyPath[MAX_PATH];
+    char buildLockFilePath[MAX_PATH];
+    HMODULE dllModule;
+    uint64 dllLastWriteTime;
     GameUpdateAndRender *gameUpdateAndRender;
     GameShutdown *gameShutdown;
 };

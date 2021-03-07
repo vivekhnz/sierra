@@ -51,7 +51,8 @@ function Invoke-Compiler {
         [Parameter(Mandatory = $true)] [string[]] $IncludePaths,
         [Parameter(Mandatory = $true)] [string[]] $ImportLibs,
         [Switch] $BuildDll,
-        [Switch] $NoImportLib
+        [Switch] $NoImportLib,
+        [Switch] $RandomizePdbFilename
     )
 
     $compilerFlags = @(
@@ -60,9 +61,14 @@ function Invoke-Compiler {
     )
     $compilerFlags += ($IncludePaths | ForEach-Object { "/I $_" })
 
-    $linkerFlags = @(
-        "/PDB:$OutputPath\$OutputName.pdb"
-    )
+    $linkerFlags = @();
+    if ($RandomizePdbFilename.IsPresent) {
+        Remove-Item "$OutputPath\$OutputName.*.pdb" -ErrorAction SilentlyContinue
+        $linkerFlags += "/PDB:$OutputPath\$OutputName.$(Get-Random).pdb"
+    }
+    else {
+        $linkerFlags += "/PDB:$OutputPath\$OutputName.pdb"
+    }
     $linkerFlags += $ImportLibs
     if ($BuildDll.IsPresent) {
         $linkerFlags +=  "/out:$OutputPath\$OutputName.dll"
@@ -80,6 +86,9 @@ function Invoke-Compiler {
     return $proc
 }
 
+$LockFilePath = "$OutputPath\build.lock"
+"build" | Out-File $LockFilePath
+
 Initialize-Environment -Platform $platform
 
 if (!(Test-Path $IntermediateOutputPath)) {
@@ -90,7 +99,8 @@ if (!(Test-Path $OutputPath)) {
 }
 
 $procs = @()
-$procs += Invoke-Compiler -SourceFile 'game.cpp' -OutputName 'terrain_game' -BuildDll -NoImportLib `
+$procs += Invoke-Compiler -SourceFile 'game.cpp' -OutputName 'terrain_game' `
+    -BuildDll -RandomizePdbFilename -NoImportLib `
     -IncludePaths @(
         '..\..\deps',
         '..\..\deps\nuget\glm.0.9.9.700\build\native\include'
@@ -115,5 +125,7 @@ $MirrorPath = 'C:\temp\terrain_mirror'
 if (!(Test-Path $MirrorPath)) {
     New-Item -ItemType Junction -Path $MirrorPath -Value '..\..\' | Out-Null
 }
+
+Remove-Item $LockFilePath -Force
 
 Write-Host "Done."
