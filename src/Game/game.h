@@ -177,8 +177,8 @@ enum GameInputButtons : uint64
     BUTTON(KEY_RIGHT_ALT, 63)
 };
 
-void gameUpdateAndRender(
+EXPORT void gameUpdateAndRender(
     GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime);
-void gameShutdown(GameMemory *memory);
+EXPORT void gameShutdown(GameMemory *memory);
 
 #endif
