@@ -1,10 +1,28 @@
 #include "SceneWorld.hpp"
 #include <glm/gtc/type_ptr.hpp>
 #include "../../Engine/terrain_assets.h"
+#include "../../Engine/IO/MouseButton.hpp"
+#include "../../Engine/IO/Key.hpp"
+
+bool isMouseButtonDown(EditorInput *input, Terrain::Engine::IO::MouseButton button)
+{
+    return input->pressedMouseButtons & static_cast<uint8>(button);
+}
+
+bool isNewMouseButtonPress(EditorInput *input, Terrain::Engine::IO::MouseButton button)
+{
+    uint8 buttonVal = static_cast<uint8>(button);
+    return (input->pressedMouseButtons & buttonVal)
+        && !(input->prevPressedMouseButtons & buttonVal);
+}
+
+bool isKeyDown(EditorInput *input, Terrain::Engine::IO::Key key)
+{
+    return input->pressedKeys & static_cast<uint64>(key);
+}
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    SceneWorld::SceneWorld(EngineMemory *memory, IO::InputManager *inputMgr) :
-        memory(memory), inputMgr(inputMgr)
+    SceneWorld::SceneWorld(EngineMemory *memory) : memory(memory)
     {
         // allocate a buffer that heightmap texture data can be copied into
         heightmapTextureDataTempBuffer = malloc(2048 * 2048 * 2);
@@ -134,13 +152,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         state->orbitCameraDistance = 112.5f;
         state->orbitCameraYaw = glm::radians(180.0f);
         state->orbitCameraPitch = glm::radians(15.0f);
-        state->cameraPos = glm::vec3(0, 0, 0);
         state->cameraLookAt = glm::vec3(0, 0, 0);
+
+        glm::vec3 lookDir =
+            glm::vec3(cos(state->orbitCameraYaw) * cos(state->orbitCameraPitch),
+                sin(state->orbitCameraPitch),
+                sin(state->orbitCameraYaw) * cos(state->orbitCameraPitch));
+        state->cameraPos = state->cameraLookAt + (lookDir * state->orbitCameraDistance);
 
         return contextId;
     }
 
-    void SceneWorld::update(float deltaTime, const EditorState &state, EditorState &newState)
+    void SceneWorld::update(
+        float deltaTime, const EditorState &state, EditorState &newState, EditorInput *input)
     {
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {
@@ -170,15 +194,19 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         bool isManipulatingCamera = false;
         for (int i = 0; i < viewStateCount; i++)
         {
-            isManipulatingCamera |= updateViewState(&viewStates[i], deltaTime);
+            ViewState *viewState = &viewStates[i];
+            if (viewState->inputControllerId == input->activeInputControllerId)
+            {
+                isManipulatingCamera |= updateViewState(viewState, deltaTime, input);
+            }
         }
         if (isManipulatingCamera)
         {
-            inputMgr->captureMouse(false);
+            input->platformCaptureMouse(false);
         }
 
         // determine the current operation being performed
-        OperationState operation = getCurrentOperation(state);
+        OperationState operation = getCurrentOperation(state, input);
 
         // update editor state
         newState.mode = operation.mode;
@@ -190,21 +218,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.isPreviewingChanges = operation.isBrushActive;
         if (operation.mode == InteractionMode::ModifyBrushRadius)
         {
-            inputMgr->captureMouse(true);
+            input->platformCaptureMouse(true);
             newState.brushRadius =
                 glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushFalloff)
         {
-            inputMgr->captureMouse(true);
+            input->platformCaptureMouse(true);
             newState.brushFalloff =
                 glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushStrength)
         {
-            inputMgr->captureMouse(true);
+            input->platformCaptureMouse(true);
             newState.brushStrength =
                 glm::clamp(state.brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
             worldState.isPreviewingChanges = true;
@@ -244,37 +272,34 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererUpdateLightingState(memory, &lightDir, true, true, true, true, true);
     }
 
-    bool SceneWorld::updateViewState(ViewState *viewState, float deltaTime)
+    bool SceneWorld::updateViewState(ViewState *viewState, float deltaTime, EditorInput *input)
     {
         bool isManipulatingCamera = false;
-        const IO::MouseInputState &mouseState =
-            inputMgr->getMouseState(viewState->inputControllerId);
 
         // orbit distance is modified by scrolling the mouse wheel
-        viewState->orbitCameraDistance *= 1.0f - (glm::sign(mouseState.scrollOffsetY) * 0.05f);
+        viewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
-        if (inputMgr->isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Middle))
+        if (isMouseButtonDown(input, IO::MouseButton::Middle))
         {
             // update the look at position if the middle mouse button is pressed
             glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
-            glm::vec3 pan =
-                (xDir * mouseState.cursorOffsetX) + (yDir * mouseState.cursorOffsetY);
+            glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
             float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
             viewState->cameraLookAt += pan * panMagnitude * 0.02f * deltaTime;
 
             isManipulatingCamera = true;
         }
-        if (inputMgr->isMouseButtonDown(viewState->inputControllerId, IO::MouseButton::Right))
+        if (isMouseButtonDown(input, IO::MouseButton::Right))
         {
             // update yaw & pitch if the right mouse button is pressed
             float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
             float rotateSensitivity = 0.05f * rotateMagnitude * deltaTime;
             viewState->orbitCameraYaw +=
-                glm::radians(mouseState.cursorOffsetX * rotateSensitivity);
+                glm::radians(input->cursorOffset.x * rotateSensitivity);
             viewState->orbitCameraPitch +=
-                glm::radians(mouseState.cursorOffsetY * rotateSensitivity);
+                glm::radians(input->cursorOffset.y * rotateSensitivity);
 
             isManipulatingCamera = true;
         }
@@ -290,19 +315,26 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return isManipulatingCamera;
     }
 
-    SceneWorld::OperationState SceneWorld::getCurrentOperation(const EditorState &prevState)
+    SceneWorld::OperationState SceneWorld::getCurrentOperation(
+        const EditorState &prevState, EditorInput *input)
     {
         EditorTool tool = prevState.tool;
 
-        // first pass - loop through each camera and determine whether the camera is being
-        // moved or the active brush stroke is being discarded
-        for (int i = 0; i < viewStateCount; i++)
+        ViewState *activeViewState = 0;
+        for (uint32 i = 0; i < viewStateCount; i++)
         {
             ViewState *viewState = &viewStates[i];
-            if (inputMgr->isMouseButtonDown(
-                    viewState->inputControllerId, IO::MouseButton::Middle)
-                || inputMgr->isMouseButtonDown(
-                    viewState->inputControllerId, IO::MouseButton::Right))
+            if (viewState->inputControllerId == input->activeInputControllerId)
+            {
+                activeViewState = viewState;
+                break;
+            }
+        }
+
+        if (activeViewState)
+        {
+            if (isMouseButtonDown(input, IO::MouseButton::Middle)
+                || isMouseButtonDown(input, IO::MouseButton::Right))
             {
                 OperationState op = {};
                 op.mode = InteractionMode::MoveCamera;
@@ -316,7 +348,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 return op;
             }
             if (prevState.heightmapStatus == HeightmapStatus::Editing
-                && inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::Escape))
+                && isKeyDown(input, IO::Key::Escape))
             {
                 OperationState op = {};
                 op.mode = InteractionMode::PaintBrushStroke;
@@ -329,117 +361,106 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 op.brushStrengthIncrease = 0.0f;
                 return op;
             }
-        }
 
-        // second pass - loop through each camera and determine whether the brush is active
-        for (int i = 0; i < viewStateCount; i++)
-        {
-            ViewState *viewState = &viewStates[i];
-            const IO::MouseInputState &mouseState =
-                inputMgr->getMouseState(viewState->inputControllerId);
-            float mouseX = (mouseState.normalizedCursorX * 2.0f) - 1.0f;
-            float mouseY = (mouseState.normalizedCursorY * 2.0f) - 1.0f;
-
-            glm::mat4 inverseViewProjection = glm::inverse(viewState->cameraTransform);
-            glm::vec4 screenPos = glm::vec4(mouseX, -mouseY, 1.0f, 1.0f);
+            glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
+            glm::mat4 inverseViewProjection = glm::inverse(activeViewState->cameraTransform);
+            glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
             glm::vec4 worldPos = inverseViewProjection * screenPos;
 
             glm::vec3 intersectionPoint;
-            if (!heightfieldIsRayIntersecting(&heightfield, viewState->cameraPos,
+            if (heightfieldIsRayIntersecting(&heightfield, activeViewState->cameraPos,
                     glm::normalize(glm::vec3(worldPos)), intersectionPoint))
-                continue;
-
-            glm::vec2 normalizedPickPoint = glm::vec2(
-                (intersectionPoint.x / 127.5f) + 0.5f, (intersectionPoint.z / 127.5f) + 0.5f);
-
-            // if the R key is pressed, we are adjusting the brush radius
-            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::R))
             {
-                float brushRadiusIncrease =
-                    mouseState.cursorOffsetX + mouseState.cursorOffsetY;
+                glm::vec2 normalizedPickPoint =
+                    glm::vec2((intersectionPoint.x / 127.5f) + 0.5f,
+                        (intersectionPoint.z / 127.5f) + 0.5f);
+
+                // if the R key is pressed, we are adjusting the brush radius
+                if (isKeyDown(input, IO::Key::R))
+                {
+                    float brushRadiusIncrease = input->cursorOffset.x + input->cursorOffset.y;
+
+                    OperationState op = {};
+                    op.mode = InteractionMode::ModifyBrushRadius;
+                    op.tool = tool;
+                    op.isBrushActive = false;
+                    op.isDiscardingStroke = false;
+                    op.brushPosition = normalizedPickPoint;
+                    op.brushRadiusIncrease = brushRadiusIncrease;
+                    op.brushFalloffIncrease = 0.0f;
+                    op.brushStrengthIncrease = 0.0f;
+                    return op;
+                }
+
+                // if the F key is pressed, we are adjusting the brush falloff
+                if (isKeyDown(input, IO::Key::F))
+                {
+                    float brushFalloffIncrease =
+                        (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                    OperationState op = {};
+                    op.mode = InteractionMode::ModifyBrushFalloff;
+                    op.tool = tool;
+                    op.isBrushActive = false;
+                    op.isDiscardingStroke = false;
+                    op.brushPosition = normalizedPickPoint;
+                    op.brushRadiusIncrease = 0.0f;
+                    op.brushFalloffIncrease = brushFalloffIncrease;
+                    op.brushStrengthIncrease = 0.0f;
+                    return op;
+                }
+
+                // if the S key is pressed, we are adjusting the brush strength
+                if (isKeyDown(input, IO::Key::S))
+                {
+                    float brushStrengthIncrease =
+                        (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                    OperationState op = {};
+                    op.mode = InteractionMode::ModifyBrushStrength;
+                    op.tool = tool;
+                    op.isBrushActive = false;
+                    op.isDiscardingStroke = false;
+                    op.brushPosition = normalizedPickPoint;
+                    op.brushRadiusIncrease = 0.0f;
+                    op.brushFalloffIncrease = 0.0f;
+                    op.brushStrengthIncrease = brushStrengthIncrease;
+                    return op;
+                }
+
+                // if a number key is pressed, change the selected tool
+                if (isKeyDown(input, IO::Key::D1))
+                {
+                    tool = EditorTool::RaiseTerrain;
+                }
+                else if (isKeyDown(input, IO::Key::D2))
+                {
+                    tool = EditorTool::LowerTerrain;
+                }
+
+                // the LMB must be newly pressed to start a new brush stroke
+                bool isBrushActive = false;
+                if (prevState.heightmapStatus == HeightmapStatus::Editing
+                    && isMouseButtonDown(input, IO::MouseButton::Left))
+                {
+                    isBrushActive = true;
+                }
+                else if (isNewMouseButtonPress(input, IO::MouseButton::Left))
+                {
+                    isBrushActive = true;
+                }
 
                 OperationState op = {};
-                op.mode = InteractionMode::ModifyBrushRadius;
+                op.mode = InteractionMode::PaintBrushStroke;
                 op.tool = tool;
-                op.isBrushActive = false;
+                op.isBrushActive = isBrushActive;
                 op.isDiscardingStroke = false;
                 op.brushPosition = normalizedPickPoint;
-                op.brushRadiusIncrease = brushRadiusIncrease;
+                op.brushRadiusIncrease = 0.0f;
                 op.brushFalloffIncrease = 0.0f;
                 op.brushStrengthIncrease = 0.0f;
                 return op;
             }
-
-            // if the F key is pressed, we are adjusting the brush falloff
-            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::F))
-            {
-                float brushFalloffIncrease =
-                    (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
-
-                OperationState op = {};
-                op.mode = InteractionMode::ModifyBrushFalloff;
-                op.tool = tool;
-                op.isBrushActive = false;
-                op.isDiscardingStroke = false;
-                op.brushPosition = normalizedPickPoint;
-                op.brushRadiusIncrease = 0.0f;
-                op.brushFalloffIncrease = brushFalloffIncrease;
-                op.brushStrengthIncrease = 0.0f;
-                return op;
-            }
-
-            // if the S key is pressed, we are adjusting the brush strength
-            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::S))
-            {
-                float brushStrengthIncrease =
-                    (mouseState.cursorOffsetX + mouseState.cursorOffsetY) * 0.001f;
-
-                OperationState op = {};
-                op.mode = InteractionMode::ModifyBrushStrength;
-                op.tool = tool;
-                op.isBrushActive = false;
-                op.isDiscardingStroke = false;
-                op.brushPosition = normalizedPickPoint;
-                op.brushRadiusIncrease = 0.0f;
-                op.brushFalloffIncrease = 0.0f;
-                op.brushStrengthIncrease = brushStrengthIncrease;
-                return op;
-            }
-
-            // if a number key is pressed, change the selected tool
-            if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::D1))
-            {
-                tool = EditorTool::RaiseTerrain;
-            }
-            else if (inputMgr->isKeyDown(viewState->inputControllerId, IO::Key::D2))
-            {
-                tool = EditorTool::LowerTerrain;
-            }
-
-            // the LMB must be newly pressed to start a new brush stroke
-            bool isBrushActive = false;
-            if (prevState.heightmapStatus == HeightmapStatus::Editing
-                && inputMgr->isMouseButtonDown(
-                    viewState->inputControllerId, IO::MouseButton::Left))
-            {
-                isBrushActive = true;
-            }
-            else if (inputMgr->isNewMouseButtonPress(
-                         viewState->inputControllerId, IO::MouseButton::Left))
-            {
-                isBrushActive = true;
-            }
-
-            OperationState op = {};
-            op.mode = InteractionMode::PaintBrushStroke;
-            op.tool = tool;
-            op.isBrushActive = isBrushActive;
-            op.isDiscardingStroke = false;
-            op.brushPosition = normalizedPickPoint;
-            op.brushRadiusIncrease = 0.0f;
-            op.brushFalloffIncrease = 0.0f;
-            op.brushStrengthIncrease = 0.0f;
-            return op;
         }
 
         OperationState op = {};
@@ -447,7 +468,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         op.tool = tool;
         op.isBrushActive = false;
         op.isDiscardingStroke = false;
-        op.brushPosition = glm::vec2();
+        op.brushPosition = glm::vec2(-10000, -10000);
         op.brushRadiusIncrease = 0.0f;
         op.brushFalloffIncrease = 0.0f;
         op.brushStrengthIncrease = 0.0f;

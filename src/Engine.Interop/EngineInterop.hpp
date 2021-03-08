@@ -34,7 +34,7 @@ public
 
         static Graphics::GlfwManager *glfw = nullptr;
         static EditorContext *appCtx = nullptr;
-        static IO::InputManager *inputMgr = nullptr;
+        static EditorInput *input = nullptr;
 
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();

@@ -10,9 +10,6 @@
     <ClCompile Include="Graphics\Window.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="IO\InputManager.cpp">
-      <Filter>IO</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\deps\glad\glad.c">
       <Filter>deps</Filter>
     </ClCompile>
@@ -30,9 +27,6 @@
     <ClInclude Include="Graphics\Window.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
-    <ClInclude Include="IO\InputManager.hpp">
-      <Filter>IO</Filter>
-    </ClInclude>
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp">
       <Filter>IO</Filter>
@@ -46,7 +40,6 @@
     <ClInclude Include="IO\MouseCaptureMode.hpp">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="AppContext.hpp" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />

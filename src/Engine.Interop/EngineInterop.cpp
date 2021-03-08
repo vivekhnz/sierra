@@ -11,6 +11,16 @@ using namespace System::Windows;
 using namespace System::Windows::Input;
 using namespace System::Windows::Threading;
 
+global_variable Terrain::Engine::IO::MouseCaptureMode mouseCaptureMode =
+    Terrain::Engine::IO::MouseCaptureMode::DoNotCapture;
+
+PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
+{
+    mouseCaptureMode = retainCursorPos
+        ? Terrain::Engine::IO::MouseCaptureMode::CaptureRetainPosition
+        : Terrain::Engine::IO::MouseCaptureMode::Capture;
+}
+
 namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
@@ -34,7 +44,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();
-        inputMgr = new IO::InputManager(*appCtx);
+        input = new EditorInput();
+        input->platformCaptureMouse = &win32CaptureMouse;
         viewportContexts = new std::vector<ViewportContext *>();
 
         currentEditorState = new EditorState();
@@ -47,7 +58,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
-        worlds = new Worlds::EditorWorlds(memory, inputMgr);
+        worlds = new Worlds::EditorWorlds(memory);
         stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 
         focusedViewportCtx = nullptr;
@@ -99,7 +110,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         // create input controller
         int inputControllerId = appCtx->addInputController();
         vctx->setInputControllerId(inputControllerId);
-        inputMgr->addInputController();
 
         return vctx;
     }
@@ -141,14 +151,39 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         win32LoadQueuedAssets(memory);
 
-        inputMgr->update();
+        appCtx->updateInputState();
+
+        int32 prevActiveInputControllerId = input->activeInputControllerId;
+        input->activeInputControllerId = appCtx->activeInputControllerId;
+        if (input->activeInputControllerId != -1)
+        {
+            if (input->activeInputControllerId == prevActiveInputControllerId)
+            {
+                input->prevPressedMouseButtons = input->pressedMouseButtons;
+                input->prevPressedKeys = input->pressedKeys;
+            }
+            else
+            {
+                input->prevPressedMouseButtons = 0;
+                input->prevPressedKeys = 0;
+            }
+            appCtx->getInputState(input);
+        }
 
         auto now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
+        IO::MouseCaptureMode prevMouseCaptureMode = mouseCaptureMode;
+        mouseCaptureMode = IO::MouseCaptureMode::DoNotCapture;
+
         memcpy(currentEditorState, newEditorState, sizeof(*currentEditorState));
-        worlds->update(deltaTime, *currentEditorState, *newEditorState);
+        worlds->update(deltaTime, *currentEditorState, *newEditorState, input);
+
+        if (mouseCaptureMode != prevMouseCaptureMode)
+        {
+            appCtx->setMouseCaptureMode(mouseCaptureMode);
+        }
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -347,8 +382,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         rendererDestroyResources(memory);
 
-        delete inputMgr;
-        inputMgr = nullptr;
+        delete input;
+        input = nullptr;
 
         delete appCtx;
         appCtx = nullptr;

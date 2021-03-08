@@ -1,9 +1,8 @@
 #include "EditorWorlds.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    EditorWorlds::EditorWorlds(EngineMemory *memory, IO::InputManager *inputMgr) :
-        sceneWorld(memory, inputMgr), heightmapCompositionWorld(memory),
-        heightmapPreviewWorld(memory)
+    EditorWorlds::EditorWorlds(EngineMemory *memory) :
+        sceneWorld(memory), heightmapCompositionWorld(memory), heightmapPreviewWorld(memory)
     {
     }
 
@@ -32,9 +31,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         vctx->setContextId(contextId);
     }
 
-    void EditorWorlds::update(float deltaTime, const EditorState &state, EditorState &newState)
+    void EditorWorlds::update(
+        float deltaTime, const EditorState &state, EditorState &newState, EditorInput *input)
     {
-        sceneWorld.update(deltaTime, state, newState);
+        sceneWorld.update(deltaTime, state, newState, input);
         heightmapCompositionWorld.update(deltaTime, state, newState);
         heightmapCompositionWorld.compositeHeightmap(state, newState);
     }

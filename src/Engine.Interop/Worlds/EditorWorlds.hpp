@@ -15,11 +15,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         HeightmapCompositionWorld heightmapCompositionWorld;
         HeightmapPreviewWorld heightmapPreviewWorld;
 
-        EditorWorlds(EngineMemory *memory, IO::InputManager *inputMgr);
+        EditorWorlds(EngineMemory *memory);
 
         void initialize();
         void linkViewport(ViewportWorld viewportWorld, ViewportContext *vctx);
-        void update(float deltaTime, const EditorState &state, EditorState &newState);
+        void update(float deltaTime,
+            const EditorState &state,
+            EditorState &newState,
+            EditorInput *input);
         void render(EngineMemory *memory, ViewportContext &vctx);
     };
 }}}}

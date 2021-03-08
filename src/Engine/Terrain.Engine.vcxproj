@@ -18,17 +18,14 @@
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
     <ClCompile Include="Graphics\Window.cpp" />
-    <ClCompile Include="IO\InputManager.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
     <ClCompile Include="terrain_heightfield.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AppContext.hpp" />
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
-    <ClInclude Include="IO\InputManager.hpp" />
     <ClInclude Include="IO\Key.hpp" />
     <ClInclude Include="IO\MouseButton.hpp" />
     <ClInclude Include="IO\MouseCaptureMode.hpp" />

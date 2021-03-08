@@ -1,10 +1,12 @@
 #pragma once
 
-#include "../Engine/AppContext.hpp"
+#include "../Engine/IO/MouseCaptureMode.hpp"
+#include "../Engine/IO/MouseInputState.hpp"
 #include "ViewportContext.hpp"
+#include "editor_input.h"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    class EditorContext : public AppContext
+    class EditorContext
     {
         int prevMousePosX;
         int prevMousePosY;
@@ -15,30 +17,21 @@ namespace Terrain { namespace Engine { namespace Interop {
         int capturedMousePosX;
         int capturedMousePosY;
 
-        struct InputState
-        {
-            int count;
-            std::vector<IO::MouseInputState> mouse;
-            std::vector<uint8> pressedMouseButtons;
-            std::vector<uint64> pressedKeys;
-
-            InputState() : count(0)
-            {
-            }
-        } inputState;
+        uint32 inputControllerCount;
+        IO::MouseInputState mouseState;
+        uint8 pressedMouseButtons;
+        uint64 pressedKeys;
 
     public:
+        int32 activeInputControllerId;
+
         EditorContext();
 
-        // input
         void updateInputState();
-        const IO::MouseInputState &getMouseState(int inputControllerId) const;
-        const uint8 &getPressedMouseButtons(int inputControllerId) const;
-        const uint64 &getPressedKeys(int inputControllerId) const;
+        void getInputState(EditorInput *input);
         void setMouseCaptureMode(IO::MouseCaptureMode mode);
 
         int addInputController();
         void onMouseScroll(double x, double y);
-        bool isInMouseCaptureMode() const;
     };
 }}}

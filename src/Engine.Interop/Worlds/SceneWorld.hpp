@@ -2,9 +2,9 @@
 
 #include "../../Engine/terrain_renderer.h"
 #include "../../Engine/terrain_heightfield.h"
-#include "../../Engine/IO/InputManager.hpp"
 #include "../EditorViewContext.hpp"
 #include "../EditorState.hpp"
+#include "../editor_input.h"
 
 #define MAX_SCENE_VIEWS 8
 #define HEIGHTFIELD_COLUMNS 256
@@ -73,7 +73,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         };
 
         EngineMemory *memory;
-        IO::InputManager *inputMgr;
 
         Heightfield heightfield;
         float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
@@ -103,19 +102,22 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         int viewStateCount = 0;
         WorldState worldState;
 
-        bool updateViewState(ViewState *viewState, float deltaTime);
-        OperationState getCurrentOperation(const EditorState &prevState);
+        bool updateViewState(ViewState *viewState, float deltaTime, EditorInput *input);
+        OperationState getCurrentOperation(const EditorState &prevState, EditorInput *input);
         HeightmapStatus getNextHeightmapStatus(HeightmapStatus currentHeightmapStatus,
             bool isBrushActive,
             bool isDiscardingStroke);
 
     public:
-        SceneWorld(EngineMemory* memory, IO::InputManager* inputMgr);
+        SceneWorld(EngineMemory *memory);
         ~SceneWorld();
 
         void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);
         uint32 linkViewport(int inputControllerId);
-        void update(float deltaTime, const EditorState &state, EditorState &newState);
+        void update(float deltaTime,
+            const EditorState &state,
+            EditorState &newState,
+            EditorInput *input);
         void render(EngineMemory *memory, EditorViewContext *vctx);
     };
 }}}}
