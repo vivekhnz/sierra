@@ -2,7 +2,7 @@
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     EditorWorlds::EditorWorlds(EngineMemory *memory) :
-        sceneWorld(memory), heightmapCompositionWorld(memory), heightmapPreviewWorld(memory)
+        sceneWorld(memory), heightmapPreviewWorld(memory)
     {
     }
 
@@ -20,12 +20,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         if (!editorMemory->isInitialized)
         {
-            rendererInitialize(&editorMemory->engine);
+            editorInitialize(editorMemory);
 
-            heightmapCompositionWorld.initialize();
             uint32 heightmapTextureHandle =
-                heightmapCompositionWorld.getCompositedTextureHandle();
-            uint32 previewTextureHandle = heightmapCompositionWorld.getPreviewTextureHandle();
+                editorMemory->heightmapCompositionState.working.renderTextureHandle;
+            uint32 previewTextureHandle =
+                editorMemory->heightmapCompositionState.preview.renderTextureHandle;
 
             sceneWorld.initialize(heightmapTextureHandle, previewTextureHandle);
             heightmapPreviewWorld.initialize(heightmapTextureHandle);
@@ -34,8 +34,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         sceneWorld.update(editorMemory, deltaTime, input);
-        heightmapCompositionWorld.update(editorMemory, deltaTime);
-        heightmapCompositionWorld.compositeHeightmap(editorMemory);
+        editorUpdate(editorMemory, deltaTime, input);
     }
 
     void EditorWorlds::render(EditorMemory *memory, ViewportContext &vctx)

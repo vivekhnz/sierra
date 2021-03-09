@@ -3,8 +3,12 @@
 
 #include <glm/gtc/type_ptr.hpp>
 #include "../Engine/terrain_platform.h"
+#include "../Engine/terrain_assets.h"
 
 #define MAX_MATERIAL_COUNT 8
+#define MAX_BRUSH_QUADS 2048
+#define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
+#define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
 
 #define PLATFORM_CAPTURE_MOUSE(name) void name(bool retainCursorPos)
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
@@ -61,6 +65,37 @@ struct EditorState
     MaterialProperties materialProps[MAX_MATERIAL_COUNT];
 };
 
+struct HeightmapCompositionState
+{
+    glm::mat4 cameraTransform;
+    uint32 quadVertexArrayHandle;
+
+    struct WorkingWorld
+    {
+        uint32 renderTextureHandle;
+        int framebufferHandle;
+        uint32 importedHeightmapTextureHandle;
+        uint32 baseHeightmapTextureHandle;
+        uint32 brushQuadVertexArrayHandle;
+
+        int brushQuadInstanceBufferHandle;
+        float brushQuadInstanceBufferData[MAX_BRUSH_QUADS * 2];
+        int brushInstanceCount;
+    } working;
+
+    struct StagingWorld
+    {
+        uint32 renderTextureHandle;
+        int framebufferHandle;
+    } staging;
+
+    struct PreviewWorld
+    {
+        uint32 renderTextureHandle;
+        int framebufferHandle;
+    } preview;
+};
+
 struct EditorMemory
 {
     bool isInitialized;
@@ -69,6 +104,7 @@ struct EditorMemory
 
     EditorState currentState;
     EditorState newState;
+    HeightmapCompositionState heightmapCompositionState;
 
     EngineMemory engine;
 };
@@ -93,5 +129,9 @@ struct EditorViewContext
     uint32 width;
     uint32 height;
 };
+
+void editorInitialize(EditorMemory *memory);
+void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input);
+void editorUpdateImportedHeightmapTexture(EditorMemory *memory, TextureAsset *asset);
 
 #endif

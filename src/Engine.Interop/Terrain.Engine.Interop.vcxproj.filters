@@ -20,13 +20,11 @@
     <ClCompile Include="Worlds\EditorWorlds.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
-    <ClCompile Include="Worlds\HeightmapCompositionWorld.cpp">
-      <Filter>Worlds</Filter>
-    </ClCompile>
     <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
     <ClCompile Include="win32_editor_platform.cpp" />
+    <ClCompile Include="editor.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Viewport.h" />
@@ -40,9 +38,6 @@
       <Filter>Worlds</Filter>
     </ClInclude>
     <ClInclude Include="Worlds\ViewportWorld.hpp">
-      <Filter>Worlds</Filter>
-    </ClInclude>
-    <ClInclude Include="Worlds\HeightmapCompositionWorld.hpp">
       <Filter>Worlds</Filter>
     </ClInclude>
     <ClInclude Include="Worlds\HeightmapPreviewWorld.hpp">

@@ -3,7 +3,6 @@
 #include "../ViewportContext.hpp"
 #include "ViewportWorld.hpp"
 #include "SceneWorld.hpp"
-#include "HeightmapCompositionWorld.hpp"
 #include "HeightmapPreviewWorld.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
@@ -11,7 +10,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
     public:
         SceneWorld sceneWorld;
-        HeightmapCompositionWorld heightmapCompositionWorld;
         HeightmapPreviewWorld heightmapPreviewWorld;
 
         EditorWorlds(EngineMemory *memory);

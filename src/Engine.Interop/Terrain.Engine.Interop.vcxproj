@@ -77,13 +77,13 @@
     <ClInclude Include="ViewportContext.hpp" />
     <ClInclude Include="Viewport.h" />
     <ClInclude Include="win32_editor_platform.h" />
-    <ClInclude Include="Worlds\HeightmapCompositionWorld.hpp" />
     <ClInclude Include="Worlds\HeightmapPreviewWorld.hpp" />
     <ClInclude Include="Worlds\ViewportWorld.hpp" />
     <ClInclude Include="Worlds\EditorWorlds.hpp" />
     <ClInclude Include="Worlds\SceneWorld.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="editor.cpp" />
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="EditorContext.cpp" />
@@ -91,7 +91,6 @@
     <ClCompile Include="Viewport.cpp" />
     <ClCompile Include="win32_editor_platform.cpp" />
     <ClCompile Include="Worlds\EditorWorlds.cpp" />
-    <ClCompile Include="Worlds\HeightmapCompositionWorld.cpp" />
     <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp" />
     <ClCompile Include="Worlds\SceneWorld.cpp" />
   </ItemGroup>

@@ -196,7 +196,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         TextureAsset asset;
         assetsLoadTexture(&memory->editor.engine, result.data, result.size, true, &asset);
-        worlds->heightmapCompositionWorld.updateImportedHeightmapTexture(&asset);
+        editorUpdateImportedHeightmapTexture(&memory->editor, &asset);
         memory->editor.newState.heightmapStatus = HEIGHTMAP_STATUS_INITIALIZING;
 
         win32FreeMemory(result.data);
