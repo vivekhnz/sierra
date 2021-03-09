@@ -27,10 +27,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return 0;
     }
 
-    void EditorWorlds::update(
-        float deltaTime, const EditorState &state, EditorState &newState, EditorInput *input)
+    void EditorWorlds::update(EditorMemory *editorMemory,
+        float deltaTime,
+        const EditorState &state,
+        EditorState &newState,
+        EditorInput *input)
     {
-        sceneWorld.update(deltaTime, state, newState, input);
+        sceneWorld.update(editorMemory, deltaTime, state, newState, input);
         heightmapCompositionWorld.update(deltaTime, state, newState);
         heightmapCompositionWorld.compositeHeightmap(state, newState);
     }

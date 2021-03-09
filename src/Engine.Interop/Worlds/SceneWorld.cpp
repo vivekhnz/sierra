@@ -160,8 +160,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return state;
     }
 
-    void SceneWorld::update(
-        float deltaTime, const EditorState &state, EditorState &newState, EditorInput *input)
+    void SceneWorld::update(EditorMemory *editorMemory,
+        float deltaTime,
+        const EditorState &state,
+        EditorState &newState,
+        EditorInput *input)
     {
         if (state.heightmapStatus != HeightmapStatus::Idle)
         {
@@ -196,7 +199,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         if (isManipulatingCamera)
         {
-            input->platformCaptureMouse(false);
+            editorMemory->platformCaptureMouse(false);
         }
 
         // determine the current operation being performed
@@ -212,21 +215,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.isPreviewingChanges = operation.isBrushActive;
         if (operation.mode == InteractionMode::ModifyBrushRadius)
         {
-            input->platformCaptureMouse(true);
+            editorMemory->platformCaptureMouse(true);
             newState.brushRadius =
                 glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushFalloff)
         {
-            input->platformCaptureMouse(true);
+            editorMemory->platformCaptureMouse(true);
             newState.brushFalloff =
                 glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == InteractionMode::ModifyBrushStrength)
         {
-            input->platformCaptureMouse(true);
+            editorMemory->platformCaptureMouse(true);
             newState.brushStrength =
                 glm::clamp(state.brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
             worldState.isPreviewingChanges = true;

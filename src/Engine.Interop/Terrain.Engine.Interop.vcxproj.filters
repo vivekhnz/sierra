@@ -26,7 +26,7 @@
     <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
-    <ClCompile Include="terrain_platform_editor_win32.cpp" />
+    <ClCompile Include="win32_editor_platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Viewport.h" />
@@ -52,7 +52,8 @@
       <Filter>Proxy</Filter>
     </ClInclude>
     <ClInclude Include="EditorState.hpp" />
-    <ClInclude Include="terrain_platform_editor_win32.h" />
     <ClInclude Include="EditorViewContext.hpp" />
+    <ClInclude Include="win32_editor_platform.h" />
+    <ClInclude Include="editor.h" />
   </ItemGroup>
 </Project>

@@ -155,7 +155,6 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
         platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length++];
     Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
     *request = {};
-    request->memory = memory;
     request->assetId = assetId;
     request->callback = onAssetLoaded;
     win32GetAssetAbsolutePath(relativePath, request->path);
@@ -223,7 +222,8 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            request->callback(request->memory, request->assetId, result.data, result.size);
+            request->callback(
+                &platformMemory->game.engine, request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue->length--;

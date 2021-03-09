@@ -3,7 +3,6 @@
 #include <windows.h>
 #include <msclr\lock.h>
 #include <msclr\marshal_cppstd.h>
-#include "terrain_platform_editor_win32.h"
 #include "../Engine/terrain_assets.h"
 
 using namespace System;
@@ -11,41 +10,14 @@ using namespace System::Windows;
 using namespace System::Windows::Input;
 using namespace System::Windows::Threading;
 
-global_variable Terrain::Engine::IO::MouseCaptureMode mouseCaptureMode =
-    Terrain::Engine::IO::MouseCaptureMode::DoNotCapture;
-
-PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
-{
-    mouseCaptureMode = retainCursorPos
-        ? Terrain::Engine::IO::MouseCaptureMode::CaptureRetainPosition
-        : Terrain::Engine::IO::MouseCaptureMode::Capture;
-}
-
 namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
-#define APP_MEMORY_SIZE (500 * 1024 * 1024)
-#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
-        uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
-        memory = (EngineMemory *)memoryBaseAddress;
-        memory->baseAddress = memoryBaseAddress + sizeof(EngineMemory);
-        memory->size = APP_MEMORY_SIZE - sizeof(EngineMemory);
-        memory->platformLogMessage = win32LogMessage;
-        memory->platformLoadAsset = win32LoadAsset;
-
-        uint64 engineMemoryOffset = 0;
-        memory->renderer.baseAddress = (uint8 *)memory->baseAddress + engineMemoryOffset;
-        memory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
-        engineMemoryOffset += memory->renderer.size;
-        memory->assets.baseAddress = (uint8 *)memory->baseAddress + engineMemoryOffset;
-        memory->assets.size = memory->size - engineMemoryOffset;
-        engineMemoryOffset += memory->assets.size;
-        assert(engineMemoryOffset == memory->size);
+        memory = win32InitializePlatform();
 
         glfw = new Graphics::GlfwManager();
         appCtx = new EditorContext();
         input = new EditorInput();
-        input->platformCaptureMouse = &win32CaptureMouse;
         viewportContexts = new std::vector<ViewportContext *>();
 
         currentEditorState = new EditorState();
@@ -58,7 +30,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         newEditorState->mode = InteractionMode::PaintBrushStroke;
 
-        worlds = new Worlds::EditorWorlds(memory);
+        worlds = new Worlds::EditorWorlds(&memory->editor.engine);
         stateProxy = gcnew Proxy::StateProxy(*newEditorState);
 
         focusedViewportCtx = nullptr;
@@ -101,7 +73,7 @@ namespace Terrain { namespace Engine { namespace Interop {
              * window.
              */
             vctx->makePrimary();
-            rendererInitialize(memory);
+            rendererInitialize(&memory->editor.engine);
             worlds->initialize();
 
             areWorldsInitialized = true;
@@ -146,7 +118,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!areWorldsInitialized)
             return;
 
-        win32LoadQueuedAssets(memory);
+        win32LoadQueuedAssets(&memory->editor.engine);
 
         appCtx->updateInputState();
 
@@ -171,15 +143,16 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        IO::MouseCaptureMode prevMouseCaptureMode = mouseCaptureMode;
-        mouseCaptureMode = IO::MouseCaptureMode::DoNotCapture;
+        IO::MouseCaptureMode prevMouseCaptureMode = memory->mouseCaptureMode;
+        memory->mouseCaptureMode = IO::MouseCaptureMode::DoNotCapture;
 
         memcpy(currentEditorState, newEditorState, sizeof(*currentEditorState));
-        worlds->update(deltaTime, *currentEditorState, *newEditorState, input);
+        worlds->update(
+            &memory->editor, deltaTime, *currentEditorState, *newEditorState, input);
 
-        if (mouseCaptureMode != prevMouseCaptureMode)
+        if (memory->mouseCaptureMode != prevMouseCaptureMode)
         {
-            appCtx->setMouseCaptureMode(mouseCaptureMode);
+            appCtx->setMouseCaptureMode(memory->mouseCaptureMode);
         }
 
         msclr::lock l(viewportCtxLock);
@@ -194,7 +167,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::RenderView(ViewportContext &vctx)
     {
         vctx.makeCurrent();
-        worlds->render(memory, vctx);
+        worlds->render(&memory->editor.engine, vctx);
         vctx.render();
     }
 
@@ -234,7 +207,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         assert(result.data);
 
         TextureAsset asset;
-        assetsLoadTexture(memory, result.data, result.size, true, &asset);
+        assetsLoadTexture(&memory->editor.engine, result.data, result.size, true, &asset);
         worlds->heightmapCompositionWorld.updateImportedHeightmapTexture(&asset);
         newEditorState->heightmapStatus = HeightmapStatus::Initializing;
 
@@ -377,7 +350,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         delete newEditorState;
         newEditorState = nullptr;
 
-        rendererDestroyResources(memory);
+        rendererDestroyResources(&memory->editor.engine);
 
         delete input;
         input = nullptr;

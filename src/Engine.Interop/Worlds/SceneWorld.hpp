@@ -4,7 +4,7 @@
 #include "../../Engine/terrain_heightfield.h"
 #include "../EditorViewContext.hpp"
 #include "../EditorState.hpp"
-#include "../editor_input.h"
+#include "../editor.h"
 
 #define MAX_SCENE_VIEWS 8
 #define HEIGHTFIELD_COLUMNS 256
@@ -113,7 +113,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);
         void *addView();
-        void update(float deltaTime,
+        void update(EditorMemory *editorMemory,
+            float deltaTime,
             const EditorState &state,
             EditorState &newState,
             EditorInput *input);

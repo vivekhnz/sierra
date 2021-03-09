@@ -41,8 +41,8 @@ typedef PLATFORM_ASSET_LOAD_CALLBACK(PlatformAssetLoadCallback);
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
 #define PLATFORM_LOAD_ASSET(name)                                                             \
-    bool name(EngineMemory *memory, uint32 assetId, const char *relativePath,                 \
-        PlatformAssetLoadCallback onAssetLoaded)
+    bool name(                                                                                \
+        uint32 assetId, const char *relativePath, PlatformAssetLoadCallback onAssetLoaded)
 typedef PLATFORM_LOAD_ASSET(PlatformLoadAsset);
 
 struct EngineMemory

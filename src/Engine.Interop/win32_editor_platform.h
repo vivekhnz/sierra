@@ -1,12 +1,20 @@
-#ifndef WIN32_GAME_H
-#define WIN32_GAME_H
+#ifndef WIN32_EDITOR_PLATFORM_H
+#define WIN32_EDITOR_PLATFORM_H
 
 #include <windows.h>
 
-#include "game.h"
+#include "../Engine/terrain_platform.h"
+#include "../Engine/IO/MouseCaptureMode.hpp"
+#include "editor.h"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
 #define MAX_WATCHED_ASSETS 256
+
+struct Win32ReadFileResult
+{
+    void *data;
+    uint64 size;
+};
 
 struct Win32AssetLoadRequest
 {
@@ -17,6 +25,7 @@ struct Win32AssetLoadRequest
 
 struct Win32AssetLoadQueue
 {
+    bool isInitialized;
     uint32 length;
     Win32AssetLoadRequest data[ASSET_LOAD_QUEUE_MAX_SIZE];
     uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];
@@ -29,29 +38,21 @@ struct Win32WatchedAsset
     uint64 lastUpdatedTime;
 };
 
-struct Win32GameCode
-{
-    char dllPath[MAX_PATH];
-    char dllShadowCopyPath[MAX_PATH];
-    char buildLockFilePath[MAX_PATH];
-    HMODULE dllModule;
-    uint64 dllLastWriteTime;
-    GameUpdateAndRender *gameUpdateAndRender;
-    GameShutdown *gameShutdown;
-};
-
 struct Win32PlatformMemory
 {
     Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
-    Win32GameCode gameCode;
 
-    bool shouldExitGame;
-    bool shouldCaptureMouse;
-    float mouseScrollOffset;
+    Terrain::Engine::IO::MouseCaptureMode mouseCaptureMode;
 
-    GameMemory game;
+    EditorMemory editor;
 };
+
+Win32PlatformMemory *win32InitializePlatform();
+void *win32AllocateMemory(uint64 size);
+Win32ReadFileResult win32ReadFile(const char *path);
+void win32FreeMemory(void *data);
+void win32LoadQueuedAssets(EngineMemory *memory);
 
 #endif

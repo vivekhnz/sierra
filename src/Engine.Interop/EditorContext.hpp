@@ -3,7 +3,7 @@
 #include "../Engine/IO/MouseCaptureMode.hpp"
 #include "../Engine/IO/MouseInputState.hpp"
 #include "ViewportContext.hpp"
-#include "editor_input.h"
+#include "editor.h"
 
 namespace Terrain { namespace Engine { namespace Interop {
     class EditorContext
@@ -22,7 +22,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         uint64 pressedKeys;
 
     public:
-        void* activeViewState;
+        void *activeViewState;
 
         EditorContext();
 

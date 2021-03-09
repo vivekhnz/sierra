@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../Engine/Graphics/GlfwManager.hpp"
+#include "win32_editor_platform.h"
 #include "EditorContext.hpp"
 #include "EditorState.hpp"
 #include "ViewportContext.hpp"
@@ -30,7 +31,7 @@ public
     ref class EngineInterop
     {
     private:
-        static EngineMemory *memory = nullptr;
+        static Win32PlatformMemory *memory = nullptr;
 
         static Graphics::GlfwManager *glfw = nullptr;
         static EditorContext *appCtx = nullptr;

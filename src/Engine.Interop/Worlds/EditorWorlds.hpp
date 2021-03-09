@@ -19,7 +19,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         void initialize();
         void *addView(ViewportWorld viewportWorld);
-        void update(float deltaTime,
+        void update(EditorMemory *editorMemory,
+            float deltaTime,
             const EditorState &state,
             EditorState &newState,
             EditorInput *input);

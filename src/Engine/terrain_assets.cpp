@@ -241,8 +241,7 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     if (!slot->isUpToDate && !slot->isLoadQueued)
     {
         ShaderInfo shaderInfo = getShaderInfo(assetId);
-        if (memory->platformLoadAsset(
-                memory, assetId, shaderInfo.relativePath, onShaderLoaded))
+        if (memory->platformLoadAsset(assetId, shaderInfo.relativePath, onShaderLoaded))
         {
             slot->isLoadQueued = true;
         }
@@ -376,8 +375,7 @@ TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
     if (!slot->isUpToDate && !slot->isLoadQueued)
     {
         TextureInfo textureInfo = getTextureInfo(assetId);
-        if (memory->platformLoadAsset(
-                memory, assetId, textureInfo.relativePath, onTextureLoaded))
+        if (memory->platformLoadAsset(assetId, textureInfo.relativePath, onTextureLoaded))
         {
             slot->isLoadQueued = true;
         }
