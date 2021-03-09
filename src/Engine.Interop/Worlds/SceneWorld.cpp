@@ -480,22 +480,22 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return currentHeightmapStatus;
     }
 
-    void SceneWorld::render(EngineMemory *memory, EditorViewContext *vctx)
+    void SceneWorld::render(EditorMemory *memory, EditorViewContext *view)
     {
-        ViewState *viewState = (ViewState *)vctx->viewState;
+        ViewState *viewState = (ViewState *)view->viewState;
 
         // calculate camera transform
         constexpr float fov = glm::pi<float>() / 4.0f;
         const float nearPlane = 0.1f;
         const float farPlane = 10000.0f;
         const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-        const float aspectRatio = (float)vctx->width / (float)vctx->height;
+        const float aspectRatio = (float)view->width / (float)view->height;
         glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
         viewState->cameraTransform =
             projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
 
-        rendererUpdateCameraState(memory, &viewState->cameraTransform);
-        rendererSetViewportSize(vctx->width, vctx->height);
+        rendererUpdateCameraState(&memory->engine, &viewState->cameraTransform);
+        rendererSetViewportSize(view->width, view->height);
         rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
         // get textures
@@ -509,11 +509,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             if (assetId)
             {
                 binding = &albedoTextures[layerIdx];
-                asset = assetsGetTexture(memory, assetId);
+                asset = assetsGetTexture(&memory->engine, assetId);
                 if (asset
                     && (assetId != binding->assetId || asset->version > binding->version))
                 {
-                    rendererUpdateTextureArray(memory, albedoTextureArrayHandle,
+                    rendererUpdateTextureArray(&memory->engine, albedoTextureArrayHandle,
                         GL_UNSIGNED_BYTE, GL_RGB, asset->width, asset->height, layerIdx,
                         asset->data);
                     binding->assetId = assetId;
@@ -525,11 +525,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             if (assetId)
             {
                 binding = &normalTextures[layerIdx];
-                asset = assetsGetTexture(memory, assetId);
+                asset = assetsGetTexture(&memory->engine, assetId);
                 if (asset
                     && (assetId != binding->assetId || asset->version > binding->version))
                 {
-                    rendererUpdateTextureArray(memory, normalTextureArrayHandle,
+                    rendererUpdateTextureArray(&memory->engine, normalTextureArrayHandle,
                         GL_UNSIGNED_BYTE, GL_RGB, asset->width, asset->height, layerIdx,
                         asset->data);
                     binding->assetId = assetId;
@@ -541,11 +541,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             if (assetId)
             {
                 binding = &displacementTextures[layerIdx];
-                asset = assetsGetTexture(memory, assetId);
+                asset = assetsGetTexture(&memory->engine, assetId);
                 if (asset
                     && (assetId != binding->assetId || asset->version > binding->version))
                 {
-                    rendererUpdateTextureArray(memory, displacementTextureArrayHandle,
+                    rendererUpdateTextureArray(&memory->engine, displacementTextureArrayHandle,
                         GL_UNSIGNED_SHORT, GL_RED, asset->width, asset->height, layerIdx,
                         asset->data);
                     binding->assetId = assetId;
@@ -557,12 +557,13 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             if (assetId)
             {
                 binding = &aoTextures[layerIdx];
-                asset = assetsGetTexture(memory, assetId);
+                asset = assetsGetTexture(&memory->engine, assetId);
                 if (asset
                     && (assetId != binding->assetId || asset->version > binding->version))
                 {
-                    rendererUpdateTextureArray(memory, aoTextureArrayHandle, GL_UNSIGNED_BYTE,
-                        GL_RED, asset->width, asset->height, layerIdx, asset->data);
+                    rendererUpdateTextureArray(&memory->engine, aoTextureArrayHandle,
+                        GL_UNSIGNED_BYTE, GL_RED, asset->width, asset->height, layerIdx,
+                        asset->data);
                     binding->assetId = assetId;
                     binding->version = asset->version;
                 }
@@ -570,71 +571,72 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         // get shader programs
-        ShaderProgramAsset *calcTessLevelShaderProgramAsset =
-            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
+        ShaderProgramAsset *calcTessLevelShaderProgramAsset = assetsGetShaderProgram(
+            &memory->engine, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
         ShaderProgramAsset *terrainShaderProgramAsset =
-            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
+            assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
         if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset)
             return;
 
         // calculate tessellation levels
         uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
         rendererSetShaderProgramUniformFloat(
-            memory, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
+            &memory->engine, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
 
-        rendererSetShaderProgramUniformInteger(memory, calcTessLevelShaderProgramHandle,
-            "horizontalEdgeCount", heightfield.rows * (heightfield.columns - 1));
-        rendererSetShaderProgramUniformInteger(
-            memory, calcTessLevelShaderProgramHandle, "columnCount", heightfield.columns);
-        rendererSetShaderProgramUniformFloat(
-            memory, calcTessLevelShaderProgramHandle, "terrainHeight", heightfield.maxHeight);
-        rendererBindTexture(memory, heightmapTextureHandle, 0);
-        rendererBindTexture(memory, previewTextureHandle, 5);
+        rendererSetShaderProgramUniformInteger(&memory->engine,
+            calcTessLevelShaderProgramHandle, "horizontalEdgeCount",
+            heightfield.rows * (heightfield.columns - 1));
+        rendererSetShaderProgramUniformInteger(&memory->engine,
+            calcTessLevelShaderProgramHandle, "columnCount", heightfield.columns);
+        rendererSetShaderProgramUniformFloat(&memory->engine, calcTessLevelShaderProgramHandle,
+            "terrainHeight", heightfield.maxHeight);
+        rendererBindTexture(&memory->engine, heightmapTextureHandle, 0);
+        rendererBindTexture(&memory->engine, previewTextureHandle, 5);
 
         uint32 meshEdgeCount = (2 * (heightfield.rows * heightfield.columns))
             - heightfield.rows - heightfield.columns;
 
-        rendererBindShaderStorageBuffer(memory, tessellationLevelBufferHandle, 0);
-        rendererBindShaderStorageBuffer(memory, terrainMesh.vertexBufferHandle, 1);
-        rendererUseShaderProgram(memory, calcTessLevelShaderProgramHandle);
+        rendererBindShaderStorageBuffer(&memory->engine, tessellationLevelBufferHandle, 0);
+        rendererBindShaderStorageBuffer(&memory->engine, terrainMesh.vertexBufferHandle, 1);
+        rendererUseShaderProgram(&memory->engine, calcTessLevelShaderProgramHandle);
         rendererDispatchCompute(meshEdgeCount, 1, 1);
         rendererShaderStorageMemoryBarrier();
 
         // bind material data
-        rendererUpdateBuffer(memory, materialPropsBufferHandle,
+        rendererUpdateBuffer(&memory->engine, materialPropsBufferHandle,
             sizeof(worldState.materialProps), worldState.materialProps);
 
         uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;
-        rendererUseShaderProgram(memory, terrainShaderProgramHandle);
+        rendererUseShaderProgram(&memory->engine, terrainShaderProgramHandle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        rendererBindTexture(memory, heightmapTextureHandle, 0);
-        rendererBindTextureArray(memory, albedoTextureArrayHandle, 1);
-        rendererBindTextureArray(memory, normalTextureArrayHandle, 2);
-        rendererBindTextureArray(memory, displacementTextureArrayHandle, 3);
-        rendererBindTextureArray(memory, aoTextureArrayHandle, 4);
-        rendererBindTexture(memory,
+        rendererBindTexture(&memory->engine, heightmapTextureHandle, 0);
+        rendererBindTextureArray(&memory->engine, albedoTextureArrayHandle, 1);
+        rendererBindTextureArray(&memory->engine, normalTextureArrayHandle, 2);
+        rendererBindTextureArray(&memory->engine, displacementTextureArrayHandle, 3);
+        rendererBindTextureArray(&memory->engine, aoTextureArrayHandle, 4);
+        rendererBindTexture(&memory->engine,
             worldState.isPreviewingChanges ? previewTextureHandle : heightmapTextureHandle, 5);
-        rendererBindShaderStorageBuffer(memory, materialPropsBufferHandle, 1);
+        rendererBindShaderStorageBuffer(&memory->engine, materialPropsBufferHandle, 1);
 
         // bind mesh data
-        rendererBindVertexArray(memory, terrainMesh.vertexArrayHandle);
+        rendererBindVertexArray(&memory->engine, terrainMesh.vertexArrayHandle);
 
         // set shader uniforms
-        rendererSetShaderProgramUniformInteger(
-            memory, terrainShaderProgramHandle, "materialCount", worldState.materialCount);
-        rendererSetShaderProgramUniformVector3(memory, terrainShaderProgramHandle,
+        rendererSetShaderProgramUniformInteger(&memory->engine, terrainShaderProgramHandle,
+            "materialCount", worldState.materialCount);
+        rendererSetShaderProgramUniformVector3(&memory->engine, terrainShaderProgramHandle,
             "terrainDimensions",
             glm::vec3(heightfield.spacing * heightfield.columns, heightfield.maxHeight,
                 heightfield.spacing * heightfield.rows));
-        rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
+        rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
             "brushHighlightStrength", worldState.isBrushHighlightVisible ? 1 : 0);
-        rendererSetShaderProgramUniformVector2(
-            memory, terrainShaderProgramHandle, "brushHighlightPos", worldState.brushPos);
-        rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
+        rendererSetShaderProgramUniformVector2(&memory->engine, terrainShaderProgramHandle,
+            "brushHighlightPos", worldState.brushPos);
+        rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
             "brushHighlightRadius", worldState.brushRadius);
-        rendererSetShaderProgramUniformFloat(memory, terrainShaderProgramHandle,
+        rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
             "brushHighlightFalloff", worldState.brushFalloff);
 
         // draw mesh

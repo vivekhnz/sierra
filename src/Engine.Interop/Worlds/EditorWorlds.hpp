@@ -16,9 +16,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         EditorWorlds(EngineMemory *memory);
 
-        void initialize();
         void *addView(ViewportWorld viewportWorld);
         void update(EditorMemory *editorMemory, float deltaTime, EditorInput *input);
-        void render(EngineMemory *memory, ViewportContext &vctx);
+        void render(EditorMemory *memory, ViewportContext &vctx);
     };
 }}}}

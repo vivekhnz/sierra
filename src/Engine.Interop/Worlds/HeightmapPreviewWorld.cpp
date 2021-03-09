@@ -45,23 +45,23 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         cameraTransform = glm::translate(cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
     }
 
-    void HeightmapPreviewWorld::render(EngineMemory *memory, EditorViewContext *vctx)
+    void HeightmapPreviewWorld::render(EditorMemory *memory, EditorViewContext *view)
     {
-        rendererUpdateCameraState(memory, &cameraTransform);
-        rendererSetViewportSize(vctx->width, vctx->height);
+        rendererUpdateCameraState(&memory->engine, &cameraTransform);
+        rendererSetViewportSize(view->width, view->height);
         rendererClearBackBuffer(0, 0, 0, 1);
 
         ShaderProgramAsset *shaderProgram =
-            assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_QUAD);
+            assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_QUAD);
         if (!shaderProgram)
             return;
 
         // render quad
-        rendererUseShaderProgram(memory, shaderProgram->handle);
+        rendererUseShaderProgram(&memory->engine, shaderProgram->handle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        rendererBindTexture(memory, heightmapTextureHandle, 0);
-        rendererBindVertexArray(memory, vertexArrayHandle);
+        rendererBindTexture(&memory->engine, heightmapTextureHandle, 0);
+        rendererBindVertexArray(&memory->engine, vertexArrayHandle);
         rendererDrawElements(GL_TRIANGLES, 6);
     }
 }}}}

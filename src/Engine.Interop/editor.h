@@ -63,6 +63,8 @@ struct EditorState
 
 struct EditorMemory
 {
+    bool isInitialized;
+
     PlatformCaptureMouse *platformCaptureMouse;
 
     EditorState currentState;
@@ -83,6 +85,13 @@ struct EditorInput
 
     uint64 pressedKeys;
     uint64 prevPressedKeys;
+};
+
+struct EditorViewContext
+{
+    void *viewState;
+    uint32 width;
+    uint32 height;
 };
 
 #endif

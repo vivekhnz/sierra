@@ -63,9 +63,6 @@ namespace Terrain { namespace Engine { namespace Interop {
              * window.
              */
             vctx->makePrimary();
-            rendererInitialize(&memory->editor.engine);
-            worlds->initialize();
-
             areWorldsInitialized = true;
         }
 
@@ -158,7 +155,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::RenderView(ViewportContext &vctx)
     {
         vctx.makeCurrent();
-        worlds->render(&memory->editor.engine, vctx);
+        worlds->render(&memory->editor, vctx);
         vctx.render();
     }
 

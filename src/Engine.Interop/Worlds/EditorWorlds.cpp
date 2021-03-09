@@ -6,19 +6,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
     }
 
-    void EditorWorlds::initialize()
-    {
-        heightmapCompositionWorld.initialize();
-        uint32 heightmapTextureHandle = heightmapCompositionWorld.getCompositedTextureHandle();
-        uint32 previewTextureHandle = heightmapCompositionWorld.getPreviewTextureHandle();
-
-        sceneWorld.initialize(heightmapTextureHandle, previewTextureHandle);
-        heightmapPreviewWorld.initialize(heightmapTextureHandle);
-    }
-
     void *EditorWorlds::addView(ViewportWorld viewportWorld)
     {
-        void *viewState = 0;
         switch (viewportWorld)
         {
         case ViewportWorld::Scene:
@@ -29,13 +18,31 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void EditorWorlds::update(EditorMemory *editorMemory, float deltaTime, EditorInput *input)
     {
+        if (!editorMemory->isInitialized)
+        {
+            rendererInitialize(&editorMemory->engine);
+
+            heightmapCompositionWorld.initialize();
+            uint32 heightmapTextureHandle =
+                heightmapCompositionWorld.getCompositedTextureHandle();
+            uint32 previewTextureHandle = heightmapCompositionWorld.getPreviewTextureHandle();
+
+            sceneWorld.initialize(heightmapTextureHandle, previewTextureHandle);
+            heightmapPreviewWorld.initialize(heightmapTextureHandle);
+
+            editorMemory->isInitialized = true;
+        }
+
         sceneWorld.update(editorMemory, deltaTime, input);
         heightmapCompositionWorld.update(editorMemory, deltaTime);
         heightmapCompositionWorld.compositeHeightmap(editorMemory);
     }
 
-    void EditorWorlds::render(EngineMemory *memory, ViewportContext &vctx)
+    void EditorWorlds::render(EditorMemory *memory, ViewportContext &vctx)
     {
+        if (!memory->isInitialized)
+            return;
+
         EditorViewContext view = vctx.getViewContext();
         if (view.width == 0 || view.height == 0)
             return;

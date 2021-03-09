@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../Engine/Graphics/Window.hpp"
-#include "EditorViewContext.hpp"
+#include "editor.h"
 #include "Worlds/ViewportWorld.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
