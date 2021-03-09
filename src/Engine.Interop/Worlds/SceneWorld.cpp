@@ -160,13 +160,12 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         return state;
     }
 
-    void SceneWorld::update(EditorMemory *editorMemory,
-        float deltaTime,
-        const EditorState &state,
-        EditorState &newState,
-        EditorInput *input)
+    void SceneWorld::update(EditorMemory *editorMemory, float deltaTime, EditorInput *input)
     {
-        if (state.heightmapStatus != HeightmapStatus::Idle)
+        EditorState *state = &editorMemory->currentState;
+        EditorState *newState = &editorMemory->newState;
+
+        if (state->heightmapStatus != HEIGHTMAP_STATUS_IDLE)
         {
             // update heightfield with composited heightmap texture
             rendererReadTexturePixels(memory, heightmapTextureHandle, GL_UNSIGNED_SHORT,
@@ -206,46 +205,46 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         OperationState operation = getCurrentOperation(state, input);
 
         // update editor state
-        newState.mode = operation.mode;
-        newState.tool = operation.tool;
-        newState.heightmapStatus = getNextHeightmapStatus(
-            state.heightmapStatus, operation.isBrushActive, operation.isDiscardingStroke);
-        newState.currentBrushPos = operation.brushPosition;
+        newState->mode = operation.mode;
+        newState->tool = operation.tool;
+        newState->heightmapStatus = getNextHeightmapStatus(
+            state->heightmapStatus, operation.isBrushActive, operation.isDiscardingStroke);
+        newState->currentBrushPos = operation.brushPosition;
 
         worldState.isPreviewingChanges = operation.isBrushActive;
-        if (operation.mode == InteractionMode::ModifyBrushRadius)
+        if (operation.mode == INTERACTION_MODE_MODIFY_BRUSH_RADIUS)
         {
             editorMemory->platformCaptureMouse(true);
-            newState.brushRadius =
-                glm::clamp(state.brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
+            newState->brushRadius =
+                glm::clamp(state->brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
             worldState.isPreviewingChanges = true;
         }
-        else if (operation.mode == InteractionMode::ModifyBrushFalloff)
+        else if (operation.mode == INTERACTION_MODE_MODIFY_BRUSH_FALLOFF)
         {
             editorMemory->platformCaptureMouse(true);
-            newState.brushFalloff =
-                glm::clamp(state.brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
+            newState->brushFalloff =
+                glm::clamp(state->brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
             worldState.isPreviewingChanges = true;
         }
-        else if (operation.mode == InteractionMode::ModifyBrushStrength)
+        else if (operation.mode == INTERACTION_MODE_MODIFY_BRUSH_STRENGTH)
         {
             editorMemory->platformCaptureMouse(true);
-            newState.brushStrength =
-                glm::clamp(state.brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
+            newState->brushStrength = glm::clamp(
+                state->brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
             worldState.isPreviewingChanges = true;
         }
 
         // update brush highlight
         worldState.brushPos = operation.brushPosition;
-        worldState.isBrushHighlightVisible = operation.mode != InteractionMode::MoveCamera;
-        worldState.brushRadius = state.brushRadius / 2048.0f;
-        worldState.brushFalloff = state.brushFalloff;
+        worldState.isBrushHighlightVisible = operation.mode != INTERACTION_MODE_MOVE_CAMERA;
+        worldState.brushRadius = state->brushRadius / 2048.0f;
+        worldState.brushFalloff = state->brushFalloff;
 
         // update material properties
-        worldState.materialCount = state.materialCount;
+        worldState.materialCount = state->materialCount;
         for (uint32 i = 0; i < worldState.materialCount; i++)
         {
-            const MaterialProperties *stateProps = &state.materialProps[i];
+            const MaterialProperties *stateProps = &state->materialProps[i];
             GpuMaterialProperties *gpuProps = &worldState.materialProps[i];
 
             gpuProps->textureSizeInWorldUnits.x = stateProps->textureSizeInWorldUnits;
@@ -263,8 +262,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // update scene lighting
         glm::vec4 lightDir = glm::vec4(0);
-        lightDir.x = sin(state.lightDirection * glm::pi<float>() * -0.5);
-        lightDir.y = cos(state.lightDirection * glm::pi<float>() * 0.5);
+        lightDir.x = sin(state->lightDirection * glm::pi<float>() * -0.5);
+        lightDir.y = cos(state->lightDirection * glm::pi<float>() * 0.5);
         lightDir.z = 0.2f;
         rendererUpdateLightingState(memory, &lightDir, true, true, true, true, true);
     }
@@ -313,9 +312,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     }
 
     SceneWorld::OperationState SceneWorld::getCurrentOperation(
-        const EditorState &prevState, EditorInput *input)
+        EditorState *prevState, EditorInput *input)
     {
-        EditorTool tool = prevState.tool;
+        EditorTool tool = prevState->tool;
 
         ViewState *activeViewState = (ViewState *)input->activeViewState;
         if (activeViewState)
@@ -324,7 +323,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 || isMouseButtonDown(input, IO::MouseButton::Right))
             {
                 OperationState op = {};
-                op.mode = InteractionMode::MoveCamera;
+                op.mode = INTERACTION_MODE_MOVE_CAMERA;
                 op.tool = tool;
                 op.isBrushActive = false;
                 op.isDiscardingStroke = false;
@@ -334,11 +333,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 op.brushStrengthIncrease = 0.0f;
                 return op;
             }
-            if (prevState.heightmapStatus == HeightmapStatus::Editing
+            if (prevState->heightmapStatus == HEIGHTMAP_STATUS_EDITING
                 && isKeyDown(input, IO::Key::Escape))
             {
                 OperationState op = {};
-                op.mode = InteractionMode::PaintBrushStroke;
+                op.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
                 op.tool = tool;
                 op.isBrushActive = false;
                 op.isDiscardingStroke = true;
@@ -368,7 +367,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                     float brushRadiusIncrease = input->cursorOffset.x + input->cursorOffset.y;
 
                     OperationState op = {};
-                    op.mode = InteractionMode::ModifyBrushRadius;
+                    op.mode = INTERACTION_MODE_MODIFY_BRUSH_RADIUS;
                     op.tool = tool;
                     op.isBrushActive = false;
                     op.isDiscardingStroke = false;
@@ -386,7 +385,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                         (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                     OperationState op = {};
-                    op.mode = InteractionMode::ModifyBrushFalloff;
+                    op.mode = INTERACTION_MODE_MODIFY_BRUSH_FALLOFF;
                     op.tool = tool;
                     op.isBrushActive = false;
                     op.isDiscardingStroke = false;
@@ -404,7 +403,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                         (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                     OperationState op = {};
-                    op.mode = InteractionMode::ModifyBrushStrength;
+                    op.mode = INTERACTION_MODE_MODIFY_BRUSH_STRENGTH;
                     op.tool = tool;
                     op.isBrushActive = false;
                     op.isDiscardingStroke = false;
@@ -418,16 +417,16 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 // if a number key is pressed, change the selected tool
                 if (isKeyDown(input, IO::Key::D1))
                 {
-                    tool = EditorTool::RaiseTerrain;
+                    tool = EDITOR_TOOL_RAISE_TERRAIN;
                 }
                 else if (isKeyDown(input, IO::Key::D2))
                 {
-                    tool = EditorTool::LowerTerrain;
+                    tool = EDITOR_TOOL_LOWER_TERRAIN;
                 }
 
                 // the LMB must be newly pressed to start a new brush stroke
                 bool isBrushActive = false;
-                if (prevState.heightmapStatus == HeightmapStatus::Editing
+                if (prevState->heightmapStatus == HEIGHTMAP_STATUS_EDITING
                     && isMouseButtonDown(input, IO::MouseButton::Left))
                 {
                     isBrushActive = true;
@@ -438,7 +437,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 }
 
                 OperationState op = {};
-                op.mode = InteractionMode::PaintBrushStroke;
+                op.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
                 op.tool = tool;
                 op.isBrushActive = isBrushActive;
                 op.isDiscardingStroke = false;
@@ -451,7 +450,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         OperationState op = {};
-        op.mode = InteractionMode::PaintBrushStroke;
+        op.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
         op.tool = tool;
         op.isBrushActive = false;
         op.isDiscardingStroke = false;
@@ -467,15 +466,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         switch (currentHeightmapStatus)
         {
-        case HeightmapStatus::Committing:
-        case HeightmapStatus::Idle:
-            return isBrushActive ? HeightmapStatus::Editing : HeightmapStatus::Idle;
-        case HeightmapStatus::Editing:
+        case HEIGHTMAP_STATUS_COMMITTING:
+        case HEIGHTMAP_STATUS_IDLE:
+            return isBrushActive ? HEIGHTMAP_STATUS_EDITING : HEIGHTMAP_STATUS_IDLE;
+        case HEIGHTMAP_STATUS_EDITING:
             return isDiscardingStroke
-                ? HeightmapStatus::Discarding
-                : (isBrushActive ? HeightmapStatus::Editing : HeightmapStatus::Committing);
-        case HeightmapStatus::Discarding:
-            return HeightmapStatus::Committing;
+                ? HEIGHTMAP_STATUS_DISCARDING
+                : (isBrushActive ? HEIGHTMAP_STATUS_EDITING : HEIGHTMAP_STATUS_COMMITTING);
+        case HEIGHTMAP_STATUS_DISCARDING:
+            return HEIGHTMAP_STATUS_COMMITTING;
         }
 
         return currentHeightmapStatus;

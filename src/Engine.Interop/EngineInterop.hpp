@@ -3,7 +3,6 @@
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "win32_editor_platform.h"
 #include "EditorContext.hpp"
-#include "EditorState.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "Proxy/StateProxy.hpp"
@@ -39,9 +38,6 @@ public
 
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();
-
-        static EditorState *currentEditorState;
-        static EditorState *newEditorState;
 
         static bool areWorldsInitialized = false;
         static Worlds::EditorWorlds *worlds;

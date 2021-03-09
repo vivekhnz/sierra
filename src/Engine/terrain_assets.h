@@ -3,7 +3,7 @@
 
 #include "terrain_platform.h"
 
-enum AssetTypes
+enum AssetType
 {
     ASSET_TYPE_SHADER = 1,
     ASSET_TYPE_SHADER_PROGRAM,
@@ -12,7 +12,7 @@ enum AssetTypes
 
 #define ASSET_ID(type, name, idx) ASSET_##type##_##name## = idx | (ASSET_TYPE_##type## << 28)
 
-enum ShaderAssets
+enum ShaderAssetId
 {
     ASSET_ID(SHADER, TEXTURE_VERTEX, 0),
     ASSET_ID(SHADER, TEXTURE_FRAGMENT, 1),
@@ -30,7 +30,7 @@ enum ShaderAssets
 };
 #define ASSET_SHADER_COUNT 13
 
-enum ShaderPrograms
+enum ShaderProgramAssetId
 {
     ASSET_ID(SHADER_PROGRAM, QUAD, 0),
     ASSET_ID(SHADER_PROGRAM, TERRAIN_TEXTURED, 1),
@@ -40,7 +40,7 @@ enum ShaderPrograms
 };
 #define ASSET_SHADER_PROGRAM_COUNT 5
 
-enum Textures
+enum TextureAssetId
 {
     ASSET_ID(TEXTURE, GROUND_ALBEDO, 0),
     ASSET_ID(TEXTURE, GROUND_NORMAL, 1),

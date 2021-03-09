@@ -126,14 +126,14 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererCreateFramebuffer(memory, preview.renderTextureHandle);
     }
 
-    void HeightmapCompositionWorld::update(
-        float deltaTime, const EditorState &state, EditorState &newState)
+    void HeightmapCompositionWorld::update(EditorMemory *editorMemory, float deltaTime)
     {
         // the last brush instance is reserved for previewing the result of the current
         // operation
 #define MAX_ALLOWED_BRUSH_INSTANCES (WorkingWorld::MAX_BRUSH_QUADS - 1)
 
-        if (state.heightmapStatus != HeightmapStatus::Editing)
+        EditorState *state = &editorMemory->currentState;
+        if (state->heightmapStatus != HEIGHTMAP_STATUS_EDITING)
         {
             // don't draw any brush instances if we are not editing the heightmap
             working.brushInstanceCount = 0;
@@ -143,7 +143,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             int idx = working.brushInstanceCount * 2;
             if (working.brushInstanceCount == 0)
             {
-                addBrushInstance(state.currentBrushPos);
+                addBrushInstance(state->currentBrushPos);
             }
             else
             {
@@ -152,7 +152,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                     glm::vec2(working.brushQuadInstanceBufferData[prevIdx],
                         working.brushQuadInstanceBufferData[prevIdx + 1]);
 
-                glm::vec2 diff = state.currentBrushPos - prevInstancePos;
+                glm::vec2 diff = state->currentBrushPos - prevInstancePos;
                 glm::vec2 direction = glm::normalize(diff);
                 float distance = glm::length(diff);
 
@@ -169,8 +169,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         // update preview brush quad instance
         uint32 previewQuadIdx = MAX_ALLOWED_BRUSH_INSTANCES * 2;
-        working.brushQuadInstanceBufferData[previewQuadIdx] = state.currentBrushPos.x;
-        working.brushQuadInstanceBufferData[previewQuadIdx + 1] = state.currentBrushPos.y;
+        working.brushQuadInstanceBufferData[previewQuadIdx] = state->currentBrushPos.x;
+        working.brushQuadInstanceBufferData[previewQuadIdx + 1] = state->currentBrushPos.y;
 
         // update brush quad instance buffer
         rendererUpdateBuffer(memory, working.brushQuadInstanceBufferHandle,
@@ -186,9 +186,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         working.brushInstanceCount++;
     }
 
-    void HeightmapCompositionWorld::compositeHeightmap(
-        const EditorState &state, EditorState &newState)
+    void HeightmapCompositionWorld::compositeHeightmap(EditorMemory *editorMemory)
     {
+        EditorState *state = &editorMemory->currentState;
+        EditorState *newState = &editorMemory->newState;
+
         ShaderProgramAsset *quadShaderProgram =
             assetsGetShaderProgram(memory, ASSET_SHADER_PROGRAM_QUAD);
         ShaderProgramAsset *brushShaderProgram =
@@ -198,7 +200,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         rendererUpdateCameraState(memory, &cameraTransform);
 
-        if (state.heightmapStatus == HeightmapStatus::Committing)
+        if (state->heightmapStatus == HEIGHTMAP_STATUS_COMMITTING)
         {
             // render staging world
             rendererBindFramebuffer(memory, staging.framebufferHandle);
@@ -215,20 +217,20 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererUnbindFramebuffer(memory, staging.framebufferHandle);
         }
 
-        if (state.heightmapStatus == HeightmapStatus::Initializing)
+        if (state->heightmapStatus == HEIGHTMAP_STATUS_INITIALIZING)
         {
             // reset heightmap quad's texture back to the imported heightmap
             working.baseHeightmapTextureHandle = working.importedHeightmapTextureHandle;
-            newState.heightmapStatus = HeightmapStatus::Committing;
+            newState->heightmapStatus = HEIGHTMAP_STATUS_COMMITTING;
         }
 
         uint32 brushBlendEquation = GL_FUNC_ADD;
-        switch (state.tool)
+        switch (state->tool)
         {
-        case EditorTool::RaiseTerrain:
+        case EDITOR_TOOL_RAISE_TERRAIN:
             brushBlendEquation = GL_FUNC_ADD;
             break;
-        case EditorTool::LowerTerrain:
+        case EDITOR_TOOL_LOWER_TERRAIN:
             brushBlendEquation = GL_FUNC_REVERSE_SUBTRACT;
             break;
         }
@@ -239,10 +241,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
          * more. As a result, we should decrease the brush strength as the brush radius
          * increases to ensure the perceived brush strength remains constant.
          */
-        float brushStrength = 0.01f + (0.15f * state.brushStrength);
-        brushStrength /= pow(state.brushRadius, 0.5f);
+        float brushStrength = 0.01f + (0.15f * state->brushStrength);
+        brushStrength /= pow(state->brushRadius, 0.5f);
 
-        if (state.heightmapStatus != HeightmapStatus::Idle)
+        if (state->heightmapStatus != HEIGHTMAP_STATUS_IDLE)
         {
             // render working world
             rendererBindFramebuffer(memory, working.framebufferHandle);
@@ -259,10 +261,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             rendererUseShaderProgram(memory, brushShaderProgram->handle);
             rendererSetPolygonMode(GL_FILL);
             rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
+            rendererSetShaderProgramUniformFloat(memory, brushShaderProgram->handle,
+                "brushScale", state->brushRadius / 2048.0f);
             rendererSetShaderProgramUniformFloat(
-                memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
-            rendererSetShaderProgramUniformFloat(
-                memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+                memory, brushShaderProgram->handle, "brushFalloff", state->brushFalloff);
             rendererSetShaderProgramUniformFloat(
                 memory, brushShaderProgram->handle, "brushStrength", brushStrength);
             rendererBindVertexArray(memory, working.brushQuadVertexArrayHandle);
@@ -287,9 +289,9 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
         rendererSetShaderProgramUniformFloat(
-            memory, brushShaderProgram->handle, "brushScale", state.brushRadius / 2048.0f);
+            memory, brushShaderProgram->handle, "brushScale", state->brushRadius / 2048.0f);
         rendererSetShaderProgramUniformFloat(
-            memory, brushShaderProgram->handle, "brushFalloff", state.brushFalloff);
+            memory, brushShaderProgram->handle, "brushFalloff", state->brushFalloff);
         rendererSetShaderProgramUniformFloat(
             memory, brushShaderProgram->handle, "brushStrength", brushStrength);
         rendererBindVertexArray(memory, working.brushQuadVertexArrayHandle);
@@ -297,7 +299,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         rendererUnbindFramebuffer(memory, preview.framebufferHandle);
 
-        if (state.heightmapStatus == HeightmapStatus::Initializing)
+        if (state->heightmapStatus == HEIGHTMAP_STATUS_INITIALIZING)
         {
             // set heightmap quad's texture to the staging world's render target
             working.baseHeightmapTextureHandle = staging.renderTextureHandle;

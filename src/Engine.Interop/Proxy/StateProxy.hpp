@@ -2,13 +2,20 @@
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Proxy {
 public
+    enum class EditorToolProxy
+    {
+        RaiseTerrain = 0,
+        LowerTerrain = 1
+    };
+
+public
     ref class StateProxy
     {
     private:
-        EditorState &state;
+        EditorState *state;
 
     public:
-        StateProxy(EditorState &state) : state(state)
+        StateProxy(EditorState *state) : state(state)
         {
         }
 
@@ -16,25 +23,25 @@ public
         {
             HeightmapStatus get()
             {
-                return state.heightmapStatus;
+                return state->heightmapStatus;
             }
 
             void set(HeightmapStatus value)
             {
-                state.heightmapStatus = value;
+                state->heightmapStatus = value;
             }
         }
 
-        property EditorTool CurrentTool
+        property EditorToolProxy CurrentTool
         {
-            EditorTool get()
+            EditorToolProxy get()
             {
-                return state.tool;
+                return (EditorToolProxy)((uint32)state->tool);
             }
 
-            void set(EditorTool value)
+            void set(EditorToolProxy value)
             {
-                state.tool = value;
+                state->tool = (EditorTool)((uint32)value);
             }
         }
 
@@ -42,12 +49,12 @@ public
         {
             float get()
             {
-                return state.brushRadius;
+                return state->brushRadius;
             }
 
             void set(float value)
             {
-                state.brushRadius = value;
+                state->brushRadius = value;
             }
         }
 
@@ -55,12 +62,12 @@ public
         {
             float get()
             {
-                return state.brushFalloff;
+                return state->brushFalloff;
             }
 
             void set(float value)
             {
-                state.brushFalloff = value;
+                state->brushFalloff = value;
             }
         }
 
@@ -68,12 +75,12 @@ public
         {
             float get()
             {
-                return state.brushStrength;
+                return state->brushStrength;
             }
 
             void set(float value)
             {
-                state.brushStrength = value;
+                state->brushStrength = value;
             }
         }
 
@@ -81,12 +88,12 @@ public
         {
             float get()
             {
-                return state.lightDirection;
+                return state->lightDirection;
             }
 
             void set(float value)
             {
-                state.lightDirection = value;
+                state->lightDirection = value;
             }
         }
     };

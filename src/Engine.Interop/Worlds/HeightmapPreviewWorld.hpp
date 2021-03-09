@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../EditorState.hpp"
 #include "../EditorViewContext.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {

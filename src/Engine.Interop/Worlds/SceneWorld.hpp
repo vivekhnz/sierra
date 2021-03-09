@@ -3,7 +3,6 @@
 #include "../../Engine/terrain_renderer.h"
 #include "../../Engine/terrain_heightfield.h"
 #include "../EditorViewContext.hpp"
-#include "../EditorState.hpp"
 #include "../editor.h"
 
 #define MAX_SCENE_VIEWS 8
@@ -102,7 +101,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         WorldState worldState;
 
         bool updateViewState(ViewState *viewState, float deltaTime, EditorInput *input);
-        OperationState getCurrentOperation(const EditorState &prevState, EditorInput *input);
+        OperationState getCurrentOperation(EditorState *prevState, EditorInput *input);
         HeightmapStatus getNextHeightmapStatus(HeightmapStatus currentHeightmapStatus,
             bool isBrushActive,
             bool isDiscardingStroke);
@@ -113,11 +112,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);
         void *addView();
-        void update(EditorMemory *editorMemory,
-            float deltaTime,
-            const EditorState &state,
-            EditorState &newState,
-            EditorInput *input);
+        void update(EditorMemory *editorMemory, float deltaTime, EditorInput *input);
         void render(EngineMemory *memory, EditorViewContext *vctx);
     };
 }}}}

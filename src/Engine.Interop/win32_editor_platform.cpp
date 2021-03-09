@@ -217,6 +217,14 @@ Win32PlatformMemory *win32InitializePlatform()
     }
 
     platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
+    platformMemory->editor.currentState = {};
+    platformMemory->editor.newState = {};
+    platformMemory->editor.newState.brushRadius = 128.0f;
+    platformMemory->editor.newState.brushFalloff = 0.1f;
+    platformMemory->editor.newState.brushStrength = 0.12f;
+    platformMemory->editor.newState.lightDirection = 0.5f;
+    platformMemory->editor.newState.materialCount = 0;
+    platformMemory->editor.newState.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
 
     EngineMemory *engine = &platformMemory->editor.engine;
     engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);

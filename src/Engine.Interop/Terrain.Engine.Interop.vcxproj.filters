@@ -51,7 +51,6 @@
     <ClInclude Include="Proxy\StateProxy.hpp">
       <Filter>Proxy</Filter>
     </ClInclude>
-    <ClInclude Include="EditorState.hpp" />
     <ClInclude Include="EditorViewContext.hpp" />
     <ClInclude Include="win32_editor_platform.h" />
     <ClInclude Include="editor.h" />

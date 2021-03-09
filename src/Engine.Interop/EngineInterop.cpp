@@ -20,18 +20,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         input = new EditorInput();
         viewportContexts = new std::vector<ViewportContext *>();
 
-        currentEditorState = new EditorState();
-        newEditorState = new EditorState();
-        newEditorState->brushRadius = 128.0f;
-        newEditorState->brushFalloff = 0.1f;
-        newEditorState->brushStrength = 0.12f;
-        newEditorState->lightDirection = 0.5f;
-        newEditorState->materialCount = 0;
-
-        newEditorState->mode = InteractionMode::PaintBrushStroke;
-
         worlds = new Worlds::EditorWorlds(&memory->editor.engine);
-        stateProxy = gcnew Proxy::StateProxy(*newEditorState);
+        stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
 
         focusedViewportCtx = nullptr;
         hoveredViewportCtx = nullptr;
@@ -146,9 +136,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         IO::MouseCaptureMode prevMouseCaptureMode = memory->mouseCaptureMode;
         memory->mouseCaptureMode = IO::MouseCaptureMode::DoNotCapture;
 
-        memcpy(currentEditorState, newEditorState, sizeof(*currentEditorState));
-        worlds->update(
-            &memory->editor, deltaTime, *currentEditorState, *newEditorState, input);
+        EditorState *currentState = &memory->editor.currentState;
+        EditorState *newState = &memory->editor.newState;
+        memcpy(currentState, newState, sizeof(*currentState));
+        worlds->update(&memory->editor, deltaTime, input);
 
         if (memory->mouseCaptureMode != prevMouseCaptureMode)
         {
@@ -209,17 +200,17 @@ namespace Terrain { namespace Engine { namespace Interop {
         TextureAsset asset;
         assetsLoadTexture(&memory->editor.engine, result.data, result.size, true, &asset);
         worlds->heightmapCompositionWorld.updateImportedHeightmapTexture(&asset);
-        newEditorState->heightmapStatus = HeightmapStatus::Initializing;
+        memory->editor.newState.heightmapStatus = HEIGHTMAP_STATUS_INITIALIZING;
 
         win32FreeMemory(result.data);
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)
     {
-        assert(newEditorState->materialCount < MAX_MATERIAL_COUNT);
-        uint32 index = newEditorState->materialCount++;
+        assert(memory->editor.newState.materialCount < MAX_MATERIAL_COUNT);
+        uint32 index = memory->editor.newState.materialCount++;
 
-        MaterialProperties *material = &newEditorState->materialProps[index];
+        MaterialProperties *material = &memory->editor.newState.materialProps[index];
         material->albedoTextureAssetId = props.albedoTextureAssetId;
         material->normalTextureAssetId = props.normalTextureAssetId;
         material->displacementTextureAssetId = props.displacementTextureAssetId;
@@ -235,10 +226,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         assert(index < MAX_MATERIAL_COUNT);
 
-        newEditorState->materialCount--;
-        for (uint32 i = index; i < newEditorState->materialCount; i++)
+        memory->editor.newState.materialCount--;
+        for (uint32 i = index; i < memory->editor.newState.materialCount; i++)
         {
-            newEditorState->materialProps[i] = newEditorState->materialProps[i + 1];
+            memory->editor.newState.materialProps[i] =
+                memory->editor.newState.materialProps[i + 1];
         }
     }
 
@@ -247,69 +239,70 @@ namespace Terrain { namespace Engine { namespace Interop {
         assert(indexA < MAX_MATERIAL_COUNT);
         assert(indexB < MAX_MATERIAL_COUNT);
 
-        MaterialProperties temp = newEditorState->materialProps[indexA];
-        newEditorState->materialProps[indexA] = newEditorState->materialProps[indexB];
-        newEditorState->materialProps[indexB] = temp;
+        MaterialProperties temp = memory->editor.newState.materialProps[indexA];
+        memory->editor.newState.materialProps[indexA] =
+            memory->editor.newState.materialProps[indexB];
+        memory->editor.newState.materialProps[indexB] = temp;
     }
 
     void EngineInterop::SetMaterialAlbedoTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].albedoTextureAssetId = assetId;
+        memory->editor.newState.materialProps[index].albedoTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialNormalTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].normalTextureAssetId = assetId;
+        memory->editor.newState.materialProps[index].normalTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialDisplacementTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].displacementTextureAssetId = assetId;
+        memory->editor.newState.materialProps[index].displacementTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialAoTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].aoTextureAssetId = assetId;
+        memory->editor.newState.materialProps[index].aoTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialTextureSize(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].textureSizeInWorldUnits = value;
+        memory->editor.newState.materialProps[index].textureSizeInWorldUnits = value;
     }
 
     void EngineInterop::SetMaterialSlopeStart(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].slopeStart = value;
+        memory->editor.newState.materialProps[index].slopeStart = value;
     }
 
     void EngineInterop::SetMaterialSlopeEnd(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].slopeEnd = value;
+        memory->editor.newState.materialProps[index].slopeEnd = value;
     }
 
     void EngineInterop::SetMaterialAltitudeStart(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].altitudeStart = value;
+        memory->editor.newState.materialProps[index].altitudeStart = value;
     }
 
     void EngineInterop::SetMaterialAltitudeEnd(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        newEditorState->materialProps[index].altitudeEnd = value;
+        memory->editor.newState.materialProps[index].altitudeEnd = value;
     }
 
     MaterialProps EngineInterop::GetMaterialProperties(int index)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        MaterialProperties *state = &newEditorState->materialProps[index];
+        MaterialProperties *state = &memory->editor.newState.materialProps[index];
 
         MaterialProps result = {};
 
@@ -343,12 +336,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             viewportContexts->clear();
             delete viewportContexts;
         }
-
-        delete currentEditorState;
-        currentEditorState = nullptr;
-
-        delete newEditorState;
-        newEditorState = nullptr;
 
         rendererDestroyResources(&memory->editor.engine);
 

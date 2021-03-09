@@ -19,7 +19,7 @@ namespace Terrain.Editor
 
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
-        Dictionary<RadioButton, EditorTool> editorToolByToolButtons;
+        Dictionary<RadioButton, EditorToolProxy> editorToolByToolButtons;
 
         private const uint textureAssetTypeId = 3;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
@@ -88,10 +88,10 @@ namespace Terrain.Editor
                 altitudeEnd = 0.28f
             });
 
-            editorToolByToolButtons = new Dictionary<RadioButton, EditorTool>
+            editorToolByToolButtons = new Dictionary<RadioButton, EditorToolProxy>
             {
-                [rbEditorToolRaiseTerrain] = EditorTool.RaiseTerrain,
-                [rbEditorToolLowerTerrain] = EditorTool.LowerTerrain
+                [rbEditorToolRaiseTerrain] = EditorToolProxy.RaiseTerrain,
+                [rbEditorToolLowerTerrain] = EditorToolProxy.LowerTerrain
             };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)

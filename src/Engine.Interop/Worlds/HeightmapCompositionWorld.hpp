@@ -1,8 +1,10 @@
 #pragma once
 
+#include <glm/gtc/type_ptr.hpp>
+
 #include "../../Engine/terrain_assets.h"
 #include "../ViewportContext.hpp"
-#include "../EditorState.hpp"
+#include "../editor.h"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     class HeightmapCompositionWorld
@@ -51,8 +53,8 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         HeightmapCompositionWorld(EngineMemory *memory);
 
         void initialize();
-        void update(float deltaTime, const EditorState &state, EditorState &newState);
-        void compositeHeightmap(const EditorState &state, EditorState &newState);
+        void update(EditorMemory *editorMemory, float deltaTime);
+        void compositeHeightmap(EditorMemory *editorMemory);
         void updateImportedHeightmapTexture(TextureAsset *asset);
 
         uint32 getCompositedTextureHandle() const
