@@ -141,14 +141,11 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
             memory, materialPropsBufferHandle, sizeof(worldState.materialProps), 0);
     }
 
-    uint32 SceneWorld::linkViewport(int inputControllerId)
+    void *SceneWorld::addView()
     {
         assert(viewStateCount < MAX_SCENE_VIEWS);
 
-        uint32 contextId = viewStateCount++;
-
-        ViewState *state = &viewStates[contextId];
-        state->inputControllerId = inputControllerId;
+        ViewState *state = &viewStates[viewStateCount++];
         state->orbitCameraDistance = 112.5f;
         state->orbitCameraYaw = glm::radians(180.0f);
         state->orbitCameraPitch = glm::radians(15.0f);
@@ -160,7 +157,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
                 sin(state->orbitCameraYaw) * cos(state->orbitCameraPitch));
         state->cameraPos = state->cameraLookAt + (lookDir * state->orbitCameraDistance);
 
-        return contextId;
+        return state;
     }
 
     void SceneWorld::update(
@@ -192,13 +189,10 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
 
         bool isManipulatingCamera = false;
-        for (int i = 0; i < viewStateCount; i++)
+        if (input->activeViewState)
         {
-            ViewState *viewState = &viewStates[i];
-            if (viewState->inputControllerId == input->activeInputControllerId)
-            {
-                isManipulatingCamera |= updateViewState(viewState, deltaTime, input);
-            }
+            ViewState *viewState = (ViewState *)input->activeViewState;
+            isManipulatingCamera = updateViewState(viewState, deltaTime, input);
         }
         if (isManipulatingCamera)
         {
@@ -320,17 +314,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
     {
         EditorTool tool = prevState.tool;
 
-        ViewState *activeViewState = 0;
-        for (uint32 i = 0; i < viewStateCount; i++)
-        {
-            ViewState *viewState = &viewStates[i];
-            if (viewState->inputControllerId == input->activeInputControllerId)
-            {
-                activeViewState = viewState;
-                break;
-            }
-        }
-
+        ViewState *activeViewState = (ViewState *)input->activeViewState;
         if (activeViewState)
         {
             if (isMouseButtonDown(input, IO::MouseButton::Middle)
@@ -496,8 +480,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
     void SceneWorld::render(EngineMemory *memory, EditorViewContext *vctx)
     {
-        assert(vctx->contextId < MAX_SCENE_VIEWS);
-        ViewState *viewState = &viewStates[vctx->contextId];
+        ViewState *viewState = (ViewState *)vctx->viewState;
 
         // calculate camera transform
         constexpr float fov = glm::pi<float>() / 4.0f;

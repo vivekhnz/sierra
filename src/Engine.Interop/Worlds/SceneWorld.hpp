@@ -27,7 +27,6 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
 
         struct ViewState
         {
-            int inputControllerId;
             float orbitCameraDistance;
             float orbitCameraYaw;
             float orbitCameraPitch;
@@ -113,7 +112,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         ~SceneWorld();
 
         void initialize(uint32 heightmapTextureHandle, uint32 previewTextureHandle);
-        uint32 linkViewport(int inputControllerId);
+        void *addView();
         void update(float deltaTime,
             const EditorState &state,
             EditorState &newState,

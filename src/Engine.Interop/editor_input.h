@@ -9,7 +9,7 @@ typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 
 struct EditorInput
 {
-    int32 activeInputControllerId;
+    void *activeViewState;
 
     float scrollOffset;
     glm::vec2 normalizedCursorPos;

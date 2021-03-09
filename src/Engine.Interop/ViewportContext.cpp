@@ -7,8 +7,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
-        hasFocus(false), isHovered(false), contextId(0), inputControllerId(-1),
-        world(Worlds::ViewportWorld::None)
+        hasFocus(false), isHovered(false), viewState(0), world(Worlds::ViewportWorld::None)
     {
     }
 
@@ -19,7 +18,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorViewContext result = {};
         result.width = w;
         result.height = h;
-        result.contextId = contextId;
+        result.viewState = viewState;
         return result;
     }
 
@@ -32,18 +31,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         this->world = world;
     }
 
-    void ViewportContext::setContextId(uint32 contextId)
+    void ViewportContext::setViewState(void *viewState)
     {
-        this->contextId = contextId;
-    }
-
-    int ViewportContext::getInputControllerId() const
-    {
-        return inputControllerId;
-    }
-    void ViewportContext::setInputControllerId(int inputControllerId)
-    {
-        this->inputControllerId = inputControllerId;
+        this->viewState = viewState;
     }
 
     std::tuple<int, int> ViewportContext::getViewportLocation() const

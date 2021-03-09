@@ -17,13 +17,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         int capturedMousePosX;
         int capturedMousePosY;
 
-        uint32 inputControllerCount;
         IO::MouseInputState mouseState;
         uint8 pressedMouseButtons;
         uint64 pressedKeys;
 
     public:
-        int32 activeInputControllerId;
+        void* activeViewState;
 
         EditorContext();
 
@@ -31,7 +30,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         void getInputState(EditorInput *input);
         void setMouseCaptureMode(IO::MouseCaptureMode mode);
 
-        int addInputController();
         void onMouseScroll(double x, double y);
     };
 }}}

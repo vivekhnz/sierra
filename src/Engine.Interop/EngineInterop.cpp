@@ -107,17 +107,14 @@ namespace Terrain { namespace Engine { namespace Interop {
             areWorldsInitialized = true;
         }
 
-        // create input controller
-        int inputControllerId = appCtx->addInputController();
-        vctx->setInputControllerId(inputControllerId);
-
         return vctx;
     }
 
     void EngineInterop::LinkViewportToWorld(
         ViewportContext *vctx, Worlds::ViewportWorld viewportWorld)
     {
-        worlds->linkViewport(viewportWorld, vctx);
+        void *viewState = worlds->addView(viewportWorld);
+        vctx->setViewState(viewState);
     }
 
     void EngineInterop::DetachView(ViewportContext *vctxToRemove)
@@ -153,11 +150,11 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         appCtx->updateInputState();
 
-        int32 prevActiveInputControllerId = input->activeInputControllerId;
-        input->activeInputControllerId = appCtx->activeInputControllerId;
-        if (input->activeInputControllerId != -1)
+        void *prevActiveViewState = input->activeViewState;
+        input->activeViewState = appCtx->activeViewState;
+        if (input->activeViewState)
         {
-            if (input->activeInputControllerId == prevActiveInputControllerId)
+            if (input->activeViewState == prevActiveViewState)
             {
                 input->prevPressedMouseButtons = input->pressedMouseButtons;
                 input->prevPressedKeys = input->pressedKeys;

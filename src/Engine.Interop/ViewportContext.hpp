@@ -11,8 +11,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         char *imgBuffer;
         std::function<void()> onRenderCallback;
         Worlds::ViewportWorld world;
-        uint32 contextId;
-        int inputControllerId;
+        void *viewState;
 
         std::tuple<int, int> location;
         bool hasFocus;
@@ -24,7 +23,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             std::function<void()> onRenderCallback);
 
         EditorViewContext getViewContext() const;
-        int getInputControllerId() const;
         Worlds::ViewportWorld getWorld() const;
         std::tuple<int, int> getViewportLocation() const;
         bool isDetached() const;
@@ -34,8 +32,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         void makePrimary();
         void makeCurrent();
         void setWorld(Worlds::ViewportWorld world);
-        void setContextId(uint32 contextId);
-        void setInputControllerId(int inputControllerId);
+        void setViewState(void *viewState);
 
         void detach();
         void reattach(char *imgBuffer, std::function<void()> onRenderCallback);

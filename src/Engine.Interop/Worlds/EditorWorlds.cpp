@@ -16,19 +16,15 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         heightmapPreviewWorld.initialize(heightmapTextureHandle);
     }
 
-    void EditorWorlds::linkViewport(ViewportWorld viewportWorld, ViewportContext *vctx)
+    void *EditorWorlds::addView(ViewportWorld viewportWorld)
     {
-        uint32 contextId = 0;
-        int inputControllerId = vctx->getInputControllerId();
-
+        void *viewState = 0;
         switch (viewportWorld)
         {
         case ViewportWorld::Scene:
-            contextId = sceneWorld.linkViewport(inputControllerId);
-            break;
+            return sceneWorld.addView();
         }
-
-        vctx->setContextId(contextId);
+        return 0;
     }
 
     void EditorWorlds::update(

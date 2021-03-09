@@ -5,7 +5,7 @@
 namespace Terrain { namespace Engine { namespace Interop {
     struct EditorViewContext
     {
-        uint32 contextId;
+        void *viewState;
         uint32 width;
         uint32 height;
     };

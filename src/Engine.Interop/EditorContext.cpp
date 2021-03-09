@@ -13,8 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     EditorContext::EditorContext() :
         prevMousePosX(0), prevMousePosY(0), nextMouseScrollOffsetX(0),
         nextMouseScrollOffsetY(0), currentMouseCaptureMode(IO::MouseCaptureMode::DoNotCapture),
-        prevMouseCaptureMode(IO::MouseCaptureMode::DoNotCapture), inputControllerCount(0),
-        activeInputControllerId(-1)
+        prevMouseCaptureMode(IO::MouseCaptureMode::DoNotCapture), activeViewState(0)
     {
     }
 
@@ -49,7 +48,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         // reset input state
-        activeInputControllerId = -1;
+        activeViewState = 0;
         mouseState = {};
         pressedMouseButtons = 0;
         pressedKeys = 0;
@@ -61,8 +60,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         else
         {
             auto view = EngineInterop::HoveredViewportContext->getViewContext();
-            activeInputControllerId =
-                EngineInterop::HoveredViewportContext->getInputControllerId();
+            activeViewState = view.viewState;
 
             pressedMouseButtons |= (Mouse::LeftButton == MouseButtonState::Pressed)
                 * static_cast<uint8>(Terrain::Engine::IO::MouseButton::Left);
@@ -218,10 +216,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         currentMouseCaptureMode = mode;
     }
 
-    int EditorContext::addInputController()
-    {
-        return inputControllerCount++;
-    }
     void EditorContext::onMouseScroll(double x, double y)
     {
         nextMouseScrollOffsetX += x;
