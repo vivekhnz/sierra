@@ -4,11 +4,17 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../Engine/terrain_platform.h"
 #include "../Engine/terrain_assets.h"
+#include "../Engine/terrain_heightfield.h"
 
 #define MAX_MATERIAL_COUNT 8
 #define MAX_BRUSH_QUADS 2048
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
+#define MAX_SCENE_VIEWS 8
+#define HEIGHTFIELD_COLUMNS 256
+#define HEIGHTFIELD_ROWS 256
+#define HEIGHTMAP_WIDTH 2048
+#define HEIGHTMAP_HEIGHT 2048
 
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
@@ -96,6 +102,77 @@ struct HeightmapCompositionState
     } preview;
 };
 
+struct TextureAssetBinding
+{
+    uint32 assetId;
+    uint8 version;
+};
+
+struct SceneViewState
+{
+    float orbitCameraDistance;
+    float orbitCameraYaw;
+    float orbitCameraPitch;
+    glm::vec3 cameraPos;
+    glm::vec3 cameraLookAt;
+    glm::mat4 cameraTransform;
+};
+
+struct GpuMaterialProperties
+{
+    glm::vec2 textureSizeInWorldUnits;
+    glm::vec2 _padding;
+    glm::vec4 rampParams;
+};
+
+struct SceneState
+{
+    Heightfield heightfield;
+    float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
+
+    struct TerrainMesh
+    {
+        uint32 elementCount;
+        uint32 vertexBufferHandle;
+        uint32 vertexArrayHandle;
+    } terrainMesh;
+
+    uint32 tessellationLevelBufferHandle;
+
+    uint32 albedoTextureArrayHandle;
+    uint32 normalTextureArrayHandle;
+    uint32 displacementTextureArrayHandle;
+    uint32 aoTextureArrayHandle;
+
+    TextureAssetBinding albedoTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding normalTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
+
+    uint32 materialPropsBufferHandle;
+
+    uint16 *heightmapTextureDataTempBuffer;
+
+    SceneViewState viewStates[MAX_SCENE_VIEWS];
+    int viewStateCount = 0;
+
+    struct WorldState
+    {
+        glm::vec2 brushPos;
+        float brushRadius;
+        float brushFalloff;
+        bool isBrushHighlightVisible;
+        bool isPreviewingChanges;
+
+        uint32 materialCount;
+        GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
+        uint32 albedoTextureAssetIds[MAX_MATERIAL_COUNT];
+        uint32 normalTextureAssetIds[MAX_MATERIAL_COUNT];
+        uint32 displacementTextureAssetIds[MAX_MATERIAL_COUNT];
+        uint32 aoTextureAssetIds[MAX_MATERIAL_COUNT];
+    } worldState;
+};
+
 struct EditorMemory
 {
     bool isInitialized;
@@ -105,6 +182,7 @@ struct EditorMemory
     EditorState currentState;
     EditorState newState;
     HeightmapCompositionState heightmapCompositionState;
+    SceneState sceneState;
 
     EngineMemory engine;
 };
@@ -132,6 +210,11 @@ struct EditorViewContext
 
 void editorInitialize(EditorMemory *memory);
 void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input);
+void editorShutdown(EditorMemory *memory);
+
+void *editorAddSceneView(EditorMemory *memory);
+void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view);
+
 void editorUpdateImportedHeightmapTexture(EditorMemory *memory, TextureAsset *asset);
 
 #endif

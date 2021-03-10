@@ -1,40 +1,32 @@
 #include "EditorWorlds.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
-    EditorWorlds::EditorWorlds(EngineMemory *memory) :
-        sceneWorld(memory), heightmapPreviewWorld(memory)
+    EditorWorlds::EditorWorlds(EditorMemory *memory) : heightmapPreviewWorld(&memory->engine)
     {
     }
 
-    void *EditorWorlds::addView(ViewportWorld viewportWorld)
+    void *EditorWorlds::addView(EditorMemory *memory, ViewportWorld viewportWorld)
     {
         switch (viewportWorld)
         {
         case ViewportWorld::Scene:
-            return sceneWorld.addView();
+            return editorAddSceneView(memory);
         }
         return 0;
     }
 
-    void EditorWorlds::update(EditorMemory *editorMemory, float deltaTime, EditorInput *input)
+    void EditorWorlds::update(EditorMemory *memory, float deltaTime, EditorInput *input)
     {
-        if (!editorMemory->isInitialized)
+        if (!memory->isInitialized)
         {
-            editorInitialize(editorMemory);
+            editorInitialize(memory);
 
-            uint32 heightmapTextureHandle =
-                editorMemory->heightmapCompositionState.working.renderTextureHandle;
-            uint32 previewTextureHandle =
-                editorMemory->heightmapCompositionState.preview.renderTextureHandle;
+            heightmapPreviewWorld.initialize(
+                memory->heightmapCompositionState.working.renderTextureHandle);
 
-            sceneWorld.initialize(heightmapTextureHandle, previewTextureHandle);
-            heightmapPreviewWorld.initialize(heightmapTextureHandle);
-
-            editorMemory->isInitialized = true;
+            memory->isInitialized = true;
         }
-
-        sceneWorld.update(editorMemory, deltaTime, input);
-        editorUpdate(editorMemory, deltaTime, input);
+        editorUpdate(memory, deltaTime, input);
     }
 
     void EditorWorlds::render(EditorMemory *memory, ViewportContext &vctx)
@@ -49,7 +41,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         switch (vctx.getWorld())
         {
         case ViewportWorld::Scene:
-            sceneWorld.render(memory, &view);
+            editorRenderSceneView(memory, &view);
             break;
         case ViewportWorld::HeightmapPreview:
             heightmapPreviewWorld.render(memory, &view);

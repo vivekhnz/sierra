@@ -80,7 +80,6 @@
     <ClInclude Include="Worlds\HeightmapPreviewWorld.hpp" />
     <ClInclude Include="Worlds\ViewportWorld.hpp" />
     <ClInclude Include="Worlds\EditorWorlds.hpp" />
-    <ClInclude Include="Worlds\SceneWorld.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="editor.cpp" />
@@ -92,7 +91,6 @@
     <ClCompile Include="win32_editor_platform.cpp" />
     <ClCompile Include="Worlds\EditorWorlds.cpp" />
     <ClCompile Include="Worlds\HeightmapPreviewWorld.cpp" />
-    <ClCompile Include="Worlds\SceneWorld.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">

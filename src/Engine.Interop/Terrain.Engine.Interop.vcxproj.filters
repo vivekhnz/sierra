@@ -14,9 +14,6 @@
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="EditorContext.cpp" />
     <ClCompile Include="ViewportContext.cpp" />
-    <ClCompile Include="Worlds\SceneWorld.cpp">
-      <Filter>Worlds</Filter>
-    </ClCompile>
     <ClCompile Include="Worlds\EditorWorlds.cpp">
       <Filter>Worlds</Filter>
     </ClCompile>
@@ -31,9 +28,6 @@
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="EditorContext.hpp" />
     <ClInclude Include="ViewportContext.hpp" />
-    <ClInclude Include="Worlds\SceneWorld.hpp">
-      <Filter>Worlds</Filter>
-    </ClInclude>
     <ClInclude Include="Worlds\EditorWorlds.hpp">
       <Filter>Worlds</Filter>
     </ClInclude>

@@ -20,7 +20,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         input = new EditorInput();
         viewportContexts = new std::vector<ViewportContext *>();
 
-        worlds = new Worlds::EditorWorlds(&memory->editor.engine);
+        worlds = new Worlds::EditorWorlds(&memory->editor);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
 
         focusedViewportCtx = nullptr;
@@ -72,7 +72,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::LinkViewportToWorld(
         ViewportContext *vctx, Worlds::ViewportWorld viewportWorld)
     {
-        void *viewState = worlds->addView(viewportWorld);
+        void *viewState = worlds->addView(&memory->editor, viewportWorld);
         vctx->setViewState(viewState);
     }
 
@@ -334,7 +334,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             delete viewportContexts;
         }
 
-        rendererDestroyResources(&memory->editor.engine);
+        editorShutdown(&memory->editor);
 
         delete input;
         input = nullptr;
