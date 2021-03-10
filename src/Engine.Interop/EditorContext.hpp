@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Engine/IO/MouseCaptureMode.hpp"
 #include "../Engine/IO/MouseInputState.hpp"
 #include "ViewportContext.hpp"
 #include "editor.h"
@@ -12,8 +11,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         int prevMousePosY;
         double nextMouseScrollOffsetX;
         double nextMouseScrollOffsetY;
-        IO::MouseCaptureMode currentMouseCaptureMode;
-        IO::MouseCaptureMode prevMouseCaptureMode;
+        bool shouldCaptureMouse;
+        bool wasMouseCaptured;
         int capturedMousePosX;
         int capturedMousePosY;
 
@@ -28,7 +27,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         void updateInputState();
         void getInputState(EditorInput *input);
-        void setMouseCaptureMode(IO::MouseCaptureMode mode);
+        void setMouseCaptureMode(bool shouldCaptureMouse);
 
         void onMouseScroll(double x, double y);
     };

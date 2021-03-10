@@ -198,7 +198,7 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         }
         if (isManipulatingCamera)
         {
-            editorMemory->platformCaptureMouse(false);
+            editorMemory->platformCaptureMouse();
         }
 
         // determine the current operation being performed
@@ -214,21 +214,21 @@ namespace Terrain { namespace Engine { namespace Interop { namespace Worlds {
         worldState.isPreviewingChanges = operation.isBrushActive;
         if (operation.mode == INTERACTION_MODE_MODIFY_BRUSH_RADIUS)
         {
-            editorMemory->platformCaptureMouse(true);
+            editorMemory->platformCaptureMouse();
             newState->brushRadius =
                 glm::clamp(state->brushRadius + operation.brushRadiusIncrease, 32.0f, 2048.0f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == INTERACTION_MODE_MODIFY_BRUSH_FALLOFF)
         {
-            editorMemory->platformCaptureMouse(true);
+            editorMemory->platformCaptureMouse();
             newState->brushFalloff =
                 glm::clamp(state->brushFalloff + operation.brushFalloffIncrease, 0.0f, 0.99f);
             worldState.isPreviewingChanges = true;
         }
         else if (operation.mode == INTERACTION_MODE_MODIFY_BRUSH_STRENGTH)
         {
-            editorMemory->platformCaptureMouse(true);
+            editorMemory->platformCaptureMouse();
             newState->brushStrength = glm::clamp(
                 state->brushStrength + operation.brushStrengthIncrease, 0.01f, 1.0f);
             worldState.isPreviewingChanges = true;

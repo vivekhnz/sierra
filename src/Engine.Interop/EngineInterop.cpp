@@ -130,17 +130,17 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        IO::MouseCaptureMode prevMouseCaptureMode = memory->mouseCaptureMode;
-        memory->mouseCaptureMode = IO::MouseCaptureMode::DoNotCapture;
+        bool wasMouseCaptured = memory->shouldCaptureMouse;
+        memory->shouldCaptureMouse = false;
 
         EditorState *currentState = &memory->editor.currentState;
         EditorState *newState = &memory->editor.newState;
         memcpy(currentState, newState, sizeof(*currentState));
         worlds->update(&memory->editor, deltaTime, input);
 
-        if (memory->mouseCaptureMode != prevMouseCaptureMode)
+        if (memory->shouldCaptureMouse != wasMouseCaptured)
         {
-            appCtx->setMouseCaptureMode(memory->mouseCaptureMode);
+            appCtx->setMouseCaptureMode(memory->shouldCaptureMouse);
         }
 
         msclr::lock l(viewportCtxLock);

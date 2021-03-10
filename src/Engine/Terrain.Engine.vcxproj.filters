@@ -37,9 +37,6 @@
     <ClInclude Include="IO\MouseButton.hpp">
       <Filter>IO</Filter>
     </ClInclude>
-    <ClInclude Include="IO\MouseCaptureMode.hpp">
-      <Filter>IO</Filter>
-    </ClInclude>
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />

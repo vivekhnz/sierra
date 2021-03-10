@@ -12,8 +12,8 @@ using namespace System::Windows::Input;
 namespace Terrain { namespace Engine { namespace Interop {
     EditorContext::EditorContext() :
         prevMousePosX(0), prevMousePosY(0), nextMouseScrollOffsetX(0),
-        nextMouseScrollOffsetY(0), currentMouseCaptureMode(IO::MouseCaptureMode::DoNotCapture),
-        prevMouseCaptureMode(IO::MouseCaptureMode::DoNotCapture), activeViewState(0)
+        nextMouseScrollOffsetY(0), shouldCaptureMouse(false), wasMouseCaptured(false),
+        activeViewState(0)
     {
     }
 
@@ -23,19 +23,18 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto actualMousePos = Mouse::GetPosition(appWindow);
         auto virtualMousePos = actualMousePos;
 
-        if (prevMouseCaptureMode == IO::MouseCaptureMode::CaptureRetainPosition)
+        if (wasMouseCaptured)
         {
             /*
-             * If we are capturing the mouse and want to retain the cursor position when the
-             * mouse is released, we need to keep both the actual mouse position and a
-             * simulated 'virtual' mouse position. The actual mouse position is used for cursor
-             * offset calculations and the virtual mouse position is used when the cursor
-             * position is queried.
+             * If we are capturing the mouse , we need to keep both the actual mouse position
+             * and a simulated 'virtual' mouse position. The actual mouse position is used for
+             * cursor offset calculations and the virtual mouse position is used when the
+             * cursor position is queried.
              */
             virtualMousePos.X = capturedMousePosX;
             virtualMousePos.Y = capturedMousePosY;
 
-            if (currentMouseCaptureMode == IO::MouseCaptureMode::DoNotCapture)
+            if (!shouldCaptureMouse)
             {
                 // move the cursor back to its original position when the mouse is released
                 auto capturedMousePos_screen =
@@ -80,16 +79,9 @@ namespace Terrain { namespace Engine { namespace Interop {
             mouseState.scrollOffsetX = nextMouseScrollOffsetX;
             mouseState.scrollOffsetY = nextMouseScrollOffsetY;
 
-            if (currentMouseCaptureMode == IO::MouseCaptureMode::DoNotCapture)
+            if (shouldCaptureMouse)
             {
-                mouseState.cursorOffsetX = actualMousePos.X - prevMousePosX;
-                mouseState.cursorOffsetY = actualMousePos.Y - prevMousePosY;
-                appWindow->Cursor = nullptr;
-            }
-            else
-            {
-                if (currentMouseCaptureMode == IO::MouseCaptureMode::CaptureRetainPosition
-                    && prevMouseCaptureMode == IO::MouseCaptureMode::DoNotCapture)
+                if (!wasMouseCaptured)
                 {
                     // store the cursor position so we can move the cursor back to it when the
                     // mouse is released
@@ -105,7 +97,12 @@ namespace Terrain { namespace Engine { namespace Interop {
                 auto viewportCenter_screen = appWindow->PointToScreen(viewportCenter_window);
                 SetCursorPos(viewportCenter_screen.X, viewportCenter_screen.Y);
 
-                if (prevMouseCaptureMode == IO::MouseCaptureMode::DoNotCapture)
+                if (wasMouseCaptured)
+                {
+                    mouseState.cursorOffsetX = actualMousePos.X - viewportCenter_window.X;
+                    mouseState.cursorOffsetY = actualMousePos.Y - viewportCenter_window.Y;
+                }
+                else
                 {
                     // don't set the mouse offset on the first frame after we capture the mouse
                     // or there will be a big jump from the initial cursor position to the
@@ -114,11 +111,12 @@ namespace Terrain { namespace Engine { namespace Interop {
                     mouseState.cursorOffsetY = 0;
                     appWindow->Cursor = Cursors::None;
                 }
-                else
-                {
-                    mouseState.cursorOffsetX = actualMousePos.X - viewportCenter_window.X;
-                    mouseState.cursorOffsetY = actualMousePos.Y - viewportCenter_window.Y;
-                }
+            }
+            else
+            {
+                mouseState.cursorOffsetX = actualMousePos.X - prevMousePosX;
+                mouseState.cursorOffsetY = actualMousePos.Y - prevMousePosY;
+                appWindow->Cursor = nullptr;
             }
 
             // update keyboard state for hovered viewport
@@ -198,7 +196,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         prevMousePosX = actualMousePos.X;
         prevMousePosY = actualMousePos.Y;
-        prevMouseCaptureMode = currentMouseCaptureMode;
+        wasMouseCaptured = shouldCaptureMouse;
     }
 
     void EditorContext::getInputState(EditorInput *input)
@@ -211,9 +209,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         input->pressedKeys = pressedKeys;
     }
 
-    void EditorContext::setMouseCaptureMode(IO::MouseCaptureMode mode)
+    void EditorContext::setMouseCaptureMode(bool shouldCaptureMouse)
     {
-        currentMouseCaptureMode = mode;
+        this->shouldCaptureMouse = shouldCaptureMouse;
     }
 
     void EditorContext::onMouseScroll(double x, double y)

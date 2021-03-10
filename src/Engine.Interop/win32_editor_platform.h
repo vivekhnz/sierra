@@ -4,7 +4,6 @@
 #include <windows.h>
 
 #include "../Engine/terrain_platform.h"
-#include "../Engine/IO/MouseCaptureMode.hpp"
 #include "editor.h"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
@@ -44,7 +43,7 @@ struct Win32PlatformMemory
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
 
-    Terrain::Engine::IO::MouseCaptureMode mouseCaptureMode;
+    bool shouldCaptureMouse;
 
     EditorMemory editor;
 };

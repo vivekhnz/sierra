@@ -10,7 +10,7 @@
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
 
-#define PLATFORM_CAPTURE_MOUSE(name) void name(bool retainCursorPos)
+#define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 
 enum HeightmapStatus

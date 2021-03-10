@@ -199,9 +199,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
 
 PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
 {
-    platformMemory->mouseCaptureMode = retainCursorPos
-        ? Terrain::Engine::IO::MouseCaptureMode::CaptureRetainPosition
-        : Terrain::Engine::IO::MouseCaptureMode::Capture;
+    platformMemory->shouldCaptureMouse = true;
 }
 
 Win32PlatformMemory *win32InitializePlatform()
