@@ -184,6 +184,9 @@ struct EditorMemory
     HeightmapCompositionState heightmapCompositionState;
     SceneState sceneState;
 
+    MemoryBlock data;
+    uint64 dataStorageUsed;
+
     EngineMemory engine;
 };
 

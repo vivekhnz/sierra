@@ -205,6 +205,7 @@ PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
 Win32PlatformMemory *win32InitializePlatform()
 {
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
+#define EDITOR_DATA_MEMORY_SIZE (8 * 1024 * 1024)
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
     platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
@@ -223,10 +224,15 @@ Win32PlatformMemory *win32InitializePlatform()
     platformMemory->editor.newState.lightDirection = 0.5f;
     platformMemory->editor.newState.materialCount = 0;
     platformMemory->editor.newState.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
+    platformMemory->editor.data.baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
+    platformMemory->editor.data.size = EDITOR_DATA_MEMORY_SIZE;
+    platformMemory->editor.dataStorageUsed = 0;
 
     EngineMemory *engine = &platformMemory->editor.engine;
-    engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
-    engine->size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
+    engine->baseAddress =
+        (uint8 *)platformMemory->editor.data.baseAddress + platformMemory->editor.data.size;
+    engine->size =
+        APP_MEMORY_SIZE - (sizeof(Win32PlatformMemory) + platformMemory->editor.data.size);
     engine->platformLogMessage = win32LogMessage;
     engine->platformLoadAsset = win32LoadAsset;
 

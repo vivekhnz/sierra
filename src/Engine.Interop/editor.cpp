@@ -16,6 +16,17 @@ struct OperationState
     float brushStrengthIncrease;
 };
 
+void *pushEditorData(EditorMemory *memory, uint64 size)
+{
+    uint64 availableStorage = memory->data.size - memory->dataStorageUsed;
+    assert(availableStorage >= size);
+
+    void *address = (uint8 *)memory->data.baseAddress + memory->dataStorageUsed;
+    memory->dataStorageUsed += size;
+
+    return address;
+}
+
 bool isMouseButtonDown(EditorInput *input, Terrain::Engine::IO::MouseButton button)
 {
     return input->pressedMouseButtons & static_cast<uint8>(button);
@@ -330,7 +341,7 @@ void editorInitialize(EditorMemory *memory)
 
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer =
-        (uint16 *)malloc(HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
+        (uint16 *)pushEditorData(memory, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
 
     sceneState->heightfield = {};
     sceneState->heightfield.columns = HEIGHTFIELD_COLUMNS;
@@ -767,7 +778,6 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
 void editorShutdown(EditorMemory *memory)
 {
     rendererDestroyResources(&memory->engine);
-    free(memory->sceneState.heightmapTextureDataTempBuffer);
 }
 
 void *editorAddSceneView(EditorMemory *memory)
