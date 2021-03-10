@@ -487,45 +487,48 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
     }
 
     bool isManipulatingCamera = false;
-    if (input->activeViewState)
+    SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
+    if (activeViewState)
     {
-        SceneViewState *viewState = (SceneViewState *)input->activeViewState;
-
         // orbit distance is modified by scrolling the mouse wheel
-        viewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
+        activeViewState->orbitCameraDistance *=
+            1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
         if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Middle))
         {
             // update the look at position if the middle mouse button is pressed
-            glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
+            glm::vec3 lookDir =
+                glm::normalize(activeViewState->cameraLookAt - activeViewState->cameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
-            float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
-            viewState->cameraLookAt += pan * panMagnitude * 0.000333f;
+            float panMagnitude =
+                glm::clamp(activeViewState->orbitCameraDistance, 2.5f, 300.0f);
+            activeViewState->cameraLookAt += pan * panMagnitude * 0.000333f;
 
             isManipulatingCamera = true;
         }
         if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Right))
         {
             // update yaw & pitch if the right mouse button is pressed
-            float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
+            float rotateMagnitude =
+                glm::clamp(activeViewState->orbitCameraDistance, 14.0f, 70.0f);
             float rotateSensitivity = rotateMagnitude * 0.000833f;
-            viewState->orbitCameraYaw +=
+            activeViewState->orbitCameraYaw +=
                 glm::radians(input->cursorOffset.x * rotateSensitivity);
-            viewState->orbitCameraPitch +=
+            activeViewState->orbitCameraPitch +=
                 glm::radians(input->cursorOffset.y * rotateSensitivity);
 
             isManipulatingCamera = true;
         }
 
         // calculate camera position
-        glm::vec3 newLookDir =
-            glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
-                sin(viewState->orbitCameraPitch),
-                sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
-        viewState->cameraPos =
-            viewState->cameraLookAt + (newLookDir * viewState->orbitCameraDistance);
+        glm::vec3 newLookDir = glm::vec3(
+            cos(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch),
+            sin(activeViewState->orbitCameraPitch),
+            sin(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch));
+        activeViewState->cameraPos = activeViewState->cameraLookAt
+            + (newLookDir * activeViewState->orbitCameraDistance);
     }
     if (isManipulatingCamera)
     {
@@ -567,8 +570,8 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
 
     // update brush highlight
     sceneState->worldState.brushPos = operation.brushPosition;
-    sceneState->worldState.isBrushHighlightVisible =
-        operation.mode != INTERACTION_MODE_MOVE_CAMERA;
+    sceneState->worldState.brushCursorVisibleView =
+        operation.mode != INTERACTION_MODE_MOVE_CAMERA ? activeViewState : (SceneViewState *)0;
     sceneState->worldState.brushRadius = state->brushRadius / 2048.0f;
     sceneState->worldState.brushFalloff = state->brushFalloff;
 
@@ -944,7 +947,8 @@ void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view)
             sceneState->heightfield.maxHeight,
             sceneState->heightfield.spacing * sceneState->heightfield.rows));
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
-        "brushHighlightStrength", sceneState->worldState.isBrushHighlightVisible ? 1 : 0);
+        "brushHighlightStrength",
+        sceneState->worldState.brushCursorVisibleView == viewState ? 1 : 0);
     rendererSetShaderProgramUniformVector2(&memory->engine, terrainShaderProgramHandle,
         "brushHighlightPos", sceneState->worldState.brushPos);
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,

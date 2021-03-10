@@ -161,7 +161,7 @@ struct SceneState
         glm::vec2 brushPos;
         float brushRadius;
         float brushFalloff;
-        bool isBrushHighlightVisible;
+        SceneViewState *brushCursorVisibleView;
         bool isPreviewingChanges;
 
         uint32 materialCount;
