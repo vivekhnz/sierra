@@ -5,8 +5,8 @@
 #include "EditorContext.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
+#include "EditorView.h"
 #include "Proxy/StateProxy.hpp"
-#include "Worlds/EditorWorlds.hpp"
 
 typedef void(__stdcall *RenderCallbackUnmanaged)();
 
@@ -39,8 +39,7 @@ public
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();
 
-        static bool areWorldsInitialized = false;
-        static Worlds::EditorWorlds *worlds;
+        static bool isGlInitialized = false;
 
         static Proxy::StateProxy ^ stateProxy;
 
@@ -74,8 +73,7 @@ public
 
         static ViewportContext *CreateView(
             char *imgBuffer, RenderCallbackUnmanaged renderCallback);
-        static void LinkViewportToWorld(
-            ViewportContext *vctx, Worlds::ViewportWorld viewportWorld);
+        static void LinkViewportToEditorView(ViewportContext *vctx, EditorView view);
         static void DetachView(ViewportContext *vctx);
 
         static void RenderView(ViewportContext &vctx);

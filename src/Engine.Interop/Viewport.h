@@ -9,7 +9,7 @@ public
         delegate void RenderCallbackManaged();
 
         ViewportContext *vctx;
-        Worlds::ViewportWorld world;
+        EditorView editorView;
 
         System::Windows::Controls::Grid ^ layoutRoot;
         System::Windows::Controls::Image ^ image;
@@ -24,23 +24,23 @@ public
         RenderCallbackManaged ^ onRenderCallback;
 
         void UpdateImage();
-        void OnWorldUpdated();
+        void OnViewUpdated();
 
     public:
         Viewport();
         ~Viewport();
 
-        property Worlds::ViewportWorld World
+        property EditorView View
         {
-            Worlds::ViewportWorld get()
+            EditorView get()
             {
-                return world;
+                return editorView;
             }
 
-            void set(Worlds::ViewportWorld value)
+            void set(EditorView value)
             {
-                world = value;
-                OnWorldUpdated();
+                editorView = value;
+                OnViewUpdated();
             }
         }
 

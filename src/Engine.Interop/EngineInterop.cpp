@@ -20,7 +20,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         input = new EditorInput();
         viewportContexts = new std::vector<ViewportContext *>();
 
-        worlds = new Worlds::EditorWorlds(&memory->editor);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
 
         focusedViewportCtx = nullptr;
@@ -55,7 +54,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto vctx = new ViewportContext(*glfw, imgBuffer, renderCallback);
         viewportContexts->push_back(vctx);
 
-        if (!areWorldsInitialized)
+        if (!isGlInitialized)
         {
             /*
              * We can only initialize the engine context once GLAD is initialized as it makes
@@ -63,16 +62,21 @@ namespace Terrain { namespace Engine { namespace Interop {
              * window.
              */
             vctx->makePrimary();
-            areWorldsInitialized = true;
+            isGlInitialized = true;
         }
 
         return vctx;
     }
 
-    void EngineInterop::LinkViewportToWorld(
-        ViewportContext *vctx, Worlds::ViewportWorld viewportWorld)
+    void EngineInterop::LinkViewportToEditorView(ViewportContext *vctx, EditorView view)
     {
-        void *viewState = worlds->addView(&memory->editor, viewportWorld);
+        void *viewState = 0;
+        switch (view)
+        {
+        case EditorView::Scene:
+            viewState = editorAddSceneView(&memory->editor);
+        }
+
         vctx->setViewState(viewState);
     }
 
@@ -102,7 +106,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
     {
-        if (!areWorldsInitialized)
+        if (!isGlInitialized)
             return;
 
         win32LoadQueuedAssets(&memory->editor.engine);
@@ -136,7 +140,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorState *currentState = &memory->editor.currentState;
         EditorState *newState = &memory->editor.newState;
         memcpy(currentState, newState, sizeof(*currentState));
-        worlds->update(&memory->editor, deltaTime, input);
+        editorUpdate(&memory->editor, deltaTime, input);
 
         if (memory->shouldCaptureMouse != wasMouseCaptured)
         {
@@ -154,8 +158,23 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::RenderView(ViewportContext &vctx)
     {
+        if (!memory->editor.isInitialized)
+            return;
+
+        EditorViewContext view = vctx.getViewContext();
+        if (view.width == 0 || view.height == 0)
+            return;
+
         vctx.makeCurrent();
-        worlds->render(&memory->editor, vctx);
+        switch (vctx.getEditorView())
+        {
+        case EditorView::Scene:
+            editorRenderSceneView(&memory->editor, &view);
+            break;
+        case EditorView::HeightmapPreview:
+            editorRenderHeightmapPreview(&memory->editor, &view);
+            break;
+        }
         vctx.render();
     }
 
@@ -321,10 +340,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         renderTimer->Stop();
 
-        delete worlds;
-        worlds = nullptr;
-
-        if (areWorldsInitialized)
+        if (isGlInitialized)
         {
             for (int i = 0; i < viewportContexts->size(); i++)
             {

@@ -221,13 +221,14 @@ void addBrushInstance(EditorMemory *memory, glm::vec2 pos)
     memory->heightmapCompositionState.working.brushInstanceCount++;
 }
 
-void editorInitialize(EditorMemory *memory)
+void initializeEditor(EditorMemory *memory)
 {
     rendererInitialize(&memory->engine);
 
     EngineMemory *engineMemory = &memory->engine;
     HeightmapCompositionState *hmCompState = &memory->heightmapCompositionState;
     SceneState *sceneState = &memory->sceneState;
+    HeightmapPreviewState *hmPreviewState = &memory->heightmapPreviewState;
 
     // create quad mesh
     float quadVertices[20] = {
@@ -453,10 +454,52 @@ void editorInitialize(EditorMemory *memory)
         rendererCreateBuffer(engineMemory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     rendererUpdateBuffer(engineMemory, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), 0);
+
+    // initialize heightmap preview
+    float heightmapPreviewQuadVertices[20] = {
+        0, 0, 0, 0, 0, //
+        1, 0, 0, 1, 0, //
+        1, 1, 0, 1, 1, //
+        0, 1, 0, 0, 1  //
+    };
+    uint32 heightmapPreviewQuadVertexBufferStride = 5 * sizeof(float);
+    uint32 heightmapPreviewQuadIndices[6] = {0, 2, 1, 0, 3, 2};
+
+    uint32 heightmapPreviewQuadVertexBufferHandle =
+        rendererCreateBuffer(engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(engineMemory, heightmapPreviewQuadVertexBufferHandle,
+        sizeof(heightmapPreviewQuadVertices), &heightmapPreviewQuadVertices);
+
+    uint32 heightmapPreviewQuadElementBufferHandle =
+        rendererCreateBuffer(engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(engineMemory, heightmapPreviewQuadElementBufferHandle,
+        sizeof(heightmapPreviewQuadIndices), &heightmapPreviewQuadIndices);
+
+    hmPreviewState->vertexArrayHandle = rendererCreateVertexArray(engineMemory);
+    rendererBindVertexArray(engineMemory, hmPreviewState->vertexArrayHandle);
+    rendererBindBuffer(engineMemory, heightmapPreviewQuadElementBufferHandle);
+    rendererBindBuffer(engineMemory, heightmapPreviewQuadVertexBufferHandle);
+    rendererBindVertexAttribute(
+        0, GL_FLOAT, false, 3, heightmapPreviewQuadVertexBufferStride, 0, false);
+    rendererBindVertexAttribute(1, GL_FLOAT, false, 2, heightmapPreviewQuadVertexBufferStride,
+        3 * sizeof(float), false);
+    rendererUnbindVertexArray();
+
+    hmPreviewState->cameraTransform = glm::identity<glm::mat4>();
+    hmPreviewState->cameraTransform =
+        glm::scale(hmPreviewState->cameraTransform, glm::vec3(2.0f, -2.0f, 1.0f));
+    hmPreviewState->cameraTransform =
+        glm::translate(hmPreviewState->cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
 }
 
 void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
 {
+    if (!memory->isInitialized)
+    {
+        initializeEditor(memory);
+        memory->isInitialized = true;
+    }
+
     ShaderProgramAsset *quadShaderProgram =
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_QUAD);
     ShaderProgramAsset *brushShaderProgram =
@@ -975,4 +1018,25 @@ void editorUpdateImportedHeightmapTexture(EditorMemory *memory, TextureAsset *as
     rendererUpdateTexture(&memory->engine,
         memory->heightmapCompositionState.working.importedHeightmapTextureHandle,
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset->width, asset->height, asset->data);
+}
+
+void editorRenderHeightmapPreview(EditorMemory *memory, EditorViewContext *view)
+{
+    rendererUpdateCameraState(&memory->engine, &memory->heightmapPreviewState.cameraTransform);
+    rendererSetViewportSize(view->width, view->height);
+    rendererClearBackBuffer(0, 0, 0, 1);
+
+    ShaderProgramAsset *shaderProgram =
+        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_QUAD);
+    if (!shaderProgram)
+        return;
+
+    // render quad
+    rendererUseShaderProgram(&memory->engine, shaderProgram->handle);
+    rendererSetPolygonMode(GL_FILL);
+    rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    rendererBindTexture(
+        &memory->engine, memory->heightmapCompositionState.working.renderTextureHandle, 0);
+    rendererBindVertexArray(&memory->engine, memory->heightmapPreviewState.vertexArrayHandle);
+    rendererDrawElements(GL_TRIANGLES, 6);
 }

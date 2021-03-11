@@ -173,6 +173,12 @@ struct SceneState
     } worldState;
 };
 
+struct HeightmapPreviewState
+{
+    uint32 vertexArrayHandle;
+    glm::mat4 cameraTransform;
+};
+
 struct EditorMemory
 {
     bool isInitialized;
@@ -183,6 +189,7 @@ struct EditorMemory
     EditorState newState;
     HeightmapCompositionState heightmapCompositionState;
     SceneState sceneState;
+    HeightmapPreviewState heightmapPreviewState;
 
     MemoryBlock data;
     uint64 dataStorageUsed;
@@ -211,7 +218,6 @@ struct EditorViewContext
     uint32 height;
 };
 
-void editorInitialize(EditorMemory *memory);
 void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input);
 void editorShutdown(EditorMemory *memory);
 
@@ -219,5 +225,7 @@ void *editorAddSceneView(EditorMemory *memory);
 void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view);
 
 void editorUpdateImportedHeightmapTexture(EditorMemory *memory, TextureAsset *asset);
+
+void editorRenderHeightmapPreview(EditorMemory *memory, EditorViewContext *view);
 
 #endif

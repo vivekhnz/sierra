@@ -32,14 +32,14 @@
                          Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
                          Checked="OnEditorToolButtonSelected" />
         </StackPanel>
-        <interop:Viewport x:Name="sceneViewport" Grid.Row="2" World="Scene" />
+        <interop:Viewport x:Name="sceneViewport" Grid.Row="2" View="Scene" />
         <ScrollViewer Grid.Column="1" Grid.Row="1" Grid.RowSpan="2"
                       VerticalScrollBarVisibility="Auto">
             <StackPanel Orientation="Vertical">
                 <Expander Style="{StaticResource SidebarExpanderStyle}" Header="HEIGHTMAP"
                           IsExpanded="True" d:IsExpanded="False">
                     <interop:Viewport x:Name="heightmapPreviewViewport" Width="300" Height="300"
-                                      World="HeightmapPreview" />
+                                      View="HeightmapPreview" />
                 </Expander>
                 <Expander Style="{StaticResource SidebarExpanderStyle}" Header="BRUSH"
                           IsExpanded="True" d:IsExpanded="False">

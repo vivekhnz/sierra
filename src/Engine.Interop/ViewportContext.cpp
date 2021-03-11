@@ -7,7 +7,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
-        hasFocus(false), isHovered(false), viewState(0), world(Worlds::ViewportWorld::None)
+        hasFocus(false), isHovered(false), viewState(0), editorView(EditorView::None)
     {
     }
 
@@ -22,13 +22,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         return result;
     }
 
-    Worlds::ViewportWorld ViewportContext::getWorld() const
+    EditorView ViewportContext::getEditorView() const
     {
-        return world;
+        return editorView;
     }
-    void ViewportContext::setWorld(Worlds::ViewportWorld world)
+    void ViewportContext::setEditorView(EditorView editorView)
     {
-        this->world = world;
+        this->editorView = editorView;
     }
 
     void ViewportContext::setViewState(void *viewState)
