@@ -117,16 +117,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         input->activeViewState = appCtx->activeViewState;
         if (input->activeViewState)
         {
-            if (input->activeViewState == prevActiveViewState)
-            {
-                input->prevPressedMouseButtons = input->pressedMouseButtons;
-                input->prevPressedKeys = input->pressedKeys;
-            }
-            else
-            {
-                input->prevPressedMouseButtons = 0;
-                input->prevPressedKeys = 0;
-            }
+            input->prevPressedButtons =
+                input->activeViewState == prevActiveViewState ? input->pressedButtons : 0;
             appCtx->getInputState(input);
         }
 

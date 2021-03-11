@@ -1,8 +1,6 @@
 #include "editor.h"
 
 #include "../Engine/terrain_renderer.h"
-#include "../Engine/IO/MouseButton.hpp"
-#include "../Engine/IO/Key.hpp"
 
 struct OperationState
 {
@@ -27,21 +25,14 @@ void *pushEditorData(EditorMemory *memory, uint64 size)
     return address;
 }
 
-bool isMouseButtonDown(EditorInput *input, Terrain::Engine::IO::MouseButton button)
+bool isButtonDown(EditorInput *input, EditorInputButtons button)
 {
-    return input->pressedMouseButtons & static_cast<uint8>(button);
+    return input->pressedButtons & button;
 }
 
-bool isNewMouseButtonPress(EditorInput *input, Terrain::Engine::IO::MouseButton button)
+bool isNewButtonPress(EditorInput *input, EditorInputButtons button)
 {
-    uint8 buttonVal = static_cast<uint8>(button);
-    return (input->pressedMouseButtons & buttonVal)
-        && !(input->prevPressedMouseButtons & buttonVal);
-}
-
-bool isKeyDown(EditorInput *input, Terrain::Engine::IO::Key key)
-{
-    return input->pressedKeys & static_cast<uint64>(key);
+    return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
 }
 
 OperationState getCurrentOperation(
@@ -52,8 +43,8 @@ OperationState getCurrentOperation(
     SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
     if (activeViewState)
     {
-        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Middle)
-            || isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Right))
+        if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE)
+            || isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
         {
             OperationState op = {};
             op.mode = INTERACTION_MODE_MOVE_CAMERA;
@@ -67,7 +58,7 @@ OperationState getCurrentOperation(
             return op;
         }
         if (prevState->heightmapStatus == HEIGHTMAP_STATUS_EDITING
-            && isKeyDown(input, Terrain::Engine::IO::Key::Escape))
+            && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
         {
             OperationState op = {};
             op.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
@@ -95,7 +86,7 @@ OperationState getCurrentOperation(
                 (intersectionPoint.x / 127.5f) + 0.5f, (intersectionPoint.z / 127.5f) + 0.5f);
 
             // if the R key is pressed, we are adjusting the brush radius
-            if (isKeyDown(input, Terrain::Engine::IO::Key::R))
+            if (isButtonDown(input, EDITOR_INPUT_KEY_R))
             {
                 float brushRadiusIncrease = input->cursorOffset.x + input->cursorOffset.y;
 
@@ -112,7 +103,7 @@ OperationState getCurrentOperation(
             }
 
             // if the F key is pressed, we are adjusting the brush falloff
-            if (isKeyDown(input, Terrain::Engine::IO::Key::F))
+            if (isButtonDown(input, EDITOR_INPUT_KEY_F))
             {
                 float brushFalloffIncrease =
                     (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
@@ -130,7 +121,7 @@ OperationState getCurrentOperation(
             }
 
             // if the S key is pressed, we are adjusting the brush strength
-            if (isKeyDown(input, Terrain::Engine::IO::Key::S))
+            if (isButtonDown(input, EDITOR_INPUT_KEY_S))
             {
                 float brushStrengthIncrease =
                     (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
@@ -148,11 +139,11 @@ OperationState getCurrentOperation(
             }
 
             // if a number key is pressed, change the selected tool
-            if (isKeyDown(input, Terrain::Engine::IO::Key::D1))
+            if (isButtonDown(input, EDITOR_INPUT_KEY_1))
             {
                 tool = EDITOR_TOOL_RAISE_TERRAIN;
             }
-            else if (isKeyDown(input, Terrain::Engine::IO::Key::D2))
+            else if (isButtonDown(input, EDITOR_INPUT_KEY_2))
             {
                 tool = EDITOR_TOOL_LOWER_TERRAIN;
             }
@@ -160,11 +151,11 @@ OperationState getCurrentOperation(
             // the LMB must be newly pressed to start a new brush stroke
             bool isBrushActive = false;
             if (prevState->heightmapStatus == HEIGHTMAP_STATUS_EDITING
-                && isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Left))
+                && isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
             {
                 isBrushActive = true;
             }
-            else if (isNewMouseButtonPress(input, Terrain::Engine::IO::MouseButton::Left))
+            else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
             {
                 isBrushActive = true;
             }
@@ -548,7 +539,7 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
         activeViewState->orbitCameraDistance *=
             1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
-        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Middle))
+        if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
         {
             // update the look at position if the middle mouse button is pressed
             glm::vec3 lookDir =
@@ -562,7 +553,7 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
 
             isManipulatingCamera = true;
         }
-        if (isMouseButtonDown(input, Terrain::Engine::IO::MouseButton::Right))
+        if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
         {
             // update yaw & pitch if the right mouse button is pressed
             float rotateMagnitude =

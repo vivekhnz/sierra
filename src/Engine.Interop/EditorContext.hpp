@@ -17,8 +17,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         int capturedMousePosY;
 
         IO::MouseInputState mouseState;
-        uint8 pressedMouseButtons;
-        uint64 pressedKeys;
+        uint64 pressedButtons;
 
     public:
         void *activeViewState;

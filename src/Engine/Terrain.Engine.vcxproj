@@ -26,8 +26,6 @@
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
     <ClInclude Include="Graphics\Window.hpp" />
-    <ClInclude Include="IO\Key.hpp" />
-    <ClInclude Include="IO\MouseButton.hpp" />
     <ClInclude Include="IO\MouseInputState.hpp" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_heightfield.h" />
