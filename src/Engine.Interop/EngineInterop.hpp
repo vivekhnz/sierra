@@ -40,7 +40,6 @@ public
 
         static Proxy::StateProxy ^ stateProxy;
 
-        static ViewportContext *focusedViewportCtx = nullptr;
         static ViewportContext *hoveredViewportCtx = nullptr;
         static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
         static System::DateTime lastTickTime;
@@ -50,16 +49,7 @@ public
             Object ^ sender, System::Windows::Input::MouseWheelEventArgs ^ args);
 
         // internal members
-        internal : static property ViewportContext *FocusedViewportContext
-        {
-        internal:
-            ViewportContext *get()
-            {
-                return focusedViewportCtx;
-            }
-        }
-
-        static property ViewportContext *HoveredViewportContext
+        internal : static property ViewportContext *HoveredViewportContext
         {
         internal:
             ViewportContext *get()
@@ -74,7 +64,6 @@ public
         static void DetachView(ViewportContext *vctx);
 
         static void RenderView(ViewportContext &vctx);
-        static void SetViewportContextFocusState(ViewportContext *vctx, bool hasFocus);
         static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:

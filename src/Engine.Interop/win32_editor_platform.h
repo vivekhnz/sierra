@@ -58,8 +58,7 @@ struct Win32PlatformMemory
 Win32PlatformMemory *win32InitializePlatform();
 Win32ReadFileResult win32ReadFile(const char *path);
 void win32FreeMemory(void *data);
-void win32TickApp(float deltaTime,
-    Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx,
-    Terrain::Engine::Interop::ViewportContext *focusedViewportCtx);
+void win32TickApp(
+    float deltaTime, Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx);
 
 #endif

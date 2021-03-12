@@ -14,7 +14,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         void *viewState;
 
         glm::vec2 location;
-        bool hasFocus;
         bool isHovered;
 
     public:

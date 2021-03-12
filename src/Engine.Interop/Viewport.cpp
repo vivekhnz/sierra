@@ -22,9 +22,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
         this->Focusable = true;
 
-        unfocusedBrush = gcnew SolidColorBrush(Color::FromRgb(24, 24, 24));
-        focusedBrush = gcnew SolidColorBrush(Color::FromRgb(0, 127, 212));
-
         layoutRoot = gcnew Grid();
         AddChild(layoutRoot);
 
@@ -35,11 +32,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         image->RenderTransform = gcnew ScaleTransform(1.0, -1.0);
         image->Stretch = Stretch::UniformToFill;
         layoutRoot->Children->Add(image);
-
-        focusBorder = gcnew Border();
-        focusBorder->BorderBrush = unfocusedBrush;
-        focusBorder->BorderThickness = Thickness(1);
-        layoutRoot->Children->Add(focusBorder);
 
         hoverBorder = gcnew Border();
         hoverBorder->BorderBrush = gcnew SolidColorBrush(Color::FromArgb(16, 255, 255, 255));
@@ -110,18 +102,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void Viewport::OnMouseDown(MouseButtonEventArgs ^ args)
     {
         this->Focus();
-    }
-
-    void Viewport::OnGotFocus(RoutedEventArgs ^ args)
-    {
-        EngineInterop::SetViewportContextFocusState(vctx, true);
-        focusBorder->BorderBrush = focusedBrush;
-    }
-
-    void Viewport::OnLostFocus(RoutedEventArgs ^ args)
-    {
-        EngineInterop::SetViewportContextFocusState(vctx, false);
-        focusBorder->BorderBrush = unfocusedBrush;
     }
 
     void Viewport::OnViewUpdated()

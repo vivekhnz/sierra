@@ -20,7 +20,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
 
-        focusedViewportCtx = nullptr;
         hoveredViewportCtx = nullptr;
 
         lastTickTime = DateTime::UtcNow;
@@ -111,7 +110,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        win32TickApp(deltaTime, hoveredViewportCtx, focusedViewportCtx);
+        win32TickApp(deltaTime, hoveredViewportCtx);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -147,18 +146,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args)
     {
         memory->nextMouseScrollOffsetY += args->Delta;
-    }
-
-    void EngineInterop::SetViewportContextFocusState(ViewportContext *vctx, bool hasFocus)
-    {
-        if (hasFocus)
-        {
-            focusedViewportCtx = vctx;
-        }
-        else if (vctx == focusedViewportCtx)
-        {
-            focusedViewportCtx = nullptr;
-        }
     }
 
     void EngineInterop::SetViewportContextHoverState(ViewportContext *vctx, bool isHovered)

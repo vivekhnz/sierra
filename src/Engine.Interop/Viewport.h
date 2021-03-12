@@ -14,13 +14,10 @@ public
         System::Windows::Controls::Grid ^ layoutRoot;
         System::Windows::Controls::Image ^ image;
         System::Windows::Media::Imaging::WriteableBitmap ^ bitmap;
-        System::Windows::Controls::Border ^ focusBorder;
         System::Windows::Controls::Border ^ hoverBorder;
 
         bool isInitialized;
         bool isInDesignMode;
-        System::Windows::Media::SolidColorBrush ^ unfocusedBrush;
-        System::Windows::Media::SolidColorBrush ^ focusedBrush;
         RenderCallbackManaged ^ onRenderCallback;
 
         void UpdateImage();
@@ -48,7 +45,5 @@ public
         void OnMouseEnter(System::Windows::Input::MouseEventArgs ^ args) override;
         void OnMouseLeave(System::Windows::Input::MouseEventArgs ^ args) override;
         void OnMouseDown(System::Windows::Input::MouseButtonEventArgs ^ args) override;
-        void OnGotFocus(System::Windows::RoutedEventArgs ^ args) override;
-        void OnLostFocus(System::Windows::RoutedEventArgs ^ args) override;
     };
 }}}

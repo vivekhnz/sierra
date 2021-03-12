@@ -251,9 +251,8 @@ Win32PlatformMemory *win32InitializePlatform()
     return platformMemory;
 }
 
-void win32GetInputState(EditorInput *input,
-    Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx,
-    Terrain::Engine::Interop::ViewportContext *focusedViewportCtx)
+void win32GetInputState(
+    EditorInput *input, Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx)
 {
     *input = {};
 
@@ -426,14 +425,13 @@ void win32GetInputState(EditorInput *input,
     platformMemory->prevPressedButtons = input->pressedButtons;
 }
 
-void win32TickApp(float deltaTime,
-    Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx,
-    Terrain::Engine::Interop::ViewportContext *focusedViewportCtx)
+void win32TickApp(
+    float deltaTime, Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx)
 {
     win32LoadQueuedAssets();
 
     EditorInput input = {};
-    win32GetInputState(&input, hoveredViewportCtx, focusedViewportCtx);
+    win32GetInputState(&input, hoveredViewportCtx);
 
     EditorState *currentState = &platformMemory->editor.currentState;
     EditorState *newState = &platformMemory->editor.newState;
