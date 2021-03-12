@@ -5,6 +5,7 @@
 
 #include "../Engine/terrain_platform.h"
 #include "editor.h"
+#include "ViewportContext.hpp"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
 #define MAX_WATCHED_ASSETS 256
@@ -44,14 +45,21 @@ struct Win32PlatformMemory
     uint32 watchedAssetCount;
 
     bool shouldCaptureMouse;
+    bool wasMouseCaptured;
+    glm::vec2 prevMousePos;
+    glm::vec2 capturedMousePos;
+    float nextMouseScrollOffsetY;
+    void *prevActiveViewState;
+    uint64 prevPressedButtons;
 
     EditorMemory editor;
 };
 
 Win32PlatformMemory *win32InitializePlatform();
-void *win32AllocateMemory(uint64 size);
 Win32ReadFileResult win32ReadFile(const char *path);
 void win32FreeMemory(void *data);
-void win32LoadQueuedAssets(EngineMemory *memory);
+void win32TickApp(float deltaTime,
+    Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx,
+    Terrain::Engine::Interop::ViewportContext *focusedViewportCtx);
 
 #endif

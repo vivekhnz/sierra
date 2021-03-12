@@ -72,7 +72,6 @@
   <ItemGroup>
     <ClInclude Include="editor.h" />
     <ClInclude Include="EngineInterop.hpp" />
-    <ClInclude Include="EditorContext.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />
     <ClInclude Include="ViewportContext.hpp" />
     <ClInclude Include="Viewport.h" />
@@ -83,7 +82,6 @@
     <ClCompile Include="editor.cpp" />
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="EditorContext.cpp" />
     <ClCompile Include="ViewportContext.cpp" />
     <ClCompile Include="Viewport.cpp" />
     <ClCompile Include="win32_editor_platform.cpp" />

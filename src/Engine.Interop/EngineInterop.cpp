@@ -16,8 +16,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory = win32InitializePlatform();
 
         glfw = new Graphics::GlfwManager();
-        appCtx = new EditorContext();
-        input = new EditorInput();
         viewportContexts = new std::vector<ViewportContext *>();
 
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
@@ -109,21 +107,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!isGlInitialized)
             return;
 
-        win32LoadQueuedAssets(&memory->editor.engine);
-        appCtx->getInputState(input);
-
-        auto now = DateTime::UtcNow;
+        DateTime now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        memory->shouldCaptureMouse = false;
-
-        EditorState *currentState = &memory->editor.currentState;
-        EditorState *newState = &memory->editor.newState;
-        memcpy(currentState, newState, sizeof(*currentState));
-        editorUpdate(&memory->editor, deltaTime, input);
-
-        appCtx->setMouseCaptureMode(memory->shouldCaptureMouse);
+        win32TickApp(deltaTime, hoveredViewportCtx, focusedViewportCtx);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
@@ -158,7 +146,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args)
     {
-        appCtx->onMouseScroll(0, args->Delta);
+        memory->nextMouseScrollOffsetY += args->Delta;
     }
 
     void EngineInterop::SetViewportContextFocusState(ViewportContext *vctx, bool hasFocus)
@@ -329,12 +317,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         editorShutdown(&memory->editor);
-
-        delete input;
-        input = nullptr;
-
-        delete appCtx;
-        appCtx = nullptr;
 
         delete glfw;
         glfw = nullptr;

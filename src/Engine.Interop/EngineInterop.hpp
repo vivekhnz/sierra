@@ -2,7 +2,6 @@
 
 #include "../Engine/Graphics/GlfwManager.hpp"
 #include "win32_editor_platform.h"
-#include "EditorContext.hpp"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "EditorView.h"
@@ -33,8 +32,6 @@ public
         static Win32PlatformMemory *memory = nullptr;
 
         static Graphics::GlfwManager *glfw = nullptr;
-        static EditorContext *appCtx = nullptr;
-        static EditorInput *input = nullptr;
 
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();

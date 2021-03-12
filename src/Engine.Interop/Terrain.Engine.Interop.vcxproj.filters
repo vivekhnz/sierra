@@ -9,7 +9,6 @@
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="Viewport.cpp" />
     <ClCompile Include="EngineInterop.cpp" />
-    <ClCompile Include="EditorContext.cpp" />
     <ClCompile Include="ViewportContext.cpp" />
     <ClCompile Include="win32_editor_platform.cpp" />
     <ClCompile Include="editor.cpp" />
@@ -17,7 +16,6 @@
   <ItemGroup>
     <ClInclude Include="Viewport.h" />
     <ClInclude Include="EngineInterop.hpp" />
-    <ClInclude Include="EditorContext.hpp" />
     <ClInclude Include="ViewportContext.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp">
       <Filter>Proxy</Filter>
