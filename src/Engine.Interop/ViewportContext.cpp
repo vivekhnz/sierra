@@ -36,7 +36,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         this->viewState = viewState;
     }
 
-    std::tuple<int, int> ViewportContext::getViewportLocation() const
+    glm::vec2 ViewportContext::getViewportLocation() const
     {
         return location;
     }
@@ -61,7 +61,8 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void ViewportContext::resize(int x, int y, int width, int height, char *buffer)
     {
-        location = std::make_tuple(x, y);
+        location.x = x;
+        location.y = y;
         window.setSize(width, height);
         imgBuffer = buffer;
     }

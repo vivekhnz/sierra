@@ -110,23 +110,12 @@ namespace Terrain { namespace Engine { namespace Interop {
             return;
 
         win32LoadQueuedAssets(&memory->editor.engine);
-
-        appCtx->updateInputState();
-
-        void *prevActiveViewState = input->activeViewState;
-        input->activeViewState = appCtx->activeViewState;
-        if (input->activeViewState)
-        {
-            input->prevPressedButtons =
-                input->activeViewState == prevActiveViewState ? input->pressedButtons : 0;
-            appCtx->getInputState(input);
-        }
+        appCtx->getInputState(input);
 
         auto now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        bool wasMouseCaptured = memory->shouldCaptureMouse;
         memory->shouldCaptureMouse = false;
 
         EditorState *currentState = &memory->editor.currentState;
@@ -134,10 +123,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         memcpy(currentState, newState, sizeof(*currentState));
         editorUpdate(&memory->editor, deltaTime, input);
 
-        if (memory->shouldCaptureMouse != wasMouseCaptured)
-        {
-            appCtx->setMouseCaptureMode(memory->shouldCaptureMouse);
-        }
+        appCtx->setMouseCaptureMode(memory->shouldCaptureMouse);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)

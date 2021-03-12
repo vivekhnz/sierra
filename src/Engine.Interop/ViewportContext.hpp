@@ -13,7 +13,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorView editorView;
         void *viewState;
 
-        std::tuple<int, int> location;
+        glm::vec2 location;
         bool hasFocus;
         bool isHovered;
 
@@ -24,7 +24,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         EditorViewContext getViewContext() const;
         EditorView getEditorView() const;
-        std::tuple<int, int> getViewportLocation() const;
+        glm::vec2 getViewportLocation() const;
         bool isDetached() const;
 
         void render();
