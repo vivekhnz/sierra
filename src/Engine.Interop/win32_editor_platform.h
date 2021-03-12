@@ -5,7 +5,6 @@
 
 #include "../Engine/terrain_platform.h"
 #include "editor.h"
-#include "ViewportContext.hpp"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
 #define MAX_WATCHED_ASSETS 256
@@ -58,7 +57,6 @@ struct Win32PlatformMemory
 Win32PlatformMemory *win32InitializePlatform();
 Win32ReadFileResult win32ReadFile(const char *path);
 void win32FreeMemory(void *data);
-void win32TickApp(
-    float deltaTime, Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx);
+void win32TickApp(float deltaTime, EditorViewContext *activeView);
 
 #endif

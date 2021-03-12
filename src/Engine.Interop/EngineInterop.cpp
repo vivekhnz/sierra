@@ -110,7 +110,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        win32TickApp(deltaTime, hoveredViewportCtx);
+        EditorViewContext activeView = {};
+        if (hoveredViewportCtx)
+        {
+            activeView = hoveredViewportCtx->getViewContext();
+        }
+        win32TickApp(deltaTime, hoveredViewportCtx ? &activeView : 0);
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)

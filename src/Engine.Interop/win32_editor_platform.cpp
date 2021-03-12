@@ -251,8 +251,7 @@ Win32PlatformMemory *win32InitializePlatform()
     return platformMemory;
 }
 
-void win32GetInputState(
-    EditorInput *input, Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx)
+void win32GetInputState(EditorInput *input, EditorViewContext *activeView)
 {
     *input = {};
 
@@ -282,11 +281,9 @@ void win32GetInputState(
         }
     }
 
-    if (hoveredViewportCtx)
+    if (activeView)
     {
-        EditorViewContext view = hoveredViewportCtx->getViewContext();
-
-        input->activeViewState = view.viewState;
+        input->activeViewState = activeView->viewState;
         if (input->activeViewState == platformMemory->prevActiveViewState)
         {
             input->prevPressedButtons = platformMemory->prevPressedButtons;
@@ -299,8 +296,8 @@ void win32GetInputState(
         input->pressedButtons |=
             (Mouse::RightButton == MouseButtonState::Pressed) * EDITOR_INPUT_MOUSE_RIGHT;
 
-        glm::vec2 viewportPos_window = hoveredViewportCtx->getViewportLocation();
-        glm::vec2 viewportSize = glm::vec2(view.width, view.height);
+        glm::vec2 viewportPos_window = glm::vec2(activeView->x, activeView->y);
+        glm::vec2 viewportSize = glm::vec2(activeView->width, activeView->height);
         input->normalizedCursorPos = (virtualMousePos - viewportPos_window) / viewportSize;
 
         // use the mouse scroll offset accumulated by the scroll wheel callback
@@ -425,13 +422,12 @@ void win32GetInputState(
     platformMemory->prevPressedButtons = input->pressedButtons;
 }
 
-void win32TickApp(
-    float deltaTime, Terrain::Engine::Interop::ViewportContext *hoveredViewportCtx)
+void win32TickApp(float deltaTime, EditorViewContext *activeView)
 {
     win32LoadQueuedAssets();
 
     EditorInput input = {};
-    win32GetInputState(&input, hoveredViewportCtx);
+    win32GetInputState(&input, activeView);
 
     EditorState *currentState = &platformMemory->editor.currentState;
     EditorState *newState = &platformMemory->editor.newState;

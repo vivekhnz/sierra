@@ -6,8 +6,8 @@ namespace Terrain { namespace Engine { namespace Interop {
     ViewportContext::ViewportContext(
         Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
-        imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), location(0, 0),
-        isHovered(false), viewState(0), editorView(EditorView::None)
+        imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), viewportX(0), viewportY(0),
+        viewState(0), editorView(EditorView::None)
     {
     }
 
@@ -16,9 +16,12 @@ namespace Terrain { namespace Engine { namespace Interop {
         auto [w, h] = window.getSize();
 
         EditorViewContext result = {};
+        result.viewState = viewState;
+        result.x = viewportX;
+        result.y = viewportY;
         result.width = w;
         result.height = h;
-        result.viewState = viewState;
+
         return result;
     }
 
@@ -34,11 +37,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void ViewportContext::setViewState(void *viewState)
     {
         this->viewState = viewState;
-    }
-
-    glm::vec2 ViewportContext::getViewportLocation() const
-    {
-        return location;
     }
 
     bool ViewportContext::isDetached() const
@@ -59,10 +57,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
     }
 
-    void ViewportContext::resize(int x, int y, int width, int height, char *buffer)
+    void ViewportContext::resize(uint32 x, uint32 y, uint32 width, uint32 height, char *buffer)
     {
-        location.x = x;
-        location.y = y;
+        viewportX = x;
+        viewportY = y;
         window.setSize(width, height);
         imgBuffer = buffer;
     }

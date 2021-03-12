@@ -13,8 +13,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         EditorView editorView;
         void *viewState;
 
-        glm::vec2 location;
-        bool isHovered;
+        uint32 viewportX;
+        uint32 viewportY;
 
     public:
         ViewportContext(Graphics::GlfwManager &glfw,
@@ -23,11 +23,10 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         EditorViewContext getViewContext() const;
         EditorView getEditorView() const;
-        glm::vec2 getViewportLocation() const;
         bool isDetached() const;
 
         void render();
-        void resize(int x, int y, int width, int height, char *buffer);
+        void resize(uint32 x, uint32 y, uint32 width, uint32 height, char *buffer);
         void makePrimary();
         void makeCurrent();
         void setEditorView(EditorView editorView);

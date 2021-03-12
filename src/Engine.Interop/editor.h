@@ -280,6 +280,8 @@ enum EditorInputButtons : uint64
 struct EditorViewContext
 {
     void *viewState;
+    uint32 x;
+    uint32 y;
     uint32 width;
     uint32 height;
 };
