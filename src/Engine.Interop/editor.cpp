@@ -838,6 +838,8 @@ void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view)
     SceneState *sceneState = &memory->sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
 
+    bool isCursorVisibleView = sceneState->worldState.brushCursorVisibleView == viewState;
+
     // calculate camera transform
     constexpr float fov = glm::pi<float>() / 4.0f;
     const float nearPlane = 0.1f;
@@ -973,7 +975,7 @@ void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view)
     rendererBindTextureArray(&memory->engine, sceneState->displacementTextureArrayHandle, 3);
     rendererBindTextureArray(&memory->engine, sceneState->aoTextureArrayHandle, 4);
     rendererBindTexture(&memory->engine,
-        sceneState->worldState.isPreviewingChanges
+        sceneState->worldState.isPreviewingChanges && isCursorVisibleView
             ? memory->heightmapCompositionState.preview.renderTextureHandle
             : memory->heightmapCompositionState.working.renderTextureHandle,
         5);
@@ -991,8 +993,7 @@ void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view)
             sceneState->heightfield.maxHeight,
             sceneState->heightfield.spacing * sceneState->heightfield.rows));
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
-        "brushHighlightStrength",
-        sceneState->worldState.brushCursorVisibleView == viewState ? 1 : 0);
+        "brushHighlightStrength", isCursorVisibleView ? 1 : 0);
     rendererSetShaderProgramUniformVector2(&memory->engine, terrainShaderProgramHandle,
         "brushHighlightPos", sceneState->worldState.brushPos);
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
