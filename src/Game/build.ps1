@@ -94,9 +94,6 @@ function Invoke-Compiler {
     return $proc
 }
 
-$LockFilePath = "$OutputPath\build.lock"
-"build" | Out-File $LockFilePath
-
 Initialize-Environment -Platform $platform
 
 if (!(Test-Path $IntermediateOutputPath)) {
@@ -105,6 +102,9 @@ if (!(Test-Path $IntermediateOutputPath)) {
 if (!(Test-Path $OutputPath)) {
     New-Item -Path $OutputPath -ItemType Directory | Out-Null
 }
+
+$LockFilePath = "$OutputPath\build.lock"
+"build" | Out-File $LockFilePath
 
 $procs = @()
 $procs += Invoke-Compiler -SourceFile 'game.cpp' -OutputName 'terrain_game' `
@@ -124,8 +124,15 @@ $procs += Invoke-Compiler -SourceFile 'win32_game.cpp' -OutputName 'win32_terrai
     ) `
     -ImportLibs @(
         "$OutputPath\Terrain.Engine.lib",
-        "..\..\deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$Platform\glfw3dll.lib"
+        "..\..\deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
     )
+
+$glfwDllSrcPath = "..\..\deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"
+$glfwDllDstPath = "$OutputPath\glfw3.dll"
+if (!(Test-Path $glfwDllDstPath)) {
+    Copy-Item -Path $glfwDllSrcPath -Destination $glfwDllDstPath
+}
+
 $procs | Wait-Process
 
 # create a junction of the repo into 'C:\temp' so hardcoded executable paths in solution
