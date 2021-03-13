@@ -4,23 +4,36 @@
 
 namespace Terrain { namespace Engine { namespace Interop {
     ViewportContext::ViewportContext(
-        Graphics::GlfwManager &glfw, void *imgBuffer, std::function<void()> onRenderCallback) :
-        window(glfw, 1280, 720, "Terrain", true),
+        Graphics::GlfwManager *glfw, void *imgBuffer, std::function<void()> onRenderCallback) :
+        glfw(glfw),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), viewportX(0), viewportY(0),
         viewState(0), editorView(EditorView::None)
     {
+        glfwWindowHint(GLFW_VISIBLE, false);
+        window = glfwCreateWindow(1280, 720, "Terrain", NULL, NULL);
+        if (!window)
+        {
+            // todo: log here
+        }
+    }
+
+    ViewportContext::~ViewportContext()
+    {
+        glfwDestroyWindow(window);
     }
 
     EditorViewContext ViewportContext::getViewContext() const
     {
-        auto [w, h] = window.getSize();
+        int32 width;
+        int32 height;
+        glfwGetWindowSize(window, &width, &height);
 
         EditorViewContext result = {};
         result.viewState = viewState;
         result.x = viewportX;
         result.y = viewportY;
-        result.width = w;
-        result.height = h;
+        result.width = (uint32)width;
+        result.height = (uint32)height;
 
         return result;
     }
@@ -46,7 +59,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void ViewportContext::render()
     {
-        window.refresh();
+        glfwSwapBuffers(window);
         if (onRenderCallback != nullptr)
         {
             onRenderCallback();
@@ -57,18 +70,20 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         viewportX = x;
         viewportY = y;
-        window.setSize(width, height);
+        glfwSetWindowSize(window, width, height);
+
         imgBuffer = buffer;
     }
 
     void ViewportContext::makePrimary()
     {
-        window.makePrimary();
+        glfwMakeContextCurrent(window);
+        glfw->setPrimaryWindow(window);
     }
 
     void ViewportContext::makeCurrent()
     {
-        window.makeCurrent();
+        glfw->setCurrentWindow(window);
     }
 
     void ViewportContext::detach()

@@ -7,9 +7,6 @@
     <ClCompile Include="Graphics\GlfwManager.cpp">
       <Filter>Graphics</Filter>
     </ClCompile>
-    <ClCompile Include="Graphics\Window.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\deps\glad\glad.c">
       <Filter>deps</Filter>
     </ClCompile>
@@ -22,9 +19,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Graphics\GlfwManager.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Graphics\Window.hpp">
       <Filter>Graphics</Filter>
     </ClInclude>
     <ClInclude Include="Common.hpp" />

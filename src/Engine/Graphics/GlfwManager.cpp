@@ -23,18 +23,18 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glfwPollEvents();
     }
 
-    void GlfwManager::setPrimaryWindow(GLFWwindow &window)
+    void GlfwManager::setPrimaryWindow(GLFWwindow *window)
     {
-        primaryWindow = &window;
+        primaryWindow = window;
     }
 
-    void GlfwManager::setCurrentWindow(GLFWwindow &window)
+    void GlfwManager::setCurrentWindow(GLFWwindow *window)
     {
-        if (primaryWindow == nullptr)
+        if (!primaryWindow)
         {
             throw std::runtime_error("No primary window configured.");
         }
-        wglMakeCurrent(GetDC(glfwGetWin32Window(&window)), glfwGetWGLContext(primaryWindow));
+        wglMakeCurrent(GetDC(glfwGetWin32Window(window)), glfwGetWGLContext(primaryWindow));
     }
 
     GlfwManager::~GlfwManager()

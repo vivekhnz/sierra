@@ -1,6 +1,6 @@
 #include "win32_game.h"
 
-#include "../Engine/Graphics/Window.hpp"
+#include "../Engine/Graphics/GlfwManager.hpp"
 #include "../Engine/terrain_assets.h"
 
 global_variable Win32PlatformMemory *platformMemory;
@@ -261,16 +261,16 @@ void win32UnloadGameCode(Win32GameCode *gameCode)
     }
 }
 
-uint64 win32GetPressedButtons(Terrain::Engine::Graphics::Window *window)
+uint64 win32GetPressedButtons(GLFWwindow *window)
 {
     uint64 buttons = 0;
 
 #define UPDATE_MOUSE_BUTTON_STATE(name)                                                       \
-    buttons |= window->isMouseButtonPressed(GLFW_MOUSE_BUTTON_##name##)                       \
+    buttons |= (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_##name##) == GLFW_PRESS)         \
         * GameInputButtons::GAME_INPUT_MOUSE_##name
 #define UPDATE_KEY_STATE(name)                                                                \
-    buttons |=                                                                                \
-        window->isKeyPressed(GLFW_KEY_##name##) * GameInputButtons::GAME_INPUT_KEY_##name
+    buttons |= (glfwGetKey(window, GLFW_KEY_##name##) == GLFW_PRESS)                          \
+        * GameInputButtons::GAME_INPUT_KEY_##name
 
     UPDATE_MOUSE_BUTTON_STATE(LEFT);
     UPDATE_MOUSE_BUTTON_STATE(MIDDLE);
@@ -340,7 +340,7 @@ uint64 win32GetPressedButtons(Terrain::Engine::Graphics::Window *window)
     return buttons;
 }
 
-void win32OnMouseScroll(double x, double y)
+void win32OnMouseScroll(GLFWwindow *window, double x, double y)
 {
     platformMemory->mouseScrollOffset += y;
 }
@@ -380,9 +380,17 @@ int32 main()
     assert(engineMemoryOffset == engine->size);
 
     Terrain::Engine::Graphics::GlfwManager glfw;
-    Terrain::Engine::Graphics::Window window(glfw, 1280, 720, "Terrain", false);
-    window.addMouseScrollHandler(win32OnMouseScroll);
-    window.makePrimary();
+
+    GLFWwindow *window = glfwCreateWindow(1280, 720, "Terrain", 0, 0);
+    if (!window)
+    {
+        win32LogMessage("Failed to create GLFW window");
+        return 1;
+    }
+
+    glfwSetScrollCallback(window, win32OnMouseScroll);
+    glfwMakeContextCurrent(window);
+    glfw.setPrimaryWindow(window);
 
     float lastTickTime = glfw.getCurrentTime();
     GameInput input = {};
@@ -394,7 +402,7 @@ int32 main()
         "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
     win32GetOutputAbsolutePath("build.lock", platformMemory->gameCode.buildLockFilePath);
 
-    while (!window.isRequestingClose())
+    while (!glfwWindowShouldClose(window))
     {
         uint64 gameCodeDllLastWriteTime =
             win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
@@ -411,9 +419,12 @@ int32 main()
 
         // query input
         input.prevPressedButtons = input.pressedButtons;
-        input.pressedButtons = win32GetPressedButtons(&window);
+        input.pressedButtons = win32GetPressedButtons(window);
 
-        auto [mouseX, mouseY] = window.getMousePosition();
+        double mouseX;
+        double mouseY;
+        glfwGetCursorPos(window, &mouseX, &mouseY);
+
         if (wasMouseCursorTeleported)
         {
             input.mouseCursorOffset = glm::vec2(0);
@@ -437,7 +448,10 @@ int32 main()
         float deltaTime = now - lastTickTime;
         lastTickTime = now;
 
-        auto [viewportWidth, viewportHeight] = window.getSize();
+        int32 viewportWidth;
+        int32 viewportHeight;
+        glfwGetWindowSize(window, &viewportWidth, &viewportHeight);
+
         Viewport viewport = {};
         viewport.width = viewportWidth;
         viewport.height = viewportHeight;
@@ -450,22 +464,25 @@ int32 main()
 
         if (platformMemory->shouldExitGame)
         {
-            window.close();
+            glfwSetWindowShouldClose(window, true);
         }
         if (platformMemory->shouldCaptureMouse != wasMouseCaptured)
         {
-            window.setMouseCaptureMode(platformMemory->shouldCaptureMouse);
+            glfwSetInputMode(window, GLFW_CURSOR,
+                platformMemory->shouldCaptureMouse ? GLFW_CURSOR_DISABLED
+                                                   : GLFW_CURSOR_NORMAL);
             wasMouseCursorTeleported = true;
         }
 
-        window.refresh();
-        glfw.processEvents();
+        glfwSwapBuffers(window);
+        glfwPollEvents();
     }
 
     if (platformMemory->gameCode.gameShutdown)
     {
         platformMemory->gameCode.gameShutdown(&platformMemory->game);
     }
+    glfwDestroyWindow(window);
 
     return 0;
 }

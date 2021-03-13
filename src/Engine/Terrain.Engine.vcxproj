@@ -17,7 +17,6 @@
     <ClCompile Include="..\..\deps\glad\glad.c" />
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
     <ClCompile Include="Graphics\GlfwManager.cpp" />
-    <ClCompile Include="Graphics\Window.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
     <ClCompile Include="terrain_heightfield.cpp" />
     <ClCompile Include="terrain_renderer.cpp" />
@@ -25,7 +24,6 @@
   <ItemGroup>
     <ClInclude Include="Common.hpp" />
     <ClInclude Include="Graphics\GlfwManager.hpp" />
-    <ClInclude Include="Graphics\Window.hpp" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_heightfield.h" />
     <ClInclude Include="terrain_platform.h" />

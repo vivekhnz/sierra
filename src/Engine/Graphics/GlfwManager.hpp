@@ -19,8 +19,8 @@ namespace Terrain { namespace Engine { namespace Graphics {
         float getCurrentTime() const;
 
         void processEvents();
-        void setPrimaryWindow(GLFWwindow &window);
-        void setCurrentWindow(GLFWwindow &window);
+        void setPrimaryWindow(GLFWwindow *window);
+        void setCurrentWindow(GLFWwindow *window);
 
         ~GlfwManager();
     };

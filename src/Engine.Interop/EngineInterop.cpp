@@ -49,7 +49,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             }
         }
 
-        auto vctx = new ViewportContext(*glfw, imgBuffer, renderCallback);
+        auto vctx = new ViewportContext(glfw, imgBuffer, renderCallback);
         viewportContexts->push_back(vctx);
 
         if (!isGlInitialized)
