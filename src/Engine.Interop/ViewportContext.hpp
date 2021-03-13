@@ -8,7 +8,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     class ViewportContext
     {
         Graphics::Window window;
-        char *imgBuffer;
         std::function<void()> onRenderCallback;
         EditorView editorView;
         void *viewState;
@@ -17,8 +16,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         uint32 viewportY;
 
     public:
+        void *imgBuffer;
+
         ViewportContext(Graphics::GlfwManager &glfw,
-            char *imgBuffer,
+            void *imgBuffer,
             std::function<void()> onRenderCallback);
 
         EditorViewContext getViewContext() const;
@@ -26,13 +27,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         bool isDetached() const;
 
         void render();
-        void resize(uint32 x, uint32 y, uint32 width, uint32 height, char *buffer);
+        void resize(uint32 x, uint32 y, uint32 width, uint32 height, void *buffer);
         void makePrimary();
         void makeCurrent();
         void setEditorView(EditorView editorView);
         void setViewState(void *viewState);
 
         void detach();
-        void reattach(char *imgBuffer, std::function<void()> onRenderCallback);
+        void reattach(void *imgBuffer, std::function<void()> onRenderCallback);
     };
 }}}

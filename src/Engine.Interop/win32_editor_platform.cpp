@@ -1,4 +1,6 @@
 #include "win32_editor_platform.h"
+
+#include <GLFW/glfw3.h>
 #include "../Engine/terrain_assets.h"
 
 using namespace System::Windows;
@@ -236,6 +238,7 @@ Win32PlatformMemory *win32InitializePlatform()
         (uint8 *)platformMemory->editor.data.baseAddress + platformMemory->editor.data.size;
     engine->size =
         APP_MEMORY_SIZE - (sizeof(Win32PlatformMemory) + platformMemory->editor.data.size);
+    engine->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
     engine->platformLogMessage = win32LogMessage;
     engine->platformLoadAsset = win32LoadAsset;
 

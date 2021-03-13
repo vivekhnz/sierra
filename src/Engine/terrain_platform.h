@@ -37,7 +37,10 @@ struct EngineMemory;
     void name(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
 typedef PLATFORM_ASSET_LOAD_CALLBACK(PlatformAssetLoadCallback);
 
-#define PLATFORM_LOG_MESSAGE(name) void name(char *message)
+#define PLATFORM_GET_GL_PROC_ADDRESS(name) void *name(const char *procName)
+typedef PLATFORM_GET_GL_PROC_ADDRESS(PlatformGetGlProcAddress);
+
+#define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
 #define PLATFORM_LOAD_ASSET(name)                                                             \
@@ -50,6 +53,7 @@ struct EngineMemory
     void *baseAddress;
     uint64 size;
 
+    PlatformGetGlProcAddress *platformGetGlProcAddress;
     PlatformLogMessage *platformLogMessage;
     PlatformLoadAsset *platformLoadAsset;
 

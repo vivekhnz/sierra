@@ -1,7 +1,6 @@
 #include "Window.hpp"
 
 #include <iostream>
-#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <windows.h>
 
@@ -66,33 +65,14 @@ namespace Terrain { namespace Engine { namespace Graphics {
         glfwSwapBuffers(window);
     }
 
-    void Window::readPixels(char *buffer)
-    {
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, buffer);
-    }
-
     void Window::setSize(int width, int height)
     {
         glfwSetWindowSize(window, width, height);
-        glViewport(0, 0, width, height);
     }
 
     void Window::makePrimary()
     {
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-
         glfwMakeContextCurrent(window);
-        if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-        {
-            throw std::runtime_error("Failed to initialize GLAD");
-        }
-        glViewport(0, 0, width, height);
-        glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-            glViewport(0, 0, width, height);
-        });
         glfwSetScrollCallback(window, [](GLFWwindow *window, double xOffset, double yOffset) {
             if (onMouseScrollHandler != NULL)
             {
@@ -106,10 +86,6 @@ namespace Terrain { namespace Engine { namespace Graphics {
     void Window::makeCurrent()
     {
         glfw.setCurrentWindow(*window);
-
-        int width, height;
-        glfwGetWindowSize(window, &width, &height);
-        glViewport(0, 0, width, height);
     }
 
     void Window::close()

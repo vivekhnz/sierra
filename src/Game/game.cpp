@@ -46,11 +46,14 @@ void reloadHeightmap(GameMemory *memory,
     memory->platformFreeMemory(result.data);
 }
 
-void initializeGame(GameMemory *memory)
+bool initializeGame(GameMemory *memory)
 {
     GameState *state = &memory->state;
 
-    rendererInitialize(&memory->engine);
+    if (!rendererInitialize(&memory->engine))
+    {
+        return 0;
+    }
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;
@@ -215,6 +218,8 @@ void initializeGame(GameMemory *memory)
         rendererCreateBuffer(&memory->engine, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     rendererUpdateBuffer(&memory->engine, state->materialPropsBufferHandle,
         sizeof(materialProps), materialProps);
+
+    return 1;
 }
 
 bool isButtonDown(GameInput *input, GameInputButtons button)
@@ -231,7 +236,11 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 {
     if (!memory->isInitialized)
     {
-        initializeGame(memory);
+        if (!initializeGame(memory))
+        {
+            memory->platformExitGame();
+            return;
+        }
         memory->isInitialized = true;
     }
 

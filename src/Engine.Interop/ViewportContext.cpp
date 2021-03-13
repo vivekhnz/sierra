@@ -4,7 +4,7 @@
 
 namespace Terrain { namespace Engine { namespace Interop {
     ViewportContext::ViewportContext(
-        Graphics::GlfwManager &glfw, char *imgBuffer, std::function<void()> onRenderCallback) :
+        Graphics::GlfwManager &glfw, void *imgBuffer, std::function<void()> onRenderCallback) :
         window(glfw, 1280, 720, "Terrain", true),
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), viewportX(0), viewportY(0),
         viewState(0), editorView(EditorView::None)
@@ -46,10 +46,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void ViewportContext::render()
     {
-        if (imgBuffer != nullptr)
-        {
-            window.readPixels(imgBuffer);
-        }
         window.refresh();
         if (onRenderCallback != nullptr)
         {
@@ -57,7 +53,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
     }
 
-    void ViewportContext::resize(uint32 x, uint32 y, uint32 width, uint32 height, char *buffer)
+    void ViewportContext::resize(uint32 x, uint32 y, uint32 width, uint32 height, void *buffer)
     {
         viewportX = x;
         viewportY = y;
@@ -81,7 +77,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         onRenderCallback = nullptr;
     }
 
-    void ViewportContext::reattach(char *imgBuffer, std::function<void()> onRenderCallback)
+    void ViewportContext::reattach(void *imgBuffer, std::function<void()> onRenderCallback)
     {
         this->imgBuffer = imgBuffer;
         this->onRenderCallback = onRenderCallback;

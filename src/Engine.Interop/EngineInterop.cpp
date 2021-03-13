@@ -4,6 +4,7 @@
 #include <msclr\lock.h>
 #include <msclr\marshal_cppstd.h>
 #include "../Engine/terrain_assets.h"
+#include "../Engine/terrain_renderer.h"
 
 using namespace System;
 using namespace System::Windows;
@@ -54,9 +55,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!isGlInitialized)
         {
             /*
-             * We can only initialize the engine context once GLAD is initialized as it makes
-             * OpenGL calls. GLAD is only initialized when a window is marked as the primary
-             * window.
+             * We can only initialize the renderer once a GL context is associated with GLFW as
+             * renderer initialization loads GLAD. A GL context is only associated with GLFW
+             * when a window is marked as the primary window.
              */
             vctx->makePrimary();
             isGlInitialized = true;
@@ -145,6 +146,10 @@ namespace Terrain { namespace Engine { namespace Interop {
             editorRenderHeightmapPreview(&memory->editor, &view);
             break;
         }
+
+        assert(vctx.imgBuffer);
+        rendererReadFramebufferPixels(view.width, view.height, vctx.imgBuffer);
+
         vctx.render();
     }
 

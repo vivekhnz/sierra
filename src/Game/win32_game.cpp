@@ -1,4 +1,5 @@
 #include "win32_game.h"
+
 #include "../Engine/Graphics/Window.hpp"
 #include "../Engine/terrain_assets.h"
 
@@ -365,6 +366,7 @@ int32 main()
     EngineMemory *engine = &platformMemory->game.engine;
     engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
     engine->size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
+    engine->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
     engine->platformLogMessage = win32LogMessage;
     engine->platformLoadAsset = win32LoadAsset;
 

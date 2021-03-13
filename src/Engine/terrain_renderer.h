@@ -1,8 +1,8 @@
 #ifndef TERRAIN_RENDERER_H
 #define TERRAIN_RENDERER_H
 
-#include <glad/glad.h>
 #include <glm/gtc/type_ptr.hpp>
+#include <glad/glad.h>
 
 #include "terrain_platform.h"
 
@@ -13,7 +13,8 @@ enum RendererBufferType
     RENDERER_SHADER_STORAGE_BUFFER
 };
 
-EXPORT void rendererInitialize(EngineMemory *memory);
+EXPORT bool rendererInitialize(EngineMemory *memory);
+
 EXPORT void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform);
 EXPORT void rendererUpdateLightingState(EngineMemory *memory,
     glm::vec4 *lightDir,
@@ -113,6 +114,7 @@ EXPORT void rendererSetBlendMode(uint32 equation, uint32 srcFactor, uint32 dstFa
 EXPORT void rendererDrawElements(uint32 primitiveType, uint32 elementCount);
 EXPORT void rendererDrawElementsInstanced(
     uint32 primitiveType, uint32 elementCount, uint32 instanceCount, uint32 instanceOffset);
+EXPORT void rendererReadFramebufferPixels(uint32 width, uint32 height, void *out_pixels);
 
 EXPORT void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount);
 EXPORT void rendererShaderStorageMemoryBarrier();

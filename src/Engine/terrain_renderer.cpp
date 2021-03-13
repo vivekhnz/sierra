@@ -81,9 +81,15 @@ uint32 getOpenGLBufferType(RendererBufferType type)
     return bufferType;
 }
 
-void rendererInitialize(EngineMemory *memory)
+bool rendererInitialize(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
+
+    if (!gladLoadGLLoader(memory->platformGetGlProcAddress))
+    {
+        memory->platformLogMessage("Failed to initialize GLAD");
+        return 0;
+    }
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -116,6 +122,8 @@ void rendererInitialize(EngineMemory *memory)
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
         sizeof(lighting));
+
+    return 1;
 }
 
 void rendererUpdateCameraState(EngineMemory *memory, glm::mat4 *transform)
@@ -564,6 +572,11 @@ void rendererDrawElementsInstanced(
 {
     glDrawElementsInstancedBaseInstance(
         primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount, instanceOffset);
+}
+
+void rendererReadFramebufferPixels(uint32 width, uint32 height, void *out_pixels)
+{
+    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, out_pixels);
 }
 
 void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount)

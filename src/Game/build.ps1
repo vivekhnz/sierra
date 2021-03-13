@@ -123,7 +123,8 @@ $procs += Invoke-Compiler -SourceFile 'win32_game.cpp' -OutputName 'win32_terrai
         '..\..\deps\nuget\glfw.3.3.2\build\native\include'
     ) `
     -ImportLibs @(
-        "$OutputPath\Terrain.Engine.lib"
+        "$OutputPath\Terrain.Engine.lib",
+        "..\..\deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$Platform\glfw3dll.lib"
     )
 $procs | Wait-Process
 
