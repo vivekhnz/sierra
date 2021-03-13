@@ -3,9 +3,7 @@
 #include "EngineInterop.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    ViewportContext::ViewportContext(
-        Graphics::GlfwManager *glfw, void *imgBuffer, std::function<void()> onRenderCallback) :
-        glfw(glfw),
+    ViewportContext::ViewportContext(void *imgBuffer, std::function<void()> onRenderCallback) :
         imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), viewportX(0), viewportY(0),
         viewState(0), editorView(EditorView::None)
     {
@@ -73,17 +71,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         glfwSetWindowSize(window, width, height);
 
         imgBuffer = buffer;
-    }
-
-    void ViewportContext::makePrimary()
-    {
-        glfwMakeContextCurrent(window);
-        glfw->setPrimaryWindow(window);
-    }
-
-    void ViewportContext::makeCurrent()
-    {
-        glfw->setCurrentWindow(window);
     }
 
     void ViewportContext::detach()

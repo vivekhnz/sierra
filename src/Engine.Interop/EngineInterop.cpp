@@ -16,7 +16,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         memory = win32InitializePlatform();
 
-        glfw = new Graphics::GlfwManager();
         viewportContexts = new std::vector<ViewportContext *>();
 
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
@@ -49,7 +48,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             }
         }
 
-        auto vctx = new ViewportContext(glfw, imgBuffer, renderCallback);
+        ViewportContext *vctx = new ViewportContext(imgBuffer, renderCallback);
         viewportContexts->push_back(vctx);
 
         if (!isGlInitialized)
@@ -59,7 +58,7 @@ namespace Terrain { namespace Engine { namespace Interop {
              * renderer initialization loads GLAD. A GL context is only associated with GLFW
              * when a window is marked as the primary window.
              */
-            vctx->makePrimary();
+            win32MakeWindowPrimary(vctx->window);
             isGlInitialized = true;
         }
 
@@ -124,7 +123,7 @@ namespace Terrain { namespace Engine { namespace Interop {
             RenderView(*vctx);
         }
 
-        glfw->processEvents();
+        win32PollEvents();
     }
 
     void EngineInterop::RenderView(ViewportContext &vctx)
@@ -136,7 +135,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (view.width == 0 || view.height == 0)
             return;
 
-        vctx.makeCurrent();
+        win32MakeWindowCurrent(vctx.window);
         switch (vctx.getEditorView())
         {
         case EditorView::Scene:
@@ -313,9 +312,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             delete viewportContexts;
         }
 
-        editorShutdown(&memory->editor);
-
-        delete glfw;
-        glfw = nullptr;
+        win32ShutdownPlatform();
     }
 }}}

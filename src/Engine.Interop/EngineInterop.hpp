@@ -1,6 +1,5 @@
 #pragma once
 
-#include "../Engine/Graphics/GlfwManager.hpp"
 #include "win32_editor_platform.h"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
@@ -30,8 +29,6 @@ public
     {
     private:
         static Win32PlatformMemory *memory = nullptr;
-
-        static Graphics::GlfwManager *glfw = nullptr;
 
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();

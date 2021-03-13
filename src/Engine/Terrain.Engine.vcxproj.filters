@@ -4,9 +4,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Graphics\GlfwManager.cpp">
-      <Filter>Graphics</Filter>
-    </ClCompile>
     <ClCompile Include="..\..\deps\glad\glad.c">
       <Filter>deps</Filter>
     </ClCompile>
@@ -18,19 +15,12 @@
     <ClCompile Include="terrain_heightfield.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Graphics\GlfwManager.hpp">
-      <Filter>Graphics</Filter>
-    </ClInclude>
-    <ClInclude Include="Common.hpp" />
     <ClInclude Include="terrain_renderer.h" />
     <ClInclude Include="terrain_assets.h" />
     <ClInclude Include="terrain_platform.h" />
     <ClInclude Include="terrain_heightfield.h" />
   </ItemGroup>
   <ItemGroup>
-    <Filter Include="Graphics">
-      <UniqueIdentifier>{637ff0a9-48b4-44c4-b433-7fef9e410d96}</UniqueIdentifier>
-    </Filter>
     <Filter Include="deps">
       <UniqueIdentifier>{7d48037c-8297-4040-9716-5da85b298951}</UniqueIdentifier>
     </Filter>

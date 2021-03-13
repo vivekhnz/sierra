@@ -1,6 +1,6 @@
 #include "win32_editor_platform.h"
 
-#include <GLFW/glfw3.h>
+#include <GLFW/glfw3native.h>
 #include "../Engine/terrain_assets.h"
 
 using namespace System::Windows;
@@ -251,6 +251,11 @@ Win32PlatformMemory *win32InitializePlatform()
     engineMemoryOffset += engine->assets.size;
     assert(engineMemoryOffset == engine->size);
 
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
     return platformMemory;
 }
 
@@ -425,6 +430,23 @@ void win32GetInputState(EditorInput *input, EditorViewContext *activeView)
     platformMemory->prevPressedButtons = input->pressedButtons;
 }
 
+void win32MakeWindowPrimary(GLFWwindow *window)
+{
+    glfwMakeContextCurrent(window);
+    platformMemory->primaryWindow = window;
+}
+
+void win32MakeWindowCurrent(GLFWwindow *window)
+{
+    if (platformMemory->primaryWindow)
+    {
+        HWND hwnd = glfwGetWin32Window(window);
+        HDC deviceCtx = GetDC(hwnd);
+        HGLRC wglCtx = glfwGetWGLContext(platformMemory->primaryWindow);
+        wglMakeCurrent(deviceCtx, wglCtx);
+    }
+}
+
 void win32TickApp(float deltaTime, EditorViewContext *activeView)
 {
     win32LoadQueuedAssets();
@@ -436,4 +458,15 @@ void win32TickApp(float deltaTime, EditorViewContext *activeView)
     EditorState *newState = &platformMemory->editor.newState;
     memcpy(currentState, newState, sizeof(*currentState));
     editorUpdate(&platformMemory->editor, deltaTime, &input);
+}
+
+void win32PollEvents()
+{
+    glfwPollEvents();
+}
+
+void win32ShutdownPlatform()
+{
+    editorShutdown(&platformMemory->editor);
+    glfwTerminate();
 }

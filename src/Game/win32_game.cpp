@@ -1,6 +1,6 @@
 #include "win32_game.h"
 
-#include "../Engine/Graphics/GlfwManager.hpp"
+#include <GLFW/glfw3.h>
 #include "../Engine/terrain_assets.h"
 
 global_variable Win32PlatformMemory *platformMemory;
@@ -379,7 +379,10 @@ int32 main()
     engineMemoryOffset += engine->assets.size;
     assert(engineMemoryOffset == engine->size);
 
-    Terrain::Engine::Graphics::GlfwManager glfw;
+    glfwInit();
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     GLFWwindow *window = glfwCreateWindow(1280, 720, "Terrain", 0, 0);
     if (!window)
@@ -390,9 +393,8 @@ int32 main()
 
     glfwSetScrollCallback(window, win32OnMouseScroll);
     glfwMakeContextCurrent(window);
-    glfw.setPrimaryWindow(window);
 
-    float lastTickTime = glfw.getCurrentTime();
+    float lastTickTime = (float)glfwGetTime();
     GameInput input = {};
     glm::vec2 prevMousePos = glm::vec2(0, 0);
     bool wasMouseCursorTeleported = true;
@@ -444,7 +446,7 @@ int32 main()
         bool wasMouseCaptured = platformMemory->shouldCaptureMouse;
         platformMemory->shouldCaptureMouse = false;
 
-        float now = glfw.getCurrentTime();
+        float now = (float)glfwGetTime();
         float deltaTime = now - lastTickTime;
         lastTickTime = now;
 
@@ -483,6 +485,7 @@ int32 main()
         platformMemory->gameCode.gameShutdown(&platformMemory->game);
     }
     glfwDestroyWindow(window);
+    glfwTerminate();
 
     return 0;
 }

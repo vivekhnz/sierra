@@ -2,6 +2,7 @@
 #define WIN32_EDITOR_PLATFORM_H
 
 #include <windows.h>
+#include <GLFW/glfw3.h>
 
 #include "../Engine/terrain_platform.h"
 #include "editor.h"
@@ -50,6 +51,7 @@ struct Win32PlatformMemory
     float nextMouseScrollOffsetY;
     void *prevActiveViewState;
     uint64 prevPressedButtons;
+    GLFWwindow *primaryWindow;
 
     EditorMemory editor;
 };
@@ -57,6 +59,10 @@ struct Win32PlatformMemory
 Win32PlatformMemory *win32InitializePlatform();
 Win32ReadFileResult win32ReadFile(const char *path);
 void win32FreeMemory(void *data);
+void win32MakeWindowPrimary(GLFWwindow *window);
+void win32MakeWindowCurrent(GLFWwindow *window);
 void win32TickApp(float deltaTime, EditorViewContext *activeView);
+void win32PollEvents();
+void win32ShutdownPlatform();
 
 #endif

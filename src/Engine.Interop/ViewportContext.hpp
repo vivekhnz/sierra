@@ -1,16 +1,13 @@
 #pragma once
 
 #include <functional>
-#include "../Engine/Graphics/GlfwManager.hpp"
+#include <GLFW/glfw3.h>
 #include "editor.h"
 #include "EditorView.h"
 
 namespace Terrain { namespace Engine { namespace Interop {
     class ViewportContext
     {
-        Graphics::GlfwManager *glfw;
-        GLFWwindow *window;
-
         std::function<void()> onRenderCallback;
         EditorView editorView;
         void *viewState;
@@ -20,10 +17,9 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     public:
         void *imgBuffer;
+        GLFWwindow *window;
 
-        ViewportContext(Graphics::GlfwManager *glfw,
-            void *imgBuffer,
-            std::function<void()> onRenderCallback);
+        ViewportContext(void *imgBuffer, std::function<void()> onRenderCallback);
         ~ViewportContext();
 
         EditorViewContext getViewContext() const;
@@ -32,8 +28,6 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         void render();
         void resize(uint32 x, uint32 y, uint32 width, uint32 height, void *buffer);
-        void makePrimary();
-        void makeCurrent();
         void setEditorView(EditorView editorView);
         void setViewState(void *viewState);
 
