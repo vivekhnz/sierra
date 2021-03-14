@@ -1,9 +1,6 @@
 #include "EngineInterop.hpp"
 
-#include <msclr\lock.h>
 #include <msclr\marshal_cppstd.h>
-#include "../Engine/terrain_assets.h"
-#include "../Engine/terrain_renderer.h"
 
 using namespace System;
 using namespace System::Windows;
@@ -14,9 +11,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine()
     {
         memory = win32InitializePlatform();
-
-        viewportContexts = new std::vector<ViewportContext *>();
-
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
 
         lastTickTime = DateTime::UtcNow;
@@ -26,95 +20,13 @@ namespace Terrain { namespace Engine { namespace Interop {
         renderTimer->Start();
     }
 
-    ViewportContext *EngineInterop::CreateView(HDC deviceContext)
-    {
-        msclr::lock l(viewportCtxLock);
-
-        // if the primary viewport context is detached, reuse it instead
-        if (viewportContexts->size() > 0)
-        {
-            auto primaryVctx = viewportContexts->at(0);
-            if (primaryVctx->isDetached())
-            {
-                primaryVctx->reattach(deviceContext);
-                return primaryVctx;
-            }
-        }
-
-        ViewportContext *vctx = new ViewportContext(deviceContext);
-        viewportContexts->push_back(vctx);
-
-        return vctx;
-    }
-
-    void EngineInterop::LinkViewportToEditorView(ViewportContext *vctx, EditorView view)
-    {
-        void *viewState = 0;
-        switch (view)
-        {
-        case EditorView::Scene:
-            viewState = editorAddSceneView(&memory->editor);
-        }
-
-        vctx->setViewState(viewState);
-    }
-
-    void EngineInterop::DetachView(ViewportContext *vctxToRemove)
-    {
-        msclr::lock l(viewportCtxLock);
-        for (int i = 0; i < viewportContexts->size(); i++)
-        {
-            if (viewportContexts->at(i) == vctxToRemove)
-            {
-                if (i == 0)
-                {
-                    // the first viewport context's window holds the active GL context
-                    // other windows need to access its GL context, so don't delete it
-                    // instead, detach it from its viewport
-                    vctxToRemove->detach();
-                }
-                else
-                {
-                    delete vctxToRemove;
-                    viewportContexts->erase(viewportContexts->begin() + i);
-                }
-                break;
-            }
-        }
-    }
-
     void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
     {
         DateTime now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        std::vector<EditorViewContext> views;
-        for (auto vctx : *viewportContexts)
-        {
-            views.push_back(vctx->getViewContext());
-        }
-        win32TickApp(deltaTime, views.data(), views.size());
-
-        msclr::lock l(viewportCtxLock);
-        for (auto vctx : *viewportContexts)
-        {
-            EditorViewContext view = vctx->getViewContext();
-            if (view.width == 0 || view.height == 0)
-                return;
-
-            wglMakeCurrent(vctx->deviceContext, memory->glRenderingContext);
-            switch (vctx->getEditorView())
-            {
-            case EditorView::Scene:
-                editorRenderSceneView(&memory->editor, &view);
-                break;
-            case EditorView::HeightmapPreview:
-                editorRenderHeightmapPreview(&memory->editor, &view);
-                break;
-            }
-            SwapBuffers(vctx->deviceContext);
-        }
+        win32TickApp(deltaTime);
     }
 
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
@@ -249,14 +161,6 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::Shutdown()
     {
         renderTimer->Stop();
-
-        for (int i = 0; i < viewportContexts->size(); i++)
-        {
-            delete viewportContexts->at(i);
-        }
-        viewportContexts->clear();
-        delete viewportContexts;
-
         win32ShutdownPlatform();
     }
 }}}

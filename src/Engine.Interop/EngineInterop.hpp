@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "win32_editor_platform.h"
-#include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "EditorView.h"
 #include "Proxy/StateProxy.hpp"
@@ -29,21 +28,12 @@ public
     {
     private:
         static Win32PlatformMemory *memory = nullptr;
-
-        static std::vector<ViewportContext *> *viewportContexts;
-        static Object ^ viewportCtxLock = gcnew Object();
-
         static Proxy::StateProxy ^ stateProxy;
 
         static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
         static System::DateTime lastTickTime;
 
         static void OnTick(Object ^ sender, System::EventArgs ^ e);
-
-        // internal members
-        internal : static ViewportContext *CreateView(HDC deviceContext);
-        static void LinkViewportToEditorView(ViewportContext *vctx, EditorView view);
-        static void DetachView(ViewportContext *vctx);
 
     public:
         static property Proxy::StateProxy^ State

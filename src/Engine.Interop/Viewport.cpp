@@ -12,20 +12,40 @@ using namespace System::Windows::Media::Imaging;
 
 ref class ViewportHwndHost : System::Windows::Interop::HwndHost
 {
+private:
+    uint32 x;
+    uint32 y;
+    uint32 width;
+    uint32 height;
+    Terrain::Engine::Interop::EditorView view;
+
 public:
-    HDC deviceContext = 0;
+    Win32ViewportWindow *window;
+
+    ViewportHwndHost(uint32 x,
+        uint32 y,
+        uint32 width,
+        uint32 height,
+        Terrain::Engine::Interop::EditorView view)
+    {
+        this->x = x;
+        this->y = y;
+        this->width = width;
+        this->height = height;
+        this->view = view;
+    }
 
 protected:
     HandleRef BuildWindowCore(HandleRef hwndParent) override
     {
         HWND parentHwnd = (HWND)hwndParent.Handle.ToPointer();
-        Win32ViewportWindow window = win32CreateViewportWindow(parentHwnd);
-        deviceContext = window.deviceContext;
-        return HandleRef(this, IntPtr(window.hwnd));
+        window = win32CreateViewportWindow(parentHwnd, x, y, width, height, view);
+        return HandleRef(this, IntPtr(window->hwnd));
     }
 
     void DestroyWindowCore(HandleRef hwnd) override
     {
+        // todo: release our Win32ViewportWindow so it can be reused by other viewports
         DestroyWindow((HWND)hwnd.Handle.ToPointer());
     }
 };
@@ -47,18 +67,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void Viewport::OnLoaded(Object ^ sender, RoutedEventArgs ^ args)
     {
-        hwndHost = gcnew ViewportHwndHost();
-        layoutRoot->Children->Add(hwndHost);
-
-        vctx = EngineInterop::CreateView(hwndHost->deviceContext);
-
         uint32 width = (uint32)Math::Max(layoutRoot->ActualWidth, 128.0);
         uint32 height = (uint32)Math::Max(layoutRoot->ActualHeight, 128.0);
         Point location = this->TranslatePoint(Point(0, 0), Application::Current->MainWindow);
-        vctx->resize(location.X, location.Y, width, height);
 
-        vctx->setEditorView(View);
-        EngineInterop::LinkViewportToEditorView(vctx, View);
+        hwndHost = gcnew ViewportHwndHost(
+            (uint32)location.X, (uint32)location.Y, width, height, View);
+        layoutRoot->Children->Add(hwndHost);
 
         isInitialized = true;
 
@@ -84,12 +99,14 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         uint32 width = (uint32)Math::Max(info->NewSize.Width, 128.0);
         uint32 height = (uint32)Math::Max(info->NewSize.Height, 128.0);
-
         Point location = this->TranslatePoint(Point(0, 0), Application::Current->MainWindow);
-        vctx->resize(location.X, location.Y, width, height);
 
         hwndHost->Width = width;
         hwndHost->Height = height;
+        hwndHost->window->vctx.x = location.X;
+        hwndHost->window->vctx.y = location.Y;
+        hwndHost->window->vctx.width = width;
+        hwndHost->window->vctx.height = height;
     }
 
     Viewport::~Viewport()
@@ -98,8 +115,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             return;
 
         isInitialized = false;
-        EngineInterop::DetachView(vctx);
-
         if (visualParent != nullptr)
         {
             visualParent->SizeChanged -= parentSizeChangedEventHandler;

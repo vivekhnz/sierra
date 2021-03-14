@@ -317,20 +317,43 @@ Win32PlatformMemory *win32InitializePlatform()
     return platformMemory;
 }
 
-Win32ViewportWindow win32CreateViewportWindow(HWND parentHwnd)
+Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
+    uint32 x,
+    uint32 y,
+    uint32 width,
+    uint32 height,
+    Terrain::Engine::Interop::EditorView view)
 {
-    Win32ViewportWindow result = {};
+    assert(platformMemory->viewportCount < MAX_VIEWPORTS);
+    Win32ViewportWindow *result =
+        &platformMemory->viewportWindows[platformMemory->viewportCount++];
 
     HINSTANCE instance = GetModuleHandle(0);
-    result.hwnd = CreateWindowEx(0, VIEWPORT_WINDOW_CLASS_NAME, L"TerrainOpenGLViewportWindow",
-        WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, parentHwnd, 0, instance, 0);
-    result.deviceContext = GetDC(result.hwnd);
-    win32SetDeviceContextPixelFormat(result.deviceContext);
+    result->hwnd =
+        CreateWindowEx(0, VIEWPORT_WINDOW_CLASS_NAME, L"TerrainOpenGLViewportWindow",
+            WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, parentHwnd, 0, instance, 0);
+    result->deviceContext = GetDC(result->hwnd);
+    win32SetDeviceContextPixelFormat(result->deviceContext);
+
+    result->view = view;
+    result->vctx.x = x;
+    result->vctx.y = y;
+    result->vctx.width = width;
+    result->vctx.height = height;
+
+    void *viewState = 0;
+    switch (view)
+    {
+    case Terrain::Engine::Interop::EditorView::Scene:
+        viewState = editorAddSceneView(&platformMemory->editor);
+        break;
+    }
+    result->vctx.viewState = viewState;
 
     return result;
 }
 
-void win32GetInputState(EditorInput *input, EditorViewContext *views, uint32 viewCount)
+void win32GetInputState(EditorInput *input)
 {
     *input = {};
 
@@ -436,12 +459,13 @@ void win32GetInputState(EditorInput *input, EditorViewContext *views, uint32 vie
             }
         }
 
-        for (uint32 i = 0; i < viewCount; i++)
+        for (uint32 i = 0; i < platformMemory->viewportCount; i++)
         {
-            EditorViewContext *view = &views[i];
+            Win32ViewportWindow *view = &platformMemory->viewportWindows[i];
+            EditorViewContext *vctx = &view->vctx;
 
-            glm::vec2 viewportPos_windowSpace = glm::vec2(view->x, view->y);
-            glm::vec2 viewportSize = glm::vec2(view->width, view->height);
+            glm::vec2 viewportPos_windowSpace = glm::vec2(vctx->x, vctx->y);
+            glm::vec2 viewportSize = glm::vec2(vctx->width, vctx->height);
 
             if (actualMousePos_windowSpace.x < viewportPos_windowSpace.x
                 || actualMousePos_windowSpace.x >= viewportPos_windowSpace.x + viewportSize.x
@@ -451,7 +475,7 @@ void win32GetInputState(EditorInput *input, EditorViewContext *views, uint32 vie
                 continue;
             }
 
-            input->activeViewState = view->viewState;
+            input->activeViewState = vctx->viewState;
             input->prevPressedButtons = platformMemory->prevPressedButtons;
             input->pressedButtons = pressedButtons;
             input->normalizedCursorPos =
@@ -508,18 +532,37 @@ void win32GetInputState(EditorInput *input, EditorViewContext *views, uint32 vie
     platformMemory->prevPressedButtons = pressedButtons;
 }
 
-void win32TickApp(float deltaTime, EditorViewContext *views, uint32 viewCount)
+void win32TickApp(float deltaTime)
 {
     win32LoadQueuedAssets();
 
     EditorInput input = {};
-    win32GetInputState(&input, views, viewCount);
+    win32GetInputState(&input);
 
     EditorState *currentState = &platformMemory->editor.currentState;
     EditorState *newState = &platformMemory->editor.newState;
     memcpy(currentState, newState, sizeof(*currentState));
 
     editorUpdate(&platformMemory->editor, deltaTime, &input);
+
+    for (uint32 i = 0; i < platformMemory->viewportCount; i++)
+    {
+        Win32ViewportWindow *viewport = &platformMemory->viewportWindows[i];
+        if (viewport->vctx.width == 0 || viewport->vctx.height == 0)
+            continue;
+
+        wglMakeCurrent(viewport->deviceContext, platformMemory->glRenderingContext);
+        switch (viewport->view)
+        {
+        case Terrain::Engine::Interop::EditorView::Scene:
+            editorRenderSceneView(&platformMemory->editor, &viewport->vctx);
+            break;
+        case Terrain::Engine::Interop::EditorView::HeightmapPreview:
+            editorRenderHeightmapPreview(&platformMemory->editor, &viewport->vctx);
+            break;
+        }
+        SwapBuffers(viewport->deviceContext);
+    }
 }
 
 void win32ShutdownPlatform()

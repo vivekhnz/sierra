@@ -6,9 +6,11 @@
 
 #include "../Engine/terrain_platform.h"
 #include "editor.h"
+#include "EditorView.h"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
 #define MAX_WATCHED_ASSETS 256
+#define MAX_VIEWPORTS 32
 
 struct Win32ReadFileResult
 {
@@ -42,6 +44,9 @@ struct Win32ViewportWindow
 {
     HWND hwnd;
     HDC deviceContext;
+
+    Terrain::Engine::Interop::EditorView view;
+    EditorViewContext vctx;
 };
 
 struct Win32PlatformMemory
@@ -49,6 +54,8 @@ struct Win32PlatformMemory
     HWND mainWindowHwnd;
     HWND dummyWindowHwnd;
     HGLRC glRenderingContext;
+    Win32ViewportWindow viewportWindows[MAX_VIEWPORTS];
+    uint32 viewportCount;
 
     bool shouldCaptureMouse;
     bool wasMouseCaptured;
@@ -65,10 +72,15 @@ struct Win32PlatformMemory
 };
 
 Win32PlatformMemory *win32InitializePlatform();
-Win32ViewportWindow win32CreateViewportWindow(HWND parentHwnd);
+Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
+    uint32 x,
+    uint32 y,
+    uint32 width,
+    uint32 height,
+    Terrain::Engine::Interop::EditorView view);
 Win32ReadFileResult win32ReadFile(const char *path);
 void win32FreeMemory(void *data);
-void win32TickApp(float deltaTime, EditorViewContext *views, uint32 viewCount);
+void win32TickApp(float deltaTime);
 void win32ShutdownPlatform();
 
 #endif

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ViewportContext.hpp"
+#include "EditorView.h"
 
 ref class ViewportHwndHost;
 
@@ -9,13 +9,11 @@ namespace Terrain { namespace Engine { namespace Interop {
 public
     ref class Viewport : System::Windows::Controls::UserControl
     {
-        ViewportContext *vctx;
         EditorView editorView;
+        bool isInitialized;
 
         System::Windows::Controls::Grid ^ layoutRoot;
         ViewportHwndHost ^ hwndHost;
-
-        bool isInitialized;
 
         System::Windows::FrameworkElement ^ visualParent;
         System::Windows::SizeChangedEventHandler ^ parentSizeChangedEventHandler;
