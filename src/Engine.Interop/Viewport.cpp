@@ -1,6 +1,5 @@
 #include "Viewport.h"
 
-#include <iostream>
 #include "EngineInterop.hpp"
 
 using namespace System;
@@ -11,54 +10,71 @@ using namespace System::Windows::Input;
 using namespace System::Windows::Media;
 using namespace System::Windows::Media::Imaging;
 
+ref class ViewportHwndHost : System::Windows::Interop::HwndHost
+{
+public:
+    HDC deviceContext = 0;
+
+protected:
+    HandleRef BuildWindowCore(HandleRef hwndParent) override
+    {
+        HWND parentHwnd = (HWND)hwndParent.Handle.ToPointer();
+        Win32ViewportWindow window = win32CreateViewportWindow(parentHwnd);
+        deviceContext = window.deviceContext;
+        return HandleRef(this, IntPtr(window.hwnd));
+    }
+
+    void DestroyWindowCore(HandleRef hwnd) override
+    {
+        DestroyWindow((HWND)hwnd.Handle.ToPointer());
+    }
+};
+
 namespace Terrain { namespace Engine { namespace Interop {
     Viewport::Viewport() : isInitialized(false)
     {
-        isInDesignMode = System::ComponentModel::DesignerProperties::GetIsInDesignMode(this);
-        if (isInDesignMode)
+        if (System::ComponentModel::DesignerProperties::GetIsInDesignMode(this))
         {
             this->Background = gcnew SolidColorBrush(Colors::CornflowerBlue);
             return;
         }
-        this->Focusable = true;
 
         layoutRoot = gcnew Grid();
         AddChild(layoutRoot);
 
-        bitmap = gcnew WriteableBitmap(1280, 720, 96, 96, PixelFormats::Pbgra32, nullptr);
-        image = gcnew Image();
-        image->Source = bitmap;
-        image->RenderTransformOrigin = Point(0.5, 0.5);
-        image->RenderTransform = gcnew ScaleTransform(1.0, -1.0);
-        image->Stretch = Stretch::UniformToFill;
-        layoutRoot->Children->Add(image);
+        this->Loaded += gcnew RoutedEventHandler(this, &Viewport::OnLoaded);
+    }
 
-        hoverBorder = gcnew Border();
-        hoverBorder->BorderBrush = gcnew SolidColorBrush(Color::FromArgb(16, 255, 255, 255));
-        hoverBorder->BorderThickness = Thickness(1);
-        hoverBorder->Visibility = Windows::Visibility::Hidden;
-        layoutRoot->Children->Add(hoverBorder);
+    void Viewport::OnLoaded(Object ^ sender, RoutedEventArgs ^ args)
+    {
+        hwndHost = gcnew ViewportHwndHost();
+        layoutRoot->Children->Add(hwndHost);
 
-        try
-        {
-            onRenderCallback = gcnew RenderCallbackManaged(this, &Viewport::UpdateImage);
-            auto unmanagedRenderCallback = static_cast<RenderCallbackUnmanaged>(
-                Marshal::GetFunctionPointerForDelegate(onRenderCallback).ToPointer());
-            vctx = EngineInterop::CreateView(
-                (char *)bitmap->BackBuffer.ToPointer(), unmanagedRenderCallback);
+        vctx = EngineInterop::CreateView(hwndHost->deviceContext);
 
-            isInitialized = true;
-        }
-        catch (const std::runtime_error &e)
+        uint32 width = (uint32)Math::Max(layoutRoot->ActualWidth, 128.0);
+        uint32 height = (uint32)Math::Max(layoutRoot->ActualHeight, 128.0);
+        Point location = this->TranslatePoint(Point(0, 0), Application::Current->MainWindow);
+        vctx->resize(location.X, location.Y, width, height);
+
+        vctx->setEditorView(View);
+        EngineInterop::LinkViewportToEditorView(vctx, View);
+
+        isInitialized = true;
+
+        visualParent = (FrameworkElement ^) VisualTreeHelper::GetParent(this);
+        if (visualParent != nullptr)
         {
-            this->Background = gcnew SolidColorBrush(Colors::Red);
-            std::cerr << e.what() << std::endl;
+            parentSizeChangedEventHandler = gcnew System::Windows::SizeChangedEventHandler(
+                this, &Terrain::Engine::Interop::Viewport::OnParentSizeChanged);
+            visualParent->SizeChanged += parentSizeChangedEventHandler;
         }
-        catch (...)
-        {
-            this->Background = gcnew SolidColorBrush(Colors::Red);
-            std::cerr << "Unhandled exception thrown." << std::endl;
-        }
+    }
+
+    void Viewport::OnParentSizeChanged(Object ^ sender, SizeChangedEventArgs ^ args)
+    {
+        hwndHost->Width = args->NewSize.Width;
+        hwndHost->Height = args->NewSize.Height;
     }
 
     void Viewport::OnRenderSizeChanged(SizeChangedInfo ^ info)
@@ -66,51 +82,14 @@ namespace Terrain { namespace Engine { namespace Interop {
         if (!isInitialized)
             return;
 
-        int width = (int)Math::Max(info->NewSize.Width, 128.0);
-        int height = (int)Math::Max(info->NewSize.Height, 128.0);
+        uint32 width = (uint32)Math::Max(info->NewSize.Width, 128.0);
+        uint32 height = (uint32)Math::Max(info->NewSize.Height, 128.0);
 
-        bitmap = gcnew WriteableBitmap(width, height, 96, 96, PixelFormats::Pbgra32, nullptr);
-        auto location = this->TranslatePoint(Point(0, 0), Application::Current->MainWindow);
-        vctx->resize(
-            location.X, location.Y, width, height, (char *)bitmap->BackBuffer.ToPointer());
-        EngineInterop::RenderView(*vctx);
-        image->Source = bitmap;
-    }
+        Point location = this->TranslatePoint(Point(0, 0), Application::Current->MainWindow);
+        vctx->resize(location.X, location.Y, width, height);
 
-    void Viewport::UpdateImage()
-    {
-        if (!isInitialized || bitmap == nullptr)
-            return;
-
-        bitmap->Lock();
-        bitmap->AddDirtyRect(Int32Rect(0, 0, bitmap->PixelWidth, bitmap->PixelHeight));
-        bitmap->Unlock();
-    }
-
-    void Viewport::OnMouseEnter(MouseEventArgs ^ args)
-    {
-        EngineInterop::SetViewportContextHoverState(vctx, true);
-        hoverBorder->Visibility = Windows::Visibility::Visible;
-    }
-
-    void Viewport::OnMouseLeave(MouseEventArgs ^ args)
-    {
-        EngineInterop::SetViewportContextHoverState(vctx, false);
-        hoverBorder->Visibility = Windows::Visibility::Hidden;
-    }
-
-    void Viewport::OnMouseDown(MouseButtonEventArgs ^ args)
-    {
-        this->Focus();
-    }
-
-    void Viewport::OnViewUpdated()
-    {
-        if (vctx == nullptr)
-            return;
-
-        vctx->setEditorView(View);
-        EngineInterop::LinkViewportToEditorView(vctx, View);
+        hwndHost->Width = width;
+        hwndHost->Height = height;
     }
 
     Viewport::~Viewport()
@@ -120,5 +99,10 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         isInitialized = false;
         EngineInterop::DetachView(vctx);
+
+        if (visualParent != nullptr)
+        {
+            visualParent->SizeChanged -= parentSizeChangedEventHandler;
+        }
     }
 }}}

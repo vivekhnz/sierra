@@ -38,31 +38,37 @@ struct Win32WatchedAsset
     uint64 lastUpdatedTime;
 };
 
+struct Win32ViewportWindow
+{
+    HWND hwnd;
+    HDC deviceContext;
+};
+
 struct Win32PlatformMemory
 {
-    Win32AssetLoadQueue assetLoadQueue;
-    Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
-    uint32 watchedAssetCount;
+    HWND mainWindowHwnd;
+    HWND dummyWindowHwnd;
+    HGLRC glRenderingContext;
 
     bool shouldCaptureMouse;
     bool wasMouseCaptured;
-    glm::vec2 prevMousePos;
-    glm::vec2 capturedMousePos;
+    glm::vec2 prevMousePos_windowSpace;
+    glm::vec2 capturedMousePos_windowSpace;
     float nextMouseScrollOffsetY;
-    void *prevActiveViewState;
     uint64 prevPressedButtons;
-    GLFWwindow *primaryWindow;
+
+    Win32AssetLoadQueue assetLoadQueue;
+    Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
+    uint32 watchedAssetCount;
 
     EditorMemory editor;
 };
 
 Win32PlatformMemory *win32InitializePlatform();
+Win32ViewportWindow win32CreateViewportWindow(HWND parentHwnd);
 Win32ReadFileResult win32ReadFile(const char *path);
 void win32FreeMemory(void *data);
-void win32MakeWindowPrimary(GLFWwindow *window);
-void win32MakeWindowCurrent(GLFWwindow *window);
-void win32TickApp(float deltaTime, EditorViewContext *activeView);
-void win32PollEvents();
+void win32TickApp(float deltaTime, EditorViewContext *views, uint32 viewCount);
 void win32ShutdownPlatform();
 
 #endif

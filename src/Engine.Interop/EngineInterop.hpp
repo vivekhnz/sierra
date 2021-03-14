@@ -1,12 +1,12 @@
 #pragma once
 
+#include <vector>
+
 #include "win32_editor_platform.h"
 #include "ViewportContext.hpp"
 #include "Viewport.h"
 #include "EditorView.h"
 #include "Proxy/StateProxy.hpp"
-
-typedef void(__stdcall *RenderCallbackUnmanaged)();
 
 namespace Terrain { namespace Engine { namespace Interop {
 public
@@ -33,35 +33,17 @@ public
         static std::vector<ViewportContext *> *viewportContexts;
         static Object ^ viewportCtxLock = gcnew Object();
 
-        static bool isGlInitialized = false;
-
         static Proxy::StateProxy ^ stateProxy;
 
-        static ViewportContext *hoveredViewportCtx = nullptr;
         static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
         static System::DateTime lastTickTime;
 
         static void OnTick(Object ^ sender, System::EventArgs ^ e);
-        static void OnMouseWheel(
-            Object ^ sender, System::Windows::Input::MouseWheelEventArgs ^ args);
 
         // internal members
-        internal : static property ViewportContext *HoveredViewportContext
-        {
-        internal:
-            ViewportContext *get()
-            {
-                return hoveredViewportCtx;
-            }
-        }
-
-        static ViewportContext *CreateView(
-            char *imgBuffer, RenderCallbackUnmanaged renderCallback);
+        internal : static ViewportContext *CreateView(HDC deviceContext);
         static void LinkViewportToEditorView(ViewportContext *vctx, EditorView view);
         static void DetachView(ViewportContext *vctx);
-
-        static void RenderView(ViewportContext &vctx);
-        static void SetViewportContextHoverState(ViewportContext *vctx, bool isHovered);
 
     public:
         static property Proxy::StateProxy^ State

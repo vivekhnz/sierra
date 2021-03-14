@@ -212,9 +212,12 @@ void addBrushInstance(EditorMemory *memory, glm::vec2 pos)
     memory->heightmapCompositionState.working.brushInstanceCount++;
 }
 
-void initializeEditor(EditorMemory *memory)
+bool initializeEditor(EditorMemory *memory)
 {
-    rendererInitialize(&memory->engine);
+    if (!rendererInitialize(&memory->engine))
+    {
+        return 0;
+    }
 
     EngineMemory *engineMemory = &memory->engine;
     HeightmapCompositionState *hmCompState = &memory->heightmapCompositionState;
@@ -481,13 +484,19 @@ void initializeEditor(EditorMemory *memory)
         glm::scale(hmPreviewState->cameraTransform, glm::vec3(2.0f, -2.0f, 1.0f));
     hmPreviewState->cameraTransform =
         glm::translate(hmPreviewState->cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
+
+    return 1;
 }
 
 void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
 {
     if (!memory->isInitialized)
     {
-        initializeEditor(memory);
+        if (!initializeEditor(memory))
+        {
+            assert(!"Failed to initialize editor");
+            return;
+        }
         memory->isInitialized = true;
     }
 
@@ -811,7 +820,10 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
 
 void editorShutdown(EditorMemory *memory)
 {
-    rendererDestroyResources(&memory->engine);
+    if (memory->isInitialized)
+    {
+        rendererDestroyResources(&memory->engine);
+    }
 }
 
 void *editorAddSceneView(EditorMemory *memory)

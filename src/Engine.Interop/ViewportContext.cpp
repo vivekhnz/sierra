@@ -3,35 +3,20 @@
 #include "EngineInterop.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
-    ViewportContext::ViewportContext(void *imgBuffer, std::function<void()> onRenderCallback) :
-        imgBuffer(imgBuffer), onRenderCallback(onRenderCallback), viewportX(0), viewportY(0),
-        viewState(0), editorView(EditorView::None)
+    ViewportContext::ViewportContext(HDC deviceContext) :
+        deviceContext(deviceContext), viewportX(0), viewportY(0), viewportWidth(0),
+        viewportHeight(0), viewState(0), editorView(EditorView::None)
     {
-        glfwWindowHint(GLFW_VISIBLE, false);
-        window = glfwCreateWindow(1280, 720, "Terrain", NULL, NULL);
-        if (!window)
-        {
-            // todo: log here
-        }
-    }
-
-    ViewportContext::~ViewportContext()
-    {
-        glfwDestroyWindow(window);
     }
 
     EditorViewContext ViewportContext::getViewContext() const
     {
-        int32 width;
-        int32 height;
-        glfwGetWindowSize(window, &width, &height);
-
         EditorViewContext result = {};
         result.viewState = viewState;
         result.x = viewportX;
         result.y = viewportY;
-        result.width = (uint32)width;
-        result.height = (uint32)height;
+        result.width = (uint32)viewportWidth;
+        result.height = (uint32)viewportHeight;
 
         return result;
     }
@@ -52,36 +37,29 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     bool ViewportContext::isDetached() const
     {
-        return imgBuffer == nullptr;
+        return deviceContext == nullptr;
     }
 
     void ViewportContext::render()
     {
-        glfwSwapBuffers(window);
-        if (onRenderCallback != nullptr)
-        {
-            onRenderCallback();
-        }
+        SwapBuffers(deviceContext);
     }
 
-    void ViewportContext::resize(uint32 x, uint32 y, uint32 width, uint32 height, void *buffer)
+    void ViewportContext::resize(uint32 x, uint32 y, uint32 width, uint32 height)
     {
         viewportX = x;
         viewportY = y;
-        glfwSetWindowSize(window, width, height);
-
-        imgBuffer = buffer;
+        viewportWidth = width;
+        viewportHeight = height;
     }
 
     void ViewportContext::detach()
     {
-        imgBuffer = nullptr;
-        onRenderCallback = nullptr;
+        deviceContext = 0;
     }
 
-    void ViewportContext::reattach(void *imgBuffer, std::function<void()> onRenderCallback)
+    void ViewportContext::reattach(HDC deviceContext)
     {
-        this->imgBuffer = imgBuffer;
-        this->onRenderCallback = onRenderCallback;
+        this->deviceContext = deviceContext;
     }
 }}}

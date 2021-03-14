@@ -1,6 +1,5 @@
 #include "EngineInterop.hpp"
 
-#include <windows.h>
 #include <msclr\lock.h>
 #include <msclr\marshal_cppstd.h>
 #include "../Engine/terrain_assets.h"
@@ -20,20 +19,14 @@ namespace Terrain { namespace Engine { namespace Interop {
 
         stateProxy = gcnew Proxy::StateProxy(&memory->editor.newState);
 
-        hoveredViewportCtx = nullptr;
-
         lastTickTime = DateTime::UtcNow;
         renderTimer = gcnew DispatcherTimer(DispatcherPriority::Send);
         renderTimer->Interval = TimeSpan::FromMilliseconds(1);
         renderTimer->Tick += gcnew System::EventHandler(&EngineInterop::OnTick);
         renderTimer->Start();
-
-        Application::Current->MainWindow->MouseWheel +=
-            gcnew MouseWheelEventHandler(&EngineInterop::OnMouseWheel);
     }
 
-    ViewportContext *EngineInterop::CreateView(
-        char *imgBuffer, RenderCallbackUnmanaged renderCallback)
+    ViewportContext *EngineInterop::CreateView(HDC deviceContext)
     {
         msclr::lock l(viewportCtxLock);
 
@@ -43,24 +36,13 @@ namespace Terrain { namespace Engine { namespace Interop {
             auto primaryVctx = viewportContexts->at(0);
             if (primaryVctx->isDetached())
             {
-                primaryVctx->reattach(imgBuffer, renderCallback);
+                primaryVctx->reattach(deviceContext);
                 return primaryVctx;
             }
         }
 
-        ViewportContext *vctx = new ViewportContext(imgBuffer, renderCallback);
+        ViewportContext *vctx = new ViewportContext(deviceContext);
         viewportContexts->push_back(vctx);
-
-        if (!isGlInitialized)
-        {
-            /*
-             * We can only initialize the renderer once a GL context is associated with GLFW as
-             * renderer initialization loads GLAD. A GL context is only associated with GLFW
-             * when a window is marked as the primary window.
-             */
-            win32MakeWindowPrimary(vctx->window);
-            isGlInitialized = true;
-        }
 
         return vctx;
     }
@@ -103,69 +85,35 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
     {
-        if (!isGlInitialized)
-            return;
-
         DateTime now = DateTime::UtcNow;
         float deltaTime = (now - lastTickTime).TotalSeconds;
         lastTickTime = now;
 
-        EditorViewContext activeView = {};
-        if (hoveredViewportCtx)
+        std::vector<EditorViewContext> views;
+        for (auto vctx : *viewportContexts)
         {
-            activeView = hoveredViewportCtx->getViewContext();
+            views.push_back(vctx->getViewContext());
         }
-        win32TickApp(deltaTime, hoveredViewportCtx ? &activeView : 0);
+        win32TickApp(deltaTime, views.data(), views.size());
 
         msclr::lock l(viewportCtxLock);
         for (auto vctx : *viewportContexts)
         {
-            RenderView(*vctx);
-        }
+            EditorViewContext view = vctx->getViewContext();
+            if (view.width == 0 || view.height == 0)
+                return;
 
-        win32PollEvents();
-    }
-
-    void EngineInterop::RenderView(ViewportContext &vctx)
-    {
-        if (!memory->editor.isInitialized)
-            return;
-
-        EditorViewContext view = vctx.getViewContext();
-        if (view.width == 0 || view.height == 0)
-            return;
-
-        win32MakeWindowCurrent(vctx.window);
-        switch (vctx.getEditorView())
-        {
-        case EditorView::Scene:
-            editorRenderSceneView(&memory->editor, &view);
-            break;
-        case EditorView::HeightmapPreview:
-            editorRenderHeightmapPreview(&memory->editor, &view);
-            break;
-        }
-
-        assert(vctx.imgBuffer);
-        rendererReadFramebufferPixels(view.width, view.height, vctx.imgBuffer);
-
-        vctx.render();
-    }
-
-    void EngineInterop::OnMouseWheel(Object ^ sender, MouseWheelEventArgs ^ args)
-    {
-        memory->nextMouseScrollOffsetY += args->Delta;
-    }
-
-    void EngineInterop::SetViewportContextHoverState(ViewportContext *vctx, bool isHovered)
-    {
-        if (isHovered)
-        {
-            hoveredViewportCtx = vctx;
-        }
-        else if (vctx == hoveredViewportCtx)
-        {
-            hoveredViewportCtx = nullptr;
+            wglMakeCurrent(vctx->deviceContext, memory->glRenderingContext);
+            switch (vctx->getEditorView())
+            {
+            case EditorView::Scene:
+                editorRenderSceneView(&memory->editor, &view);
+                break;
+            case EditorView::HeightmapPreview:
+                editorRenderHeightmapPreview(&memory->editor, &view);
+                break;
+            }
+            SwapBuffers(vctx->deviceContext);
         }
     }
 
@@ -302,15 +250,12 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         renderTimer->Stop();
 
-        if (isGlInitialized)
+        for (int i = 0; i < viewportContexts->size(); i++)
         {
-            for (int i = 0; i < viewportContexts->size(); i++)
-            {
-                delete viewportContexts->at(i);
-            }
-            viewportContexts->clear();
-            delete viewportContexts;
+            delete viewportContexts->at(i);
         }
+        viewportContexts->clear();
+        delete viewportContexts;
 
         win32ShutdownPlatform();
     }

@@ -1,5 +1,6 @@
 #include "win32_editor_platform.h"
 
+#include <windowsx.h>
 #include <GLFW/glfw3native.h>
 #include "../Engine/terrain_assets.h"
 
@@ -7,6 +8,8 @@ using namespace System::Windows;
 using namespace System::Windows::Input;
 
 global_variable Win32PlatformMemory *platformMemory;
+
+#define VIEWPORT_WINDOW_CLASS_NAME L"TerrainOpenGLViewportWindowClass"
 
 void win32GetAbsolutePath(const char *relativePath, char *absolutePath)
 {
@@ -207,6 +210,42 @@ PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
     platformMemory->shouldCaptureMouse = true;
 }
 
+void win32SetDeviceContextPixelFormat(HDC deviceContext)
+{
+    PIXELFORMATDESCRIPTOR pfd = {};
+    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+    pfd.nVersion = 1;
+    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
+    pfd.iPixelType = PFD_TYPE_RGBA;
+    pfd.cColorBits = 32;
+    pfd.cDepthBits = 16;
+    pfd.iLayerType = PFD_MAIN_PLANE;
+
+    int32 pixelFormat = ChoosePixelFormat(deviceContext, &pfd);
+    SetPixelFormat(deviceContext, pixelFormat, &pfd);
+}
+
+LRESULT WINAPI win32ViewportWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_SETCURSOR:
+    {
+        bool hideCursor =
+            platformMemory->shouldCaptureMouse || platformMemory->wasMouseCaptured;
+        SetCursor(hideCursor ? 0 : LoadCursor(0, IDC_ARROW));
+        return 1;
+    }
+    case WM_MOUSEWHEEL:
+    {
+        platformMemory->nextMouseScrollOffsetY +=
+            GET_WHEEL_DELTA_WPARAM(wParam) * GET_Y_LPARAM(lParam);
+        return 1;
+    }
+    }
+    return DefWindowProc(hwnd, message, wParam, lParam);
+}
+
 Win32PlatformMemory *win32InitializePlatform()
 {
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
@@ -238,7 +277,6 @@ Win32PlatformMemory *win32InitializePlatform()
         (uint8 *)platformMemory->editor.data.baseAddress + platformMemory->editor.data.size;
     engine->size =
         APP_MEMORY_SIZE - (sizeof(Win32PlatformMemory) + platformMemory->editor.data.size);
-    engine->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
     engine->platformLogMessage = win32LogMessage;
     engine->platformLoadAsset = win32LoadAsset;
 
@@ -251,222 +289,242 @@ Win32PlatformMemory *win32InitializePlatform()
     engineMemoryOffset += engine->assets.size;
     assert(engineMemoryOffset == engine->size);
 
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    System::Windows::Interop::WindowInteropHelper interopHelper(
+        Application::Current->MainWindow);
+    platformMemory->mainWindowHwnd = (HWND)interopHelper.EnsureHandle().ToPointer();
+
+    HINSTANCE instance = GetModuleHandle(0);
+    WNDCLASS dummyWindowClass = {};
+    dummyWindowClass.lpfnWndProc = DefWindowProc;
+    dummyWindowClass.hInstance = instance;
+    dummyWindowClass.lpszClassName = L"TerrainOpenGLDummyWindowClass";
+    RegisterClass(&dummyWindowClass);
+
+    platformMemory->dummyWindowHwnd = CreateWindowEx(0, dummyWindowClass.lpszClassName,
+        L"TerrainOpenGLDummyWindow", 0, 0, 0, 100, 100, 0, 0, instance, 0);
+    HDC dummyDeviceContext = GetDC(platformMemory->dummyWindowHwnd);
+    win32SetDeviceContextPixelFormat(dummyDeviceContext);
+    platformMemory->glRenderingContext = wglCreateContext(dummyDeviceContext);
+    wglMakeCurrent(dummyDeviceContext, platformMemory->glRenderingContext);
+
+    WNDCLASS viewportWindowClass = {};
+    viewportWindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
+    viewportWindowClass.lpfnWndProc = (WNDPROC)win32ViewportWndProc;
+    viewportWindowClass.hInstance = instance;
+    viewportWindowClass.lpszClassName = VIEWPORT_WINDOW_CLASS_NAME;
+    RegisterClass(&viewportWindowClass);
 
     return platformMemory;
 }
 
-void win32GetInputState(EditorInput *input, EditorViewContext *activeView)
+Win32ViewportWindow win32CreateViewportWindow(HWND parentHwnd)
+{
+    Win32ViewportWindow result = {};
+
+    HINSTANCE instance = GetModuleHandle(0);
+    result.hwnd = CreateWindowEx(0, VIEWPORT_WINDOW_CLASS_NAME, L"TerrainOpenGLViewportWindow",
+        WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, parentHwnd, 0, instance, 0);
+    result.deviceContext = GetDC(result.hwnd);
+    win32SetDeviceContextPixelFormat(result.deviceContext);
+
+    return result;
+}
+
+void win32GetInputState(EditorInput *input, EditorViewContext *views, uint32 viewCount)
 {
     *input = {};
 
+    uint64 pressedButtons = 0;
+    pressedButtons |= (GetAsyncKeyState(VK_LBUTTON) ? EDITOR_INPUT_MOUSE_LEFT : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_MBUTTON) ? EDITOR_INPUT_MOUSE_MIDDLE : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_RBUTTON) ? EDITOR_INPUT_MOUSE_RIGHT : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_SPACE) ? EDITOR_INPUT_KEY_SPACE : 0);
+    pressedButtons |= (GetAsyncKeyState(0x30) ? EDITOR_INPUT_KEY_0 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x31) ? EDITOR_INPUT_KEY_1 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x32) ? EDITOR_INPUT_KEY_2 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x33) ? EDITOR_INPUT_KEY_3 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x34) ? EDITOR_INPUT_KEY_4 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x35) ? EDITOR_INPUT_KEY_5 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x36) ? EDITOR_INPUT_KEY_6 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x37) ? EDITOR_INPUT_KEY_7 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x38) ? EDITOR_INPUT_KEY_8 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x39) ? EDITOR_INPUT_KEY_9 : 0);
+    pressedButtons |= (GetAsyncKeyState(0x41) ? EDITOR_INPUT_KEY_A : 0);
+    pressedButtons |= (GetAsyncKeyState(0x42) ? EDITOR_INPUT_KEY_B : 0);
+    pressedButtons |= (GetAsyncKeyState(0x43) ? EDITOR_INPUT_KEY_C : 0);
+    pressedButtons |= (GetAsyncKeyState(0x44) ? EDITOR_INPUT_KEY_D : 0);
+    pressedButtons |= (GetAsyncKeyState(0x45) ? EDITOR_INPUT_KEY_E : 0);
+    pressedButtons |= (GetAsyncKeyState(0x46) ? EDITOR_INPUT_KEY_F : 0);
+    pressedButtons |= (GetAsyncKeyState(0x47) ? EDITOR_INPUT_KEY_G : 0);
+    pressedButtons |= (GetAsyncKeyState(0x48) ? EDITOR_INPUT_KEY_H : 0);
+    pressedButtons |= (GetAsyncKeyState(0x49) ? EDITOR_INPUT_KEY_I : 0);
+    pressedButtons |= (GetAsyncKeyState(0x4A) ? EDITOR_INPUT_KEY_J : 0);
+    pressedButtons |= (GetAsyncKeyState(0x4B) ? EDITOR_INPUT_KEY_K : 0);
+    pressedButtons |= (GetAsyncKeyState(0x4C) ? EDITOR_INPUT_KEY_L : 0);
+    pressedButtons |= (GetAsyncKeyState(0x4D) ? EDITOR_INPUT_KEY_M : 0);
+    pressedButtons |= (GetAsyncKeyState(0x4E) ? EDITOR_INPUT_KEY_N : 0);
+    pressedButtons |= (GetAsyncKeyState(0x4F) ? EDITOR_INPUT_KEY_O : 0);
+    pressedButtons |= (GetAsyncKeyState(0x50) ? EDITOR_INPUT_KEY_P : 0);
+    pressedButtons |= (GetAsyncKeyState(0x51) ? EDITOR_INPUT_KEY_Q : 0);
+    pressedButtons |= (GetAsyncKeyState(0x52) ? EDITOR_INPUT_KEY_R : 0);
+    pressedButtons |= (GetAsyncKeyState(0x53) ? EDITOR_INPUT_KEY_S : 0);
+    pressedButtons |= (GetAsyncKeyState(0x54) ? EDITOR_INPUT_KEY_T : 0);
+    pressedButtons |= (GetAsyncKeyState(0x55) ? EDITOR_INPUT_KEY_U : 0);
+    pressedButtons |= (GetAsyncKeyState(0x56) ? EDITOR_INPUT_KEY_V : 0);
+    pressedButtons |= (GetAsyncKeyState(0x57) ? EDITOR_INPUT_KEY_W : 0);
+    pressedButtons |= (GetAsyncKeyState(0x58) ? EDITOR_INPUT_KEY_X : 0);
+    pressedButtons |= (GetAsyncKeyState(0x59) ? EDITOR_INPUT_KEY_Y : 0);
+    pressedButtons |= (GetAsyncKeyState(0x5A) ? EDITOR_INPUT_KEY_Z : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_ESCAPE) ? EDITOR_INPUT_KEY_ESCAPE : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_RETURN) ? EDITOR_INPUT_KEY_ENTER : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_RIGHT) ? EDITOR_INPUT_KEY_RIGHT : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_LEFT) ? EDITOR_INPUT_KEY_LEFT : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_DOWN) ? EDITOR_INPUT_KEY_DOWN : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_UP) ? EDITOR_INPUT_KEY_UP : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F1) ? EDITOR_INPUT_KEY_F1 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F2) ? EDITOR_INPUT_KEY_F2 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F3) ? EDITOR_INPUT_KEY_F3 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F4) ? EDITOR_INPUT_KEY_F4 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F5) ? EDITOR_INPUT_KEY_F5 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F6) ? EDITOR_INPUT_KEY_F6 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F7) ? EDITOR_INPUT_KEY_F7 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F8) ? EDITOR_INPUT_KEY_F8 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F9) ? EDITOR_INPUT_KEY_F9 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F10) ? EDITOR_INPUT_KEY_F10 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F11) ? EDITOR_INPUT_KEY_F11 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_F12) ? EDITOR_INPUT_KEY_F12 : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_LSHIFT) ? EDITOR_INPUT_KEY_LEFT_SHIFT : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_LCONTROL) ? EDITOR_INPUT_KEY_LEFT_CONTROL : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_RSHIFT) ? EDITOR_INPUT_KEY_RIGHT_SHIFT : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_RCONTROL) ? EDITOR_INPUT_KEY_RIGHT_CONTROL : 0);
+    pressedButtons |= (GetAsyncKeyState(VK_MENU) ? EDITOR_INPUT_KEY_ALT : 0);
+
     Window ^ appWindow = Application::Current->MainWindow;
-    Point actualMousePosPt = Mouse::GetPosition(appWindow);
-    glm::vec2 actualMousePos = glm::vec2(actualMousePosPt.X, actualMousePosPt.Y);
-    glm::vec2 virtualMousePos = actualMousePos;
 
-    if (platformMemory->wasMouseCaptured)
+    POINT cursorPos_screenSpaceWin32Point;
+    GetCursorPos(&cursorPos_screenSpaceWin32Point);
+    Point cursorPos_screenSpacePoint =
+        Point(cursorPos_screenSpaceWin32Point.x, cursorPos_screenSpaceWin32Point.y);
+    Point actualMousePos_windowSpacePoint =
+        appWindow->PointFromScreen(cursorPos_screenSpacePoint);
+    glm::vec2 actualMousePos_windowSpace =
+        glm::vec2(actualMousePos_windowSpacePoint.X, actualMousePos_windowSpacePoint.Y);
+    glm::vec2 virtualMousePos_windowSpace = actualMousePos_windowSpace;
+
+    if (GetForegroundWindow() == platformMemory->mainWindowHwnd)
     {
-        /*
-         * If we are capturing the mouse, we need to keep both the actual mouse position
-         * and a simulated 'virtual' mouse position. The actual mouse position is used for
-         * cursor offset calculations and the virtual mouse position is used when the
-         * cursor position is queried.
-         */
-        virtualMousePos = platformMemory->capturedMousePos;
-
-        if (!platformMemory->shouldCaptureMouse)
+        if (platformMemory->wasMouseCaptured)
         {
-            // move the cursor back to its original position when the mouse is released
-            Point capturedMousePos_screen = appWindow->PointToScreen(
-                Point(platformMemory->capturedMousePos.x, platformMemory->capturedMousePos.y));
-            SetCursorPos(capturedMousePos_screen.X, capturedMousePos_screen.Y);
+            /*
+             * If we are capturing the mouse, we need to keep both the actual mouse position
+             * and a simulated 'virtual' mouse position. The actual mouse position is used for
+             * cursor offset calculations and the virtual mouse position is used when the
+             * cursor position is queried.
+             */
+            virtualMousePos_windowSpace = platformMemory->capturedMousePos_windowSpace;
 
-            actualMousePos = platformMemory->capturedMousePos;
-        }
-    }
-
-    if (activeView)
-    {
-        input->activeViewState = activeView->viewState;
-        if (input->activeViewState == platformMemory->prevActiveViewState)
-        {
-            input->prevPressedButtons = platformMemory->prevPressedButtons;
-        }
-
-        input->pressedButtons |=
-            (Mouse::LeftButton == MouseButtonState::Pressed) * EDITOR_INPUT_MOUSE_LEFT;
-        input->pressedButtons |=
-            (Mouse::MiddleButton == MouseButtonState::Pressed) * EDITOR_INPUT_MOUSE_MIDDLE;
-        input->pressedButtons |=
-            (Mouse::RightButton == MouseButtonState::Pressed) * EDITOR_INPUT_MOUSE_RIGHT;
-
-        glm::vec2 viewportPos_window = glm::vec2(activeView->x, activeView->y);
-        glm::vec2 viewportSize = glm::vec2(activeView->width, activeView->height);
-        input->normalizedCursorPos = (virtualMousePos - viewportPos_window) / viewportSize;
-
-        // use the mouse scroll offset accumulated by the scroll wheel callback
-        input->scrollOffset = platformMemory->nextMouseScrollOffsetY;
-
-        if (platformMemory->shouldCaptureMouse)
-        {
-            if (!platformMemory->wasMouseCaptured)
+            if (!platformMemory->shouldCaptureMouse)
             {
-                // store the cursor position so we can move the cursor back to it when the
-                // mouse is released
-                platformMemory->capturedMousePos = actualMousePos;
+                // move the cursor back to its original position when the mouse is released
+                Point capturedMousePos_screenSpacePoint = appWindow->PointToScreen(
+                    Point(platformMemory->capturedMousePos_windowSpace.x,
+                        platformMemory->capturedMousePos_windowSpace.y));
+                SetCursorPos(
+                    capturedMousePos_screenSpacePoint.X, capturedMousePos_screenSpacePoint.Y);
+
+                actualMousePos_windowSpace = platformMemory->capturedMousePos_windowSpace;
+            }
+        }
+
+        for (uint32 i = 0; i < viewCount; i++)
+        {
+            EditorViewContext *view = &views[i];
+
+            glm::vec2 viewportPos_windowSpace = glm::vec2(view->x, view->y);
+            glm::vec2 viewportSize = glm::vec2(view->width, view->height);
+
+            if (actualMousePos_windowSpace.x < viewportPos_windowSpace.x
+                || actualMousePos_windowSpace.x >= viewportPos_windowSpace.x + viewportSize.x
+                || actualMousePos_windowSpace.y < viewportPos_windowSpace.y
+                || actualMousePos_windowSpace.y >= viewportPos_windowSpace.y + viewportSize.y)
+            {
+                continue;
             }
 
-            // calculate the center of the hovered viewport relative to the window
-            glm::vec2 viewportCenter_window = viewportPos_window + (viewportSize * 0.5f);
+            input->activeViewState = view->viewState;
+            input->prevPressedButtons = platformMemory->prevPressedButtons;
+            input->pressedButtons = pressedButtons;
+            input->normalizedCursorPos =
+                (virtualMousePos_windowSpace - viewportPos_windowSpace) / viewportSize;
+            input->scrollOffset = platformMemory->nextMouseScrollOffsetY;
 
-            // convert the viewport center to screen space and move the cursor to it
-            Point viewportCenterPt_screen = appWindow->PointToScreen(
-                Point(viewportCenter_window.x, viewportCenter_window.y));
-            SetCursorPos(viewportCenterPt_screen.X, viewportCenterPt_screen.Y);
-
-            if (platformMemory->wasMouseCaptured)
+            if (platformMemory->shouldCaptureMouse)
             {
-                input->cursorOffset = actualMousePos - viewportCenter_window;
+                if (!platformMemory->wasMouseCaptured)
+                {
+                    // store the cursor position so we can move the cursor back to it when the
+                    // mouse is released
+                    platformMemory->capturedMousePos_windowSpace = actualMousePos_windowSpace;
+                }
+
+                // calculate the center of the hovered viewport relative to the window
+                glm::vec2 viewportCenter_windowSpace =
+                    glm::ceil(viewportPos_windowSpace + (viewportSize * 0.5f));
+
+                // convert the viewport center to screen space and move the cursor to it
+                Point viewportCenter_screenSpacePoint = appWindow->PointToScreen(
+                    Point(viewportCenter_windowSpace.x, viewportCenter_windowSpace.y));
+                SetCursorPos(
+                    viewportCenter_screenSpacePoint.X, viewportCenter_screenSpacePoint.Y);
+
+                if (platformMemory->wasMouseCaptured)
+                {
+                    input->cursorOffset =
+                        actualMousePos_windowSpace - viewportCenter_windowSpace;
+                }
+                else
+                {
+                    // don't set the mouse offset on the first frame after we capture the mouse
+                    // or there will be a big jump from the initial cursor position to the
+                    // center of the viewport
+                    input->cursorOffset.x = 0;
+                    input->cursorOffset.y = 0;
+                    SetCursor(0);
+                }
             }
             else
             {
-                // don't set the mouse offset on the first frame after we capture the mouse
-                // or there will be a big jump from the initial cursor position to the
-                // center of the viewport
-                input->cursorOffset.x = 0;
-                input->cursorOffset.y = 0;
-                appWindow->Cursor = Cursors::None;
+                input->cursorOffset =
+                    actualMousePos_windowSpace - platformMemory->prevMousePos_windowSpace;
             }
+            break;
         }
-        else
-        {
-            input->cursorOffset = actualMousePos - platformMemory->prevMousePos;
-            appWindow->Cursor = nullptr;
-        }
-
-        // update keyboard state for hovered viewport
-        if (appWindow->IsKeyboardFocusWithin)
-        {
-#define UPDATE_KEY_STATE(EDITOR_KEY, WINDOWS_KEY)                                             \
-    input->pressedButtons |= Keyboard::IsKeyDown(WINDOWS_KEY) * EDITOR_INPUT_KEY_##EDITOR_KEY
-
-            UPDATE_KEY_STATE(SPACE, Key::Space);
-            UPDATE_KEY_STATE(0, Key::D0);
-            UPDATE_KEY_STATE(1, Key::D1);
-            UPDATE_KEY_STATE(2, Key::D2);
-            UPDATE_KEY_STATE(3, Key::D3);
-            UPDATE_KEY_STATE(4, Key::D4);
-            UPDATE_KEY_STATE(5, Key::D5);
-            UPDATE_KEY_STATE(6, Key::D6);
-            UPDATE_KEY_STATE(7, Key::D7);
-            UPDATE_KEY_STATE(8, Key::D8);
-            UPDATE_KEY_STATE(9, Key::D9);
-            UPDATE_KEY_STATE(A, Key::A);
-            UPDATE_KEY_STATE(B, Key::B);
-            UPDATE_KEY_STATE(C, Key::C);
-            UPDATE_KEY_STATE(D, Key::D);
-            UPDATE_KEY_STATE(E, Key::E);
-            UPDATE_KEY_STATE(F, Key::F);
-            UPDATE_KEY_STATE(G, Key::G);
-            UPDATE_KEY_STATE(H, Key::H);
-            UPDATE_KEY_STATE(I, Key::I);
-            UPDATE_KEY_STATE(J, Key::J);
-            UPDATE_KEY_STATE(K, Key::K);
-            UPDATE_KEY_STATE(L, Key::L);
-            UPDATE_KEY_STATE(M, Key::M);
-            UPDATE_KEY_STATE(N, Key::N);
-            UPDATE_KEY_STATE(O, Key::O);
-            UPDATE_KEY_STATE(P, Key::P);
-            UPDATE_KEY_STATE(Q, Key::Q);
-            UPDATE_KEY_STATE(R, Key::R);
-            UPDATE_KEY_STATE(S, Key::S);
-            UPDATE_KEY_STATE(T, Key::T);
-            UPDATE_KEY_STATE(U, Key::U);
-            UPDATE_KEY_STATE(V, Key::V);
-            UPDATE_KEY_STATE(W, Key::W);
-            UPDATE_KEY_STATE(X, Key::X);
-            UPDATE_KEY_STATE(Y, Key::Y);
-            UPDATE_KEY_STATE(Z, Key::Z);
-            UPDATE_KEY_STATE(ESCAPE, Key::Escape);
-            UPDATE_KEY_STATE(ENTER, Key::Enter);
-            UPDATE_KEY_STATE(RIGHT, Key::Right);
-            UPDATE_KEY_STATE(LEFT, Key::Left);
-            UPDATE_KEY_STATE(DOWN, Key::Down);
-            UPDATE_KEY_STATE(UP, Key::Up);
-            UPDATE_KEY_STATE(F1, Key::F1);
-            UPDATE_KEY_STATE(F2, Key::F2);
-            UPDATE_KEY_STATE(F3, Key::F3);
-            UPDATE_KEY_STATE(F4, Key::F4);
-            UPDATE_KEY_STATE(F5, Key::F5);
-            UPDATE_KEY_STATE(F6, Key::F6);
-            UPDATE_KEY_STATE(F7, Key::F7);
-            UPDATE_KEY_STATE(F8, Key::F8);
-            UPDATE_KEY_STATE(F9, Key::F9);
-            UPDATE_KEY_STATE(F10, Key::F10);
-            UPDATE_KEY_STATE(F11, Key::F11);
-            UPDATE_KEY_STATE(F12, Key::F12);
-            UPDATE_KEY_STATE(LEFT_SHIFT, Key::LeftShift);
-            UPDATE_KEY_STATE(LEFT_CONTROL, Key::LeftCtrl);
-            UPDATE_KEY_STATE(LEFT_ALT, Key::LeftAlt);
-            UPDATE_KEY_STATE(RIGHT_SHIFT, Key::RightShift);
-            UPDATE_KEY_STATE(RIGHT_CONTROL, Key::RightCtrl);
-            UPDATE_KEY_STATE(RIGHT_ALT, Key::RightAlt);
-        }
-    }
-    else
-    {
-        appWindow->Cursor = nullptr;
     }
 
     platformMemory->nextMouseScrollOffsetY = 0;
-    platformMemory->prevMousePos = actualMousePos;
+    platformMemory->prevMousePos_windowSpace = actualMousePos_windowSpace;
     platformMemory->wasMouseCaptured = platformMemory->shouldCaptureMouse;
     platformMemory->shouldCaptureMouse = false;
-    platformMemory->prevActiveViewState = input->activeViewState;
-    platformMemory->prevPressedButtons = input->pressedButtons;
+    platformMemory->prevPressedButtons = pressedButtons;
 }
 
-void win32MakeWindowPrimary(GLFWwindow *window)
-{
-    glfwMakeContextCurrent(window);
-    platformMemory->primaryWindow = window;
-}
-
-void win32MakeWindowCurrent(GLFWwindow *window)
-{
-    if (platformMemory->primaryWindow)
-    {
-        HWND hwnd = glfwGetWin32Window(window);
-        HDC deviceCtx = GetDC(hwnd);
-        HGLRC wglCtx = glfwGetWGLContext(platformMemory->primaryWindow);
-        wglMakeCurrent(deviceCtx, wglCtx);
-    }
-}
-
-void win32TickApp(float deltaTime, EditorViewContext *activeView)
+void win32TickApp(float deltaTime, EditorViewContext *views, uint32 viewCount)
 {
     win32LoadQueuedAssets();
 
     EditorInput input = {};
-    win32GetInputState(&input, activeView);
+    win32GetInputState(&input, views, viewCount);
 
     EditorState *currentState = &platformMemory->editor.currentState;
     EditorState *newState = &platformMemory->editor.newState;
     memcpy(currentState, newState, sizeof(*currentState));
-    editorUpdate(&platformMemory->editor, deltaTime, &input);
-}
 
-void win32PollEvents()
-{
-    glfwPollEvents();
+    editorUpdate(&platformMemory->editor, deltaTime, &input);
 }
 
 void win32ShutdownPlatform()
 {
     editorShutdown(&platformMemory->editor);
-    glfwTerminate();
+    wglDeleteContext(platformMemory->glRenderingContext);
+    DestroyWindow(platformMemory->dummyWindowHwnd);
 }

@@ -85,9 +85,13 @@ bool rendererInitialize(EngineMemory *memory)
 {
     RendererState *state = getState(memory);
 
-    if (!gladLoadGLLoader(memory->platformGetGlProcAddress))
+    bool glLoadSucceeded = memory->platformGetGlProcAddress
+        ? gladLoadGLLoader(memory->platformGetGlProcAddress)
+        : gladLoadGL();
+    if (!glLoadSucceeded)
     {
         memory->platformLogMessage("Failed to initialize GLAD");
+        assert(!"Failed to initialize GLAD");
         return 0;
     }
 
@@ -572,11 +576,6 @@ void rendererDrawElementsInstanced(
 {
     glDrawElementsInstancedBaseInstance(
         primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount, instanceOffset);
-}
-
-void rendererReadFramebufferPixels(uint32 width, uint32 height, void *out_pixels)
-{
-    glReadPixels(0, 0, width, height, GL_BGRA, GL_UNSIGNED_BYTE, out_pixels);
 }
 
 void rendererDispatchCompute(uint32 xCount, uint32 yCount, uint32 zCount)
