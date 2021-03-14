@@ -2,7 +2,6 @@
 #define WIN32_EDITOR_PLATFORM_H
 
 #include <windows.h>
-#include <GLFW/glfw3.h>
 
 #include "../Engine/terrain_platform.h"
 #include "editor.h"

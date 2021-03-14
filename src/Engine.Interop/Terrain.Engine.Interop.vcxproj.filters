@@ -22,7 +22,4 @@
     <ClInclude Include="editor.h" />
     <ClInclude Include="EditorView.h" />
   </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
 </Project>

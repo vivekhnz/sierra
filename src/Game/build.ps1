@@ -103,6 +103,10 @@ if (!(Test-Path $OutputPath)) {
     New-Item -Path $OutputPath -ItemType Directory | Out-Null
 }
 
+if (!(Test-Path '..\..\deps\nuget\glfw*')) {
+    & nuget restore 'packages.config'
+}
+
 $LockFilePath = "$OutputPath\build.lock"
 "build" | Out-File $LockFilePath
 

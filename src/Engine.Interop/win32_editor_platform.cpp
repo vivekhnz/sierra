@@ -1,7 +1,6 @@
 #include "win32_editor_platform.h"
 
 #include <windowsx.h>
-#include <GLFW/glfw3native.h>
 #include "../Engine/terrain_assets.h"
 
 using namespace System::Windows;
