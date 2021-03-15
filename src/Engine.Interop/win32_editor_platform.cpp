@@ -248,7 +248,7 @@ LRESULT WINAPI win32ViewportWndProc(HWND hwnd, UINT message, WPARAM wParam, LPAR
 Win32PlatformMemory *win32InitializePlatform()
 {
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
-#define EDITOR_DATA_MEMORY_SIZE (8 * 1024 * 1024)
+#define EDITOR_DATA_MEMORY_SIZE (32 * 1024 * 1024)
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
     platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
@@ -257,6 +257,13 @@ Win32PlatformMemory *win32InitializePlatform()
     {
         platformMemory->assetLoadQueue.indices[i] = i;
     }
+
+    platformMemory->editorCode.editorUpdate = editorUpdate;
+    platformMemory->editorCode.editorShutdown = editorShutdown;
+    platformMemory->editorCode.editorRenderSceneView = editorRenderSceneView;
+    platformMemory->editorCode.editorUpdateImportedHeightmapTexture =
+        editorUpdateImportedHeightmapTexture;
+    platformMemory->editorCode.editorRenderHeightmapPreview = editorRenderHeightmapPreview;
 
     platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
     platformMemory->editor.state.currentUiState = {};
@@ -339,15 +346,7 @@ Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
     result->vctx.y = y;
     result->vctx.width = width;
     result->vctx.height = height;
-
-    void *viewState = 0;
-    switch (view)
-    {
-    case Terrain::Engine::Interop::EditorView::Scene:
-        viewState = editorAddSceneView(&platformMemory->editor);
-        break;
-    }
-    result->vctx.viewState = viewState;
+    result->vctx.viewState = 0;
 
     return result;
 }
@@ -544,7 +543,8 @@ void win32TickApp(float deltaTime)
         TextureAsset asset;
         assetsLoadTexture(
             &platformMemory->editor.engine, result.data, result.size, true, &asset);
-        editorUpdateImportedHeightmapTexture(&platformMemory->editor, &asset);
+        platformMemory->editorCode.editorUpdateImportedHeightmapTexture(
+            &platformMemory->editor, &asset);
 
         win32FreeMemory(result.data);
         *platformMemory->importedHeightmapTexturePath = 0;
@@ -555,7 +555,7 @@ void win32TickApp(float deltaTime)
     EditorInput input = {};
     win32GetInputState(&input);
 
-    editorUpdate(&platformMemory->editor, deltaTime, &input);
+    platformMemory->editorCode.editorUpdate(&platformMemory->editor, deltaTime, &input);
 
     for (uint32 i = 0; i < platformMemory->viewportCount; i++)
     {
@@ -567,10 +567,12 @@ void win32TickApp(float deltaTime)
         switch (viewport->view)
         {
         case Terrain::Engine::Interop::EditorView::Scene:
-            editorRenderSceneView(&platformMemory->editor, &viewport->vctx);
+            platformMemory->editorCode.editorRenderSceneView(
+                &platformMemory->editor, &viewport->vctx);
             break;
         case Terrain::Engine::Interop::EditorView::HeightmapPreview:
-            editorRenderHeightmapPreview(&platformMemory->editor, &viewport->vctx);
+            platformMemory->editorCode.editorRenderHeightmapPreview(
+                &platformMemory->editor, &viewport->vctx);
             break;
         }
         SwapBuffers(viewport->deviceContext);
@@ -579,7 +581,7 @@ void win32TickApp(float deltaTime)
 
 void win32ShutdownPlatform()
 {
-    editorShutdown(&platformMemory->editor);
+    platformMemory->editorCode.editorShutdown(&platformMemory->editor);
     wglDeleteContext(platformMemory->glRenderingContext);
     DestroyWindow(platformMemory->dummyWindowHwnd);
 }

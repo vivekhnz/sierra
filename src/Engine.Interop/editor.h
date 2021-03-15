@@ -10,7 +10,6 @@
 #define MAX_BRUSH_QUADS 2048
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
-#define MAX_SCENE_VIEWS 8
 #define HEIGHTFIELD_COLUMNS 256
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTMAP_WIDTH 2048
@@ -152,9 +151,6 @@ struct SceneState
 
     uint16 *heightmapTextureDataTempBuffer;
 
-    SceneViewState viewStates[MAX_SCENE_VIEWS];
-    int viewStateCount = 0;
-
     struct WorldState
     {
         glm::vec2 brushPos;
@@ -290,14 +286,28 @@ struct EditorViewContext
     uint32 height;
 };
 
-void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input);
-void editorShutdown(EditorMemory *memory);
+#define EDITOR_UPDATE(name)                                                                   \
+    void name(EditorMemory *memory, float deltaTime, EditorInput *input)
+typedef EDITOR_UPDATE(EditorUpdate);
 
-void *editorAddSceneView(EditorMemory *memory);
-void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view);
+#define EDITOR_RENDER_SCENE_VIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
+typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
 
-void editorUpdateImportedHeightmapTexture(EditorMemory *memory, TextureAsset *asset);
+#define EDITOR_RENDER_HEIGHTMAP_PREVIEW(name)                                                 \
+    void name(EditorMemory *memory, EditorViewContext *view)
+typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 
-void editorRenderHeightmapPreview(EditorMemory *memory, EditorViewContext *view);
+#define EDITOR_SHUTDOWN(name) void name(EditorMemory *memory)
+typedef EDITOR_SHUTDOWN(EditorShutdown);
+
+#define EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(name)                                        \
+    void name(EditorMemory *memory, TextureAsset *asset)
+typedef EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(EditorUpdateImportedHeightmapTexture);
+
+EDITOR_UPDATE(editorUpdate);
+EDITOR_SHUTDOWN(editorShutdown);
+EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView);
+EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture);
+EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview);
 
 #endif

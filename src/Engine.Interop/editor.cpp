@@ -24,6 +24,7 @@ void *pushEditorData(EditorMemory *memory, uint64 size)
 
     return address;
 }
+#define pushEditorStruct(memory, struct) (struct *)pushEditorData(memory, sizeof(struct))
 
 bool isButtonDown(EditorInput *input, EditorInputButtons button)
 {
@@ -488,7 +489,7 @@ bool initializeEditor(EditorMemory *memory)
     return 1;
 }
 
-void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
+EDITOR_UPDATE(editorUpdate)
 {
     if (!memory->isInitialized)
     {
@@ -818,7 +819,7 @@ void editorUpdate(EditorMemory *memory, float deltaTime, EditorInput *input)
     }
 }
 
-void editorShutdown(EditorMemory *memory)
+EDITOR_SHUTDOWN(editorShutdown)
 {
     if (memory->isInitialized)
     {
@@ -826,29 +827,27 @@ void editorShutdown(EditorMemory *memory)
     }
 }
 
-void *editorAddSceneView(EditorMemory *memory)
-{
-    SceneState *sceneState = &memory->state.sceneState;
-    assert(sceneState->viewStateCount < MAX_SCENE_VIEWS);
-
-    SceneViewState *state = &sceneState->viewStates[sceneState->viewStateCount++];
-    state->orbitCameraDistance = 112.5f;
-    state->orbitCameraYaw = glm::radians(180.0f);
-    state->orbitCameraPitch = glm::radians(15.0f);
-    state->cameraLookAt = glm::vec3(0, 0, 0);
-
-    glm::vec3 lookDir = glm::vec3(cos(state->orbitCameraYaw) * cos(state->orbitCameraPitch),
-        sin(state->orbitCameraPitch),
-        sin(state->orbitCameraYaw) * cos(state->orbitCameraPitch));
-    state->cameraPos = state->cameraLookAt + (lookDir * state->orbitCameraDistance);
-
-    return state;
-}
-
-void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view)
+EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     SceneState *sceneState = &memory->state.sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
+    if (!viewState)
+    {
+        viewState = pushEditorStruct(memory, SceneViewState);
+        viewState->orbitCameraDistance = 112.5f;
+        viewState->orbitCameraYaw = glm::radians(180.0f);
+        viewState->orbitCameraPitch = glm::radians(15.0f);
+        viewState->cameraLookAt = glm::vec3(0, 0, 0);
+
+        glm::vec3 lookDir =
+            glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
+                sin(viewState->orbitCameraPitch),
+                sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
+        viewState->cameraPos =
+            viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
+
+        view->viewState = viewState;
+    }
 
     bool isCursorVisibleView = sceneState->worldState.brushCursorVisibleView == viewState;
 
@@ -1017,14 +1016,14 @@ void editorRenderSceneView(EditorMemory *memory, EditorViewContext *view)
     rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);
 }
 
-void editorUpdateImportedHeightmapTexture(EditorMemory *memory, TextureAsset *asset)
+EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)
 {
     rendererUpdateTexture(&memory->engine, memory->state.importedHeightmapTextureHandle,
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset->width, asset->height, asset->data);
     memory->state.newUiState.heightmapStatus = HEIGHTMAP_STATUS_INITIALIZING;
 }
 
-void editorRenderHeightmapPreview(EditorMemory *memory, EditorViewContext *view)
+EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     rendererUpdateCameraState(
         &memory->engine, &memory->state.heightmapPreviewState.cameraTransform);

@@ -48,6 +48,15 @@ struct Win32ViewportWindow
     EditorViewContext vctx;
 };
 
+struct Win32EditorCode
+{
+    EditorUpdate *editorUpdate;
+    EditorShutdown *editorShutdown;
+    EditorRenderSceneView *editorRenderSceneView;
+    EditorUpdateImportedHeightmapTexture *editorUpdateImportedHeightmapTexture;
+    EditorRenderHeightmapPreview *editorRenderHeightmapPreview;
+};
+
 struct Win32PlatformMemory
 {
     HWND mainWindowHwnd;
@@ -55,6 +64,8 @@ struct Win32PlatformMemory
     HGLRC glRenderingContext;
     Win32ViewportWindow viewportWindows[MAX_VIEWPORTS];
     uint32 viewportCount;
+
+    Win32EditorCode editorCode;
 
     bool shouldCaptureMouse;
     bool wasMouseCaptured;
@@ -78,8 +89,6 @@ Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
     uint32 width,
     uint32 height,
     Terrain::Engine::Interop::EditorView view);
-Win32ReadFileResult win32ReadFile(const char *path);
-void win32FreeMemory(void *data);
 void win32TickApp(float deltaTime);
 void win32ShutdownPlatform();
 
