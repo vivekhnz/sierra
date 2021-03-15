@@ -57,7 +57,7 @@ struct MaterialProperties
     float altitudeEnd;
 };
 
-struct EditorState
+struct EditorUiState
 {
     HeightmapStatus heightmapStatus;
     InteractionMode mode;
@@ -80,7 +80,6 @@ struct HeightmapCompositionState
     {
         uint32 renderTextureHandle;
         int framebufferHandle;
-        uint32 importedHeightmapTextureHandle;
         uint32 baseHeightmapTextureHandle;
         uint32 brushQuadVertexArrayHandle;
 
@@ -179,18 +178,24 @@ struct HeightmapPreviewState
     glm::mat4 cameraTransform;
 };
 
+struct EditorState
+{
+    uint32 importedHeightmapTextureHandle;
+
+    EditorUiState currentUiState;
+    EditorUiState newUiState;
+    HeightmapCompositionState heightmapCompositionState;
+    SceneState sceneState;
+    HeightmapPreviewState heightmapPreviewState;
+};
+
 struct EditorMemory
 {
     bool isInitialized;
 
     PlatformCaptureMouse *platformCaptureMouse;
 
-    EditorState currentState;
-    EditorState newState;
-    HeightmapCompositionState heightmapCompositionState;
-    SceneState sceneState;
-    HeightmapPreviewState heightmapPreviewState;
-
+    EditorState state;
     MemoryBlock data;
     uint64 dataStorageUsed;
 

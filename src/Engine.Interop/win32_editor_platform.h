@@ -67,6 +67,7 @@ struct Win32PlatformMemory
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
 
+    char importedHeightmapTexturePath[MAX_PATH];
     EditorMemory editor;
 };
 

@@ -259,14 +259,14 @@ Win32PlatformMemory *win32InitializePlatform()
     }
 
     platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
-    platformMemory->editor.currentState = {};
-    platformMemory->editor.newState = {};
-    platformMemory->editor.newState.brushRadius = 128.0f;
-    platformMemory->editor.newState.brushFalloff = 0.1f;
-    platformMemory->editor.newState.brushStrength = 0.12f;
-    platformMemory->editor.newState.lightDirection = 0.5f;
-    platformMemory->editor.newState.materialCount = 0;
-    platformMemory->editor.newState.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
+    platformMemory->editor.state.currentUiState = {};
+    platformMemory->editor.state.newUiState = {};
+    platformMemory->editor.state.newUiState.brushRadius = 128.0f;
+    platformMemory->editor.state.newUiState.brushFalloff = 0.1f;
+    platformMemory->editor.state.newUiState.brushStrength = 0.12f;
+    platformMemory->editor.state.newUiState.lightDirection = 0.5f;
+    platformMemory->editor.state.newUiState.materialCount = 0;
+    platformMemory->editor.state.newUiState.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
     platformMemory->editor.data.baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
     platformMemory->editor.data.size = EDITOR_DATA_MEMORY_SIZE;
     platformMemory->editor.dataStorageUsed = 0;
@@ -535,12 +535,25 @@ void win32TickApp(float deltaTime)
 {
     win32LoadQueuedAssets();
 
+    if (platformMemory->importedHeightmapTexturePath[0])
+    {
+        Win32ReadFileResult result =
+            win32ReadFile(platformMemory->importedHeightmapTexturePath);
+        assert(result.data);
+
+        TextureAsset asset;
+        assetsLoadTexture(
+            &platformMemory->editor.engine, result.data, result.size, true, &asset);
+        editorUpdateImportedHeightmapTexture(&platformMemory->editor, &asset);
+
+        win32FreeMemory(result.data);
+        *platformMemory->importedHeightmapTexturePath = 0;
+    }
+
+    platformMemory->editor.state.currentUiState = platformMemory->editor.state.newUiState;
+
     EditorInput input = {};
     win32GetInputState(&input);
-
-    EditorState *currentState = &platformMemory->editor.currentState;
-    EditorState *newState = &platformMemory->editor.newState;
-    memcpy(currentState, newState, sizeof(*currentState));
 
     editorUpdate(&platformMemory->editor, deltaTime, &input);
 

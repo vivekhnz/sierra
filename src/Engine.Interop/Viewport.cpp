@@ -1,6 +1,5 @@
 #include "Viewport.h"
-
-#include "EngineInterop.hpp"
+#include "win32_editor_platform.h"
 
 using namespace System;
 using namespace System::Runtime::InteropServices;

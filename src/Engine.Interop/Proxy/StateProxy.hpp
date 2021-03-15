@@ -12,10 +12,10 @@ public
     ref class StateProxy
     {
     private:
-        EditorState *state;
+        EditorUiState *state;
 
     public:
-        StateProxy(EditorState *state) : state(state)
+        StateProxy(EditorUiState *state) : state(state)
         {
         }
 
