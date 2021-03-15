@@ -10,7 +10,7 @@ global_variable Win32PlatformMemory *platformMemory;
 
 #define VIEWPORT_WINDOW_CLASS_NAME L"TerrainOpenGLViewportWindowClass"
 
-void win32GetAbsolutePath(const char *relativePath, char *absolutePath)
+void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
 {
     // get path to current assembly
     CHAR exePath[MAX_PATH];
@@ -53,6 +53,33 @@ void win32GetAbsolutePath(const char *relativePath, char *absolutePath)
     for (const char *srcCursor = relativePath; *srcCursor; srcCursor++)
     {
         *dstCursor++ = *srcCursor;
+    }
+    *dstCursor = 0;
+}
+
+void win32GetOutputAbsolutePath(const char *filename, char *absolutePath)
+{
+    CHAR exePath[MAX_PATH];
+    uint64 exePathLength = GetModuleFileNameA(0, exePath, MAX_PATH);
+
+    const char *srcCursor = exePath + exePathLength;
+    uint64 outputDirPathLength = exePathLength;
+    while (*srcCursor != '\\')
+    {
+        srcCursor--;
+        outputDirPathLength--;
+    }
+
+    srcCursor = exePath;
+    char *dstCursor = absolutePath;
+    for (uint32 i = 0; i < outputDirPathLength + 1; i++)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+    srcCursor = filename;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
     }
     *dstCursor = 0;
 }
@@ -136,7 +163,7 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     *request = {};
     request->assetId = assetId;
     request->callback = onAssetLoaded;
-    win32GetAbsolutePath(relativePath, request->path);
+    win32GetAssetAbsolutePath(relativePath, request->path);
 
     // add asset to watch list so we can hot reload it
     bool isAssetAlreadyWatched = false;
@@ -258,12 +285,10 @@ Win32PlatformMemory *win32InitializePlatform()
         platformMemory->assetLoadQueue.indices[i] = i;
     }
 
-    platformMemory->editorCode.editorUpdate = editorUpdate;
-    platformMemory->editorCode.editorShutdown = editorShutdown;
-    platformMemory->editorCode.editorRenderSceneView = editorRenderSceneView;
-    platformMemory->editorCode.editorUpdateImportedHeightmapTexture =
-        editorUpdateImportedHeightmapTexture;
-    platformMemory->editorCode.editorRenderHeightmapPreview = editorRenderHeightmapPreview;
+    win32GetOutputAbsolutePath("terrain_editor.dll", platformMemory->editorCode.dllPath);
+    win32GetOutputAbsolutePath(
+        "terrain_editor.copy.dll", platformMemory->editorCode.dllShadowCopyPath);
+    win32GetOutputAbsolutePath("build.lock", platformMemory->editorCode.buildLockFilePath);
 
     platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
     platformMemory->editor.state.currentUiState = {};
@@ -530,11 +555,61 @@ void win32GetInputState(EditorInput *input)
     platformMemory->prevPressedButtons = pressedButtons;
 }
 
+void win32LoadEditorCode(Win32EditorCode *editorCode)
+{
+    if (!CopyFileA(editorCode->dllPath, editorCode->dllShadowCopyPath, false))
+        return;
+
+    editorCode->dllModule = LoadLibraryA(editorCode->dllShadowCopyPath);
+    if (editorCode->dllModule)
+    {
+        editorCode->editorUpdate =
+            (EditorUpdate *)GetProcAddress(editorCode->dllModule, "editorUpdate");
+        editorCode->editorShutdown =
+            (EditorShutdown *)GetProcAddress(editorCode->dllModule, "editorShutdown");
+        editorCode->editorRenderSceneView = (EditorRenderSceneView *)GetProcAddress(
+            editorCode->dllModule, "editorRenderSceneView");
+        editorCode->editorUpdateImportedHeightmapTexture =
+            (EditorUpdateImportedHeightmapTexture *)GetProcAddress(
+                editorCode->dllModule, "editorUpdateImportedHeightmapTexture");
+        editorCode->editorRenderHeightmapPreview =
+            (EditorRenderHeightmapPreview *)GetProcAddress(
+                editorCode->dllModule, "editorRenderHeightmapPreview");
+    }
+}
+
+void win32UnloadEditorCode(Win32EditorCode *editorCode)
+{
+    if (editorCode->dllModule)
+    {
+        FreeLibrary(editorCode->dllModule);
+        editorCode->dllModule = 0;
+
+        editorCode->editorUpdate = 0;
+        editorCode->editorShutdown = 0;
+        editorCode->editorRenderSceneView = 0;
+        editorCode->editorUpdateImportedHeightmapTexture = 0;
+        editorCode->editorRenderHeightmapPreview = 0;
+    }
+}
+
 void win32TickApp(float deltaTime)
 {
+    uint64 editorCodeDllLastWriteTime =
+        win32GetFileLastWriteTime(platformMemory->editorCode.dllPath);
+    if (editorCodeDllLastWriteTime
+        && editorCodeDllLastWriteTime > platformMemory->editorCode.dllLastWriteTime
+        && !win32GetFileLastWriteTime(platformMemory->editorCode.buildLockFilePath))
+    {
+        win32UnloadEditorCode(&platformMemory->editorCode);
+        win32LoadEditorCode(&platformMemory->editorCode);
+        platformMemory->editorCode.dllLastWriteTime = editorCodeDllLastWriteTime;
+    }
+
     win32LoadQueuedAssets();
 
-    if (platformMemory->importedHeightmapTexturePath[0])
+    if (platformMemory->importedHeightmapTexturePath[0]
+        && platformMemory->editorCode.editorUpdateImportedHeightmapTexture)
     {
         Win32ReadFileResult result =
             win32ReadFile(platformMemory->importedHeightmapTexturePath);
@@ -555,7 +630,10 @@ void win32TickApp(float deltaTime)
     EditorInput input = {};
     win32GetInputState(&input);
 
-    platformMemory->editorCode.editorUpdate(&platformMemory->editor, deltaTime, &input);
+    if (platformMemory->editorCode.editorUpdate)
+    {
+        platformMemory->editorCode.editorUpdate(&platformMemory->editor, deltaTime, &input);
+    }
 
     for (uint32 i = 0; i < platformMemory->viewportCount; i++)
     {
@@ -567,12 +645,18 @@ void win32TickApp(float deltaTime)
         switch (viewport->view)
         {
         case Terrain::Engine::Interop::EditorView::Scene:
-            platformMemory->editorCode.editorRenderSceneView(
-                &platformMemory->editor, &viewport->vctx);
+            if (platformMemory->editorCode.editorRenderSceneView)
+            {
+                platformMemory->editorCode.editorRenderSceneView(
+                    &platformMemory->editor, &viewport->vctx);
+            }
             break;
         case Terrain::Engine::Interop::EditorView::HeightmapPreview:
-            platformMemory->editorCode.editorRenderHeightmapPreview(
-                &platformMemory->editor, &viewport->vctx);
+            if (platformMemory->editorCode.editorRenderHeightmapPreview)
+            {
+                platformMemory->editorCode.editorRenderHeightmapPreview(
+                    &platformMemory->editor, &viewport->vctx);
+            }
             break;
         }
         SwapBuffers(viewport->deviceContext);
@@ -581,7 +665,10 @@ void win32TickApp(float deltaTime)
 
 void win32ShutdownPlatform()
 {
-    platformMemory->editorCode.editorShutdown(&platformMemory->editor);
+    if (platformMemory->editorCode.editorShutdown)
+    {
+        platformMemory->editorCode.editorShutdown(&platformMemory->editor);
+    }
     wglDeleteContext(platformMemory->glRenderingContext);
     DestroyWindow(platformMemory->dummyWindowHwnd);
 }

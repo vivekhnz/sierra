@@ -1,7 +1,9 @@
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
 $Configuration = 'Debug'
 $Platform = 'x64'
-$IntermediateOutputPath = "..\..\obj\$Configuration\$Platform\Game"
-$OutputPath = "..\..\bin\$Configuration\$Platform"
+$BaseIntermediateOutputPath = "obj\$Configuration\$Platform"
+$OutputPath = "bin\$Configuration\$Platform"
 
 $CommonCompilerFlags = @(
     '/nologo',
@@ -56,16 +58,22 @@ function Invoke-Compiler {
     (
         [Parameter(Mandatory = $true)] [string] $SourceFile,
         [Parameter(Mandatory = $true)] [string] $OutputName,
-        [Parameter(Mandatory = $true)] [string[]] $IncludePaths,
-        [Parameter(Mandatory = $true)] [string[]] $ImportLibs,
+        [Parameter(Mandatory = $true)] [string] $IntermediateOutputDirName,
+        [Parameter(Mandatory = $false)] [string[]] $IncludePaths,
+        [Parameter(Mandatory = $false)] [string[]] $ImportLibs,
         [Switch] $BuildDll,
         [Switch] $NoImportLib,
         [Switch] $RandomizePdbFilename
     )
 
+    $intermediateOutputPath = "$BaseIntermediateOutputPath\$IntermediateOutputDirName"
+    if (!(Test-Path $intermediateOutputPath)) {
+        New-Item -Path $intermediateOutputPath -ItemType Directory | Out-Null
+    }
+    
     $compilerFlags = @(
         $SourceFile,
-        "/Fo$IntermediateOutputPath/"
+        "/Fo$intermediateOutputPath/"
     )
     $compilerFlags += ($IncludePaths | ForEach-Object { "/I $_" })
 
@@ -96,14 +104,11 @@ function Invoke-Compiler {
 
 Initialize-Environment -Platform $platform
 
-if (!(Test-Path $IntermediateOutputPath)) {
-    New-Item -Path $IntermediateOutputPath -ItemType Directory | Out-Null
-}
 if (!(Test-Path $OutputPath)) {
     New-Item -Path $OutputPath -ItemType Directory | Out-Null
 }
 
-if (!(Test-Path '..\..\deps\nuget\glfw*')) {
+if (!(Test-Path 'deps\nuget\glfw*')) {
     & nuget restore 'packages.config'
 }
 
@@ -111,27 +116,43 @@ $LockFilePath = "$OutputPath\build.lock"
 "build" | Out-File $LockFilePath
 
 $procs = @()
-$procs += Invoke-Compiler -SourceFile 'game.cpp' -OutputName 'terrain_game' `
+$procs += Invoke-Compiler `
+    -SourceFile 'src\Game\game.cpp' -OutputName 'terrain_game' `
+    -IntermediateOutputDirName 'Game' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
     -IncludePaths @(
-        '..\..\deps',
-        '..\..\deps\nuget\glm.0.9.9.700\build\native\include'
+        'deps',
+        'deps\nuget\glm.0.9.9.700\build\native\include'
     ) `
     -ImportLibs @(
         "$OutputPath\Terrain.Engine.lib"
     )
-$procs += Invoke-Compiler -SourceFile 'win32_game.cpp' -OutputName 'win32_terrain' -NoImportLib `
+$procs += Invoke-Compiler `
+    -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
+    -IntermediateOutputDirName 'Game' `
+    -NoImportLib `
     -IncludePaths @(
-        '..\..\deps',
-        '..\..\deps\nuget\glm.0.9.9.700\build\native\include',
-        '..\..\deps\nuget\glfw.3.3.2\build\native\include'
+        'deps',
+        'deps\nuget\glm.0.9.9.700\build\native\include',
+        'deps\nuget\glfw.3.3.2\build\native\include'
     ) `
     -ImportLibs @(
         "$OutputPath\Terrain.Engine.lib",
-        "..\..\deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
+        "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
+    )
+$procs += Invoke-Compiler `
+    -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
+    -IntermediateOutputDirName 'EditorCore' `
+    -BuildDll -RandomizePdbFilename -NoImportLib `
+    -IncludePaths @(
+        'deps',
+        'deps\nuget\glm.0.9.9.700\build\native\include'
+    ) `
+    -ImportLibs @(
+        "$OutputPath\Terrain.Engine.lib"
     )
 
-$glfwDllSrcPath = "..\..\deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"
+$glfwDllSrcPath = "deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"
 $glfwDllDstPath = "$OutputPath\glfw3.dll"
 if (!(Test-Path $glfwDllDstPath)) {
     Copy-Item -Path $glfwDllSrcPath -Destination $glfwDllDstPath
@@ -143,9 +164,18 @@ $procs | Wait-Process
 # files can point there
 $MirrorPath = 'C:\temp\terrain_mirror'
 if (!(Test-Path $MirrorPath)) {
-    New-Item -ItemType Junction -Path $MirrorPath -Value '..\..\' | Out-Null
+    New-Item -ItemType Junction -Path $MirrorPath -Value '.' | Out-Null
 }
 
 Remove-Item $LockFilePath -Force
 
-Write-Host "Done."
+$sw.Stop();
+
+if ($procs.ExitCode | Where-Object { $_ -ne 0 }) {
+    Write-Host "Build failed" -ForegroundColor Red
+    exit 1
+}
+else {
+    Write-Host "Build succeeded ($($sw.ElapsedMilliseconds)ms)" -ForegroundColor Green
+    exit 0
+}

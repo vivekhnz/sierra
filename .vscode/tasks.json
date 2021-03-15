@@ -2,15 +2,15 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "Build Game",
+			"label": "Build",
 			"type": "shell",
-			"command": "${workspaceFolder}\\src\\Game\\build.ps1",
+			"command": "${workspaceFolder}\\build.ps1",
 			"options": {
-				"cwd": "${workspaceFolder}\\src\\Game"
+				"cwd": "${workspaceFolder}"
 			},
 			"presentation": {
 				"echo": true,
-				"reveal": "always",
+				"reveal": "silent",
 				"focus": false,
 				"panel": "shared",
 				"showReuseMessage": false,

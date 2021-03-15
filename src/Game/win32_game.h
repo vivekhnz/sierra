@@ -36,6 +36,7 @@ struct Win32GameCode
     char buildLockFilePath[MAX_PATH];
     HMODULE dllModule;
     uint64 dllLastWriteTime;
+
     GameUpdateAndRender *gameUpdateAndRender;
     GameShutdown *gameShutdown;
 };

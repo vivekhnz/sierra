@@ -489,7 +489,7 @@ bool initializeEditor(EditorMemory *memory)
     return 1;
 }
 
-EDITOR_UPDATE(editorUpdate)
+API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     if (!memory->isInitialized)
     {
@@ -819,7 +819,7 @@ EDITOR_UPDATE(editorUpdate)
     }
 }
 
-EDITOR_SHUTDOWN(editorShutdown)
+API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
 {
     if (memory->isInitialized)
     {
@@ -827,7 +827,7 @@ EDITOR_SHUTDOWN(editorShutdown)
     }
 }
 
-EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
+API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     SceneState *sceneState = &memory->state.sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
@@ -1016,14 +1016,14 @@ EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);
 }
 
-EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)
+API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)
 {
     rendererUpdateTexture(&memory->engine, memory->state.importedHeightmapTextureHandle,
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset->width, asset->height, asset->data);
     memory->state.newUiState.heightmapStatus = HEIGHTMAP_STATUS_INITIALIZING;
 }
 
-EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
+API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     rendererUpdateCameraState(
         &memory->engine, &memory->state.heightmapPreviewState.cameraTransform);

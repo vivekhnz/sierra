@@ -304,10 +304,4 @@ typedef EDITOR_SHUTDOWN(EditorShutdown);
     void name(EditorMemory *memory, TextureAsset *asset)
 typedef EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(EditorUpdateImportedHeightmapTexture);
 
-EDITOR_UPDATE(editorUpdate);
-EDITOR_SHUTDOWN(editorShutdown);
-EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView);
-EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture);
-EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview);
-
 #endif

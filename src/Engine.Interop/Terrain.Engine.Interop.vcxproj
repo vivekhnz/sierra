@@ -70,7 +70,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="editor.h" />
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />
     <ClInclude Include="Viewport.h" />
@@ -78,7 +77,6 @@
     <ClInclude Include="win32_editor_platform.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="editor.cpp" />
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="Viewport.cpp" />

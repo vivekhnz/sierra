@@ -4,7 +4,7 @@
 #include <windows.h>
 
 #include "../Engine/terrain_platform.h"
-#include "editor.h"
+#include "../EditorCore/editor.h"
 #include "EditorView.h"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
@@ -50,6 +50,12 @@ struct Win32ViewportWindow
 
 struct Win32EditorCode
 {
+    char dllPath[MAX_PATH];
+    char dllShadowCopyPath[MAX_PATH];
+    char buildLockFilePath[MAX_PATH];
+    HMODULE dllModule;
+    uint64 dllLastWriteTime;
+
     EditorUpdate *editorUpdate;
     EditorShutdown *editorShutdown;
     EditorRenderSceneView *editorRenderSceneView;

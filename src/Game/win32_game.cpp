@@ -256,6 +256,7 @@ void win32UnloadGameCode(Win32GameCode *gameCode)
     {
         FreeLibrary(gameCode->dllModule);
         gameCode->dllModule = 0;
+
         gameCode->gameUpdateAndRender = 0;
         gameCode->gameShutdown = 0;
     }
