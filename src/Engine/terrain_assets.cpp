@@ -100,13 +100,17 @@ ShaderInfo getShaderInfo(uint32 assetId)
         info.type = GL_FRAGMENT_SHADER;
         info.relativePath = "data/wireframe_fragment_shader.glsl";
         break;
-    case ASSET_SHADER_BRUSH_VERTEX:
+    case ASSET_SHADER_BRUSH_MASK_VERTEX:
         info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/brush_vertex_shader.glsl";
+        info.relativePath = "data/brush_mask_vertex_shader.glsl";
         break;
-    case ASSET_SHADER_BRUSH_FRAGMENT:
+    case ASSET_SHADER_BRUSH_MASK_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/brush_fragment_shader.glsl";
+        info.relativePath = "data/brush_mask_fragment_shader.glsl";
+        break;
+    case ASSET_SHADER_BRUSH_BLEND_ADD_SUB_FRAGMENT:
+        info.type = GL_FRAGMENT_SHADER;
+        info.relativePath = "data/brush_blend_add_sub_fragment_shader.glsl";
         break;
     }
     return info;
@@ -140,10 +144,15 @@ void getShaderProgramShaders(
         *out_shaderCount = 1;
         *out_shaderAssetIds++ = ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL;
         break;
-    case ASSET_SHADER_PROGRAM_BRUSH:
+    case ASSET_SHADER_PROGRAM_BRUSH_MASK:
         *out_shaderCount = 2;
-        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_VERTEX;
-        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_FRAGMENT;
+        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_MASK_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_MASK_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB:
+        *out_shaderCount = 2;
+        *out_shaderAssetIds++ = ASSET_SHADER_TEXTURE_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_BLEND_ADD_SUB_FRAGMENT;
         break;
     }
 }

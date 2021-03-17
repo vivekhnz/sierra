@@ -214,6 +214,17 @@ void addBrushInstance(EditorMemory *memory, glm::vec2 pos)
     memory->state.heightmapCompositionState.working.brushInstanceCount++;
 }
 
+HeightmapRenderTexture createHeightmapRenderTexture(EngineMemory *engineMemory)
+{
+    HeightmapRenderTexture result = {};
+
+    result.textureHandle = rendererCreateTexture(engineMemory, GL_UNSIGNED_SHORT, GL_R16,
+        GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+    result.framebufferHandle = rendererCreateFramebuffer(engineMemory, result.textureHandle);
+
+    return result;
+}
+
 bool initializeEditor(EditorMemory *memory)
 {
     if (!rendererInitialize(&memory->engine))
@@ -229,6 +240,12 @@ bool initializeEditor(EditorMemory *memory)
     memory->state.importedHeightmapTextureHandle =
         rendererCreateTexture(engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
             GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+
+    memory->state.committedHeightmap = createHeightmapRenderTexture(engineMemory);
+    memory->state.workingBrushInfluenceMask = createHeightmapRenderTexture(engineMemory);
+    memory->state.workingHeightmap = createHeightmapRenderTexture(engineMemory);
+    memory->state.previewBrushInfluenceMask = createHeightmapRenderTexture(engineMemory);
+    memory->state.previewHeightmap = createHeightmapRenderTexture(engineMemory);
 
     // create quad mesh
     float quadVertices[20] = {
@@ -264,15 +281,6 @@ bool initializeEditor(EditorMemory *memory)
         glm::scale(hmCompState->cameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
     hmCompState->cameraTransform =
         glm::translate(hmCompState->cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
-
-    /*
-        The working world is where the base heightmap and brush strokes will be drawn.
-    */
-    hmCompState->working.renderTextureHandle =
-        rendererCreateTexture(engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-            GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-    hmCompState->working.framebufferHandle =
-        rendererCreateFramebuffer(engineMemory, hmCompState->working.renderTextureHandle);
 
     // create brush quad mesh
     float brushQuadVertices[16] = {
@@ -313,27 +321,6 @@ bool initializeEditor(EditorMemory *memory)
     rendererUnbindVertexArray();
 
     hmCompState->working.brushInstanceCount = 0;
-
-    /*
-        The staging world is a quad textured with the framebuffer of the working world.
-        The resulting texture is fed back into the working world as the base heightmap
-    */
-    hmCompState->staging.renderTextureHandle =
-        rendererCreateTexture(engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-            GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-    hmCompState->staging.framebufferHandle =
-        rendererCreateFramebuffer(engineMemory, hmCompState->staging.renderTextureHandle);
-
-    /*
-        The preview world is a quad textured with the framebuffer of the working world as
-        well as a single brush instance quad at the current mouse position to preview the
-        result of the current operation.
-    */
-    hmCompState->preview.renderTextureHandle =
-        rendererCreateTexture(engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-            GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-    hmCompState->preview.framebufferHandle =
-        rendererCreateFramebuffer(engineMemory, hmCompState->preview.renderTextureHandle);
 
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer =
@@ -489,6 +476,70 @@ bool initializeEditor(EditorMemory *memory)
     return 1;
 }
 
+void compositeHeightmap(EditorMemory *memory,
+    uint32 baseHeightmapTextureHandle,
+    HeightmapRenderTexture *brushInfluenceMask,
+    HeightmapRenderTexture *output,
+    uint32 brushMaskShaderProgramHandle,
+    uint32 brushBlendAddSubShaderProgramHandle,
+    uint32 brushInstanceCount,
+    uint32 brushInstanceOffset)
+{
+    EngineMemory *engineMemory = &memory->engine;
+
+    float brushRadius = memory->state.currentUiState.brushRadius / 2048.0f;
+    float brushFalloff = memory->state.currentUiState.brushFalloff;
+
+    /*
+     * Because the spacing between brush instances is constant, higher radius brushes will
+     * result in more brush instances being drawn, meaning the terrain will be influenced
+     * more. As a result, we should decrease the brush strength as the brush radius
+     * increases to ensure the perceived brush strength remains constant.
+     */
+    float brushStrength = 0.01f + (0.15f * memory->state.currentUiState.brushStrength);
+    brushStrength /= pow(memory->state.currentUiState.brushRadius, 0.5f);
+
+    // render brush influence mask
+    rendererBindFramebuffer(engineMemory, brushInfluenceMask->framebufferHandle);
+    rendererSetViewportSize(2048, 2048);
+    rendererClearBackBuffer(0, 0, 0, 1);
+
+    rendererUseShaderProgram(engineMemory, brushMaskShaderProgramHandle);
+    rendererSetPolygonMode(GL_FILL);
+    rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE);
+    rendererSetShaderProgramUniformFloat(
+        engineMemory, brushMaskShaderProgramHandle, "brushScale", brushRadius);
+    rendererSetShaderProgramUniformFloat(
+        engineMemory, brushMaskShaderProgramHandle, "brushFalloff", brushFalloff);
+    rendererSetShaderProgramUniformFloat(
+        engineMemory, brushMaskShaderProgramHandle, "brushStrength", brushStrength);
+    rendererBindVertexArray(engineMemory,
+        memory->state.heightmapCompositionState.working.brushQuadVertexArrayHandle);
+    rendererDrawElementsInstanced(GL_TRIANGLES, 6, brushInstanceCount, brushInstanceOffset);
+
+    rendererUnbindFramebuffer(engineMemory, brushInfluenceMask->framebufferHandle);
+
+    // render heightmap
+    rendererBindFramebuffer(engineMemory, output->framebufferHandle);
+    rendererSetViewportSize(2048, 2048);
+    rendererClearBackBuffer(0, 0, 0, 1);
+
+    rendererUseShaderProgram(engineMemory, brushBlendAddSubShaderProgramHandle);
+    rendererSetPolygonMode(GL_FILL);
+    rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    rendererBindVertexArray(
+        engineMemory, memory->state.heightmapCompositionState.quadVertexArrayHandle);
+
+    float blendSign = memory->state.currentUiState.tool == EDITOR_TOOL_LOWER_TERRAIN ? -1 : 1;
+    rendererSetShaderProgramUniformFloat(
+        engineMemory, brushBlendAddSubShaderProgramHandle, "blendSign", blendSign);
+    rendererBindTexture(engineMemory, baseHeightmapTextureHandle, 0);
+    rendererBindTexture(engineMemory, brushInfluenceMask->textureHandle, 1);
+    rendererDrawElements(GL_TRIANGLES, 6);
+
+    rendererUnbindFramebuffer(engineMemory, output->framebufferHandle);
+}
+
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     if (!memory->isInitialized)
@@ -503,9 +554,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     ShaderProgramAsset *quadShaderProgram =
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_QUAD);
-    ShaderProgramAsset *brushShaderProgram =
-        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH);
-    if (!quadShaderProgram || !brushShaderProgram)
+    ShaderProgramAsset *brushMaskShaderProgram =
+        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_MASK);
+    ShaderProgramAsset *brushBlendAddSubShaderProgram =
+        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB);
+    if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram)
     {
         return;
     }
@@ -519,8 +572,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         // update heightfield with composited heightmap texture
         rendererReadTexturePixels(&memory->engine,
-            memory->state.heightmapCompositionState.working.renderTextureHandle,
-            GL_UNSIGNED_SHORT, GL_RED, sceneState->heightmapTextureDataTempBuffer);
+            memory->state.workingHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+            sceneState->heightmapTextureDataTempBuffer);
 
         uint16 heightmapWidth = 2048;
         uint16 heightmapHeight = 2048;
@@ -710,19 +763,20 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     if (uiState->heightmapStatus == HEIGHTMAP_STATUS_COMMITTING)
     {
-        // render staging world
-        rendererBindFramebuffer(&memory->engine, hmCompState->staging.framebufferHandle);
+        rendererBindFramebuffer(
+            &memory->engine, memory->state.committedHeightmap.framebufferHandle);
         rendererSetViewportSize(2048, 2048);
         rendererClearBackBuffer(0, 0, 0, 1);
 
         rendererUseShaderProgram(&memory->engine, quadShaderProgram->handle);
         rendererSetPolygonMode(GL_FILL);
         rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        rendererBindTexture(&memory->engine, hmCompState->working.renderTextureHandle, 0);
+        rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
         rendererBindVertexArray(&memory->engine, hmCompState->quadVertexArrayHandle);
         rendererDrawElements(GL_TRIANGLES, 6);
 
-        rendererUnbindFramebuffer(&memory->engine, hmCompState->staging.framebufferHandle);
+        rendererUnbindFramebuffer(
+            &memory->engine, memory->state.committedHeightmap.framebufferHandle);
     }
 
     if (uiState->heightmapStatus == HEIGHTMAP_STATUS_INITIALIZING)
@@ -755,67 +809,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     if (uiState->heightmapStatus != HEIGHTMAP_STATUS_IDLE)
     {
-        // render working world
-        rendererBindFramebuffer(&memory->engine, hmCompState->working.framebufferHandle);
-        rendererSetViewportSize(2048, 2048);
-        rendererClearBackBuffer(0, 0, 0, 1);
-
-        rendererUseShaderProgram(&memory->engine, quadShaderProgram->handle);
-        rendererSetPolygonMode(GL_FILL);
-        rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        rendererBindTexture(
-            &memory->engine, hmCompState->working.baseHeightmapTextureHandle, 0);
-        rendererBindVertexArray(&memory->engine, hmCompState->quadVertexArrayHandle);
-        rendererDrawElements(GL_TRIANGLES, 6);
-
-        rendererUseShaderProgram(&memory->engine, brushShaderProgram->handle);
-        rendererSetPolygonMode(GL_FILL);
-        rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
-        rendererSetShaderProgramUniformFloat(&memory->engine, brushShaderProgram->handle,
-            "brushScale", uiState->brushRadius / 2048.0f);
-        rendererSetShaderProgramUniformFloat(&memory->engine, brushShaderProgram->handle,
-            "brushFalloff", uiState->brushFalloff);
-        rendererSetShaderProgramUniformFloat(
-            &memory->engine, brushShaderProgram->handle, "brushStrength", brushStrength);
-        rendererBindVertexArray(
-            &memory->engine, hmCompState->working.brushQuadVertexArrayHandle);
-        rendererDrawElementsInstanced(
-            GL_TRIANGLES, 6, hmCompState->working.brushInstanceCount, 0);
-
-        rendererUnbindFramebuffer(&memory->engine, hmCompState->working.framebufferHandle);
+        compositeHeightmap(memory,
+            memory->state.heightmapCompositionState.working.baseHeightmapTextureHandle,
+            &memory->state.workingBrushInfluenceMask, &memory->state.workingHeightmap,
+            brushMaskShaderProgram->handle, brushBlendAddSubShaderProgram->handle,
+            hmCompState->working.brushInstanceCount, 0);
     }
-
-    // render preview world
-    rendererBindFramebuffer(&memory->engine, hmCompState->preview.framebufferHandle);
-    rendererSetViewportSize(2048, 2048);
-    rendererClearBackBuffer(0, 0, 0, 1);
-
-    rendererUseShaderProgram(&memory->engine, quadShaderProgram->handle);
-    rendererSetPolygonMode(GL_FILL);
-    rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindTexture(&memory->engine, hmCompState->working.renderTextureHandle, 0);
-    rendererBindVertexArray(&memory->engine, hmCompState->quadVertexArrayHandle);
-    rendererDrawElements(GL_TRIANGLES, 6);
-
-    rendererUseShaderProgram(&memory->engine, brushShaderProgram->handle);
-    rendererSetPolygonMode(GL_FILL);
-    rendererSetBlendMode(brushBlendEquation, GL_SRC_ALPHA, GL_ONE);
-    rendererSetShaderProgramUniformFloat(&memory->engine, brushShaderProgram->handle,
-        "brushScale", uiState->brushRadius / 2048.0f);
-    rendererSetShaderProgramUniformFloat(
-        &memory->engine, brushShaderProgram->handle, "brushFalloff", uiState->brushFalloff);
-    rendererSetShaderProgramUniformFloat(
-        &memory->engine, brushShaderProgram->handle, "brushStrength", brushStrength);
-    rendererBindVertexArray(&memory->engine, hmCompState->working.brushQuadVertexArrayHandle);
-    rendererDrawElementsInstanced(GL_TRIANGLES, 6, 1, MAX_BRUSH_QUADS - 1);
-
-    rendererUnbindFramebuffer(&memory->engine, hmCompState->preview.framebufferHandle);
+    compositeHeightmap(memory, memory->state.workingHeightmap.textureHandle,
+        &memory->state.previewBrushInfluenceMask, &memory->state.previewHeightmap,
+        brushMaskShaderProgram->handle, brushBlendAddSubShaderProgram->handle, 1,
+        MAX_BRUSH_QUADS - 1);
 
     if (uiState->heightmapStatus == HEIGHTMAP_STATUS_INITIALIZING)
     {
-        // set heightmap quad's texture to the staging world's render target
         hmCompState->working.baseHeightmapTextureHandle =
-            hmCompState->staging.renderTextureHandle;
+            memory->state.committedHeightmap.textureHandle;
     }
 }
 
@@ -953,10 +961,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         "columnCount", sceneState->heightfield.columns);
     rendererSetShaderProgramUniformFloat(&memory->engine, calcTessLevelShaderProgramHandle,
         "terrainHeight", sceneState->heightfield.maxHeight);
-    rendererBindTexture(&memory->engine,
-        memory->state.heightmapCompositionState.working.renderTextureHandle, 0);
-    rendererBindTexture(&memory->engine,
-        memory->state.heightmapCompositionState.preview.renderTextureHandle, 5);
+    rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
+    rendererBindTexture(&memory->engine, memory->state.previewHeightmap.textureHandle, 5);
 
     uint32 meshEdgeCount =
         (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
@@ -979,16 +985,15 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    rendererBindTexture(&memory->engine,
-        memory->state.heightmapCompositionState.working.renderTextureHandle, 0);
+    rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
     rendererBindTextureArray(&memory->engine, sceneState->albedoTextureArrayHandle, 1);
     rendererBindTextureArray(&memory->engine, sceneState->normalTextureArrayHandle, 2);
     rendererBindTextureArray(&memory->engine, sceneState->displacementTextureArrayHandle, 3);
     rendererBindTextureArray(&memory->engine, sceneState->aoTextureArrayHandle, 4);
     rendererBindTexture(&memory->engine,
         sceneState->worldState.isPreviewingChanges && isCursorVisibleView
-            ? memory->state.heightmapCompositionState.preview.renderTextureHandle
-            : memory->state.heightmapCompositionState.working.renderTextureHandle,
+            ? memory->state.previewHeightmap.textureHandle
+            : memory->state.workingHeightmap.textureHandle,
         5);
     rendererBindShaderStorageBuffer(&memory->engine, sceneState->materialPropsBufferHandle, 1);
 
@@ -1039,8 +1044,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     rendererUseShaderProgram(&memory->engine, shaderProgram->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindTexture(&memory->engine,
-        memory->state.heightmapCompositionState.working.renderTextureHandle, 0);
+    rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
     rendererBindVertexArray(
         &memory->engine, memory->state.heightmapPreviewState.vertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);

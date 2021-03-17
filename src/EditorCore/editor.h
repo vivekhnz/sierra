@@ -77,27 +77,13 @@ struct HeightmapCompositionState
 
     struct WorkingWorld
     {
-        uint32 renderTextureHandle;
-        int framebufferHandle;
         uint32 baseHeightmapTextureHandle;
         uint32 brushQuadVertexArrayHandle;
 
-        int brushQuadInstanceBufferHandle;
+        uint32 brushQuadInstanceBufferHandle;
         float brushQuadInstanceBufferData[MAX_BRUSH_QUADS * 2];
-        int brushInstanceCount;
+        uint32 brushInstanceCount;
     } working;
-
-    struct StagingWorld
-    {
-        uint32 renderTextureHandle;
-        int framebufferHandle;
-    } staging;
-
-    struct PreviewWorld
-    {
-        uint32 renderTextureHandle;
-        int framebufferHandle;
-    } preview;
 };
 
 struct TextureAssetBinding
@@ -174,9 +160,21 @@ struct HeightmapPreviewState
     glm::mat4 cameraTransform;
 };
 
+struct HeightmapRenderTexture
+{
+    uint32 textureHandle;
+    uint32 framebufferHandle;
+};
+
 struct EditorState
 {
     uint32 importedHeightmapTextureHandle;
+
+    HeightmapRenderTexture committedHeightmap;
+    HeightmapRenderTexture workingBrushInfluenceMask;
+    HeightmapRenderTexture workingHeightmap;
+    HeightmapRenderTexture previewBrushInfluenceMask;
+    HeightmapRenderTexture previewHeightmap;
 
     EditorUiState currentUiState;
     EditorUiState newUiState;
