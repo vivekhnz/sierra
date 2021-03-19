@@ -298,7 +298,6 @@ Win32PlatformMemory *win32InitializePlatform()
     platformMemory->editor.state.newUiState.brushStrength = 0.12f;
     platformMemory->editor.state.newUiState.lightDirection = 0.5f;
     platformMemory->editor.state.newUiState.materialCount = 0;
-    platformMemory->editor.state.newUiState.mode = INTERACTION_MODE_PAINT_BRUSH_STROKE;
     platformMemory->editor.data.baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
     platformMemory->editor.data.size = EDITOR_DATA_MEMORY_SIZE;
     platformMemory->editor.dataStorageUsed = 0;

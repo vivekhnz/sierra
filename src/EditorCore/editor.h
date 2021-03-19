@@ -18,24 +18,6 @@
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 
-enum HeightmapStatus
-{
-    HEIGHTMAP_STATUS_INITIALIZING = 0,
-    HEIGHTMAP_STATUS_IDLE = 1,
-    HEIGHTMAP_STATUS_EDITING = 2,
-    HEIGHTMAP_STATUS_COMMITTING = 3,
-    HEIGHTMAP_STATUS_DISCARDING = 4
-};
-
-enum InteractionMode
-{
-    INTERACTION_MODE_MOVE_CAMERA = 0,
-    INTERACTION_MODE_MODIFY_BRUSH_RADIUS = 1,
-    INTERACTION_MODE_MODIFY_BRUSH_FALLOFF = 2,
-    INTERACTION_MODE_MODIFY_BRUSH_STRENGTH = 3,
-    INTERACTION_MODE_PAINT_BRUSH_STROKE = 4
-};
-
 enum EditorTool
 {
     EDITOR_TOOL_RAISE_TERRAIN = 0,
@@ -58,10 +40,7 @@ struct MaterialProperties
 
 struct EditorUiState
 {
-    HeightmapStatus heightmapStatus;
-    InteractionMode mode;
     EditorTool tool;
-    glm::vec2 currentBrushPos;
     float brushRadius;
     float brushFalloff;
     float brushStrength;
@@ -77,9 +56,7 @@ struct HeightmapCompositionState
 
     struct WorkingWorld
     {
-        uint32 baseHeightmapTextureHandle;
         uint32 brushQuadVertexArrayHandle;
-
         uint32 brushQuadInstanceBufferHandle;
         float brushQuadInstanceBufferData[MAX_BRUSH_QUADS * 2];
         uint32 brushInstanceCount;
@@ -175,6 +152,8 @@ struct EditorState
     HeightmapRenderTexture workingHeightmap;
     HeightmapRenderTexture previewBrushInfluenceMask;
     HeightmapRenderTexture previewHeightmap;
+
+    bool isEditingHeightmap;
 
     EditorUiState currentUiState;
     EditorUiState newUiState;

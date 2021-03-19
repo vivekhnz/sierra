@@ -19,19 +19,6 @@ public
         {
         }
 
-        property HeightmapStatus CurrentHeightmapStatus
-        {
-            HeightmapStatus get()
-            {
-                return state->heightmapStatus;
-            }
-
-            void set(HeightmapStatus value)
-            {
-                state->heightmapStatus = value;
-            }
-        }
-
         property EditorToolProxy CurrentTool
         {
             EditorToolProxy get()

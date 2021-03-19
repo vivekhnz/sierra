@@ -20,6 +20,6 @@ EXPORT float heightfieldGetHeight(Heightfield *heightfield, float worldX, float 
 EXPORT bool heightfieldIsRayIntersecting(Heightfield *heightfield,
     glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
-    glm::vec3 &out_intersectionPoint);
+    glm::vec3 *out_intersectionPoint);
 
 #endif

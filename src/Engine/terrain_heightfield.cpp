@@ -128,7 +128,7 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     uint32 xEnd,
     uint32 yStart,
     uint32 yEnd,
-    float &inout_hitDistance)
+    float *inout_hitDistance)
 {
     // raycast a bounding box first to avoid expensive triangle raycasting
     glm::vec3 boundsTopLeft =
@@ -168,17 +168,17 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
             float intersectDist;
             if (isRayIntersectingTriangle(
                     rayOrigin, rayDirection, topLeft, topRight, bottomRight, intersectDist)
-                && intersectDist < inout_hitDistance)
+                && intersectDist < *inout_hitDistance)
             {
                 hit = true;
-                inout_hitDistance = intersectDist;
+                *inout_hitDistance = intersectDist;
             }
             if (isRayIntersectingTriangle(
                     rayOrigin, rayDirection, bottomRight, bottomLeft, topLeft, intersectDist)
-                && intersectDist < inout_hitDistance)
+                && intersectDist < *inout_hitDistance)
             {
                 hit = true;
-                inout_hitDistance = intersectDist;
+                *inout_hitDistance = intersectDist;
             }
         }
     }
@@ -189,7 +189,7 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
 bool heightfieldIsRayIntersecting(Heightfield *heightfield,
     glm::vec3 rayOrigin,
     glm::vec3 rayDirection,
-    glm::vec3 &out_intersectionPoint)
+    glm::vec3 *out_intersectionPoint)
 {
     float hitDistance = 999999.0f;
     bool hit = false;
@@ -208,8 +208,8 @@ bool heightfieldIsRayIntersecting(Heightfield *heightfield,
         uint32 xEnd = colSlice - 1;
         while (xEnd < heightfield->columns)
         {
-            hit |= isRayIntersectingHeightfieldSlice(
-                heightfield, rayOrigin, rayDirection, xStart, xEnd, yStart, yEnd, hitDistance);
+            hit |= isRayIntersectingHeightfieldSlice(heightfield, rayOrigin, rayDirection,
+                xStart, xEnd, yStart, yEnd, &hitDistance);
 
             xStart = xEnd;
             xEnd += colSlice;
@@ -221,7 +221,7 @@ bool heightfieldIsRayIntersecting(Heightfield *heightfield,
 
     if (hit)
     {
-        out_intersectionPoint = rayOrigin + (rayDirection * hitDistance);
+        *out_intersectionPoint = rayOrigin + (rayDirection * hitDistance);
         return true;
     }
     return false;
