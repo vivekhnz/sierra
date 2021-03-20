@@ -291,13 +291,12 @@ Win32PlatformMemory *win32InitializePlatform()
     win32GetOutputAbsolutePath("build.lock", platformMemory->editorCode.buildLockFilePath);
 
     platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
-    platformMemory->editor.state.currentUiState = {};
-    platformMemory->editor.state.newUiState = {};
-    platformMemory->editor.state.newUiState.brushRadius = 128.0f;
-    platformMemory->editor.state.newUiState.brushFalloff = 0.1f;
-    platformMemory->editor.state.newUiState.brushStrength = 0.12f;
-    platformMemory->editor.state.newUiState.lightDirection = 0.5f;
-    platformMemory->editor.state.newUiState.materialCount = 0;
+    platformMemory->editor.state.uiState = {};
+    platformMemory->editor.state.uiState.brushRadius = 128.0f;
+    platformMemory->editor.state.uiState.brushFalloff = 0.1f;
+    platformMemory->editor.state.uiState.brushStrength = 0.12f;
+    platformMemory->editor.state.uiState.lightDirection = 0.5f;
+    platformMemory->editor.state.uiState.materialCount = 0;
     platformMemory->editor.data.baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
     platformMemory->editor.data.size = EDITOR_DATA_MEMORY_SIZE;
     platformMemory->editor.dataStorageUsed = 0;
@@ -623,8 +622,6 @@ void win32TickApp(float deltaTime)
         win32FreeMemory(result.data);
         *platformMemory->importedHeightmapTexturePath = 0;
     }
-
-    platformMemory->editor.state.currentUiState = platformMemory->editor.state.newUiState;
 
     EditorInput input = {};
     win32GetInputState(&input);

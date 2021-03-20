@@ -49,14 +49,6 @@ struct EditorUiState
     MaterialProperties materialProps[MAX_MATERIAL_COUNT];
 };
 
-struct HeightmapCompositionState
-{
-    uint32 brushQuadVertexArrayHandle;
-    uint32 brushQuadInstanceBufferHandle;
-    glm::vec2 brushQuadInstanceBufferData[MAX_BRUSH_QUADS];
-    uint32 brushInstanceCount;
-};
-
 struct TextureAssetBinding
 {
     uint32 assetId;
@@ -133,6 +125,10 @@ struct HeightmapRenderTexture
 
 struct EditorState
 {
+    glm::mat4 orthographicCameraTransform;
+    uint32 quadVertexArrayHandle;
+    uint32 quadFlippedYVertexArrayHandle;
+
     uint32 importedHeightmapTextureHandle;
 
     HeightmapRenderTexture committedHeightmap;
@@ -142,14 +138,12 @@ struct EditorState
     HeightmapRenderTexture previewHeightmap;
 
     bool isEditingHeightmap;
+    uint32 activeBrushStrokeVertexArrayHandle;
+    uint32 activeBrushStrokeInstanceBufferHandle;
+    glm::vec2 activeBrushStrokeInstanceBufferData[MAX_BRUSH_QUADS];
+    uint32 activeBrushStrokeInstanceCount;
 
-    uint32 quadVertexArrayHandle;
-    uint32 quadFlippedYVertexArrayHandle;
-    glm::mat4 orthographicCameraTransform;
-
-    EditorUiState currentUiState;
-    EditorUiState newUiState;
-    HeightmapCompositionState heightmapCompositionState;
+    EditorUiState uiState;
     SceneState sceneState;
 };
 
