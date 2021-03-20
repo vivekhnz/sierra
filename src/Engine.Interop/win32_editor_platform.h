@@ -26,7 +26,6 @@ struct Win32AssetLoadRequest
 
 struct Win32AssetLoadQueue
 {
-    bool isInitialized;
     uint32 length;
     Win32AssetLoadRequest data[ASSET_LOAD_QUEUE_MAX_SIZE];
     uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];

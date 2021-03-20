@@ -24,15 +24,6 @@ bool isNewButtonPress(EditorInput *input, EditorInputButtons button)
     return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
 }
 
-void addBrushInstance(EditorMemory *memory, glm::vec2 pos)
-{
-    uint32 idx = memory->state.heightmapCompositionState.working.brushInstanceCount * 2;
-    memory->state.heightmapCompositionState.working.brushQuadInstanceBufferData[idx] = pos.x;
-    memory->state.heightmapCompositionState.working.brushQuadInstanceBufferData[idx + 1] =
-        pos.y;
-    memory->state.heightmapCompositionState.working.brushInstanceCount++;
-}
-
 HeightmapRenderTexture createHeightmapRenderTexture(EngineMemory *engineMemory)
 {
     HeightmapRenderTexture result = {};
@@ -128,7 +119,7 @@ bool initializeEditor(EditorMemory *memory)
     rendererUpdateBuffer(engineMemory, hmCompState->working.brushQuadInstanceBufferHandle,
         sizeof(hmCompState->working.brushQuadInstanceBufferData),
         &hmCompState->working.brushQuadInstanceBufferData);
-    uint32 instanceBufferStride = 2 * sizeof(float);
+    uint32 instanceBufferStride = sizeof(glm::vec2);
 
     hmCompState->working.brushQuadVertexArrayHandle = rendererCreateVertexArray(engineMemory);
     rendererBindVertexArray(engineMemory, hmCompState->working.brushQuadVertexArrayHandle);
@@ -455,6 +446,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
     sceneState->worldState.isPreviewingChanges = false;
 
+    // the last brush instance is reserved for previewing the result of the current operation
+#define MAX_ALLOWED_BRUSH_INSTANCES (MAX_BRUSH_QUADS - 1)
+
     bool isManipulatingCamera = false;
     SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
     if (activeViewState)
@@ -573,6 +567,39 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                             {
                                 sceneState->worldState.isPreviewingChanges = true;
+
+                                glm::vec2 *nextBrushInstance =
+                                    &hmCompState->working.brushQuadInstanceBufferData
+                                         [hmCompState->working.brushInstanceCount];
+                                if (hmCompState->working.brushInstanceCount
+                                    < MAX_ALLOWED_BRUSH_INSTANCES - 1)
+                                {
+                                    if (hmCompState->working.brushInstanceCount == 0)
+                                    {
+                                        *nextBrushInstance++ = newBrushPos;
+                                        hmCompState->working.brushInstanceCount++;
+                                    }
+                                    else
+                                    {
+                                        glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
+
+                                        glm::vec2 diff = newBrushPos - *prevBrushInstance;
+                                        glm::vec2 direction = glm::normalize(diff);
+                                        float distanceRemaining = glm::length(diff);
+
+                                        const float BRUSH_INSTANCE_SPACING = 0.005f;
+                                        while (distanceRemaining > BRUSH_INSTANCE_SPACING
+                                            && hmCompState->working.brushInstanceCount
+                                                < MAX_ALLOWED_BRUSH_INSTANCES - 1)
+                                        {
+                                            *nextBrushInstance++ = *prevBrushInstance++
+                                                + (direction * BRUSH_INSTANCE_SPACING);
+                                            hmCompState->working.brushInstanceCount++;
+
+                                            distanceRemaining -= BRUSH_INSTANCE_SPACING;
+                                        }
+                                    }
+                                }
                             }
                             else
                             {
@@ -644,43 +671,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     lightDir.z = 0.2f;
     rendererUpdateLightingState(&memory->engine, &lightDir, true, true, true, true, true);
 
-    // the last brush instance is reserved for previewing the result of the current operation
-#define MAX_ALLOWED_BRUSH_INSTANCES (MAX_BRUSH_QUADS - 1)
-
-    if (memory->state.isEditingHeightmap
-        && hmCompState->working.brushInstanceCount < MAX_ALLOWED_BRUSH_INSTANCES - 1)
-    {
-        int idx = hmCompState->working.brushInstanceCount * 2;
-        if (hmCompState->working.brushInstanceCount == 0)
-        {
-            addBrushInstance(memory, newBrushPos);
-        }
-        else
-        {
-            int prevIdx = (hmCompState->working.brushInstanceCount - 1) * 2;
-            glm::vec2 prevInstancePos =
-                glm::vec2(hmCompState->working.brushQuadInstanceBufferData[prevIdx],
-                    hmCompState->working.brushQuadInstanceBufferData[prevIdx + 1]);
-
-            glm::vec2 diff = newBrushPos - prevInstancePos;
-            glm::vec2 direction = glm::normalize(diff);
-            float distance = glm::length(diff);
-
-            const float BRUSH_INSTANCE_SPACING = 0.005f;
-            while (distance > BRUSH_INSTANCE_SPACING
-                && hmCompState->working.brushInstanceCount < MAX_ALLOWED_BRUSH_INSTANCES - 1)
-            {
-                prevInstancePos += direction * BRUSH_INSTANCE_SPACING;
-                addBrushInstance(memory, prevInstancePos);
-                distance -= BRUSH_INSTANCE_SPACING;
-            }
-        }
-    }
-
     // update preview brush quad instance
-    uint32 previewQuadIdx = MAX_ALLOWED_BRUSH_INSTANCES * 2;
-    hmCompState->working.brushQuadInstanceBufferData[previewQuadIdx] = newBrushPos.x;
-    hmCompState->working.brushQuadInstanceBufferData[previewQuadIdx + 1] = newBrushPos.y;
+    hmCompState->working.brushQuadInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] =
+        newBrushPos;
 
     // update brush quad instance buffer
     rendererUpdateBuffer(&memory->engine, hmCompState->working.brushQuadInstanceBufferHandle,

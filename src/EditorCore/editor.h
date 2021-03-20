@@ -58,7 +58,7 @@ struct HeightmapCompositionState
     {
         uint32 brushQuadVertexArrayHandle;
         uint32 brushQuadInstanceBufferHandle;
-        float brushQuadInstanceBufferData[MAX_BRUSH_QUADS * 2];
+        glm::vec2 brushQuadInstanceBufferData[MAX_BRUSH_QUADS];
         uint32 brushInstanceCount;
     } working;
 };
