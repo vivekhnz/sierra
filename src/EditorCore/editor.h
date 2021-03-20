@@ -51,16 +51,10 @@ struct EditorUiState
 
 struct HeightmapCompositionState
 {
-    glm::mat4 cameraTransform;
-    uint32 quadVertexArrayHandle;
-
-    struct WorkingWorld
-    {
-        uint32 brushQuadVertexArrayHandle;
-        uint32 brushQuadInstanceBufferHandle;
-        glm::vec2 brushQuadInstanceBufferData[MAX_BRUSH_QUADS];
-        uint32 brushInstanceCount;
-    } working;
+    uint32 brushQuadVertexArrayHandle;
+    uint32 brushQuadInstanceBufferHandle;
+    glm::vec2 brushQuadInstanceBufferData[MAX_BRUSH_QUADS];
+    uint32 brushInstanceCount;
 };
 
 struct TextureAssetBinding
@@ -131,12 +125,6 @@ struct SceneState
     } worldState;
 };
 
-struct HeightmapPreviewState
-{
-    uint32 vertexArrayHandle;
-    glm::mat4 cameraTransform;
-};
-
 struct HeightmapRenderTexture
 {
     uint32 textureHandle;
@@ -155,11 +143,14 @@ struct EditorState
 
     bool isEditingHeightmap;
 
+    uint32 quadVertexArrayHandle;
+    uint32 quadFlippedYVertexArrayHandle;
+    glm::mat4 orthographicCameraTransform;
+
     EditorUiState currentUiState;
     EditorUiState newUiState;
     HeightmapCompositionState heightmapCompositionState;
     SceneState sceneState;
-    HeightmapPreviewState heightmapPreviewState;
 };
 
 struct EditorMemory

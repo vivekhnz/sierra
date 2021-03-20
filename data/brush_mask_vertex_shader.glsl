@@ -13,6 +13,7 @@ layout(location = 0) out vec2 out_uv;
 
 void main()
 {
-    gl_Position = camera_transform * vec4((in_mesh_pos * brushScale) + in_instance_pos, 0.0f, 1.0f);
+    vec2 pos = ((in_mesh_pos - vec2(0.5)) * brushScale) + in_instance_pos;
+    gl_Position = camera_transform * vec4(pos, 0, 1);
     out_uv = in_mesh_uv;
 }

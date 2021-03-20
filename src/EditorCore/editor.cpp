@@ -45,7 +45,6 @@ bool initializeEditor(EditorMemory *memory)
     EngineMemory *engineMemory = &memory->engine;
     HeightmapCompositionState *hmCompState = &memory->state.heightmapCompositionState;
     SceneState *sceneState = &memory->state.sceneState;
-    HeightmapPreviewState *hmPreviewState = &memory->state.heightmapPreviewState;
 
     memory->state.importedHeightmapTextureHandle =
         rendererCreateTexture(engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
@@ -59,14 +58,19 @@ bool initializeEditor(EditorMemory *memory)
 
     memory->state.isEditingHeightmap = false;
 
-    // create quad mesh
-    float quadVertices[20] = {
-        0, 0, 0, 0, 0, //
-        1, 0, 0, 1, 0, //
-        1, 1, 0, 1, 1, //
-        0, 1, 0, 0, 1  //
+    float quadVertices[16] = {
+        0, 0, 0, 0, //
+        1, 0, 1, 0, //
+        1, 1, 1, 1, //
+        0, 1, 0, 1  //
     };
-    uint32 quadVertexBufferStride = 5 * sizeof(float);
+    float quadFlippedYVertices[16] = {
+        0, 0, 0, 1, //
+        1, 0, 1, 1, //
+        1, 1, 1, 0, //
+        0, 1, 0, 0  //
+    };
+    uint32 quadVertexBufferStride = 4 * sizeof(float);
     uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
 
     uint32 quadVertexBufferHandle =
@@ -74,65 +78,59 @@ bool initializeEditor(EditorMemory *memory)
     rendererUpdateBuffer(
         engineMemory, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
 
+    uint32 quadFlippedYVertexBufferHandle =
+        rendererCreateBuffer(engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(engineMemory, quadFlippedYVertexBufferHandle,
+        sizeof(quadFlippedYVertices), &quadFlippedYVertices);
+
     uint32 quadElementBufferHandle =
         rendererCreateBuffer(engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
     rendererUpdateBuffer(
         engineMemory, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
 
-    hmCompState->quadVertexArrayHandle = rendererCreateVertexArray(engineMemory);
-    rendererBindVertexArray(engineMemory, hmCompState->quadVertexArrayHandle);
+    memory->state.quadVertexArrayHandle = rendererCreateVertexArray(engineMemory);
+    rendererBindVertexArray(engineMemory, memory->state.quadVertexArrayHandle);
     rendererBindBuffer(engineMemory, quadElementBufferHandle);
     rendererBindBuffer(engineMemory, quadVertexBufferHandle);
-    rendererBindVertexAttribute(0, GL_FLOAT, false, 3, quadVertexBufferStride, 0, false);
+    rendererBindVertexAttribute(0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
     rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, quadVertexBufferStride, 3 * sizeof(float), false);
+        1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     rendererUnbindVertexArray();
 
-    hmCompState->cameraTransform = glm::identity<glm::mat4>();
-    hmCompState->cameraTransform =
-        glm::scale(hmCompState->cameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
-    hmCompState->cameraTransform =
-        glm::translate(hmCompState->cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
+    memory->state.quadFlippedYVertexArrayHandle = rendererCreateVertexArray(engineMemory);
+    rendererBindVertexArray(engineMemory, memory->state.quadFlippedYVertexArrayHandle);
+    rendererBindBuffer(engineMemory, quadElementBufferHandle);
+    rendererBindBuffer(engineMemory, quadFlippedYVertexBufferHandle);
+    rendererBindVertexAttribute(0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
+    rendererBindVertexAttribute(
+        1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
+    rendererUnbindVertexArray();
 
-    // create brush quad mesh
-    float brushQuadVertices[16] = {
-        -0.5f, -0.5f, 0.0f, 0.0f, //
-        +0.5f, -0.5f, 1.0f, 0.0f, //
-        +0.5f, +0.5f, 1.0f, 1.0f, //
-        -0.5f, +0.5f, 0.0f, 1.0f  //
-    };
-    uint32 brushQuadVertexBufferStride = 4 * sizeof(float);
-    uint32 brushQuadIndices[6] = {0, 1, 2, 0, 2, 3};
+    memory->state.orthographicCameraTransform = glm::identity<glm::mat4>();
+    memory->state.orthographicCameraTransform =
+        glm::scale(memory->state.orthographicCameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
+    memory->state.orthographicCameraTransform = glm::translate(
+        memory->state.orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
-    uint32 brushQuadElementBufferHandle =
-        rendererCreateBuffer(engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(engineMemory, brushQuadElementBufferHandle, sizeof(brushQuadIndices),
-        &brushQuadIndices);
-
-    uint32 brushQuadVertexBufferHandle =
+    hmCompState->brushQuadInstanceBufferHandle =
         rendererCreateBuffer(engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(engineMemory, brushQuadVertexBufferHandle, sizeof(brushQuadVertices),
-        &brushQuadVertices);
-
-    hmCompState->working.brushQuadInstanceBufferHandle =
-        rendererCreateBuffer(engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(engineMemory, hmCompState->working.brushQuadInstanceBufferHandle,
-        sizeof(hmCompState->working.brushQuadInstanceBufferData),
-        &hmCompState->working.brushQuadInstanceBufferData);
+    rendererUpdateBuffer(engineMemory, hmCompState->brushQuadInstanceBufferHandle,
+        sizeof(hmCompState->brushQuadInstanceBufferData),
+        &hmCompState->brushQuadInstanceBufferData);
     uint32 instanceBufferStride = sizeof(glm::vec2);
 
-    hmCompState->working.brushQuadVertexArrayHandle = rendererCreateVertexArray(engineMemory);
-    rendererBindVertexArray(engineMemory, hmCompState->working.brushQuadVertexArrayHandle);
-    rendererBindBuffer(engineMemory, brushQuadElementBufferHandle);
-    rendererBindBuffer(engineMemory, brushQuadVertexBufferHandle);
-    rendererBindVertexAttribute(0, GL_FLOAT, false, 2, brushQuadVertexBufferStride, 0, false);
+    hmCompState->brushQuadVertexArrayHandle = rendererCreateVertexArray(engineMemory);
+    rendererBindVertexArray(engineMemory, hmCompState->brushQuadVertexArrayHandle);
+    rendererBindBuffer(engineMemory, quadElementBufferHandle);
+    rendererBindBuffer(engineMemory, quadVertexBufferHandle);
+    rendererBindVertexAttribute(0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
     rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, brushQuadVertexBufferStride, 2 * sizeof(float), false);
-    rendererBindBuffer(engineMemory, hmCompState->working.brushQuadInstanceBufferHandle);
+        1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
+    rendererBindBuffer(engineMemory, hmCompState->brushQuadInstanceBufferHandle);
     rendererBindVertexAttribute(2, GL_FLOAT, false, 2, instanceBufferStride, 0, true);
     rendererUnbindVertexArray();
 
-    hmCompState->working.brushInstanceCount = 0;
+    hmCompState->brushInstanceCount = 0;
 
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer =
@@ -249,42 +247,6 @@ bool initializeEditor(EditorMemory *memory)
     rendererUpdateBuffer(engineMemory, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), 0);
 
-    // initialize heightmap preview
-    float heightmapPreviewQuadVertices[20] = {
-        0, 0, 0, 0, 0, //
-        1, 0, 0, 1, 0, //
-        1, 1, 0, 1, 1, //
-        0, 1, 0, 0, 1  //
-    };
-    uint32 heightmapPreviewQuadVertexBufferStride = 5 * sizeof(float);
-    uint32 heightmapPreviewQuadIndices[6] = {0, 2, 1, 0, 3, 2};
-
-    uint32 heightmapPreviewQuadVertexBufferHandle =
-        rendererCreateBuffer(engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(engineMemory, heightmapPreviewQuadVertexBufferHandle,
-        sizeof(heightmapPreviewQuadVertices), &heightmapPreviewQuadVertices);
-
-    uint32 heightmapPreviewQuadElementBufferHandle =
-        rendererCreateBuffer(engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(engineMemory, heightmapPreviewQuadElementBufferHandle,
-        sizeof(heightmapPreviewQuadIndices), &heightmapPreviewQuadIndices);
-
-    hmPreviewState->vertexArrayHandle = rendererCreateVertexArray(engineMemory);
-    rendererBindVertexArray(engineMemory, hmPreviewState->vertexArrayHandle);
-    rendererBindBuffer(engineMemory, heightmapPreviewQuadElementBufferHandle);
-    rendererBindBuffer(engineMemory, heightmapPreviewQuadVertexBufferHandle);
-    rendererBindVertexAttribute(
-        0, GL_FLOAT, false, 3, heightmapPreviewQuadVertexBufferStride, 0, false);
-    rendererBindVertexAttribute(1, GL_FLOAT, false, 2, heightmapPreviewQuadVertexBufferStride,
-        3 * sizeof(float), false);
-    rendererUnbindVertexArray();
-
-    hmPreviewState->cameraTransform = glm::identity<glm::mat4>();
-    hmPreviewState->cameraTransform =
-        glm::scale(hmPreviewState->cameraTransform, glm::vec3(2.0f, -2.0f, 1.0f));
-    hmPreviewState->cameraTransform =
-        glm::translate(hmPreviewState->cameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
-
     return 1;
 }
 
@@ -315,8 +277,7 @@ void compositeHeightmap(EditorMemory *memory,
     rendererBindFramebuffer(engineMemory, brushInfluenceMask->framebufferHandle);
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
-    rendererUpdateCameraState(
-        &memory->engine, &memory->state.heightmapCompositionState.cameraTransform);
+    rendererUpdateCameraState(&memory->engine, &memory->state.orthographicCameraTransform);
 
     rendererUseShaderProgram(engineMemory, brushMaskShaderProgramHandle);
     rendererSetPolygonMode(GL_FILL);
@@ -327,8 +288,8 @@ void compositeHeightmap(EditorMemory *memory,
         engineMemory, brushMaskShaderProgramHandle, "brushFalloff", brushFalloff);
     rendererSetShaderProgramUniformFloat(
         engineMemory, brushMaskShaderProgramHandle, "brushStrength", brushStrength);
-    rendererBindVertexArray(engineMemory,
-        memory->state.heightmapCompositionState.working.brushQuadVertexArrayHandle);
+    rendererBindVertexArray(
+        engineMemory, memory->state.heightmapCompositionState.brushQuadVertexArrayHandle);
     rendererDrawElementsInstanced(GL_TRIANGLES, 6, brushInstanceCount, brushInstanceOffset);
 
     rendererUnbindFramebuffer(engineMemory, brushInfluenceMask->framebufferHandle);
@@ -341,8 +302,7 @@ void compositeHeightmap(EditorMemory *memory,
     rendererUseShaderProgram(engineMemory, brushBlendAddSubShaderProgramHandle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindVertexArray(
-        engineMemory, memory->state.heightmapCompositionState.quadVertexArrayHandle);
+    rendererBindVertexArray(engineMemory, memory->state.quadVertexArrayHandle);
 
     float blendSign = memory->state.currentUiState.tool == EDITOR_TOOL_LOWER_TERRAIN ? -1 : 1;
     rendererSetShaderProgramUniformFloat(
@@ -386,28 +346,26 @@ void commitChanges(EditorMemory *memory)
         &memory->engine, memory->state.committedHeightmap.framebufferHandle);
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
-    rendererUpdateCameraState(
-        &memory->engine, &memory->state.heightmapCompositionState.cameraTransform);
+    rendererUpdateCameraState(&memory->engine, &memory->state.orthographicCameraTransform);
 
     rendererUseShaderProgram(&memory->engine, quadShaderProgram->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
-    rendererBindVertexArray(
-        &memory->engine, memory->state.heightmapCompositionState.quadVertexArrayHandle);
+    rendererBindVertexArray(&memory->engine, memory->state.quadVertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);
 
     rendererUnbindFramebuffer(
         &memory->engine, memory->state.committedHeightmap.framebufferHandle);
 
     memory->state.isEditingHeightmap = false;
-    memory->state.heightmapCompositionState.working.brushInstanceCount = 0;
+    memory->state.heightmapCompositionState.brushInstanceCount = 0;
 }
 
 void discardChanges(EditorMemory *memory)
 {
     memory->state.isEditingHeightmap = false;
-    memory->state.heightmapCompositionState.working.brushInstanceCount = 0;
+    memory->state.heightmapCompositionState.brushInstanceCount = 0;
 
     rendererReadTexturePixels(&memory->engine, memory->state.committedHeightmap.textureHandle,
         GL_UNSIGNED_SHORT, GL_RED, memory->state.sceneState.heightmapTextureDataTempBuffer);
@@ -569,15 +527,15 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                 sceneState->worldState.isPreviewingChanges = true;
 
                                 glm::vec2 *nextBrushInstance =
-                                    &hmCompState->working.brushQuadInstanceBufferData
-                                         [hmCompState->working.brushInstanceCount];
-                                if (hmCompState->working.brushInstanceCount
+                                    &hmCompState->brushQuadInstanceBufferData
+                                         [hmCompState->brushInstanceCount];
+                                if (hmCompState->brushInstanceCount
                                     < MAX_ALLOWED_BRUSH_INSTANCES - 1)
                                 {
-                                    if (hmCompState->working.brushInstanceCount == 0)
+                                    if (hmCompState->brushInstanceCount == 0)
                                     {
                                         *nextBrushInstance++ = newBrushPos;
-                                        hmCompState->working.brushInstanceCount++;
+                                        hmCompState->brushInstanceCount++;
                                     }
                                     else
                                     {
@@ -589,12 +547,12 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                                         const float BRUSH_INSTANCE_SPACING = 0.005f;
                                         while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                            && hmCompState->working.brushInstanceCount
+                                            && hmCompState->brushInstanceCount
                                                 < MAX_ALLOWED_BRUSH_INSTANCES - 1)
                                         {
                                             *nextBrushInstance++ = *prevBrushInstance++
                                                 + (direction * BRUSH_INSTANCE_SPACING);
-                                            hmCompState->working.brushInstanceCount++;
+                                            hmCompState->brushInstanceCount++;
 
                                             distanceRemaining -= BRUSH_INSTANCE_SPACING;
                                         }
@@ -672,17 +630,16 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     rendererUpdateLightingState(&memory->engine, &lightDir, true, true, true, true, true);
 
     // update preview brush quad instance
-    hmCompState->working.brushQuadInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] =
-        newBrushPos;
+    hmCompState->brushQuadInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] = newBrushPos;
 
     // update brush quad instance buffer
-    rendererUpdateBuffer(&memory->engine, hmCompState->working.brushQuadInstanceBufferHandle,
-        BRUSH_QUAD_INSTANCE_BUFFER_SIZE, hmCompState->working.brushQuadInstanceBufferData);
+    rendererUpdateBuffer(&memory->engine, hmCompState->brushQuadInstanceBufferHandle,
+        BRUSH_QUAD_INSTANCE_BUFFER_SIZE, hmCompState->brushQuadInstanceBufferData);
 
     compositeHeightmap(memory, memory->state.committedHeightmap.textureHandle,
         &memory->state.workingBrushInfluenceMask, &memory->state.workingHeightmap,
         brushMaskShaderProgram->handle, brushBlendAddSubShaderProgram->handle,
-        hmCompState->working.brushInstanceCount, 0);
+        hmCompState->brushInstanceCount, 0);
     compositeHeightmap(memory, memory->state.workingHeightmap.textureHandle,
         &memory->state.previewBrushInfluenceMask, &memory->state.previewHeightmap,
         brushMaskShaderProgram->handle, brushBlendAddSubShaderProgram->handle, 1,
@@ -906,15 +863,13 @@ API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightma
         &memory->engine, memory->state.committedHeightmap.framebufferHandle);
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
-    rendererUpdateCameraState(
-        &memory->engine, &memory->state.heightmapCompositionState.cameraTransform);
+    rendererUpdateCameraState(&memory->engine, &memory->state.orthographicCameraTransform);
 
     rendererUseShaderProgram(&memory->engine, quadShaderProgram->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rendererBindTexture(&memory->engine, memory->state.importedHeightmapTextureHandle, 0);
-    rendererBindVertexArray(
-        &memory->engine, memory->state.heightmapCompositionState.quadVertexArrayHandle);
+    rendererBindVertexArray(&memory->engine, memory->state.quadVertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);
 
     rendererUnbindFramebuffer(
@@ -925,8 +880,7 @@ API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightma
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
-    rendererUpdateCameraState(
-        &memory->engine, &memory->state.heightmapPreviewState.cameraTransform);
+    rendererUpdateCameraState(&memory->engine, &memory->state.orthographicCameraTransform);
     rendererSetViewportSize(view->width, view->height);
     rendererClearBackBuffer(0, 0, 0, 1);
 
@@ -940,7 +894,6 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
-    rendererBindVertexArray(
-        &memory->engine, memory->state.heightmapPreviewState.vertexArrayHandle);
+    rendererBindVertexArray(&memory->engine, memory->state.quadFlippedYVertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);
 }
