@@ -21,7 +21,8 @@ typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 enum EditorTool
 {
     EDITOR_TOOL_RAISE_TERRAIN = 0,
-    EDITOR_TOOL_LOWER_TERRAIN = 1
+    EDITOR_TOOL_LOWER_TERRAIN = 1,
+    EDITOR_TOOL_FLATTEN_TERRAIN = 2
 };
 
 struct MaterialProperties
@@ -142,6 +143,7 @@ struct EditorState
     uint32 activeBrushStrokeInstanceBufferHandle;
     glm::vec2 activeBrushStrokeInstanceBufferData[MAX_BRUSH_QUADS];
     uint32 activeBrushStrokeInstanceCount;
+    float activeBrushStrokeInitialHeight;
 
     EditorUiState uiState;
     SceneState sceneState;

@@ -91,7 +91,8 @@ namespace Terrain.Editor
             editorToolByToolButtons = new Dictionary<RadioButton, EditorToolProxy>
             {
                 [rbEditorToolRaiseTerrain] = EditorToolProxy.RaiseTerrain,
-                [rbEditorToolLowerTerrain] = EditorToolProxy.LowerTerrain
+                [rbEditorToolLowerTerrain] = EditorToolProxy.LowerTerrain,
+                [rbEditorToolFlattenTerrain] = EditorToolProxy.FlattenTerrain,
             };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)

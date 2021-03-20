@@ -5,7 +5,8 @@ public
     enum class EditorToolProxy
     {
         RaiseTerrain = 0,
-        LowerTerrain = 1
+        LowerTerrain = 1,
+        FlattenTerrain = 2
     };
 
 public

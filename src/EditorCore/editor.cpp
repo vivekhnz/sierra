@@ -2,6 +2,14 @@
 
 #include "../Engine/terrain_renderer.h"
 
+struct BrushBlendProperties
+{
+    uint32 shaderProgramHandle;
+    bool isInfluenceCumulative;
+    float addSubSign;
+    float flattenHeight;
+};
+
 void *pushEditorData(EditorMemory *memory, uint64 size)
 {
     uint64 availableStorage = memory->data.size - memory->dataStorageUsed;
@@ -254,23 +262,26 @@ void compositeHeightmap(EditorMemory *memory,
     HeightmapRenderTexture *brushInfluenceMask,
     HeightmapRenderTexture *output,
     uint32 brushMaskShaderProgramHandle,
-    uint32 brushBlendAddSubShaderProgramHandle,
     uint32 brushInstanceCount,
-    uint32 brushInstanceOffset)
+    uint32 brushInstanceOffset,
+    BrushBlendProperties *blendProps)
 {
     EngineMemory *engineMemory = &memory->engine;
 
     float brushRadius = memory->state.uiState.brushRadius / 2048.0f;
     float brushFalloff = memory->state.uiState.brushFalloff;
-
-    /*
-     * Because the spacing between brush instances is constant, higher radius brushes will
-     * result in more brush instances being drawn, meaning the terrain will be influenced
-     * more. As a result, we should decrease the brush strength as the brush radius
-     * increases to ensure the perceived brush strength remains constant.
-     */
-    float brushStrength = 0.01f + (0.15f * memory->state.uiState.brushStrength);
-    brushStrength /= pow(memory->state.uiState.brushRadius, 0.5f);
+    float brushStrength = 1;
+    if (blendProps->isInfluenceCumulative)
+    {
+        /*
+         * Because the spacing between brush instances is constant, higher radius brushes will
+         * result in more brush instances being drawn, meaning the terrain will be influenced
+         * more. As a result, we should decrease the brush strength as the brush radius
+         * increases to ensure the perceived brush strength remains constant.
+         */
+        brushStrength = 0.01f + (0.15f * memory->state.uiState.brushStrength);
+        brushStrength /= pow(memory->state.uiState.brushRadius, 0.5f);
+    }
 
     // render brush influence mask
     rendererBindFramebuffer(engineMemory, brushInfluenceMask->framebufferHandle);
@@ -280,7 +291,8 @@ void compositeHeightmap(EditorMemory *memory,
 
     rendererUseShaderProgram(engineMemory, brushMaskShaderProgramHandle);
     rendererSetPolygonMode(GL_FILL);
-    rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE);
+    rendererSetBlendMode(
+        blendProps->isInfluenceCumulative ? GL_FUNC_ADD : GL_MAX, GL_ONE, GL_ONE);
     rendererSetShaderProgramUniformFloat(
         engineMemory, brushMaskShaderProgramHandle, "brushScale", brushRadius);
     rendererSetShaderProgramUniformFloat(
@@ -297,14 +309,15 @@ void compositeHeightmap(EditorMemory *memory,
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
 
-    rendererUseShaderProgram(engineMemory, brushBlendAddSubShaderProgramHandle);
+    rendererUseShaderProgram(engineMemory, blendProps->shaderProgramHandle);
+    rendererSetShaderProgramUniformFloat(
+        engineMemory, blendProps->shaderProgramHandle, "blendSign", blendProps->addSubSign);
+    rendererSetShaderProgramUniformFloat(engineMemory, blendProps->shaderProgramHandle,
+        "flattenHeight", blendProps->flattenHeight);
+
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rendererBindVertexArray(engineMemory, memory->state.quadVertexArrayHandle);
-
-    float blendSign = memory->state.uiState.tool == EDITOR_TOOL_LOWER_TERRAIN ? -1 : 1;
-    rendererSetShaderProgramUniformFloat(
-        engineMemory, brushBlendAddSubShaderProgramHandle, "blendSign", blendSign);
     rendererBindTexture(engineMemory, baseHeightmapTextureHandle, 0);
     rendererBindTexture(engineMemory, brushInfluenceMask->textureHandle, 1);
     rendererDrawElements(GL_TRIANGLES, 6);
@@ -389,7 +402,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_MASK);
     ShaderProgramAsset *brushBlendAddSubShaderProgram =
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB);
-    if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram)
+    ShaderProgramAsset *brushBlendFlattenShaderProgram =
+        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN);
+    if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram
+        || !brushBlendFlattenShaderProgram)
     {
         return;
     }
@@ -478,10 +494,17 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                     glm::vec2 heightfieldSize =
                         glm::vec2(heightfield->columns, heightfield->rows)
                         * heightfield->spacing;
-                    glm::vec2 relativePickPoint =
-                        glm::vec2(intersectionPoint.x, intersectionPoint.z)
-                        - heightfield->position;
-                    newBrushPos = relativePickPoint / heightfieldSize;
+                    glm::vec3 relativeIntersectionPoint = intersectionPoint
+                        - glm::vec3(heightfield->position.x, 0, heightfield->position.y);
+                    newBrushPos =
+                        glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z)
+                        / heightfieldSize;
+
+                    if (!memory->state.isEditingHeightmap)
+                    {
+                        memory->state.activeBrushStrokeInitialHeight =
+                            relativeIntersectionPoint.y / heightfield->maxHeight;
+                    }
 
                     if (isButtonDown(input, EDITOR_INPUT_KEY_R))
                     {
@@ -566,6 +589,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         {
                             memory->state.isEditingHeightmap = true;
                             sceneState->worldState.isPreviewingChanges = true;
+                            memory->state.activeBrushStrokeInitialHeight =
+                                relativeIntersectionPoint.y / heightfield->maxHeight;
                         }
                     }
                 }
@@ -589,6 +614,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         else if (isButtonDown(input, EDITOR_INPUT_KEY_2))
         {
             memory->state.uiState.tool = EDITOR_TOOL_LOWER_TERRAIN;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_3))
+        {
+            memory->state.uiState.tool = EDITOR_TOOL_FLATTEN_TERRAIN;
         }
     }
 
@@ -635,14 +664,33 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     rendererUpdateBuffer(&memory->engine, memory->state.activeBrushStrokeInstanceBufferHandle,
         BRUSH_QUAD_INSTANCE_BUFFER_SIZE, memory->state.activeBrushStrokeInstanceBufferData);
 
+    BrushBlendProperties blendProps = {};
+    switch (memory->state.uiState.tool)
+    {
+    case EDITOR_TOOL_RAISE_TERRAIN:
+        blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->handle;
+        blendProps.isInfluenceCumulative = true;
+        blendProps.addSubSign = 1;
+        break;
+    case EDITOR_TOOL_LOWER_TERRAIN:
+        blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->handle;
+        blendProps.isInfluenceCumulative = true;
+        blendProps.addSubSign = -1;
+        break;
+    case EDITOR_TOOL_FLATTEN_TERRAIN:
+        blendProps.shaderProgramHandle = brushBlendFlattenShaderProgram->handle;
+        blendProps.isInfluenceCumulative = false;
+        blendProps.flattenHeight = memory->state.activeBrushStrokeInitialHeight;
+        break;
+    }
+
     compositeHeightmap(memory, memory->state.committedHeightmap.textureHandle,
         &memory->state.workingBrushInfluenceMask, &memory->state.workingHeightmap,
-        brushMaskShaderProgram->handle, brushBlendAddSubShaderProgram->handle,
-        memory->state.activeBrushStrokeInstanceCount, 0);
+        brushMaskShaderProgram->handle, memory->state.activeBrushStrokeInstanceCount, 0,
+        &blendProps);
     compositeHeightmap(memory, memory->state.workingHeightmap.textureHandle,
         &memory->state.previewBrushInfluenceMask, &memory->state.previewHeightmap,
-        brushMaskShaderProgram->handle, brushBlendAddSubShaderProgram->handle, 1,
-        MAX_BRUSH_QUADS - 1);
+        brushMaskShaderProgram->handle, 1, MAX_BRUSH_QUADS - 1, &blendProps);
 
     if (memory->state.isEditingHeightmap)
     {

@@ -8,10 +8,10 @@ out vec4 FragColor;
 
 void main()
 {
-    float value = pow(distance(uv, vec2(0.5f)) * 2.0f, 2);
+    float d = 1 - min(distance(uv, vec2(0.5f)) * 2, 1);
+    float value = (cos(d * 3.14f) * 0.5f) + 0.5f;
     value = (1 - value) / (1 - brushFalloff);
     value = max(min(value, 1.0f), 0.0f);
     value = value * brushStrength;
-    
-    FragColor = vec4(1, 1, 1, value);
+    FragColor = vec4(value, 0, 0, 0);
 }

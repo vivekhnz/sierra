@@ -31,6 +31,10 @@
                          GroupName="EditorTool"
                          Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
                          Checked="OnEditorToolButtonSelected" />
+            <RadioButton x:Name="rbEditorToolFlattenTerrain" Content="Flatten Terrain"
+                         GroupName="EditorTool"
+                         Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
+                         Checked="OnEditorToolButtonSelected" />
         </StackPanel>
         <interop:Viewport x:Name="sceneViewport" Grid.Row="2" View="Scene" />
         <ScrollViewer Grid.Column="1" Grid.Row="1" Grid.RowSpan="2"
