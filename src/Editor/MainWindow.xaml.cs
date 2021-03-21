@@ -93,6 +93,7 @@ namespace Terrain.Editor
                 [rbEditorToolRaiseTerrain] = EditorToolProxy.RaiseTerrain,
                 [rbEditorToolLowerTerrain] = EditorToolProxy.LowerTerrain,
                 [rbEditorToolFlattenTerrain] = EditorToolProxy.FlattenTerrain,
+                [rbEditorToolSmoothTerrain] = EditorToolProxy.SmoothTerrain
             };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)

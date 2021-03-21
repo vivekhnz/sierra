@@ -22,7 +22,8 @@ enum EditorTool
 {
     EDITOR_TOOL_RAISE_TERRAIN = 0,
     EDITOR_TOOL_LOWER_TERRAIN = 1,
-    EDITOR_TOOL_FLATTEN_TERRAIN = 2
+    EDITOR_TOOL_FLATTEN_TERRAIN = 2,
+    EDITOR_TOOL_SMOOTH_TERRAIN = 3
 };
 
 struct MaterialProperties
@@ -137,6 +138,7 @@ struct EditorState
     HeightmapRenderTexture workingHeightmap;
     HeightmapRenderTexture previewBrushInfluenceMask;
     HeightmapRenderTexture previewHeightmap;
+    HeightmapRenderTexture temporaryHeightmap;
 
     bool isEditingHeightmap;
     uint32 activeBrushStrokeVertexArrayHandle;

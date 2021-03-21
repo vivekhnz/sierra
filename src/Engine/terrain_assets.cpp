@@ -116,6 +116,10 @@ ShaderInfo getShaderInfo(uint32 assetId)
         info.type = GL_FRAGMENT_SHADER;
         info.relativePath = "data/brush_blend_flatten_fragment_shader.glsl";
         break;
+    case ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT:
+        info.type = GL_FRAGMENT_SHADER;
+        info.relativePath = "data/brush_blend_smooth_fragment_shader.glsl";
+        break;
     }
     return info;
 }
@@ -162,6 +166,11 @@ void getShaderProgramShaders(
         *out_shaderCount = 2;
         *out_shaderAssetIds++ = ASSET_SHADER_TEXTURE_VERTEX;
         *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_BLEND_FLATTEN_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH:
+        *out_shaderCount = 2;
+        *out_shaderAssetIds++ = ASSET_SHADER_TEXTURE_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT;
         break;
     }
 }

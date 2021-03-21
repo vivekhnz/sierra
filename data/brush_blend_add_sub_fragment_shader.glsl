@@ -9,7 +9,7 @@ uniform float blendSign;
 out vec4 FragColor;
 
 void main()
-{    
+{
     float baseValue = texture(baseTexture, uv).r;
     float influence = texture(influenceTexture, uv).r;
 

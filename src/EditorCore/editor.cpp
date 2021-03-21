@@ -6,6 +6,7 @@ struct BrushBlendProperties
 {
     uint32 shaderProgramHandle;
     bool isInfluenceCumulative;
+    uint32 iterations;
     float addSubSign;
     float flattenHeight;
 };
@@ -116,6 +117,7 @@ bool initializeEditor(EditorMemory *memory)
     memory->state.workingHeightmap = createHeightmapRenderTexture(engineMemory);
     memory->state.previewBrushInfluenceMask = createHeightmapRenderTexture(engineMemory);
     memory->state.previewHeightmap = createHeightmapRenderTexture(engineMemory);
+    memory->state.temporaryHeightmap = createHeightmapRenderTexture(engineMemory);
 
     memory->state.isEditingHeightmap = false;
 
@@ -266,6 +268,8 @@ void compositeHeightmap(EditorMemory *memory,
     uint32 brushInstanceOffset,
     BrushBlendProperties *blendProps)
 {
+    assert(blendProps->iterations % 2 == 1);
+
     EngineMemory *engineMemory = &memory->engine;
 
     float brushRadius = memory->state.uiState.brushRadius / 2048.0f;
@@ -305,24 +309,36 @@ void compositeHeightmap(EditorMemory *memory,
     rendererUnbindFramebuffer(engineMemory, brushInfluenceMask->framebufferHandle);
 
     // render heightmap
-    rendererBindFramebuffer(engineMemory, output->framebufferHandle);
-    rendererSetViewportSize(2048, 2048);
-    rendererClearBackBuffer(0, 0, 0, 1);
-
     rendererUseShaderProgram(engineMemory, blendProps->shaderProgramHandle);
     rendererSetShaderProgramUniformFloat(
         engineMemory, blendProps->shaderProgramHandle, "blendSign", blendProps->addSubSign);
     rendererSetShaderProgramUniformFloat(engineMemory, blendProps->shaderProgramHandle,
         "flattenHeight", blendProps->flattenHeight);
-
+    rendererSetShaderProgramUniformInteger(engineMemory, blendProps->shaderProgramHandle,
+        "iterationCount", blendProps->iterations);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rendererBindVertexArray(engineMemory, memory->state.quadVertexArrayHandle);
-    rendererBindTexture(engineMemory, baseHeightmapTextureHandle, 0);
     rendererBindTexture(engineMemory, brushInfluenceMask->textureHandle, 1);
-    rendererDrawElements(GL_TRIANGLES, 6);
 
-    rendererUnbindFramebuffer(engineMemory, output->framebufferHandle);
+    uint32 inputTextureHandle = baseHeightmapTextureHandle;
+    HeightmapRenderTexture *iterationOutput = output;
+    for (uint32 i = 0; i < blendProps->iterations; i++)
+    {
+        rendererBindFramebuffer(engineMemory, iterationOutput->framebufferHandle);
+
+        rendererSetViewportSize(2048, 2048);
+        rendererClearBackBuffer(0, 0, 0, 1);
+        rendererBindTexture(engineMemory, inputTextureHandle, 0);
+        rendererSetShaderProgramUniformInteger(
+            engineMemory, blendProps->shaderProgramHandle, "iteration", i);
+        rendererDrawElements(GL_TRIANGLES, 6);
+
+        rendererUnbindFramebuffer(engineMemory, iterationOutput->framebufferHandle);
+
+        inputTextureHandle = iterationOutput->textureHandle;
+        iterationOutput = i % 2 == 0 ? &memory->state.temporaryHeightmap : output;
+    }
 }
 
 void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
@@ -404,8 +420,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB);
     ShaderProgramAsset *brushBlendFlattenShaderProgram =
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN);
+    ShaderProgramAsset *brushBlendSmoothShaderProgram =
+        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH);
     if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram
-        || !brushBlendFlattenShaderProgram)
+        || !brushBlendFlattenShaderProgram || !brushBlendSmoothShaderProgram)
     {
         return;
     }
@@ -619,6 +637,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         {
             memory->state.uiState.tool = EDITOR_TOOL_FLATTEN_TERRAIN;
         }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_4))
+        {
+            memory->state.uiState.tool = EDITOR_TOOL_SMOOTH_TERRAIN;
+        }
     }
 
     // update brush highlight
@@ -670,17 +692,25 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     case EDITOR_TOOL_RAISE_TERRAIN:
         blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
+        blendProps.iterations = 1;
         blendProps.addSubSign = 1;
         break;
     case EDITOR_TOOL_LOWER_TERRAIN:
         blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
+        blendProps.iterations = 1;
         blendProps.addSubSign = -1;
         break;
     case EDITOR_TOOL_FLATTEN_TERRAIN:
         blendProps.shaderProgramHandle = brushBlendFlattenShaderProgram->handle;
         blendProps.isInfluenceCumulative = false;
+        blendProps.iterations = 1;
         blendProps.flattenHeight = memory->state.activeBrushStrokeInitialHeight;
+        break;
+    case EDITOR_TOOL_SMOOTH_TERRAIN:
+        blendProps.shaderProgramHandle = brushBlendSmoothShaderProgram->handle;
+        blendProps.isInfluenceCumulative = true;
+        blendProps.iterations = 3;
         break;
     }
 

@@ -6,7 +6,8 @@ public
     {
         RaiseTerrain = 0,
         LowerTerrain = 1,
-        FlattenTerrain = 2
+        FlattenTerrain = 2,
+        SmoothTerrain = 3
     };
 
 public
