@@ -13,7 +13,7 @@ void main()
     float baseValue = texture(baseTexture, uv).r;
     float influence = texture(influenceTexture, uv).r;
     
-    float newValue = mix(baseValue, flattenHeight, influence);
+    float newValue = mix(baseValue, flattenHeight, 1 - pow(1 - influence, 2));
 
     FragColor = vec4(newValue, newValue, newValue, 1);
 }

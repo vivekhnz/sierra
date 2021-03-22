@@ -79,7 +79,7 @@ void main()
     vec2 baseTexcoordsZ = vec2(texcoord.x * triAxisSign.z, texcoord.y);
 
     // blend materials based on slope, altitude and height
-    vec3 material_albedo = vec3(0.5);
+    vec3 material_albedo = vec3(0.72, 0.69, 0.65);
     vec3 material_normal = vec3(0);
     float material_ao = 1;
 
@@ -142,7 +142,7 @@ void main()
     }
 
     // calculate lighting
-    float ambientLight = 0.1f;
+    float ambientLight = 0.15f;
     vec3 normal = normalize(vertexNormal - (material_normal * 0.5f));
     float nDotL = dot(normal, lighting_lightDir.xyz);
     float lightingAmplitude = lighting_isEnabled
