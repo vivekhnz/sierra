@@ -56,7 +56,7 @@ float getDisplacement(vec2 uv, int layerIdx, float mip)
 }
 float height(vec2 uv)
 {
-    return textureLod(heightmapTexture, uv, 2.0f).x;
+    return textureLod(heightmapTexture, uv, 2).x;
 }
 
 void main()

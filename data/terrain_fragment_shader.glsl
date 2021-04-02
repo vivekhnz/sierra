@@ -15,10 +15,6 @@ layout (std140, binding = 1) uniform Lighting
 
 uniform int materialCount;
 uniform vec3 terrainDimensions;
-uniform vec2 brushHighlightPos;
-uniform float brushHighlightStrength;
-uniform float brushHighlightRadius;
-uniform float brushHighlightFalloff;
 
 layout(binding = 1) uniform sampler2DArray albedoTextures;
 layout(binding = 2) uniform sampler2DArray normalTextures;
@@ -35,6 +31,16 @@ layout(std430, binding = 1) buffer materialPropsBuffer
 {
     MaterialProperties materialProps[];
 };
+
+const int BRUSH_VIS_MODE_NONE = 0;
+const int BRUSH_VIS_MODE_CURSOR_ONLY = 1;
+const int BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA = 2;
+const int BRUSH_VIS_MODE_HIGHLIGHT_CURSOR = 3;
+
+uniform int visualizationMode;
+uniform vec2 cursorPos;
+uniform float cursorRadius;
+uniform float cursorFalloff;
 
 out vec4 FragColor;
 
@@ -149,33 +155,61 @@ void main()
         ? ambientLight + pow(0.5 + (nDotL * 0.5), 2)
         : 1.0f;
     vec3 terrainColor = material_albedo * lightingAmplitude * mix(0.6, 1.0, material_ao);
-    
-    float outerRadius = brushHighlightRadius * 0.5f;
-    float innerRadius = outerRadius * brushHighlightFalloff;
-    
-    vec2 normalizedUV = texcoord.xz / terrainDimensions.xz;
-    float distFromCenter = distance(normalizedUV, brushHighlightPos);
-    
-    // outline thickness is based on depth
-    float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.002), 0.0005);
-    float outlineIntensity = 0;
-    outlineIntensity += calcRingOpacity(outerRadius, outlineWidth, distFromCenter);
-    outlineIntensity += calcRingOpacity(innerRadius, outlineWidth, distFromCenter);
-    
-    float heightDelta = previewHeight - actualHeight;
-    vec3 highlightColor = vec3(0.5, 0.5, 0.5);
-    if (heightDelta > 0)
-    {
-        highlightColor = vec3(0, 1, 0.25f);
-    }
-    else if (heightDelta < 0)
-    {
-        highlightColor = vec3(1, 0, 0.1f);
-    }
-    
-    float highlightIntensity = min(abs(heightDelta) / 0.001f, 1) * 0.25;
-    highlightIntensity += outlineIntensity * 0.75;
-    highlightIntensity *= brushHighlightStrength;
 
-    FragColor = vec4(terrainColor + (highlightColor * highlightIntensity), 1);
+    bool isCursorActive = true;
+    bool isAdjustingParameter = false;
+    bool isBrushActive = false;
+
+    vec3 highlight = vec3(0);
+    if (visualizationMode != BRUSH_VIS_MODE_NONE)
+    {
+        float outerRadius = cursorRadius * 0.5f;
+        float innerRadius = outerRadius * cursorFalloff;
+        vec2 normalizedUV = texcoord.xz / terrainDimensions.xz;
+        float distFromCenter = distance(normalizedUV, cursorPos);
+
+        float baseHighlightIntensity = 0;
+        vec3 highlightColor = vec3(0.5, 0.5, 0.5);
+        
+        if (visualizationMode == BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA)
+        {
+            float heightDelta = previewHeight - actualHeight;
+            if (heightDelta > 0)
+            {
+                highlightColor = vec3(0, 0.5, 0.125);
+            }
+            else if (heightDelta < 0)
+            {
+                highlightColor = vec3(1, 0, 0.1f);
+            }
+            
+            baseHighlightIntensity = min(abs(heightDelta) / 0.001f, 1) * 0.225;
+        }
+        else if (visualizationMode == BRUSH_VIS_MODE_HIGHLIGHT_CURSOR)
+        {
+            highlightColor = vec3(1, 0.509, 0.094);
+            baseHighlightIntensity = (outerRadius - distFromCenter) / (outerRadius - innerRadius);
+            baseHighlightIntensity = clamp(baseHighlightIntensity, 0, 1);
+            baseHighlightIntensity *= 0.2;
+        }
+        highlight = highlightColor * baseHighlightIntensity;
+
+        // outline thickness is based on depth
+        float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.002), 0.0005);
+        
+        float outlineIntensity = 0;
+        outlineIntensity += calcRingOpacity(outerRadius, outlineWidth, distFromCenter);
+        outlineIntensity += calcRingOpacity(innerRadius, outlineWidth, distFromCenter);
+        
+        float outlineShadowIntensity = 0;
+        outlineShadowIntensity += calcRingOpacity(
+            outerRadius - (outlineWidth * 1.5), outlineWidth * 4, distFromCenter);
+        outlineShadowIntensity += calcRingOpacity(
+            innerRadius - (outlineWidth * 1.5), outlineWidth * 4, distFromCenter);
+
+        highlight += vec3(-0.05 * outlineShadowIntensity);
+        highlight += mix(highlightColor, vec3(1), 0.3) * outlineIntensity;
+    }
+
+    FragColor = vec4(terrainColor + highlight, 1);
 }

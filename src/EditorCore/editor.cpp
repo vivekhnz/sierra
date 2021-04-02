@@ -11,6 +11,14 @@ struct BrushBlendProperties
     float flattenHeight;
 };
 
+enum BrushVisualizationMode
+{
+    BRUSH_VIS_MODE_NONE = 0,
+    BRUSH_VIS_MODE_CURSOR_ONLY = 1,
+    BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA = 2,
+    BRUSH_VIS_MODE_HIGHLIGHT_CURSOR = 3
+};
+
 void *pushEditorData(EditorMemory *memory, uint64 size)
 {
     uint64 availableStorage = memory->data.size - memory->dataStorageUsed;
@@ -431,7 +439,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     SceneState *sceneState = &memory->state.sceneState;
 
     glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
-    sceneState->worldState.isPreviewingChanges = false;
+    memory->state.isAdjustingBrushParameters = false;
 
     // the last brush instance is reserved for previewing the result of the current operation
 #define MAX_ALLOWED_BRUSH_INSTANCES (MAX_BRUSH_QUADS - 1)
@@ -533,7 +541,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         memory->state.uiState.brushRadius =
                             glm::clamp(memory->state.uiState.brushRadius + brushRadiusIncrease,
                                 32.0f, 2048.0f);
-                        sceneState->worldState.isPreviewingChanges = true;
+                        memory->state.isAdjustingBrushParameters = true;
                     }
                     else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
                     {
@@ -544,7 +552,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         memory->state.uiState.brushFalloff = glm::clamp(
                             memory->state.uiState.brushFalloff + brushFalloffIncrease, 0.0f,
                             0.99f);
-                        sceneState->worldState.isPreviewingChanges = true;
+                        memory->state.isAdjustingBrushParameters = true;
                     }
                     else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
                     {
@@ -555,7 +563,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         memory->state.uiState.brushStrength = glm::clamp(
                             memory->state.uiState.brushStrength + brushStrengthIncrease, 0.01f,
                             1.0f);
-                        sceneState->worldState.isPreviewingChanges = true;
+                        memory->state.isAdjustingBrushParameters = true;
                     }
                     else
                     {
@@ -563,8 +571,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         {
                             if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                             {
-                                sceneState->worldState.isPreviewingChanges = true;
-
                                 glm::vec2 *nextBrushInstance =
                                     &memory->state.activeBrushStrokeInstanceBufferData
                                          [memory->state.activeBrushStrokeInstanceCount];
@@ -606,7 +612,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                         {
                             memory->state.isEditingHeightmap = true;
-                            sceneState->worldState.isPreviewingChanges = true;
                             memory->state.activeBrushStrokeInitialHeight =
                                 relativeIntersectionPoint.y / heightfield->maxHeight;
                         }
@@ -762,8 +767,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         view->viewState = viewState;
     }
 
-    bool isCursorVisibleView = sceneState->worldState.brushCursorVisibleView == viewState;
-
     // calculate camera transform
     constexpr float fov = glm::pi<float>() / 4.0f;
     const float nearPlane = 0.1f;
@@ -854,6 +857,35 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset)
         return;
 
+    BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
+    uint32 activeHeightmapTextureHandle = memory->state.workingHeightmap.textureHandle;
+    uint32 referenceHeightmapTextureHandle = memory->state.workingHeightmap.textureHandle;
+
+    if (sceneState->worldState.brushCursorVisibleView == viewState)
+    {
+        if (memory->state.isAdjustingBrushParameters)
+        {
+            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
+            if (memory->state.isEditingHeightmap)
+            {
+                referenceHeightmapTextureHandle =
+                    memory->state.committedHeightmap.textureHandle;
+            }
+            else
+            {
+                activeHeightmapTextureHandle = memory->state.previewHeightmap.textureHandle;
+            }
+        }
+        else if (memory->state.isEditingHeightmap)
+        {
+            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
+        }
+        else
+        {
+            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_CURSOR_ONLY;
+        }
+    }
+
     // calculate tessellation levels
     uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
     rendererSetShaderProgramUniformFloat(
@@ -866,8 +898,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         "columnCount", sceneState->heightfield.columns);
     rendererSetShaderProgramUniformFloat(&memory->engine, calcTessLevelShaderProgramHandle,
         "terrainHeight", sceneState->heightfield.maxHeight);
-    rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
-    rendererBindTexture(&memory->engine, memory->state.previewHeightmap.textureHandle, 5);
+    rendererBindTexture(&memory->engine, activeHeightmapTextureHandle, 0);
 
     uint32 meshEdgeCount =
         (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
@@ -890,16 +921,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    rendererBindTexture(&memory->engine, memory->state.workingHeightmap.textureHandle, 0);
+    rendererBindTexture(&memory->engine, activeHeightmapTextureHandle, 0);
     rendererBindTextureArray(&memory->engine, sceneState->albedoTextureArrayHandle, 1);
     rendererBindTextureArray(&memory->engine, sceneState->normalTextureArrayHandle, 2);
     rendererBindTextureArray(&memory->engine, sceneState->displacementTextureArrayHandle, 3);
     rendererBindTextureArray(&memory->engine, sceneState->aoTextureArrayHandle, 4);
-    rendererBindTexture(&memory->engine,
-        sceneState->worldState.isPreviewingChanges && isCursorVisibleView
-            ? memory->state.previewHeightmap.textureHandle
-            : memory->state.workingHeightmap.textureHandle,
-        5);
+    rendererBindTexture(&memory->engine, referenceHeightmapTextureHandle, 5);
+
     rendererBindShaderStorageBuffer(&memory->engine, sceneState->materialPropsBufferHandle, 1);
 
     // bind mesh data
@@ -913,14 +941,14 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         glm::vec3(sceneState->heightfield.spacing * sceneState->heightfield.columns,
             sceneState->heightfield.maxHeight,
             sceneState->heightfield.spacing * sceneState->heightfield.rows));
-    rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
-        "brushHighlightStrength", isCursorVisibleView ? 1 : 0);
+    rendererSetShaderProgramUniformInteger(
+        &memory->engine, terrainShaderProgramHandle, "visualizationMode", visualizationMode);
     rendererSetShaderProgramUniformVector2(&memory->engine, terrainShaderProgramHandle,
-        "brushHighlightPos", sceneState->worldState.brushPos);
+        "cursorPos", sceneState->worldState.brushPos);
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
-        "brushHighlightRadius", sceneState->worldState.brushRadius);
+        "cursorRadius", sceneState->worldState.brushRadius);
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
-        "brushHighlightFalloff", sceneState->worldState.brushFalloff);
+        "cursorFalloff", sceneState->worldState.brushFalloff);
 
     // draw mesh
     rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);

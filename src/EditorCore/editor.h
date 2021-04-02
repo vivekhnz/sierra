@@ -108,7 +108,6 @@ struct SceneState
         float brushRadius;
         float brushFalloff;
         SceneViewState *brushCursorVisibleView;
-        bool isPreviewingChanges;
 
         uint32 materialCount;
         GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
@@ -141,6 +140,7 @@ struct EditorState
     HeightmapRenderTexture temporaryHeightmap;
 
     bool isEditingHeightmap;
+    bool isAdjustingBrushParameters;
     uint32 activeBrushStrokeVertexArrayHandle;
     uint32 activeBrushStrokeInstanceBufferHandle;
     glm::vec2 activeBrushStrokeInstanceBufferData[MAX_BRUSH_QUADS];

@@ -21,9 +21,9 @@ layout (std140, binding = 1) uniform Lighting
 uniform int materialCount;
 uniform vec3 terrainDimensions;
 
-layout(binding = 0) uniform sampler2D heightmapTexture;
+layout(binding = 0) uniform sampler2D activeHeightmapTexture;
 layout(binding = 3) uniform sampler2DArray displacementTextures;
-layout(binding = 5) uniform sampler2D previewTexture;
+layout(binding = 5) uniform sampler2D referenceHeightmapTexture;
 
 struct MaterialProperties
 {
@@ -61,17 +61,9 @@ float getDisplacement(vec2 uv, int layerIdx, float mip)
         textureLod(displacementTextures, uvLayered, ceil(mip)).x,
         fract(mip));
 }
-float actualHeight(vec2 uv)
-{
-    return textureLod(heightmapTexture, uv, 2.0f).x;
-}
-float previewHeight(vec2 uv)
-{
-    return textureLod(previewTexture, uv, 2.0f).x;
-}
 float height(vec2 uv)
 {
-    return previewHeight(uv);
+    return textureLod(activeHeightmapTexture, uv, 2).x;
 }
 vec3 calcTriplanarBlend(vec3 normal)
 {
@@ -114,7 +106,8 @@ void main()
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     pos.y = altitude * terrainDimensions.y;
 
-    heights = vec2(actualHeight(hUV), previewHeight(hUV));
+    heights.x = textureLod(referenceHeightmapTexture, hUV, 2).x;
+    heights.y = altitude;
 
     if (lighting_isDisplacementMapEnabled)
     {

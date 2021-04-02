@@ -29,7 +29,6 @@ uniform int columnCount;
 uniform float targetTriangleSize;
 uniform float terrainHeight;
 layout(binding = 0) uniform sampler2D heightmapTexture;
-layout(binding = 5) uniform sampler2D previewTexture;
 
 vec3 worldToScreen(vec3 p)
 {
@@ -39,7 +38,7 @@ vec3 worldToScreen(vec3 p)
 
 float height(vec2 uv)
 {
-    return texture(previewTexture, uv).x * terrainHeight;
+    return texture(heightmapTexture, uv).x * terrainHeight;
 }
 
 float calcTessLevel(Vertex a, Vertex b)
