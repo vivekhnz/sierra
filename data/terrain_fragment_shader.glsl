@@ -169,7 +169,7 @@ void main()
         float distFromCenter = distance(normalizedUV, cursorPos);
 
         float baseHighlightIntensity = 0;
-        vec3 highlightColor = vec3(0.5, 0.5, 0.5);
+        vec3 highlightColor = vec3(0.3);
         
         if (visualizationMode == BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA)
         {
