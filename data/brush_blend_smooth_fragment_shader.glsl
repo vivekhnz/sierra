@@ -16,7 +16,7 @@ void main()
 
     influence = clamp((influence * iterationCount) - iteration, 0, 1);
     
-    float offsetLength = 16.0f / 2048.0f;
+    float offsetLength = 64.0f / 2048.0f;
     float blurredValue = baseValue;
     int radialStepCount = 12;
     for (int i = 0; i < radialStepCount; i++)
