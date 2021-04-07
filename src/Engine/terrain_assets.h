@@ -7,7 +7,8 @@ enum AssetType
 {
     ASSET_TYPE_SHADER = 1,
     ASSET_TYPE_SHADER_PROGRAM,
-    ASSET_TYPE_TEXTURE
+    ASSET_TYPE_TEXTURE,
+    ASSET_TYPE_MESH
 };
 
 #define ASSET_ID(type, name, idx) ASSET_##type##_##name## = idx | (ASSET_TYPE_##type## << 28)
@@ -29,9 +30,11 @@ enum ShaderAssetId
     ASSET_ID(SHADER, BRUSH_MASK_FRAGMENT, 12),
     ASSET_ID(SHADER, BRUSH_BLEND_ADD_SUB_FRAGMENT, 13),
     ASSET_ID(SHADER, BRUSH_BLEND_FLATTEN_FRAGMENT, 14),
-    ASSET_ID(SHADER, BRUSH_BLEND_SMOOTH_FRAGMENT, 15)
+    ASSET_ID(SHADER, BRUSH_BLEND_SMOOTH_FRAGMENT, 15),
+    ASSET_ID(SHADER, ROCK_VERTEX, 16),
+    ASSET_ID(SHADER, ROCK_FRAGMENT, 17)
 };
-#define ASSET_SHADER_COUNT 16
+#define ASSET_SHADER_COUNT 18
 
 enum ShaderProgramAssetId
 {
@@ -42,9 +45,10 @@ enum ShaderProgramAssetId
     ASSET_ID(SHADER_PROGRAM, BRUSH_MASK, 4),
     ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_ADD_SUB, 5),
     ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_FLATTEN, 6),
-    ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_SMOOTH, 7)
+    ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_SMOOTH, 7),
+    ASSET_ID(SHADER_PROGRAM, ROCK, 8)
 };
-#define ASSET_SHADER_PROGRAM_COUNT 8
+#define ASSET_SHADER_PROGRAM_COUNT 9
 
 enum TextureAssetId
 {
@@ -63,6 +67,12 @@ enum TextureAssetId
 };
 #define ASSET_TEXTURE_COUNT 12
 
+enum MeshAssetId
+{
+    ASSET_ID(MESH, ROCK, 0)
+};
+#define ASSET_MESH_COUNT 12
+
 struct ShaderAsset
 {
     uint32 handle;
@@ -79,6 +89,14 @@ struct TextureAsset
     void *data;
     uint8 version;
 };
+struct MeshAsset
+{
+    uint8 version;
+    uint32 vertexCount;
+    uint32 elementCount;
+    void *vertices;
+    void *indices;
+};
 
 EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
 EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId);
@@ -86,6 +104,8 @@ EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 a
 EXPORT void assetsLoadTexture(
     EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset);
 EXPORT TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId);
+
+EXPORT MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId);
 
 EXPORT void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId);
 

@@ -1,6 +1,7 @@
 #include "terrain_assets.h"
 
 #include <stb/stb_image.h>
+#include <fast_obj/fast_obj.h>
 #include "terrain_renderer.h"
 
 #define ASSET_GET_INDEX(id) (id & 0x0FFFFFFF)
@@ -25,6 +26,12 @@ struct TextureAssetSlot
     bool isLoadQueued;
     TextureAsset *asset;
 };
+struct MeshAssetSlot
+{
+    bool isUpToDate;
+    bool isLoadQueued;
+    MeshAsset *asset;
+};
 
 struct ShaderInfo
 {
@@ -35,6 +42,10 @@ struct TextureInfo
 {
     const char *relativePath;
     bool is16Bit;
+};
+struct MeshInfo
+{
+    const char *relativePath;
 };
 
 struct AssetsState
@@ -48,8 +59,27 @@ struct AssetsState
     TextureAssetSlot textureAssetSlots[ASSET_TEXTURE_COUNT];
     TextureAsset textureAssets[ASSET_TEXTURE_COUNT];
 
+    MeshAssetSlot meshAssetSlots[ASSET_MESH_COUNT];
+    MeshAsset meshAssets[ASSET_MESH_COUNT];
+
     uint64 dataStorageUsed;
 };
+
+void *pushAssetData(EngineMemory *memory, uint64 size)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    uint64 availableStorage =
+        memory->assets.size - (sizeof(AssetsState) + state->dataStorageUsed);
+    assert(availableStorage >= size);
+
+    void *address =
+        (uint8 *)memory->assets.baseAddress + sizeof(AssetsState) + state->dataStorageUsed;
+    state->dataStorageUsed += size;
+
+    return address;
+}
 
 ShaderInfo getShaderInfo(uint32 assetId)
 {
@@ -120,6 +150,14 @@ ShaderInfo getShaderInfo(uint32 assetId)
         info.type = GL_FRAGMENT_SHADER;
         info.relativePath = "data/brush_blend_smooth_fragment_shader.glsl";
         break;
+    case ASSET_SHADER_ROCK_VERTEX:
+        info.type = GL_VERTEX_SHADER;
+        info.relativePath = "data/rock_vertex_shader.glsl";
+        break;
+    case ASSET_SHADER_ROCK_FRAGMENT:
+        info.type = GL_FRAGMENT_SHADER;
+        info.relativePath = "data/rock_fragment_shader.glsl";
+        break;
     }
     return info;
 }
@@ -171,6 +209,11 @@ void getShaderProgramShaders(
         *out_shaderCount = 2;
         *out_shaderAssetIds++ = ASSET_SHADER_TEXTURE_VERTEX;
         *out_shaderAssetIds++ = ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT;
+        break;
+    case ASSET_SHADER_PROGRAM_ROCK:
+        *out_shaderCount = 2;
+        *out_shaderAssetIds++ = ASSET_SHADER_ROCK_VERTEX;
+        *out_shaderAssetIds++ = ASSET_SHADER_ROCK_FRAGMENT;
         break;
     }
 }
@@ -227,6 +270,18 @@ TextureInfo getTextureInfo(uint32 assetId)
     case ASSET_TEXTURE_SNOW_AO:
         info.relativePath = "data/snow_ao.tga";
         info.is16Bit = false;
+        break;
+    }
+    return info;
+}
+
+MeshInfo getMeshInfo(uint32 assetId)
+{
+    MeshInfo info = {};
+    switch (assetId)
+    {
+    case ASSET_MESH_ROCK:
+        info.relativePath = "data/rock.obj";
         break;
     }
     return info;
@@ -333,9 +388,6 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
 EXPORT void assetsLoadTexture(
     EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset)
 {
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
     const stbi_uc *rawData = static_cast<stbi_uc *>(data);
     void *loadedData;
     int32 width;
@@ -352,20 +404,15 @@ EXPORT void assetsLoadTexture(
         loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
         elementSize = 1;
     }
-
-    uint64 availableStorage =
-        memory->assets.size - (sizeof(AssetsState) + state->dataStorageUsed);
-    uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
-    assert(availableStorage >= requiredStorage);
     assert(width >= 0);
     assert(height >= 0);
 
     out_asset->width = (uint32)width;
     out_asset->height = (uint32)height;
-    out_asset->data =
-        (uint8 *)memory->assets.baseAddress + sizeof(AssetsState) + state->dataStorageUsed;
+
+    uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
+    out_asset->data = (uint8 *)pushAssetData(memory, requiredStorage);
     memcpy(out_asset->data, loadedData, requiredStorage);
-    state->dataStorageUsed += requiredStorage;
 
     stbi_image_free(loadedData);
 }
@@ -403,6 +450,117 @@ TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
     {
         TextureInfo textureInfo = getTextureInfo(assetId);
         if (memory->platformLoadAsset(assetId, textureInfo.relativePath, onTextureLoaded))
+        {
+            slot->isLoadQueued = true;
+        }
+    }
+
+    return slot->asset;
+}
+
+struct FastObjVirtualFile
+{
+    void *data;
+    uint64 size;
+    uint64 position;
+};
+void *fast_obj_file_open(const char *path, void *user_data)
+{
+    return user_data;
+}
+void fast_obj_file_close(void *file, void *user_data)
+{
+    FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
+    virtualFile->position = 0;
+}
+uint64 fast_obj_file_read(void *file, void *dst, uint64 bytes, void *user_data)
+{
+    FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
+    uint64 size = bytes;
+    uint64 remainingBytes = virtualFile->size - virtualFile->position;
+    if (size > remainingBytes)
+    {
+        size = remainingBytes;
+    }
+    memcpy(dst, (uint8 *)virtualFile->data + virtualFile->position, size);
+    virtualFile->position += size;
+    return size;
+}
+unsigned long fast_obj_file_size(void *file, void *user_data)
+{
+    FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
+    return virtualFile->size;
+}
+
+PLATFORM_ASSET_LOAD_CALLBACK(onMeshLoaded)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    uint32 assetIdx = ASSET_GET_INDEX(assetId);
+    assert(assetIdx < ASSET_MESH_COUNT);
+
+    MeshInfo meshInfo = getMeshInfo(assetId);
+    MeshAsset *asset = &state->meshAssets[assetIdx];
+
+    fastObjCallbacks callbacks = {};
+    callbacks.file_open = fast_obj_file_open;
+    callbacks.file_close = fast_obj_file_close;
+    callbacks.file_read = fast_obj_file_read;
+    callbacks.file_size = fast_obj_file_size;
+
+    FastObjVirtualFile virtualFile = {};
+    virtualFile.data = data;
+    virtualFile.size = size;
+
+    fastObjMesh *mesh =
+        fast_obj_read_with_callbacks(meshInfo.relativePath, &callbacks, &virtualFile);
+
+    asset->elementCount = mesh->face_count * 3;
+    uint32 elementBufferSize = sizeof(uint32) * asset->elementCount;
+    asset->indices = (uint32 *)pushAssetData(memory, elementBufferSize);
+
+    asset->vertexCount = asset->elementCount;
+    uint32 vertexBufferSize = sizeof(float) * asset->vertexCount * 6;
+    asset->vertices = (float *)pushAssetData(memory, vertexBufferSize);
+
+    uint32 *currentIndex = (uint32 *)asset->indices;
+    float *currentVertex = (float *)asset->vertices;
+    for (uint32 i = 0; i < asset->elementCount; i++)
+    {
+        fastObjIndex index = mesh->indices[i];
+        *currentIndex++ = i;
+        *currentVertex++ = mesh->positions[index.p * 3];
+        *currentVertex++ = mesh->positions[(index.p * 3) + 1];
+        *currentVertex++ = mesh->positions[(index.p * 3) + 2];
+        *currentVertex++ = mesh->normals[index.n * 3] * -1;
+        *currentVertex++ = mesh->normals[(index.n * 3) + 1];
+        *currentVertex++ = mesh->normals[(index.n * 3) + 2];
+    }
+
+    fast_obj_destroy(mesh);
+
+    asset->version++;
+
+    MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
+    slot->asset = asset;
+    slot->isUpToDate = true;
+}
+
+MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId)
+{
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_MESH);
+    uint32 assetIdx = ASSET_GET_INDEX(assetId);
+    assert(assetIdx < ASSET_MESH_COUNT);
+
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
+    if (!slot->isUpToDate && !slot->isLoadQueued)
+    {
+        MeshInfo meshInfo = getMeshInfo(assetId);
+        if (memory->platformLoadAsset(assetId, meshInfo.relativePath, onMeshLoaded))
         {
             slot->isLoadQueued = true;
         }

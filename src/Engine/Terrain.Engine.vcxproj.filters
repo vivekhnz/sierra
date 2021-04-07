@@ -13,6 +13,9 @@
     <ClCompile Include="terrain_renderer.cpp" />
     <ClCompile Include="terrain_assets.cpp" />
     <ClCompile Include="terrain_heightfield.cpp" />
+    <ClCompile Include="..\..\deps\fast_obj\fast_obj.c">
+      <Filter>deps</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="terrain_renderer.h" />

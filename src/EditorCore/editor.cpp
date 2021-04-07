@@ -171,8 +171,8 @@ bool initializeEditor(EditorMemory *memory)
         * sceneState->heightfield.rows * terrainVertexBufferStride;
     float *terrainVertices = (float *)malloc(terrainVertexBufferSize);
 
-    uint32 elementBufferSize = sizeof(uint32) * sceneState->terrainMesh.elementCount;
-    uint32 *terrainIndices = (uint32 *)malloc(elementBufferSize);
+    uint32 terrainElementBufferSize = sizeof(uint32) * sceneState->terrainMesh.elementCount;
+    uint32 *terrainIndices = (uint32 *)malloc(terrainElementBufferSize);
 
     float offsetX =
         (sceneState->heightfield.columns - 1) * sceneState->heightfield.spacing * -0.5f;
@@ -214,7 +214,7 @@ bool initializeEditor(EditorMemory *memory)
     uint32 terrainElementBufferHandle =
         rendererCreateBuffer(engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
     rendererUpdateBuffer(
-        engineMemory, terrainElementBufferHandle, elementBufferSize, terrainIndices);
+        engineMemory, terrainElementBufferHandle, terrainElementBufferSize, terrainIndices);
     free(terrainIndices);
 
     sceneState->terrainMesh.vertexArrayHandle = rendererCreateVertexArray(engineMemory);
@@ -263,6 +263,8 @@ bool initializeEditor(EditorMemory *memory)
         rendererCreateBuffer(engineMemory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     rendererUpdateBuffer(engineMemory, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), 0);
+
+    sceneState->rockMesh = {};
 
     return 1;
 }
@@ -854,7 +856,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
     ShaderProgramAsset *terrainShaderProgramAsset =
         assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
-    if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset)
+    ShaderProgramAsset *rockShaderProgramAsset =
+        assetsGetShaderProgram(&memory->engine, ASSET_SHADER_PROGRAM_ROCK);
+    if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset
+        || !rockShaderProgramAsset)
         return;
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
@@ -888,9 +893,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     // calculate tessellation levels
     uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
+    uint32 meshEdgeCount =
+        (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
+        - sceneState->heightfield.rows - sceneState->heightfield.columns;
     rendererSetShaderProgramUniformFloat(
         &memory->engine, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
-
     rendererSetShaderProgramUniformInteger(&memory->engine, calcTessLevelShaderProgramHandle,
         "horizontalEdgeCount",
         sceneState->heightfield.rows * (sceneState->heightfield.columns - 1));
@@ -899,11 +906,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetShaderProgramUniformFloat(&memory->engine, calcTessLevelShaderProgramHandle,
         "terrainHeight", sceneState->heightfield.maxHeight);
     rendererBindTexture(&memory->engine, activeHeightmapTextureHandle, 0);
-
-    uint32 meshEdgeCount =
-        (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
-        - sceneState->heightfield.rows - sceneState->heightfield.columns;
-
     rendererBindShaderStorageBuffer(
         &memory->engine, sceneState->tessellationLevelBufferHandle, 0);
     rendererBindShaderStorageBuffer(
@@ -912,28 +914,21 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererDispatchCompute(meshEdgeCount, 1, 1);
     rendererShaderStorageMemoryBarrier();
 
-    // bind material data
+    // draw terrain mesh
     rendererUpdateBuffer(&memory->engine, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), sceneState->worldState.materialProps);
-
     uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;
     rendererUseShaderProgram(&memory->engine, terrainShaderProgramHandle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
     rendererBindTexture(&memory->engine, activeHeightmapTextureHandle, 0);
     rendererBindTextureArray(&memory->engine, sceneState->albedoTextureArrayHandle, 1);
     rendererBindTextureArray(&memory->engine, sceneState->normalTextureArrayHandle, 2);
     rendererBindTextureArray(&memory->engine, sceneState->displacementTextureArrayHandle, 3);
     rendererBindTextureArray(&memory->engine, sceneState->aoTextureArrayHandle, 4);
     rendererBindTexture(&memory->engine, referenceHeightmapTextureHandle, 5);
-
     rendererBindShaderStorageBuffer(&memory->engine, sceneState->materialPropsBufferHandle, 1);
-
-    // bind mesh data
     rendererBindVertexArray(&memory->engine, sceneState->terrainMesh.vertexArrayHandle);
-
-    // set shader uniforms
     rendererSetShaderProgramUniformInteger(&memory->engine, terrainShaderProgramHandle,
         "materialCount", sceneState->worldState.materialCount);
     rendererSetShaderProgramUniformVector3(&memory->engine, terrainShaderProgramHandle,
@@ -949,9 +944,55 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         "cursorRadius", sceneState->worldState.brushRadius);
     rendererSetShaderProgramUniformFloat(&memory->engine, terrainShaderProgramHandle,
         "cursorFalloff", sceneState->worldState.brushFalloff);
-
-    // draw mesh
     rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);
+    rendererUnbindVertexArray();
+
+    // draw rock
+    if (!sceneState->rockMesh.isLoaded)
+    {
+        MeshAsset *rockMesh = assetsGetMesh(&memory->engine, ASSET_MESH_ROCK);
+        if (rockMesh)
+        {
+            sceneState->rockMesh.elementCount = rockMesh->elementCount;
+
+            uint32 rockVertexBufferStride = 6 * sizeof(float);
+            uint32 rockVertexBufferSize = rockMesh->vertexCount * rockVertexBufferStride;
+            uint32 rockElementBufferSize = sizeof(uint32) * sceneState->rockMesh.elementCount;
+
+            sceneState->rockMesh.vertexBufferHandle =
+                rendererCreateBuffer(&memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+            rendererUpdateBuffer(&memory->engine, sceneState->rockMesh.vertexBufferHandle,
+                rockVertexBufferSize, rockMesh->vertices);
+
+            uint32 rockElementBufferHandle =
+                rendererCreateBuffer(&memory->engine, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+            rendererUpdateBuffer(&memory->engine, rockElementBufferHandle,
+                rockElementBufferSize, rockMesh->indices);
+
+            sceneState->rockMesh.vertexArrayHandle =
+                rendererCreateVertexArray(&memory->engine);
+            rendererBindVertexArray(&memory->engine, sceneState->rockMesh.vertexArrayHandle);
+            rendererBindBuffer(&memory->engine, rockElementBufferHandle);
+            rendererBindBuffer(&memory->engine, sceneState->rockMesh.vertexBufferHandle);
+            rendererBindVertexAttribute(
+                0, GL_FLOAT, false, 3, rockVertexBufferStride, 0, false);
+            rendererBindVertexAttribute(
+                1, GL_FLOAT, false, 3, rockVertexBufferStride, 3 * sizeof(float), false);
+            rendererUnbindVertexArray();
+
+            sceneState->rockMesh.isLoaded = true;
+        }
+        else
+        {
+            return;
+        }
+    }
+
+    rendererUseShaderProgram(&memory->engine, rockShaderProgramAsset->handle);
+    rendererSetPolygonMode(GL_FILL);
+    rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    rendererBindVertexArray(&memory->engine, sceneState->rockMesh.vertexArrayHandle);
+    rendererDrawElements(GL_TRIANGLES, sceneState->rockMesh.elementCount);
 }
 
 API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)

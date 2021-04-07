@@ -88,6 +88,14 @@ struct SceneState
 
     uint32 tessellationLevelBufferHandle;
 
+    struct RockMesh
+    {
+        bool isLoaded;
+        uint32 elementCount;
+        uint32 vertexBufferHandle;
+        uint32 vertexArrayHandle;
+    } rockMesh;
+
     uint32 albedoTextureArrayHandle;
     uint32 normalTextureArrayHandle;
     uint32 displacementTextureArrayHandle;
