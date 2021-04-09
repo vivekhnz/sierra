@@ -93,6 +93,128 @@
                         </Grid>
                     </StackPanel>
                 </Expander>
+                <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
+                          IsExpanded="True" d:IsExpanded="False">
+                    <StackPanel Orientation="Vertical" Margin="12">
+                        <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
+                        <Grid Margin="0 0 0 8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="32" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="X" Foreground="#888" Grid.Row="0"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockPositionXSlider" Minimum="-100" Maximum="100" Value="0"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockPositionXSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+
+                            <TextBlock Text="Y" Foreground="#888" Grid.Row="1"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockPositionYSlider" Minimum="-100" Maximum="100" Value="0"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockPositionYSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+
+                            <TextBlock Text="Z" Foreground="#888" Grid.Row="2"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockPositionZSlider" Minimum="-100" Maximum="100" Value="0"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockPositionZSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                        </Grid>
+                        <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
+                        <Grid Margin="0 0 0 8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="32" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="X" Foreground="#888" Grid.Row="0"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockRotationXSlider" Minimum="-360" Maximum="360" Value="0"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockRotationXSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+
+                            <TextBlock Text="Y" Foreground="#888" Grid.Row="1"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockRotationYSlider" Minimum="-360" Maximum="360" Value="0"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockRotationYSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                            
+                            <TextBlock Text="Z" Foreground="#888" Grid.Row="2"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockRotationZSlider" Minimum="-360" Maximum="360" Value="0"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockRotationZSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                        </Grid>
+                        <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="32" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="32" />
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="32" />
+                                <RowDefinition Height="32" />
+                            </Grid.RowDefinitions>
+                            <TextBlock Text="X" Foreground="#888" Grid.Row="0"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockScaleXSlider" Minimum="0" Maximum="10" Value="1"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockScaleXSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+
+                            <TextBlock Text="Y" Foreground="#888" Grid.Row="1"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockScaleYSlider" Minimum="0" Maximum="10" Value="1"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
+                                    ValueChanged="rockTransformSlider_ValueChanged"  />
+                            <TextBlock Text="{Binding ElementName=rockScaleYSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+
+                            <TextBlock Text="Z" Foreground="#888" Grid.Row="2"
+                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
+                            <Slider x:Name="rockScaleZSlider" Minimum="0" Maximum="10" Value="1"
+                                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
+                                    ValueChanged="rockTransformSlider_ValueChanged" />
+                            <TextBlock Text="{Binding ElementName=rockScaleZSlider, Path=Value}"
+                                       Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                        </Grid>
+                    </StackPanel>
+                </Expander>
                 <Expander Style="{StaticResource SidebarExpanderStyle}" Header="SCENE"
                           IsExpanded="True">
                     <StackPanel Orientation="Vertical" Margin="12">

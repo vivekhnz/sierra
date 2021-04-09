@@ -151,6 +151,23 @@ namespace Terrain.Editor
             EngineInterop.State.BrushStrength = (float)brushStrengthSlider.Value;
         }
 
+        private void rockTransformSlider_ValueChanged(object sender,
+            RoutedPropertyChangedEventArgs<double> e)
+        {
+            if (!isUiInitialized) return;
+
+            EngineInterop.SetRockTransform(
+                (float)rockPositionXSlider.Value,
+                (float)rockPositionYSlider.Value,
+                (float)rockPositionZSlider.Value,
+                (float)rockRotationXSlider.Value,
+                (float)rockRotationYSlider.Value,
+                (float)rockRotationZSlider.Value,
+                (float)rockScaleXSlider.Value,
+                (float)rockScaleYSlider.Value,
+                (float)rockScaleZSlider.Value);
+        }
+
         private void lightDirectionSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {

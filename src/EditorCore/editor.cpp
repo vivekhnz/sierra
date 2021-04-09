@@ -1,5 +1,6 @@
 #include "editor.h"
 
+#include <glm/gtx/quaternion.hpp>
 #include "../Engine/terrain_renderer.h"
 
 struct BrushBlendProperties
@@ -265,6 +266,11 @@ bool initializeEditor(EditorMemory *memory)
         sizeof(sceneState->worldState.materialProps), 0);
 
     sceneState->rockMesh = {};
+    sceneState->rockInstanceBufferHandle =
+        rendererCreateBuffer(engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(engineMemory, sceneState->rockInstanceBufferHandle,
+        sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
+    sceneState->rockInstanceCount = 1;
 
     return 1;
 }
@@ -693,6 +699,19 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     rendererUpdateBuffer(&memory->engine, memory->state.activeBrushStrokeInstanceBufferHandle,
         BRUSH_QUAD_INSTANCE_BUFFER_SIZE, memory->state.activeBrushStrokeInstanceBufferData);
 
+    // update rock instance buffer
+    glm::mat4 rockTransform = glm::identity<glm::mat4>();
+    rockTransform = glm::translate(rockTransform, memory->state.uiState.rockPosition);
+    rockTransform = glm::scale(rockTransform, memory->state.uiState.rockScale);
+    glm::vec3 rockRotEuler = glm::radians(memory->state.uiState.rockRotation);
+    glm::quat rockRotQuat = glm::quat(rockRotEuler);
+    glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
+    rockTransform *= rockRotMat;
+
+    sceneState->rockInstanceBufferData[0] = rockTransform;
+    rendererUpdateBuffer(&memory->engine, sceneState->rockInstanceBufferHandle,
+        sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
+
     BrushBlendProperties blendProps = {};
     switch (memory->state.uiState.tool)
     {
@@ -957,6 +976,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
             uint32 rockVertexBufferStride = 6 * sizeof(float);
             uint32 rockVertexBufferSize = rockMesh->vertexCount * rockVertexBufferStride;
+            uint32 rockInstanceBufferStride = sizeof(glm::mat4);
             uint32 rockElementBufferSize = sizeof(uint32) * sceneState->rockMesh.elementCount;
 
             sceneState->rockMesh.vertexBufferHandle =
@@ -978,6 +998,15 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 0, GL_FLOAT, false, 3, rockVertexBufferStride, 0, false);
             rendererBindVertexAttribute(
                 1, GL_FLOAT, false, 3, rockVertexBufferStride, 3 * sizeof(float), false);
+            rendererBindBuffer(&memory->engine, sceneState->rockInstanceBufferHandle);
+            rendererBindVertexAttribute(
+                2, GL_FLOAT, false, 4, rockInstanceBufferStride, 0, true);
+            rendererBindVertexAttribute(
+                3, GL_FLOAT, false, 4, rockInstanceBufferStride, 4 * sizeof(float), true);
+            rendererBindVertexAttribute(
+                4, GL_FLOAT, false, 4, rockInstanceBufferStride, 8 * sizeof(float), true);
+            rendererBindVertexAttribute(
+                5, GL_FLOAT, false, 4, rockInstanceBufferStride, 12 * sizeof(float), true);
             rendererUnbindVertexArray();
 
             sceneState->rockMesh.isLoaded = true;
@@ -992,7 +1021,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     rendererBindVertexArray(&memory->engine, sceneState->rockMesh.vertexArrayHandle);
-    rendererDrawElements(GL_TRIANGLES, sceneState->rockMesh.elementCount);
+    rendererDrawElementsInstanced(
+        GL_TRIANGLES, sceneState->rockMesh.elementCount, sceneState->rockInstanceCount, 0);
 }
 
 API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)

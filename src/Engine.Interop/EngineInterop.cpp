@@ -155,6 +155,27 @@ namespace Terrain { namespace Engine { namespace Interop {
         return result;
     }
 
+    void EngineInterop::SetRockTransform(float positionX,
+        float positionY,
+        float positionZ,
+        float rotationX,
+        float rotationY,
+        float rotationZ,
+        float scaleX,
+        float scaleY,
+        float scaleZ)
+    {
+        memory->editor.state.uiState.rockPosition.x = positionX;
+        memory->editor.state.uiState.rockPosition.y = positionY;
+        memory->editor.state.uiState.rockPosition.z = positionZ;
+        memory->editor.state.uiState.rockRotation.x = rotationX;
+        memory->editor.state.uiState.rockRotation.y = rotationY;
+        memory->editor.state.uiState.rockRotation.z = rotationZ;
+        memory->editor.state.uiState.rockScale.x = scaleX;
+        memory->editor.state.uiState.rockScale.y = scaleY;
+        memory->editor.state.uiState.rockScale.z = scaleZ;
+    }
+
     void EngineInterop::Shutdown()
     {
         renderTimer->Stop();

@@ -297,6 +297,9 @@ Win32PlatformMemory *win32InitializePlatform()
     platformMemory->editor.state.uiState.brushStrength = 0.12f;
     platformMemory->editor.state.uiState.lightDirection = 0.5f;
     platformMemory->editor.state.uiState.materialCount = 0;
+    platformMemory->editor.state.uiState.rockPosition = glm::vec3(0);
+    platformMemory->editor.state.uiState.rockRotation = glm::vec3(0);
+    platformMemory->editor.state.uiState.rockScale = glm::vec3(1);
     platformMemory->editor.data.baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
     platformMemory->editor.data.size = EDITOR_DATA_MEMORY_SIZE;
     platformMemory->editor.dataStorageUsed = 0;

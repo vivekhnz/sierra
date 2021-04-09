@@ -10,6 +10,7 @@
 #define MAX_BRUSH_QUADS 2048
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
+#define MAX_ROCK_INSTANCES 32
 #define HEIGHTFIELD_COLUMNS 256
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTMAP_WIDTH 2048
@@ -49,6 +50,9 @@ struct EditorUiState
     float lightDirection;
     uint32 materialCount;
     MaterialProperties materialProps[MAX_MATERIAL_COUNT];
+    glm::vec3 rockPosition;
+    glm::vec3 rockRotation;
+    glm::vec3 rockScale;
 };
 
 struct TextureAssetBinding
@@ -95,6 +99,10 @@ struct SceneState
         uint32 vertexBufferHandle;
         uint32 vertexArrayHandle;
     } rockMesh;
+
+    uint32 rockInstanceBufferHandle;
+    glm::mat4 rockInstanceBufferData[MAX_ROCK_INSTANCES];
+    uint32 rockInstanceCount;
 
     uint32 albedoTextureArrayHandle;
     uint32 normalTextureArrayHandle;

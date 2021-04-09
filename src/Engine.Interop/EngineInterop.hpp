@@ -61,6 +61,15 @@ public
         static void SetMaterialAltitudeStart(int index, float value);
         static void SetMaterialAltitudeEnd(int index, float value);
         static MaterialProps GetMaterialProperties(int index);
+        static void SetRockTransform(float positionX,
+            float positionY,
+            float positionZ,
+            float rotationX,
+            float rotationY,
+            float rotationZ,
+            float scaleX,
+            float scaleY,
+            float scaleZ);
 
         static void Shutdown();
     };
