@@ -70,8 +70,8 @@ namespace Terrain.Editor
                 displacementTextureAssetId = textureFilenameToAssetId["rock_displacement.tga"],
                 aoTextureAssetId = textureFilenameToAssetId["rock_ao.tga"],
                 textureSizeInWorldUnits = 13.0f,
-                slopeStart = 0.6f,
-                slopeEnd = 0.8f,
+                slopeStart = 0.2f,
+                slopeEnd = 0.4f,
                 altitudeStart = 0,
                 altitudeEnd = 0.001f
             });
@@ -82,8 +82,8 @@ namespace Terrain.Editor
                 displacementTextureAssetId = textureFilenameToAssetId["snow_displacement.tga"],
                 aoTextureAssetId = textureFilenameToAssetId["snow_ao.tga"],
                 textureSizeInWorldUnits = 2.0f,
-                slopeStart = 0.8f,
-                slopeEnd = 0.75f,
+                slopeStart = 0.4f,
+                slopeEnd = 0.2f,
                 altitudeStart = 0.25f,
                 altitudeEnd = 0.28f
             });

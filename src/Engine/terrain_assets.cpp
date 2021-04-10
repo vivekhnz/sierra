@@ -533,7 +533,7 @@ PLATFORM_ASSET_LOAD_CALLBACK(onMeshLoaded)
         *currentVertex++ = mesh->positions[index.p * 3];
         *currentVertex++ = mesh->positions[(index.p * 3) + 1];
         *currentVertex++ = mesh->positions[(index.p * 3) + 2];
-        *currentVertex++ = mesh->normals[index.n * 3] * -1;
+        *currentVertex++ = mesh->normals[index.n * 3];
         *currentVertex++ = mesh->normals[(index.n * 3) + 1];
         *currentVertex++ = mesh->normals[(index.n * 3) + 2];
     }

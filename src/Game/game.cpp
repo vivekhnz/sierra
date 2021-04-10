@@ -200,8 +200,8 @@ bool initializeGame(GameMemory *memory)
     materialProps[9] = 13.0f;
     materialProps[10] = 0.0f;
     materialProps[11] = 0.0f;
-    materialProps[12] = 0.6f;
-    materialProps[13] = 0.8f;
+    materialProps[12] = 0.2f;
+    materialProps[13] = 0.4f;
     materialProps[14] = 0.0f;
     materialProps[15] = 0.001f;
 
@@ -209,8 +209,8 @@ bool initializeGame(GameMemory *memory)
     materialProps[17] = 2.0f;
     materialProps[18] = 0.0f;
     materialProps[19] = 0.0f;
-    materialProps[20] = 0.8f;
-    materialProps[21] = 0.75f;
+    materialProps[20] = 0.4f;
+    materialProps[21] = 0.2f;
     materialProps[22] = 0.25f;
     materialProps[23] = 0.28f;
 

@@ -83,12 +83,15 @@ void main()
     // calculate normal
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
     float altitude = height(hUV);
-    vec2 normalSampleOffset = 1 / terrainDimensions.xz;
-    float hL = height(vec2(hUV.x - normalSampleOffset.x, hUV.y));
-    float hR = height(vec2(hUV.x + normalSampleOffset.x, hUV.y));
-    float hD = height(vec2(hUV.x, hUV.y - normalSampleOffset.y));
-    float hU = height(vec2(hUV.x, hUV.y + normalSampleOffset.y));
-    normal = normalize(vec3(hR - hL, normalSampleOffset.x * 2, hD - hU));
+    float normalSampleOffsetInTexels = 2;
+    vec2 normalSampleOffsetInUvCoords = normalSampleOffsetInTexels / vec2(2048, 2048);
+    float hL = height(vec2(hUV.x - normalSampleOffsetInUvCoords.x, hUV.y));
+    float hR = height(vec2(hUV.x + normalSampleOffsetInUvCoords.x, hUV.y));
+    float hD = height(vec2(hUV.x, hUV.y - normalSampleOffsetInUvCoords.y));
+    float hU = height(vec2(hUV.x, hUV.y + normalSampleOffsetInUvCoords.y));
+    
+    float nY = (2 * terrainDimensions.x * normalSampleOffsetInUvCoords.x) / terrainDimensions.y;
+    normal = normalize(vec3(hL - hR, nY, hU - hD));
     float slope = 1 - normal.y;
     
     // calculate texture coordinates
