@@ -1,6 +1,84 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
+    <SolidColorBrush x:Key="PrimaryThemeBrush" Color="#FF8218" />
+
+    <Style TargetType="{x:Type TabControl}">
+        <Setter Property="OverridesDefaultStyle" Value="True" />
+        <Setter Property="SnapsToDevicePixels" Value="True" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="{x:Type TabControl}">
+                    <Grid KeyboardNavigation.TabNavigation="Local">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+                        <TabPanel x:Name="HeaderPanel"
+                            Grid.Row="0" Panel.ZIndex="1"
+                            IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
+                        <Border x:Name="Border" Grid.Row="1" BorderThickness="0"
+                                Background="#333"
+                                KeyboardNavigation.TabNavigation="Local"
+                                KeyboardNavigation.DirectionalNavigation="Contained"
+                                KeyboardNavigation.TabIndex="2">
+                            <ContentPresenter x:Name="PART_SelectedContentHost"
+                                              Margin="0"
+                                              ContentSource="SelectedContent" />
+                        </Border>
+                    </Grid>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="ItemContainerStyle">
+            <Setter.Value>
+                <Style TargetType="TabItem">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="TabItem">
+                                <Border Name="Panel" BorderBrush="{StaticResource PrimaryThemeBrush}"
+                                        Background="#0333" BorderThickness="0 0 0 1" Padding="12 0"
+                                        Height="32" Cursor="Hand">
+                                    <ContentPresenter x:Name="ContentSite"
+                                                      VerticalAlignment="Center"
+                                                      HorizontalAlignment="Center"
+                                                      ContentSource="Header" />
+                                </Border>
+                                <ControlTemplate.Triggers>
+                                    <Trigger SourceName="Panel" Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="Panel" Property="Background" Value="#333" />
+                                    </Trigger>
+                                    <Trigger SourceName="Panel" Property="IsMouseOver" Value="False">
+                                        <Setter TargetName="Panel" Property="Background" Value="#0333" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="True">
+                                        <Setter TargetName="Panel" Property="BorderBrush"
+                                                Value="{StaticResource PrimaryThemeBrush}" />
+                                        <Setter TargetName="ContentSite" Property="TextElement.Foreground"
+                                                Value="{StaticResource PrimaryThemeBrush}" />
+                                    </Trigger>
+                                    <Trigger Property="IsSelected" Value="False">
+                                        <Setter TargetName="Panel" Property="BorderBrush"
+                                                Value="Transparent" />
+                                        <Setter TargetName="ContentSite" Property="TextElement.Foreground"
+                                                Value="#888" />
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Setter Property="HeaderTemplate">
+                        <Setter.Value>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding}" FontWeight="Bold" FontSize="11" />
+                            </DataTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="SidebarExpanderStyle" TargetType="{x:Type Expander}">
         <Setter Property="HeaderTemplate">
             <Setter.Value>
@@ -18,8 +96,8 @@
                             <RowDefinition Height="27" />
                             <RowDefinition Name="ContentRow" Height="0" />
                         </Grid.RowDefinitions>
-                        <Border Background="#222" BorderThickness="0 0 0 1" CornerRadius="0"
-                                Padding="8 0" BorderBrush="#111">
+                        <Border BorderThickness="0 1 0 0" CornerRadius="0" Padding="8 0"
+                                BorderBrush="#555">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />

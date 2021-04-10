@@ -800,7 +800,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rendererUpdateCameraState(&memory->engine, &viewState->cameraTransform);
     rendererSetViewportSize(view->width, view->height);
-    rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
+    rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
 
     // get textures
     for (uint32 layerIdx = 0; layerIdx < sceneState->worldState.materialCount; layerIdx++)
