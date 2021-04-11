@@ -17,7 +17,7 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <Border Background="#282828" BorderBrush="#333" BorderThickness="0 0 1 0">
-            <Menu Padding="0 4" VerticalAlignment="Center" Background="Transparent"
+            <Menu VerticalAlignment="Center" Background="Transparent"
                   Foreground="#888">
                 <MenuItem Header="File">
                     <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />

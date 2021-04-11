@@ -17,6 +17,7 @@
                         <TabPanel x:Name="HeaderPanel"
                             Grid.Row="0" Panel.ZIndex="1"
                             IsItemsHost="True" KeyboardNavigation.TabIndex="1" />
+                        <Rectangle Grid.Row="0" Height="1" Fill="#181818" VerticalAlignment="Bottom" />
                         <Border x:Name="Border" Grid.Row="1" BorderThickness="0"
                                 Background="#333"
                                 KeyboardNavigation.TabNavigation="Local"
