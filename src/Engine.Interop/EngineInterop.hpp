@@ -3,7 +3,6 @@
 #include <vector>
 
 #include "win32_editor_platform.h"
-#include "Viewport.h"
 #include "Proxy/StateProxy.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
@@ -20,6 +19,13 @@ public
         float slopeEnd;
         float altitudeStart;
         float altitudeEnd;
+    };
+
+public
+    value struct EditorPlatformViewportWindow
+    {
+        System::IntPtr windowPtr;
+        System::IntPtr windowHwnd;
     };
 
 public
@@ -45,6 +51,16 @@ public
         }
 
         static void InitializeEngine();
+        static void Shutdown();
+
+        static EditorPlatformViewportWindow CreateViewportWindow(System::IntPtr parentHwnd,
+            uint32 x,
+            uint32 y,
+            uint32 width,
+            uint32 height,
+            EditorView view);
+        static void ResizeViewportWindow(
+            System::IntPtr windowPtr, uint32 x, uint32 y, uint32 width, uint32 height);
 
         static void LoadHeightmapTexture(System::String ^ path);
         static void AddMaterial(MaterialProps props);
@@ -69,7 +85,5 @@ public
             float scaleX,
             float scaleY,
             float scaleZ);
-
-        static void Shutdown();
     };
 }}}

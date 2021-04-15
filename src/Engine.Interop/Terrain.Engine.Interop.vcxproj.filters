@@ -7,12 +7,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="Viewport.cpp" />
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="win32_editor_platform.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="Viewport.h" />
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp">
       <Filter>Proxy</Filter>

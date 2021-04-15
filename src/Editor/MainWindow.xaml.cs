@@ -115,8 +115,6 @@ namespace Terrain.Editor
 
         private void Window_Closing(object sender, CancelEventArgs e)
         {
-            sceneViewport.Dispose();
-            heightmapPreviewViewport.Dispose();
             EditorPlatform.Shutdown();
         }
 

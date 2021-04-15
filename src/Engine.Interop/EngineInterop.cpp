@@ -29,6 +29,38 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32TickApp(deltaTime);
     }
 
+    EditorPlatformViewportWindow EngineInterop::CreateViewportWindow(System::IntPtr parentHwnd,
+        uint32 x,
+        uint32 y,
+        uint32 width,
+        uint32 height,
+        EditorView view)
+    {
+        Win32ViewportWindow *window =
+            win32CreateViewportWindow((HWND)parentHwnd.ToPointer(), x, y, width, height, view);
+
+        EditorPlatformViewportWindow result = {};
+        result.windowPtr = System::IntPtr(window);
+        result.windowHwnd = System::IntPtr(window->hwnd);
+        return result;
+    }
+
+    void EngineInterop::ResizeViewportWindow(
+        System::IntPtr windowPtr, uint32 x, uint32 y, uint32 width, uint32 height)
+    {
+        Win32ViewportWindow *window = (Win32ViewportWindow *)windowPtr.ToPointer();
+        window->vctx.x = x;
+        window->vctx.y = y;
+        window->vctx.width = width;
+        window->vctx.height = height;
+    }
+
+    void EngineInterop::Shutdown()
+    {
+        renderTimer->Stop();
+        win32ShutdownPlatform();
+    }
+
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
     {
         std::string pathStr = msclr::interop::marshal_as<std::string>(path);
@@ -174,11 +206,5 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory->editor.state.uiState.rockScale.x = scaleX;
         memory->editor.state.uiState.rockScale.y = scaleY;
         memory->editor.state.uiState.rockScale.z = scaleZ;
-    }
-
-    void EngineInterop::Shutdown()
-    {
-        renderTimer->Stop();
-        win32ShutdownPlatform();
     }
 }}}

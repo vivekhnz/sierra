@@ -3,7 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:interop="clr-namespace:Terrain.Engine.Interop;assembly=Terrain.Engine.Interop"
+        xmlns:controls="clr-namespace:Terrain.Editor.Controls"
         mc:Ignorable="d"
         Title="Terrain Editor" Width="1280" Height="720"
         Closing="Window_Closing">
@@ -24,15 +24,14 @@
                 </MenuItem>
             </Menu>
         </Border>
-        <interop:Viewport x:Name="sceneViewport" Grid.Row="1" View="Scene" />
+        <controls:Viewport Grid.Row="1" View="Scene" />
         <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Width="360" Background="#282828">
             <TabControl>
                 <TabItem Header="TERRAIN">
                     <StackPanel Orientation="Vertical">
                         <Expander Style="{StaticResource SidebarExpanderStyle}" Header="HEIGHTMAP"
                                   IsExpanded="True" d:IsExpanded="False" Visibility="Collapsed">
-                            <interop:Viewport x:Name="heightmapPreviewViewport" Width="360" Height="360"
-                                              View="HeightmapPreview" />
+                            <controls:Viewport Width="360" Height="360" View="HeightmapPreview" />
                         </Expander>
                         <Expander Style="{StaticResource SidebarExpanderStyle}" Header="BRUSH"
                                   IsExpanded="True" d:IsExpanded="False">

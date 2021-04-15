@@ -72,14 +72,12 @@
   <ItemGroup>
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />
-    <ClInclude Include="Viewport.h" />
     <ClInclude Include="EditorView.h" />
     <ClInclude Include="win32_editor_platform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="Viewport.cpp" />
     <ClCompile Include="win32_editor_platform.cpp" />
   </ItemGroup>
   <ItemGroup>
