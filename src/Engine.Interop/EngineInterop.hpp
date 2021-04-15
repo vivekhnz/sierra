@@ -4,7 +4,6 @@
 
 #include "win32_editor_platform.h"
 #include "Viewport.h"
-#include "EditorView.h"
 #include "Proxy/StateProxy.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {

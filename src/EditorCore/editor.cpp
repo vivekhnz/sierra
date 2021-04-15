@@ -966,7 +966,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);
     rendererUnbindVertexArray();
 
-    // draw rock
+    // draw rocks
     if (!sceneState->rockMesh.isLoaded)
     {
         MeshAsset *rockMesh = assetsGetMesh(&memory->engine, ASSET_MESH_ROCK);

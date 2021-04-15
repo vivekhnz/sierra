@@ -293,7 +293,7 @@ Win32PlatformMemory *win32InitializePlatform()
     platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
     platformMemory->editor.state.uiState = {};
     platformMemory->editor.state.uiState.brushRadius = 128.0f;
-    platformMemory->editor.state.uiState.brushFalloff = 0.1f;
+    platformMemory->editor.state.uiState.brushFalloff = 0.75f;
     platformMemory->editor.state.uiState.brushStrength = 0.12f;
     platformMemory->editor.state.uiState.lightDirection = 0.5f;
     platformMemory->editor.state.uiState.materialCount = 0;

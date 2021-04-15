@@ -48,7 +48,7 @@ namespace Terrain.Editor
                 textureFilenameToAssetId[kvp.Value] = kvp.Key;
             }
 
-            EngineInterop.InitializeEngine();
+            EditorPlatform.Initialize();
             InitializeComponent();
 
             AddMaterial(new MaterialProps
@@ -117,7 +117,7 @@ namespace Terrain.Editor
         {
             sceneViewport.Dispose();
             heightmapPreviewViewport.Dispose();
-            EngineInterop.Shutdown();
+            EditorPlatform.Shutdown();
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)
@@ -129,26 +129,19 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                EngineInterop.LoadHeightmapTexture(ofd.FileName);
+                EditorCore.LoadHeightmapTexture(ofd.FileName);
             }
         }
 
-        private void brushRadiusSlider_ValueChanged(object sender,
+        private void OnBrushParameterSliderValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
-            EngineInterop.State.BrushRadius = (float)brushRadiusSlider.Value;
-        }
+            if (!isUiInitialized) return;
 
-        private void brushFalloffSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            EngineInterop.State.BrushFalloff = (float)brushFalloffSlider.Value;
-        }
-
-        private void brushStrengthSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            EngineInterop.State.BrushStrength = (float)brushStrengthSlider.Value;
+            EditorCore.SetBrushParameters(
+                (float)brushRadiusSlider.Value,
+                (float)brushFalloffSlider.Value,
+                (float)brushStrengthSlider.Value);
         }
 
         private void rockTransformSlider_ValueChanged(object sender,
@@ -156,7 +149,7 @@ namespace Terrain.Editor
         {
             if (!isUiInitialized) return;
 
-            EngineInterop.SetRockTransform(
+            EditorCore.SetRockTransform(
                 (float)rockPositionXSlider.Value,
                 (float)rockPositionYSlider.Value,
                 (float)rockPositionZSlider.Value,
@@ -171,7 +164,7 @@ namespace Terrain.Editor
         private void lightDirectionSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
-            EngineInterop.State.LightDirection = (float)lightDirectionSlider.Value;
+            EditorCore.SetSceneParameters((float)lightDirectionSlider.Value);
         }
 
         private void btnAddMaterial_Click(object sender, RoutedEventArgs e)
@@ -196,7 +189,7 @@ namespace Terrain.Editor
             int selectedMaterialIndex = lbMaterials.SelectedIndex;
             if (selectedMaterialIndex < 0) return;
 
-            EngineInterop.DeleteMaterial(selectedMaterialIndex);
+            EditorCore.DeleteMaterial(selectedMaterialIndex);
             lbMaterials.Items.RemoveAt(selectedMaterialIndex);
 
             if (lbMaterials.Items.Count > 0)
@@ -210,7 +203,7 @@ namespace Terrain.Editor
             int selectedMaterialIndex = lbMaterials.SelectedIndex;
             if (selectedMaterialIndex < 0) return;
 
-            EngineInterop.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex - 1);
+            EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex - 1);
             var temp = lbMaterials.Items[selectedMaterialIndex];
             lbMaterials.Items[selectedMaterialIndex] = lbMaterials.Items[selectedMaterialIndex - 1];
             lbMaterials.Items[selectedMaterialIndex - 1] = temp;
@@ -222,43 +215,22 @@ namespace Terrain.Editor
             int selectedMaterialIndex = lbMaterials.SelectedIndex;
             if (selectedMaterialIndex < 0) return;
 
-            EngineInterop.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex + 1);
+            EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex + 1);
             var temp = lbMaterials.Items[selectedMaterialIndex];
             lbMaterials.Items[selectedMaterialIndex] = lbMaterials.Items[selectedMaterialIndex + 1];
             lbMaterials.Items[selectedMaterialIndex + 1] = temp;
             lbMaterials.SelectedIndex = selectedMaterialIndex + 1;
         }
 
-        private void materialTextureSizeSlider_ValueChanged(object sender,
+        private void OnMaterialParameterSliderValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
             if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
 
-            float value = (float)materialTextureSizeSlider.Value;
-            EngineInterop.SetMaterialTextureSize(lbMaterials.SelectedIndex, value);
-        }
-
-        private void materialRampParamsSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
-
-            if (sender == materialSlopeStartSlider)
-            {
-                EngineInterop.SetMaterialSlopeStart(lbMaterials.SelectedIndex, (float)materialSlopeStartSlider.Value);
-            }
-            else if (sender == materialSlopeEndSlider)
-            {
-                EngineInterop.SetMaterialSlopeEnd(lbMaterials.SelectedIndex, (float)materialSlopeEndSlider.Value);
-            }
-            else if (sender == materialAltitudeStartSlider)
-            {
-                EngineInterop.SetMaterialAltitudeStart(lbMaterials.SelectedIndex, (float)materialAltitudeStartSlider.Value);
-            }
-            else if (sender == materialAltitudeEndSlider)
-            {
-                EngineInterop.SetMaterialAltitudeEnd(lbMaterials.SelectedIndex, (float)materialAltitudeEndSlider.Value);
-            }
+            EditorCore.SetMaterialParameters(lbMaterials.SelectedIndex,
+                (float)materialTextureSizeSlider.Value,
+                (float)materialSlopeStartSlider.Value, (float)materialSlopeEndSlider.Value,
+                (float)materialAltitudeStartSlider.Value, (float)materialAltitudeEndSlider.Value);
         }
 
         private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
@@ -268,7 +240,7 @@ namespace Terrain.Editor
             var senderBtn = sender as RadioButton;
             if (senderBtn == null) return;
 
-            EngineInterop.State.CurrentTool = editorToolByToolButtons[senderBtn];
+            EditorCore.SetBrushTool(editorToolByToolButtons[senderBtn]);
         }
 
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -289,42 +261,46 @@ namespace Terrain.Editor
                 return;
             }
 
+            TerrainMaterialTextureType textureType = TerrainMaterialTextureType.Albedo;
             if (dropdown == cbMaterialAlbedoTexture)
             {
-                EngineInterop.SetMaterialAlbedoTexture(lbMaterials.SelectedIndex, textureAssetId);
+                textureType = TerrainMaterialTextureType.Albedo;
             }
             else if (dropdown == cbMaterialNormalTexture)
             {
-                EngineInterop.SetMaterialNormalTexture(lbMaterials.SelectedIndex, textureAssetId);
+                textureType = TerrainMaterialTextureType.Normal;
             }
             else if (dropdown == cbMaterialDisplacementTexture)
             {
-                EngineInterop.SetMaterialDisplacementTexture(lbMaterials.SelectedIndex, textureAssetId);
+                textureType = TerrainMaterialTextureType.Displacement;
             }
             else if (dropdown == cbMaterialAoTexture)
             {
-                EngineInterop.SetMaterialAoTexture(lbMaterials.SelectedIndex, textureAssetId);
+                textureType = TerrainMaterialTextureType.AmbientOcclusion;
             }
+            EditorCore.SetMaterialTexture(lbMaterials.SelectedIndex, textureType, textureAssetId);
         }
 
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
-            if (brushRadiusSlider.Value != EngineInterop.State.BrushRadius)
+            var brushParams = EditorCore.GetBrushParameters();
+            if (brushRadiusSlider.Value != brushParams.Radius)
             {
-                brushRadiusSlider.Value = EngineInterop.State.BrushRadius;
+                brushRadiusSlider.Value = brushParams.Radius;
             }
-            if (brushFalloffSlider.Value != EngineInterop.State.BrushFalloff)
+            if (brushFalloffSlider.Value != brushParams.Falloff)
             {
-                brushFalloffSlider.Value = EngineInterop.State.BrushFalloff;
+                brushFalloffSlider.Value = brushParams.Falloff;
             }
-            if (brushStrengthSlider.Value != EngineInterop.State.BrushStrength)
+            if (brushStrengthSlider.Value != brushParams.Strength)
             {
-                brushStrengthSlider.Value = EngineInterop.State.BrushStrength;
+                brushStrengthSlider.Value = brushParams.Strength;
             }
 
+            EditorToolProxy currentTool = EditorCore.GetBrushTool();
             foreach (var kvp in editorToolByToolButtons)
             {
-                bool shouldBeSelected = kvp.Value == EngineInterop.State.CurrentTool;
+                bool shouldBeSelected = kvp.Value == currentTool;
                 if (shouldBeSelected && kvp.Key.IsChecked != true)
                 {
                     kvp.Key.IsChecked = true;
@@ -339,14 +315,14 @@ namespace Terrain.Editor
         private void AddMaterial(MaterialProps props)
         {
             lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
-            EngineInterop.AddMaterial(props);
+            EditorCore.AddMaterial(props);
 
             btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
         }
 
         private void UpdateMaterialDetails(int selectedMaterialIndex)
         {
-            var props = EngineInterop.GetMaterialProperties(selectedMaterialIndex);
+            var props = EditorCore.GetMaterialProperties(selectedMaterialIndex);
 
             bool isFirstMaterial = selectedMaterialIndex == 0;
             bool isLastMaterial = selectedMaterialIndex == lbMaterials.Items.Count - 1;
