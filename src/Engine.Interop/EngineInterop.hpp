@@ -20,13 +20,6 @@ public
     };
 
 public
-    value struct EditorPlatformViewportWindow
-    {
-        System::IntPtr windowPtr;
-        System::IntPtr windowHwnd;
-    };
-
-public
     value struct EditorInitPlatformParamsProxy
     {
         System::IntPtr memoryPtr;
@@ -40,6 +33,7 @@ public
         System::IntPtr instance;
         System::IntPtr mainWindowHwnd;
         System::IntPtr dummyWindowHwnd;
+        System::IntPtr glRenderingContext;
     };
 
 public
@@ -63,7 +57,7 @@ public
         static void Shutdown();
         static void TickApp(float deltaTime);
 
-        static EditorPlatformViewportWindow CreateViewportWindow(System::IntPtr parentHwnd,
+        static System::IntPtr CreateViewportWindow(System::IntPtr deviceContextPtr,
             uint32 x,
             uint32 y,
             uint32 width,

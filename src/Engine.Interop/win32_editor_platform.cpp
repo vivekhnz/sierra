@@ -280,10 +280,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
         params->editorCodeBuildLockFilePath, platformMemory->editorCode.buildLockFilePath);
     platformMemory->mainWindowHwnd = params->mainWindowHwnd;
     platformMemory->dummyWindowHwnd = params->dummyWindowHwnd;
-    HDC dummyDeviceContext = GetDC(platformMemory->dummyWindowHwnd);
-    win32SetDeviceContextPixelFormat(dummyDeviceContext);
-    platformMemory->glRenderingContext = wglCreateContext(dummyDeviceContext);
-    wglMakeCurrent(dummyDeviceContext, platformMemory->glRenderingContext);
+    platformMemory->glRenderingContext = params->glRenderingContext;
 
     WNDCLASS viewportWindowClass = {};
     viewportWindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
@@ -328,7 +325,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     return platformMemory;
 }
 
-Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
+Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
     uint32 x,
     uint32 y,
     uint32 width,
@@ -339,13 +336,7 @@ Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
     Win32ViewportWindow *result =
         &platformMemory->viewportWindows[platformMemory->viewportCount++];
 
-    HINSTANCE instance = GetModuleHandle(0);
-    result->hwnd =
-        CreateWindowEx(0, VIEWPORT_WINDOW_CLASS_NAME, L"TerrainOpenGLViewportWindow",
-            WS_CHILD | WS_VISIBLE, 0, 0, 1, 1, parentHwnd, 0, instance, 0);
-    result->deviceContext = GetDC(result->hwnd);
-    win32SetDeviceContextPixelFormat(result->deviceContext);
-
+    result->deviceContext = deviceContext;
     result->view = view;
     result->vctx.x = x;
     result->vctx.y = y;

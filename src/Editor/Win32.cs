@@ -80,6 +80,33 @@ namespace Terrain.Editor
             public string lpszClassName;
         }
 
+        [Flags]
+        internal enum WindowStyles : uint
+        {
+            Border = 0x800000,
+            Caption = 0xc00000,
+            Child = 0x40000000,
+            ClipChildren = 0x2000000,
+            ClipSiblings = 0x4000000,
+            Disabled = 0x8000000,
+            DialogFrame = 0x400000,
+            Group = 0x20000,
+            HorizontalScrollBar = 0x100000,
+            Maximize = 0x1000000,
+            MaximizeBox = 0x10000,
+            Minimize = 0x20000000,
+            MinimizeBox = 0x20000,
+            Overlapped = 0x0,
+            OverlappedWindow = Overlapped | Caption | SysMenu | SizeFrame | MinimizeBox | MaximizeBox,
+            Popup = 0x80000000u,
+            PopupWindow = Popup | Border | SysMenu,
+            SizeFrame = 0x40000,
+            SysMenu = 0x80000,
+            TabStop = 0x10000,
+            Visible = 0x10000000,
+            VerticalScrollBar = 0x200000
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern IntPtr DefWindowProc(IntPtr hWnd, uint uMsg, IntPtr wParam,
             IntPtr lParam);
@@ -89,10 +116,92 @@ namespace Terrain.Editor
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         internal static extern IntPtr CreateWindowEx(ulong dwExStyle, string lpClassName,
-           string lpWindowName, ulong dwStyle, int x, int y, int nWidth, int nHeight,
+           string lpWindowName, WindowStyles dwStyle, int x, int y, int nWidth, int nHeight,
            IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
 
         [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr GetDC(IntPtr hWnd);
+
+        [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool DestroyWindow(IntPtr hWnd);
+
+        // gdi32.dll
+
+        internal enum PixelFormatDescriptorFlags : uint
+        {
+            DoubleBuffer = 0x00000001,
+            Stereo = 0x00000002,
+            DrawToWindow = 0x00000004,
+            DrawToBitmap = 0x00000008,
+            SupportGdi = 0x00000010,
+            SupportOpenGL = 0x00000020,
+            GenericFormat = 0x00000040,
+            NeedPalette = 0x00000080,
+            NeedSystemPalette = 0x00000100,
+            SwapExchange = 0x00000200,
+            SwapCopy = 0x00000400,
+            SwapLayerBuffers = 0x00000800,
+            GenericAccelerated = 0x00001000,
+            SupportDirectDraw = 0x00002000,
+            Direct3DAccelerated = 0x00004000,
+            SupportComposition = 0x00008000
+        }
+        internal enum PixelFormatDescriptorPixelType
+        {
+            RGBA = 0,
+            ColorIndex = 1
+        }
+        internal enum PixelFormatDescriptorLayerType
+        {
+            UnderlayPlane = -1,
+            MainPlane = 0,
+            OverlayPlane = 1
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct PixelFormatDescriptor
+        {
+            public ushort Size;
+            public ushort Version;
+            public PixelFormatDescriptorFlags Flags;
+            public PixelFormatDescriptorPixelType PixelType;
+            public byte ColorBits;
+            public byte RedBits;
+            public byte RedShift;
+            public byte GreenBits;
+            public byte GreenShift;
+            public byte BlueBits;
+            public byte BlueShift;
+            public byte AlphaBits;
+            public byte AlphaShift;
+            public byte AccumBits;
+            public byte AccumRedBits;
+            public byte AccumGreenBits;
+            public byte AccumBlueBits;
+            public byte AccumAlphaBits;
+            public byte DepthBits;
+            public byte StencilBits;
+            public byte AuxBuffers;
+            public PixelFormatDescriptorLayerType LayerType;
+            private byte Reserved;
+            public uint LayerMask;
+            public uint VisibleMask;
+            public uint DamageMask;
+        }
+
+        [DllImport("gdi32.dll", SetLastError = true)]
+        internal static extern int ChoosePixelFormat(IntPtr hDC, ref PixelFormatDescriptor ppfd);
+
+        [DllImport("gdi32.dll", SetLastError = true)]
+        internal static extern int SetPixelFormat(IntPtr hDC, int pixelFormat,
+            ref PixelFormatDescriptor ppfd);
+
+        // opengl32.dll
+
+        [DllImport("opengl32.dll", EntryPoint = "wglCreateContext", SetLastError = true)]
+        internal static extern IntPtr CreateGLContext(IntPtr hDC);
+
+        [DllImport("opengl32.dll", EntryPoint = "wglMakeCurrent", SetLastError = true)]
+        internal static extern bool MakeGLContextCurrent(IntPtr hDC, IntPtr renderingContext);
     }
 }

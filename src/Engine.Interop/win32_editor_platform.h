@@ -40,9 +40,7 @@ struct Win32WatchedAsset
 
 struct Win32ViewportWindow
 {
-    HWND hwnd;
     HDC deviceContext;
-
     Terrain::Engine::Interop::EditorView view;
     EditorViewContext vctx;
 };
@@ -100,9 +98,10 @@ struct Win32InitPlatformParams
     HINSTANCE instance;
     HWND mainWindowHwnd;
     HWND dummyWindowHwnd;
+    HGLRC glRenderingContext;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
-Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
+Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
     uint32 x,
     uint32 y,
     uint32 width,

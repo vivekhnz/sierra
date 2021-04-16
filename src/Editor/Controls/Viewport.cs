@@ -32,10 +32,10 @@ namespace Terrain.Editor.Controls
 
             protected override HandleRef BuildWindowCore(HandleRef hwndParent)
             {
-                EditorPlatformViewportWindow window = EditorPlatform.CreateViewportWindow(
+                var window = EditorPlatform.CreateViewportWindow(
                     hwndParent.Handle, x, y, width, height, view);
-                windowPtr = window.windowPtr;
-                return new HandleRef(this, window.windowHwnd);
+                windowPtr = window.WindowPtr;
+                return new HandleRef(this, window.Hwnd);
             }
 
             protected override void DestroyWindowCore(HandleRef hwnd)

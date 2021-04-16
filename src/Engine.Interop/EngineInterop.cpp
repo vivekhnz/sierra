@@ -28,6 +28,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         initParams.instance = (HINSTANCE)params.instance.ToPointer();
         initParams.mainWindowHwnd = (HWND)params.mainWindowHwnd.ToPointer();
         initParams.dummyWindowHwnd = (HWND)params.dummyWindowHwnd.ToPointer();
+        initParams.glRenderingContext = (HGLRC)params.glRenderingContext.ToPointer();
 
         memory = win32InitializePlatform(&initParams);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
@@ -43,20 +44,16 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32TickApp(deltaTime);
     }
 
-    EditorPlatformViewportWindow EngineInterop::CreateViewportWindow(System::IntPtr parentHwnd,
+    System::IntPtr EngineInterop::CreateViewportWindow(System::IntPtr deviceContextPtr,
         uint32 x,
         uint32 y,
         uint32 width,
         uint32 height,
         EditorView view)
     {
-        Win32ViewportWindow *window =
-            win32CreateViewportWindow((HWND)parentHwnd.ToPointer(), x, y, width, height, view);
-
-        EditorPlatformViewportWindow result = {};
-        result.windowPtr = System::IntPtr(window);
-        result.windowHwnd = System::IntPtr(window->hwnd);
-        return result;
+        Win32ViewportWindow *window = win32CreateViewportWindow(
+            (HDC)deviceContextPtr.ToPointer(), x, y, width, height, view);
+        return System::IntPtr(window);
     }
 
     void EngineInterop::ResizeViewportWindow(
