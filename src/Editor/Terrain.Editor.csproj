@@ -17,8 +17,4 @@
     <ProjectReference Include="..\Engine.Interop\Terrain.Engine.Interop.vcxproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="PInvoke.User32" Version="0.7.104" />
-  </ItemGroup>
-
 </Project>

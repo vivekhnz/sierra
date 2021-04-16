@@ -1,18 +1,46 @@
-﻿using PInvoke;
-using System;
+﻿using System;
+using System.Windows.Threading;
 using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
     internal static class EditorPlatform
     {
+        private static DispatcherTimer renderTimer;
+        private static DateTime lastTickTime;
+
         internal static void Initialize()
         {
-            EngineInterop.InitializeEngine();
+            uint editorMemorySizeInBytes = 32 * 1024 * 1024;
+            uint engineMemorySizeInBytes = 480 * 1024 * 1024;
+            uint appMemorySizeInBytes = editorMemorySizeInBytes + engineMemorySizeInBytes;
+            IntPtr appMemoryPtr = Win32.VirtualAlloc(IntPtr.Zero, appMemorySizeInBytes,
+                Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
+                Win32.MemoryProtection.ReadWrite);
+
+            EngineInterop.InitializeEngine(appMemoryPtr, editorMemorySizeInBytes, engineMemorySizeInBytes);
+
+            lastTickTime = DateTime.UtcNow;
+            renderTimer = new DispatcherTimer(DispatcherPriority.Send)
+            {
+                Interval = TimeSpan.FromMilliseconds(1)
+            };
+            renderTimer.Tick += OnTick;
+            renderTimer.Start();
+        }
+
+        private static void OnTick(object sender, EventArgs e)
+        {
+            DateTime now = DateTime.UtcNow;
+            float deltaTime = (float)((now - lastTickTime).TotalSeconds);
+            lastTickTime = now;
+
+            EngineInterop.TickApp(deltaTime);
         }
 
         internal static void Shutdown()
         {
+            renderTimer.Stop();
             EngineInterop.Shutdown();
         }
 
@@ -24,7 +52,7 @@ namespace Terrain.Editor
 
         internal static void DestroyViewportWindow(IntPtr hwnd)
         {
-            User32.DestroyWindow(hwnd);
+            Win32.DestroyWindow(hwnd);
         }
 
         internal static void ResizeViewportWindow(IntPtr windowPtr,

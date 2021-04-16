@@ -1,7 +1,5 @@
 #pragma once
 
-#include <vector>
-
 #include "win32_editor_platform.h"
 #include "Proxy/StateProxy.hpp"
 
@@ -35,11 +33,6 @@ public
         static Win32PlatformMemory *memory = nullptr;
         static Proxy::StateProxy ^ stateProxy;
 
-        static System::Windows::Threading::DispatcherTimer ^ renderTimer = nullptr;
-        static System::DateTime lastTickTime;
-
-        static void OnTick(Object ^ sender, System::EventArgs ^ e);
-
     public:
         static property Proxy::StateProxy^ State
         {
@@ -50,8 +43,10 @@ public
             }
         }
 
-        static void InitializeEngine();
+        static void InitializeEngine(System::IntPtr appMemoryPtr, uint64 editorMemorySize,
+            uint64 engineMemorySize);
         static void Shutdown();
+        static void TickApp(float deltaTime);
 
         static EditorPlatformViewportWindow CreateViewportWindow(System::IntPtr parentHwnd,
             uint32 x,

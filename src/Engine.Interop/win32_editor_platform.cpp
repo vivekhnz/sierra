@@ -205,7 +205,7 @@ void win32LoadQueuedAssets()
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            assetsInvalidateAsset(&platformMemory->editor.engine, asset->assetId);
+            assetsInvalidateAsset(platformMemory->editor->engine, asset->assetId);
         }
     }
 
@@ -218,7 +218,7 @@ void win32LoadQueuedAssets()
         if (result.data)
         {
             request->callback(
-                &platformMemory->editor.engine, request->assetId, result.data, result.size);
+                platformMemory->editor->engine, request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
             platformMemory->assetLoadQueue.length--;
@@ -272,54 +272,29 @@ LRESULT WINAPI win32ViewportWndProc(HWND hwnd, UINT message, WPARAM wParam, LPAR
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-Win32PlatformMemory *win32InitializePlatform()
+Win32PlatformMemory *win32InitializePlatform(
+    uint8 *memoryBaseAddress, uint64 editorMemorySize, uint64 engineMemorySize)
 {
-#define APP_MEMORY_SIZE (500 * 1024 * 1024)
-#define EDITOR_DATA_MEMORY_SIZE (32 * 1024 * 1024)
-#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
-    uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
-    platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
+    uint8 *platformMemoryBaseAddress = memoryBaseAddress;
+    uint8 *editorMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
+    uint8 *engineMemoryBaseAddress = editorMemoryBaseAddress + editorMemorySize;
+    uint8 actualEngineMemorySize = engineMemorySize - sizeof(Win32PlatformMemory);
+
+    platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
+    EditorMemory *editorMemory = (EditorMemory *)editorMemoryBaseAddress;
+    EngineMemory *engineMemory = (EngineMemory *)engineMemoryBaseAddress;
+
+    // initialize platform memory
     *platformMemory = {};
+    platformMemory->editor = editorMemory;
     for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
     {
         platformMemory->assetLoadQueue.indices[i] = i;
     }
-
     win32GetOutputAbsolutePath("terrain_editor.dll", platformMemory->editorCode.dllPath);
     win32GetOutputAbsolutePath(
         "terrain_editor.copy.dll", platformMemory->editorCode.dllShadowCopyPath);
     win32GetOutputAbsolutePath("build.lock", platformMemory->editorCode.buildLockFilePath);
-
-    platformMemory->editor.platformCaptureMouse = win32CaptureMouse;
-    platformMemory->editor.state.uiState = {};
-    platformMemory->editor.state.uiState.brushRadius = 128.0f;
-    platformMemory->editor.state.uiState.brushFalloff = 0.75f;
-    platformMemory->editor.state.uiState.brushStrength = 0.12f;
-    platformMemory->editor.state.uiState.lightDirection = 0.5f;
-    platformMemory->editor.state.uiState.materialCount = 0;
-    platformMemory->editor.state.uiState.rockPosition = glm::vec3(0);
-    platformMemory->editor.state.uiState.rockRotation = glm::vec3(0);
-    platformMemory->editor.state.uiState.rockScale = glm::vec3(1);
-    platformMemory->editor.data.baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
-    platformMemory->editor.data.size = EDITOR_DATA_MEMORY_SIZE;
-    platformMemory->editor.dataStorageUsed = 0;
-
-    EngineMemory *engine = &platformMemory->editor.engine;
-    engine->baseAddress =
-        (uint8 *)platformMemory->editor.data.baseAddress + platformMemory->editor.data.size;
-    engine->size =
-        APP_MEMORY_SIZE - (sizeof(Win32PlatformMemory) + platformMemory->editor.data.size);
-    engine->platformLogMessage = win32LogMessage;
-    engine->platformLoadAsset = win32LoadAsset;
-
-    uint64 engineMemoryOffset = 0;
-    engine->renderer.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
-    engine->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
-    engineMemoryOffset += engine->renderer.size;
-    engine->assets.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
-    engine->assets.size = engine->size - engineMemoryOffset;
-    engineMemoryOffset += engine->assets.size;
-    assert(engineMemoryOffset == engine->size);
 
     System::Windows::Interop::WindowInteropHelper interopHelper(
         Application::Current->MainWindow);
@@ -345,6 +320,39 @@ Win32PlatformMemory *win32InitializePlatform()
     viewportWindowClass.hInstance = instance;
     viewportWindowClass.lpszClassName = VIEWPORT_WINDOW_CLASS_NAME;
     RegisterClass(&viewportWindowClass);
+
+    // initialize editor memory
+    editorMemory->platformCaptureMouse = win32CaptureMouse;
+    editorMemory->state.uiState = {};
+    editorMemory->state.uiState.brushRadius = 128.0f;
+    editorMemory->state.uiState.brushFalloff = 0.75f;
+    editorMemory->state.uiState.brushStrength = 0.12f;
+    editorMemory->state.uiState.lightDirection = 0.5f;
+    editorMemory->state.uiState.materialCount = 0;
+    editorMemory->state.uiState.rockPosition = glm::vec3(0);
+    editorMemory->state.uiState.rockRotation = glm::vec3(0);
+    editorMemory->state.uiState.rockScale = glm::vec3(1);
+    editorMemory->data.baseAddress = editorMemoryBaseAddress + sizeof(EditorMemory);
+    editorMemory->data.size = editorMemorySize;
+    editorMemory->dataStorageUsed = 0;
+    editorMemory->engine = engineMemory;
+
+    // initialize engine memory
+    engineMemory->baseAddress = engineMemoryBaseAddress;
+    engineMemory->size = actualEngineMemorySize;
+    engineMemory->platformLogMessage = win32LogMessage;
+    engineMemory->platformLoadAsset = win32LoadAsset;
+
+#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
+    uint64 engineMemoryOffset = sizeof(EngineMemory);
+    engineMemory->renderer.baseAddress =
+        (uint8 *)engineMemory->baseAddress + engineMemoryOffset;
+    engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+    engineMemoryOffset += engineMemory->renderer.size;
+    engineMemory->assets.baseAddress = (uint8 *)engineMemory->baseAddress + engineMemoryOffset;
+    engineMemory->assets.size = engineMemory->size - engineMemoryOffset;
+    engineMemoryOffset += engineMemory->assets.size;
+    assert(engineMemoryOffset == engineMemory->size);
 
     return platformMemory;
 }
@@ -618,9 +626,9 @@ void win32TickApp(float deltaTime)
 
         TextureAsset asset;
         assetsLoadTexture(
-            &platformMemory->editor.engine, result.data, result.size, true, &asset);
+            platformMemory->editor->engine, result.data, result.size, true, &asset);
         platformMemory->editorCode.editorUpdateImportedHeightmapTexture(
-            &platformMemory->editor, &asset);
+            platformMemory->editor, &asset);
 
         win32FreeMemory(result.data);
         *platformMemory->importedHeightmapTexturePath = 0;
@@ -631,7 +639,7 @@ void win32TickApp(float deltaTime)
 
     if (platformMemory->editorCode.editorUpdate)
     {
-        platformMemory->editorCode.editorUpdate(&platformMemory->editor, deltaTime, &input);
+        platformMemory->editorCode.editorUpdate(platformMemory->editor, deltaTime, &input);
     }
 
     for (uint32 i = 0; i < platformMemory->viewportCount; i++)
@@ -647,14 +655,14 @@ void win32TickApp(float deltaTime)
             if (platformMemory->editorCode.editorRenderSceneView)
             {
                 platformMemory->editorCode.editorRenderSceneView(
-                    &platformMemory->editor, &viewport->vctx);
+                    platformMemory->editor, &viewport->vctx);
             }
             break;
         case Terrain::Engine::Interop::EditorView::HeightmapPreview:
             if (platformMemory->editorCode.editorRenderHeightmapPreview)
             {
                 platformMemory->editorCode.editorRenderHeightmapPreview(
-                    &platformMemory->editor, &viewport->vctx);
+                    platformMemory->editor, &viewport->vctx);
             }
             break;
         }
@@ -666,7 +674,7 @@ void win32ShutdownPlatform()
 {
     if (platformMemory->editorCode.editorShutdown)
     {
-        platformMemory->editorCode.editorShutdown(&platformMemory->editor);
+        platformMemory->editorCode.editorShutdown(platformMemory->editor);
     }
     wglDeleteContext(platformMemory->glRenderingContext);
     DestroyWindow(platformMemory->dummyWindowHwnd);

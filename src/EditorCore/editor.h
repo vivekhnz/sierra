@@ -177,7 +177,7 @@ struct EditorMemory
     MemoryBlock data;
     uint64 dataStorageUsed;
 
-    EngineMemory engine;
+    EngineMemory *engine;
 };
 
 struct EditorInput

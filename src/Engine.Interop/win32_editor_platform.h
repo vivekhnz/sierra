@@ -84,10 +84,11 @@ struct Win32PlatformMemory
     uint32 watchedAssetCount;
 
     char importedHeightmapTexturePath[MAX_PATH];
-    EditorMemory editor;
+    EditorMemory *editor;
 };
 
-Win32PlatformMemory *win32InitializePlatform();
+Win32PlatformMemory *win32InitializePlatform(
+    uint8 *memoryBaseAddress, uint64 editorMemorySize, uint64 engineMemorySize);
 Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
     uint32 x,
     uint32 y,

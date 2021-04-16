@@ -2,30 +2,22 @@
 
 #include <msclr\marshal_cppstd.h>
 
-using namespace System;
-using namespace System::Windows;
-using namespace System::Windows::Input;
-using namespace System::Windows::Threading;
-
 namespace Terrain { namespace Engine { namespace Interop {
-    void EngineInterop::InitializeEngine()
+    void EngineInterop::InitializeEngine(
+        System::IntPtr appMemoryPtr, uint64 editorMemorySize, uint64 engineMemorySize)
     {
-        memory = win32InitializePlatform();
-        stateProxy = gcnew Proxy::StateProxy(&memory->editor.state.uiState);
-
-        lastTickTime = DateTime::UtcNow;
-        renderTimer = gcnew DispatcherTimer(DispatcherPriority::Send);
-        renderTimer->Interval = TimeSpan::FromMilliseconds(1);
-        renderTimer->Tick += gcnew System::EventHandler(&EngineInterop::OnTick);
-        renderTimer->Start();
+        memory = win32InitializePlatform(
+            (uint8 *)appMemoryPtr.ToPointer(), editorMemorySize, engineMemorySize);
+        stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
     }
 
-    void EngineInterop::OnTick(Object ^ sender, EventArgs ^ e)
+    void EngineInterop::Shutdown()
     {
-        DateTime now = DateTime::UtcNow;
-        float deltaTime = (now - lastTickTime).TotalSeconds;
-        lastTickTime = now;
+        win32ShutdownPlatform();
+    }
 
+    void EngineInterop::TickApp(float deltaTime)
+    {
         win32TickApp(deltaTime);
     }
 
@@ -55,12 +47,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         window->vctx.height = height;
     }
 
-    void EngineInterop::Shutdown()
-    {
-        renderTimer->Stop();
-        win32ShutdownPlatform();
-    }
-
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
     {
         std::string pathStr = msclr::interop::marshal_as<std::string>(path);
@@ -74,10 +60,10 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::AddMaterial(MaterialProps props)
     {
-        assert(memory->editor.state.uiState.materialCount < MAX_MATERIAL_COUNT);
-        uint32 index = memory->editor.state.uiState.materialCount++;
+        assert(memory->editor->state.uiState.materialCount < MAX_MATERIAL_COUNT);
+        uint32 index = memory->editor->state.uiState.materialCount++;
 
-        MaterialProperties *material = &memory->editor.state.uiState.materialProps[index];
+        MaterialProperties *material = &memory->editor->state.uiState.materialProps[index];
         material->albedoTextureAssetId = props.albedoTextureAssetId;
         material->normalTextureAssetId = props.normalTextureAssetId;
         material->displacementTextureAssetId = props.displacementTextureAssetId;
@@ -93,11 +79,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         assert(index < MAX_MATERIAL_COUNT);
 
-        memory->editor.state.uiState.materialCount--;
-        for (uint32 i = index; i < memory->editor.state.uiState.materialCount; i++)
+        memory->editor->state.uiState.materialCount--;
+        for (uint32 i = index; i < memory->editor->state.uiState.materialCount; i++)
         {
-            memory->editor.state.uiState.materialProps[i] =
-                memory->editor.state.uiState.materialProps[i + 1];
+            memory->editor->state.uiState.materialProps[i] =
+                memory->editor->state.uiState.materialProps[i + 1];
         }
     }
 
@@ -106,70 +92,71 @@ namespace Terrain { namespace Engine { namespace Interop {
         assert(indexA < MAX_MATERIAL_COUNT);
         assert(indexB < MAX_MATERIAL_COUNT);
 
-        MaterialProperties temp = memory->editor.state.uiState.materialProps[indexA];
-        memory->editor.state.uiState.materialProps[indexA] =
-            memory->editor.state.uiState.materialProps[indexB];
-        memory->editor.state.uiState.materialProps[indexB] = temp;
+        MaterialProperties temp = memory->editor->state.uiState.materialProps[indexA];
+        memory->editor->state.uiState.materialProps[indexA] =
+            memory->editor->state.uiState.materialProps[indexB];
+        memory->editor->state.uiState.materialProps[indexB] = temp;
     }
 
     void EngineInterop::SetMaterialAlbedoTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].albedoTextureAssetId = assetId;
+        memory->editor->state.uiState.materialProps[index].albedoTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialNormalTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].normalTextureAssetId = assetId;
+        memory->editor->state.uiState.materialProps[index].normalTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialDisplacementTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].displacementTextureAssetId = assetId;
+        memory->editor->state.uiState.materialProps[index].displacementTextureAssetId =
+            assetId;
     }
 
     void EngineInterop::SetMaterialAoTexture(int index, uint32 assetId)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].aoTextureAssetId = assetId;
+        memory->editor->state.uiState.materialProps[index].aoTextureAssetId = assetId;
     }
 
     void EngineInterop::SetMaterialTextureSize(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].textureSizeInWorldUnits = value;
+        memory->editor->state.uiState.materialProps[index].textureSizeInWorldUnits = value;
     }
 
     void EngineInterop::SetMaterialSlopeStart(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].slopeStart = value;
+        memory->editor->state.uiState.materialProps[index].slopeStart = value;
     }
 
     void EngineInterop::SetMaterialSlopeEnd(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].slopeEnd = value;
+        memory->editor->state.uiState.materialProps[index].slopeEnd = value;
     }
 
     void EngineInterop::SetMaterialAltitudeStart(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].altitudeStart = value;
+        memory->editor->state.uiState.materialProps[index].altitudeStart = value;
     }
 
     void EngineInterop::SetMaterialAltitudeEnd(int index, float value)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        memory->editor.state.uiState.materialProps[index].altitudeEnd = value;
+        memory->editor->state.uiState.materialProps[index].altitudeEnd = value;
     }
 
     MaterialProps EngineInterop::GetMaterialProperties(int index)
     {
         assert(index < MAX_MATERIAL_COUNT);
-        MaterialProperties *state = &memory->editor.state.uiState.materialProps[index];
+        MaterialProperties *state = &memory->editor->state.uiState.materialProps[index];
 
         MaterialProps result = {};
 
@@ -197,14 +184,14 @@ namespace Terrain { namespace Engine { namespace Interop {
         float scaleY,
         float scaleZ)
     {
-        memory->editor.state.uiState.rockPosition.x = positionX;
-        memory->editor.state.uiState.rockPosition.y = positionY;
-        memory->editor.state.uiState.rockPosition.z = positionZ;
-        memory->editor.state.uiState.rockRotation.x = rotationX;
-        memory->editor.state.uiState.rockRotation.y = rotationY;
-        memory->editor.state.uiState.rockRotation.z = rotationZ;
-        memory->editor.state.uiState.rockScale.x = scaleX;
-        memory->editor.state.uiState.rockScale.y = scaleY;
-        memory->editor.state.uiState.rockScale.z = scaleZ;
+        memory->editor->state.uiState.rockPosition.x = positionX;
+        memory->editor->state.uiState.rockPosition.y = positionY;
+        memory->editor->state.uiState.rockPosition.z = positionZ;
+        memory->editor->state.uiState.rockRotation.x = rotationX;
+        memory->editor->state.uiState.rockRotation.y = rotationY;
+        memory->editor->state.uiState.rockRotation.z = rotationZ;
+        memory->editor->state.uiState.rockScale.x = scaleX;
+        memory->editor->state.uiState.rockScale.y = scaleY;
+        memory->editor->state.uiState.rockScale.z = scaleZ;
     }
 }}}
