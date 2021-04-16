@@ -5,8 +5,10 @@ namespace Terrain.Editor
 {
     internal static class Win32
     {
+        // kernel32.dll
+
         [Flags]
-        public enum AllocationType : uint
+        internal enum AllocationType : uint
         {
             Commit = 0x1000,
             Reserve = 0x2000,
@@ -20,7 +22,7 @@ namespace Terrain.Editor
         }
 
         [Flags]
-        public enum MemoryProtection : uint
+        internal enum MemoryProtection : uint
         {
             Execute = 0x10,
             ExecuteRead = 0x20,
@@ -35,11 +37,62 @@ namespace Terrain.Editor
             WriteCombineModifierflag = 0x400
         }
 
-        [DllImport("kernel32")]
-        public static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize,
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern IntPtr VirtualAlloc(IntPtr lpAddress, uint dwSize,
             AllocationType flAllocationType, MemoryProtection flProtect);
 
-        [DllImport("user32.dll")]
+        [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
+        internal static extern IntPtr GetModuleHandle(string lpModuleName);
+
+        // user32.dll
+
+        internal delegate IntPtr WndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
+
+        [Flags]
+        internal enum WindowClassStyles : uint
+        {
+            ByteAlignClient = 0x1000,
+            ByteAlignWindow = 0x2000,
+            ClassDC = 0x40,
+            DoubleClicks = 0x8,
+            DropShadow = 0x20000,
+            GlobalClass = 0x4000,
+            HorizontalRedraw = 0x2,
+            NoClose = 0x200,
+            OwnDC = 0x20,
+            ParentDC = 0x80,
+            SaveBits = 0x800,
+            VerticalRedraw = 0x1
+        }
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        internal struct WindowClass
+        {
+            public WindowClassStyles style;
+            public IntPtr lpfnWndProc;
+            public int cbClsExtra;
+            public int cbWndExtra;
+            public IntPtr hInstance;
+            public IntPtr hIcon;
+            public IntPtr hCursor;
+            public IntPtr hbrBackground;
+            public string lpszMenuName;
+            public string lpszClassName;
+        }
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr DefWindowProc(IntPtr hWnd, uint uMsg, IntPtr wParam,
+            IntPtr lParam);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        internal static extern ushort RegisterClass(ref WindowClass lpWndClass);
+
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        internal static extern IntPtr CreateWindowEx(ulong dwExStyle, string lpClassName,
+           string lpWindowName, ulong dwStyle, int x, int y, int nWidth, int nHeight,
+           IntPtr hWndParent, IntPtr hMenu, IntPtr hInstance, IntPtr lpParam);
+
+        [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool DestroyWindow(IntPtr hWnd);
     }
 }

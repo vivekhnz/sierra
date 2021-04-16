@@ -87,8 +87,21 @@ struct Win32PlatformMemory
     EditorMemory *editor;
 };
 
-Win32PlatformMemory *win32InitializePlatform(
-    uint8 *memoryBaseAddress, uint64 editorMemorySize, uint64 engineMemorySize);
+struct Win32InitPlatformParams
+{
+    uint8 *memoryBaseAddress;
+    uint64 editorMemorySize;
+    uint64 engineMemorySize;
+
+    char editorCodeDllPath[MAX_PATH];
+    char editorCodeDllShadowCopyPath[MAX_PATH];
+    char editorCodeBuildLockFilePath[MAX_PATH];
+
+    HINSTANCE instance;
+    HWND mainWindowHwnd;
+    HWND dummyWindowHwnd;
+};
+Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
 Win32ViewportWindow *win32CreateViewportWindow(HWND parentHwnd,
     uint32 x,
     uint32 y,

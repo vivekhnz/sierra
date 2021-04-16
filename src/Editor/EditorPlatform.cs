@@ -1,4 +1,8 @@
 ﻿using System;
+using System.IO;
+using System.Runtime.InteropServices;
+using System.Windows;
+using System.Windows.Interop;
 using System.Windows.Threading;
 using Terrain.Engine.Interop;
 
@@ -8,6 +12,7 @@ namespace Terrain.Editor
     {
         private static DispatcherTimer renderTimer;
         private static DateTime lastTickTime;
+        private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
 
         internal static void Initialize()
         {
@@ -18,7 +23,39 @@ namespace Terrain.Editor
                 Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
                 Win32.MemoryProtection.ReadWrite);
 
-            EngineInterop.InitializeEngine(appMemoryPtr, editorMemorySizeInBytes, engineMemorySizeInBytes);
+            var interopHelper = new WindowInteropHelper(Application.Current.MainWindow);
+            IntPtr mainWindowHwnd = interopHelper.EnsureHandle();
+
+            IntPtr appInstance = Win32.GetModuleHandle(null);
+            Win32.WindowClass dummyWindowClass = new Win32.WindowClass
+            {
+                lpfnWndProc = Marshal.GetFunctionPointerForDelegate(defWndProc),
+                hInstance = appInstance,
+                lpszClassName = "TerrainOpenGLDummyWindowClass"
+            };
+            Win32.RegisterClass(ref dummyWindowClass);
+            IntPtr dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
+                "TerrainOpenGLDummyWindow", 0, 0, 0, 100, 100, IntPtr.Zero, IntPtr.Zero, appInstance,
+                IntPtr.Zero);
+
+            var initParams = new EditorInitPlatformParamsProxy
+            {
+                memoryPtr = appMemoryPtr,
+                editorMemorySize = editorMemorySizeInBytes,
+                engineMemorySize = engineMemorySizeInBytes,
+
+                editorCodeDllPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
+                editorCodeDllShadowCopyPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll"),
+                editorCodeBuildLockFilePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
+
+                instance = appInstance,
+                mainWindowHwnd = mainWindowHwnd,
+                dummyWindowHwnd = dummyWindowHwnd
+            };
+            EngineInterop.InitializeEngine(initParams);
 
             lastTickTime = DateTime.UtcNow;
             renderTimer = new DispatcherTimer(DispatcherPriority.Send)

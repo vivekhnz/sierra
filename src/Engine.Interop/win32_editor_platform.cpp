@@ -57,33 +57,6 @@ void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
     *dstCursor = 0;
 }
 
-void win32GetOutputAbsolutePath(const char *filename, char *absolutePath)
-{
-    CHAR exePath[MAX_PATH];
-    uint64 exePathLength = GetModuleFileNameA(0, exePath, MAX_PATH);
-
-    const char *srcCursor = exePath + exePathLength;
-    uint64 outputDirPathLength = exePathLength;
-    while (*srcCursor != '\\')
-    {
-        srcCursor--;
-        outputDirPathLength--;
-    }
-
-    srcCursor = exePath;
-    char *dstCursor = absolutePath;
-    for (uint32 i = 0; i < outputDirPathLength + 1; i++)
-    {
-        *dstCursor++ = *srcCursor++;
-    }
-    srcCursor = filename;
-    while (*srcCursor)
-    {
-        *dstCursor++ = *srcCursor++;
-    }
-    *dstCursor = 0;
-}
-
 uint64 win32GetFileLastWriteTime(char *path)
 {
     WIN32_FILE_ATTRIBUTE_DATA attributes;
@@ -272,13 +245,22 @@ LRESULT WINAPI win32ViewportWndProc(HWND hwnd, UINT message, WPARAM wParam, LPAR
     return DefWindowProc(hwnd, message, wParam, lParam);
 }
 
-Win32PlatformMemory *win32InitializePlatform(
-    uint8 *memoryBaseAddress, uint64 editorMemorySize, uint64 engineMemorySize)
+void win32CopyString(char *src, char *dst)
 {
-    uint8 *platformMemoryBaseAddress = memoryBaseAddress;
+    char *srcCursor = src;
+    char *dstCursor = dst;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+}
+
+Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
+{
+    uint8 *platformMemoryBaseAddress = params->memoryBaseAddress;
     uint8 *editorMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
-    uint8 *engineMemoryBaseAddress = editorMemoryBaseAddress + editorMemorySize;
-    uint8 actualEngineMemorySize = engineMemorySize - sizeof(Win32PlatformMemory);
+    uint8 *engineMemoryBaseAddress = editorMemoryBaseAddress + params->editorMemorySize;
+    uint8 actualEngineMemorySize = params->engineMemorySize - sizeof(Win32PlatformMemory);
 
     platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
     EditorMemory *editorMemory = (EditorMemory *)editorMemoryBaseAddress;
@@ -291,24 +273,13 @@ Win32PlatformMemory *win32InitializePlatform(
     {
         platformMemory->assetLoadQueue.indices[i] = i;
     }
-    win32GetOutputAbsolutePath("terrain_editor.dll", platformMemory->editorCode.dllPath);
-    win32GetOutputAbsolutePath(
-        "terrain_editor.copy.dll", platformMemory->editorCode.dllShadowCopyPath);
-    win32GetOutputAbsolutePath("build.lock", platformMemory->editorCode.buildLockFilePath);
-
-    System::Windows::Interop::WindowInteropHelper interopHelper(
-        Application::Current->MainWindow);
-    platformMemory->mainWindowHwnd = (HWND)interopHelper.EnsureHandle().ToPointer();
-
-    HINSTANCE instance = GetModuleHandle(0);
-    WNDCLASS dummyWindowClass = {};
-    dummyWindowClass.lpfnWndProc = DefWindowProc;
-    dummyWindowClass.hInstance = instance;
-    dummyWindowClass.lpszClassName = L"TerrainOpenGLDummyWindowClass";
-    RegisterClass(&dummyWindowClass);
-
-    platformMemory->dummyWindowHwnd = CreateWindowEx(0, dummyWindowClass.lpszClassName,
-        L"TerrainOpenGLDummyWindow", 0, 0, 0, 100, 100, 0, 0, instance, 0);
+    win32CopyString(params->editorCodeDllPath, platformMemory->editorCode.dllPath);
+    win32CopyString(
+        params->editorCodeDllShadowCopyPath, platformMemory->editorCode.dllShadowCopyPath);
+    win32CopyString(
+        params->editorCodeBuildLockFilePath, platformMemory->editorCode.buildLockFilePath);
+    platformMemory->mainWindowHwnd = params->mainWindowHwnd;
+    platformMemory->dummyWindowHwnd = params->dummyWindowHwnd;
     HDC dummyDeviceContext = GetDC(platformMemory->dummyWindowHwnd);
     win32SetDeviceContextPixelFormat(dummyDeviceContext);
     platformMemory->glRenderingContext = wglCreateContext(dummyDeviceContext);
@@ -317,7 +288,7 @@ Win32PlatformMemory *win32InitializePlatform(
     WNDCLASS viewportWindowClass = {};
     viewportWindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
     viewportWindowClass.lpfnWndProc = (WNDPROC)win32ViewportWndProc;
-    viewportWindowClass.hInstance = instance;
+    viewportWindowClass.hInstance = params->instance;
     viewportWindowClass.lpszClassName = VIEWPORT_WINDOW_CLASS_NAME;
     RegisterClass(&viewportWindowClass);
 
@@ -333,7 +304,7 @@ Win32PlatformMemory *win32InitializePlatform(
     editorMemory->state.uiState.rockRotation = glm::vec3(0);
     editorMemory->state.uiState.rockScale = glm::vec3(1);
     editorMemory->data.baseAddress = editorMemoryBaseAddress + sizeof(EditorMemory);
-    editorMemory->data.size = editorMemorySize;
+    editorMemory->data.size = params->editorMemorySize;
     editorMemory->dataStorageUsed = 0;
     editorMemory->engine = engineMemory;
 

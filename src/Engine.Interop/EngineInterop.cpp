@@ -3,11 +3,33 @@
 #include <msclr\marshal_cppstd.h>
 
 namespace Terrain { namespace Engine { namespace Interop {
-    void EngineInterop::InitializeEngine(
-        System::IntPtr appMemoryPtr, uint64 editorMemorySize, uint64 engineMemorySize)
+    void GetCStringFromManagedString(System::String ^ src, char *dst)
     {
-        memory = win32InitializePlatform(
-            (uint8 *)appMemoryPtr.ToPointer(), editorMemorySize, engineMemorySize);
+        std::string stdStr = msclr::interop::marshal_as<std::string>(src);
+        const char *srcCursor = stdStr.c_str();
+        char *dstCursor = dst;
+        while (*srcCursor)
+        {
+            *dstCursor++ = *srcCursor++;
+        }
+    }
+
+    void EngineInterop::InitializeEngine(EditorInitPlatformParamsProxy params)
+    {
+        Win32InitPlatformParams initParams = {};
+        initParams.memoryBaseAddress = (uint8 *)params.memoryPtr.ToPointer();
+        initParams.editorMemorySize = params.editorMemorySize;
+        initParams.engineMemorySize = params.engineMemorySize;
+        GetCStringFromManagedString(params.editorCodeDllPath, initParams.editorCodeDllPath);
+        GetCStringFromManagedString(
+            params.editorCodeDllShadowCopyPath, initParams.editorCodeDllShadowCopyPath);
+        GetCStringFromManagedString(
+            params.editorCodeBuildLockFilePath, initParams.editorCodeBuildLockFilePath);
+        initParams.instance = (HINSTANCE)params.instance.ToPointer();
+        initParams.mainWindowHwnd = (HWND)params.mainWindowHwnd.ToPointer();
+        initParams.dummyWindowHwnd = (HWND)params.dummyWindowHwnd.ToPointer();
+
+        memory = win32InitializePlatform(&initParams);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
     }
 
@@ -49,13 +71,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
     {
-        std::string pathStr = msclr::interop::marshal_as<std::string>(path);
-        const char *srcCursor = pathStr.c_str();
-        char *dstCursor = memory->importedHeightmapTexturePath;
-        while (*srcCursor)
-        {
-            *dstCursor++ = *srcCursor++;
-        }
+        GetCStringFromManagedString(path, memory->importedHeightmapTexturePath);
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)

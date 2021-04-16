@@ -27,6 +27,22 @@ public
     };
 
 public
+    value struct EditorInitPlatformParamsProxy
+    {
+        System::IntPtr memoryPtr;
+        uint64 editorMemorySize;
+        uint64 engineMemorySize;
+
+        System::String ^ editorCodeDllPath;
+        System::String ^ editorCodeDllShadowCopyPath;
+        System::String ^ editorCodeBuildLockFilePath;
+
+        System::IntPtr instance;
+        System::IntPtr mainWindowHwnd;
+        System::IntPtr dummyWindowHwnd;
+    };
+
+public
     ref class EngineInterop
     {
     private:
@@ -43,8 +59,7 @@ public
             }
         }
 
-        static void InitializeEngine(System::IntPtr appMemoryPtr, uint64 editorMemorySize,
-            uint64 engineMemorySize);
+        static void InitializeEngine(EditorInitPlatformParamsProxy params);
         static void Shutdown();
         static void TickApp(float deltaTime);
 
