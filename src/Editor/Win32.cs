@@ -46,7 +46,8 @@ namespace Terrain.Editor
 
         // user32.dll
 
-        internal delegate IntPtr WndProc(IntPtr hWnd, uint uMsg, IntPtr wParam, IntPtr lParam);
+        internal delegate IntPtr WndProc(
+            IntPtr hwnd, WindowMessage message, IntPtr wParam, IntPtr lParam);
 
         [Flags]
         internal enum WindowClassStyles : uint
@@ -107,9 +108,35 @@ namespace Terrain.Editor
             VerticalScrollBar = 0x200000
         }
 
+        internal enum WindowMessage : uint
+        {
+            SetCursor = 0x0020,
+            MouseWheel = 0x020A
+        }
+
+        internal enum Cursor
+        {
+            Arrow = 32512,
+            IBeam = 32513,
+            Wait = 32514,
+            Cross = 32515,
+            UpArrow = 32516,
+            Size = 32640,
+            Icon = 32641,
+            SizeNWSE = 32642,
+            SizeNESW = 32643,
+            SizeWE = 32644,
+            SizeNS = 32645,
+            SizeAll = 32646,
+            No = 32648,
+            Hand = 32649,
+            AppStarting = 32650,
+            Help = 32651
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
-        internal static extern IntPtr DefWindowProc(IntPtr hWnd, uint uMsg, IntPtr wParam,
-            IntPtr lParam);
+        internal static extern IntPtr DefWindowProc(IntPtr hwnd, WindowMessage message,
+            IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
         internal static extern ushort RegisterClass(ref WindowClass lpWndClass);
@@ -125,8 +152,15 @@ namespace Terrain.Editor
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool DestroyWindow(IntPtr hWnd);
 
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr LoadCursor(IntPtr hInstance, Cursor lpCursorName);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr SetCursor(IntPtr handle);
+
         // gdi32.dll
 
+        [Flags]
         internal enum PixelFormatDescriptorFlags : uint
         {
             DoubleBuffer = 0x00000001,

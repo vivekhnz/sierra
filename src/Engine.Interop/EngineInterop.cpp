@@ -29,6 +29,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         initParams.mainWindowHwnd = (HWND)params.mainWindowHwnd.ToPointer();
         initParams.dummyWindowHwnd = (HWND)params.dummyWindowHwnd.ToPointer();
         initParams.glRenderingContext = (HGLRC)params.glRenderingContext.ToPointer();
+        initParams.platformCaptureMouse =
+            (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
 
         memory = win32InitializePlatform(&initParams);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
@@ -39,9 +41,14 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32ShutdownPlatform();
     }
 
-    void EngineInterop::TickApp(float deltaTime)
+    void EngineInterop::TickApp(float deltaTime, EditorTickAppParamsProxy params)
     {
-        win32TickApp(deltaTime);
+        Win32TickAppParams tickParams = {};
+        tickParams.shouldCaptureMouse = params.shouldCaptureMouse;
+        tickParams.wasMouseCaptured = params.wasMouseCaptured;
+        tickParams.nextMouseScrollOffsetY = params.nextMouseScrollOffsetY;
+
+        win32TickApp(deltaTime, &tickParams);
     }
 
     System::IntPtr EngineInterop::CreateViewportWindow(System::IntPtr deviceContextPtr,

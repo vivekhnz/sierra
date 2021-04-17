@@ -34,6 +34,16 @@ public
         System::IntPtr mainWindowHwnd;
         System::IntPtr dummyWindowHwnd;
         System::IntPtr glRenderingContext;
+
+        System::IntPtr platformCaptureMouse;
+    };
+
+public
+    value struct EditorTickAppParamsProxy
+    {
+        bool shouldCaptureMouse;
+        bool wasMouseCaptured;
+        float nextMouseScrollOffsetY;
     };
 
 public
@@ -55,7 +65,7 @@ public
 
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
         static void Shutdown();
-        static void TickApp(float deltaTime);
+        static void TickApp(float deltaTime, EditorTickAppParamsProxy params);
 
         static System::IntPtr CreateViewportWindow(System::IntPtr deviceContextPtr,
             uint32 x,

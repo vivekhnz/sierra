@@ -20,9 +20,20 @@ namespace Terrain.Editor
 
         private static IntPtr appInstance = Win32.GetModuleHandle(null);
         private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
+        private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
 
         private static DispatcherTimer renderTimer;
         private static DateTime lastTickTime;
+
+        private static bool shouldCaptureMouse;
+        private static bool wasMouseCaptured;
+        private static float nextMouseScrollOffsetY;
+
+        private delegate void PlatformCaptureMouse();
+        private static PlatformCaptureMouse EditorPlatformCaptureMouse = () =>
+        {
+            shouldCaptureMouse = true;
+        };
 
         internal static void Initialize()
         {
@@ -36,7 +47,7 @@ namespace Terrain.Editor
             var interopHelper = new WindowInteropHelper(Application.Current.MainWindow);
             IntPtr mainWindowHwnd = interopHelper.EnsureHandle();
 
-            Win32.WindowClass dummyWindowClass = new Win32.WindowClass
+            var dummyWindowClass = new Win32.WindowClass
             {
                 lpfnWndProc = Marshal.GetFunctionPointerForDelegate(defWndProc),
                 hInstance = appInstance,
@@ -51,6 +62,17 @@ namespace Terrain.Editor
             ConfigureDeviceContextForOpenGL(dummyDeviceContext);
             IntPtr glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
             Win32.MakeGLContextCurrent(dummyDeviceContext, glRenderingContext);
+
+            var viewportWindowClass = new Win32.WindowClass
+            {
+                style = Win32.WindowClassStyles.HorizontalRedraw |
+                    Win32.WindowClassStyles.VerticalRedraw |
+                    Win32.WindowClassStyles.OwnDC,
+                lpfnWndProc = Marshal.GetFunctionPointerForDelegate(viewportWndProc),
+                hInstance = appInstance,
+                lpszClassName = ViewportWindowClassName
+            };
+            Win32.RegisterClass(ref viewportWindowClass);
 
             var initParams = new EditorInitPlatformParamsProxy
             {
@@ -68,7 +90,10 @@ namespace Terrain.Editor
                 instance = appInstance,
                 mainWindowHwnd = mainWindowHwnd,
                 dummyWindowHwnd = dummyWindowHwnd,
-                glRenderingContext = glRenderingContext
+                glRenderingContext = glRenderingContext,
+
+                platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(
+                    EditorPlatformCaptureMouse)
             };
             EngineInterop.InitializeEngine(initParams);
 
@@ -87,8 +112,7 @@ namespace Terrain.Editor
             {
                 Size = (ushort)Marshal.SizeOf<Win32.PixelFormatDescriptor>(),
                 Version = 1,
-                Flags =
-                    Win32.PixelFormatDescriptorFlags.DrawToWindow |
+                Flags = Win32.PixelFormatDescriptorFlags.DrawToWindow |
                     Win32.PixelFormatDescriptorFlags.SupportOpenGL |
                     Win32.PixelFormatDescriptorFlags.DoubleBuffer,
                 PixelType = Win32.PixelFormatDescriptorPixelType.RGBA,
@@ -100,13 +124,45 @@ namespace Terrain.Editor
             Win32.SetPixelFormat(deviceContext, pixelFormat, ref pfd);
         }
 
+        private static IntPtr ViewportWindowProc(
+            IntPtr hwnd, Win32.WindowMessage message, IntPtr wParam, IntPtr lParam)
+        {
+            IntPtr resultHandled = new IntPtr(1);
+            switch (message)
+            {
+                case Win32.WindowMessage.SetCursor:
+                    bool hideCursor = shouldCaptureMouse || wasMouseCaptured;
+                    Win32.SetCursor(hideCursor
+                        ? IntPtr.Zero
+                        : Win32.LoadCursor(IntPtr.Zero, Win32.Cursor.Arrow));
+                    return resultHandled;
+
+                case Win32.WindowMessage.MouseWheel:
+                    short delta = (short)(wParam.ToInt64() >> 16);
+                    short direction = (short)(lParam.ToInt64() >> 16);
+                    nextMouseScrollOffsetY += delta * direction;
+                    return resultHandled;
+            }
+            return Win32.DefWindowProc(hwnd, message, wParam, lParam);
+        }
+
         private static void OnTick(object sender, EventArgs e)
         {
             DateTime now = DateTime.UtcNow;
             float deltaTime = (float)((now - lastTickTime).TotalSeconds);
             lastTickTime = now;
 
-            EngineInterop.TickApp(deltaTime);
+            var tickParams = new EditorTickAppParamsProxy
+            {
+                shouldCaptureMouse = shouldCaptureMouse,
+                wasMouseCaptured = wasMouseCaptured,
+                nextMouseScrollOffsetY = nextMouseScrollOffsetY
+            };
+            wasMouseCaptured = shouldCaptureMouse;
+            shouldCaptureMouse = false;
+            nextMouseScrollOffsetY = 0;
+
+            EngineInterop.TickApp(deltaTime, tickParams);
         }
 
         internal static void Shutdown()

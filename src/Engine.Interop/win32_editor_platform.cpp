@@ -204,47 +204,6 @@ void win32LoadQueuedAssets()
     }
 }
 
-PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
-{
-    platformMemory->shouldCaptureMouse = true;
-}
-
-void win32SetDeviceContextPixelFormat(HDC deviceContext)
-{
-    PIXELFORMATDESCRIPTOR pfd = {};
-    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    pfd.nVersion = 1;
-    pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER;
-    pfd.iPixelType = PFD_TYPE_RGBA;
-    pfd.cColorBits = 32;
-    pfd.cDepthBits = 16;
-    pfd.iLayerType = PFD_MAIN_PLANE;
-
-    int32 pixelFormat = ChoosePixelFormat(deviceContext, &pfd);
-    SetPixelFormat(deviceContext, pixelFormat, &pfd);
-}
-
-LRESULT WINAPI win32ViewportWndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-    switch (message)
-    {
-    case WM_SETCURSOR:
-    {
-        bool hideCursor =
-            platformMemory->shouldCaptureMouse || platformMemory->wasMouseCaptured;
-        SetCursor(hideCursor ? 0 : LoadCursor(0, IDC_ARROW));
-        return 1;
-    }
-    case WM_MOUSEWHEEL:
-    {
-        platformMemory->nextMouseScrollOffsetY +=
-            GET_WHEEL_DELTA_WPARAM(wParam) * GET_Y_LPARAM(lParam);
-        return 1;
-    }
-    }
-    return DefWindowProc(hwnd, message, wParam, lParam);
-}
-
 void win32CopyString(char *src, char *dst)
 {
     char *srcCursor = src;
@@ -282,15 +241,8 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     platformMemory->dummyWindowHwnd = params->dummyWindowHwnd;
     platformMemory->glRenderingContext = params->glRenderingContext;
 
-    WNDCLASS viewportWindowClass = {};
-    viewportWindowClass.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
-    viewportWindowClass.lpfnWndProc = (WNDPROC)win32ViewportWndProc;
-    viewportWindowClass.hInstance = params->instance;
-    viewportWindowClass.lpszClassName = VIEWPORT_WINDOW_CLASS_NAME;
-    RegisterClass(&viewportWindowClass);
-
     // initialize editor memory
-    editorMemory->platformCaptureMouse = win32CaptureMouse;
+    editorMemory->platformCaptureMouse = params->platformCaptureMouse;
     editorMemory->state.uiState = {};
     editorMemory->state.uiState.brushRadius = 128.0f;
     editorMemory->state.uiState.brushFalloff = 0.75f;
@@ -347,7 +299,7 @@ Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
     return result;
 }
 
-void win32GetInputState(EditorInput *input)
+void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
 {
     *input = {};
 
@@ -430,7 +382,7 @@ void win32GetInputState(EditorInput *input)
 
     if (GetForegroundWindow() == platformMemory->mainWindowHwnd)
     {
-        if (platformMemory->wasMouseCaptured)
+        if (params->wasMouseCaptured)
         {
             /*
              * If we are capturing the mouse, we need to keep both the actual mouse position
@@ -440,7 +392,7 @@ void win32GetInputState(EditorInput *input)
              */
             virtualMousePos_windowSpace = platformMemory->capturedMousePos_windowSpace;
 
-            if (!platformMemory->shouldCaptureMouse)
+            if (!params->shouldCaptureMouse)
             {
                 // move the cursor back to its original position when the mouse is released
                 Point capturedMousePos_screenSpacePoint = appWindow->PointToScreen(
@@ -474,11 +426,11 @@ void win32GetInputState(EditorInput *input)
             input->pressedButtons = pressedButtons;
             input->normalizedCursorPos =
                 (virtualMousePos_windowSpace - viewportPos_windowSpace) / viewportSize;
-            input->scrollOffset = platformMemory->nextMouseScrollOffsetY;
+            input->scrollOffset = params->nextMouseScrollOffsetY;
 
-            if (platformMemory->shouldCaptureMouse)
+            if (params->shouldCaptureMouse)
             {
-                if (!platformMemory->wasMouseCaptured)
+                if (!params->wasMouseCaptured)
                 {
                     // store the cursor position so we can move the cursor back to it when the
                     // mouse is released
@@ -495,7 +447,7 @@ void win32GetInputState(EditorInput *input)
                 SetCursorPos(
                     viewportCenter_screenSpacePoint.X, viewportCenter_screenSpacePoint.Y);
 
-                if (platformMemory->wasMouseCaptured)
+                if (params->wasMouseCaptured)
                 {
                     input->cursorOffset =
                         actualMousePos_windowSpace - viewportCenter_windowSpace;
@@ -519,10 +471,7 @@ void win32GetInputState(EditorInput *input)
         }
     }
 
-    platformMemory->nextMouseScrollOffsetY = 0;
     platformMemory->prevMousePos_windowSpace = actualMousePos_windowSpace;
-    platformMemory->wasMouseCaptured = platformMemory->shouldCaptureMouse;
-    platformMemory->shouldCaptureMouse = false;
     platformMemory->prevPressedButtons = pressedButtons;
 }
 
@@ -564,7 +513,7 @@ void win32UnloadEditorCode(Win32EditorCode *editorCode)
     }
 }
 
-void win32TickApp(float deltaTime)
+void win32TickApp(float deltaTime, Win32TickAppParams *params)
 {
     uint64 editorCodeDllLastWriteTime =
         win32GetFileLastWriteTime(platformMemory->editorCode.dllPath);
@@ -597,7 +546,7 @@ void win32TickApp(float deltaTime)
     }
 
     EditorInput input = {};
-    win32GetInputState(&input);
+    win32GetInputState(&input, params);
 
     if (platformMemory->editorCode.editorUpdate)
     {
