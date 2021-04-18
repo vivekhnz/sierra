@@ -296,15 +296,7 @@ Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
 void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
 {
     Window ^ appWindow = Application::Current->MainWindow;
-
-    POINT cursorPos_screenSpaceWin32Point;
-    GetCursorPos(&cursorPos_screenSpaceWin32Point);
-    Point cursorPos_screenSpacePoint =
-        Point(cursorPos_screenSpaceWin32Point.x, cursorPos_screenSpaceWin32Point.y);
-    Point actualMousePos_windowSpacePoint =
-        appWindow->PointFromScreen(cursorPos_screenSpacePoint);
-    glm::vec2 actualMousePos_windowSpace =
-        glm::vec2(actualMousePos_windowSpacePoint.X, actualMousePos_windowSpacePoint.Y);
+    glm::vec2 actualMousePos_windowSpace = params->mousePosWindowSpace;
     glm::vec2 virtualMousePos_windowSpace = actualMousePos_windowSpace;
 
     if (GetForegroundWindow() == params->mainWindowHwnd)

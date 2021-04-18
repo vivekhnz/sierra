@@ -108,6 +108,7 @@ struct Win32TickAppParams
     float nextMouseScrollOffsetY;
     uint64 pressedButtons;
     uint64 prevPressedButtons;
+    glm::vec2 mousePosWindowSpace;
 };
 void win32TickApp(float deltaTime, Win32TickAppParams *params);
 void win32ShutdownPlatform();

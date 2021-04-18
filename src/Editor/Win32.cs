@@ -147,6 +147,13 @@ namespace Terrain.Editor
             MouseMiddle = 0x04,
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct Point
+        {
+            public int X;
+            public int Y;
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern IntPtr DefWindowProc(IntPtr hwnd, WindowMessage message,
             IntPtr wParam, IntPtr lParam);
@@ -170,6 +177,9 @@ namespace Terrain.Editor
 
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern IntPtr SetCursor(IntPtr handle);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool GetCursorPos(out Point lpPoint);
 
         // gdi32.dll
 

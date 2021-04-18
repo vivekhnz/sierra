@@ -47,6 +47,8 @@ namespace Terrain { namespace Engine { namespace Interop {
         tickParams.nextMouseScrollOffsetY = params.nextMouseScrollOffsetY;
         tickParams.pressedButtons = params.pressedButtons;
         tickParams.prevPressedButtons = params.prevPressedButtons;
+        tickParams.mousePosWindowSpace =
+            glm::vec2(params.mousePosWindowSpace.X, params.mousePosWindowSpace.Y);
 
         win32TickApp(deltaTime, &tickParams);
     }

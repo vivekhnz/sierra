@@ -44,6 +44,7 @@ public
         float nextMouseScrollOffsetY;
         uint64 pressedButtons;
         uint64 prevPressedButtons;
+        System::Windows::Point mousePosWindowSpace;
     };
 
 public

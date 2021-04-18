@@ -308,6 +308,12 @@ namespace Terrain.Editor
             pressedButtons |= Keyboard.IsKeyDown(Key.RightCtrl) ? EditorInputButtons.KeyRightControl : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
 
+            Win32.GetCursorPos(out var mousePosScreenSpaceWin32Point);
+            Point mousePosScreenSpaceWpfPoint = new Point(
+                mousePosScreenSpaceWin32Point.X, mousePosScreenSpaceWin32Point.Y);
+            Point mousePosWindowSpaceWpfPoint =
+                App.Current.MainWindow.PointFromScreen(mousePosScreenSpaceWpfPoint);
+
             var tickParams = new EditorTickAppParamsProxy
             {
                 mainWindowHwnd = mainWindowHwnd,
@@ -317,7 +323,8 @@ namespace Terrain.Editor
                 wasMouseCaptured = wasMouseCaptured,
                 nextMouseScrollOffsetY = nextMouseScrollOffsetY,
                 pressedButtons = (ulong)pressedButtons,
-                prevPressedButtons = (ulong)prevPressedButtons
+                prevPressedButtons = (ulong)prevPressedButtons,
+                mousePosWindowSpace = mousePosWindowSpaceWpfPoint
             };
             wasMouseCaptured = shouldCaptureMouse;
             shouldCaptureMouse = false;
