@@ -25,10 +25,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             params.editorCodeDllShadowCopyPath, initParams.editorCodeDllShadowCopyPath);
         GetCStringFromManagedString(
             params.editorCodeBuildLockFilePath, initParams.editorCodeBuildLockFilePath);
-        initParams.instance = (HINSTANCE)params.instance.ToPointer();
-        initParams.mainWindowHwnd = (HWND)params.mainWindowHwnd.ToPointer();
-        initParams.dummyWindowHwnd = (HWND)params.dummyWindowHwnd.ToPointer();
-        initParams.glRenderingContext = (HGLRC)params.glRenderingContext.ToPointer();
         initParams.platformCaptureMouse =
             (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
 
@@ -44,9 +40,13 @@ namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::TickApp(float deltaTime, EditorTickAppParamsProxy params)
     {
         Win32TickAppParams tickParams = {};
+        tickParams.mainWindowHwnd = (HWND)params.mainWindowHwnd.ToPointer();
+        tickParams.glRenderingContext = (HGLRC)params.glRenderingContext.ToPointer();
         tickParams.shouldCaptureMouse = params.shouldCaptureMouse;
         tickParams.wasMouseCaptured = params.wasMouseCaptured;
         tickParams.nextMouseScrollOffsetY = params.nextMouseScrollOffsetY;
+        tickParams.pressedButtons = params.pressedButtons;
+        tickParams.prevPressedButtons = params.prevPressedButtons;
 
         win32TickApp(deltaTime, &tickParams);
     }

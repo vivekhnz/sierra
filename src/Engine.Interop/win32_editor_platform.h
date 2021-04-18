@@ -62,9 +62,6 @@ struct Win32EditorCode
 
 struct Win32PlatformMemory
 {
-    HWND mainWindowHwnd;
-    HWND dummyWindowHwnd;
-    HGLRC glRenderingContext;
     Win32ViewportWindow viewportWindows[MAX_VIEWPORTS];
     uint32 viewportCount;
 
@@ -72,7 +69,6 @@ struct Win32PlatformMemory
 
     glm::vec2 prevMousePos_windowSpace;
     glm::vec2 capturedMousePos_windowSpace;
-    uint64 prevPressedButtons;
 
     Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
@@ -92,11 +88,6 @@ struct Win32InitPlatformParams
     char editorCodeDllShadowCopyPath[MAX_PATH];
     char editorCodeBuildLockFilePath[MAX_PATH];
 
-    HINSTANCE instance;
-    HWND mainWindowHwnd;
-    HWND dummyWindowHwnd;
-    HGLRC glRenderingContext;
-
     PlatformCaptureMouse *platformCaptureMouse;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
@@ -109,9 +100,14 @@ Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
 
 struct Win32TickAppParams
 {
+    HWND mainWindowHwnd;
+    HGLRC glRenderingContext;
+
     bool shouldCaptureMouse;
     bool wasMouseCaptured;
     float nextMouseScrollOffsetY;
+    uint64 pressedButtons;
+    uint64 prevPressedButtons;
 };
 void win32TickApp(float deltaTime, Win32TickAppParams *params);
 void win32ShutdownPlatform();

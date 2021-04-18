@@ -30,20 +30,20 @@ public
         System::String ^ editorCodeDllShadowCopyPath;
         System::String ^ editorCodeBuildLockFilePath;
 
-        System::IntPtr instance;
-        System::IntPtr mainWindowHwnd;
-        System::IntPtr dummyWindowHwnd;
-        System::IntPtr glRenderingContext;
-
         System::IntPtr platformCaptureMouse;
     };
 
 public
     value struct EditorTickAppParamsProxy
     {
+        System::IntPtr mainWindowHwnd;
+        System::IntPtr glRenderingContext;
+
         bool shouldCaptureMouse;
         bool wasMouseCaptured;
         float nextMouseScrollOffsetY;
+        uint64 pressedButtons;
+        uint64 prevPressedButtons;
     };
 
 public

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
 using Terrain.Engine.Interop;
@@ -14,6 +15,74 @@ namespace Terrain.Editor
         public IntPtr WindowPtr;
     }
 
+    [Flags]
+    internal enum EditorInputButtons : ulong
+    {
+        MouseLeft = 1L << 0,
+        MouseMiddle = 1L << 1,
+        MouseRight = 1L << 2,
+        KeySpace = 1L << 3,
+        Key0 = 1L << 4,
+        Key1 = 1L << 5,
+        Key2 = 1L << 6,
+        Key3 = 1L << 7,
+        Key4 = 1L << 8,
+        Key5 = 1L << 9,
+        Key6 = 1L << 10,
+        Key7 = 1L << 11,
+        Key8 = 1L << 12,
+        Key9 = 1L << 13,
+        KeyA = 1L << 14,
+        KeyB = 1L << 15,
+        KeyC = 1L << 16,
+        KeyD = 1L << 17,
+        KeyE = 1L << 18,
+        KeyF = 1L << 19,
+        KeyG = 1L << 20,
+        KeyH = 1L << 21,
+        KeyI = 1L << 22,
+        KeyJ = 1L << 23,
+        KeyK = 1L << 24,
+        KeyL = 1L << 25,
+        KeyM = 1L << 26,
+        KeyN = 1L << 27,
+        KeyO = 1L << 28,
+        KeyP = 1L << 29,
+        KeyQ = 1L << 30,
+        KeyR = 1L << 31,
+        KeyS = 1L << 32,
+        KeyT = 1L << 33,
+        KeyU = 1L << 34,
+        KeyV = 1L << 35,
+        KeyW = 1L << 36,
+        KeyX = 1L << 37,
+        KeyY = 1L << 38,
+        KeyZ = 1L << 39,
+        KeyEscape = 1L << 40,
+        KeyEnter = 1L << 41,
+        KeyRight = 1L << 42,
+        KeyLeft = 1L << 43,
+        KeyDown = 1L << 44,
+        KeyUp = 1L << 45,
+        KeyF1 = 1L << 46,
+        KeyF2 = 1L << 47,
+        KeyF3 = 1L << 48,
+        KeyF4 = 1L << 49,
+        KeyF5 = 1L << 50,
+        KeyF6 = 1L << 51,
+        KeyF7 = 1L << 52,
+        KeyF8 = 1L << 53,
+        KeyF9 = 1L << 54,
+        KeyF10 = 1L << 55,
+        KeyF11 = 1L << 56,
+        KeyF12 = 1L << 57,
+        KeyLeftShift = 1L << 58,
+        KeyLeftControl = 1L << 59,
+        KeyRightRhift = 1L << 60,
+        KeyRightControl = 1L << 61,
+        KeyAlt = 1L << 62
+    }
+
     internal static class EditorPlatform
     {
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
@@ -22,12 +91,20 @@ namespace Terrain.Editor
         private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
         private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
 
+        private static IntPtr mainWindowHwnd;
+        private static IntPtr dummyWindowHwnd;
+        private static IntPtr glRenderingContext;
+
         private static DispatcherTimer renderTimer;
         private static DateTime lastTickTime;
 
         private static bool shouldCaptureMouse;
         private static bool wasMouseCaptured;
         private static float nextMouseScrollOffsetY;
+        private static bool isMouseLeftDown;
+        private static bool isMouseMiddleDown;
+        private static bool isMouseRightDown;
+        private static EditorInputButtons prevPressedButtons;
 
         private delegate void PlatformCaptureMouse();
         private static PlatformCaptureMouse EditorPlatformCaptureMouse = () =>
@@ -45,7 +122,7 @@ namespace Terrain.Editor
                 Win32.MemoryProtection.ReadWrite);
 
             var interopHelper = new WindowInteropHelper(Application.Current.MainWindow);
-            IntPtr mainWindowHwnd = interopHelper.EnsureHandle();
+            mainWindowHwnd = interopHelper.EnsureHandle();
 
             var dummyWindowClass = new Win32.WindowClass
             {
@@ -54,13 +131,13 @@ namespace Terrain.Editor
                 lpszClassName = "TerrainOpenGLDummyWindowClass"
             };
             Win32.RegisterClass(ref dummyWindowClass);
-            IntPtr dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
+            dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
                 "TerrainOpenGLDummyWindow", 0, 0, 0, 100, 100, IntPtr.Zero, IntPtr.Zero, appInstance,
                 IntPtr.Zero);
 
             IntPtr dummyDeviceContext = Win32.GetDC(dummyWindowHwnd);
             ConfigureDeviceContextForOpenGL(dummyDeviceContext);
-            IntPtr glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
+            glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
             Win32.MakeGLContextCurrent(dummyDeviceContext, glRenderingContext);
 
             var viewportWindowClass = new Win32.WindowClass
@@ -86,11 +163,6 @@ namespace Terrain.Editor
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll"),
                 editorCodeBuildLockFilePath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
-
-                instance = appInstance,
-                mainWindowHwnd = mainWindowHwnd,
-                dummyWindowHwnd = dummyWindowHwnd,
-                glRenderingContext = glRenderingContext,
 
                 platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(
                     EditorPlatformCaptureMouse)
@@ -142,6 +214,25 @@ namespace Terrain.Editor
                     short direction = (short)(lParam.ToInt64() >> 16);
                     nextMouseScrollOffsetY += delta * direction;
                     return resultHandled;
+
+                case Win32.WindowMessage.MouseLeftButtonDown:
+                    isMouseLeftDown = true;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseLeftButtonUp:
+                    isMouseLeftDown = false;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseMiddleButtonDown:
+                    isMouseMiddleDown = true;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseMiddleButtonUp:
+                    isMouseMiddleDown = false;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseRightButtonDown:
+                    isMouseRightDown = true;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseRightButtonUp:
+                    isMouseRightDown = false;
+                    return resultHandled;
             }
             return Win32.DefWindowProc(hwnd, message, wParam, lParam);
         }
@@ -152,15 +243,86 @@ namespace Terrain.Editor
             float deltaTime = (float)((now - lastTickTime).TotalSeconds);
             lastTickTime = now;
 
+            EditorInputButtons pressedButtons = 0;
+            pressedButtons |= isMouseLeftDown ? EditorInputButtons.MouseLeft : 0;
+            pressedButtons |= isMouseMiddleDown ? EditorInputButtons.MouseMiddle : 0;
+            pressedButtons |= isMouseRightDown ? EditorInputButtons.MouseRight : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Space) ? EditorInputButtons.KeySpace : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D0) ? EditorInputButtons.Key0 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D1) ? EditorInputButtons.Key1 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D2) ? EditorInputButtons.Key2 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D3) ? EditorInputButtons.Key3 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D4) ? EditorInputButtons.Key4 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D5) ? EditorInputButtons.Key5 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D6) ? EditorInputButtons.Key6 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D7) ? EditorInputButtons.Key7 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D8) ? EditorInputButtons.Key8 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D9) ? EditorInputButtons.Key9 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.A) ? EditorInputButtons.KeyA : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.B) ? EditorInputButtons.KeyB : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.C) ? EditorInputButtons.KeyC : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.D) ? EditorInputButtons.KeyD : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.E) ? EditorInputButtons.KeyE : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F) ? EditorInputButtons.KeyF : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.G) ? EditorInputButtons.KeyG : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.H) ? EditorInputButtons.KeyH : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.I) ? EditorInputButtons.KeyI : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.J) ? EditorInputButtons.KeyJ : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.K) ? EditorInputButtons.KeyK : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.L) ? EditorInputButtons.KeyL : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.M) ? EditorInputButtons.KeyM : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.N) ? EditorInputButtons.KeyN : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.O) ? EditorInputButtons.KeyO : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.P) ? EditorInputButtons.KeyP : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Q) ? EditorInputButtons.KeyQ : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.R) ? EditorInputButtons.KeyR : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.S) ? EditorInputButtons.KeyS : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.T) ? EditorInputButtons.KeyT : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.U) ? EditorInputButtons.KeyU : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.V) ? EditorInputButtons.KeyV : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.W) ? EditorInputButtons.KeyW : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.X) ? EditorInputButtons.KeyX : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Y) ? EditorInputButtons.KeyY : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Z) ? EditorInputButtons.KeyZ : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Escape) ? EditorInputButtons.KeyEscape : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Enter) ? EditorInputButtons.KeyEnter : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Right) ? EditorInputButtons.KeyRight : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Left) ? EditorInputButtons.KeyLeft : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Down) ? EditorInputButtons.KeyDown : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Up) ? EditorInputButtons.KeyUp : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F1) ? EditorInputButtons.KeyF1 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F2) ? EditorInputButtons.KeyF2 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F3) ? EditorInputButtons.KeyF3 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F4) ? EditorInputButtons.KeyF4 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F5) ? EditorInputButtons.KeyF5 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F6) ? EditorInputButtons.KeyF6 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F7) ? EditorInputButtons.KeyF7 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F8) ? EditorInputButtons.KeyF8 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F9) ? EditorInputButtons.KeyF9 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F10) ? EditorInputButtons.KeyF10 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F11) ? EditorInputButtons.KeyF11 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.F12) ? EditorInputButtons.KeyF12 : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.LeftShift) ? EditorInputButtons.KeyLeftShift : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.LeftCtrl) ? EditorInputButtons.KeyLeftControl : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.RightShift) ? EditorInputButtons.KeyRightRhift : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.RightCtrl) ? EditorInputButtons.KeyRightControl : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
+
             var tickParams = new EditorTickAppParamsProxy
             {
+                mainWindowHwnd = mainWindowHwnd,
+                glRenderingContext = glRenderingContext,
+
                 shouldCaptureMouse = shouldCaptureMouse,
                 wasMouseCaptured = wasMouseCaptured,
-                nextMouseScrollOffsetY = nextMouseScrollOffsetY
+                nextMouseScrollOffsetY = nextMouseScrollOffsetY,
+                pressedButtons = (ulong)pressedButtons,
+                prevPressedButtons = (ulong)prevPressedButtons
             };
             wasMouseCaptured = shouldCaptureMouse;
             shouldCaptureMouse = false;
             nextMouseScrollOffsetY = 0;
+            prevPressedButtons = pressedButtons;
 
             EngineInterop.TickApp(deltaTime, tickParams);
         }
@@ -169,6 +331,9 @@ namespace Terrain.Editor
         {
             renderTimer.Stop();
             EngineInterop.Shutdown();
+
+            Win32.DestroyGLContext(glRenderingContext);
+            Win32.DestroyWindow(dummyWindowHwnd);
         }
 
         internal static EditorViewportWindow CreateViewportWindow(IntPtr parentHwnd,

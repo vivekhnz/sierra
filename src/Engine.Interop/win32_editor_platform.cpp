@@ -237,9 +237,6 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
         params->editorCodeDllShadowCopyPath, platformMemory->editorCode.dllShadowCopyPath);
     win32CopyString(
         params->editorCodeBuildLockFilePath, platformMemory->editorCode.buildLockFilePath);
-    platformMemory->mainWindowHwnd = params->mainWindowHwnd;
-    platformMemory->dummyWindowHwnd = params->dummyWindowHwnd;
-    platformMemory->glRenderingContext = params->glRenderingContext;
 
     // initialize editor memory
     editorMemory->platformCaptureMouse = params->platformCaptureMouse;
@@ -298,73 +295,6 @@ Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
 
 void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
 {
-    *input = {};
-
-    uint64 pressedButtons = 0;
-    pressedButtons |= (GetAsyncKeyState(VK_LBUTTON) ? EDITOR_INPUT_MOUSE_LEFT : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_MBUTTON) ? EDITOR_INPUT_MOUSE_MIDDLE : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_RBUTTON) ? EDITOR_INPUT_MOUSE_RIGHT : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_SPACE) ? EDITOR_INPUT_KEY_SPACE : 0);
-    pressedButtons |= (GetAsyncKeyState(0x30) ? EDITOR_INPUT_KEY_0 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x31) ? EDITOR_INPUT_KEY_1 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x32) ? EDITOR_INPUT_KEY_2 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x33) ? EDITOR_INPUT_KEY_3 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x34) ? EDITOR_INPUT_KEY_4 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x35) ? EDITOR_INPUT_KEY_5 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x36) ? EDITOR_INPUT_KEY_6 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x37) ? EDITOR_INPUT_KEY_7 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x38) ? EDITOR_INPUT_KEY_8 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x39) ? EDITOR_INPUT_KEY_9 : 0);
-    pressedButtons |= (GetAsyncKeyState(0x41) ? EDITOR_INPUT_KEY_A : 0);
-    pressedButtons |= (GetAsyncKeyState(0x42) ? EDITOR_INPUT_KEY_B : 0);
-    pressedButtons |= (GetAsyncKeyState(0x43) ? EDITOR_INPUT_KEY_C : 0);
-    pressedButtons |= (GetAsyncKeyState(0x44) ? EDITOR_INPUT_KEY_D : 0);
-    pressedButtons |= (GetAsyncKeyState(0x45) ? EDITOR_INPUT_KEY_E : 0);
-    pressedButtons |= (GetAsyncKeyState(0x46) ? EDITOR_INPUT_KEY_F : 0);
-    pressedButtons |= (GetAsyncKeyState(0x47) ? EDITOR_INPUT_KEY_G : 0);
-    pressedButtons |= (GetAsyncKeyState(0x48) ? EDITOR_INPUT_KEY_H : 0);
-    pressedButtons |= (GetAsyncKeyState(0x49) ? EDITOR_INPUT_KEY_I : 0);
-    pressedButtons |= (GetAsyncKeyState(0x4A) ? EDITOR_INPUT_KEY_J : 0);
-    pressedButtons |= (GetAsyncKeyState(0x4B) ? EDITOR_INPUT_KEY_K : 0);
-    pressedButtons |= (GetAsyncKeyState(0x4C) ? EDITOR_INPUT_KEY_L : 0);
-    pressedButtons |= (GetAsyncKeyState(0x4D) ? EDITOR_INPUT_KEY_M : 0);
-    pressedButtons |= (GetAsyncKeyState(0x4E) ? EDITOR_INPUT_KEY_N : 0);
-    pressedButtons |= (GetAsyncKeyState(0x4F) ? EDITOR_INPUT_KEY_O : 0);
-    pressedButtons |= (GetAsyncKeyState(0x50) ? EDITOR_INPUT_KEY_P : 0);
-    pressedButtons |= (GetAsyncKeyState(0x51) ? EDITOR_INPUT_KEY_Q : 0);
-    pressedButtons |= (GetAsyncKeyState(0x52) ? EDITOR_INPUT_KEY_R : 0);
-    pressedButtons |= (GetAsyncKeyState(0x53) ? EDITOR_INPUT_KEY_S : 0);
-    pressedButtons |= (GetAsyncKeyState(0x54) ? EDITOR_INPUT_KEY_T : 0);
-    pressedButtons |= (GetAsyncKeyState(0x55) ? EDITOR_INPUT_KEY_U : 0);
-    pressedButtons |= (GetAsyncKeyState(0x56) ? EDITOR_INPUT_KEY_V : 0);
-    pressedButtons |= (GetAsyncKeyState(0x57) ? EDITOR_INPUT_KEY_W : 0);
-    pressedButtons |= (GetAsyncKeyState(0x58) ? EDITOR_INPUT_KEY_X : 0);
-    pressedButtons |= (GetAsyncKeyState(0x59) ? EDITOR_INPUT_KEY_Y : 0);
-    pressedButtons |= (GetAsyncKeyState(0x5A) ? EDITOR_INPUT_KEY_Z : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_ESCAPE) ? EDITOR_INPUT_KEY_ESCAPE : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_RETURN) ? EDITOR_INPUT_KEY_ENTER : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_RIGHT) ? EDITOR_INPUT_KEY_RIGHT : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_LEFT) ? EDITOR_INPUT_KEY_LEFT : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_DOWN) ? EDITOR_INPUT_KEY_DOWN : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_UP) ? EDITOR_INPUT_KEY_UP : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F1) ? EDITOR_INPUT_KEY_F1 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F2) ? EDITOR_INPUT_KEY_F2 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F3) ? EDITOR_INPUT_KEY_F3 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F4) ? EDITOR_INPUT_KEY_F4 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F5) ? EDITOR_INPUT_KEY_F5 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F6) ? EDITOR_INPUT_KEY_F6 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F7) ? EDITOR_INPUT_KEY_F7 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F8) ? EDITOR_INPUT_KEY_F8 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F9) ? EDITOR_INPUT_KEY_F9 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F10) ? EDITOR_INPUT_KEY_F10 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F11) ? EDITOR_INPUT_KEY_F11 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_F12) ? EDITOR_INPUT_KEY_F12 : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_LSHIFT) ? EDITOR_INPUT_KEY_LEFT_SHIFT : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_LCONTROL) ? EDITOR_INPUT_KEY_LEFT_CONTROL : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_RSHIFT) ? EDITOR_INPUT_KEY_RIGHT_SHIFT : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_RCONTROL) ? EDITOR_INPUT_KEY_RIGHT_CONTROL : 0);
-    pressedButtons |= (GetAsyncKeyState(VK_MENU) ? EDITOR_INPUT_KEY_ALT : 0);
-
     Window ^ appWindow = Application::Current->MainWindow;
 
     POINT cursorPos_screenSpaceWin32Point;
@@ -377,7 +307,7 @@ void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
         glm::vec2(actualMousePos_windowSpacePoint.X, actualMousePos_windowSpacePoint.Y);
     glm::vec2 virtualMousePos_windowSpace = actualMousePos_windowSpace;
 
-    if (GetForegroundWindow() == platformMemory->mainWindowHwnd)
+    if (GetForegroundWindow() == params->mainWindowHwnd)
     {
         if (params->wasMouseCaptured)
         {
@@ -419,8 +349,8 @@ void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
             }
 
             input->activeViewState = vctx->viewState;
-            input->prevPressedButtons = platformMemory->prevPressedButtons;
-            input->pressedButtons = pressedButtons;
+            input->prevPressedButtons = params->prevPressedButtons;
+            input->pressedButtons = params->pressedButtons;
             input->normalizedCursorPos =
                 (virtualMousePos_windowSpace - viewportPos_windowSpace) / viewportSize;
             input->scrollOffset = params->nextMouseScrollOffsetY;
@@ -469,7 +399,6 @@ void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
     }
 
     platformMemory->prevMousePos_windowSpace = actualMousePos_windowSpace;
-    platformMemory->prevPressedButtons = pressedButtons;
 }
 
 void win32LoadEditorCode(Win32EditorCode *editorCode)
@@ -556,7 +485,7 @@ void win32TickApp(float deltaTime, Win32TickAppParams *params)
         if (viewport->vctx.width == 0 || viewport->vctx.height == 0)
             continue;
 
-        wglMakeCurrent(viewport->deviceContext, platformMemory->glRenderingContext);
+        wglMakeCurrent(viewport->deviceContext, params->glRenderingContext);
         switch (viewport->view)
         {
         case Terrain::Engine::Interop::EditorView::Scene:
@@ -584,6 +513,4 @@ void win32ShutdownPlatform()
     {
         platformMemory->editorCode.editorShutdown(platformMemory->editor);
     }
-    wglDeleteContext(platformMemory->glRenderingContext);
-    DestroyWindow(platformMemory->dummyWindowHwnd);
 }

@@ -111,7 +111,13 @@ namespace Terrain.Editor
         internal enum WindowMessage : uint
         {
             SetCursor = 0x0020,
-            MouseWheel = 0x020A
+            MouseWheel = 0x020A,
+            MouseLeftButtonDown = 0x0201,
+            MouseLeftButtonUp = 0x0202,
+            MouseRightButtonDown = 0x0204,
+            MouseRightButtonUp = 0x0205,
+            MouseMiddleButtonDown = 0x0207,
+            MouseMiddleButtonUp = 0x0208
         }
 
         internal enum Cursor
@@ -132,6 +138,13 @@ namespace Terrain.Editor
             Hand = 32649,
             AppStarting = 32650,
             Help = 32651
+        }
+
+        internal enum VirtualKey
+        {
+            MouseLeft = 0x01,
+            MouseRight = 0x02,
+            MouseMiddle = 0x04,
         }
 
         [DllImport("user32.dll", SetLastError = true)]
@@ -237,5 +250,8 @@ namespace Terrain.Editor
 
         [DllImport("opengl32.dll", EntryPoint = "wglMakeCurrent", SetLastError = true)]
         internal static extern bool MakeGLContextCurrent(IntPtr hDC, IntPtr renderingContext);
+
+        [DllImport("opengl32.dll", EntryPoint = "wglDeleteContext", SetLastError = true)]
+        internal static extern IntPtr DestroyGLContext(IntPtr renderingContext);
     }
 }
