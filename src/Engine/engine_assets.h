@@ -1,7 +1,7 @@
-#ifndef TERRAIN_ASSETS_H
-#define TERRAIN_ASSETS_H
+#ifndef ENGINE_ASSETS_H
+#define ENGINE_ASSETS_H
 
-#include "terrain_platform.h"
+#include "engine_platform.h"
 
 enum AssetType
 {

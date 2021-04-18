@@ -1,8 +1,8 @@
-#include "terrain_assets.h"
+#include "engine_assets.h"
 
 #include <stb/stb_image.h>
 #include <fast_obj/fast_obj.h>
-#include "terrain_renderer.h"
+#include "engine_renderer.h"
 
 #define ASSET_GET_INDEX(id) (id & 0x0FFFFFFF)
 #define ASSET_GET_TYPE(id) ((id & 0xF0000000) >> 28)

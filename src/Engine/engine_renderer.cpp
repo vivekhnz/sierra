@@ -1,4 +1,4 @@
-#include "terrain_renderer.h"
+#include "engine_renderer.h"
 
 #define RENDERER_MAX_TEXTURES 128
 #define RENDERER_MAX_FRAMEBUFFERS 128

@@ -1,5 +1,5 @@
-#ifndef TERRAIN_PLATFORM_H
-#define TERRAIN_PLATFORM_H
+#ifndef ENGINE_PLATFORM_H
+#define ENGINE_PLATFORM_H
 
 #include <stdint.h>
 
@@ -50,9 +50,6 @@ typedef PLATFORM_LOAD_ASSET(PlatformLoadAsset);
 
 struct EngineMemory
 {
-    void *baseAddress;
-    uint64 size;
-
     PlatformGetGlProcAddress *platformGetGlProcAddress;
     PlatformLogMessage *platformLogMessage;
     PlatformLoadAsset *platformLoadAsset;

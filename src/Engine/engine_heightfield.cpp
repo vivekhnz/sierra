@@ -1,4 +1,4 @@
-#include "terrain_heightfield.h"
+#include "engine_heightfield.h"
 
 float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
 {

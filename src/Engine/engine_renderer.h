@@ -1,10 +1,10 @@
-#ifndef TERRAIN_RENDERER_H
-#define TERRAIN_RENDERER_H
+#ifndef ENGINE_RENDERER_H
+#define ENGINE_RENDERER_H
 
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 
-#include "terrain_platform.h"
+#include "engine_platform.h"
 
 enum RendererBufferType
 {

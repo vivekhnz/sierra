@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-#include "../Engine/terrain_platform.h"
+#include "../Engine/engine_platform.h"
 #include "../EditorCore/editor.h"
 #include "EditorView.h"
 

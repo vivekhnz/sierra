@@ -1,7 +1,7 @@
 #include "editor.h"
 
 #include <glm/gtx/quaternion.hpp>
-#include "../Engine/terrain_renderer.h"
+#include "../Engine/engine_renderer.h"
 
 struct BrushBlendProperties
 {

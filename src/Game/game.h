@@ -3,8 +3,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "../Engine/terrain_platform.h"
-#include "../Engine/terrain_heightfield.h"
+#include "../Engine/engine_platform.h"
+#include "../Engine/engine_heightfield.h"
 
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTFIELD_COLUMNS 256
@@ -95,7 +95,7 @@ struct GameMemory
 
     GameState state;
 
-    EngineMemory engine;
+    EngineMemory *engineMemory;
 };
 
 struct Viewport

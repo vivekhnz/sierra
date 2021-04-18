@@ -1,7 +1,7 @@
 #include "win32_editor_platform.h"
 
 #include <windowsx.h>
-#include "../Engine/terrain_assets.h"
+#include "../Engine/engine_assets.h"
 
 using namespace System::Windows;
 using namespace System::Windows::Input;
@@ -258,21 +258,18 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     editorMemory->engine = engineMemory;
 
     // initialize engine memory
-    engineMemory->baseAddress = engineMemoryBaseAddress;
-    engineMemory->size = actualEngineMemorySize;
     engineMemory->platformLogMessage = win32LogMessage;
     engineMemory->platformLoadAsset = win32LoadAsset;
 
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);
-    engineMemory->renderer.baseAddress =
-        (uint8 *)engineMemory->baseAddress + engineMemoryOffset;
+    engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
     engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
     engineMemoryOffset += engineMemory->renderer.size;
-    engineMemory->assets.baseAddress = (uint8 *)engineMemory->baseAddress + engineMemoryOffset;
-    engineMemory->assets.size = engineMemory->size - engineMemoryOffset;
+    engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+    engineMemory->assets.size = actualEngineMemorySize - engineMemoryOffset;
     engineMemoryOffset += engineMemory->assets.size;
-    assert(engineMemoryOffset == engineMemory->size);
+    assert(engineMemoryOffset == actualEngineMemorySize);
 
     return platformMemory;
 }

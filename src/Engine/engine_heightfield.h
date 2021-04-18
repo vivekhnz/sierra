@@ -1,9 +1,9 @@
-#ifndef TERRAIN_HEIGHTFIELD_H
-#define TERRAIN_HEIGHTFIELD_H
+#ifndef ENGINE_HEIGHTFIELD_H
+#define ENGINE_HEIGHTFIELD_H
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "terrain_platform.h"
+#include "engine_platform.h"
 
 struct Heightfield
 {

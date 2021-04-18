@@ -1,7 +1,7 @@
 #include "win32_game.h"
 
 #include <GLFW/glfw3.h>
-#include "../Engine/terrain_assets.h"
+#include "../Engine/engine_assets.h"
 
 global_variable Win32PlatformMemory *platformMemory;
 
@@ -223,8 +223,8 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            request->callback(
-                &platformMemory->game.engine, request->assetId, result.data, result.size);
+            request->callback(platformMemory->gameMemory->engineMemory, request->assetId,
+                result.data, result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue->length--;
@@ -349,36 +349,45 @@ void win32OnMouseScroll(GLFWwindow *window, double x, double y)
 int32 main()
 {
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
-#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
-    uint8 *memoryBaseAddress = static_cast<uint8 *>(win32AllocateMemory(APP_MEMORY_SIZE));
-    platformMemory = (Win32PlatformMemory *)memoryBaseAddress;
-    *platformMemory = {};
+    uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
+    uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
+    uint8 *engineMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
+    uint8 engineMemorySize =
+        APP_MEMORY_SIZE - (engineMemoryBaseAddress - platformMemoryBaseAddress);
+
+    platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
+    GameMemory *gameMemory = (GameMemory *)gameMemoryBaseAddress;
+    EngineMemory *engineMemory = (EngineMemory *)engineMemoryBaseAddress;
+
+    // initialize platform memory
+    platformMemory->gameMemory = gameMemory;
     for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
     {
         platformMemory->assetLoadQueue.indices[i] = i;
     }
 
-    platformMemory->game.platformGetAssetAbsolutePath = win32GetAssetAbsolutePath;
-    platformMemory->game.platformReadFile = win32ReadFile;
-    platformMemory->game.platformFreeMemory = win32FreeMemory;
-    platformMemory->game.platformExitGame = win32ExitGame;
-    platformMemory->game.platformCaptureMouse = win32CaptureMouse;
+    // initialize game memory
+    gameMemory->engineMemory = engineMemory;
+    gameMemory->platformGetAssetAbsolutePath = win32GetAssetAbsolutePath;
+    gameMemory->platformReadFile = win32ReadFile;
+    gameMemory->platformFreeMemory = win32FreeMemory;
+    gameMemory->platformExitGame = win32ExitGame;
+    gameMemory->platformCaptureMouse = win32CaptureMouse;
 
-    EngineMemory *engine = &platformMemory->game.engine;
-    engine->baseAddress = memoryBaseAddress + sizeof(Win32PlatformMemory);
-    engine->size = APP_MEMORY_SIZE - sizeof(Win32PlatformMemory);
-    engine->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
-    engine->platformLogMessage = win32LogMessage;
-    engine->platformLoadAsset = win32LoadAsset;
+    // initialize engine memory
+    engineMemory->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
+    engineMemory->platformLogMessage = win32LogMessage;
+    engineMemory->platformLoadAsset = win32LoadAsset;
 
-    uint64 engineMemoryOffset = 0;
-    engine->renderer.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
-    engine->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
-    engineMemoryOffset += engine->renderer.size;
-    engine->assets.baseAddress = (uint8 *)engine->baseAddress + engineMemoryOffset;
-    engine->assets.size = engine->size - engineMemoryOffset;
-    engineMemoryOffset += engine->assets.size;
-    assert(engineMemoryOffset == engine->size);
+#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
+    uint64 engineMemoryOffset = sizeof(EngineMemory);
+    engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+    engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+    engineMemoryOffset += engineMemory->renderer.size;
+    engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+    engineMemory->assets.size = engineMemorySize - engineMemoryOffset;
+    engineMemoryOffset += engineMemory->assets.size;
+    assert(engineMemoryOffset == engineMemorySize);
 
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -418,7 +427,7 @@ int32 main()
             platformMemory->gameCode.dllLastWriteTime = gameCodeDllLastWriteTime;
         }
 
-        win32LoadQueuedAssets(&platformMemory->game.engine);
+        win32LoadQueuedAssets(platformMemory->gameMemory->engineMemory);
 
         // query input
         input.prevPressedButtons = input.pressedButtons;
@@ -462,7 +471,7 @@ int32 main()
         if (platformMemory->gameCode.gameUpdateAndRender)
         {
             platformMemory->gameCode.gameUpdateAndRender(
-                &platformMemory->game, &input, viewport, deltaTime);
+                platformMemory->gameMemory, &input, viewport, deltaTime);
         }
 
         if (platformMemory->shouldExitGame)
@@ -483,7 +492,7 @@ int32 main()
 
     if (platformMemory->gameCode.gameShutdown)
     {
-        platformMemory->gameCode.gameShutdown(&platformMemory->game);
+        platformMemory->gameCode.gameShutdown(platformMemory->gameMemory);
     }
     glfwDestroyWindow(window);
     glfwTerminate();
