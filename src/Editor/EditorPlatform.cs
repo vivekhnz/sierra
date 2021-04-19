@@ -78,7 +78,7 @@ namespace Terrain.Editor
         KeyF12 = 1L << 57,
         KeyLeftShift = 1L << 58,
         KeyLeftControl = 1L << 59,
-        KeyRightRhift = 1L << 60,
+        KeyRightShift = 1L << 60,
         KeyRightControl = 1L << 61,
         KeyAlt = 1L << 62
     }
@@ -304,7 +304,7 @@ namespace Terrain.Editor
             pressedButtons |= Keyboard.IsKeyDown(Key.F12) ? EditorInputButtons.KeyF12 : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftShift) ? EditorInputButtons.KeyLeftShift : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftCtrl) ? EditorInputButtons.KeyLeftControl : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.RightShift) ? EditorInputButtons.KeyRightRhift : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.RightShift) ? EditorInputButtons.KeyRightShift : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.RightCtrl) ? EditorInputButtons.KeyRightControl : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
 
