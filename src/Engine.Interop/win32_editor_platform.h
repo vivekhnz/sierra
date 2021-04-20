@@ -55,9 +55,6 @@ struct Win32PlatformMemory
 {
     Win32EditorCode editorCode;
 
-    glm::vec2 prevMousePos_windowSpace;
-    glm::vec2 capturedMousePos_windowSpace;
-
     Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
