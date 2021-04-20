@@ -34,17 +34,25 @@ public
     };
 
 public
-    value struct EditorTickAppParamsProxy
+    value struct EditorInputProxy
     {
-        System::IntPtr mainWindowHwnd;
-        System::IntPtr glRenderingContext;
+        System::IntPtr activeViewState;
 
-        bool shouldCaptureMouse;
-        bool wasMouseCaptured;
-        float nextMouseScrollOffsetY;
+        float scrollOffset;
+        System::Windows::Point normalizedCursorPos;
+        System::Windows::Vector cursorOffset;
         uint64 pressedButtons;
         uint64 prevPressedButtons;
-        System::Windows::Point mousePosWindowSpace;
+    };
+
+public
+    value struct EditorViewContextProxy
+    {
+        System::IntPtr viewState;
+        uint32 x;
+        uint32 y;
+        uint32 width;
+        uint32 height;
     };
 
 public
@@ -66,16 +74,10 @@ public
 
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
         static void Shutdown();
-        static void TickApp(float deltaTime, EditorTickAppParamsProxy params);
+        static void TickApp(float deltaTime, EditorInputProxy input);
 
-        static System::IntPtr CreateViewportWindow(System::IntPtr deviceContextPtr,
-            uint32 x,
-            uint32 y,
-            uint32 width,
-            uint32 height,
-            EditorView view);
-        static void ResizeViewportWindow(
-            System::IntPtr windowPtr, uint32 x, uint32 y, uint32 width, uint32 height);
+        static void RenderSceneView(EditorViewContextProxy % vctx);
+        static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
 
         static void LoadHeightmapTexture(System::String ^ path);
         static void AddMaterial(MaterialProps props);

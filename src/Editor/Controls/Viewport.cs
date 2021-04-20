@@ -5,7 +5,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
-using Terrain.Engine.Interop;
 
 namespace Terrain.Editor.Controls
 {
@@ -19,7 +18,7 @@ namespace Terrain.Editor.Controls
             uint height;
             EditorView view;
 
-            public IntPtr windowPtr;
+            private EditorViewportWindow window;
 
             internal ViewportHwndHost(uint x, uint y, uint width, uint height, EditorView view)
             {
@@ -32,16 +31,25 @@ namespace Terrain.Editor.Controls
 
             protected override HandleRef BuildWindowCore(HandleRef hwndParent)
             {
-                var window = EditorPlatform.CreateViewportWindow(
+                window = EditorPlatform.CreateViewportWindow(
                     hwndParent.Handle, x, y, width, height, view);
-                windowPtr = window.WindowPtr;
                 return new HandleRef(this, window.Hwnd);
             }
 
             protected override void DestroyWindowCore(HandleRef hwnd)
             {
-                // todo: release our Win32ViewportWindow so it can be reused by other viewports
+                // todo: remove our EditorViewportWindow
                 EditorPlatform.DestroyViewportWindow(hwnd.Handle);
+            }
+
+            internal void ResizeWindow(Point location, uint width, uint height)
+            {
+                Width = width;
+                Height = height;
+                window.ViewContext.x = (uint)location.X;
+                window.ViewContext.y = (uint)location.Y;
+                window.ViewContext.width = width;
+                window.ViewContext.height = height;
             }
         }
 
@@ -121,9 +129,7 @@ namespace Terrain.Editor.Controls
             uint height = (uint)Math.Max(info.NewSize.Height, 128.0);
             Point location = this.TranslatePoint(new Point(0, 0), Application.Current.MainWindow);
 
-            hwndHost.Width = width;
-            hwndHost.Height = height;
-            EditorPlatform.ResizeViewportWindow(hwndHost.windowPtr, (uint)location.X, (uint)location.Y, width, height);
+            hwndHost.ResizeWindow(location, width, height);
 
             base.OnRenderSizeChanged(info);
         }

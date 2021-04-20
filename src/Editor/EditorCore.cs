@@ -1,4 +1,6 @@
-﻿using Terrain.Engine.Interop;
+﻿using System;
+using System.Runtime.InteropServices;
+using Terrain.Engine.Interop;
 using Terrain.Engine.Interop.Proxy;
 
 namespace Terrain.Editor
@@ -20,6 +22,16 @@ namespace Terrain.Editor
 
     internal static class EditorCore
     {
+        internal static void RenderSceneView(ref EditorViewContextProxy vctx)
+        {
+            EngineInterop.RenderSceneView(ref vctx);
+        }
+
+        internal static void RenderHeightmapPreview(ref EditorViewContextProxy vctx)
+        {
+            EngineInterop.RenderHeightmapPreview(ref vctx);
+        }
+
         internal static void LoadHeightmapTexture(string path)
         {
             EngineInterop.LoadHeightmapTexture(path);

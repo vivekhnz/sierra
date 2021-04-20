@@ -37,42 +37,46 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32ShutdownPlatform();
     }
 
-    void EngineInterop::TickApp(float deltaTime, EditorTickAppParamsProxy params)
+    void EngineInterop::TickApp(float deltaTime, EditorInputProxy input)
     {
-        Win32TickAppParams tickParams = {};
-        tickParams.mainWindowHwnd = (HWND)params.mainWindowHwnd.ToPointer();
-        tickParams.glRenderingContext = (HGLRC)params.glRenderingContext.ToPointer();
-        tickParams.shouldCaptureMouse = params.shouldCaptureMouse;
-        tickParams.wasMouseCaptured = params.wasMouseCaptured;
-        tickParams.nextMouseScrollOffsetY = params.nextMouseScrollOffsetY;
-        tickParams.pressedButtons = params.pressedButtons;
-        tickParams.prevPressedButtons = params.prevPressedButtons;
-        tickParams.mousePosWindowSpace =
-            glm::vec2(params.mousePosWindowSpace.X, params.mousePosWindowSpace.Y);
+        EditorInput inputInternal = {};
+        inputInternal.activeViewState = input.activeViewState.ToPointer();
+        inputInternal.scrollOffset = input.scrollOffset;
+        inputInternal.normalizedCursorPos =
+            glm::vec2(input.normalizedCursorPos.X, input.normalizedCursorPos.Y);
+        inputInternal.cursorOffset = glm::vec2(input.cursorOffset.X, input.cursorOffset.Y);
+        inputInternal.pressedButtons = input.pressedButtons;
+        inputInternal.prevPressedButtons = input.prevPressedButtons;
 
-        win32TickApp(deltaTime, &tickParams);
+        win32TickApp(deltaTime, &inputInternal);
     }
 
-    System::IntPtr EngineInterop::CreateViewportWindow(System::IntPtr deviceContextPtr,
-        uint32 x,
-        uint32 y,
-        uint32 width,
-        uint32 height,
-        EditorView view)
+    void EngineInterop::RenderSceneView(EditorViewContextProxy % vctx)
     {
-        Win32ViewportWindow *window = win32CreateViewportWindow(
-            (HDC)deviceContextPtr.ToPointer(), x, y, width, height, view);
-        return System::IntPtr(window);
+        EditorViewContext vctxInternal;
+        vctxInternal.viewState = vctx.viewState.ToPointer();
+        vctxInternal.x = vctx.x;
+        vctxInternal.y = vctx.y;
+        vctxInternal.width = vctx.width;
+        vctxInternal.height = vctx.height;
+
+        win32RenderSceneView(&vctxInternal);
+
+        vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
-    void EngineInterop::ResizeViewportWindow(
-        System::IntPtr windowPtr, uint32 x, uint32 y, uint32 width, uint32 height)
+    void EngineInterop::RenderHeightmapPreview(EditorViewContextProxy % vctx)
     {
-        Win32ViewportWindow *window = (Win32ViewportWindow *)windowPtr.ToPointer();
-        window->vctx.x = x;
-        window->vctx.y = y;
-        window->vctx.width = width;
-        window->vctx.height = height;
+        EditorViewContext vctxInternal;
+        vctxInternal.viewState = vctx.viewState.ToPointer();
+        vctxInternal.x = vctx.x;
+        vctxInternal.y = vctx.y;
+        vctxInternal.width = vctx.width;
+        vctxInternal.height = vctx.height;
+
+        win32RenderHeightmapPreview(&vctxInternal);
+
+        vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)

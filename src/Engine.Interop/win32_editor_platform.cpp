@@ -8,8 +8,6 @@ using namespace System::Windows::Input;
 
 global_variable Win32PlatformMemory *platformMemory;
 
-#define VIEWPORT_WINDOW_CLASS_NAME L"TerrainOpenGLViewportWindowClass"
-
 void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
 {
     // get path to current assembly
@@ -271,128 +269,6 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     return platformMemory;
 }
 
-Win32ViewportWindow *win32CreateViewportWindow(HDC deviceContext,
-    uint32 x,
-    uint32 y,
-    uint32 width,
-    uint32 height,
-    Terrain::Engine::Interop::EditorView view)
-{
-    assert(platformMemory->viewportCount < MAX_VIEWPORTS);
-    Win32ViewportWindow *result =
-        &platformMemory->viewportWindows[platformMemory->viewportCount++];
-
-    result->deviceContext = deviceContext;
-    result->view = view;
-    result->vctx.x = x;
-    result->vctx.y = y;
-    result->vctx.width = width;
-    result->vctx.height = height;
-    result->vctx.viewState = 0;
-
-    return result;
-}
-
-void win32GetInputState(EditorInput *input, Win32TickAppParams *params)
-{
-    Window ^ appWindow = Application::Current->MainWindow;
-    glm::vec2 actualMousePos_windowSpace = params->mousePosWindowSpace;
-    glm::vec2 virtualMousePos_windowSpace = actualMousePos_windowSpace;
-
-    if (GetForegroundWindow() == params->mainWindowHwnd)
-    {
-        if (params->wasMouseCaptured)
-        {
-            /*
-             * If we are capturing the mouse, we need to keep both the actual mouse position
-             * and a simulated 'virtual' mouse position. The actual mouse position is used for
-             * cursor offset calculations and the virtual mouse position is used when the
-             * cursor position is queried.
-             */
-            virtualMousePos_windowSpace = platformMemory->capturedMousePos_windowSpace;
-
-            if (!params->shouldCaptureMouse)
-            {
-                // move the cursor back to its original position when the mouse is released
-                Point capturedMousePos_screenSpacePoint = appWindow->PointToScreen(
-                    Point(platformMemory->capturedMousePos_windowSpace.x,
-                        platformMemory->capturedMousePos_windowSpace.y));
-                SetCursorPos(
-                    capturedMousePos_screenSpacePoint.X, capturedMousePos_screenSpacePoint.Y);
-
-                actualMousePos_windowSpace = platformMemory->capturedMousePos_windowSpace;
-            }
-        }
-
-        for (uint32 i = 0; i < platformMemory->viewportCount; i++)
-        {
-            Win32ViewportWindow *view = &platformMemory->viewportWindows[i];
-            EditorViewContext *vctx = &view->vctx;
-
-            glm::vec2 viewportPos_windowSpace = glm::vec2(vctx->x, vctx->y);
-            glm::vec2 viewportSize = glm::vec2(vctx->width, vctx->height);
-
-            if (actualMousePos_windowSpace.x < viewportPos_windowSpace.x
-                || actualMousePos_windowSpace.x >= viewportPos_windowSpace.x + viewportSize.x
-                || actualMousePos_windowSpace.y < viewportPos_windowSpace.y
-                || actualMousePos_windowSpace.y >= viewportPos_windowSpace.y + viewportSize.y)
-            {
-                continue;
-            }
-
-            input->activeViewState = vctx->viewState;
-            input->prevPressedButtons = params->prevPressedButtons;
-            input->pressedButtons = params->pressedButtons;
-            input->normalizedCursorPos =
-                (virtualMousePos_windowSpace - viewportPos_windowSpace) / viewportSize;
-            input->scrollOffset = params->nextMouseScrollOffsetY;
-
-            if (params->shouldCaptureMouse)
-            {
-                if (!params->wasMouseCaptured)
-                {
-                    // store the cursor position so we can move the cursor back to it when the
-                    // mouse is released
-                    platformMemory->capturedMousePos_windowSpace = actualMousePos_windowSpace;
-                }
-
-                // calculate the center of the hovered viewport relative to the window
-                glm::vec2 viewportCenter_windowSpace =
-                    glm::ceil(viewportPos_windowSpace + (viewportSize * 0.5f));
-
-                // convert the viewport center to screen space and move the cursor to it
-                Point viewportCenter_screenSpacePoint = appWindow->PointToScreen(
-                    Point(viewportCenter_windowSpace.x, viewportCenter_windowSpace.y));
-                SetCursorPos(
-                    viewportCenter_screenSpacePoint.X, viewportCenter_screenSpacePoint.Y);
-
-                if (params->wasMouseCaptured)
-                {
-                    input->cursorOffset =
-                        actualMousePos_windowSpace - viewportCenter_windowSpace;
-                }
-                else
-                {
-                    // don't set the mouse offset on the first frame after we capture the mouse
-                    // or there will be a big jump from the initial cursor position to the
-                    // center of the viewport
-                    input->cursorOffset.x = 0;
-                    input->cursorOffset.y = 0;
-                    SetCursor(0);
-                }
-            }
-            else
-            {
-                input->cursorOffset =
-                    actualMousePos_windowSpace - platformMemory->prevMousePos_windowSpace;
-            }
-            break;
-        }
-    }
-
-    platformMemory->prevMousePos_windowSpace = actualMousePos_windowSpace;
-}
-
 void win32LoadEditorCode(Win32EditorCode *editorCode)
 {
     if (!CopyFileA(editorCode->dllPath, editorCode->dllShadowCopyPath, false))
@@ -431,7 +307,7 @@ void win32UnloadEditorCode(Win32EditorCode *editorCode)
     }
 }
 
-void win32TickApp(float deltaTime, Win32TickAppParams *params)
+void win32TickApp(float deltaTime, EditorInput *input)
 {
     uint64 editorCodeDllLastWriteTime =
         win32GetFileLastWriteTime(platformMemory->editorCode.dllPath);
@@ -463,39 +339,25 @@ void win32TickApp(float deltaTime, Win32TickAppParams *params)
         *platformMemory->importedHeightmapTexturePath = 0;
     }
 
-    EditorInput input = {};
-    win32GetInputState(&input, params);
-
     if (platformMemory->editorCode.editorUpdate)
     {
-        platformMemory->editorCode.editorUpdate(platformMemory->editor, deltaTime, &input);
+        platformMemory->editorCode.editorUpdate(platformMemory->editor, deltaTime, input);
     }
+}
 
-    for (uint32 i = 0; i < platformMemory->viewportCount; i++)
+void win32RenderSceneView(EditorViewContext *vctx)
+{
+    if (platformMemory->editorCode.editorRenderSceneView)
     {
-        Win32ViewportWindow *viewport = &platformMemory->viewportWindows[i];
-        if (viewport->vctx.width == 0 || viewport->vctx.height == 0)
-            continue;
+        platformMemory->editorCode.editorRenderSceneView(platformMemory->editor, vctx);
+    }
+}
 
-        wglMakeCurrent(viewport->deviceContext, params->glRenderingContext);
-        switch (viewport->view)
-        {
-        case Terrain::Engine::Interop::EditorView::Scene:
-            if (platformMemory->editorCode.editorRenderSceneView)
-            {
-                platformMemory->editorCode.editorRenderSceneView(
-                    platformMemory->editor, &viewport->vctx);
-            }
-            break;
-        case Terrain::Engine::Interop::EditorView::HeightmapPreview:
-            if (platformMemory->editorCode.editorRenderHeightmapPreview)
-            {
-                platformMemory->editorCode.editorRenderHeightmapPreview(
-                    platformMemory->editor, &viewport->vctx);
-            }
-            break;
-        }
-        SwapBuffers(viewport->deviceContext);
+void win32RenderHeightmapPreview(EditorViewContext *vctx)
+{
+    if (platformMemory->editorCode.editorRenderHeightmapPreview)
+    {
+        platformMemory->editorCode.editorRenderHeightmapPreview(platformMemory->editor, vctx);
     }
 }
 

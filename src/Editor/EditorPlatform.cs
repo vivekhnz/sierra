@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -9,11 +10,12 @@ using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
-    internal struct EditorViewportWindow
+    public enum EditorView
     {
-        public IntPtr Hwnd;
-        public IntPtr WindowPtr;
-    }
+        None = 0,
+        Scene = 1,
+        HeightmapPreview = 2
+    };
 
     [Flags]
     internal enum EditorInputButtons : ulong
@@ -83,6 +85,14 @@ namespace Terrain.Editor
         KeyAlt = 1L << 62
     }
 
+    internal class EditorViewportWindow
+    {
+        public IntPtr Hwnd;
+        public IntPtr DeviceContext;
+        public EditorView View;
+        public EditorViewContextProxy ViewContext;
+    }
+
     internal static class EditorPlatform
     {
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
@@ -98,13 +108,17 @@ namespace Terrain.Editor
         private static DispatcherTimer renderTimer;
         private static DateTime lastTickTime;
 
+        private static Point prevMousePosWindowSpace;
         private static bool shouldCaptureMouse;
         private static bool wasMouseCaptured;
+        private static Point capturedMousePosWindowSpace;
         private static float nextMouseScrollOffsetY;
         private static bool isMouseLeftDown;
         private static bool isMouseMiddleDown;
         private static bool isMouseRightDown;
         private static EditorInputButtons prevPressedButtons;
+
+        private static List<EditorViewportWindow> viewportWindows = new List<EditorViewportWindow>();
 
         private delegate void PlatformCaptureMouse();
         private static PlatformCaptureMouse EditorPlatformCaptureMouse = () =>
@@ -237,12 +251,11 @@ namespace Terrain.Editor
             return Win32.DefWindowProc(hwnd, message, wParam, lParam);
         }
 
-        private static void OnTick(object sender, EventArgs e)
+        private static EditorInputProxy GetInputState()
         {
-            DateTime now = DateTime.UtcNow;
-            float deltaTime = (float)((now - lastTickTime).TotalSeconds);
-            lastTickTime = now;
+            EditorInputProxy result = new EditorInputProxy();
 
+            // query button state
             EditorInputButtons pressedButtons = 0;
             pressedButtons |= isMouseLeftDown ? EditorInputButtons.MouseLeft : 0;
             pressedButtons |= isMouseMiddleDown ? EditorInputButtons.MouseMiddle : 0;
@@ -308,30 +321,141 @@ namespace Terrain.Editor
             pressedButtons |= Keyboard.IsKeyDown(Key.RightCtrl) ? EditorInputButtons.KeyRightControl : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
 
+            // get mouse cursor position
             Win32.GetCursorPos(out var mousePosScreenSpaceWin32Point);
             Point mousePosScreenSpaceWpfPoint = new Point(
                 mousePosScreenSpaceWin32Point.X, mousePosScreenSpaceWin32Point.Y);
             Point mousePosWindowSpaceWpfPoint =
                 App.Current.MainWindow.PointFromScreen(mousePosScreenSpaceWpfPoint);
 
-            var tickParams = new EditorTickAppParamsProxy
-            {
-                mainWindowHwnd = mainWindowHwnd,
-                glRenderingContext = glRenderingContext,
+            var appWindow = App.Current.MainWindow;
+            Point actualMousePosWindowSpace = mousePosWindowSpaceWpfPoint;
+            Point virtualMousePosWindowSpace = actualMousePosWindowSpace;
 
-                shouldCaptureMouse = shouldCaptureMouse,
-                wasMouseCaptured = wasMouseCaptured,
-                nextMouseScrollOffsetY = nextMouseScrollOffsetY,
-                pressedButtons = (ulong)pressedButtons,
-                prevPressedButtons = (ulong)prevPressedButtons,
-                mousePosWindowSpace = mousePosWindowSpaceWpfPoint
-            };
+            if (Win32.GetForegroundWindow() == mainWindowHwnd)
+            {
+                if (wasMouseCaptured)
+                {
+                    /*
+                     * If we are capturing the mouse, we need to keep both the actual mouse position
+                     * and a simulated 'virtual' mouse position. The actual mouse position is used for
+                     * cursor offset calculations and the virtual mouse position is used when the
+                     * cursor position is queried.
+                     */
+                    virtualMousePosWindowSpace = capturedMousePosWindowSpace;
+
+                    if (!shouldCaptureMouse)
+                    {
+                        // move the cursor back to its original position when the mouse is released
+                        Point capturedMousePosScreenSpace =
+                            appWindow.PointToScreen(capturedMousePosWindowSpace);
+                        Win32.SetCursorPos(
+                            (int)capturedMousePosScreenSpace.X,
+                            (int)capturedMousePosScreenSpace.Y);
+
+                        actualMousePosWindowSpace = capturedMousePosWindowSpace;
+                    }
+                }
+
+                for (int i = 0; i < viewportWindows.Count; i++)
+                {
+                    var viewportWindow = viewportWindows[i];
+                    var vctx = viewportWindow.ViewContext;
+
+                    if (actualMousePosWindowSpace.X < vctx.x
+                        || actualMousePosWindowSpace.X >= vctx.x + vctx.width
+                        || actualMousePosWindowSpace.Y < vctx.y
+                        || actualMousePosWindowSpace.Y >= vctx.y + vctx.height)
+                    {
+                        continue;
+                    }
+
+                    result.activeViewState = vctx.viewState;
+                    result.prevPressedButtons = (ulong)prevPressedButtons;
+                    result.pressedButtons = (ulong)pressedButtons;
+                    result.normalizedCursorPos.X =
+                        (float)(virtualMousePosWindowSpace.X - vctx.x) / (float)vctx.width;
+                    result.normalizedCursorPos.Y =
+                        (float)(virtualMousePosWindowSpace.Y - vctx.y) / (float)vctx.height;
+                    result.scrollOffset = nextMouseScrollOffsetY;
+
+                    if (shouldCaptureMouse)
+                    {
+                        if (!wasMouseCaptured)
+                        {
+                            // store the cursor position so we can move the cursor back to it when
+                            // the mouse is released
+                            capturedMousePosWindowSpace = actualMousePosWindowSpace;
+                        }
+
+                        // calculate the center of the hovered viewport relative to the window
+                        Point viewportCenterWindowSpace = new Point(
+                            Math.Ceiling(vctx.x + (vctx.width * 0.5)),
+                            Math.Ceiling(vctx.y + (vctx.height * 0.5)));
+
+                        // convert the viewport center to screen space and move the cursor to it
+                        Point viewportCenterScreenSpace =
+                            appWindow.PointToScreen(viewportCenterWindowSpace);
+                        Win32.SetCursorPos(
+                            (int)viewportCenterScreenSpace.X, (int)viewportCenterScreenSpace.Y);
+
+                        if (wasMouseCaptured)
+                        {
+                            result.cursorOffset = actualMousePosWindowSpace - viewportCenterWindowSpace;
+                        }
+                        else
+                        {
+                            // don't set the mouse offset on the first frame after we capture the mouse
+                            // or there will be a big jump from the initial cursor position to the
+                            // center of the viewport
+                            result.cursorOffset = new Vector(0, 0);
+                            Win32.SetCursor(IntPtr.Zero);
+                        }
+                    }
+                    else
+                    {
+                        result.cursorOffset = actualMousePosWindowSpace - prevMousePosWindowSpace;
+                    }
+                    break;
+                }
+            }
+
+            prevMousePosWindowSpace = actualMousePosWindowSpace;
             wasMouseCaptured = shouldCaptureMouse;
             shouldCaptureMouse = false;
             nextMouseScrollOffsetY = 0;
             prevPressedButtons = pressedButtons;
 
-            EngineInterop.TickApp(deltaTime, tickParams);
+            return result;
+        }
+
+        private static void OnTick(object sender, EventArgs e)
+        {
+            DateTime now = DateTime.UtcNow;
+            float deltaTime = (float)((now - lastTickTime).TotalSeconds);
+            lastTickTime = now;
+
+            EditorInputProxy input = GetInputState();
+            EngineInterop.TickApp(deltaTime, input);
+
+            for (int i = 0; i < viewportWindows.Count; i++)
+            {
+                var viewportWindow = viewportWindows[i];
+                if (viewportWindow.ViewContext.width == 0 || viewportWindow.ViewContext.height == 0)
+                    continue;
+
+                Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
+                switch (viewportWindow.View)
+                {
+                    case EditorView.Scene:
+                        EditorCore.RenderSceneView(ref viewportWindow.ViewContext);
+                        break;
+                    case EditorView.HeightmapPreview:
+                        EditorCore.RenderHeightmapPreview(ref viewportWindow.ViewContext);
+                        break;
+                }
+                Win32.SwapBuffers(viewportWindow.DeviceContext);
+            }
         }
 
         internal static void Shutdown()
@@ -353,25 +477,28 @@ namespace Terrain.Editor
             IntPtr deviceContext = Win32.GetDC(hwnd);
             ConfigureDeviceContextForOpenGL(deviceContext);
 
-            IntPtr windowPtr = EngineInterop.CreateViewportWindow(
-                deviceContext, x, y, width, height, view);
-
-            return new EditorViewportWindow
+            var viewportWindow = new EditorViewportWindow
             {
                 Hwnd = hwnd,
-                WindowPtr = windowPtr
+                DeviceContext = deviceContext,
+                View = view,
+                ViewContext = new EditorViewContextProxy
+                {
+                    viewState = IntPtr.Zero,
+                    x = x,
+                    y = y,
+                    width = width,
+                    height = height
+                }
             };
+            viewportWindows.Add(viewportWindow);
+
+            return viewportWindow;
         }
 
         internal static void DestroyViewportWindow(IntPtr hwnd)
         {
             Win32.DestroyWindow(hwnd);
-        }
-
-        internal static void ResizeViewportWindow(IntPtr windowPtr,
-            uint x, uint y, uint width, uint height)
-        {
-            EngineInterop.ResizeViewportWindow(windowPtr, x, y, width, height);
         }
     }
 }

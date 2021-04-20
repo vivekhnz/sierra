@@ -72,7 +72,6 @@
   <ItemGroup>
     <ClInclude Include="EngineInterop.hpp" />
     <ClInclude Include="Proxy\StateProxy.hpp" />
-    <ClInclude Include="EditorView.h" />
     <ClInclude Include="win32_editor_platform.h" />
   </ItemGroup>
   <ItemGroup>

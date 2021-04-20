@@ -16,6 +16,5 @@
       <Filter>Proxy</Filter>
     </ClInclude>
     <ClInclude Include="win32_editor_platform.h" />
-    <ClInclude Include="EditorView.h" />
   </ItemGroup>
 </Project>

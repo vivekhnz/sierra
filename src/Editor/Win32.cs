@@ -179,7 +179,13 @@ namespace Terrain.Editor
         internal static extern IntPtr SetCursor(IntPtr handle);
 
         [DllImport("user32.dll", SetLastError = true)]
+        internal static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool GetCursorPos(out Point lpPoint);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool SetCursorPos(int X, int Y);
 
         // gdi32.dll
 
@@ -252,6 +258,9 @@ namespace Terrain.Editor
         [DllImport("gdi32.dll", SetLastError = true)]
         internal static extern int SetPixelFormat(IntPtr hDC, int pixelFormat,
             ref PixelFormatDescriptor ppfd);
+
+        [DllImport("gdi32.dll", SetLastError = true)]
+        internal static extern int SwapBuffers(IntPtr hDC);
 
         // opengl32.dll
 
