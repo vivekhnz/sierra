@@ -33,19 +33,13 @@ struct MemoryBlock
 
 struct EngineMemory;
 
-#define PLATFORM_ASSET_LOAD_CALLBACK(name)                                                    \
-    void name(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
-typedef PLATFORM_ASSET_LOAD_CALLBACK(PlatformAssetLoadCallback);
-
 #define PLATFORM_GET_GL_PROC_ADDRESS(name) void *name(const char *procName)
 typedef PLATFORM_GET_GL_PROC_ADDRESS(PlatformGetGlProcAddress);
 
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
-#define PLATFORM_LOAD_ASSET(name)                                                             \
-    bool name(                                                                                \
-        uint32 assetId, const char *relativePath, PlatformAssetLoadCallback onAssetLoaded)
+#define PLATFORM_LOAD_ASSET(name) bool name(uint32 assetId, const char *relativePath)
 typedef PLATFORM_LOAD_ASSET(PlatformLoadAsset);
 
 struct EngineMemory

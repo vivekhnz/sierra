@@ -107,6 +107,7 @@ EXPORT TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId);
 
 EXPORT MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId);
 
+EXPORT void assetsOnAssetLoaded(EngineMemory *memory, uint32 assetId, void *data, uint64 size);
 EXPORT void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId);
 
 #endif

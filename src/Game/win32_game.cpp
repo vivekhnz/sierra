@@ -157,7 +157,6 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
     *request = {};
     request->assetId = assetId;
-    request->callback = onAssetLoaded;
     win32GetAssetAbsolutePath(relativePath, request->path);
 
     // add asset to watch list so we can hot reload it
@@ -223,7 +222,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            request->callback(platformMemory->gameMemory->engineMemory, request->assetId,
+            assetsOnAssetLoaded(platformMemory->gameMemory->engineMemory, request->assetId,
                 result.data, result.size);
             win32FreeMemory(result.data);
 

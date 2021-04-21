@@ -19,7 +19,6 @@ struct Win32AssetLoadRequest
 {
     uint32 assetId;
     char path[MAX_PATH];
-    PlatformAssetLoadCallback *callback;
 };
 
 struct Win32AssetLoadQueue

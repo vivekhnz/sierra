@@ -287,30 +287,6 @@ MeshInfo getMeshInfo(uint32 assetId)
     return info;
 }
 
-PLATFORM_ASSET_LOAD_CALLBACK(onShaderLoaded)
-{
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    ShaderInfo shaderInfo = getShaderInfo(assetId);
-
-    char *src = static_cast<char *>(data);
-    uint32 handle;
-    if (rendererCreateShader(memory, shaderInfo.type, src, &handle))
-    {
-        uint32 assetIdx = ASSET_GET_INDEX(assetId);
-        assert(assetIdx < ASSET_SHADER_COUNT);
-
-        ShaderAsset *asset = &state->shaderAssets[assetIdx];
-        asset->version++;
-        asset->handle = handle;
-
-        ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
-        slot->asset = asset;
-        slot->isUpToDate = true;
-    }
-}
-
 ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
@@ -323,7 +299,7 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     if (!slot->isUpToDate && !slot->isLoadQueued)
     {
         ShaderInfo shaderInfo = getShaderInfo(assetId);
-        if (memory->platformLoadAsset(assetId, shaderInfo.relativePath, onShaderLoaded))
+        if (memory->platformLoadAsset(assetId, shaderInfo.relativePath))
         {
             slot->isLoadQueued = true;
         }
@@ -417,25 +393,6 @@ EXPORT void assetsLoadTexture(
     stbi_image_free(loadedData);
 }
 
-PLATFORM_ASSET_LOAD_CALLBACK(onTextureLoaded)
-{
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    assert(assetIdx < ASSET_TEXTURE_COUNT);
-
-    TextureInfo textureInfo = getTextureInfo(assetId);
-
-    TextureAsset *asset = &state->textureAssets[assetIdx];
-    assetsLoadTexture(memory, data, size, textureInfo.is16Bit, asset);
-    asset->version++;
-
-    TextureAssetSlot *slot = &state->textureAssetSlots[assetIdx];
-    slot->asset = asset;
-    slot->isUpToDate = true;
-}
-
 TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_TEXTURE);
@@ -449,7 +406,7 @@ TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
     if (!slot->isUpToDate && !slot->isLoadQueued)
     {
         TextureInfo textureInfo = getTextureInfo(assetId);
-        if (memory->platformLoadAsset(assetId, textureInfo.relativePath, onTextureLoaded))
+        if (memory->platformLoadAsset(assetId, textureInfo.relativePath))
         {
             slot->isLoadQueued = true;
         }
@@ -491,18 +448,9 @@ unsigned long fast_obj_file_size(void *file, void *user_data)
     FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
     return virtualFile->size;
 }
-
-PLATFORM_ASSET_LOAD_CALLBACK(onMeshLoaded)
+void fastObjLoadMesh(
+    EngineMemory *memory, const char *path, void *data, uint64 size, MeshAsset *out_asset)
 {
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    assert(assetIdx < ASSET_MESH_COUNT);
-
-    MeshInfo meshInfo = getMeshInfo(assetId);
-    MeshAsset *asset = &state->meshAssets[assetIdx];
-
     fastObjCallbacks callbacks = {};
     callbacks.file_open = fast_obj_file_open;
     callbacks.file_close = fast_obj_file_close;
@@ -513,20 +461,19 @@ PLATFORM_ASSET_LOAD_CALLBACK(onMeshLoaded)
     virtualFile.data = data;
     virtualFile.size = size;
 
-    fastObjMesh *mesh =
-        fast_obj_read_with_callbacks(meshInfo.relativePath, &callbacks, &virtualFile);
+    fastObjMesh *mesh = fast_obj_read_with_callbacks(path, &callbacks, &virtualFile);
 
-    asset->elementCount = mesh->face_count * 3;
-    uint32 elementBufferSize = sizeof(uint32) * asset->elementCount;
-    asset->indices = (uint32 *)pushAssetData(memory, elementBufferSize);
+    out_asset->elementCount = mesh->face_count * 3;
+    uint32 elementBufferSize = sizeof(uint32) * out_asset->elementCount;
+    out_asset->indices = (uint32 *)pushAssetData(memory, elementBufferSize);
 
-    asset->vertexCount = asset->elementCount;
-    uint32 vertexBufferSize = sizeof(float) * asset->vertexCount * 6;
-    asset->vertices = (float *)pushAssetData(memory, vertexBufferSize);
+    out_asset->vertexCount = out_asset->elementCount;
+    uint32 vertexBufferSize = sizeof(float) * out_asset->vertexCount * 6;
+    out_asset->vertices = (float *)pushAssetData(memory, vertexBufferSize);
 
-    uint32 *currentIndex = (uint32 *)asset->indices;
-    float *currentVertex = (float *)asset->vertices;
-    for (uint32 i = 0; i < asset->elementCount; i++)
+    uint32 *currentIndex = (uint32 *)out_asset->indices;
+    float *currentVertex = (float *)out_asset->vertices;
+    for (uint32 i = 0; i < out_asset->elementCount; i++)
     {
         fastObjIndex index = mesh->indices[i];
         *currentIndex++ = i;
@@ -539,12 +486,6 @@ PLATFORM_ASSET_LOAD_CALLBACK(onMeshLoaded)
     }
 
     fast_obj_destroy(mesh);
-
-    asset->version++;
-
-    MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
-    slot->asset = asset;
-    slot->isUpToDate = true;
 }
 
 MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId)
@@ -560,13 +501,67 @@ MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId)
     if (!slot->isUpToDate && !slot->isLoadQueued)
     {
         MeshInfo meshInfo = getMeshInfo(assetId);
-        if (memory->platformLoadAsset(assetId, meshInfo.relativePath, onMeshLoaded))
+        if (memory->platformLoadAsset(assetId, meshInfo.relativePath))
         {
             slot->isLoadQueued = true;
         }
     }
 
     return slot->asset;
+}
+
+void assetsOnAssetLoaded(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
+    uint32 assetIdx = ASSET_GET_INDEX(assetId);
+    uint32 assetType = ASSET_GET_TYPE(assetId);
+
+    if (assetType == ASSET_TYPE_SHADER)
+    {
+        assert(assetIdx < ASSET_SHADER_COUNT);
+        ShaderInfo shaderInfo = getShaderInfo(assetId);
+
+        char *src = static_cast<char *>(data);
+        uint32 handle;
+        if (rendererCreateShader(memory, shaderInfo.type, src, &handle))
+        {
+            ShaderAsset *asset = &state->shaderAssets[assetIdx];
+            asset->version++;
+            asset->handle = handle;
+
+            ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
+            slot->asset = asset;
+            slot->isUpToDate = true;
+        }
+    }
+    else if (assetType == ASSET_TYPE_TEXTURE)
+    {
+        assert(assetIdx < ASSET_TEXTURE_COUNT);
+        TextureInfo textureInfo = getTextureInfo(assetId);
+
+        TextureAsset *asset = &state->textureAssets[assetIdx];
+        assetsLoadTexture(memory, data, size, textureInfo.is16Bit, asset);
+        asset->version++;
+
+        TextureAssetSlot *slot = &state->textureAssetSlots[assetIdx];
+        slot->asset = asset;
+        slot->isUpToDate = true;
+    }
+    else if (assetType == ASSET_TYPE_MESH)
+    {
+        assert(assetIdx < ASSET_MESH_COUNT);
+        MeshInfo meshInfo = getMeshInfo(assetId);
+
+        MeshAsset *asset = &state->meshAssets[assetIdx];
+        fastObjLoadMesh(memory, meshInfo.relativePath, data, size, asset);
+        asset->version++;
+
+        MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
+        slot->asset = asset;
+        slot->isUpToDate = true;
+    }
 }
 
 void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId)
@@ -588,6 +583,13 @@ void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId)
     {
         assert(assetIdx < ASSET_TEXTURE_COUNT);
         TextureAssetSlot *slot = &state->textureAssetSlots[assetIdx];
+        slot->isUpToDate = false;
+        slot->isLoadQueued = false;
+    }
+    else if (assetType == ASSET_TYPE_MESH)
+    {
+        assert(assetIdx < ASSET_MESH_COUNT);
+        MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
         slot->isUpToDate = false;
         slot->isLoadQueued = false;
     }
