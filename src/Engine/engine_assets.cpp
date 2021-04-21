@@ -287,7 +287,7 @@ MeshInfo getMeshInfo(uint32 assetId)
     return info;
 }
 
-ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
+EXPORT ASSETS_GET_SHADER(assetsGetShader)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -308,7 +308,7 @@ ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId)
     return slot->asset;
 }
 
-ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
+EXPORT ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER_PROGRAM);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -361,8 +361,7 @@ ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId)
     return slot->asset;
 }
 
-EXPORT void assetsLoadTexture(
-    EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset)
+EXPORT ASSETS_LOAD_TEXTURE(assetsLoadTexture)
 {
     const stbi_uc *rawData = static_cast<stbi_uc *>(data);
     void *loadedData;
@@ -393,7 +392,7 @@ EXPORT void assetsLoadTexture(
     stbi_image_free(loadedData);
 }
 
-TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId)
+EXPORT ASSETS_GET_TEXTURE(assetsGetTexture)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_TEXTURE);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -488,7 +487,7 @@ void fastObjLoadMesh(
     fast_obj_destroy(mesh);
 }
 
-MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId)
+EXPORT ASSETS_GET_MESH(assetsGetMesh)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_MESH);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -510,7 +509,7 @@ MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId)
     return slot->asset;
 }
 
-void assetsOnAssetLoaded(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
+EXPORT ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
@@ -564,7 +563,7 @@ void assetsOnAssetLoaded(EngineMemory *memory, uint32 assetId, void *data, uint6
     }
 }
 
-void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId)
+EXPORT ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;

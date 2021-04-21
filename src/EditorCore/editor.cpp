@@ -55,7 +55,7 @@ HeightmapRenderTexture createHeightmapRenderTexture(EngineMemory *engineMemory)
 
 bool initializeEditor(EditorMemory *memory)
 {
-    if (!rendererInitialize(memory->engine))
+    if (!rendererInitialize(memory->engineMemory))
     {
         return 0;
     }
@@ -84,67 +84,73 @@ bool initializeEditor(EditorMemory *memory)
     uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
 
     uint32 quadVertexBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        rendererCreateBuffer(memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
     rendererUpdateBuffer(
-        memory->engine, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
+        memory->engineMemory, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
 
     uint32 quadFlippedYVertexBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(memory->engine, quadFlippedYVertexBufferHandle,
+        rendererCreateBuffer(memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(memory->engineMemory, quadFlippedYVertexBufferHandle,
         sizeof(quadFlippedYVertices), &quadFlippedYVertices);
 
     uint32 quadElementBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        rendererCreateBuffer(memory->engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
     rendererUpdateBuffer(
-        memory->engine, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
+        memory->engineMemory, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
 
-    memory->state.quadVertexArrayHandle = rendererCreateVertexArray(memory->engine);
-    rendererBindVertexArray(memory->engine, memory->state.quadVertexArrayHandle);
-    rendererBindBuffer(memory->engine, quadElementBufferHandle);
-    rendererBindBuffer(memory->engine, quadVertexBufferHandle);
+    memory->state.quadVertexArrayHandle = rendererCreateVertexArray(memory->engineMemory);
+    rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
+    rendererBindBuffer(memory->engineMemory, quadElementBufferHandle);
+    rendererBindBuffer(memory->engineMemory, quadVertexBufferHandle);
     rendererBindVertexAttribute(0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
     rendererBindVertexAttribute(
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     rendererUnbindVertexArray();
 
-    memory->state.quadFlippedYVertexArrayHandle = rendererCreateVertexArray(memory->engine);
-    rendererBindVertexArray(memory->engine, memory->state.quadFlippedYVertexArrayHandle);
-    rendererBindBuffer(memory->engine, quadElementBufferHandle);
-    rendererBindBuffer(memory->engine, quadFlippedYVertexBufferHandle);
+    memory->state.quadFlippedYVertexArrayHandle =
+        rendererCreateVertexArray(memory->engineMemory);
+    rendererBindVertexArray(memory->engineMemory, memory->state.quadFlippedYVertexArrayHandle);
+    rendererBindBuffer(memory->engineMemory, quadElementBufferHandle);
+    rendererBindBuffer(memory->engineMemory, quadFlippedYVertexBufferHandle);
     rendererBindVertexAttribute(0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
     rendererBindVertexAttribute(
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     rendererUnbindVertexArray();
 
     memory->state.importedHeightmapTextureHandle =
-        rendererCreateTexture(memory->engine, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-            GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+        rendererCreateTexture(memory->engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048,
+            2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    memory->state.committedHeightmap = createHeightmapRenderTexture(memory->engine);
-    memory->state.workingBrushInfluenceMask = createHeightmapRenderTexture(memory->engine);
-    memory->state.workingHeightmap = createHeightmapRenderTexture(memory->engine);
-    memory->state.previewBrushInfluenceMask = createHeightmapRenderTexture(memory->engine);
-    memory->state.previewHeightmap = createHeightmapRenderTexture(memory->engine);
-    memory->state.temporaryHeightmap = createHeightmapRenderTexture(memory->engine);
+    memory->state.committedHeightmap = createHeightmapRenderTexture(memory->engineMemory);
+    memory->state.workingBrushInfluenceMask =
+        createHeightmapRenderTexture(memory->engineMemory);
+    memory->state.workingHeightmap = createHeightmapRenderTexture(memory->engineMemory);
+    memory->state.previewBrushInfluenceMask =
+        createHeightmapRenderTexture(memory->engineMemory);
+    memory->state.previewHeightmap = createHeightmapRenderTexture(memory->engineMemory);
+    memory->state.temporaryHeightmap = createHeightmapRenderTexture(memory->engineMemory);
 
     memory->state.isEditingHeightmap = false;
 
     memory->state.activeBrushStrokeInstanceBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(memory->engine, memory->state.activeBrushStrokeInstanceBufferHandle,
+        rendererCreateBuffer(memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(memory->engineMemory,
+        memory->state.activeBrushStrokeInstanceBufferHandle,
         sizeof(memory->state.activeBrushStrokeInstanceBufferData),
         &memory->state.activeBrushStrokeInstanceBufferData);
     uint32 instanceBufferStride = sizeof(glm::vec2);
 
     memory->state.activeBrushStrokeVertexArrayHandle =
-        rendererCreateVertexArray(memory->engine);
-    rendererBindVertexArray(memory->engine, memory->state.activeBrushStrokeVertexArrayHandle);
-    rendererBindBuffer(memory->engine, quadElementBufferHandle);
-    rendererBindBuffer(memory->engine, quadVertexBufferHandle);
+        rendererCreateVertexArray(memory->engineMemory);
+    rendererBindVertexArray(
+        memory->engineMemory, memory->state.activeBrushStrokeVertexArrayHandle);
+    rendererBindBuffer(memory->engineMemory, quadElementBufferHandle);
+    rendererBindBuffer(memory->engineMemory, quadVertexBufferHandle);
     rendererBindVertexAttribute(0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
     rendererBindVertexAttribute(
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
-    rendererBindBuffer(memory->engine, memory->state.activeBrushStrokeInstanceBufferHandle);
+    rendererBindBuffer(
+        memory->engineMemory, memory->state.activeBrushStrokeInstanceBufferHandle);
     rendererBindVertexAttribute(2, GL_FLOAT, false, 2, instanceBufferStride, 0, true);
     rendererUnbindVertexArray();
 
@@ -207,44 +213,45 @@ bool initializeEditor(EditorMemory *memory)
     }
 
     sceneState->terrainMesh.vertexBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(memory->engine, sceneState->terrainMesh.vertexBufferHandle,
+        rendererCreateBuffer(memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(memory->engineMemory, sceneState->terrainMesh.vertexBufferHandle,
         terrainVertexBufferSize, terrainVertices);
     free(terrainVertices);
 
     uint32 terrainElementBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(
-        memory->engine, terrainElementBufferHandle, terrainElementBufferSize, terrainIndices);
+        rendererCreateBuffer(memory->engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(memory->engineMemory, terrainElementBufferHandle,
+        terrainElementBufferSize, terrainIndices);
     free(terrainIndices);
 
-    sceneState->terrainMesh.vertexArrayHandle = rendererCreateVertexArray(memory->engine);
-    rendererBindVertexArray(memory->engine, sceneState->terrainMesh.vertexArrayHandle);
-    rendererBindBuffer(memory->engine, terrainElementBufferHandle);
-    rendererBindBuffer(memory->engine, sceneState->terrainMesh.vertexBufferHandle);
+    sceneState->terrainMesh.vertexArrayHandle =
+        rendererCreateVertexArray(memory->engineMemory);
+    rendererBindVertexArray(memory->engineMemory, sceneState->terrainMesh.vertexArrayHandle);
+    rendererBindBuffer(memory->engineMemory, terrainElementBufferHandle);
+    rendererBindBuffer(memory->engineMemory, sceneState->terrainMesh.vertexBufferHandle);
     rendererBindVertexAttribute(0, GL_FLOAT, false, 3, terrainVertexBufferStride, 0, false);
     rendererBindVertexAttribute(
         1, GL_FLOAT, false, 2, terrainVertexBufferStride, 3 * sizeof(float), false);
     rendererUnbindVertexArray();
 
     // create buffer to store vertex edge data
-    sceneState->tessellationLevelBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    rendererUpdateBuffer(memory->engine, sceneState->tessellationLevelBufferHandle,
+    sceneState->tessellationLevelBufferHandle = rendererCreateBuffer(
+        memory->engineMemory, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
+    rendererUpdateBuffer(memory->engineMemory, sceneState->tessellationLevelBufferHandle,
         sceneState->heightfield.columns * sceneState->heightfield.rows * sizeof(glm::vec4), 0);
 
     sceneState->albedoTextureArrayHandle =
-        rendererCreateTextureArray(memory->engine, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048,
-            2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB,
+            2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     sceneState->normalTextureArrayHandle =
-        rendererCreateTextureArray(memory->engine, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048,
-            2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB,
+            2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     sceneState->displacementTextureArrayHandle =
-        rendererCreateTextureArray(memory->engine, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048,
-            2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+            2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     sceneState->aoTextureArrayHandle =
-        rendererCreateTextureArray(memory->engine, GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048,
-            MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+        rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048,
+            2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     sceneState->worldState.materialCount = 0;
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
@@ -260,15 +267,15 @@ bool initializeEditor(EditorMemory *memory)
         sceneState->displacementTextures[i] = {};
         sceneState->aoTextures[i] = {};
     }
-    sceneState->materialPropsBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
-    rendererUpdateBuffer(memory->engine, sceneState->materialPropsBufferHandle,
+    sceneState->materialPropsBufferHandle = rendererCreateBuffer(
+        memory->engineMemory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+    rendererUpdateBuffer(memory->engineMemory, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), 0);
 
     sceneState->rockMesh = {};
     sceneState->rockInstanceBufferHandle =
-        rendererCreateBuffer(memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    rendererUpdateBuffer(memory->engine, sceneState->rockInstanceBufferHandle,
+        rendererCreateBuffer(memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    rendererUpdateBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle,
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
     sceneState->rockInstanceCount = 1;
 
@@ -302,53 +309,55 @@ void compositeHeightmap(EditorMemory *memory,
     }
 
     // render brush influence mask
-    rendererBindFramebuffer(memory->engine, brushInfluenceMask->framebufferHandle);
+    rendererBindFramebuffer(memory->engineMemory, brushInfluenceMask->framebufferHandle);
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
-    rendererUpdateCameraState(memory->engine, &memory->state.orthographicCameraTransform);
+    rendererUpdateCameraState(
+        memory->engineMemory, &memory->state.orthographicCameraTransform);
 
-    rendererUseShaderProgram(memory->engine, brushMaskShaderProgramHandle);
+    rendererUseShaderProgram(memory->engineMemory, brushMaskShaderProgramHandle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(
         blendProps->isInfluenceCumulative ? GL_FUNC_ADD : GL_MAX, GL_ONE, GL_ONE);
     rendererSetShaderProgramUniformFloat(
-        memory->engine, brushMaskShaderProgramHandle, "brushScale", brushRadius);
+        memory->engineMemory, brushMaskShaderProgramHandle, "brushScale", brushRadius);
     rendererSetShaderProgramUniformFloat(
-        memory->engine, brushMaskShaderProgramHandle, "brushFalloff", brushFalloff);
+        memory->engineMemory, brushMaskShaderProgramHandle, "brushFalloff", brushFalloff);
     rendererSetShaderProgramUniformFloat(
-        memory->engine, brushMaskShaderProgramHandle, "brushStrength", brushStrength);
-    rendererBindVertexArray(memory->engine, memory->state.activeBrushStrokeVertexArrayHandle);
+        memory->engineMemory, brushMaskShaderProgramHandle, "brushStrength", brushStrength);
+    rendererBindVertexArray(
+        memory->engineMemory, memory->state.activeBrushStrokeVertexArrayHandle);
     rendererDrawElementsInstanced(GL_TRIANGLES, 6, brushInstanceCount, brushInstanceOffset);
 
-    rendererUnbindFramebuffer(memory->engine, brushInfluenceMask->framebufferHandle);
+    rendererUnbindFramebuffer(memory->engineMemory, brushInfluenceMask->framebufferHandle);
 
     // render heightmap
-    rendererUseShaderProgram(memory->engine, blendProps->shaderProgramHandle);
-    rendererSetShaderProgramUniformFloat(
-        memory->engine, blendProps->shaderProgramHandle, "blendSign", blendProps->addSubSign);
-    rendererSetShaderProgramUniformFloat(memory->engine, blendProps->shaderProgramHandle,
+    rendererUseShaderProgram(memory->engineMemory, blendProps->shaderProgramHandle);
+    rendererSetShaderProgramUniformFloat(memory->engineMemory, blendProps->shaderProgramHandle,
+        "blendSign", blendProps->addSubSign);
+    rendererSetShaderProgramUniformFloat(memory->engineMemory, blendProps->shaderProgramHandle,
         "flattenHeight", blendProps->flattenHeight);
-    rendererSetShaderProgramUniformInteger(memory->engine, blendProps->shaderProgramHandle,
-        "iterationCount", blendProps->iterations);
+    rendererSetShaderProgramUniformInteger(memory->engineMemory,
+        blendProps->shaderProgramHandle, "iterationCount", blendProps->iterations);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindVertexArray(memory->engine, memory->state.quadVertexArrayHandle);
-    rendererBindTexture(memory->engine, brushInfluenceMask->textureHandle, 1);
+    rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
+    rendererBindTexture(memory->engineMemory, brushInfluenceMask->textureHandle, 1);
 
     uint32 inputTextureHandle = baseHeightmapTextureHandle;
     HeightmapRenderTexture *iterationOutput = output;
     for (uint32 i = 0; i < blendProps->iterations; i++)
     {
-        rendererBindFramebuffer(memory->engine, iterationOutput->framebufferHandle);
+        rendererBindFramebuffer(memory->engineMemory, iterationOutput->framebufferHandle);
 
         rendererSetViewportSize(2048, 2048);
         rendererClearBackBuffer(0, 0, 0, 1);
-        rendererBindTexture(memory->engine, inputTextureHandle, 0);
+        rendererBindTexture(memory->engineMemory, inputTextureHandle, 0);
         rendererSetShaderProgramUniformInteger(
-            memory->engine, blendProps->shaderProgramHandle, "iteration", i);
+            memory->engineMemory, blendProps->shaderProgramHandle, "iteration", i);
         rendererDrawElements(GL_TRIANGLES, 6);
 
-        rendererUnbindFramebuffer(memory->engine, iterationOutput->framebufferHandle);
+        rendererUnbindFramebuffer(memory->engineMemory, iterationOutput->framebufferHandle);
 
         inputTextureHandle = iterationOutput->textureHandle;
         iterationOutput = i % 2 == 0 ? &memory->state.temporaryHeightmap : output;
@@ -379,25 +388,26 @@ void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
 void commitChanges(EditorMemory *memory)
 {
     ShaderProgramAsset *quadShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_QUAD);
+        memory->engine.assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
     if (!quadShaderProgram)
         return;
 
     rendererBindFramebuffer(
-        memory->engine, memory->state.committedHeightmap.framebufferHandle);
+        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
-    rendererUpdateCameraState(memory->engine, &memory->state.orthographicCameraTransform);
+    rendererUpdateCameraState(
+        memory->engineMemory, &memory->state.orthographicCameraTransform);
 
-    rendererUseShaderProgram(memory->engine, quadShaderProgram->handle);
+    rendererUseShaderProgram(memory->engineMemory, quadShaderProgram->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindTexture(memory->engine, memory->state.workingHeightmap.textureHandle, 0);
-    rendererBindVertexArray(memory->engine, memory->state.quadVertexArrayHandle);
+    rendererBindTexture(memory->engineMemory, memory->state.workingHeightmap.textureHandle, 0);
+    rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);
 
     rendererUnbindFramebuffer(
-        memory->engine, memory->state.committedHeightmap.framebufferHandle);
+        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
 
     memory->state.isEditingHeightmap = false;
     memory->state.activeBrushStrokeInstanceCount = 0;
@@ -408,8 +418,9 @@ void discardChanges(EditorMemory *memory)
     memory->state.isEditingHeightmap = false;
     memory->state.activeBrushStrokeInstanceCount = 0;
 
-    rendererReadTexturePixels(memory->engine, memory->state.committedHeightmap.textureHandle,
-        GL_UNSIGNED_SHORT, GL_RED, memory->state.sceneState.heightmapTextureDataTempBuffer);
+    rendererReadTexturePixels(memory->engineMemory,
+        memory->state.committedHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+        memory->state.sceneState.heightmapTextureDataTempBuffer);
     updateHeightfieldHeights(&memory->state.sceneState.heightfield,
         memory->state.sceneState.heightmapTextureDataTempBuffer);
 }
@@ -426,16 +437,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         memory->isInitialized = true;
     }
 
+    EngineClientApi *engine = &memory->engine;
+
     ShaderProgramAsset *quadShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_QUAD);
+        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
     ShaderProgramAsset *brushMaskShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_BRUSH_MASK);
-    ShaderProgramAsset *brushBlendAddSubShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB);
-    ShaderProgramAsset *brushBlendFlattenShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN);
-    ShaderProgramAsset *brushBlendSmoothShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH);
+        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_MASK);
+    ShaderProgramAsset *brushBlendAddSubShaderProgram = engine->assetsGetShaderProgram(
+        memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB);
+    ShaderProgramAsset *brushBlendFlattenShaderProgram = engine->assetsGetShaderProgram(
+        memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN);
+    ShaderProgramAsset *brushBlendSmoothShaderProgram = engine->assetsGetShaderProgram(
+        memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH);
     if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram
         || !brushBlendFlattenShaderProgram || !brushBlendSmoothShaderProgram)
     {
@@ -687,15 +700,16 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     lightDir.x = sin(memory->state.uiState.lightDirection * glm::pi<float>() * -0.5);
     lightDir.y = cos(memory->state.uiState.lightDirection * glm::pi<float>() * 0.5);
     lightDir.z = 0.2f;
-    rendererUpdateLightingState(memory->engine, &lightDir, true, true, true, true, true);
+    rendererUpdateLightingState(memory->engineMemory, &lightDir, true, true, true, true, true);
 
     // update preview brush quad instance
     memory->state.activeBrushStrokeInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] =
         newBrushPos;
 
     // update brush quad instance buffer
-    rendererUpdateBuffer(memory->engine, memory->state.activeBrushStrokeInstanceBufferHandle,
-        BRUSH_QUAD_INSTANCE_BUFFER_SIZE, memory->state.activeBrushStrokeInstanceBufferData);
+    rendererUpdateBuffer(memory->engineMemory,
+        memory->state.activeBrushStrokeInstanceBufferHandle, BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+        memory->state.activeBrushStrokeInstanceBufferData);
 
     // update rock instance buffer
     glm::mat4 rockTransform = glm::identity<glm::mat4>();
@@ -707,7 +721,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     rockTransform *= rockRotMat;
 
     sceneState->rockInstanceBufferData[0] = rockTransform;
-    rendererUpdateBuffer(memory->engine, sceneState->rockInstanceBufferHandle,
+    rendererUpdateBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle,
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
 
     BrushBlendProperties blendProps = {};
@@ -748,8 +762,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     if (memory->state.isEditingHeightmap)
     {
-        rendererReadTexturePixels(memory->engine, memory->state.workingHeightmap.textureHandle,
-            GL_UNSIGNED_SHORT, GL_RED, sceneState->heightmapTextureDataTempBuffer);
+        rendererReadTexturePixels(memory->engineMemory,
+            memory->state.workingHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+            sceneState->heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(
             &sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
     }
@@ -759,12 +774,13 @@ API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
 {
     if (memory->isInitialized)
     {
-        rendererDestroyResources(memory->engine);
+        rendererDestroyResources(memory->engineMemory);
     }
 }
 
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
+    EngineClientApi *engine = &memory->engine;
     SceneState *sceneState = &memory->state.sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
@@ -795,7 +811,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     viewState->cameraTransform =
         projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
 
-    rendererUpdateCameraState(memory->engine, &viewState->cameraTransform);
+    rendererUpdateCameraState(memory->engineMemory, &viewState->cameraTransform);
     rendererSetViewportSize(view->width, view->height);
     rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
 
@@ -810,10 +826,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         if (assetId)
         {
             binding = &sceneState->albedoTextures[layerIdx];
-            asset = assetsGetTexture(memory->engine, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
             if (asset && (assetId != binding->assetId || asset->version > binding->version))
             {
-                rendererUpdateTextureArray(memory->engine,
+                rendererUpdateTextureArray(memory->engineMemory,
                     sceneState->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
                     asset->width, asset->height, layerIdx, asset->data);
                 binding->assetId = assetId;
@@ -825,10 +841,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         if (assetId)
         {
             binding = &sceneState->normalTextures[layerIdx];
-            asset = assetsGetTexture(memory->engine, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
             if (asset && (assetId != binding->assetId || asset->version > binding->version))
             {
-                rendererUpdateTextureArray(memory->engine,
+                rendererUpdateTextureArray(memory->engineMemory,
                     sceneState->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
                     asset->width, asset->height, layerIdx, asset->data);
                 binding->assetId = assetId;
@@ -840,10 +856,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         if (assetId)
         {
             binding = &sceneState->displacementTextures[layerIdx];
-            asset = assetsGetTexture(memory->engine, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
             if (asset && (assetId != binding->assetId || asset->version > binding->version))
             {
-                rendererUpdateTextureArray(memory->engine,
+                rendererUpdateTextureArray(memory->engineMemory,
                     sceneState->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
                     asset->width, asset->height, layerIdx, asset->data);
                 binding->assetId = assetId;
@@ -855,12 +871,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         if (assetId)
         {
             binding = &sceneState->aoTextures[layerIdx];
-            asset = assetsGetTexture(memory->engine, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
             if (asset && (assetId != binding->assetId || asset->version > binding->version))
             {
-                rendererUpdateTextureArray(memory->engine, sceneState->aoTextureArrayHandle,
-                    GL_UNSIGNED_BYTE, GL_RED, asset->width, asset->height, layerIdx,
-                    asset->data);
+                rendererUpdateTextureArray(memory->engineMemory,
+                    sceneState->aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED, asset->width,
+                    asset->height, layerIdx, asset->data);
                 binding->assetId = assetId;
                 binding->version = asset->version;
             }
@@ -868,12 +884,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     // get shader programs
-    ShaderProgramAsset *calcTessLevelShaderProgramAsset =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
-    ShaderProgramAsset *terrainShaderProgramAsset =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
+    ShaderProgramAsset *calcTessLevelShaderProgramAsset = engine->assetsGetShaderProgram(
+        memory->engineMemory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
+    ShaderProgramAsset *terrainShaderProgramAsset = engine->assetsGetShaderProgram(
+        memory->engineMemory, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
     ShaderProgramAsset *rockShaderProgramAsset =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_ROCK);
+        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_ROCK);
     if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset
         || !rockShaderProgramAsset)
         return;
@@ -913,52 +929,54 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
         - sceneState->heightfield.rows - sceneState->heightfield.columns;
     rendererSetShaderProgramUniformFloat(
-        memory->engine, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
-    rendererSetShaderProgramUniformInteger(memory->engine, calcTessLevelShaderProgramHandle,
-        "horizontalEdgeCount",
+        memory->engineMemory, calcTessLevelShaderProgramHandle, "targetTriangleSize", 0.015f);
+    rendererSetShaderProgramUniformInteger(memory->engineMemory,
+        calcTessLevelShaderProgramHandle, "horizontalEdgeCount",
         sceneState->heightfield.rows * (sceneState->heightfield.columns - 1));
-    rendererSetShaderProgramUniformInteger(memory->engine, calcTessLevelShaderProgramHandle,
-        "columnCount", sceneState->heightfield.columns);
-    rendererSetShaderProgramUniformFloat(memory->engine, calcTessLevelShaderProgramHandle,
-        "terrainHeight", sceneState->heightfield.maxHeight);
-    rendererBindTexture(memory->engine, activeHeightmapTextureHandle, 0);
+    rendererSetShaderProgramUniformInteger(memory->engineMemory,
+        calcTessLevelShaderProgramHandle, "columnCount", sceneState->heightfield.columns);
+    rendererSetShaderProgramUniformFloat(memory->engineMemory,
+        calcTessLevelShaderProgramHandle, "terrainHeight", sceneState->heightfield.maxHeight);
+    rendererBindTexture(memory->engineMemory, activeHeightmapTextureHandle, 0);
     rendererBindShaderStorageBuffer(
-        memory->engine, sceneState->tessellationLevelBufferHandle, 0);
+        memory->engineMemory, sceneState->tessellationLevelBufferHandle, 0);
     rendererBindShaderStorageBuffer(
-        memory->engine, sceneState->terrainMesh.vertexBufferHandle, 1);
-    rendererUseShaderProgram(memory->engine, calcTessLevelShaderProgramHandle);
+        memory->engineMemory, sceneState->terrainMesh.vertexBufferHandle, 1);
+    rendererUseShaderProgram(memory->engineMemory, calcTessLevelShaderProgramHandle);
     rendererDispatchCompute(meshEdgeCount, 1, 1);
     rendererShaderStorageMemoryBarrier();
 
     // draw terrain mesh
-    rendererUpdateBuffer(memory->engine, sceneState->materialPropsBufferHandle,
+    rendererUpdateBuffer(memory->engineMemory, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), sceneState->worldState.materialProps);
     uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;
-    rendererUseShaderProgram(memory->engine, terrainShaderProgramHandle);
+    rendererUseShaderProgram(memory->engineMemory, terrainShaderProgramHandle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindTexture(memory->engine, activeHeightmapTextureHandle, 0);
-    rendererBindTextureArray(memory->engine, sceneState->albedoTextureArrayHandle, 1);
-    rendererBindTextureArray(memory->engine, sceneState->normalTextureArrayHandle, 2);
-    rendererBindTextureArray(memory->engine, sceneState->displacementTextureArrayHandle, 3);
-    rendererBindTextureArray(memory->engine, sceneState->aoTextureArrayHandle, 4);
-    rendererBindTexture(memory->engine, referenceHeightmapTextureHandle, 5);
-    rendererBindShaderStorageBuffer(memory->engine, sceneState->materialPropsBufferHandle, 1);
-    rendererBindVertexArray(memory->engine, sceneState->terrainMesh.vertexArrayHandle);
-    rendererSetShaderProgramUniformInteger(memory->engine, terrainShaderProgramHandle,
+    rendererBindTexture(memory->engineMemory, activeHeightmapTextureHandle, 0);
+    rendererBindTextureArray(memory->engineMemory, sceneState->albedoTextureArrayHandle, 1);
+    rendererBindTextureArray(memory->engineMemory, sceneState->normalTextureArrayHandle, 2);
+    rendererBindTextureArray(
+        memory->engineMemory, sceneState->displacementTextureArrayHandle, 3);
+    rendererBindTextureArray(memory->engineMemory, sceneState->aoTextureArrayHandle, 4);
+    rendererBindTexture(memory->engineMemory, referenceHeightmapTextureHandle, 5);
+    rendererBindShaderStorageBuffer(
+        memory->engineMemory, sceneState->materialPropsBufferHandle, 1);
+    rendererBindVertexArray(memory->engineMemory, sceneState->terrainMesh.vertexArrayHandle);
+    rendererSetShaderProgramUniformInteger(memory->engineMemory, terrainShaderProgramHandle,
         "materialCount", sceneState->worldState.materialCount);
-    rendererSetShaderProgramUniformVector3(memory->engine, terrainShaderProgramHandle,
+    rendererSetShaderProgramUniformVector3(memory->engineMemory, terrainShaderProgramHandle,
         "terrainDimensions",
         glm::vec3(sceneState->heightfield.spacing * sceneState->heightfield.columns,
             sceneState->heightfield.maxHeight,
             sceneState->heightfield.spacing * sceneState->heightfield.rows));
-    rendererSetShaderProgramUniformInteger(
-        memory->engine, terrainShaderProgramHandle, "visualizationMode", visualizationMode);
-    rendererSetShaderProgramUniformVector2(memory->engine, terrainShaderProgramHandle,
+    rendererSetShaderProgramUniformInteger(memory->engineMemory, terrainShaderProgramHandle,
+        "visualizationMode", visualizationMode);
+    rendererSetShaderProgramUniformVector2(memory->engineMemory, terrainShaderProgramHandle,
         "cursorPos", sceneState->worldState.brushPos);
-    rendererSetShaderProgramUniformFloat(memory->engine, terrainShaderProgramHandle,
+    rendererSetShaderProgramUniformFloat(memory->engineMemory, terrainShaderProgramHandle,
         "cursorRadius", sceneState->worldState.brushRadius);
-    rendererSetShaderProgramUniformFloat(memory->engine, terrainShaderProgramHandle,
+    rendererSetShaderProgramUniformFloat(memory->engineMemory, terrainShaderProgramHandle,
         "cursorFalloff", sceneState->worldState.brushFalloff);
     rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);
     rendererUnbindVertexArray();
@@ -966,7 +984,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     // draw rocks
     if (!sceneState->rockMesh.isLoaded)
     {
-        MeshAsset *rockMesh = assetsGetMesh(memory->engine, ASSET_MESH_ROCK);
+        MeshAsset *rockMesh = engine->assetsGetMesh(memory->engineMemory, ASSET_MESH_ROCK);
         if (rockMesh)
         {
             sceneState->rockMesh.elementCount = rockMesh->elementCount;
@@ -976,25 +994,27 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             uint32 rockInstanceBufferStride = sizeof(glm::mat4);
             uint32 rockElementBufferSize = sizeof(uint32) * sceneState->rockMesh.elementCount;
 
-            sceneState->rockMesh.vertexBufferHandle =
-                rendererCreateBuffer(memory->engine, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-            rendererUpdateBuffer(memory->engine, sceneState->rockMesh.vertexBufferHandle,
+            sceneState->rockMesh.vertexBufferHandle = rendererCreateBuffer(
+                memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+            rendererUpdateBuffer(memory->engineMemory, sceneState->rockMesh.vertexBufferHandle,
                 rockVertexBufferSize, rockMesh->vertices);
 
-            uint32 rockElementBufferHandle =
-                rendererCreateBuffer(memory->engine, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-            rendererUpdateBuffer(memory->engine, rockElementBufferHandle,
+            uint32 rockElementBufferHandle = rendererCreateBuffer(
+                memory->engineMemory, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+            rendererUpdateBuffer(memory->engineMemory, rockElementBufferHandle,
                 rockElementBufferSize, rockMesh->indices);
 
-            sceneState->rockMesh.vertexArrayHandle = rendererCreateVertexArray(memory->engine);
-            rendererBindVertexArray(memory->engine, sceneState->rockMesh.vertexArrayHandle);
-            rendererBindBuffer(memory->engine, rockElementBufferHandle);
-            rendererBindBuffer(memory->engine, sceneState->rockMesh.vertexBufferHandle);
+            sceneState->rockMesh.vertexArrayHandle =
+                rendererCreateVertexArray(memory->engineMemory);
+            rendererBindVertexArray(
+                memory->engineMemory, sceneState->rockMesh.vertexArrayHandle);
+            rendererBindBuffer(memory->engineMemory, rockElementBufferHandle);
+            rendererBindBuffer(memory->engineMemory, sceneState->rockMesh.vertexBufferHandle);
             rendererBindVertexAttribute(
                 0, GL_FLOAT, false, 3, rockVertexBufferStride, 0, false);
             rendererBindVertexAttribute(
                 1, GL_FLOAT, false, 3, rockVertexBufferStride, 3 * sizeof(float), false);
-            rendererBindBuffer(memory->engine, sceneState->rockInstanceBufferHandle);
+            rendererBindBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle);
             rendererBindVertexAttribute(
                 2, GL_FLOAT, false, 4, rockInstanceBufferStride, 0, true);
             rendererBindVertexAttribute(
@@ -1013,10 +1033,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
     }
 
-    rendererUseShaderProgram(memory->engine, rockShaderProgramAsset->handle);
+    rendererUseShaderProgram(memory->engineMemory, rockShaderProgramAsset->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindVertexArray(memory->engine, sceneState->rockMesh.vertexArrayHandle);
+    rendererBindVertexArray(memory->engineMemory, sceneState->rockMesh.vertexArrayHandle);
     rendererDrawElementsInstanced(
         GL_TRIANGLES, sceneState->rockMesh.elementCount, sceneState->rockInstanceCount, 0);
 }
@@ -1024,48 +1044,50 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)
 {
     ShaderProgramAsset *quadShaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_QUAD);
+        memory->engine.assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
     if (!quadShaderProgram)
         return;
 
-    rendererUpdateTexture(memory->engine, memory->state.importedHeightmapTextureHandle,
+    rendererUpdateTexture(memory->engineMemory, memory->state.importedHeightmapTextureHandle,
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset->width, asset->height, asset->data);
 
     rendererBindFramebuffer(
-        memory->engine, memory->state.committedHeightmap.framebufferHandle);
+        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
     rendererSetViewportSize(2048, 2048);
     rendererClearBackBuffer(0, 0, 0, 1);
-    rendererUpdateCameraState(memory->engine, &memory->state.orthographicCameraTransform);
+    rendererUpdateCameraState(
+        memory->engineMemory, &memory->state.orthographicCameraTransform);
 
-    rendererUseShaderProgram(memory->engine, quadShaderProgram->handle);
+    rendererUseShaderProgram(memory->engineMemory, quadShaderProgram->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindTexture(memory->engine, memory->state.importedHeightmapTextureHandle, 0);
-    rendererBindVertexArray(memory->engine, memory->state.quadVertexArrayHandle);
+    rendererBindTexture(memory->engineMemory, memory->state.importedHeightmapTextureHandle, 0);
+    rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);
 
     rendererUnbindFramebuffer(
-        memory->engine, memory->state.committedHeightmap.framebufferHandle);
+        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
 
     updateHeightfieldHeights(&memory->state.sceneState.heightfield, (uint16 *)asset->data);
 }
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
-    rendererUpdateCameraState(memory->engine, &memory->state.orthographicCameraTransform);
+    rendererUpdateCameraState(
+        memory->engineMemory, &memory->state.orthographicCameraTransform);
     rendererSetViewportSize(view->width, view->height);
     rendererClearBackBuffer(0, 0, 0, 1);
 
     ShaderProgramAsset *shaderProgram =
-        assetsGetShaderProgram(memory->engine, ASSET_SHADER_PROGRAM_QUAD);
+        memory->engine.assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
     if (!shaderProgram)
         return;
 
     // render quad
-    rendererUseShaderProgram(memory->engine, shaderProgram->handle);
+    rendererUseShaderProgram(memory->engineMemory, shaderProgram->handle);
     rendererSetPolygonMode(GL_FILL);
     rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    rendererBindTexture(memory->engine, memory->state.workingHeightmap.textureHandle, 0);
-    rendererBindVertexArray(memory->engine, memory->state.quadFlippedYVertexArrayHandle);
+    rendererBindTexture(memory->engineMemory, memory->state.workingHeightmap.textureHandle, 0);
+    rendererBindVertexArray(memory->engineMemory, memory->state.quadFlippedYVertexArrayHandle);
     rendererDrawElements(GL_TRIANGLES, 6);
 }

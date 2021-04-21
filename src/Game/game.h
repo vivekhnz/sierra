@@ -2,9 +2,7 @@
 #define GAME_H
 
 #include <glm/gtc/type_ptr.hpp>
-
-#include "../Engine/engine_platform.h"
-#include "../Engine/engine_heightfield.h"
+#include "../Engine/engine.h"
 
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTFIELD_COLUMNS 256
@@ -95,6 +93,7 @@ struct GameMemory
 
     GameState state;
 
+    EngineClientApi engine;
     EngineMemory *engineMemory;
 };
 

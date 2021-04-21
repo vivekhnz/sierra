@@ -2,9 +2,7 @@
 #define EDITOR_H
 
 #include <glm/gtc/type_ptr.hpp>
-#include "../Engine/engine_platform.h"
-#include "../Engine/engine_assets.h"
-#include "../Engine/engine_heightfield.h"
+#include "../Engine/engine.h"
 
 #define MAX_MATERIAL_COUNT 8
 #define MAX_BRUSH_QUADS 2048
@@ -177,7 +175,8 @@ struct EditorMemory
     MemoryBlock data;
     uint64 dataStorageUsed;
 
-    EngineMemory *engine;
+    EngineClientApi engine;
+    EngineMemory *engineMemory;
 };
 
 struct EditorInput

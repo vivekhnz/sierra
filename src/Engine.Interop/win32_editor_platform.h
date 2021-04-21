@@ -3,7 +3,7 @@
 
 #include <windows.h>
 
-#include "../Engine/engine_platform.h"
+#include "../Engine/engine.h"
 #include "../EditorCore/editor.h"
 
 #define ASSET_LOAD_QUEUE_MAX_SIZE 128
@@ -52,6 +52,7 @@ struct Win32EditorCode
 
 struct Win32PlatformMemory
 {
+    EnginePlatformApi engineApi;
     Win32EditorCode editorCode;
 
     Win32AssetLoadQueue assetLoadQueue;

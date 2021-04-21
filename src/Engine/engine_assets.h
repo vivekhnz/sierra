@@ -98,16 +98,29 @@ struct MeshAsset
     void *indices;
 };
 
-EXPORT ShaderAsset *assetsGetShader(EngineMemory *memory, uint32 assetId);
-EXPORT ShaderProgramAsset *assetsGetShaderProgram(EngineMemory *memory, uint32 assetId);
+#define ASSETS_GET_SHADER(name) ShaderAsset *name(EngineMemory *memory, uint32 assetId)
+typedef ASSETS_GET_SHADER(AssetsGetShader);
 
-EXPORT void assetsLoadTexture(
-    EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset);
-EXPORT TextureAsset *assetsGetTexture(EngineMemory *memory, uint32 assetId);
+#define ASSETS_GET_SHADER_PROGRAM(name)                                                       \
+    ShaderProgramAsset *name(EngineMemory *memory, uint32 assetId)
+typedef ASSETS_GET_SHADER_PROGRAM(AssetsGetShaderProgram);
 
-EXPORT MeshAsset *assetsGetMesh(EngineMemory *memory, uint32 assetId);
+#define ASSETS_LOAD_TEXTURE(name)                                                             \
+    void name(                                                                                \
+        EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset)
+typedef ASSETS_LOAD_TEXTURE(AssetsLoadTexture);
 
-EXPORT void assetsOnAssetLoaded(EngineMemory *memory, uint32 assetId, void *data, uint64 size);
-EXPORT void assetsInvalidateAsset(EngineMemory *memory, uint32 assetId);
+#define ASSETS_GET_TEXTURE(name) TextureAsset *name(EngineMemory *memory, uint32 assetId)
+typedef ASSETS_GET_TEXTURE(AssetsGetTexture);
+
+#define ASSETS_GET_MESH(name) MeshAsset *name(EngineMemory *memory, uint32 assetId)
+typedef ASSETS_GET_MESH(AssetsGetMesh);
+
+#define ASSETS_ON_ASSET_LOADED(name)                                                          \
+    void name(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
+typedef ASSETS_ON_ASSET_LOADED(AssetsOnAssetLoaded);
+
+#define ASSETS_INVALIDATE_ASSET(name) void name(EngineMemory *memory, uint32 assetId)
+typedef ASSETS_INVALIDATE_ASSET(AssetsInvalidateAsset);
 
 #endif

@@ -1,7 +1,6 @@
 #include "win32_editor_platform.h"
 
 #include <windowsx.h>
-#include "../Engine/engine_assets.h"
 
 using namespace System::Windows;
 using namespace System::Windows::Input;
@@ -175,7 +174,8 @@ void win32LoadQueuedAssets()
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            assetsInvalidateAsset(platformMemory->editor->engine, asset->assetId);
+            platformMemory->engineApi.assetsInvalidateAsset(
+                platformMemory->editor->engineMemory, asset->assetId);
         }
     }
 
@@ -187,8 +187,8 @@ void win32LoadQueuedAssets()
         Win32ReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            assetsOnAssetLoaded(
-                platformMemory->editor->engine, request->assetId, result.data, result.size);
+            platformMemory->engineApi.assetsOnAssetLoaded(platformMemory->editor->engineMemory,
+                request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
             platformMemory->assetLoadQueue.length--;
@@ -224,6 +224,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 
     // initialize platform memory
     *platformMemory = {};
+    engineGetPlatformApi(&platformMemory->engineApi);
     platformMemory->editor = editorMemory;
     for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
     {
@@ -249,7 +250,8 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     editorMemory->data.baseAddress = editorMemoryBaseAddress + sizeof(EditorMemory);
     editorMemory->data.size = params->editorMemorySize;
     editorMemory->dataStorageUsed = 0;
-    editorMemory->engine = engineMemory;
+    engineGetClientApi(&editorMemory->engine);
+    editorMemory->engineMemory = engineMemory;
 
     // initialize engine memory
     engineMemory->platformLogMessage = win32LogMessage;
@@ -329,8 +331,8 @@ void win32TickApp(float deltaTime, EditorInput *input)
         assert(result.data);
 
         TextureAsset asset;
-        assetsLoadTexture(
-            platformMemory->editor->engine, result.data, result.size, true, &asset);
+        platformMemory->engineApi.assetsLoadTexture(
+            platformMemory->editor->engineMemory, result.data, result.size, true, &asset);
         platformMemory->editorCode.editorUpdateImportedHeightmapTexture(
             platformMemory->editor, &asset);
 

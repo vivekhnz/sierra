@@ -17,11 +17,10 @@
     <ClCompile Include="..\..\deps\glad\glad.c" />
     <ClCompile Include="..\..\deps\stb\stb_image.c" />
     <ClCompile Include="..\..\deps\fast_obj\fast_obj.c" />
-    <ClCompile Include="engine_assets.cpp" />
-    <ClCompile Include="engine_heightfield.cpp" />
-    <ClCompile Include="engine_renderer.cpp" />
+    <ClCompile Include="engine.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="engine.h" />
     <ClInclude Include="engine_assets.h" />
     <ClInclude Include="engine_heightfield.h" />
     <ClInclude Include="engine_platform.h" />

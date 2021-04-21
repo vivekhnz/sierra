@@ -209,7 +209,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            assetsInvalidateAsset(memory, asset->assetId);
+            platformMemory->engineApi.assetsInvalidateAsset(memory, asset->assetId);
         }
     }
 
@@ -222,8 +222,9 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            assetsOnAssetLoaded(platformMemory->gameMemory->engineMemory, request->assetId,
-                result.data, result.size);
+            platformMemory->engineApi.assetsOnAssetLoaded(
+                platformMemory->gameMemory->engineMemory, request->assetId, result.data,
+                result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue->length--;
@@ -360,6 +361,7 @@ int32 main()
 
     // initialize platform memory
     platformMemory->gameMemory = gameMemory;
+    engineGetPlatformApi(&platformMemory->engineApi);
     for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
     {
         platformMemory->assetLoadQueue.indices[i] = i;
@@ -367,6 +369,7 @@ int32 main()
 
     // initialize game memory
     gameMemory->engineMemory = engineMemory;
+    engineGetClientApi(&gameMemory->engine);
     gameMemory->platformGetAssetAbsolutePath = win32GetAssetAbsolutePath;
     gameMemory->platformReadFile = win32ReadFile;
     gameMemory->platformFreeMemory = win32FreeMemory;
