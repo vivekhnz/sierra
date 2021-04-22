@@ -19,6 +19,9 @@ struct EngineClientApi
     AssetsLoadTexture *assetsLoadTexture;
     AssetsGetTexture *assetsGetTexture;
     AssetsGetMesh *assetsGetMesh;
+
+    HeightfieldGetHeight *heightfieldGetHeight;
+    HeightfieldIsRayIntersecting *heightfieldIsRayIntersecting;
 };
 
 EXPORT void engineGetPlatformApi(EnginePlatformApi *api);

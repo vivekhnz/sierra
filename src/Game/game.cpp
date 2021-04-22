@@ -405,7 +405,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         }
 
         // smoothly lerp Y to terrain height
-        float targetHeight = heightfieldGetHeight(&state->heightfield,
+        float targetHeight = engine->heightfieldGetHeight(&state->heightfield,
                                  state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
             + 1.75f;
         state->firstPersonCameraPos.y =

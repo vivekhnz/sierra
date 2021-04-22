@@ -17,7 +17,7 @@ float getTerrainPatchHeight(Heightfield *heightfield, int32 x, int32 z)
     return heightfield->heights[i];
 }
 
-float heightfieldGetHeight(Heightfield *heightfield, float worldX, float worldZ)
+HEIGHTFIELD_GET_HEIGHT(heightfieldGetHeight)
 {
     float relativeX = worldX - heightfield->position.x;
     float relativeZ = worldZ - heightfield->position.y;
@@ -186,10 +186,7 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     return hit;
 }
 
-bool heightfieldIsRayIntersecting(Heightfield *heightfield,
-    glm::vec3 rayOrigin,
-    glm::vec3 rayDirection,
-    glm::vec3 *out_intersectionPoint)
+HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
 {
     float hitDistance = 999999.0f;
     bool hit = false;

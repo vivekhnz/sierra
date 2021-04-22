@@ -287,7 +287,7 @@ MeshInfo getMeshInfo(uint32 assetId)
     return info;
 }
 
-EXPORT ASSETS_GET_SHADER(assetsGetShader)
+ASSETS_GET_SHADER(assetsGetShader)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -308,7 +308,7 @@ EXPORT ASSETS_GET_SHADER(assetsGetShader)
     return slot->asset;
 }
 
-EXPORT ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
+ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER_PROGRAM);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -361,7 +361,7 @@ EXPORT ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
     return slot->asset;
 }
 
-EXPORT ASSETS_LOAD_TEXTURE(assetsLoadTexture)
+ASSETS_LOAD_TEXTURE(assetsLoadTexture)
 {
     const stbi_uc *rawData = static_cast<stbi_uc *>(data);
     void *loadedData;
@@ -392,7 +392,7 @@ EXPORT ASSETS_LOAD_TEXTURE(assetsLoadTexture)
     stbi_image_free(loadedData);
 }
 
-EXPORT ASSETS_GET_TEXTURE(assetsGetTexture)
+ASSETS_GET_TEXTURE(assetsGetTexture)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_TEXTURE);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -420,16 +420,16 @@ struct FastObjVirtualFile
     uint64 size;
     uint64 position;
 };
-void *fast_obj_file_open(const char *path, void *user_data)
+void *fastObjFileOpen(const char *path, void *user_data)
 {
     return user_data;
 }
-void fast_obj_file_close(void *file, void *user_data)
+void fastObjFileClose(void *file, void *user_data)
 {
     FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
     virtualFile->position = 0;
 }
-uint64 fast_obj_file_read(void *file, void *dst, uint64 bytes, void *user_data)
+uint64 fastObjFileRead(void *file, void *dst, uint64 bytes, void *user_data)
 {
     FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
     uint64 size = bytes;
@@ -442,7 +442,7 @@ uint64 fast_obj_file_read(void *file, void *dst, uint64 bytes, void *user_data)
     virtualFile->position += size;
     return size;
 }
-unsigned long fast_obj_file_size(void *file, void *user_data)
+unsigned long fastObjFileSize(void *file, void *user_data)
 {
     FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
     return virtualFile->size;
@@ -451,10 +451,10 @@ void fastObjLoadMesh(
     EngineMemory *memory, const char *path, void *data, uint64 size, MeshAsset *out_asset)
 {
     fastObjCallbacks callbacks = {};
-    callbacks.file_open = fast_obj_file_open;
-    callbacks.file_close = fast_obj_file_close;
-    callbacks.file_read = fast_obj_file_read;
-    callbacks.file_size = fast_obj_file_size;
+    callbacks.file_open = fastObjFileOpen;
+    callbacks.file_close = fastObjFileClose;
+    callbacks.file_read = fastObjFileRead;
+    callbacks.file_size = fastObjFileSize;
 
     FastObjVirtualFile virtualFile = {};
     virtualFile.data = data;
@@ -487,7 +487,7 @@ void fastObjLoadMesh(
     fast_obj_destroy(mesh);
 }
 
-EXPORT ASSETS_GET_MESH(assetsGetMesh)
+ASSETS_GET_MESH(assetsGetMesh)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_MESH);
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
@@ -509,7 +509,7 @@ EXPORT ASSETS_GET_MESH(assetsGetMesh)
     return slot->asset;
 }
 
-EXPORT ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
+ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
@@ -563,7 +563,7 @@ EXPORT ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
     }
 }
 
-EXPORT ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
+ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;

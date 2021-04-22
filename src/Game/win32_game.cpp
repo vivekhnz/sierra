@@ -1,7 +1,6 @@
 #include "win32_game.h"
 
 #include <GLFW/glfw3.h>
-#include "../Engine/engine_assets.h"
 
 global_variable Win32PlatformMemory *platformMemory;
 

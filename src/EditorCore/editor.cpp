@@ -1,7 +1,6 @@
 #include "editor.h"
 
 #include <glm/gtx/quaternion.hpp>
-#include "../Engine/engine_renderer.h"
 
 struct BrushBlendProperties
 {
@@ -533,8 +532,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                 glm::vec3 intersectionPoint;
                 Heightfield *heightfield = &memory->state.sceneState.heightfield;
-                if (heightfieldIsRayIntersecting(heightfield, activeViewState->cameraPos,
-                        glm::normalize(glm::vec3(worldPos)), &intersectionPoint))
+                if (engine->heightfieldIsRayIntersecting(heightfield,
+                        activeViewState->cameraPos, glm::normalize(glm::vec3(worldPos)),
+                        &intersectionPoint))
                 {
                     glm::vec2 heightfieldSize =
                         glm::vec2(heightfield->columns, heightfield->rows)

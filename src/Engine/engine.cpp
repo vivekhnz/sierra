@@ -18,4 +18,7 @@ void engineGetClientApi(EngineClientApi *api)
     api->assetsLoadTexture = assetsLoadTexture;
     api->assetsGetTexture = assetsGetTexture;
     api->assetsGetMesh = assetsGetMesh;
+
+    api->heightfieldGetHeight = heightfieldGetHeight;
+    api->heightfieldIsRayIntersecting = heightfieldIsRayIntersecting;
 }
