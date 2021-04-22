@@ -9,6 +9,9 @@
 
 #define MAX_SHADERS_PER_PROGRAM 8
 
+RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram);
+RENDERER_CREATE_SHADER(rendererCreateShader);
+
 struct ShaderAssetSlot
 {
     bool isUpToDate;
