@@ -8,8 +8,38 @@
 #define HEIGHTFIELD_COLUMNS 256
 #define MATERIAL_COUNT 3
 
+struct AssetInfo
+{
+    uint32 id;
+    uint8 version;
+};
+
+struct GameAssets
+{
+    AssetInfo shaderProgramTerrainWireframe;
+    AssetInfo shaderProgramTerrainTextured;
+    AssetInfo shaderProgramTerrainCalcTessLevel;
+
+    AssetInfo textureGroundAlbedo;
+    AssetInfo textureGroundNormal;
+    AssetInfo textureGroundDisplacement;
+    AssetInfo textureGroundAo;
+
+    AssetInfo textureRockAlbedo;
+    AssetInfo textureRockNormal;
+    AssetInfo textureRockDisplacement;
+    AssetInfo textureRockAo;
+
+    AssetInfo textureSnowAlbedo;
+    AssetInfo textureSnowNormal;
+    AssetInfo textureSnowDisplacement;
+    AssetInfo textureSnowAo;
+};
+
 struct GameState
 {
+    GameAssets assets;
+
     bool isOrbitCameraMode;
     bool isWireframeMode;
     bool isLightingEnabled;
@@ -42,19 +72,6 @@ struct GameState
     uint32 normalTextureArrayHandle;
     uint32 displacementTextureArrayHandle;
     uint32 aoTextureArrayHandle;
-
-    uint8 groundAlbedoTextureVersion;
-    uint8 rockAlbedoTextureVersion;
-    uint8 snowAlbedoTextureVersion;
-    uint8 groundNormalTextureVersion;
-    uint8 rockNormalTextureVersion;
-    uint8 snowNormalTextureVersion;
-    uint8 groundDisplacementTextureVersion;
-    uint8 rockDisplacementTextureVersion;
-    uint8 snowDisplacementTextureVersion;
-    uint8 groundAoTextureVersion;
-    uint8 rockAoTextureVersion;
-    uint8 snowAoTextureVersion;
 
     uint32 materialPropsBufferHandle;
 };

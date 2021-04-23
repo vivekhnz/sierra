@@ -57,10 +57,24 @@ HeightmapRenderTexture createHeightmapRenderTexture(EditorMemory *memory)
 bool initializeEditor(EditorMemory *memory)
 {
     EngineClientApi *engine = &memory->engine;
+    EditorAssets *assets = &memory->state.assets;
+
     if (!engine->rendererInitialize(memory->engineMemory))
     {
         return 0;
     }
+
+    assets->shaderProgramQuad.id = ASSET_SHADER_PROGRAM_QUAD;
+    assets->shaderProgramTerrainCalcTessLevel.id =
+        ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL;
+    assets->shaderProgramTerrainTextured.id = ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED;
+    assets->shaderProgramBrushMask.id = ASSET_SHADER_PROGRAM_BRUSH_MASK;
+    assets->shaderProgramBrushBlendAddSub.id = ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB;
+    assets->shaderProgramBrushBlendFlatten.id = ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN;
+    assets->shaderProgramBrushBlendSmooth.id = ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH;
+    assets->shaderProgramRock.id = ASSET_SHADER_PROGRAM_ROCK;
+
+    assets->meshRock.id = ASSET_MESH_ROCK;
 
     SceneState *sceneState = &memory->state.sceneState;
 
@@ -403,9 +417,10 @@ void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
 void commitChanges(EditorMemory *memory)
 {
     EngineClientApi *engine = &memory->engine;
+    EditorAssets *assets = &memory->state.assets;
 
     ShaderProgramAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
+        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad.id);
     if (!quadShaderProgram)
         return;
 
@@ -456,17 +471,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     EngineClientApi *engine = &memory->engine;
+    EditorAssets *assets = &memory->state.assets;
 
     ShaderProgramAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
-    ShaderProgramAsset *brushMaskShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_MASK);
+        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad.id);
+    ShaderProgramAsset *brushMaskShaderProgram = engine->assetsGetShaderProgram(
+        memory->engineMemory, assets->shaderProgramBrushMask.id);
     ShaderProgramAsset *brushBlendAddSubShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB);
+        memory->engineMemory, assets->shaderProgramBrushBlendAddSub.id);
     ShaderProgramAsset *brushBlendFlattenShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN);
+        memory->engineMemory, assets->shaderProgramBrushBlendFlatten.id);
     ShaderProgramAsset *brushBlendSmoothShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH);
+        memory->engineMemory, assets->shaderProgramBrushBlendSmooth.id);
     if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram
         || !brushBlendFlattenShaderProgram || !brushBlendSmoothShaderProgram)
     {
@@ -801,6 +817,7 @@ API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     EngineClientApi *engine = &memory->engine;
+    EditorAssets *assets = &memory->state.assets;
     SceneState *sceneState = &memory->state.sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
@@ -905,11 +922,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     // get shader programs
     ShaderProgramAsset *calcTessLevelShaderProgramAsset = engine->assetsGetShaderProgram(
-        memory->engineMemory, ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL);
+        memory->engineMemory, assets->shaderProgramTerrainCalcTessLevel.id);
     ShaderProgramAsset *terrainShaderProgramAsset = engine->assetsGetShaderProgram(
-        memory->engineMemory, ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED);
+        memory->engineMemory, assets->shaderProgramTerrainTextured.id);
     ShaderProgramAsset *rockShaderProgramAsset =
-        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_ROCK);
+        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramRock.id);
     if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset
         || !rockShaderProgramAsset)
         return;
@@ -1008,7 +1025,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     // draw rocks
     if (!sceneState->rockMesh.isLoaded)
     {
-        MeshAsset *rockMesh = engine->assetsGetMesh(memory->engineMemory, ASSET_MESH_ROCK);
+        MeshAsset *rockMesh = engine->assetsGetMesh(memory->engineMemory, assets->meshRock.id);
         if (rockMesh)
         {
             sceneState->rockMesh.elementCount = rockMesh->elementCount;
@@ -1072,9 +1089,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)
 {
     EngineClientApi *engine = &memory->engine;
+    EditorAssets *assets = &memory->state.assets;
 
     ShaderProgramAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
+        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad.id);
     if (!quadShaderProgram)
         return;
 
@@ -1106,6 +1124,7 @@ API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightma
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     EngineClientApi *engine = &memory->engine;
+    EditorAssets *assets = &memory->state.assets;
 
     engine->rendererUpdateCameraState(
         memory->engineMemory, &memory->state.orthographicCameraTransform);
@@ -1113,7 +1132,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererClearBackBuffer(0, 0, 0, 1);
 
     ShaderProgramAsset *shaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, ASSET_SHADER_PROGRAM_QUAD);
+        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad.id);
     if (!shaderProgram)
         return;
 

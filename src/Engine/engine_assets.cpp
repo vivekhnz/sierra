@@ -328,24 +328,24 @@ ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
 
     uint32 shaderHandles[MAX_SHADERS_PER_PROGRAM];
     uint8 shaderVersions[MAX_SHADERS_PER_PROGRAM];
-    bool shouldCreateShader = false;
+    bool shouldCreateShaderProgram = false;
     for (uint32 i = 0; i < shaderCount; i++)
     {
         ShaderAsset *shader = assetsGetShader(memory, shaderAssetIds[i]);
         if (!shader)
         {
-            shouldCreateShader = false;
+            shouldCreateShaderProgram = false;
             break;
         }
         if (shader && shader->version > slot->shaderVersions[i])
         {
-            shouldCreateShader = true;
+            shouldCreateShaderProgram = true;
         }
         shaderHandles[i] = shader->handle;
         shaderVersions[i] = shader->version;
     }
 
-    if (shouldCreateShader)
+    if (shouldCreateShaderProgram)
     {
         uint32 handle;
         if (rendererCreateShaderProgram(memory, shaderCount, shaderHandles, &handle))

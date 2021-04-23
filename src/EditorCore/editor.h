@@ -138,8 +138,30 @@ struct HeightmapRenderTexture
     uint32 framebufferHandle;
 };
 
+struct AssetInfo
+{
+    uint32 id;
+    uint8 version;
+};
+
+struct EditorAssets
+{
+    AssetInfo shaderProgramQuad;
+    AssetInfo shaderProgramTerrainCalcTessLevel;
+    AssetInfo shaderProgramTerrainTextured;
+    AssetInfo shaderProgramBrushMask;
+    AssetInfo shaderProgramBrushBlendAddSub;
+    AssetInfo shaderProgramBrushBlendFlatten;
+    AssetInfo shaderProgramBrushBlendSmooth;
+    AssetInfo shaderProgramRock;
+
+    AssetInfo meshRock;
+};
+
 struct EditorState
 {
+    EditorAssets assets;
+
     glm::mat4 orthographicCameraTransform;
     uint32 quadVertexArrayHandle;
     uint32 quadFlippedYVertexArrayHandle;
