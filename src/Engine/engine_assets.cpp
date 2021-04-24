@@ -91,75 +91,75 @@ ShaderInfo getShaderInfo(uint32 assetId)
     {
     case ASSET_SHADER_TEXTURE_VERTEX:
         info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/texture_vertex_shader.glsl";
+        info.relativePath = "texture_vertex_shader.glsl";
         break;
     case ASSET_SHADER_TEXTURE_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/texture_fragment_shader.glsl";
+        info.relativePath = "texture_fragment_shader.glsl";
         break;
     case ASSET_SHADER_TERRAIN_VERTEX:
         info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/terrain_vertex_shader.glsl";
+        info.relativePath = "terrain_vertex_shader.glsl";
         break;
     case ASSET_SHADER_TERRAIN_TESS_CTRL:
         info.type = GL_TESS_CONTROL_SHADER;
-        info.relativePath = "data/terrain_tess_ctrl_shader.glsl";
+        info.relativePath = "terrain_tess_ctrl_shader.glsl";
         break;
     case ASSET_SHADER_TERRAIN_TESS_EVAL:
         info.type = GL_TESS_EVALUATION_SHADER;
-        info.relativePath = "data/terrain_tess_eval_shader.glsl";
+        info.relativePath = "terrain_tess_eval_shader.glsl";
         break;
     case ASSET_SHADER_TERRAIN_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/terrain_fragment_shader.glsl";
+        info.relativePath = "terrain_fragment_shader.glsl";
         break;
     case ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL:
         info.type = GL_COMPUTE_SHADER;
-        info.relativePath = "data/terrain_calc_tess_levels_comp_shader.glsl";
+        info.relativePath = "terrain_calc_tess_levels_comp_shader.glsl";
         break;
     case ASSET_SHADER_WIREFRAME_VERTEX:
         info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/wireframe_vertex_shader.glsl";
+        info.relativePath = "wireframe_vertex_shader.glsl";
         break;
     case ASSET_SHADER_WIREFRAME_TESS_CTRL:
         info.type = GL_TESS_CONTROL_SHADER;
-        info.relativePath = "data/wireframe_tess_ctrl_shader.glsl";
+        info.relativePath = "wireframe_tess_ctrl_shader.glsl";
         break;
     case ASSET_SHADER_WIREFRAME_TESS_EVAL:
         info.type = GL_TESS_EVALUATION_SHADER;
-        info.relativePath = "data/wireframe_tess_eval_shader.glsl";
+        info.relativePath = "wireframe_tess_eval_shader.glsl";
         break;
     case ASSET_SHADER_WIREFRAME_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/wireframe_fragment_shader.glsl";
+        info.relativePath = "wireframe_fragment_shader.glsl";
         break;
     case ASSET_SHADER_BRUSH_MASK_VERTEX:
         info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/brush_mask_vertex_shader.glsl";
+        info.relativePath = "brush_mask_vertex_shader.glsl";
         break;
     case ASSET_SHADER_BRUSH_MASK_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/brush_mask_fragment_shader.glsl";
+        info.relativePath = "brush_mask_fragment_shader.glsl";
         break;
     case ASSET_SHADER_BRUSH_BLEND_ADD_SUB_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/brush_blend_add_sub_fragment_shader.glsl";
+        info.relativePath = "brush_blend_add_sub_fragment_shader.glsl";
         break;
     case ASSET_SHADER_BRUSH_BLEND_FLATTEN_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/brush_blend_flatten_fragment_shader.glsl";
+        info.relativePath = "brush_blend_flatten_fragment_shader.glsl";
         break;
     case ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/brush_blend_smooth_fragment_shader.glsl";
+        info.relativePath = "brush_blend_smooth_fragment_shader.glsl";
         break;
     case ASSET_SHADER_ROCK_VERTEX:
         info.type = GL_VERTEX_SHADER;
-        info.relativePath = "data/rock_vertex_shader.glsl";
+        info.relativePath = "rock_vertex_shader.glsl";
         break;
     case ASSET_SHADER_ROCK_FRAGMENT:
         info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "data/rock_fragment_shader.glsl";
+        info.relativePath = "rock_fragment_shader.glsl";
         break;
     }
     return info;
@@ -227,51 +227,51 @@ TextureInfo getTextureInfo(uint32 assetId)
     switch (assetId)
     {
     case ASSET_TEXTURE_GROUND_ALBEDO:
-        info.relativePath = "data/ground_albedo.bmp";
+        info.relativePath = "ground_albedo.bmp";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_GROUND_NORMAL:
-        info.relativePath = "data/ground_normal.bmp";
+        info.relativePath = "ground_normal.bmp";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_GROUND_DISPLACEMENT:
-        info.relativePath = "data/ground_displacement.tga";
+        info.relativePath = "ground_displacement.tga";
         info.is16Bit = true;
         break;
     case ASSET_TEXTURE_GROUND_AO:
-        info.relativePath = "data/ground_ao.tga";
+        info.relativePath = "ground_ao.tga";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_ROCK_ALBEDO:
-        info.relativePath = "data/rock_albedo.jpg";
+        info.relativePath = "rock_albedo.jpg";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_ROCK_NORMAL:
-        info.relativePath = "data/rock_normal.jpg";
+        info.relativePath = "rock_normal.jpg";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_ROCK_DISPLACEMENT:
-        info.relativePath = "data/rock_displacement.tga";
+        info.relativePath = "rock_displacement.tga";
         info.is16Bit = true;
         break;
     case ASSET_TEXTURE_ROCK_AO:
-        info.relativePath = "data/rock_ao.tga";
+        info.relativePath = "rock_ao.tga";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_SNOW_ALBEDO:
-        info.relativePath = "data/snow_albedo.jpg";
+        info.relativePath = "snow_albedo.jpg";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_SNOW_NORMAL:
-        info.relativePath = "data/snow_normal.jpg";
+        info.relativePath = "snow_normal.jpg";
         info.is16Bit = false;
         break;
     case ASSET_TEXTURE_SNOW_DISPLACEMENT:
-        info.relativePath = "data/snow_displacement.tga";
+        info.relativePath = "snow_displacement.tga";
         info.is16Bit = true;
         break;
     case ASSET_TEXTURE_SNOW_AO:
-        info.relativePath = "data/snow_ao.tga";
+        info.relativePath = "snow_ao.tga";
         info.is16Bit = false;
         break;
     }
@@ -284,7 +284,7 @@ MeshInfo getMeshInfo(uint32 assetId)
     switch (assetId)
     {
     case ASSET_MESH_ROCK:
-        info.relativePath = "data/rock.obj";
+        info.relativePath = "rock.obj";
         break;
     }
     return info;

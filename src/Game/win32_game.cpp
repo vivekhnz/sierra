@@ -44,6 +44,11 @@ void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
     {
         *dstCursor++ = exePath[i];
     }
+    *dstCursor++ = 'd';
+    *dstCursor++ = 'a';
+    *dstCursor++ = 't';
+    *dstCursor++ = 'a';
+    *dstCursor++ = '\\';
     for (const char *srcCursor = relativePath; *srcCursor; srcCursor++)
     {
         *dstCursor++ = *srcCursor;

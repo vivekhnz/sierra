@@ -8,37 +8,43 @@
 #define HEIGHTFIELD_COLUMNS 256
 #define MATERIAL_COUNT 3
 
-struct AssetInfo
-{
-    uint32 id;
-    uint8 version;
-};
-
 struct GameAssets
 {
-    AssetInfo shaderProgramTerrainWireframe;
-    AssetInfo shaderProgramTerrainTextured;
-    AssetInfo shaderProgramTerrainCalcTessLevel;
+    uint32 shaderProgramTerrainWireframe;
+    uint32 shaderProgramTerrainTextured;
+    uint32 shaderProgramTerrainCalcTessLevel;
 
-    AssetInfo textureGroundAlbedo;
-    AssetInfo textureGroundNormal;
-    AssetInfo textureGroundDisplacement;
-    AssetInfo textureGroundAo;
+    uint32 textureGroundAlbedo;
+    uint32 textureGroundNormal;
+    uint32 textureGroundDisplacement;
+    uint32 textureGroundAo;
 
-    AssetInfo textureRockAlbedo;
-    AssetInfo textureRockNormal;
-    AssetInfo textureRockDisplacement;
-    AssetInfo textureRockAo;
+    uint32 textureRockAlbedo;
+    uint32 textureRockNormal;
+    uint32 textureRockDisplacement;
+    uint32 textureRockAo;
 
-    AssetInfo textureSnowAlbedo;
-    AssetInfo textureSnowNormal;
-    AssetInfo textureSnowDisplacement;
-    AssetInfo textureSnowAo;
+    uint32 textureSnowAlbedo;
+    uint32 textureSnowNormal;
+    uint32 textureSnowDisplacement;
+    uint32 textureSnowAo;
 };
 
 struct GameState
 {
     GameAssets assets;
+    uint8 groundAlbedoTextureVersion;
+    uint8 rockAlbedoTextureVersion;
+    uint8 snowAlbedoTextureVersion;
+    uint8 groundNormalTextureVersion;
+    uint8 rockNormalTextureVersion;
+    uint8 snowNormalTextureVersion;
+    uint8 groundDisplacementTextureVersion;
+    uint8 rockDisplacementTextureVersion;
+    uint8 snowDisplacementTextureVersion;
+    uint8 groundAoTextureVersion;
+    uint8 rockAoTextureVersion;
+    uint8 snowAoTextureVersion;
 
     bool isOrbitCameraMode;
     bool isWireframeMode;

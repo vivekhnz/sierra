@@ -138,24 +138,18 @@ struct HeightmapRenderTexture
     uint32 framebufferHandle;
 };
 
-struct AssetInfo
-{
-    uint32 id;
-    uint8 version;
-};
-
 struct EditorAssets
 {
-    AssetInfo shaderProgramQuad;
-    AssetInfo shaderProgramTerrainCalcTessLevel;
-    AssetInfo shaderProgramTerrainTextured;
-    AssetInfo shaderProgramBrushMask;
-    AssetInfo shaderProgramBrushBlendAddSub;
-    AssetInfo shaderProgramBrushBlendFlatten;
-    AssetInfo shaderProgramBrushBlendSmooth;
-    AssetInfo shaderProgramRock;
+    uint32 shaderProgramQuad;
+    uint32 shaderProgramTerrainCalcTessLevel;
+    uint32 shaderProgramTerrainTextured;
+    uint32 shaderProgramBrushMask;
+    uint32 shaderProgramBrushBlendAddSub;
+    uint32 shaderProgramBrushBlendFlatten;
+    uint32 shaderProgramBrushBlendSmooth;
+    uint32 shaderProgramRock;
 
-    AssetInfo meshRock;
+    uint32 meshRock;
 };
 
 struct EditorState
