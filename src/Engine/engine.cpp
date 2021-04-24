@@ -16,6 +16,7 @@ void engineGetPlatformApi(EnginePlatformApi *api)
 void engineGetClientApi(EngineClientApi *api)
 {
     api->assetsRegisterTexture = assetsRegisterTexture;
+    api->assetsRegisterShaderProgram = assetsRegisterShaderProgram;
     api->assetsGetShader = assetsGetShader;
     api->assetsGetShaderProgram = assetsGetShaderProgram;
     api->assetsLoadTexture = assetsLoadTexture;

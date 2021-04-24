@@ -36,20 +36,6 @@ enum ShaderAssetId
 };
 #define ASSET_SHADER_COUNT 18
 
-enum ShaderProgramAssetId
-{
-    ASSET_ID(SHADER_PROGRAM, QUAD, 0),
-    ASSET_ID(SHADER_PROGRAM, TERRAIN_TEXTURED, 1),
-    ASSET_ID(SHADER_PROGRAM, TERRAIN_WIREFRAME, 2),
-    ASSET_ID(SHADER_PROGRAM, TERRAIN_CALC_TESS_LEVEL, 3),
-    ASSET_ID(SHADER_PROGRAM, BRUSH_MASK, 4),
-    ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_ADD_SUB, 5),
-    ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_FLATTEN, 6),
-    ASSET_ID(SHADER_PROGRAM, BRUSH_BLEND_SMOOTH, 7),
-    ASSET_ID(SHADER_PROGRAM, ROCK, 8)
-};
-#define ASSET_SHADER_PROGRAM_COUNT 9
-
 enum MeshAssetId
 {
     ASSET_ID(MESH, ROCK, 0)
@@ -79,12 +65,14 @@ struct MeshAsset
     void *vertices;
     void *indices;
 };
-
 struct LoadedAsset
 {
     uint8 version;
     union
     {
+        void *untyped;
+        ShaderAsset *shader;
+        ShaderProgramAsset *shaderProgram;
         TextureAsset *texture;
     };
 };
@@ -94,30 +82,48 @@ struct TextureAssetMetadata
     bool is16Bit;
 };
 
-struct AssetLoadState
+struct AssetFileState
 {
+    char *relativePath;
     bool isUpToDate;
     bool isLoadQueued;
-    LoadedAsset asset;
+};
+struct CompositeAssetState
+{
+    uint32 dependencyCount;
+    uint32 *dependencyAssetIds;
+    uint8 *dependencyVersions;
 };
 
+enum AssetRegistrationType
+{
+    ASSET_REG_FILE,
+    ASSET_REG_COMPOSITE,
+    ASSET_REG_VIRTUAL
+};
 struct AssetRegistration
 {
     uint32 id;
-    char *relativePath;
-    AssetLoadState *loadState;
-    struct
+    AssetRegistrationType regType;
+    union
     {
-        union
-        {
-            TextureAssetMetadata *texture;
-        };
+        AssetFileState *fileState;
+        CompositeAssetState *compositeState;
+    };
+    union
+    {
+        TextureAssetMetadata *texture;
     } metadata;
+    LoadedAsset asset;
 };
 
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \
     uint32 name(EngineMemory *memory, const char *relativePath, bool is16Bit)
 typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
+
+#define ASSETS_REGISTER_SHADER_PROGRAM(name)                                                  \
+    uint32 name(EngineMemory *memory, uint32 *shaderAssetIds, uint32 shaderCount)
+typedef ASSETS_REGISTER_SHADER_PROGRAM(AssetsRegisterShaderProgram);
 
 #define ASSETS_GET_REGISTERED_ASSET_COUNT(name) uint32 name(EngineMemory *memory)
 typedef ASSETS_GET_REGISTERED_ASSET_COUNT(AssetsGetRegisteredAssetCount);
@@ -128,8 +134,7 @@ typedef ASSETS_GET_REGISTERED_ASSETS(AssetsGetRegisteredAssets);
 #define ASSETS_GET_SHADER(name) ShaderAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER(AssetsGetShader);
 
-#define ASSETS_GET_SHADER_PROGRAM(name)                                                       \
-    ShaderProgramAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_SHADER_PROGRAM(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER_PROGRAM(AssetsGetShaderProgram);
 
 #define ASSETS_LOAD_TEXTURE(name)                                                             \

@@ -3,6 +3,7 @@
 #include "../Engine/engine.h"
 
 #define MAX_PATH 260
+#define arrayCount(array) (sizeof(array) / sizeof(array[0]))
 
 float clamp(float value, float min, float max)
 {
@@ -57,9 +58,28 @@ bool initializeGame(GameMemory *memory)
         return 0;
     }
 
-    assets->shaderProgramTerrainWireframe = ASSET_SHADER_PROGRAM_TERRAIN_WIREFRAME;
-    assets->shaderProgramTerrainTextured = ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED;
-    assets->shaderProgramTerrainCalcTessLevel = ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL;
+    uint32 wireframeShaderAssetIds[] = {
+        ASSET_SHADER_WIREFRAME_VERTEX,    //
+        ASSET_SHADER_WIREFRAME_TESS_CTRL, //
+        ASSET_SHADER_WIREFRAME_TESS_EVAL, //
+        ASSET_SHADER_WIREFRAME_FRAGMENT   //
+    };
+    assets->shaderProgramTerrainWireframe = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, wireframeShaderAssetIds, arrayCount(wireframeShaderAssetIds));
+
+    uint32 texturedShaderAssetIds[] = {
+        ASSET_SHADER_TERRAIN_VERTEX,    //
+        ASSET_SHADER_TERRAIN_TESS_CTRL, //
+        ASSET_SHADER_TERRAIN_TESS_EVAL, //
+        ASSET_SHADER_TERRAIN_FRAGMENT   //
+    };
+    assets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, texturedShaderAssetIds, arrayCount(texturedShaderAssetIds));
+
+    uint32 calcTessLevelShaderAssetIds[] = {ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL};
+    assets->shaderProgramTerrainCalcTessLevel =
+        engine->assetsRegisterShaderProgram(memory->engineMemory, calcTessLevelShaderAssetIds,
+            arrayCount(calcTessLevelShaderAssetIds));
 
     assets->textureGroundAlbedo =
         engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
@@ -558,10 +578,13 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         : assets->shaderProgramTerrainTextured;
     uint32 terrainPolygonMode = state->isWireframeMode ? GL_LINE : GL_FILL;
 
-    ShaderProgramAsset *calcTessLevelShaderProgram = engine->assetsGetShaderProgram(
+    LoadedAsset *calcTessLevelShaderProgramAsset = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramTerrainCalcTessLevel);
-    ShaderProgramAsset *terrainShaderProgram =
+    LoadedAsset *terrainShaderProgramAsset =
         engine->assetsGetShaderProgram(memory->engineMemory, terrainShaderProgramAssetId);
+    ShaderProgramAsset *calcTessLevelShaderProgram =
+        calcTessLevelShaderProgramAsset->shaderProgram;
+    ShaderProgramAsset *terrainShaderProgram = terrainShaderProgramAsset->shaderProgram;
     if (calcTessLevelShaderProgram && terrainShaderProgram)
     {
         uint32 meshEdgeCount = (2 * (state->heightfield.rows * state->heightfield.columns))

@@ -2,6 +2,8 @@
 
 #include <glm/gtx/quaternion.hpp>
 
+#define arrayCount(array) (sizeof(array) / sizeof(array[0]))
+
 struct BrushBlendProperties
 {
     uint32 shaderProgramHandle;
@@ -64,6 +66,51 @@ bool initializeEditor(EditorMemory *memory)
         return 0;
     }
 
+    uint32 quadShaderAssetIds[] = {ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_TEXTURE_FRAGMENT};
+    assets->shaderProgramQuad = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, quadShaderAssetIds, arrayCount(quadShaderAssetIds));
+
+    uint32 calcTessLevelShaderAssetIds[] = {ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL};
+    assets->shaderProgramTerrainCalcTessLevel =
+        engine->assetsRegisterShaderProgram(memory->engineMemory, calcTessLevelShaderAssetIds,
+            arrayCount(calcTessLevelShaderAssetIds));
+
+    uint32 texturedShaderAssetIds[] = {
+        ASSET_SHADER_TERRAIN_VERTEX,    //
+        ASSET_SHADER_TERRAIN_TESS_CTRL, //
+        ASSET_SHADER_TERRAIN_TESS_EVAL, //
+        ASSET_SHADER_TERRAIN_FRAGMENT   //
+    };
+    assets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, texturedShaderAssetIds, arrayCount(texturedShaderAssetIds));
+
+    uint32 brushMaskShaderAssetIds[] = {
+        ASSET_SHADER_BRUSH_MASK_VERTEX, ASSET_SHADER_BRUSH_MASK_FRAGMENT};
+    assets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, brushMaskShaderAssetIds, arrayCount(brushMaskShaderAssetIds));
+
+    uint32 brushBlendAddSubShaderAssetIds[] = {
+        ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_BRUSH_BLEND_ADD_SUB_FRAGMENT};
+    assets->shaderProgramBrushBlendAddSub =
+        engine->assetsRegisterShaderProgram(memory->engineMemory,
+            brushBlendAddSubShaderAssetIds, arrayCount(brushBlendAddSubShaderAssetIds));
+
+    uint32 brushBlendFlattenShaderAssetIds[] = {
+        ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_BRUSH_BLEND_FLATTEN_FRAGMENT};
+    assets->shaderProgramBrushBlendFlatten =
+        engine->assetsRegisterShaderProgram(memory->engineMemory,
+            brushBlendFlattenShaderAssetIds, arrayCount(brushBlendFlattenShaderAssetIds));
+
+    uint32 brushBlendSmoothShaderAssetIds[] = {
+        ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT};
+    assets->shaderProgramBrushBlendSmooth =
+        engine->assetsRegisterShaderProgram(memory->engineMemory,
+            brushBlendSmoothShaderAssetIds, arrayCount(brushBlendSmoothShaderAssetIds));
+
+    uint32 rockShaderAssetIds[] = {ASSET_SHADER_ROCK_VERTEX, ASSET_SHADER_ROCK_FRAGMENT};
+    assets->shaderProgramRock = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, rockShaderAssetIds, arrayCount(rockShaderAssetIds));
+
     engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
     engine->assetsRegisterTexture(memory->engineMemory, "ground_normal.bmp", false);
     engine->assetsRegisterTexture(memory->engineMemory, "ground_displacement.tga", true);
@@ -76,15 +123,6 @@ bool initializeEditor(EditorMemory *memory)
     engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
     engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
     engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
-
-    assets->shaderProgramQuad = ASSET_SHADER_PROGRAM_QUAD;
-    assets->shaderProgramTerrainCalcTessLevel = ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL;
-    assets->shaderProgramTerrainTextured = ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED;
-    assets->shaderProgramBrushMask = ASSET_SHADER_PROGRAM_BRUSH_MASK;
-    assets->shaderProgramBrushBlendAddSub = ASSET_SHADER_PROGRAM_BRUSH_BLEND_ADD_SUB;
-    assets->shaderProgramBrushBlendFlatten = ASSET_SHADER_PROGRAM_BRUSH_BLEND_FLATTEN;
-    assets->shaderProgramBrushBlendSmooth = ASSET_SHADER_PROGRAM_BRUSH_BLEND_SMOOTH;
-    assets->shaderProgramRock = ASSET_SHADER_PROGRAM_ROCK;
 
     assets->meshRock = ASSET_MESH_ROCK;
 
@@ -431,9 +469,9 @@ void commitChanges(EditorMemory *memory)
     EngineClientApi *engine = &memory->engine;
     EditorAssets *assets = &memory->state.assets;
 
-    ShaderProgramAsset *quadShaderProgram =
+    LoadedAsset *quadShaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
-    if (!quadShaderProgram)
+    if (!quadShaderProgram->shaderProgram)
         return;
 
     engine->rendererBindFramebuffer(
@@ -443,7 +481,8 @@ void commitChanges(EditorMemory *memory)
     engine->rendererUpdateCameraState(
         memory->engineMemory, &memory->state.orthographicCameraTransform);
 
-    engine->rendererUseShaderProgram(memory->engineMemory, quadShaderProgram->handle);
+    engine->rendererUseShaderProgram(
+        memory->engineMemory, quadShaderProgram->shaderProgram->handle);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     engine->rendererBindTexture(
@@ -485,18 +524,20 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     EngineClientApi *engine = &memory->engine;
     EditorAssets *assets = &memory->state.assets;
 
-    ShaderProgramAsset *quadShaderProgram =
+    LoadedAsset *quadShaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
-    ShaderProgramAsset *brushMaskShaderProgram =
+    LoadedAsset *brushMaskShaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramBrushMask);
-    ShaderProgramAsset *brushBlendAddSubShaderProgram = engine->assetsGetShaderProgram(
+    LoadedAsset *brushBlendAddSubShaderProgram = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramBrushBlendAddSub);
-    ShaderProgramAsset *brushBlendFlattenShaderProgram = engine->assetsGetShaderProgram(
+    LoadedAsset *brushBlendFlattenShaderProgram = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramBrushBlendFlatten);
-    ShaderProgramAsset *brushBlendSmoothShaderProgram = engine->assetsGetShaderProgram(
+    LoadedAsset *brushBlendSmoothShaderProgram = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramBrushBlendSmooth);
-    if (!quadShaderProgram || !brushMaskShaderProgram || !brushBlendAddSubShaderProgram
-        || !brushBlendFlattenShaderProgram || !brushBlendSmoothShaderProgram)
+    if (!quadShaderProgram->shaderProgram || !brushMaskShaderProgram->shaderProgram
+        || !brushBlendAddSubShaderProgram->shaderProgram
+        || !brushBlendFlattenShaderProgram->shaderProgram
+        || !brushBlendSmoothShaderProgram->shaderProgram)
     {
         return;
     }
@@ -776,25 +817,25 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     switch (memory->state.uiState.tool)
     {
     case EDITOR_TOOL_RAISE_TERRAIN:
-        blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->handle;
+        blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 1;
         blendProps.addSubSign = 1;
         break;
     case EDITOR_TOOL_LOWER_TERRAIN:
-        blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->handle;
+        blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 1;
         blendProps.addSubSign = -1;
         break;
     case EDITOR_TOOL_FLATTEN_TERRAIN:
-        blendProps.shaderProgramHandle = brushBlendFlattenShaderProgram->handle;
+        blendProps.shaderProgramHandle = brushBlendFlattenShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = false;
         blendProps.iterations = 1;
         blendProps.flattenHeight = memory->state.activeBrushStrokeInitialHeight;
         break;
     case EDITOR_TOOL_SMOOTH_TERRAIN:
-        blendProps.shaderProgramHandle = brushBlendSmoothShaderProgram->handle;
+        blendProps.shaderProgramHandle = brushBlendSmoothShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 3;
         break;
@@ -802,11 +843,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     compositeHeightmap(memory, memory->state.committedHeightmap.textureHandle,
         &memory->state.workingBrushInfluenceMask, &memory->state.workingHeightmap,
-        brushMaskShaderProgram->handle, memory->state.activeBrushStrokeInstanceCount, 0,
-        &blendProps);
+        brushMaskShaderProgram->shaderProgram->handle,
+        memory->state.activeBrushStrokeInstanceCount, 0, &blendProps);
     compositeHeightmap(memory, memory->state.workingHeightmap.textureHandle,
         &memory->state.previewBrushInfluenceMask, &memory->state.previewHeightmap,
-        brushMaskShaderProgram->handle, 1, MAX_BRUSH_QUADS - 1, &blendProps);
+        brushMaskShaderProgram->shaderProgram->handle, 1, MAX_BRUSH_QUADS - 1, &blendProps);
 
     if (memory->state.isEditingHeightmap)
     {
@@ -941,14 +982,14 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     // get shader programs
-    ShaderProgramAsset *calcTessLevelShaderProgramAsset = engine->assetsGetShaderProgram(
+    LoadedAsset *calcTessLevelShaderProgramAsset = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramTerrainCalcTessLevel);
-    ShaderProgramAsset *terrainShaderProgramAsset = engine->assetsGetShaderProgram(
+    LoadedAsset *terrainShaderProgramAsset = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramTerrainTextured);
-    ShaderProgramAsset *rockShaderProgramAsset =
+    LoadedAsset *rockShaderProgramAsset =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramRock);
-    if (!calcTessLevelShaderProgramAsset || !terrainShaderProgramAsset
-        || !rockShaderProgramAsset)
+    if (!calcTessLevelShaderProgramAsset->shaderProgram
+        || !terrainShaderProgramAsset->shaderProgram || !rockShaderProgramAsset->shaderProgram)
         return;
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
@@ -981,7 +1022,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     // calculate tessellation levels
-    uint32 calcTessLevelShaderProgramHandle = calcTessLevelShaderProgramAsset->handle;
+    uint32 calcTessLevelShaderProgramHandle =
+        calcTessLevelShaderProgramAsset->shaderProgram->handle;
     uint32 meshEdgeCount =
         (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
         - sceneState->heightfield.rows - sceneState->heightfield.columns;
@@ -1006,7 +1048,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     // draw terrain mesh
     engine->rendererUpdateBuffer(memory->engineMemory, sceneState->materialPropsBufferHandle,
         sizeof(sceneState->worldState.materialProps), sceneState->worldState.materialProps);
-    uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->handle;
+    uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->shaderProgram->handle;
     engine->rendererUseShaderProgram(memory->engineMemory, terrainShaderProgramHandle);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -1097,7 +1139,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
     }
 
-    engine->rendererUseShaderProgram(memory->engineMemory, rockShaderProgramAsset->handle);
+    engine->rendererUseShaderProgram(
+        memory->engineMemory, rockShaderProgramAsset->shaderProgram->handle);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     engine->rendererBindVertexArray(
@@ -1111,9 +1154,9 @@ API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightma
     EngineClientApi *engine = &memory->engine;
     EditorAssets *assets = &memory->state.assets;
 
-    ShaderProgramAsset *quadShaderProgram =
+    LoadedAsset *quadShaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
-    if (!quadShaderProgram)
+    if (!quadShaderProgram->shaderProgram)
         return;
 
     engine->rendererUpdateTexture(memory->engineMemory,
@@ -1127,7 +1170,8 @@ API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightma
     engine->rendererUpdateCameraState(
         memory->engineMemory, &memory->state.orthographicCameraTransform);
 
-    engine->rendererUseShaderProgram(memory->engineMemory, quadShaderProgram->handle);
+    engine->rendererUseShaderProgram(
+        memory->engineMemory, quadShaderProgram->shaderProgram->handle);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     engine->rendererBindTexture(
@@ -1151,13 +1195,14 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererSetViewportSize(view->width, view->height);
     engine->rendererClearBackBuffer(0, 0, 0, 1);
 
-    ShaderProgramAsset *shaderProgram =
+    LoadedAsset *shaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
-    if (!shaderProgram)
+    if (!shaderProgram->shaderProgram)
         return;
 
     // render quad
-    engine->rendererUseShaderProgram(memory->engineMemory, shaderProgram->handle);
+    engine->rendererUseShaderProgram(
+        memory->engineMemory, shaderProgram->shaderProgram->handle);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     engine->rendererBindTexture(

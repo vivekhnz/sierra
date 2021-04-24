@@ -97,7 +97,9 @@ namespace Terrain { namespace Engine { namespace Interop {
             AssetRegistration *reg = &assetRegs[i];
             AssetRegistrationProxy proxy = AssetRegistrationProxy();
             proxy.id = reg->id;
-            proxy.relativePath = gcnew System::String(reg->relativePath);
+            proxy.relativePath = reg->regType == AssetRegistrationType::ASSET_REG_FILE
+                ? gcnew System::String(reg->fileState->relativePath)
+                : System::String::Empty;
             result[i] = proxy;
         }
         return result;
