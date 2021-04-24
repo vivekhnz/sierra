@@ -3,8 +3,6 @@
 
 #include "engine_platform.h"
 
-#define MAX_ASSET_FILE_PATH 260
-
 enum AssetType
 {
     ASSET_TYPE_SHADER = 1,
@@ -52,34 +50,11 @@ enum ShaderProgramAssetId
 };
 #define ASSET_SHADER_PROGRAM_COUNT 9
 
-enum TextureAssetId
-{
-    ASSET_ID(TEXTURE, GROUND_ALBEDO, 0),
-    ASSET_ID(TEXTURE, GROUND_NORMAL, 1),
-    ASSET_ID(TEXTURE, GROUND_DISPLACEMENT, 2),
-    ASSET_ID(TEXTURE, GROUND_AO, 3),
-    ASSET_ID(TEXTURE, ROCK_ALBEDO, 4),
-    ASSET_ID(TEXTURE, ROCK_NORMAL, 5),
-    ASSET_ID(TEXTURE, ROCK_DISPLACEMENT, 6),
-    ASSET_ID(TEXTURE, ROCK_AO, 7),
-    ASSET_ID(TEXTURE, SNOW_ALBEDO, 8),
-    ASSET_ID(TEXTURE, SNOW_NORMAL, 9),
-    ASSET_ID(TEXTURE, SNOW_DISPLACEMENT, 10),
-    ASSET_ID(TEXTURE, SNOW_AO, 11)
-};
-#define ASSET_TEXTURE_COUNT 12
-
 enum MeshAssetId
 {
     ASSET_ID(MESH, ROCK, 0)
 };
 #define ASSET_MESH_COUNT 12
-
-struct TextureAssetRegistration
-{
-    uint32 id;
-    char relativePath[MAX_ASSET_FILE_PATH];
-};
 
 struct ShaderAsset
 {
@@ -95,7 +70,6 @@ struct TextureAsset
     uint32 width;
     uint32 height;
     void *data;
-    uint8 version;
 };
 struct MeshAsset
 {
@@ -106,9 +80,50 @@ struct MeshAsset
     void *indices;
 };
 
-#define ASSETS_GET_REGISTERED_TEXTURE_ASSETS(name)                                            \
-    TextureAssetRegistration *name(EngineMemory *memory, uint32 *out_count)
-typedef ASSETS_GET_REGISTERED_TEXTURE_ASSETS(AssetsGetRegisteredTextureAssets);
+struct LoadedAsset
+{
+    uint8 version;
+    union
+    {
+        TextureAsset *texture;
+    };
+};
+
+struct TextureAssetMetadata
+{
+    bool is16Bit;
+};
+
+struct AssetLoadState
+{
+    bool isUpToDate;
+    bool isLoadQueued;
+    LoadedAsset asset;
+};
+
+struct AssetRegistration
+{
+    uint32 id;
+    char *relativePath;
+    AssetLoadState *loadState;
+    struct
+    {
+        union
+        {
+            TextureAssetMetadata *texture;
+        };
+    } metadata;
+};
+
+#define ASSETS_REGISTER_TEXTURE(name)                                                         \
+    uint32 name(EngineMemory *memory, const char *relativePath, bool is16Bit)
+typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
+
+#define ASSETS_GET_REGISTERED_ASSET_COUNT(name) uint32 name(EngineMemory *memory)
+typedef ASSETS_GET_REGISTERED_ASSET_COUNT(AssetsGetRegisteredAssetCount);
+
+#define ASSETS_GET_REGISTERED_ASSETS(name) AssetRegistration *name(EngineMemory *memory)
+typedef ASSETS_GET_REGISTERED_ASSETS(AssetsGetRegisteredAssets);
 
 #define ASSETS_GET_SHADER(name) ShaderAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER(AssetsGetShader);
@@ -122,7 +137,7 @@ typedef ASSETS_GET_SHADER_PROGRAM(AssetsGetShaderProgram);
         EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset)
 typedef ASSETS_LOAD_TEXTURE(AssetsLoadTexture);
 
-#define ASSETS_GET_TEXTURE(name) TextureAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_TEXTURE(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_TEXTURE(AssetsGetTexture);
 
 #define ASSETS_GET_MESH(name) MeshAsset *name(EngineMemory *memory, uint32 assetId)

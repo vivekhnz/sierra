@@ -2,11 +2,29 @@
 
 namespace Terrain.Editor
 {
+    internal enum AssetType
+    {
+        Shader = 1,
+        ShaderProgram,
+        Texture,
+        Mesh
+    }
+
     internal static class Engine
     {
-        internal static TextureAssetRegistrationProxy[] GetRegisteredTextureAssets()
+        internal static uint GetRegisteredAssetCount()
         {
-            return EngineInterop.GetRegisteredTextureAssets();
+            return EngineInterop.GetRegisteredAssetCount();
+        }
+
+        internal static AssetRegistrationProxy[] GetRegisteredAssets()
+        {
+            return EngineInterop.GetRegisteredAssets();
+        }
+
+        internal static AssetType GetAssetType(AssetRegistrationProxy assetReg)
+        {
+            return (AssetType)((assetReg.id & 0xF0000000) >> 28);
         }
     }
 }

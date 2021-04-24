@@ -56,7 +56,7 @@ public
     };
 
 public
-    value struct TextureAssetRegistrationProxy
+    value struct AssetRegistrationProxy
     {
         uint32 id;
         System::String ^ relativePath;
@@ -86,7 +86,8 @@ public
         static void RenderSceneView(EditorViewContextProxy % vctx);
         static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
 
-        static array<TextureAssetRegistrationProxy> ^ GetRegisteredTextureAssets();
+        static uint32 GetRegisteredAssetCount();
+        static array<AssetRegistrationProxy> ^ GetRegisteredAssets();
 
         static void LoadHeightmapTexture(System::String ^ path);
         static void AddMaterial(MaterialProps props);

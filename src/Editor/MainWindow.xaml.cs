@@ -21,8 +21,12 @@ namespace Terrain.Editor
         DispatcherTimer updateUiTimer;
         Dictionary<RadioButton, EditorToolProxy> editorToolByToolButtons;
 
+        private uint prevAssetCount;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
-            = new Dictionary<uint, string>();
+            = new Dictionary<uint, string>
+            {
+                [0] = null
+            };
         private static Dictionary<string, uint> textureFilenameToAssetId
             = new Dictionary<string, uint>();
 
@@ -30,50 +34,6 @@ namespace Terrain.Editor
         {
             EditorPlatform.Initialize();
             InitializeComponent();
-
-            var registeredTextureAssets = Engine.GetRegisteredTextureAssets();
-            foreach (var asset in registeredTextureAssets)
-            {
-                textureAssetIdToFilename[asset.id] = asset.relativePath;
-                textureFilenameToAssetId[asset.relativePath] = asset.id;
-            }
-
-            AddMaterial(new MaterialProps
-            {
-                albedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
-                normalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
-                displacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
-                aoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
-                textureSizeInWorldUnits = 2.5f,
-                slopeStart = 0.0f,
-                slopeEnd = 0.0f,
-                altitudeStart = 0.0f,
-                altitudeEnd = 0.0f
-            });
-            AddMaterial(new MaterialProps
-            {
-                albedoTextureAssetId = textureFilenameToAssetId["rock_albedo.jpg"],
-                normalTextureAssetId = textureFilenameToAssetId["rock_normal.jpg"],
-                displacementTextureAssetId = textureFilenameToAssetId["rock_displacement.tga"],
-                aoTextureAssetId = textureFilenameToAssetId["rock_ao.tga"],
-                textureSizeInWorldUnits = 13.0f,
-                slopeStart = 0.2f,
-                slopeEnd = 0.4f,
-                altitudeStart = 0,
-                altitudeEnd = 0.001f
-            });
-            AddMaterial(new MaterialProps
-            {
-                albedoTextureAssetId = textureFilenameToAssetId["snow_albedo.jpg"],
-                normalTextureAssetId = textureFilenameToAssetId["snow_normal.jpg"],
-                displacementTextureAssetId = textureFilenameToAssetId["snow_displacement.tga"],
-                aoTextureAssetId = textureFilenameToAssetId["snow_ao.tga"],
-                textureSizeInWorldUnits = 2.0f,
-                slopeStart = 0.4f,
-                slopeEnd = 0.2f,
-                altitudeStart = 0.25f,
-                altitudeEnd = 0.28f
-            });
 
             editorToolByToolButtons = new Dictionary<RadioButton, EditorToolProxy>
             {
@@ -295,12 +255,68 @@ namespace Terrain.Editor
                     kvp.Key.IsChecked = false;
                 }
             }
+
+            uint assetCount = Engine.GetRegisteredAssetCount();
+            if (assetCount != prevAssetCount)
+            {
+                var registeredAssets = Engine.GetRegisteredAssets();
+                foreach (var asset in registeredAssets)
+                {
+                    if (Engine.GetAssetType(asset) == AssetType.Texture)
+                    {
+                        textureAssetIdToFilename[asset.id] = asset.relativePath;
+                        textureFilenameToAssetId[asset.relativePath] = asset.id;
+                    }
+                }
+
+                if (prevAssetCount == 0)
+                {
+                    AddMaterial(new MaterialProps
+                    {
+                        albedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
+                        normalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
+                        displacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
+                        aoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
+                        textureSizeInWorldUnits = 2.5f,
+                        slopeStart = 0.0f,
+                        slopeEnd = 0.0f,
+                        altitudeStart = 0.0f,
+                        altitudeEnd = 0.0f
+                    });
+                    AddMaterial(new MaterialProps
+                    {
+                        albedoTextureAssetId = textureFilenameToAssetId["rock_albedo.jpg"],
+                        normalTextureAssetId = textureFilenameToAssetId["rock_normal.jpg"],
+                        displacementTextureAssetId = textureFilenameToAssetId["rock_displacement.tga"],
+                        aoTextureAssetId = textureFilenameToAssetId["rock_ao.tga"],
+                        textureSizeInWorldUnits = 13.0f,
+                        slopeStart = 0.2f,
+                        slopeEnd = 0.4f,
+                        altitudeStart = 0,
+                        altitudeEnd = 0.001f
+                    });
+                    AddMaterial(new MaterialProps
+                    {
+                        albedoTextureAssetId = textureFilenameToAssetId["snow_albedo.jpg"],
+                        normalTextureAssetId = textureFilenameToAssetId["snow_normal.jpg"],
+                        displacementTextureAssetId = textureFilenameToAssetId["snow_displacement.tga"],
+                        aoTextureAssetId = textureFilenameToAssetId["snow_ao.tga"],
+                        textureSizeInWorldUnits = 2.0f,
+                        slopeStart = 0.4f,
+                        slopeEnd = 0.2f,
+                        altitudeStart = 0.25f,
+                        altitudeEnd = 0.28f
+                    });
+                }
+
+                prevAssetCount = assetCount;
+            }
         }
 
         private void AddMaterial(MaterialProps props)
         {
-            lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
             EditorCore.AddMaterial(props);
+            lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
 
             btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
         }

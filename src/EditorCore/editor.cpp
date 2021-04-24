@@ -64,6 +64,19 @@ bool initializeEditor(EditorMemory *memory)
         return 0;
     }
 
+    engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "ground_normal.bmp", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "ground_displacement.tga", true);
+    engine->assetsRegisterTexture(memory->engineMemory, "ground_ao.tga", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "rock_albedo.jpg", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "rock_normal.jpg", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "rock_displacement.tga", true);
+    engine->assetsRegisterTexture(memory->engineMemory, "rock_ao.tga", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "snow_albedo.jpg", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
+    engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
+    engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
+
     assets->shaderProgramQuad = ASSET_SHADER_PROGRAM_QUAD;
     assets->shaderProgramTerrainCalcTessLevel = ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL;
     assets->shaderProgramTerrainTextured = ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED;
@@ -855,7 +868,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     for (uint32 layerIdx = 0; layerIdx < sceneState->worldState.materialCount; layerIdx++)
     {
         uint32 assetId;
-        TextureAsset *asset;
+        LoadedAsset *asset;
         TextureAssetBinding *binding;
 
         assetId = sceneState->worldState.albedoTextureAssetIds[layerIdx];
@@ -863,11 +876,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         {
             binding = &sceneState->albedoTextures[layerIdx];
             asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset && (assetId != binding->assetId || asset->version > binding->version))
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(memory->engineMemory,
                     sceneState->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                    asset->width, asset->height, layerIdx, asset->data);
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
                 binding->assetId = assetId;
                 binding->version = asset->version;
             }
@@ -878,11 +893,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         {
             binding = &sceneState->normalTextures[layerIdx];
             asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset && (assetId != binding->assetId || asset->version > binding->version))
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(memory->engineMemory,
                     sceneState->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                    asset->width, asset->height, layerIdx, asset->data);
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
                 binding->assetId = assetId;
                 binding->version = asset->version;
             }
@@ -893,11 +910,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         {
             binding = &sceneState->displacementTextures[layerIdx];
             asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset && (assetId != binding->assetId || asset->version > binding->version))
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(memory->engineMemory,
                     sceneState->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
-                    asset->width, asset->height, layerIdx, asset->data);
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
                 binding->assetId = assetId;
                 binding->version = asset->version;
             }
@@ -908,11 +927,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         {
             binding = &sceneState->aoTextures[layerIdx];
             asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset && (assetId != binding->assetId || asset->version > binding->version))
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(memory->engineMemory,
-                    sceneState->aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED, asset->width,
-                    asset->height, layerIdx, asset->data);
+                    sceneState->aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED,
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
                 binding->assetId = assetId;
                 binding->version = asset->version;
             }

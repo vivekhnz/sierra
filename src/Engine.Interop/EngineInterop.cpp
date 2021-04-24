@@ -79,19 +79,23 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
-    array<TextureAssetRegistrationProxy> ^ EngineInterop::GetRegisteredTextureAssets()
+    uint32 EngineInterop::GetRegisteredAssetCount()
     {
-        uint32 assetCount;
-        TextureAssetRegistration *assetRegs =
-            memory->engineApi.assetsGetRegisteredTextureAssets(
-                memory->editor->engineMemory, &assetCount);
+        return memory->engineApi.assetsGetRegisteredAssetCount(memory->editor->engineMemory);
+    }
 
-        array<TextureAssetRegistrationProxy> ^ result =
-            gcnew array<TextureAssetRegistrationProxy>(assetCount);
+    array<AssetRegistrationProxy> ^ EngineInterop::GetRegisteredAssets()
+    {
+        uint32 assetCount = GetRegisteredAssetCount();
+        AssetRegistration *assetRegs =
+            memory->engineApi.assetsGetRegisteredAssets(memory->editor->engineMemory);
+
+        array<AssetRegistrationProxy> ^ result =
+            gcnew array<AssetRegistrationProxy>(assetCount);
         for (uint32 i = 0; i < assetCount; i++)
         {
-            TextureAssetRegistration *reg = &assetRegs[i];
-            TextureAssetRegistrationProxy proxy = TextureAssetRegistrationProxy();
+            AssetRegistration *reg = &assetRegs[i];
+            AssetRegistrationProxy proxy = AssetRegistrationProxy();
             proxy.id = reg->id;
             proxy.relativePath = gcnew System::String(reg->relativePath);
             result[i] = proxy;

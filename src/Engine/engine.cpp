@@ -6,7 +6,8 @@
 
 void engineGetPlatformApi(EnginePlatformApi *api)
 {
-    api->assetsGetRegisteredTextureAssets = assetsGetRegisteredTextureAssets;
+    api->assetsGetRegisteredAssetCount = assetsGetRegisteredAssetCount;
+    api->assetsGetRegisteredAssets = assetsGetRegisteredAssets;
     api->assetsOnAssetLoaded = assetsOnAssetLoaded;
     api->assetsInvalidateAsset = assetsInvalidateAsset;
     api->assetsLoadTexture = assetsLoadTexture;
@@ -14,6 +15,7 @@ void engineGetPlatformApi(EnginePlatformApi *api)
 
 void engineGetClientApi(EngineClientApi *api)
 {
+    api->assetsRegisterTexture = assetsRegisterTexture;
     api->assetsGetShader = assetsGetShader;
     api->assetsGetShaderProgram = assetsGetShaderProgram;
     api->assetsLoadTexture = assetsLoadTexture;

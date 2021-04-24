@@ -61,18 +61,30 @@ bool initializeGame(GameMemory *memory)
     assets->shaderProgramTerrainTextured = ASSET_SHADER_PROGRAM_TERRAIN_TEXTURED;
     assets->shaderProgramTerrainCalcTessLevel = ASSET_SHADER_PROGRAM_TERRAIN_CALC_TESS_LEVEL;
 
-    assets->textureGroundAlbedo = ASSET_TEXTURE_GROUND_ALBEDO;
-    assets->textureGroundNormal = ASSET_TEXTURE_GROUND_NORMAL;
-    assets->textureGroundDisplacement = ASSET_TEXTURE_GROUND_DISPLACEMENT;
-    assets->textureGroundAo = ASSET_TEXTURE_GROUND_AO;
-    assets->textureRockAlbedo = ASSET_TEXTURE_ROCK_ALBEDO;
-    assets->textureRockNormal = ASSET_TEXTURE_ROCK_NORMAL;
-    assets->textureRockDisplacement = ASSET_TEXTURE_ROCK_DISPLACEMENT;
-    assets->textureRockAo = ASSET_TEXTURE_ROCK_AO;
-    assets->textureSnowAlbedo = ASSET_TEXTURE_SNOW_ALBEDO;
-    assets->textureSnowNormal = ASSET_TEXTURE_SNOW_NORMAL;
-    assets->textureSnowDisplacement = ASSET_TEXTURE_SNOW_DISPLACEMENT;
-    assets->textureSnowAo = ASSET_TEXTURE_SNOW_AO;
+    assets->textureGroundAlbedo =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
+    assets->textureGroundNormal =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_normal.bmp", false);
+    assets->textureGroundDisplacement =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_displacement.tga", true);
+    assets->textureGroundAo =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_ao.tga", false);
+    assets->textureRockAlbedo =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_albedo.jpg", false);
+    assets->textureRockNormal =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_normal.jpg", false);
+    assets->textureRockDisplacement =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_displacement.tga", true);
+    assets->textureRockAo =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_ao.tga", false);
+    assets->textureSnowAlbedo =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_albedo.jpg", false);
+    assets->textureSnowNormal =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
+    assets->textureSnowDisplacement =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
+    assets->textureSnowAo =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;
@@ -443,98 +455,101 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     engine->rendererSetViewportSize(viewport.width, viewport.height);
     engine->rendererClearBackBuffer(0.392f, 0.584f, 0.929f, 1);
 
-    TextureAsset *asset;
+    LoadedAsset *asset;
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureGroundAlbedo);
-    if (asset && asset->version > state->groundAlbedoTextureVersion)
+    if (asset->texture && asset->version > state->groundAlbedoTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->width,
-            asset->height, 0, asset->data);
+            state->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width,
+            asset->texture->height, 0, asset->texture->data);
         state->groundAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureGroundNormal);
-    if (asset && asset->version > state->groundNormalTextureVersion)
+    if (asset->texture && asset->version > state->groundNormalTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->width,
-            asset->height, 0, asset->data);
+            state->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width,
+            asset->texture->height, 0, asset->texture->data);
         state->groundNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureGroundDisplacement);
-    if (asset && asset->version > state->groundDisplacementTextureVersion)
+    if (asset->texture && asset->version > state->groundDisplacementTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED, asset->width,
-            asset->height, 0, asset->data);
+            state->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
+            asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureGroundAo);
-    if (asset && asset->version > state->groundAoTextureVersion)
+    if (asset->texture && asset->version > state->groundAoTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory, state->aoTextureArrayHandle,
-            GL_UNSIGNED_BYTE, GL_RED, asset->width, asset->height, 0, asset->data);
+            GL_UNSIGNED_BYTE, GL_RED, asset->texture->width, asset->texture->height, 0,
+            asset->texture->data);
         state->groundAoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureRockAlbedo);
-    if (asset && asset->version > state->rockAlbedoTextureVersion)
+    if (asset->texture && asset->version > state->rockAlbedoTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->width,
-            asset->height, 1, asset->data);
+            state->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width,
+            asset->texture->height, 1, asset->texture->data);
         state->rockAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureRockNormal);
-    if (asset && asset->version > state->rockNormalTextureVersion)
+    if (asset->texture && asset->version > state->rockNormalTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->width,
-            asset->height, 1, asset->data);
+            state->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width,
+            asset->texture->height, 1, asset->texture->data);
         state->rockNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureRockDisplacement);
-    if (asset && asset->version > state->rockDisplacementTextureVersion)
+    if (asset->texture && asset->version > state->rockDisplacementTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED, asset->width,
-            asset->height, 1, asset->data);
+            state->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
+            asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureRockAo);
-    if (asset && asset->version > state->rockAoTextureVersion)
+    if (asset->texture && asset->version > state->rockAoTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory, state->aoTextureArrayHandle,
-            GL_UNSIGNED_BYTE, GL_RED, asset->width, asset->height, 1, asset->data);
+            GL_UNSIGNED_BYTE, GL_RED, asset->texture->width, asset->texture->height, 1,
+            asset->texture->data);
         state->rockAoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureSnowAlbedo);
-    if (asset && asset->version > state->snowAlbedoTextureVersion)
+    if (asset->texture && asset->version > state->snowAlbedoTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->width,
-            asset->height, 2, asset->data);
+            state->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width,
+            asset->texture->height, 2, asset->texture->data);
         state->snowAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureSnowNormal);
-    if (asset && asset->version > state->snowNormalTextureVersion)
+    if (asset->texture && asset->version > state->snowNormalTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->width,
-            asset->height, 2, asset->data);
+            state->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width,
+            asset->texture->height, 2, asset->texture->data);
         state->snowNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureSnowDisplacement);
-    if (asset && asset->version > state->snowDisplacementTextureVersion)
+    if (asset->texture && asset->version > state->snowDisplacementTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory,
-            state->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED, asset->width,
-            asset->height, 2, asset->data);
+            state->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
+            asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(memory->engineMemory, assets->textureSnowAo);
-    if (asset && asset->version > state->snowAoTextureVersion)
+    if (asset->texture && asset->version > state->snowAoTextureVersion)
     {
         engine->rendererUpdateTextureArray(memory->engineMemory, state->aoTextureArrayHandle,
-            GL_UNSIGNED_BYTE, GL_RED, asset->width, asset->height, 2, asset->data);
+            GL_UNSIGNED_BYTE, GL_RED, asset->texture->width, asset->texture->height, 2,
+            asset->texture->data);
         state->snowAoTextureVersion = asset->version;
     }
 

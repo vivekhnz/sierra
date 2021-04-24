@@ -7,7 +7,8 @@
 
 struct EnginePlatformApi
 {
-    AssetsGetRegisteredTextureAssets *assetsGetRegisteredTextureAssets;
+    AssetsGetRegisteredAssetCount *assetsGetRegisteredAssetCount;
+    AssetsGetRegisteredAssets *assetsGetRegisteredAssets;
     AssetsOnAssetLoaded *assetsOnAssetLoaded;
     AssetsInvalidateAsset *assetsInvalidateAsset;
     AssetsLoadTexture *assetsLoadTexture;
@@ -15,6 +16,7 @@ struct EnginePlatformApi
 
 struct EngineClientApi
 {
+    AssetsRegisterTexture *assetsRegisterTexture;
     AssetsGetShader *assetsGetShader;
     AssetsGetShaderProgram *assetsGetShaderProgram;
     AssetsLoadTexture *assetsLoadTexture;
