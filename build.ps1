@@ -99,7 +99,11 @@ function Invoke-Compiler {
 
     $args = $CommonCompilerFlags + $compilerFlags + '/link' + $CommonLinkerFlags + $linkerFlags
     $proc = Start-Process cl -ArgumentList $args -NoNewWindow -PassThru
-    return $proc
+
+    return @{
+        OutputName = $OutputName;
+        Process = $proc;
+    }
 }
 
 Initialize-Environment -Platform $platform
@@ -115,8 +119,8 @@ if (!(Test-Path 'deps\nuget\glfw*')) {
 $LockFilePath = "$OutputPath\build.lock"
 "build" | Out-File $LockFilePath
 
-$procs = @()
-$procs += Invoke-Compiler `
+$builds = @()
+$builds += Invoke-Compiler `
     -SourceFile 'src\Game\game.cpp' -OutputName 'terrain_game' `
     -IntermediateOutputDirName 'Game' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
@@ -127,7 +131,7 @@ $procs += Invoke-Compiler `
     -ImportLibs @(
         "$OutputPath\Terrain.Engine.lib"
     )
-$procs += Invoke-Compiler `
+$builds += Invoke-Compiler `
     -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
     -IntermediateOutputDirName 'Game' `
     -NoImportLib `
@@ -140,7 +144,7 @@ $procs += Invoke-Compiler `
         "$OutputPath\Terrain.Engine.lib",
         "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
     )
-$procs += Invoke-Compiler `
+$builds += Invoke-Compiler `
     -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
     -IntermediateOutputDirName 'EditorCore' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
@@ -158,7 +162,7 @@ if (!(Test-Path $glfwDllDstPath)) {
     Copy-Item -Path $glfwDllSrcPath -Destination $glfwDllDstPath
 }
 
-$procs | Wait-Process
+$builds.Process | Wait-Process
 
 # create a junction of the repo into 'C:\temp' so hardcoded executable paths in solution
 # files can point there
@@ -171,8 +175,18 @@ Remove-Item $LockFilePath -Force
 
 $sw.Stop();
 
-if ($procs.ExitCode | Where-Object { $_ -ne 0 }) {
+if ($builds.Process.ExitCode | Where-Object { $_ -ne 0 }) {
     Write-Host "Build failed" -ForegroundColor Red
+    $tick = [char]::ConvertFromUtf32([convert]::ToInt32('2705', 16))
+    $cross = [char]::ConvertFromUtf32([convert]::ToInt32('274C', 16))
+    $builds | ForEach-Object {
+        if ($_.Process.ExitCode -eq 0) {
+            Write-Host "$tick $($_.OutputName)" -ForegroundColor Green
+        }
+        else {
+            Write-Host "$cross $($_.OutputName)" -ForegroundColor Red
+        }
+    }
     exit 1
 }
 else {
