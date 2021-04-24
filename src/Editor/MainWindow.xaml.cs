@@ -21,35 +21,22 @@ namespace Terrain.Editor
         DispatcherTimer updateUiTimer;
         Dictionary<RadioButton, EditorToolProxy> editorToolByToolButtons;
 
-        private const uint textureAssetTypeId = 3;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
-            = new Dictionary<uint, string>
-            {
-                [0 | (textureAssetTypeId << 28)] = "ground_albedo.bmp",
-                [1 | (textureAssetTypeId << 28)] = "ground_normal.bmp",
-                [2 | (textureAssetTypeId << 28)] = "ground_displacement.tga",
-                [3 | (textureAssetTypeId << 28)] = "ground_ao.tga",
-                [4 | (textureAssetTypeId << 28)] = "rock_albedo.jpg",
-                [5 | (textureAssetTypeId << 28)] = "rock_normal.jpg",
-                [6 | (textureAssetTypeId << 28)] = "rock_displacement.tga",
-                [7 | (textureAssetTypeId << 28)] = "rock_ao.tga",
-                [8 | (textureAssetTypeId << 28)] = "snow_albedo.jpg",
-                [9 | (textureAssetTypeId << 28)] = "snow_normal.jpg",
-                [10 | (textureAssetTypeId << 28)] = "snow_displacement.tga",
-                [11 | (textureAssetTypeId << 28)] = "snow_ao.tga"
-            };
+            = new Dictionary<uint, string>();
         private static Dictionary<string, uint> textureFilenameToAssetId
             = new Dictionary<string, uint>();
 
         public MainWindow()
         {
-            foreach (var kvp in textureAssetIdToFilename)
-            {
-                textureFilenameToAssetId[kvp.Value] = kvp.Key;
-            }
-
             EditorPlatform.Initialize();
             InitializeComponent();
+
+            var registeredTextureAssets = Engine.GetRegisteredTextureAssets();
+            foreach (var asset in registeredTextureAssets)
+            {
+                textureAssetIdToFilename[asset.id] = asset.relativePath;
+                textureFilenameToAssetId[asset.relativePath] = asset.id;
+            }
 
             AddMaterial(new MaterialProps
             {

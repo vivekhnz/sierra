@@ -79,6 +79,26 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
+    array<TextureAssetRegistrationProxy> ^ EngineInterop::GetRegisteredTextureAssets()
+    {
+        uint32 assetCount;
+        TextureAssetRegistration *assetRegs =
+            memory->engineApi.assetsGetRegisteredTextureAssets(
+                memory->editor->engineMemory, &assetCount);
+
+        array<TextureAssetRegistrationProxy> ^ result =
+            gcnew array<TextureAssetRegistrationProxy>(assetCount);
+        for (uint32 i = 0; i < assetCount; i++)
+        {
+            TextureAssetRegistration *reg = &assetRegs[i];
+            TextureAssetRegistrationProxy proxy = TextureAssetRegistrationProxy();
+            proxy.id = reg->id;
+            proxy.relativePath = gcnew System::String(reg->relativePath);
+            result[i] = proxy;
+        }
+        return result;
+    }
+
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
     {
         GetCStringFromManagedString(path, memory->importedHeightmapTexturePath);

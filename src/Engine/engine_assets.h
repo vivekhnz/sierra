@@ -3,6 +3,8 @@
 
 #include "engine_platform.h"
 
+#define MAX_ASSET_FILE_PATH 260
+
 enum AssetType
 {
     ASSET_TYPE_SHADER = 1,
@@ -73,6 +75,12 @@ enum MeshAssetId
 };
 #define ASSET_MESH_COUNT 12
 
+struct TextureAssetRegistration
+{
+    uint32 id;
+    char relativePath[MAX_ASSET_FILE_PATH];
+};
+
 struct ShaderAsset
 {
     uint32 handle;
@@ -97,6 +105,10 @@ struct MeshAsset
     void *vertices;
     void *indices;
 };
+
+#define ASSETS_GET_REGISTERED_TEXTURE_ASSETS(name)                                            \
+    TextureAssetRegistration *name(EngineMemory *memory, uint32 *out_count)
+typedef ASSETS_GET_REGISTERED_TEXTURE_ASSETS(AssetsGetRegisteredTextureAssets);
 
 #define ASSETS_GET_SHADER(name) ShaderAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER(AssetsGetShader);

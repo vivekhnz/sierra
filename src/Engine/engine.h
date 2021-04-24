@@ -7,6 +7,7 @@
 
 struct EnginePlatformApi
 {
+    AssetsGetRegisteredTextureAssets *assetsGetRegisteredTextureAssets;
     AssetsOnAssetLoaded *assetsOnAssetLoaded;
     AssetsInvalidateAsset *assetsInvalidateAsset;
     AssetsLoadTexture *assetsLoadTexture;

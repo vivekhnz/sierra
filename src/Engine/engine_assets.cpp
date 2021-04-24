@@ -290,6 +290,30 @@ MeshInfo getMeshInfo(uint32 assetId)
     return info;
 }
 
+ASSETS_GET_REGISTERED_TEXTURE_ASSETS(assetsGetRegisteredTextureAssets)
+{
+    TextureAssetRegistration *assets = (TextureAssetRegistration *)pushAssetData(
+        memory, sizeof(TextureAssetRegistration) * ASSET_TEXTURE_COUNT);
+    *out_count = ASSET_TEXTURE_COUNT;
+
+    for (uint32 i = 0; i < ASSET_TEXTURE_COUNT; i++)
+    {
+        TextureAssetRegistration *reg = &assets[i];
+
+        reg->id = i | (ASSET_TYPE_TEXTURE << 28);
+        TextureInfo info = getTextureInfo(reg->id);
+
+        const char *srcCursor = info.relativePath;
+        char *dstCursor = reg->relativePath;
+        while (*srcCursor)
+        {
+            *dstCursor++ = *srcCursor++;
+        }
+    }
+
+    return assets;
+}
+
 ASSETS_GET_SHADER(assetsGetShader)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
