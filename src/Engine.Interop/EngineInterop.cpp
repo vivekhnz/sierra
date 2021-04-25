@@ -29,6 +29,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
         initParams.platformLogMessage =
             (PlatformLogMessage *)params.platformLogMessage.ToPointer();
+        initParams.platformQueueAssetLoad =
+            (PlatformQueueAssetLoad *)params.platformQueueAssetLoad.ToPointer();
 
         memory = win32InitializePlatform(&initParams);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
@@ -98,6 +100,22 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
+    uint32 EngineInterop::GetImportedHeightmapAssetId()
+    {
+        if (memory->editorCode.editorGetImportedHeightmapAssetId)
+        {
+            return memory->editorCode.editorGetImportedHeightmapAssetId(memory->editor);
+        }
+
+        return 0;
+    }
+
+    void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
+    {
+        memory->engineApi.assetsSetAssetData(
+            memory->editor->engineMemory, assetId, data.ToPointer(), size);
+    }
+
     uint32 EngineInterop::GetRegisteredAssetCount()
     {
         return memory->engineApi.assetsGetRegisteredAssetCount(memory->editor->engineMemory);
@@ -122,14 +140,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             result[i] = proxy;
         }
         return result;
-    }
-
-    void EngineInterop::LoadHeightmapTexture(System::String ^ path)
-    {
-        char pathCStr[MAX_PATH];
-        GetCStringFromManagedString(path, pathCStr);
-        win32QueueAssetLoadAbsolute(
-            memory->editor->state.assets.textureVirtualImportedHeightmap, pathCStr);
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)

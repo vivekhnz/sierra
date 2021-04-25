@@ -6,27 +6,7 @@
 #include "../Engine/engine.h"
 #include "../EditorCore/editor.h"
 
-#define ASSET_LOAD_QUEUE_MAX_SIZE 128
 #define MAX_WATCHED_ASSETS 256
-
-struct Win32ReadFileResult
-{
-    void *data;
-    uint64 size;
-};
-
-struct Win32AssetLoadRequest
-{
-    uint32 assetId;
-    char path[MAX_PATH];
-};
-
-struct Win32AssetLoadQueue
-{
-    uint32 length;
-    Win32AssetLoadRequest data[ASSET_LOAD_QUEUE_MAX_SIZE];
-    uint32 indices[ASSET_LOAD_QUEUE_MAX_SIZE];
-};
 
 struct Win32WatchedAsset
 {
@@ -47,6 +27,7 @@ struct Win32EditorCode
     EditorShutdown *editorShutdown;
     EditorRenderSceneView *editorRenderSceneView;
     EditorRenderHeightmapPreview *editorRenderHeightmapPreview;
+    EditorGetImportedHeightmapAssetId *editorGetImportedHeightmapAssetId;
 };
 
 struct Win32PlatformMemory
@@ -54,7 +35,6 @@ struct Win32PlatformMemory
     EnginePlatformApi engineApi;
     Win32EditorCode editorCode;
 
-    Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
 
@@ -73,10 +53,9 @@ struct Win32InitPlatformParams
 
     PlatformCaptureMouse *platformCaptureMouse;
     PlatformLogMessage *platformLogMessage;
+    PlatformQueueAssetLoad *platformQueueAssetLoad;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
-
 void win32TickPlatform();
-bool win32QueueAssetLoadAbsolute(uint32 assetId, const char *absolutePath);
 
 #endif

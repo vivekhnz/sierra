@@ -1,4 +1,6 @@
-﻿using Terrain.Engine.Interop;
+﻿using System;
+using System.Runtime.InteropServices;
+using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
@@ -25,6 +27,13 @@ namespace Terrain.Editor
         internal static AssetType GetAssetType(AssetRegistrationProxy assetReg)
         {
             return (AssetType)((assetReg.id & 0xF0000000) >> 28);
+        }
+
+        internal static void SetAssetData(uint assetId, byte[] data)
+        {
+            GCHandle pinnedArray = GCHandle.Alloc(data, GCHandleType.Pinned);
+            EngineInterop.SetAssetData(assetId, pinnedArray.AddrOfPinnedObject(), (ulong)data.Length);
+            pinnedArray.Free();
         }
     }
 }

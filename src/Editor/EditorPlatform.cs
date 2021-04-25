@@ -96,6 +96,12 @@ namespace Terrain.Editor
 
     internal static class EditorPlatform
     {
+        private struct AssetLoadRequest
+        {
+            public uint AssetId { get; internal set; }
+            public string Path { get; internal set; }
+        }
+
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
 
         private static IntPtr appInstance = Win32.GetModuleHandle(null);
@@ -121,20 +127,22 @@ namespace Terrain.Editor
 
         private static List<EditorViewportWindow> viewportWindows = new List<EditorViewportWindow>();
 
-        private delegate void PlatformCaptureMouse();
-        private static PlatformCaptureMouse EditorPlatformCaptureMouse = () =>
-        {
-            shouldCaptureMouse = true;
-        };
+        private static string assetsDirectoryPath;
+        private static List<AssetLoadRequest> assetLoadRequests = new List<AssetLoadRequest>();
 
+        private delegate void PlatformCaptureMouse();
         private delegate void PlatformLogMessage(string message);
-        private static PlatformLogMessage EditorPlatformLogMessage = message =>
-        {
-            Debug.WriteLine(message);
-        };
+        private delegate bool PlatformQueueAssetLoad(uint assetId, string relativePath);
+
+        private static PlatformCaptureMouse editorPlatformCaptureMouse = CaptureMouse;
+        private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
+        private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
 
         internal static void Initialize()
         {
+            assetsDirectoryPath = Path.Combine(
+                AppDomain.CurrentDomain.BaseDirectory, "../../../data");
+
             uint editorMemorySizeInBytes = 32 * 1024 * 1024;
             uint engineMemorySizeInBytes = 480 * 1024 * 1024;
             uint appMemorySizeInBytes = editorMemorySizeInBytes + engineMemorySizeInBytes;
@@ -185,10 +193,9 @@ namespace Terrain.Editor
                 editorCodeBuildLockFilePath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
 
-                platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(
-                    EditorPlatformCaptureMouse),
-                platformLogMessage = Marshal.GetFunctionPointerForDelegate(
-                    EditorPlatformLogMessage)
+                platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(editorPlatformCaptureMouse),
+                platformLogMessage = Marshal.GetFunctionPointerForDelegate(editorPlatformLogMessage),
+                platformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(editorPlatformQueueAssetLoad)
             };
             EngineInterop.InitializeEngine(initParams);
 
@@ -258,6 +265,32 @@ namespace Terrain.Editor
                     return resultHandled;
             }
             return Win32.DefWindowProc(hwnd, message, wParam, lParam);
+        }
+
+        private static void CaptureMouse()
+        {
+            shouldCaptureMouse = true;
+        }
+
+        private static void LogMessage(string message)
+        {
+            Debug.WriteLine(message);
+        }
+
+        internal static bool QueueAssetLoad(uint assetId, string absolutePath)
+        {
+            assetLoadRequests.Add(new AssetLoadRequest
+            {
+                AssetId = assetId,
+                Path = absolutePath
+            });
+
+            return true;
+        }
+
+        private static bool QueueAssetLoadRelative(uint assetId, string relativePath)
+        {
+            return QueueAssetLoad(assetId, Path.Combine(assetsDirectoryPath, relativePath));
         }
 
         private static EditorInputProxy GetInputState()
@@ -447,6 +480,23 @@ namespace Terrain.Editor
             EditorInputProxy input = GetInputState();
 
             EngineInterop.TickPlatform();
+
+            for (int i = 0; i < assetLoadRequests.Count; i++)
+            {
+                var request = assetLoadRequests[i];
+                try
+                {
+                    var data = File.ReadAllBytes(request.Path);
+                    Engine.SetAssetData(request.AssetId, data);
+
+                    assetLoadRequests.RemoveAt(i);
+                    i--;
+                }
+                catch (IOException)
+                {
+                    // ignore and try again next tick
+                }
+            }
 
             EditorCore.Update(deltaTime, input);
 

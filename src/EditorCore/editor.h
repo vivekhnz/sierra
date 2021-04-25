@@ -297,6 +297,9 @@ typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
     void name(EditorMemory *memory, EditorViewContext *view)
 typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 
+#define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(name) uint32 name(EditorMemory *memory)
+typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(EditorGetImportedHeightmapAssetId);
+
 #define EDITOR_SHUTDOWN(name) void name(EditorMemory *memory)
 typedef EDITOR_SHUTDOWN(EditorShutdown);
 

@@ -1,7 +1,5 @@
 #include "win32_editor_platform.h"
 
-#include <windowsx.h>
-
 using namespace System::Windows;
 using namespace System::Windows::Input;
 
@@ -82,33 +80,6 @@ void win32CopyString(const char *src, char *dst)
     }
 }
 
-bool win32QueueAssetLoadAbsolute(uint32 assetId, const char *absolutePath)
-{
-    if (platformMemory->assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
-    {
-        // decline the request - our asset load queue is at capacity
-        return false;
-    }
-
-    // add asset load request to queue
-    uint32 index =
-        platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length++];
-    Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
-    *request = {};
-    request->assetId = assetId;
-    win32CopyString(absolutePath, request->path);
-
-    return true;
-}
-
-PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
-{
-    char absolutePath[MAX_PATH];
-    win32GetAssetAbsolutePath(relativePath, absolutePath);
-
-    return win32QueueAssetLoadAbsolute(assetId, absolutePath);
-}
-
 PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
 {
     if (platformMemory->watchedAssetCount >= MAX_WATCHED_ASSETS)
@@ -137,10 +108,6 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     *platformMemory = {};
     engineGetPlatformApi(&platformMemory->engineApi);
     platformMemory->editor = editorMemory;
-    for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
-    {
-        platformMemory->assetLoadQueue.indices[i] = i;
-    }
     win32CopyString(params->editorCodeDllPath, platformMemory->editorCode.dllPath);
     win32CopyString(
         params->editorCodeDllShadowCopyPath, platformMemory->editorCode.dllShadowCopyPath);
@@ -166,7 +133,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 
     // initialize engine memory
     engineMemory->platformLogMessage = params->platformLogMessage;
-    engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
+    engineMemory->platformQueueAssetLoad = params->platformQueueAssetLoad;
     engineMemory->platformWatchAssetFile = win32WatchAssetFile;
 
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
@@ -199,6 +166,9 @@ void win32LoadEditorCode(Win32EditorCode *editorCode)
         editorCode->editorRenderHeightmapPreview =
             (EditorRenderHeightmapPreview *)GetProcAddress(
                 editorCode->dllModule, "editorRenderHeightmapPreview");
+        editorCode->editorGetImportedHeightmapAssetId =
+            (EditorGetImportedHeightmapAssetId *)GetProcAddress(
+                editorCode->dllModule, "editorGetImportedHeightmapAssetId");
     }
 }
 
@@ -240,48 +210,5 @@ void win32TickPlatform()
             platformMemory->engineApi.assetsInvalidateAsset(
                 platformMemory->editor->engineMemory, asset->assetId);
         }
-    }
-
-    // action any asset load requests
-    for (uint32 i = 0; i < platformMemory->assetLoadQueue.length; i++)
-    {
-        uint32 index = platformMemory->assetLoadQueue.indices[i];
-        Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
-
-        HANDLE handle =
-            CreateFileA(request->path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-        if (handle == INVALID_HANDLE_VALUE)
-        {
-            uint32 error = GetLastError();
-            continue;
-        }
-
-        LARGE_INTEGER fileSize;
-        if (GetFileSizeEx(handle, &fileSize))
-        {
-            void *fileData =
-                VirtualAlloc(0, fileSize.QuadPart, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-            if (fileData)
-            {
-                DWORD bytesRead;
-                if (ReadFile(handle, fileData, fileSize.QuadPart, &bytesRead, 0)
-                    && bytesRead == fileSize.QuadPart)
-                {
-                    platformMemory->engineApi.assetsSetAssetData(
-                        platformMemory->editor->engineMemory, request->assetId, fileData,
-                        fileSize.QuadPart);
-
-                    platformMemory->assetLoadQueue.length--;
-                    platformMemory->assetLoadQueue.indices[i] =
-                        platformMemory->assetLoadQueue
-                            .indices[platformMemory->assetLoadQueue.length];
-                    platformMemory->assetLoadQueue
-                        .indices[platformMemory->assetLoadQueue.length] = index;
-                    i--;
-                }
-                VirtualFree(fileData, 0, MEM_RELEASE);
-            }
-        }
-        CloseHandle(handle);
     }
 }

@@ -37,7 +37,11 @@ namespace Terrain.Editor
 
         internal static void LoadHeightmapTexture(string path)
         {
-            EngineInterop.LoadHeightmapTexture(path);
+            uint importedHeightmapAssetId = EngineInterop.GetImportedHeightmapAssetId();
+            if (importedHeightmapAssetId > 0)
+            {
+                EditorPlatform.QueueAssetLoad(importedHeightmapAssetId, path);
+            }
         }
 
         internal static EditorToolProxy GetBrushTool()

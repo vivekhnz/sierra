@@ -1249,3 +1249,8 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
         memory->engineMemory, memory->state.quadFlippedYVertexArrayHandle);
     engine->rendererDrawElements(GL_TRIANGLES, 6);
 }
+
+API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(editorGetImportedHeightmapAssetId)
+{
+    return memory->state.assets.textureVirtualImportedHeightmap;
+}
