@@ -46,7 +46,6 @@ struct Win32EditorCode
     EditorUpdate *editorUpdate;
     EditorShutdown *editorShutdown;
     EditorRenderSceneView *editorRenderSceneView;
-    EditorUpdateImportedHeightmapTexture *editorUpdateImportedHeightmapTexture;
     EditorRenderHeightmapPreview *editorRenderHeightmapPreview;
 };
 
@@ -59,7 +58,6 @@ struct Win32PlatformMemory
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
 
-    char importedHeightmapTexturePath[MAX_PATH];
     EditorMemory *editor;
 };
 
@@ -81,5 +79,7 @@ void win32TickApp(float deltaTime, EditorInput *input);
 void win32RenderSceneView(EditorViewContext *vctx);
 void win32RenderHeightmapPreview(EditorViewContext *vctx);
 void win32ShutdownPlatform();
+
+bool win32QueueAssetLoadAbsolute(uint32 assetId, const char *absolutePath);
 
 #endif

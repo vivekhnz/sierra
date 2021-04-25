@@ -159,6 +159,8 @@ bool initializeEditor(EditorMemory *memory)
     engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
     engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
     engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
+    assets->textureVirtualImportedHeightmap =
+        engine->assetsRegisterTexture(memory->engineMemory, 0, true);
 
     assets->meshRock = engine->assetsRegisterMesh(memory->engineMemory, "rock.obj");
 
@@ -576,6 +578,40 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         || !brushBlendSmoothShaderProgram->shaderProgram)
     {
         return;
+    }
+
+    LoadedAsset *importedHeightmapAsset = engine->assetsGetTexture(
+        memory->engineMemory, assets->textureVirtualImportedHeightmap);
+    if (importedHeightmapAsset->texture
+        && importedHeightmapAsset->version != memory->state.importedHeightmapTextureVersion)
+    {
+        engine->rendererUpdateTexture(memory->engineMemory,
+            memory->state.importedHeightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+            importedHeightmapAsset->texture->width, importedHeightmapAsset->texture->height,
+            importedHeightmapAsset->texture->data);
+
+        engine->rendererBindFramebuffer(
+            memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
+        engine->rendererSetViewportSize(2048, 2048);
+        engine->rendererClearBackBuffer(0, 0, 0, 1);
+        engine->rendererUpdateCameraState(
+            memory->engineMemory, &memory->state.orthographicCameraTransform);
+        engine->rendererUseShaderProgram(
+            memory->engineMemory, quadShaderProgram->shaderProgram->handle);
+        engine->rendererSetPolygonMode(GL_FILL);
+        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        engine->rendererBindTexture(
+            memory->engineMemory, memory->state.importedHeightmapTextureHandle, 0);
+        engine->rendererBindVertexArray(
+            memory->engineMemory, memory->state.quadVertexArrayHandle);
+        engine->rendererDrawElements(GL_TRIANGLES, 6);
+        engine->rendererUnbindFramebuffer(
+            memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
+
+        updateHeightfieldHeights(&memory->state.sceneState.heightfield,
+            (uint16 *)importedHeightmapAsset->texture->data);
+
+        memory->state.importedHeightmapTextureVersion = importedHeightmapAsset->version;
     }
 
     SceneState *sceneState = &memory->state.sceneState;
@@ -1185,42 +1221,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         memory->engineMemory, sceneState->rockMesh.vertexArrayHandle);
     engine->rendererDrawElementsInstanced(
         GL_TRIANGLES, sceneState->rockMesh.elementCount, sceneState->rockInstanceCount, 0);
-}
-
-API_EXPORT EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(editorUpdateImportedHeightmapTexture)
-{
-    EngineClientApi *engine = &memory->engine;
-    EditorAssets *assets = &memory->state.assets;
-
-    LoadedAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
-    if (!quadShaderProgram->shaderProgram)
-        return;
-
-    engine->rendererUpdateTexture(memory->engineMemory,
-        memory->state.importedHeightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
-        asset->width, asset->height, asset->data);
-
-    engine->rendererBindFramebuffer(
-        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
-    engine->rendererSetViewportSize(2048, 2048);
-    engine->rendererClearBackBuffer(0, 0, 0, 1);
-    engine->rendererUpdateCameraState(
-        memory->engineMemory, &memory->state.orthographicCameraTransform);
-
-    engine->rendererUseShaderProgram(
-        memory->engineMemory, quadShaderProgram->shaderProgram->handle);
-    engine->rendererSetPolygonMode(GL_FILL);
-    engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    engine->rendererBindTexture(
-        memory->engineMemory, memory->state.importedHeightmapTextureHandle, 0);
-    engine->rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
-    engine->rendererDrawElements(GL_TRIANGLES, 6);
-
-    engine->rendererUnbindFramebuffer(
-        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
-
-    updateHeightfieldHeights(&memory->state.sceneState.heightfield, (uint16 *)asset->data);
 }
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)

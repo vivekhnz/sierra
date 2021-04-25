@@ -117,11 +117,6 @@ typedef ASSETS_GET_SHADER(AssetsGetShader);
 #define ASSETS_GET_SHADER_PROGRAM(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER_PROGRAM(AssetsGetShaderProgram);
 
-#define ASSETS_LOAD_TEXTURE(name)                                                             \
-    void name(                                                                                \
-        EngineMemory *memory, void *data, uint64 size, bool is16Bit, TextureAsset *out_asset)
-typedef ASSETS_LOAD_TEXTURE(AssetsLoadTexture);
-
 #define ASSETS_GET_TEXTURE(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_TEXTURE(AssetsGetTexture);
 

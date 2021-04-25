@@ -11,7 +11,6 @@ struct EnginePlatformApi
     AssetsGetRegisteredAssets *assetsGetRegisteredAssets;
     AssetsSetAssetData *assetsSetAssetData;
     AssetsInvalidateAsset *assetsInvalidateAsset;
-    AssetsLoadTexture *assetsLoadTexture;
 };
 
 struct EngineClientApi
@@ -22,7 +21,6 @@ struct EngineClientApi
     AssetsRegisterMesh *assetsRegisterMesh;
     AssetsGetShader *assetsGetShader;
     AssetsGetShaderProgram *assetsGetShaderProgram;
-    AssetsLoadTexture *assetsLoadTexture;
     AssetsGetTexture *assetsGetTexture;
     AssetsGetMesh *assetsGetMesh;
 

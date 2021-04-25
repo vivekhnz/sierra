@@ -308,6 +308,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
             }
             src += (patchTexelHeight - 1) * heightmapWidth;
         }
+
+        state->heightmapTextureVersion = heightmapAsset->version;
     }
 
     // swap camera mode when C key is pressed

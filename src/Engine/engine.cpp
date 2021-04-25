@@ -10,7 +10,6 @@ void engineGetPlatformApi(EnginePlatformApi *api)
     api->assetsGetRegisteredAssets = assetsGetRegisteredAssets;
     api->assetsSetAssetData = assetsSetAssetData;
     api->assetsInvalidateAsset = assetsInvalidateAsset;
-    api->assetsLoadTexture = assetsLoadTexture;
 }
 
 void engineGetClientApi(EngineClientApi *api)
@@ -21,7 +20,6 @@ void engineGetClientApi(EngineClientApi *api)
     api->assetsRegisterMesh = assetsRegisterMesh;
     api->assetsGetShader = assetsGetShader;
     api->assetsGetShaderProgram = assetsGetShaderProgram;
-    api->assetsLoadTexture = assetsLoadTexture;
     api->assetsGetTexture = assetsGetTexture;
     api->assetsGetMesh = assetsGetMesh;
 

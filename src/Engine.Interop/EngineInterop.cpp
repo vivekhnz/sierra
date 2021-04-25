@@ -107,7 +107,10 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::LoadHeightmapTexture(System::String ^ path)
     {
-        GetCStringFromManagedString(path, memory->importedHeightmapTexturePath);
+        char pathCStr[MAX_PATH];
+        GetCStringFromManagedString(path, pathCStr);
+        win32QueueAssetLoadAbsolute(
+            memory->editor->state.assets.textureVirtualImportedHeightmap, pathCStr);
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)

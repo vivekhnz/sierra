@@ -149,6 +149,8 @@ struct EditorAssets
     uint32 shaderProgramBrushBlendSmooth;
     uint32 shaderProgramRock;
 
+    uint32 textureVirtualImportedHeightmap;
+
     uint32 meshRock;
 };
 
@@ -161,6 +163,7 @@ struct EditorState
     uint32 quadFlippedYVertexArrayHandle;
 
     uint32 importedHeightmapTextureHandle;
+    uint8 importedHeightmapTextureVersion;
 
     HeightmapRenderTexture committedHeightmap;
     HeightmapRenderTexture workingBrushInfluenceMask;
@@ -296,9 +299,5 @@ typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 
 #define EDITOR_SHUTDOWN(name) void name(EditorMemory *memory)
 typedef EDITOR_SHUTDOWN(EditorShutdown);
-
-#define EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(name)                                        \
-    void name(EditorMemory *memory, TextureAsset *asset)
-typedef EDITOR_UPDATE_IMPORTED_HEIGHTMAP_TEXTURE(EditorUpdateImportedHeightmapTexture);
 
 #endif

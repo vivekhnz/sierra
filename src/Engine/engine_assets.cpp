@@ -242,37 +242,6 @@ ASSETS_GET_MESH(assetsGetMesh)
     return getAsset(memory, assetId);
 }
 
-ASSETS_LOAD_TEXTURE(assetsLoadTexture)
-{
-    const stbi_uc *rawData = static_cast<stbi_uc *>(data);
-    void *loadedData;
-    int32 width;
-    int32 height;
-    int32 channels;
-    uint64 elementSize = 0;
-    if (is16Bit)
-    {
-        loadedData = stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
-        elementSize = 2;
-    }
-    else
-    {
-        loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
-        elementSize = 1;
-    }
-    assert(width >= 0);
-    assert(height >= 0);
-
-    out_asset->width = (uint32)width;
-    out_asset->height = (uint32)height;
-
-    uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
-    out_asset->data = (uint8 *)pushAssetData(memory, requiredStorage);
-    memcpy(out_asset->data, loadedData, requiredStorage);
-
-    stbi_image_free(loadedData);
-}
-
 struct FastObjVirtualFile
 {
     void *data;
@@ -376,8 +345,36 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         {
             reg->asset.texture = pushAssetStruct(memory, TextureAsset);
         }
-        assetsLoadTexture(
-            memory, data, size, reg->metadata.texture->is16Bit, reg->asset.texture);
+
+        const stbi_uc *rawData = static_cast<stbi_uc *>(data);
+        void *loadedData;
+        int32 width;
+        int32 height;
+        int32 channels;
+        uint64 elementSize = 0;
+        if (reg->metadata.texture->is16Bit)
+        {
+            loadedData =
+                stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
+            elementSize = 2;
+        }
+        else
+        {
+            loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
+            elementSize = 1;
+        }
+        assert(width >= 0);
+        assert(height >= 0);
+
+        reg->asset.texture->width = (uint32)width;
+        reg->asset.texture->height = (uint32)height;
+
+        uint64 requiredStorage =
+            (uint64)width * (uint64)height * (uint64)channels * elementSize;
+        reg->asset.texture->data = (uint8 *)pushAssetData(memory, requiredStorage);
+        memcpy(reg->asset.texture->data, loadedData, requiredStorage);
+
+        stbi_image_free(loadedData);
     }
     else if (assetType == ASSET_TYPE_MESH)
     {

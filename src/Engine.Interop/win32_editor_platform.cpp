@@ -123,7 +123,17 @@ Win32ReadFileResult win32ReadFile(const char *path)
     return result;
 }
 
-PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
+void win32CopyString(const char *src, char *dst)
+{
+    const char *srcCursor = src;
+    char *dstCursor = dst;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+}
+
+bool win32QueueAssetLoadAbsolute(uint32 assetId, const char *absolutePath)
 {
     if (platformMemory->assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
     {
@@ -137,9 +147,17 @@ PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
     Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
     *request = {};
     request->assetId = assetId;
-    win32GetAssetAbsolutePath(relativePath, request->path);
+    win32CopyString(absolutePath, request->path);
 
     return true;
+}
+
+PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
+{
+    char absolutePath[MAX_PATH];
+    win32GetAssetAbsolutePath(relativePath, absolutePath);
+
+    return win32QueueAssetLoadAbsolute(assetId, absolutePath);
 }
 
 PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
@@ -189,16 +207,6 @@ void win32LoadQueuedAssets()
                 index;
             i--;
         }
-    }
-}
-
-void win32CopyString(char *src, char *dst)
-{
-    char *srcCursor = src;
-    char *dstCursor = dst;
-    while (*srcCursor)
-    {
-        *dstCursor++ = *srcCursor++;
     }
 }
 
@@ -276,9 +284,6 @@ void win32LoadEditorCode(Win32EditorCode *editorCode)
             (EditorShutdown *)GetProcAddress(editorCode->dllModule, "editorShutdown");
         editorCode->editorRenderSceneView = (EditorRenderSceneView *)GetProcAddress(
             editorCode->dllModule, "editorRenderSceneView");
-        editorCode->editorUpdateImportedHeightmapTexture =
-            (EditorUpdateImportedHeightmapTexture *)GetProcAddress(
-                editorCode->dllModule, "editorUpdateImportedHeightmapTexture");
         editorCode->editorRenderHeightmapPreview =
             (EditorRenderHeightmapPreview *)GetProcAddress(
                 editorCode->dllModule, "editorRenderHeightmapPreview");
@@ -295,7 +300,6 @@ void win32UnloadEditorCode(Win32EditorCode *editorCode)
         editorCode->editorUpdate = 0;
         editorCode->editorShutdown = 0;
         editorCode->editorRenderSceneView = 0;
-        editorCode->editorUpdateImportedHeightmapTexture = 0;
         editorCode->editorRenderHeightmapPreview = 0;
     }
 }
@@ -314,23 +318,6 @@ void win32TickApp(float deltaTime, EditorInput *input)
     }
 
     win32LoadQueuedAssets();
-
-    if (platformMemory->importedHeightmapTexturePath[0]
-        && platformMemory->editorCode.editorUpdateImportedHeightmapTexture)
-    {
-        Win32ReadFileResult result =
-            win32ReadFile(platformMemory->importedHeightmapTexturePath);
-        assert(result.data);
-
-        TextureAsset asset;
-        platformMemory->engineApi.assetsLoadTexture(
-            platformMemory->editor->engineMemory, result.data, result.size, true, &asset);
-        platformMemory->editorCode.editorUpdateImportedHeightmapTexture(
-            platformMemory->editor, &asset);
-
-        win32FreeMemory(result.data);
-        *platformMemory->importedHeightmapTexturePath = 0;
-    }
 
     if (platformMemory->editorCode.editorUpdate)
     {
