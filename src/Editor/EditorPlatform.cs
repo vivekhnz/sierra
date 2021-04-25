@@ -96,10 +96,16 @@ namespace Terrain.Editor
 
     internal static class EditorPlatform
     {
-        private struct AssetLoadRequest
+        private class AssetLoadRequest
         {
-            public uint AssetId { get; internal set; }
-            public string Path { get; internal set; }
+            public uint AssetId;
+            public string Path;
+        }
+        private class WatchedAsset
+        {
+            public uint AssetId;
+            public string Path;
+            public DateTime LastUpdatedTimeUtc;
         }
 
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
@@ -129,14 +135,17 @@ namespace Terrain.Editor
 
         private static string assetsDirectoryPath;
         private static List<AssetLoadRequest> assetLoadRequests = new List<AssetLoadRequest>();
+        private static List<WatchedAsset> watchedAssets = new List<WatchedAsset>();
 
         private delegate void PlatformCaptureMouse();
         private delegate void PlatformLogMessage(string message);
         private delegate bool PlatformQueueAssetLoad(uint assetId, string relativePath);
+        private delegate void PlatformWatchAssetFile(uint assetId, string relativePath);
 
         private static PlatformCaptureMouse editorPlatformCaptureMouse = CaptureMouse;
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
+        private static PlatformWatchAssetFile editorPlatformWatchAssetFile = WatchAssetFile;
 
         internal static void Initialize()
         {
@@ -195,7 +204,8 @@ namespace Terrain.Editor
 
                 platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(editorPlatformCaptureMouse),
                 platformLogMessage = Marshal.GetFunctionPointerForDelegate(editorPlatformLogMessage),
-                platformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(editorPlatformQueueAssetLoad)
+                platformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(editorPlatformQueueAssetLoad),
+                platformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(editorPlatformWatchAssetFile)
             };
             EngineInterop.InitializeEngine(initParams);
 
@@ -291,6 +301,17 @@ namespace Terrain.Editor
         private static bool QueueAssetLoadRelative(uint assetId, string relativePath)
         {
             return QueueAssetLoad(assetId, Path.Combine(assetsDirectoryPath, relativePath));
+        }
+
+        private static void WatchAssetFile(uint assetId, string relativePath)
+        {
+            var asset = new WatchedAsset
+            {
+                AssetId = assetId,
+                Path = Path.Combine(assetsDirectoryPath, relativePath)
+            };
+            asset.LastUpdatedTimeUtc = File.GetLastWriteTimeUtc(asset.Path);
+            watchedAssets.Add(asset);
         }
 
         private static EditorInputProxy GetInputState()
@@ -481,6 +502,18 @@ namespace Terrain.Editor
 
             EngineInterop.TickPlatform();
 
+            // invalidate watched assets that have changed
+            foreach (var asset in watchedAssets)
+            {
+                DateTime lastWriteTimeUtc = File.GetLastWriteTimeUtc(asset.Path);
+                if (lastWriteTimeUtc > asset.LastUpdatedTimeUtc)
+                {
+                    asset.LastUpdatedTimeUtc = lastWriteTimeUtc;
+                    Engine.InvalidateAsset(asset.AssetId);
+                }
+            }
+
+            // action any asset load requests
             for (int i = 0; i < assetLoadRequests.Count; i++)
             {
                 var request = assetLoadRequests[i];

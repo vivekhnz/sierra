@@ -80,19 +80,6 @@ void win32CopyString(const char *src, char *dst)
     }
 }
 
-PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
-{
-    if (platformMemory->watchedAssetCount >= MAX_WATCHED_ASSETS)
-    {
-        return;
-    }
-    Win32WatchedAsset *watchedAsset =
-        &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
-    watchedAsset->assetId = assetId;
-    win32GetAssetAbsolutePath(relativePath, watchedAsset->path);
-    watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(watchedAsset->path);
-}
-
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 {
     uint8 *platformMemoryBaseAddress = params->memoryBaseAddress;
@@ -134,7 +121,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     // initialize engine memory
     engineMemory->platformLogMessage = params->platformLogMessage;
     engineMemory->platformQueueAssetLoad = params->platformQueueAssetLoad;
-    engineMemory->platformWatchAssetFile = win32WatchAssetFile;
+    engineMemory->platformWatchAssetFile = params->platformWatchAssetFile;
 
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);
@@ -197,18 +184,5 @@ void win32TickPlatform()
         win32UnloadEditorCode(&platformMemory->editorCode);
         win32LoadEditorCode(&platformMemory->editorCode);
         platformMemory->editorCode.dllLastWriteTime = editorCodeDllLastWriteTime;
-    }
-
-    // invalidate watched assets that have changed
-    for (uint32 i = 0; i < platformMemory->watchedAssetCount; i++)
-    {
-        Win32WatchedAsset *asset = &platformMemory->watchedAssets[i];
-        uint64 lastWriteTime = win32GetFileLastWriteTime(asset->path);
-        if (lastWriteTime > asset->lastUpdatedTime)
-        {
-            asset->lastUpdatedTime = lastWriteTime;
-            platformMemory->engineApi.assetsInvalidateAsset(
-                platformMemory->editor->engineMemory, asset->assetId);
-        }
     }
 }

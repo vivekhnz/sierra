@@ -6,15 +6,6 @@
 #include "../Engine/engine.h"
 #include "../EditorCore/editor.h"
 
-#define MAX_WATCHED_ASSETS 256
-
-struct Win32WatchedAsset
-{
-    uint32 assetId;
-    char path[MAX_PATH];
-    uint64 lastUpdatedTime;
-};
-
 struct Win32EditorCode
 {
     char dllPath[MAX_PATH];
@@ -35,9 +26,6 @@ struct Win32PlatformMemory
     EnginePlatformApi engineApi;
     Win32EditorCode editorCode;
 
-    Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
-    uint32 watchedAssetCount;
-
     EditorMemory *editor;
 };
 
@@ -54,6 +42,7 @@ struct Win32InitPlatformParams
     PlatformCaptureMouse *platformCaptureMouse;
     PlatformLogMessage *platformLogMessage;
     PlatformQueueAssetLoad *platformQueueAssetLoad;
+    PlatformWatchAssetFile *platformWatchAssetFile;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
 void win32TickPlatform();

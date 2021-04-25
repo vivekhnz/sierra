@@ -35,5 +35,10 @@ namespace Terrain.Editor
             EngineInterop.SetAssetData(assetId, pinnedArray.AddrOfPinnedObject(), (ulong)data.Length);
             pinnedArray.Free();
         }
+
+        internal static void InvalidateAsset(uint assetId)
+        {
+            EngineInterop.InvalidateAsset(assetId);
+        }
     }
 }

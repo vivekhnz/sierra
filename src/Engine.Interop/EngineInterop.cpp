@@ -31,6 +31,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             (PlatformLogMessage *)params.platformLogMessage.ToPointer();
         initParams.platformQueueAssetLoad =
             (PlatformQueueAssetLoad *)params.platformQueueAssetLoad.ToPointer();
+        initParams.platformWatchAssetFile =
+            (PlatformWatchAssetFile *)params.platformWatchAssetFile.ToPointer();
 
         memory = win32InitializePlatform(&initParams);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
@@ -110,12 +112,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         return 0;
     }
 
-    void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
-    {
-        memory->engineApi.assetsSetAssetData(
-            memory->editor->engineMemory, assetId, data.ToPointer(), size);
-    }
-
     uint32 EngineInterop::GetRegisteredAssetCount()
     {
         return memory->engineApi.assetsGetRegisteredAssetCount(memory->editor->engineMemory);
@@ -140,6 +136,17 @@ namespace Terrain { namespace Engine { namespace Interop {
             result[i] = proxy;
         }
         return result;
+    }
+
+    void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
+    {
+        memory->engineApi.assetsSetAssetData(
+            memory->editor->engineMemory, assetId, data.ToPointer(), size);
+    }
+
+    void EngineInterop::InvalidateAsset(uint32 assetId)
+    {
+        memory->engineApi.assetsInvalidateAsset(memory->editor->engineMemory, assetId);
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)

@@ -33,6 +33,7 @@ public
         System::IntPtr platformCaptureMouse;
         System::IntPtr platformLogMessage;
         System::IntPtr platformQueueAssetLoad;
+        System::IntPtr platformWatchAssetFile;
     };
 
 public
@@ -90,9 +91,10 @@ public
         static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
         static uint32 GetImportedHeightmapAssetId();
 
-        static void SetAssetData(uint32 assetId, System::IntPtr data, uint64 size);
         static uint32 GetRegisteredAssetCount();
         static array<AssetRegistrationProxy> ^ GetRegisteredAssets();
+        static void SetAssetData(uint32 assetId, System::IntPtr data, uint64 size);
+        static void InvalidateAsset(uint32 assetId);
 
         static void AddMaterial(MaterialProps props);
         static void DeleteMaterial(int index);
