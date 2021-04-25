@@ -28,6 +28,8 @@ struct GameAssets
     uint32 textureSnowNormal;
     uint32 textureSnowDisplacement;
     uint32 textureSnowAo;
+
+    uint32 textureVirtualHeightmap;
 };
 
 struct GameState
@@ -74,6 +76,8 @@ struct GameState
     uint32 terrainMeshTessLevelBufferHandle;
 
     uint32 heightmapTextureHandle;
+    uint8 heightmapTextureVersion;
+
     uint32 albedoTextureArrayHandle;
     uint32 normalTextureArrayHandle;
     uint32 displacementTextureArrayHandle;
@@ -108,9 +112,6 @@ struct GameMemory
 {
     bool isInitialized;
 
-    PlatformGetAssetAbsolutePath *platformGetAssetAbsolutePath;
-    PlatformReadFile *platformReadFile;
-    PlatformFreeMemory *platformFreeMemory;
     PlatformExitGame *platformExitGame;
     PlatformCaptureMouse *platformCaptureMouse;
 

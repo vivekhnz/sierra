@@ -360,9 +360,6 @@ int32 main()
     // initialize game memory
     gameMemory->engineMemory = engineMemory;
     engineGetClientApi(&gameMemory->engine);
-    gameMemory->platformGetAssetAbsolutePath = win32GetAssetAbsolutePath;
-    gameMemory->platformReadFile = win32ReadFile;
-    gameMemory->platformFreeMemory = win32FreeMemory;
     gameMemory->platformExitGame = win32ExitGame;
     gameMemory->platformCaptureMouse = win32CaptureMouse;
 

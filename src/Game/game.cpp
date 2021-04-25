@@ -10,43 +10,6 @@ float clamp(float value, float min, float max)
     return (value < min ? min : (value > max ? max : value));
 }
 
-void reloadHeightmap(GameMemory *memory,
-    Heightfield *heightfield,
-    uint32 textureHandle,
-    const char *relativePath)
-{
-    char absolutePath[MAX_PATH];
-    memory->platformGetAssetAbsolutePath(relativePath, absolutePath);
-    PlatformReadFileResult result = memory->platformReadFile(absolutePath);
-    assert(result.data);
-
-    TextureAsset asset;
-    memory->engine.assetsLoadTexture(
-        memory->engineMemory, result.data, result.size, true, &asset);
-    memory->engine.rendererUpdateTexture(memory->engineMemory, textureHandle,
-        GL_UNSIGNED_SHORT, GL_R16, GL_RED, asset.width, asset.height, asset.data);
-
-    uint16 heightmapWidth = 2048;
-    uint16 heightmapHeight = 2048;
-    uint16 patchTexelWidth = heightmapWidth / heightfield->columns;
-    uint16 patchTexelHeight = heightmapHeight / heightfield->rows;
-
-    uint16 *src = (uint16 *)asset.data;
-    float *dst = (float *)heightfield->heights;
-    float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
-    for (uint32 y = 0; y < heightfield->rows; y++)
-    {
-        for (uint32 x = 0; x < heightfield->columns; x++)
-        {
-            *dst++ = *src * heightScalar;
-            src += patchTexelWidth;
-        }
-        src += (patchTexelHeight - 1) * heightmapWidth;
-    }
-
-    memory->platformFreeMemory(result.data);
-}
-
 bool initializeGame(GameMemory *memory)
 {
     GameState *state = &memory->state;
@@ -124,6 +87,9 @@ bool initializeGame(GameMemory *memory)
         engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
     assets->textureSnowAo =
         engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
+
+    assets->textureVirtualHeightmap =
+        engine->assetsRegisterTexture(memory->engineMemory, 0, true);
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;
@@ -221,8 +187,8 @@ bool initializeGame(GameMemory *memory)
     state->heightmapTextureHandle =
         engine->rendererCreateTexture(memory->engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
             2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    reloadHeightmap(
-        memory, &state->heightfield, state->heightmapTextureHandle, "heightmap.tga");
+    memory->engineMemory->platformQueueAssetLoad(
+        assets->textureVirtualHeightmap, "heightmap.tga");
 
     state->albedoTextureArrayHandle =
         engine->rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_BYTE, GL_RGBA,
@@ -316,6 +282,34 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         memory->platformExitGame();
     }
 
+    LoadedAsset *heightmapAsset =
+        engine->assetsGetTexture(memory->engineMemory, assets->textureVirtualHeightmap);
+    if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
+    {
+        memory->engine.rendererUpdateTexture(memory->engineMemory,
+            state->heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+            heightmapAsset->texture->width, heightmapAsset->texture->height,
+            heightmapAsset->texture->data);
+
+        uint16 heightmapWidth = 2048;
+        uint16 heightmapHeight = 2048;
+        uint16 patchTexelWidth = heightmapWidth / state->heightfield.columns;
+        uint16 patchTexelHeight = heightmapHeight / state->heightfield.rows;
+
+        uint16 *src = (uint16 *)heightmapAsset->texture->data;
+        float *dst = (float *)state->heightfield.heights;
+        float heightScalar = state->heightfield.maxHeight / (float)UINT16_MAX;
+        for (uint32 y = 0; y < state->heightfield.rows; y++)
+        {
+            for (uint32 x = 0; x < state->heightfield.columns; x++)
+            {
+                *dst++ = *src * heightScalar;
+                src += patchTexelWidth;
+            }
+            src += (patchTexelHeight - 1) * heightmapWidth;
+        }
+    }
+
     // swap camera mode when C key is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_C))
     {
@@ -360,8 +354,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     // load a different heightmap when H is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_H))
     {
-        reloadHeightmap(
-            memory, &state->heightfield, state->heightmapTextureHandle, "heightmap2.tga");
+        memory->engineMemory->platformQueueAssetLoad(
+            assets->textureVirtualHeightmap, "heightmap2.tga");
     }
 
     // toggle terrain wireframe mode when Z is pressed
