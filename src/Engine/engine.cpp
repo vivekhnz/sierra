@@ -8,7 +8,7 @@ void engineGetPlatformApi(EnginePlatformApi *api)
 {
     api->assetsGetRegisteredAssetCount = assetsGetRegisteredAssetCount;
     api->assetsGetRegisteredAssets = assetsGetRegisteredAssets;
-    api->assetsOnAssetLoaded = assetsOnAssetLoaded;
+    api->assetsSetAssetData = assetsSetAssetData;
     api->assetsInvalidateAsset = assetsInvalidateAsset;
     api->assetsLoadTexture = assetsLoadTexture;
 }

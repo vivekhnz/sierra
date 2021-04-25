@@ -123,7 +123,7 @@ Win32ReadFileResult win32ReadFile(const char *path)
     return result;
 }
 
-PLATFORM_LOAD_ASSET(win32LoadAsset)
+PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
 {
     if (platformMemory->assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
     {
@@ -139,34 +139,20 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     request->assetId = assetId;
     win32GetAssetAbsolutePath(relativePath, request->path);
 
-    // add asset to watch list so we can hot reload it
-    bool isAssetAlreadyWatched = false;
-    for (int i = 0; i < platformMemory->watchedAssetCount; i++)
-    {
-        if (platformMemory->watchedAssets[i].assetId == assetId)
-        {
-            isAssetAlreadyWatched = true;
-            break;
-        }
-    }
-    if (!isAssetAlreadyWatched)
-    {
-        assert(platformMemory->watchedAssetCount < MAX_WATCHED_ASSETS);
-        Win32WatchedAsset *watchedAsset =
-            &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
-        watchedAsset->assetId = assetId;
-
-        char *src = request->path;
-        char *dst = watchedAsset->path;
-        while (*src)
-        {
-            *dst++ = *src++;
-        }
-
-        watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(request->path);
-    }
-
     return true;
+}
+
+PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
+{
+    if (platformMemory->watchedAssetCount >= MAX_WATCHED_ASSETS)
+    {
+        return;
+    }
+    Win32WatchedAsset *watchedAsset =
+        &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
+    watchedAsset->assetId = assetId;
+    win32GetAssetAbsolutePath(relativePath, watchedAsset->path);
+    watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(watchedAsset->path);
 }
 
 void win32LoadQueuedAssets()
@@ -192,7 +178,7 @@ void win32LoadQueuedAssets()
         Win32ReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            platformMemory->engineApi.assetsOnAssetLoaded(platformMemory->editor->engineMemory,
+            platformMemory->engineApi.assetsSetAssetData(platformMemory->editor->engineMemory,
                 request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
@@ -260,7 +246,8 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 
     // initialize engine memory
     engineMemory->platformLogMessage = win32LogMessage;
-    engineMemory->platformLoadAsset = win32LoadAsset;
+    engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
+    engineMemory->platformWatchAssetFile = win32WatchAssetFile;
 
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);

@@ -9,7 +9,7 @@ struct EnginePlatformApi
 {
     AssetsGetRegisteredAssetCount *assetsGetRegisteredAssetCount;
     AssetsGetRegisteredAssets *assetsGetRegisteredAssets;
-    AssetsOnAssetLoaded *assetsOnAssetLoaded;
+    AssetsSetAssetData *assetsSetAssetData;
     AssetsInvalidateAsset *assetsInvalidateAsset;
     AssetsLoadTexture *assetsLoadTexture;
 };

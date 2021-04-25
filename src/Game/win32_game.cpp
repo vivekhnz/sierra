@@ -147,7 +147,7 @@ PLATFORM_READ_FILE(win32ReadFile)
     return result;
 }
 
-PLATFORM_LOAD_ASSET(win32LoadAsset)
+PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
 {
     if (platformMemory->assetLoadQueue.length >= ASSET_LOAD_QUEUE_MAX_SIZE)
     {
@@ -163,34 +163,20 @@ PLATFORM_LOAD_ASSET(win32LoadAsset)
     request->assetId = assetId;
     win32GetAssetAbsolutePath(relativePath, request->path);
 
-    // add asset to watch list so we can hot reload it
-    bool isAssetAlreadyWatched = false;
-    for (int i = 0; i < platformMemory->watchedAssetCount; i++)
-    {
-        if (platformMemory->watchedAssets[i].assetId == assetId)
-        {
-            isAssetAlreadyWatched = true;
-            break;
-        }
-    }
-    if (!isAssetAlreadyWatched)
-    {
-        assert(platformMemory->watchedAssetCount < MAX_WATCHED_ASSETS);
-        Win32WatchedAsset *watchedAsset =
-            &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
-        watchedAsset->assetId = assetId;
-
-        char *src = request->path;
-        char *dst = watchedAsset->path;
-        while (*src)
-        {
-            *dst++ = *src++;
-        }
-
-        watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(request->path);
-    }
-
     return true;
+}
+
+PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
+{
+    if (platformMemory->watchedAssetCount >= MAX_WATCHED_ASSETS)
+    {
+        return;
+    }
+    Win32WatchedAsset *watchedAsset =
+        &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
+    watchedAsset->assetId = assetId;
+    win32GetAssetAbsolutePath(relativePath, watchedAsset->path);
+    watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(watchedAsset->path);
 }
 
 PLATFORM_EXIT_GAME(win32ExitGame)
@@ -226,7 +212,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            platformMemory->engineApi.assetsOnAssetLoaded(
+            platformMemory->engineApi.assetsSetAssetData(
                 platformMemory->gameMemory->engineMemory, request->assetId, result.data,
                 result.size);
             win32FreeMemory(result.data);
@@ -383,7 +369,8 @@ int32 main()
     // initialize engine memory
     engineMemory->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
     engineMemory->platformLogMessage = win32LogMessage;
-    engineMemory->platformLoadAsset = win32LoadAsset;
+    engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
+    engineMemory->platformWatchAssetFile = win32WatchAssetFile;
 
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);

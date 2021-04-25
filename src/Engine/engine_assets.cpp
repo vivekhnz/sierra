@@ -70,6 +70,8 @@ AssetRegistration *registerAsset(EngineMemory *memory,
             *dstCursor++ = *srcCursor++;
         }
         *dstCursor = 0;
+
+        memory->platformWatchAssetFile(reg->id, relativePath);
     }
     else if (dependencyCount > 0)
     {
@@ -176,7 +178,7 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
         AssetFileState *fileState = reg->fileState;
         if (fileState->relativePath && !fileState->isUpToDate && !fileState->isLoadQueued)
         {
-            if (memory->platformLoadAsset(assetId, fileState->relativePath))
+            if (memory->platformQueueAssetLoad(assetId, fileState->relativePath))
             {
                 fileState->isLoadQueued = true;
             }
@@ -344,7 +346,7 @@ void fastObjLoadMesh(
     fast_obj_destroy(mesh);
 }
 
-ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
+ASSETS_SET_ASSET_DATA(assetsSetAssetData)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
@@ -357,15 +359,14 @@ ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
 
     if (assetType == ASSET_TYPE_SHADER)
     {
-        if (!reg->asset.shader)
-        {
-            reg->asset.shader = pushAssetStruct(memory, ShaderAsset);
-        }
-
         char *src = static_cast<char *>(data);
         uint32 handle;
         if (rendererCreateShader(memory, reg->metadata.shader->type, src, &handle))
         {
+            if (!reg->asset.shader)
+            {
+                reg->asset.shader = pushAssetStruct(memory, ShaderAsset);
+            }
             reg->asset.shader->handle = handle;
         }
     }

@@ -128,9 +128,9 @@ typedef ASSETS_GET_TEXTURE(AssetsGetTexture);
 #define ASSETS_GET_MESH(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_MESH(AssetsGetMesh);
 
-#define ASSETS_ON_ASSET_LOADED(name)                                                          \
+#define ASSETS_SET_ASSET_DATA(name)                                                           \
     void name(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
-typedef ASSETS_ON_ASSET_LOADED(AssetsOnAssetLoaded);
+typedef ASSETS_SET_ASSET_DATA(AssetsSetAssetData);
 
 #define ASSETS_INVALIDATE_ASSET(name) void name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_INVALIDATE_ASSET(AssetsInvalidateAsset);

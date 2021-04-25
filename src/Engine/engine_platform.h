@@ -39,14 +39,18 @@ typedef PLATFORM_GET_GL_PROC_ADDRESS(PlatformGetGlProcAddress);
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
-#define PLATFORM_LOAD_ASSET(name) bool name(uint32 assetId, const char *relativePath)
-typedef PLATFORM_LOAD_ASSET(PlatformLoadAsset);
+#define PLATFORM_QUEUE_ASSET_LOAD(name) bool name(uint32 assetId, const char *relativePath)
+typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
+
+#define PLATFORM_WATCH_ASSET_FILE(name) void name(uint32 assetId, const char *relativePath)
+typedef PLATFORM_WATCH_ASSET_FILE(PlatformWatchAssetFile);
 
 struct EngineMemory
 {
     PlatformGetGlProcAddress *platformGetGlProcAddress;
     PlatformLogMessage *platformLogMessage;
-    PlatformLoadAsset *platformLoadAsset;
+    PlatformQueueAssetLoad *platformQueueAssetLoad;
+    PlatformWatchAssetFile *platformWatchAssetFile;
 
     MemoryBlock renderer;
     MemoryBlock assets;
