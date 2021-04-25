@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Windows;
@@ -126,6 +127,12 @@ namespace Terrain.Editor
             shouldCaptureMouse = true;
         };
 
+        private delegate void PlatformLogMessage(string message);
+        private static PlatformLogMessage EditorPlatformLogMessage = message =>
+        {
+            Debug.WriteLine(message);
+        };
+
         internal static void Initialize()
         {
             uint editorMemorySizeInBytes = 32 * 1024 * 1024;
@@ -179,7 +186,9 @@ namespace Terrain.Editor
                     AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
 
                 platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(
-                    EditorPlatformCaptureMouse)
+                    EditorPlatformCaptureMouse),
+                platformLogMessage = Marshal.GetFunctionPointerForDelegate(
+                    EditorPlatformLogMessage)
             };
             EngineInterop.InitializeEngine(initParams);
 
@@ -436,7 +445,10 @@ namespace Terrain.Editor
             lastTickTime = now;
 
             EditorInputProxy input = GetInputState();
-            EngineInterop.TickApp(deltaTime, input);
+
+            EngineInterop.TickPlatform();
+
+            EditorCore.Update(deltaTime, input);
 
             for (int i = 0; i < viewportWindows.Count; i++)
             {

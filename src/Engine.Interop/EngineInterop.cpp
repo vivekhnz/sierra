@@ -27,6 +27,8 @@ namespace Terrain { namespace Engine { namespace Interop {
             params.editorCodeBuildLockFilePath, initParams.editorCodeBuildLockFilePath);
         initParams.platformCaptureMouse =
             (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
+        initParams.platformLogMessage =
+            (PlatformLogMessage *)params.platformLogMessage.ToPointer();
 
         memory = win32InitializePlatform(&initParams);
         stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
@@ -34,10 +36,18 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::Shutdown()
     {
-        win32ShutdownPlatform();
+        if (memory->editorCode.editorShutdown)
+        {
+            memory->editorCode.editorShutdown(memory->editor);
+        }
     }
 
-    void EngineInterop::TickApp(float deltaTime, EditorInputProxy input)
+    void EngineInterop::TickPlatform()
+    {
+        win32TickPlatform();
+    }
+
+    void EngineInterop::Update(float deltaTime, EditorInputProxy input)
     {
         EditorInput inputInternal = {};
         inputInternal.activeViewState = input.activeViewState.ToPointer();
@@ -48,7 +58,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         inputInternal.pressedButtons = input.pressedButtons;
         inputInternal.prevPressedButtons = input.prevPressedButtons;
 
-        win32TickApp(deltaTime, &inputInternal);
+        if (memory->editorCode.editorUpdate)
+        {
+            memory->editorCode.editorUpdate(memory->editor, deltaTime, &inputInternal);
+        }
     }
 
     void EngineInterop::RenderSceneView(EditorViewContextProxy % vctx)
@@ -60,7 +73,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctxInternal.width = vctx.width;
         vctxInternal.height = vctx.height;
 
-        win32RenderSceneView(&vctxInternal);
+        if (memory->editorCode.editorRenderSceneView)
+        {
+            memory->editorCode.editorRenderSceneView(memory->editor, &vctxInternal);
+        }
 
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
@@ -74,7 +90,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctxInternal.width = vctx.width;
         vctxInternal.height = vctx.height;
 
-        win32RenderHeightmapPreview(&vctxInternal);
+        if (memory->editorCode.editorRenderHeightmapPreview)
+        {
+            memory->editorCode.editorRenderHeightmapPreview(memory->editor, &vctxInternal);
+        }
 
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }

@@ -20,6 +20,11 @@ namespace Terrain.Editor
 
     internal static class EditorCore
     {
+        internal static void Update(float deltaTime, EditorInputProxy input)
+        {
+            EngineInterop.Update(deltaTime, input);
+        }
+
         internal static void RenderSceneView(ref EditorViewContextProxy vctx)
         {
             EngineInterop.RenderSceneView(ref vctx);

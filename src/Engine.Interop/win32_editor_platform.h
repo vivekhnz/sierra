@@ -72,14 +72,11 @@ struct Win32InitPlatformParams
     char editorCodeBuildLockFilePath[MAX_PATH];
 
     PlatformCaptureMouse *platformCaptureMouse;
+    PlatformLogMessage *platformLogMessage;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
 
-void win32TickApp(float deltaTime, EditorInput *input);
-void win32RenderSceneView(EditorViewContext *vctx);
-void win32RenderHeightmapPreview(EditorViewContext *vctx);
-void win32ShutdownPlatform();
-
+void win32TickPlatform();
 bool win32QueueAssetLoadAbsolute(uint32 assetId, const char *absolutePath);
 
 #endif

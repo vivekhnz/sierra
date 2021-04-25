@@ -31,6 +31,7 @@ public
         System::String ^ editorCodeBuildLockFilePath;
 
         System::IntPtr platformCaptureMouse;
+        System::IntPtr platformLogMessage;
     };
 
 public
@@ -81,8 +82,9 @@ public
 
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
         static void Shutdown();
-        static void TickApp(float deltaTime, EditorInputProxy input);
+        static void TickPlatform();
 
+        static void Update(float deltaTime, EditorInputProxy input);
         static void RenderSceneView(EditorViewContextProxy % vctx);
         static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
 

@@ -72,57 +72,6 @@ uint64 win32GetFileLastWriteTime(char *path)
     return lastWriteTime;
 }
 
-void *win32AllocateMemory(uint64 size)
-{
-    return VirtualAlloc(0, size, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-}
-
-void win32FreeMemory(void *data)
-{
-    if (!data)
-        return;
-
-    VirtualFree(data, 0, MEM_RELEASE);
-}
-
-PLATFORM_LOG_MESSAGE(win32LogMessage)
-{
-    OutputDebugStringA(message);
-}
-
-Win32ReadFileResult win32ReadFile(const char *path)
-{
-    Win32ReadFileResult result = {};
-
-    HANDLE handle = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if (handle == INVALID_HANDLE_VALUE)
-    {
-        int err = GetLastError();
-        return result;
-    }
-
-    LARGE_INTEGER size;
-    if (GetFileSizeEx(handle, &size))
-    {
-        result.size = size.QuadPart;
-        result.data = win32AllocateMemory(result.size);
-        if (result.data)
-        {
-            DWORD bytesRead;
-            if (!ReadFile(handle, result.data, result.size, &bytesRead, 0)
-                || result.size != bytesRead)
-            {
-                win32FreeMemory(result.data);
-                result.data = 0;
-                result.size = 0;
-            }
-        }
-    }
-    CloseHandle(handle);
-
-    return result;
-}
-
 void win32CopyString(const char *src, char *dst)
 {
     const char *srcCursor = src;
@@ -173,43 +122,6 @@ PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
     watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(watchedAsset->path);
 }
 
-void win32LoadQueuedAssets()
-{
-    // invalidate watched assets that have changed
-    for (uint32 i = 0; i < platformMemory->watchedAssetCount; i++)
-    {
-        Win32WatchedAsset *asset = &platformMemory->watchedAssets[i];
-        uint64 lastWriteTime = win32GetFileLastWriteTime(asset->path);
-        if (lastWriteTime > asset->lastUpdatedTime)
-        {
-            asset->lastUpdatedTime = lastWriteTime;
-            platformMemory->engineApi.assetsInvalidateAsset(
-                platformMemory->editor->engineMemory, asset->assetId);
-        }
-    }
-
-    // action any asset load requests
-    for (uint32 i = 0; i < platformMemory->assetLoadQueue.length; i++)
-    {
-        uint32 index = platformMemory->assetLoadQueue.indices[i];
-        Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
-        Win32ReadFileResult result = win32ReadFile(request->path);
-        if (result.data)
-        {
-            platformMemory->engineApi.assetsSetAssetData(platformMemory->editor->engineMemory,
-                request->assetId, result.data, result.size);
-            win32FreeMemory(result.data);
-
-            platformMemory->assetLoadQueue.length--;
-            platformMemory->assetLoadQueue.indices[i] =
-                platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length];
-            platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length] =
-                index;
-            i--;
-        }
-    }
-}
-
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 {
     uint8 *platformMemoryBaseAddress = params->memoryBaseAddress;
@@ -253,7 +165,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     editorMemory->engineMemory = engineMemory;
 
     // initialize engine memory
-    engineMemory->platformLogMessage = win32LogMessage;
+    engineMemory->platformLogMessage = params->platformLogMessage;
     engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
     engineMemory->platformWatchAssetFile = win32WatchAssetFile;
 
@@ -304,7 +216,7 @@ void win32UnloadEditorCode(Win32EditorCode *editorCode)
     }
 }
 
-void win32TickApp(float deltaTime, EditorInput *input)
+void win32TickPlatform()
 {
     uint64 editorCodeDllLastWriteTime =
         win32GetFileLastWriteTime(platformMemory->editorCode.dllPath);
@@ -317,34 +229,59 @@ void win32TickApp(float deltaTime, EditorInput *input)
         platformMemory->editorCode.dllLastWriteTime = editorCodeDllLastWriteTime;
     }
 
-    win32LoadQueuedAssets();
-
-    if (platformMemory->editorCode.editorUpdate)
+    // invalidate watched assets that have changed
+    for (uint32 i = 0; i < platformMemory->watchedAssetCount; i++)
     {
-        platformMemory->editorCode.editorUpdate(platformMemory->editor, deltaTime, input);
+        Win32WatchedAsset *asset = &platformMemory->watchedAssets[i];
+        uint64 lastWriteTime = win32GetFileLastWriteTime(asset->path);
+        if (lastWriteTime > asset->lastUpdatedTime)
+        {
+            asset->lastUpdatedTime = lastWriteTime;
+            platformMemory->engineApi.assetsInvalidateAsset(
+                platformMemory->editor->engineMemory, asset->assetId);
+        }
     }
-}
 
-void win32RenderSceneView(EditorViewContext *vctx)
-{
-    if (platformMemory->editorCode.editorRenderSceneView)
+    // action any asset load requests
+    for (uint32 i = 0; i < platformMemory->assetLoadQueue.length; i++)
     {
-        platformMemory->editorCode.editorRenderSceneView(platformMemory->editor, vctx);
-    }
-}
+        uint32 index = platformMemory->assetLoadQueue.indices[i];
+        Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
 
-void win32RenderHeightmapPreview(EditorViewContext *vctx)
-{
-    if (platformMemory->editorCode.editorRenderHeightmapPreview)
-    {
-        platformMemory->editorCode.editorRenderHeightmapPreview(platformMemory->editor, vctx);
-    }
-}
+        HANDLE handle =
+            CreateFileA(request->path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
+        if (handle == INVALID_HANDLE_VALUE)
+        {
+            uint32 error = GetLastError();
+            continue;
+        }
 
-void win32ShutdownPlatform()
-{
-    if (platformMemory->editorCode.editorShutdown)
-    {
-        platformMemory->editorCode.editorShutdown(platformMemory->editor);
+        LARGE_INTEGER fileSize;
+        if (GetFileSizeEx(handle, &fileSize))
+        {
+            void *fileData =
+                VirtualAlloc(0, fileSize.QuadPart, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+            if (fileData)
+            {
+                DWORD bytesRead;
+                if (ReadFile(handle, fileData, fileSize.QuadPart, &bytesRead, 0)
+                    && bytesRead == fileSize.QuadPart)
+                {
+                    platformMemory->engineApi.assetsSetAssetData(
+                        platformMemory->editor->engineMemory, request->assetId, fileData,
+                        fileSize.QuadPart);
+
+                    platformMemory->assetLoadQueue.length--;
+                    platformMemory->assetLoadQueue.indices[i] =
+                        platformMemory->assetLoadQueue
+                            .indices[platformMemory->assetLoadQueue.length];
+                    platformMemory->assetLoadQueue
+                        .indices[platformMemory->assetLoadQueue.length] = index;
+                    i--;
+                }
+                VirtualFree(fileData, 0, MEM_RELEASE);
+            }
+        }
+        CloseHandle(handle);
     }
 }
