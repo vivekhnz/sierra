@@ -9,7 +9,8 @@ $CommonCompilerFlags = @(
     '/nologo',
     '/std:c++17',
     '/EHa',
-    '/Z7'
+    '/Z7',
+    '/FC'
 )
 if ($Configuration -eq 'Debug') {
     $CommonCompilerFlags += '/MTd'

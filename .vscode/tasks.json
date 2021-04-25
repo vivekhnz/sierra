@@ -8,6 +8,7 @@
 			"options": {
 				"cwd": "${workspaceFolder}"
 			},
+			"problemMatcher": "$msCompile",
 			"presentation": {
 				"echo": true,
 				"reveal": "silent",
