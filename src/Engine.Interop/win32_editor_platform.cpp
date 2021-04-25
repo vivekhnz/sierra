@@ -5,58 +5,6 @@ using namespace System::Windows::Input;
 
 global_variable Win32PlatformMemory *platformMemory;
 
-void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
-{
-    // get path to current assembly
-    CHAR exePath[MAX_PATH];
-    GetModuleFileNameA(0, exePath, MAX_PATH);
-
-    // traverse three directories up from the assembly
-    int slashPositions[4] = {};
-    int slashesFound = 0;
-    for (int i = 0; i < MAX_PATH; i++)
-    {
-        char c = exePath[i];
-        if (!c)
-        {
-            break;
-        }
-        else if (c == '\\')
-        {
-            slashesFound++;
-            if (slashesFound > 4)
-            {
-                slashPositions[0] = slashPositions[1];
-                slashPositions[1] = slashPositions[2];
-                slashPositions[2] = slashPositions[3];
-                slashPositions[3] = i;
-            }
-            else
-            {
-                slashPositions[slashesFound - 1] = i;
-            }
-        }
-    }
-    assert(slashesFound >= 4);
-
-    // concatenate root path with relative path
-    char *dstCursor = absolutePath;
-    for (int i = 0; i < slashPositions[0] + 1; i++)
-    {
-        *dstCursor++ = exePath[i];
-    }
-    *dstCursor++ = 'd';
-    *dstCursor++ = 'a';
-    *dstCursor++ = 't';
-    *dstCursor++ = 'a';
-    *dstCursor++ = '\\';
-    for (const char *srcCursor = relativePath; *srcCursor; srcCursor++)
-    {
-        *dstCursor++ = *srcCursor;
-    }
-    *dstCursor = 0;
-}
-
 uint64 win32GetFileLastWriteTime(char *path)
 {
     WIN32_FILE_ATTRIBUTE_DATA attributes;
