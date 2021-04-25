@@ -13,30 +13,10 @@
 RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram);
 RENDERER_CREATE_SHADER(rendererCreateShader);
 
-struct MeshAssetSlot
-{
-    bool isUpToDate;
-    bool isLoadQueued;
-    MeshAsset *asset;
-};
-
-struct TextureInfo
-{
-    const char *relativePath;
-    bool is16Bit;
-};
-struct MeshInfo
-{
-    const char *relativePath;
-};
-
 struct AssetsState
 {
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
-
-    MeshAssetSlot meshAssetSlots[ASSET_MESH_COUNT];
-    MeshAsset meshAssets[ASSET_MESH_COUNT];
 
     uint64 dataStorageUsed;
 };
@@ -57,18 +37,6 @@ void *pushAssetData(EngineMemory *memory, uint64 size)
     return address;
 }
 #define pushAssetStruct(memory, type) (type *)pushAssetData(memory, sizeof(type))
-
-MeshInfo getMeshInfo(uint32 assetId)
-{
-    MeshInfo info = {};
-    switch (assetId)
-    {
-    case ASSET_MESH_ROCK:
-        info.relativePath = "rock.obj";
-        break;
-    }
-    return info;
-}
 
 AssetRegistration *registerAsset(EngineMemory *memory,
     AssetType type,
@@ -135,7 +103,6 @@ ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
     reg->metadata.texture->is16Bit = is16Bit;
     return reg->id;
 }
-
 ASSETS_REGISTER_SHADER(assetsRegisterShader)
 {
     AssetRegistration *reg = registerAsset(memory, ASSET_TYPE_SHADER, relativePath, 0, 0);
@@ -143,11 +110,15 @@ ASSETS_REGISTER_SHADER(assetsRegisterShader)
     reg->metadata.shader->type = type;
     return reg->id;
 }
-
 ASSETS_REGISTER_SHADER_PROGRAM(assetsRegisterShaderProgram)
 {
     AssetRegistration *reg =
         registerAsset(memory, ASSET_TYPE_SHADER_PROGRAM, 0, shaderAssetIds, shaderCount);
+    return reg->id;
+}
+ASSETS_REGISTER_MESH(assetsRegisterMesh)
+{
+    AssetRegistration *reg = registerAsset(memory, ASSET_TYPE_MESH, relativePath, 0, 0);
     return reg->id;
 }
 
@@ -157,7 +128,6 @@ ASSETS_GET_REGISTERED_ASSET_COUNT(assetsGetRegisteredAssetCount)
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
     return state->registeredAssetCount;
 }
-
 ASSETS_GET_REGISTERED_ASSETS(assetsGetRegisteredAssets)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
@@ -254,10 +224,19 @@ ASSETS_GET_SHADER(assetsGetShader)
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
     return getAsset(memory, assetId);
 }
-
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
 {
     assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER_PROGRAM);
+    return getAsset(memory, assetId);
+}
+ASSETS_GET_TEXTURE(assetsGetTexture)
+{
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_TEXTURE);
+    return getAsset(memory, assetId);
+}
+ASSETS_GET_MESH(assetsGetMesh)
+{
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_MESH);
     return getAsset(memory, assetId);
 }
 
@@ -290,12 +269,6 @@ ASSETS_LOAD_TEXTURE(assetsLoadTexture)
     memcpy(out_asset->data, loadedData, requiredStorage);
 
     stbi_image_free(loadedData);
-}
-
-ASSETS_GET_TEXTURE(assetsGetTexture)
-{
-    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_TEXTURE);
-    return getAsset(memory, assetId);
 }
 
 struct FastObjVirtualFile
@@ -371,28 +344,6 @@ void fastObjLoadMesh(
     fast_obj_destroy(mesh);
 }
 
-ASSETS_GET_MESH(assetsGetMesh)
-{
-    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_MESH);
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    assert(assetIdx < ASSET_MESH_COUNT);
-
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
-    if (!slot->isUpToDate && !slot->isLoadQueued)
-    {
-        MeshInfo meshInfo = getMeshInfo(assetId);
-        if (memory->platformLoadAsset(assetId, meshInfo.relativePath))
-        {
-            slot->isLoadQueued = true;
-        }
-    }
-
-    return slot->asset;
-}
-
 ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
@@ -401,52 +352,44 @@ ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     uint32 assetType = ASSET_GET_TYPE(assetId);
 
-    if (assetType == ASSET_TYPE_SHADER || assetType == ASSET_TYPE_TEXTURE)
+    assert(assetIdx < state->registeredAssetCount);
+    AssetRegistration *reg = &state->registeredAssets[assetIdx];
+
+    if (assetType == ASSET_TYPE_SHADER)
     {
-        assert(assetIdx < state->registeredAssetCount);
-        AssetRegistration *reg = &state->registeredAssets[assetIdx];
+        if (!reg->asset.shader)
+        {
+            reg->asset.shader = pushAssetStruct(memory, ShaderAsset);
+        }
 
-        if (assetType == ASSET_TYPE_SHADER)
+        char *src = static_cast<char *>(data);
+        uint32 handle;
+        if (rendererCreateShader(memory, reg->metadata.shader->type, src, &handle))
         {
-            if (!reg->asset.shader)
-            {
-                reg->asset.shader = pushAssetStruct(memory, ShaderAsset);
-            }
-
-            char *src = static_cast<char *>(data);
-            uint32 handle;
-            if (rendererCreateShader(memory, reg->metadata.shader->type, src, &handle))
-            {
-                reg->asset.shader->handle = handle;
-            }
+            reg->asset.shader->handle = handle;
         }
-        else if (assetType == ASSET_TYPE_TEXTURE)
+    }
+    else if (assetType == ASSET_TYPE_TEXTURE)
+    {
+        if (!reg->asset.texture)
         {
-            if (!reg->asset.texture)
-            {
-                reg->asset.texture = pushAssetStruct(memory, TextureAsset);
-            }
-            assetsLoadTexture(
-                memory, data, size, reg->metadata.texture->is16Bit, reg->asset.texture);
+            reg->asset.texture = pushAssetStruct(memory, TextureAsset);
         }
-        reg->asset.version++;
-        if (reg->regType == ASSET_REG_FILE)
-        {
-            reg->fileState->isUpToDate = true;
-        }
+        assetsLoadTexture(
+            memory, data, size, reg->metadata.texture->is16Bit, reg->asset.texture);
     }
     else if (assetType == ASSET_TYPE_MESH)
     {
-        assert(assetIdx < ASSET_MESH_COUNT);
-        MeshInfo meshInfo = getMeshInfo(assetId);
-
-        MeshAsset *asset = &state->meshAssets[assetIdx];
-        fastObjLoadMesh(memory, meshInfo.relativePath, data, size, asset);
-        asset->version++;
-
-        MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
-        slot->asset = asset;
-        slot->isUpToDate = true;
+        if (!reg->asset.mesh)
+        {
+            reg->asset.mesh = pushAssetStruct(memory, MeshAsset);
+        }
+        fastObjLoadMesh(memory, reg->fileState->relativePath, data, size, reg->asset.mesh);
+    }
+    reg->asset.version++;
+    if (reg->regType == ASSET_REG_FILE)
+    {
+        reg->fileState->isUpToDate = true;
     }
 }
 
@@ -456,23 +399,11 @@ ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
 
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    uint32 assetType = ASSET_GET_TYPE(assetId);
-
-    if (assetType == ASSET_TYPE_SHADER || assetType == ASSET_TYPE_TEXTURE)
+    assert(assetIdx < state->registeredAssetCount);
+    AssetRegistration *reg = &state->registeredAssets[assetIdx];
+    if (reg->regType == ASSET_REG_FILE)
     {
-        assert(assetIdx < state->registeredAssetCount);
-        AssetRegistration *reg = &state->registeredAssets[assetIdx];
-        if (reg->regType == ASSET_REG_FILE)
-        {
-            reg->fileState->isUpToDate = false;
-            reg->fileState->isLoadQueued = false;
-        }
-    }
-    else if (assetType == ASSET_TYPE_MESH)
-    {
-        assert(assetIdx < ASSET_MESH_COUNT);
-        MeshAssetSlot *slot = &state->meshAssetSlots[assetIdx];
-        slot->isUpToDate = false;
-        slot->isLoadQueued = false;
+        reg->fileState->isUpToDate = false;
+        reg->fileState->isLoadQueued = false;
     }
 }

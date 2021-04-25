@@ -18,6 +18,7 @@ void engineGetClientApi(EngineClientApi *api)
     api->assetsRegisterShader = assetsRegisterShader;
     api->assetsRegisterTexture = assetsRegisterTexture;
     api->assetsRegisterShaderProgram = assetsRegisterShaderProgram;
+    api->assetsRegisterMesh = assetsRegisterMesh;
     api->assetsGetShader = assetsGetShader;
     api->assetsGetShaderProgram = assetsGetShaderProgram;
     api->assetsLoadTexture = assetsLoadTexture;

@@ -11,14 +11,6 @@ enum AssetType
     ASSET_TYPE_MESH
 };
 
-#define ASSET_ID(type, name, idx) ASSET_##type##_##name## = idx | (ASSET_TYPE_##type## << 28)
-
-enum MeshAssetId
-{
-    ASSET_ID(MESH, ROCK, 0)
-};
-#define ASSET_MESH_COUNT 12
-
 struct ShaderAsset
 {
     uint32 handle;
@@ -35,7 +27,6 @@ struct TextureAsset
 };
 struct MeshAsset
 {
-    uint8 version;
     uint32 vertexCount;
     uint32 elementCount;
     void *vertices;
@@ -50,6 +41,7 @@ struct LoadedAsset
         ShaderAsset *shader;
         ShaderProgramAsset *shaderProgram;
         TextureAsset *texture;
+        MeshAsset *mesh;
     };
 };
 
@@ -110,6 +102,9 @@ typedef ASSETS_REGISTER_SHADER(AssetsRegisterShader);
     uint32 name(EngineMemory *memory, uint32 *shaderAssetIds, uint32 shaderCount)
 typedef ASSETS_REGISTER_SHADER_PROGRAM(AssetsRegisterShaderProgram);
 
+#define ASSETS_REGISTER_MESH(name) uint32 name(EngineMemory *memory, const char *relativePath)
+typedef ASSETS_REGISTER_MESH(AssetsRegisterMesh);
+
 #define ASSETS_GET_REGISTERED_ASSET_COUNT(name) uint32 name(EngineMemory *memory)
 typedef ASSETS_GET_REGISTERED_ASSET_COUNT(AssetsGetRegisteredAssetCount);
 
@@ -130,7 +125,7 @@ typedef ASSETS_LOAD_TEXTURE(AssetsLoadTexture);
 #define ASSETS_GET_TEXTURE(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_TEXTURE(AssetsGetTexture);
 
-#define ASSETS_GET_MESH(name) MeshAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_MESH(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_MESH(AssetsGetMesh);
 
 #define ASSETS_ON_ASSET_LOADED(name)                                                          \

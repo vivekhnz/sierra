@@ -19,6 +19,7 @@ struct EngineClientApi
     AssetsRegisterShader *assetsRegisterShader;
     AssetsRegisterTexture *assetsRegisterTexture;
     AssetsRegisterShaderProgram *assetsRegisterShaderProgram;
+    AssetsRegisterMesh *assetsRegisterMesh;
     AssetsGetShader *assetsGetShader;
     AssetsGetShaderProgram *assetsGetShaderProgram;
     AssetsLoadTexture *assetsLoadTexture;

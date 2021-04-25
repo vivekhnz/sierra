@@ -160,7 +160,7 @@ bool initializeEditor(EditorMemory *memory)
     engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
     engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
 
-    assets->meshRock = ASSET_MESH_ROCK;
+    assets->meshRock = engine->assetsRegisterMesh(memory->engineMemory, "rock.obj");
 
     SceneState *sceneState = &memory->state.sceneState;
 
@@ -1123,7 +1123,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     // draw rocks
     if (!sceneState->rockMesh.isLoaded)
     {
-        MeshAsset *rockMesh = engine->assetsGetMesh(memory->engineMemory, assets->meshRock);
+        LoadedAsset *rockMeshAsset =
+            engine->assetsGetMesh(memory->engineMemory, assets->meshRock);
+        MeshAsset *rockMesh = rockMeshAsset->mesh;
         if (rockMesh)
         {
             sceneState->rockMesh.elementCount = rockMesh->elementCount;
