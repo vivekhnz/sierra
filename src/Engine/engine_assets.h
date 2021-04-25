@@ -13,29 +13,6 @@ enum AssetType
 
 #define ASSET_ID(type, name, idx) ASSET_##type##_##name## = idx | (ASSET_TYPE_##type## << 28)
 
-enum ShaderAssetId
-{
-    ASSET_ID(SHADER, TEXTURE_VERTEX, 0),
-    ASSET_ID(SHADER, TEXTURE_FRAGMENT, 1),
-    ASSET_ID(SHADER, TERRAIN_VERTEX, 2),
-    ASSET_ID(SHADER, TERRAIN_TESS_CTRL, 3),
-    ASSET_ID(SHADER, TERRAIN_TESS_EVAL, 4),
-    ASSET_ID(SHADER, TERRAIN_FRAGMENT, 5),
-    ASSET_ID(SHADER, TERRAIN_COMPUTE_TESS_LEVEL, 6),
-    ASSET_ID(SHADER, WIREFRAME_VERTEX, 7),
-    ASSET_ID(SHADER, WIREFRAME_TESS_CTRL, 8),
-    ASSET_ID(SHADER, WIREFRAME_TESS_EVAL, 9),
-    ASSET_ID(SHADER, WIREFRAME_FRAGMENT, 10),
-    ASSET_ID(SHADER, BRUSH_MASK_VERTEX, 11),
-    ASSET_ID(SHADER, BRUSH_MASK_FRAGMENT, 12),
-    ASSET_ID(SHADER, BRUSH_BLEND_ADD_SUB_FRAGMENT, 13),
-    ASSET_ID(SHADER, BRUSH_BLEND_FLATTEN_FRAGMENT, 14),
-    ASSET_ID(SHADER, BRUSH_BLEND_SMOOTH_FRAGMENT, 15),
-    ASSET_ID(SHADER, ROCK_VERTEX, 16),
-    ASSET_ID(SHADER, ROCK_FRAGMENT, 17)
-};
-#define ASSET_SHADER_COUNT 18
-
 enum MeshAssetId
 {
     ASSET_ID(MESH, ROCK, 0)
@@ -45,7 +22,6 @@ enum MeshAssetId
 struct ShaderAsset
 {
     uint32 handle;
-    uint8 version;
 };
 struct ShaderProgramAsset
 {
@@ -77,6 +53,10 @@ struct LoadedAsset
     };
 };
 
+struct ShaderAssetMetadata
+{
+    uint32 type;
+};
 struct TextureAssetMetadata
 {
     bool is16Bit;
@@ -112,6 +92,7 @@ struct AssetRegistration
     };
     union
     {
+        ShaderAssetMetadata *shader;
         TextureAssetMetadata *texture;
     } metadata;
     LoadedAsset asset;
@@ -120,6 +101,10 @@ struct AssetRegistration
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \
     uint32 name(EngineMemory *memory, const char *relativePath, bool is16Bit)
 typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
+
+#define ASSETS_REGISTER_SHADER(name)                                                          \
+    uint32 name(EngineMemory *memory, const char *relativePath, uint32 type)
+typedef ASSETS_REGISTER_SHADER(AssetsRegisterShader);
 
 #define ASSETS_REGISTER_SHADER_PROGRAM(name)                                                  \
     uint32 name(EngineMemory *memory, uint32 *shaderAssetIds, uint32 shaderCount)
@@ -131,7 +116,7 @@ typedef ASSETS_GET_REGISTERED_ASSET_COUNT(AssetsGetRegisteredAssetCount);
 #define ASSETS_GET_REGISTERED_ASSETS(name) AssetRegistration *name(EngineMemory *memory)
 typedef ASSETS_GET_REGISTERED_ASSETS(AssetsGetRegisteredAssets);
 
-#define ASSETS_GET_SHADER(name) ShaderAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_SHADER(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER(AssetsGetShader);
 
 #define ASSETS_GET_SHADER_PROGRAM(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)

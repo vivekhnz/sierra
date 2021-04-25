@@ -66,48 +66,84 @@ bool initializeEditor(EditorMemory *memory)
         return 0;
     }
 
-    uint32 quadShaderAssetIds[] = {ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_TEXTURE_FRAGMENT};
+    uint32 shaderTextureVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderTextureFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderTerrainVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderTerrainTessCtrl = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
+    uint32 shaderTerrainTessEval = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+    uint32 shaderTerrainFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
+    uint32 shaderWireframeVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderWireframeTessCtrl = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
+    uint32 shaderWireframeTessEval = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+    uint32 shaderWireframeFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderBrushMaskVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "brush_mask_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderBrushMaskFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderRockVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "rock_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderRockFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+
+    uint32 quadShaderAssetIds[] = {shaderTextureVertex, shaderTextureFragment};
     assets->shaderProgramQuad = engine->assetsRegisterShaderProgram(
         memory->engineMemory, quadShaderAssetIds, arrayCount(quadShaderAssetIds));
 
-    uint32 calcTessLevelShaderAssetIds[] = {ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL};
+    uint32 calcTessLevelShaderAssetIds[] = {shaderTerrainComputeTessLevel};
     assets->shaderProgramTerrainCalcTessLevel =
         engine->assetsRegisterShaderProgram(memory->engineMemory, calcTessLevelShaderAssetIds,
             arrayCount(calcTessLevelShaderAssetIds));
 
     uint32 texturedShaderAssetIds[] = {
-        ASSET_SHADER_TERRAIN_VERTEX,    //
-        ASSET_SHADER_TERRAIN_TESS_CTRL, //
-        ASSET_SHADER_TERRAIN_TESS_EVAL, //
-        ASSET_SHADER_TERRAIN_FRAGMENT   //
+        shaderTerrainVertex,   //
+        shaderTerrainTessCtrl, //
+        shaderTerrainTessEval, //
+        shaderTerrainFragment  //
     };
     assets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
         memory->engineMemory, texturedShaderAssetIds, arrayCount(texturedShaderAssetIds));
 
-    uint32 brushMaskShaderAssetIds[] = {
-        ASSET_SHADER_BRUSH_MASK_VERTEX, ASSET_SHADER_BRUSH_MASK_FRAGMENT};
+    uint32 brushMaskShaderAssetIds[] = {shaderBrushMaskVertex, shaderBrushMaskFragment};
     assets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(
         memory->engineMemory, brushMaskShaderAssetIds, arrayCount(brushMaskShaderAssetIds));
 
     uint32 brushBlendAddSubShaderAssetIds[] = {
-        ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_BRUSH_BLEND_ADD_SUB_FRAGMENT};
+        shaderTextureVertex, shaderBrush_blendAddSubFragment};
     assets->shaderProgramBrushBlendAddSub =
         engine->assetsRegisterShaderProgram(memory->engineMemory,
             brushBlendAddSubShaderAssetIds, arrayCount(brushBlendAddSubShaderAssetIds));
 
     uint32 brushBlendFlattenShaderAssetIds[] = {
-        ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_BRUSH_BLEND_FLATTEN_FRAGMENT};
+        shaderTextureVertex, shaderBrush_blendFlattenFragment};
     assets->shaderProgramBrushBlendFlatten =
         engine->assetsRegisterShaderProgram(memory->engineMemory,
             brushBlendFlattenShaderAssetIds, arrayCount(brushBlendFlattenShaderAssetIds));
 
     uint32 brushBlendSmoothShaderAssetIds[] = {
-        ASSET_SHADER_TEXTURE_VERTEX, ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT};
+        shaderTextureVertex, shaderBrush_blendSmoothFragment};
     assets->shaderProgramBrushBlendSmooth =
         engine->assetsRegisterShaderProgram(memory->engineMemory,
             brushBlendSmoothShaderAssetIds, arrayCount(brushBlendSmoothShaderAssetIds));
 
-    uint32 rockShaderAssetIds[] = {ASSET_SHADER_ROCK_VERTEX, ASSET_SHADER_ROCK_FRAGMENT};
+    uint32 rockShaderAssetIds[] = {shaderRockVertex, shaderRockFragment};
     assets->shaderProgramRock = engine->assetsRegisterShaderProgram(
         memory->engineMemory, rockShaderAssetIds, arrayCount(rockShaderAssetIds));
 

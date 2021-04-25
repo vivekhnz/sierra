@@ -13,12 +13,6 @@
 RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram);
 RENDERER_CREATE_SHADER(rendererCreateShader);
 
-struct ShaderAssetSlot
-{
-    bool isUpToDate;
-    bool isLoadQueued;
-    ShaderAsset *asset;
-};
 struct MeshAssetSlot
 {
     bool isUpToDate;
@@ -26,11 +20,6 @@ struct MeshAssetSlot
     MeshAsset *asset;
 };
 
-struct ShaderInfo
-{
-    uint32 type;
-    const char *relativePath;
-};
 struct TextureInfo
 {
     const char *relativePath;
@@ -45,9 +34,6 @@ struct AssetsState
 {
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
-
-    ShaderAssetSlot shaderAssetSlots[ASSET_SHADER_COUNT];
-    ShaderAsset shaderAssets[ASSET_SHADER_COUNT];
 
     MeshAssetSlot meshAssetSlots[ASSET_MESH_COUNT];
     MeshAsset meshAssets[ASSET_MESH_COUNT];
@@ -71,87 +57,6 @@ void *pushAssetData(EngineMemory *memory, uint64 size)
     return address;
 }
 #define pushAssetStruct(memory, type) (type *)pushAssetData(memory, sizeof(type))
-
-ShaderInfo getShaderInfo(uint32 assetId)
-{
-    ShaderInfo info = {};
-    switch (assetId)
-    {
-    case ASSET_SHADER_TEXTURE_VERTEX:
-        info.type = GL_VERTEX_SHADER;
-        info.relativePath = "texture_vertex_shader.glsl";
-        break;
-    case ASSET_SHADER_TEXTURE_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "texture_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_TERRAIN_VERTEX:
-        info.type = GL_VERTEX_SHADER;
-        info.relativePath = "terrain_vertex_shader.glsl";
-        break;
-    case ASSET_SHADER_TERRAIN_TESS_CTRL:
-        info.type = GL_TESS_CONTROL_SHADER;
-        info.relativePath = "terrain_tess_ctrl_shader.glsl";
-        break;
-    case ASSET_SHADER_TERRAIN_TESS_EVAL:
-        info.type = GL_TESS_EVALUATION_SHADER;
-        info.relativePath = "terrain_tess_eval_shader.glsl";
-        break;
-    case ASSET_SHADER_TERRAIN_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "terrain_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL:
-        info.type = GL_COMPUTE_SHADER;
-        info.relativePath = "terrain_calc_tess_levels_comp_shader.glsl";
-        break;
-    case ASSET_SHADER_WIREFRAME_VERTEX:
-        info.type = GL_VERTEX_SHADER;
-        info.relativePath = "wireframe_vertex_shader.glsl";
-        break;
-    case ASSET_SHADER_WIREFRAME_TESS_CTRL:
-        info.type = GL_TESS_CONTROL_SHADER;
-        info.relativePath = "wireframe_tess_ctrl_shader.glsl";
-        break;
-    case ASSET_SHADER_WIREFRAME_TESS_EVAL:
-        info.type = GL_TESS_EVALUATION_SHADER;
-        info.relativePath = "wireframe_tess_eval_shader.glsl";
-        break;
-    case ASSET_SHADER_WIREFRAME_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "wireframe_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_BRUSH_MASK_VERTEX:
-        info.type = GL_VERTEX_SHADER;
-        info.relativePath = "brush_mask_vertex_shader.glsl";
-        break;
-    case ASSET_SHADER_BRUSH_MASK_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "brush_mask_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_BRUSH_BLEND_ADD_SUB_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "brush_blend_add_sub_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_BRUSH_BLEND_FLATTEN_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "brush_blend_flatten_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_BRUSH_BLEND_SMOOTH_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "brush_blend_smooth_fragment_shader.glsl";
-        break;
-    case ASSET_SHADER_ROCK_VERTEX:
-        info.type = GL_VERTEX_SHADER;
-        info.relativePath = "rock_vertex_shader.glsl";
-        break;
-    case ASSET_SHADER_ROCK_FRAGMENT:
-        info.type = GL_FRAGMENT_SHADER;
-        info.relativePath = "rock_fragment_shader.glsl";
-        break;
-    }
-    return info;
-}
 
 MeshInfo getMeshInfo(uint32 assetId)
 {
@@ -231,6 +136,14 @@ ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
     return reg->id;
 }
 
+ASSETS_REGISTER_SHADER(assetsRegisterShader)
+{
+    AssetRegistration *reg = registerAsset(memory, ASSET_TYPE_SHADER, relativePath, 0, 0);
+    reg->metadata.shader = pushAssetStruct(memory, ShaderAssetMetadata);
+    reg->metadata.shader->type = type;
+    return reg->id;
+}
+
 ASSETS_REGISTER_SHADER_PROGRAM(assetsRegisterShaderProgram)
 {
     AssetRegistration *reg =
@@ -250,27 +163,6 @@ ASSETS_GET_REGISTERED_ASSETS(assetsGetRegisteredAssets)
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
     return state->registeredAssets;
-}
-
-ASSETS_GET_SHADER(assetsGetShader)
-{
-    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    assert(assetIdx < ASSET_SHADER_COUNT);
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
-    if (!slot->isUpToDate && !slot->isLoadQueued)
-    {
-        ShaderInfo shaderInfo = getShaderInfo(assetId);
-        if (memory->platformLoadAsset(assetId, shaderInfo.relativePath))
-        {
-            slot->isLoadQueued = true;
-        }
-    }
-
-    return slot->asset;
 }
 
 bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAsset **deps)
@@ -304,18 +196,6 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
 {
     assert(memory->assets.size >= sizeof(AssetsState));
     AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
-    // todo: remove this when shaders are managed within the asset registration system
-    if (ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER)
-    {
-        LoadedAsset *loaded = pushAssetStruct(memory, LoadedAsset);
-        loaded->shader = assetsGetShader(memory, assetId);
-        if (loaded->shader)
-        {
-            loaded->version = loaded->shader->version;
-        }
-        return loaded;
-    }
 
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < state->registeredAssetCount);
@@ -367,6 +247,12 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
     }
 
     return &reg->asset;
+}
+
+ASSETS_GET_SHADER(assetsGetShader)
+{
+    assert(ASSET_GET_TYPE(assetId) == ASSET_TYPE_SHADER);
+    return getAsset(memory, assetId);
 }
 
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
@@ -515,36 +401,34 @@ ASSETS_ON_ASSET_LOADED(assetsOnAssetLoaded)
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     uint32 assetType = ASSET_GET_TYPE(assetId);
 
-    if (assetType == ASSET_TYPE_SHADER)
-    {
-        assert(assetIdx < ASSET_SHADER_COUNT);
-        ShaderInfo shaderInfo = getShaderInfo(assetId);
-
-        char *src = static_cast<char *>(data);
-        uint32 handle;
-        if (rendererCreateShader(memory, shaderInfo.type, src, &handle))
-        {
-            ShaderAsset *asset = &state->shaderAssets[assetIdx];
-            asset->version++;
-            asset->handle = handle;
-
-            ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
-            slot->asset = asset;
-            slot->isUpToDate = true;
-        }
-    }
-    else if (assetType == ASSET_TYPE_TEXTURE)
+    if (assetType == ASSET_TYPE_SHADER || assetType == ASSET_TYPE_TEXTURE)
     {
         assert(assetIdx < state->registeredAssetCount);
         AssetRegistration *reg = &state->registeredAssets[assetIdx];
 
-        if (!reg->asset.texture)
+        if (assetType == ASSET_TYPE_SHADER)
         {
-            reg->asset.texture = pushAssetStruct(memory, TextureAsset);
-        }
-        assetsLoadTexture(
-            memory, data, size, reg->metadata.texture->is16Bit, reg->asset.texture);
+            if (!reg->asset.shader)
+            {
+                reg->asset.shader = pushAssetStruct(memory, ShaderAsset);
+            }
 
+            char *src = static_cast<char *>(data);
+            uint32 handle;
+            if (rendererCreateShader(memory, reg->metadata.shader->type, src, &handle))
+            {
+                reg->asset.shader->handle = handle;
+            }
+        }
+        else if (assetType == ASSET_TYPE_TEXTURE)
+        {
+            if (!reg->asset.texture)
+            {
+                reg->asset.texture = pushAssetStruct(memory, TextureAsset);
+            }
+            assetsLoadTexture(
+                memory, data, size, reg->metadata.texture->is16Bit, reg->asset.texture);
+        }
         reg->asset.version++;
         if (reg->regType == ASSET_REG_FILE)
         {
@@ -574,14 +458,7 @@ ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     uint32 assetType = ASSET_GET_TYPE(assetId);
 
-    if (assetType == ASSET_TYPE_SHADER)
-    {
-        assert(assetIdx < ASSET_SHADER_COUNT);
-        ShaderAssetSlot *slot = &state->shaderAssetSlots[assetIdx];
-        slot->isUpToDate = false;
-        slot->isLoadQueued = false;
-    }
-    else if (assetType == ASSET_TYPE_TEXTURE)
+    if (assetType == ASSET_TYPE_SHADER || assetType == ASSET_TYPE_TEXTURE)
     {
         assert(assetIdx < state->registeredAssetCount);
         AssetRegistration *reg = &state->registeredAssets[assetIdx];

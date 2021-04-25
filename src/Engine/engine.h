@@ -16,6 +16,7 @@ struct EnginePlatformApi
 
 struct EngineClientApi
 {
+    AssetsRegisterShader *assetsRegisterShader;
     AssetsRegisterTexture *assetsRegisterTexture;
     AssetsRegisterShaderProgram *assetsRegisterShaderProgram;
     AssetsGetShader *assetsGetShader;

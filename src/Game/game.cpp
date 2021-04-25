@@ -58,25 +58,44 @@ bool initializeGame(GameMemory *memory)
         return 0;
     }
 
+    uint32 shaderTerrainVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderTerrainTessCtrl = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
+    uint32 shaderTerrainTessEval = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+    uint32 shaderTerrainFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    uint32 shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
+        memory->engineMemory, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
+    uint32 shaderWireframeVertex = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
+    uint32 shaderWireframeTessCtrl = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
+    uint32 shaderWireframeTessEval = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+    uint32 shaderWireframeFragment = engine->assetsRegisterShader(
+        memory->engineMemory, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+
     uint32 wireframeShaderAssetIds[] = {
-        ASSET_SHADER_WIREFRAME_VERTEX,    //
-        ASSET_SHADER_WIREFRAME_TESS_CTRL, //
-        ASSET_SHADER_WIREFRAME_TESS_EVAL, //
-        ASSET_SHADER_WIREFRAME_FRAGMENT   //
+        shaderWireframeVertex,   //
+        shaderWireframeTessCtrl, //
+        shaderWireframeTessEval, //
+        shaderWireframeFragment  //
     };
     assets->shaderProgramTerrainWireframe = engine->assetsRegisterShaderProgram(
         memory->engineMemory, wireframeShaderAssetIds, arrayCount(wireframeShaderAssetIds));
 
     uint32 texturedShaderAssetIds[] = {
-        ASSET_SHADER_TERRAIN_VERTEX,    //
-        ASSET_SHADER_TERRAIN_TESS_CTRL, //
-        ASSET_SHADER_TERRAIN_TESS_EVAL, //
-        ASSET_SHADER_TERRAIN_FRAGMENT   //
+        shaderTerrainVertex,   //
+        shaderTerrainTessCtrl, //
+        shaderTerrainTessEval, //
+        shaderTerrainFragment  //
     };
     assets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
         memory->engineMemory, texturedShaderAssetIds, arrayCount(texturedShaderAssetIds));
 
-    uint32 calcTessLevelShaderAssetIds[] = {ASSET_SHADER_TERRAIN_COMPUTE_TESS_LEVEL};
+    uint32 calcTessLevelShaderAssetIds[] = {shaderTerrainComputeTessLevel};
     assets->shaderProgramTerrainCalcTessLevel =
         engine->assetsRegisterShaderProgram(memory->engineMemory, calcTessLevelShaderAssetIds,
             arrayCount(calcTessLevelShaderAssetIds));
