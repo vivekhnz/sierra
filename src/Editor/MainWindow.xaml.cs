@@ -6,7 +6,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
 using Terrain.Engine.Interop;
-using Terrain.Engine.Interop.Proxy;
 
 namespace Terrain.Editor
 {

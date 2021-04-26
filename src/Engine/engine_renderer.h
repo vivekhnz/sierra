@@ -109,7 +109,7 @@ typedef RENDERER_UPDATE_BUFFER(RendererUpdateBuffer);
 
 #define RENDERER_BIND_VERTEX_ATTRIBUTE(name)                                                  \
     void name(uint8 index, uint32 elementType, bool isNormalized, uint8 elementCount,         \
-        uint32 stride, uint32 offset, bool isPerInstance)
+        uint32 stride, uint64 offset, bool isPerInstance)
 typedef RENDERER_BIND_VERTEX_ATTRIBUTE(RendererBindVertexAttribute);
 #define RENDERER_BIND_SHADER_STORAGE_BUFFER(name)                                             \
     void name(EngineMemory *memory, uint32 handle, uint8 slot)

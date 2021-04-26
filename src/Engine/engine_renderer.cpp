@@ -83,7 +83,7 @@ uint32 getOpenGLBufferType(RendererBufferType type)
     return bufferType;
 }
 
-RENDERER_INITIALIZE(rendererInitialize, GetGLProcAddress *getGlProcAddress)
+RENDERER_INITIALIZE(rendererInitialize)
 {
     RendererState *state = getState(memory);
 

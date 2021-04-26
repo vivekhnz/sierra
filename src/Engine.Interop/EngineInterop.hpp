@@ -1,7 +1,6 @@
 #pragma once
 
 #include "win32_editor_platform.h"
-#include "Proxy/StateProxy.hpp"
 
 namespace Terrain { namespace Engine { namespace Interop {
 public
@@ -70,49 +69,71 @@ public
     };
 
 public
+    enum class EditorToolProxy
+    {
+        RaiseTerrain = 0,
+        LowerTerrain = 1,
+        FlattenTerrain = 2,
+        SmoothTerrain = 3
+    };
+
+public
+    value struct TerrainBrushParameters
+    {
+        float Radius;
+        float Falloff;
+        float Strength;
+    };
+
+public
+    enum class TerrainMaterialTextureType
+    {
+        Albedo = 0,
+        Normal = 1,
+        Displacement = 2,
+        AmbientOcclusion = 3
+    };
+
+public
     ref class EngineInterop
     {
     private:
         static Win32PlatformMemory *memory = nullptr;
-        static Proxy::StateProxy ^ stateProxy;
 
     public:
-        static property Proxy::StateProxy^ State
-        {
-        public:
-            Proxy::StateProxy^ get()
-            {
-                return stateProxy;
-            }
-        }
-
+        // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
-        static void Shutdown();
         static void TickPlatform();
 
-        static void Update(float deltaTime, EditorInputProxy input);
-        static void RenderSceneView(EditorViewContextProxy % vctx);
-        static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
-        static uint32 GetImportedHeightmapAssetId();
-
+        // engine
         static uint32 GetRegisteredAssetCount();
         static array<AssetRegistrationProxy> ^ GetRegisteredAssets();
         static void SetAssetData(uint32 assetId, System::IntPtr data, uint64 size);
         static void InvalidateAsset(uint32 assetId);
 
+        // editor
+        static void Update(float deltaTime, EditorInputProxy input);
+        static void RenderSceneView(EditorViewContextProxy % vctx);
+        static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
+        static void Shutdown();
+
+        static uint32 GetImportedHeightmapAssetId();
+        static EditorToolProxy GetBrushTool();
+        static void SetBrushTool(EditorToolProxy tool);
+        static TerrainBrushParameters GetBrushParameters();
+        static void SetBrushParameters(float radius, float falloff, float strength);
         static void AddMaterial(MaterialProps props);
         static void DeleteMaterial(int index);
         static void SwapMaterial(int indexA, int indexB);
-        static void SetMaterialAlbedoTexture(int index, uint32 assetId);
-        static void SetMaterialNormalTexture(int index, uint32 assetId);
-        static void SetMaterialDisplacementTexture(int index, uint32 assetId);
-        static void SetMaterialAoTexture(int index, uint32 assetId);
-        static void SetMaterialTextureSize(int index, float value);
-        static void SetMaterialSlopeStart(int index, float value);
-        static void SetMaterialSlopeEnd(int index, float value);
-        static void SetMaterialAltitudeStart(int index, float value);
-        static void SetMaterialAltitudeEnd(int index, float value);
         static MaterialProps GetMaterialProperties(int index);
+        static void SetMaterialTexture(
+            int index, TerrainMaterialTextureType textureType, uint32 assetId);
+        static void SetMaterialParameters(int index,
+            float textureSize,
+            float slopeStart,
+            float slopeEnd,
+            float altitudeStart,
+            float altitudeEnd);
         static void SetRockTransform(float positionX,
             float positionY,
             float positionZ,
@@ -122,5 +143,6 @@ public
             float scaleX,
             float scaleY,
             float scaleZ);
+        static void SetSceneParameters(float lightDirection);
     };
 }}}

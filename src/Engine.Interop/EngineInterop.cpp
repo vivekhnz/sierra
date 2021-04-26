@@ -40,20 +40,49 @@ namespace Terrain { namespace Engine { namespace Interop {
             (PlatformWatchAssetFile *)params.platformWatchAssetFile.ToPointer();
 
         memory = win32InitializePlatform(&initParams);
-        stateProxy = gcnew Proxy::StateProxy(&memory->editor->state.uiState);
-    }
-
-    void EngineInterop::Shutdown()
-    {
-        if (memory->editorCode.editorShutdown)
-        {
-            memory->editorCode.editorShutdown(memory->editor);
-        }
     }
 
     void EngineInterop::TickPlatform()
     {
         win32TickPlatform();
+    }
+
+    uint32 EngineInterop::GetRegisteredAssetCount()
+    {
+        return memory->engineCode.api.assetsGetRegisteredAssetCount(
+            memory->editor->engineMemory);
+    }
+
+    array<AssetRegistrationProxy> ^ EngineInterop::GetRegisteredAssets()
+    {
+        uint32 assetCount = GetRegisteredAssetCount();
+        AssetRegistration *assetRegs =
+            memory->engineCode.api.assetsGetRegisteredAssets(memory->editor->engineMemory);
+
+        array<AssetRegistrationProxy> ^ result =
+            gcnew array<AssetRegistrationProxy>(assetCount);
+        for (uint32 i = 0; i < assetCount; i++)
+        {
+            AssetRegistration *reg = &assetRegs[i];
+            AssetRegistrationProxy proxy = AssetRegistrationProxy();
+            proxy.id = reg->id;
+            proxy.relativePath = reg->regType == AssetRegistrationType::ASSET_REG_FILE
+                ? gcnew System::String(reg->fileState->relativePath)
+                : System::String::Empty;
+            result[i] = proxy;
+        }
+        return result;
+    }
+
+    void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
+    {
+        memory->engineCode.api.assetsSetAssetData(
+            memory->editor->engineMemory, assetId, data.ToPointer(), size);
+    }
+
+    void EngineInterop::InvalidateAsset(uint32 assetId)
+    {
+        memory->engineCode.api.assetsInvalidateAsset(memory->editor->engineMemory, assetId);
     }
 
     void EngineInterop::Update(float deltaTime, EditorInputProxy input)
@@ -107,6 +136,14 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
+    void EngineInterop::Shutdown()
+    {
+        if (memory->editorCode.editorShutdown)
+        {
+            memory->editorCode.editorShutdown(memory->editor);
+        }
+    }
+
     uint32 EngineInterop::GetImportedHeightmapAssetId()
     {
         if (memory->editorCode.editorGetImportedHeightmapAssetId)
@@ -117,42 +154,32 @@ namespace Terrain { namespace Engine { namespace Interop {
         return 0;
     }
 
-    uint32 EngineInterop::GetRegisteredAssetCount()
+    EditorToolProxy EngineInterop::GetBrushTool()
     {
-        return memory->engineCode.api.assetsGetRegisteredAssetCount(
-            memory->editor->engineMemory);
+        return (EditorToolProxy)memory->editor->state.uiState.tool;
     }
 
-    array<AssetRegistrationProxy> ^ EngineInterop::GetRegisteredAssets()
+    void EngineInterop::SetBrushTool(EditorToolProxy tool)
     {
-        uint32 assetCount = GetRegisteredAssetCount();
-        AssetRegistration *assetRegs =
-            memory->engineCode.api.assetsGetRegisteredAssets(memory->editor->engineMemory);
-
-        array<AssetRegistrationProxy> ^ result =
-            gcnew array<AssetRegistrationProxy>(assetCount);
-        for (uint32 i = 0; i < assetCount; i++)
-        {
-            AssetRegistration *reg = &assetRegs[i];
-            AssetRegistrationProxy proxy = AssetRegistrationProxy();
-            proxy.id = reg->id;
-            proxy.relativePath = reg->regType == AssetRegistrationType::ASSET_REG_FILE
-                ? gcnew System::String(reg->fileState->relativePath)
-                : System::String::Empty;
-            result[i] = proxy;
-        }
-        return result;
+        memory->editor->state.uiState.tool = (EditorTool)tool;
     }
 
-    void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
+    TerrainBrushParameters EngineInterop::GetBrushParameters()
     {
-        memory->engineCode.api.assetsSetAssetData(
-            memory->editor->engineMemory, assetId, data.ToPointer(), size);
+        TerrainBrushParameters brushParams = {};
+
+        brushParams.Radius = memory->editor->state.uiState.brushRadius;
+        brushParams.Falloff = memory->editor->state.uiState.brushFalloff;
+        brushParams.Strength = memory->editor->state.uiState.brushStrength;
+
+        return brushParams;
     }
 
-    void EngineInterop::InvalidateAsset(uint32 assetId)
+    void EngineInterop::SetBrushParameters(float radius, float falloff, float strength)
     {
-        memory->engineCode.api.assetsInvalidateAsset(memory->editor->engineMemory, assetId);
+        memory->editor->state.uiState.brushRadius = radius;
+        memory->editor->state.uiState.brushFalloff = falloff;
+        memory->editor->state.uiState.brushStrength = strength;
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)
@@ -195,61 +222,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory->editor->state.uiState.materialProps[indexB] = temp;
     }
 
-    void EngineInterop::SetMaterialAlbedoTexture(int index, uint32 assetId)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].albedoTextureAssetId = assetId;
-    }
-
-    void EngineInterop::SetMaterialNormalTexture(int index, uint32 assetId)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].normalTextureAssetId = assetId;
-    }
-
-    void EngineInterop::SetMaterialDisplacementTexture(int index, uint32 assetId)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].displacementTextureAssetId =
-            assetId;
-    }
-
-    void EngineInterop::SetMaterialAoTexture(int index, uint32 assetId)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].aoTextureAssetId = assetId;
-    }
-
-    void EngineInterop::SetMaterialTextureSize(int index, float value)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].textureSizeInWorldUnits = value;
-    }
-
-    void EngineInterop::SetMaterialSlopeStart(int index, float value)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].slopeStart = value;
-    }
-
-    void EngineInterop::SetMaterialSlopeEnd(int index, float value)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].slopeEnd = value;
-    }
-
-    void EngineInterop::SetMaterialAltitudeStart(int index, float value)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].altitudeStart = value;
-    }
-
-    void EngineInterop::SetMaterialAltitudeEnd(int index, float value)
-    {
-        assert(index < MAX_MATERIAL_COUNT);
-        memory->editor->state.uiState.materialProps[index].altitudeEnd = value;
-    }
-
     MaterialProps EngineInterop::GetMaterialProperties(int index)
     {
         assert(index < MAX_MATERIAL_COUNT);
@@ -271,6 +243,38 @@ namespace Terrain { namespace Engine { namespace Interop {
         return result;
     }
 
+    void EngineInterop::SetMaterialTexture(
+        int index, TerrainMaterialTextureType textureType, uint32 assetId)
+    {
+        assert(index < MAX_MATERIAL_COUNT);
+
+        MaterialProperties *matProps = &memory->editor->state.uiState.materialProps[index];
+        uint32 *materialTextureAssetIds[] = {
+            &matProps->albedoTextureAssetId,       //
+            &matProps->normalTextureAssetId,       //
+            &matProps->displacementTextureAssetId, //
+            &matProps->aoTextureAssetId            //
+        };
+        *materialTextureAssetIds[(uint32)textureType] = assetId;
+    }
+
+    void EngineInterop::SetMaterialParameters(int index,
+        float textureSize,
+        float slopeStart,
+        float slopeEnd,
+        float altitudeStart,
+        float altitudeEnd)
+    {
+        assert(index < MAX_MATERIAL_COUNT);
+        MaterialProperties *matProps = &memory->editor->state.uiState.materialProps[index];
+
+        matProps->textureSizeInWorldUnits = textureSize;
+        matProps->slopeStart = slopeStart;
+        matProps->slopeEnd = slopeEnd;
+        matProps->altitudeStart = altitudeStart;
+        matProps->altitudeEnd = altitudeEnd;
+    }
+
     void EngineInterop::SetRockTransform(float positionX,
         float positionY,
         float positionZ,
@@ -290,5 +294,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory->editor->state.uiState.rockScale.x = scaleX;
         memory->editor->state.uiState.rockScale.y = scaleY;
         memory->editor->state.uiState.rockScale.z = scaleZ;
+    }
+
+    void EngineInterop::SetSceneParameters(float lightDirection)
+    {
+        memory->editor->state.uiState.lightDirection = lightDirection;
     }
 }}}
