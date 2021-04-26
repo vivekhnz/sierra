@@ -58,8 +58,10 @@ HeightmapRenderTexture createHeightmapRenderTexture(EditorMemory *memory)
 
 bool initializeEditor(EditorMemory *memory)
 {
+    EditorState *state = pushEditorStruct(memory, EditorState);
+
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &memory->state.assets;
+    EditorAssets *assets = &state->assets;
 
     uint32 shaderTextureVertex = engine->assetsRegisterShader(
         memory->engineMemory, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
@@ -159,22 +161,22 @@ bool initializeEditor(EditorMemory *memory)
 
     assets->meshRock = engine->assetsRegisterMesh(memory->engineMemory, "rock.obj");
 
-    memory->state.orthographicCameraTransform = glm::identity<glm::mat4>();
-    memory->state.orthographicCameraTransform =
-        glm::scale(memory->state.orthographicCameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
-    memory->state.orthographicCameraTransform = glm::translate(
-        memory->state.orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
+    state->orthographicCameraTransform = glm::identity<glm::mat4>();
+    state->orthographicCameraTransform =
+        glm::scale(state->orthographicCameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
+    state->orthographicCameraTransform =
+        glm::translate(state->orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
-    memory->state.uiState.brushRadius = 128.0f;
-    memory->state.uiState.brushFalloff = 0.75f;
-    memory->state.uiState.brushStrength = 0.12f;
-    memory->state.uiState.lightDirection = 0.5f;
-    memory->state.uiState.materialCount = 0;
-    memory->state.uiState.rockPosition = glm::vec3(0);
-    memory->state.uiState.rockRotation = glm::vec3(0);
-    memory->state.uiState.rockScale = glm::vec3(1);
+    state->uiState.brushRadius = 128.0f;
+    state->uiState.brushFalloff = 0.75f;
+    state->uiState.brushStrength = 0.12f;
+    state->uiState.lightDirection = 0.5f;
+    state->uiState.materialCount = 0;
+    state->uiState.rockPosition = glm::vec3(0);
+    state->uiState.rockRotation = glm::vec3(0);
+    state->uiState.rockScale = glm::vec3(1);
 
-    SceneState *sceneState = &memory->state.sceneState;
+    SceneState *sceneState = &state->sceneState;
 
     float quadVertices[16] = {
         0, 0, 0, 0, //
@@ -206,9 +208,8 @@ bool initializeEditor(EditorMemory *memory)
     engine->rendererUpdateBuffer(
         memory->engineMemory, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
 
-    memory->state.quadVertexArrayHandle =
-        engine->rendererCreateVertexArray(memory->engineMemory);
-    engine->rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
+    state->quadVertexArrayHandle = engine->rendererCreateVertexArray(memory->engineMemory);
+    engine->rendererBindVertexArray(memory->engineMemory, state->quadVertexArrayHandle);
     engine->rendererBindBuffer(memory->engineMemory, quadElementBufferHandle);
     engine->rendererBindBuffer(memory->engineMemory, quadVertexBufferHandle);
     engine->rendererBindVertexAttribute(
@@ -217,10 +218,10 @@ bool initializeEditor(EditorMemory *memory)
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     engine->rendererUnbindVertexArray();
 
-    memory->state.quadFlippedYVertexArrayHandle =
+    state->quadFlippedYVertexArrayHandle =
         engine->rendererCreateVertexArray(memory->engineMemory);
     engine->rendererBindVertexArray(
-        memory->engineMemory, memory->state.quadFlippedYVertexArrayHandle);
+        memory->engineMemory, state->quadFlippedYVertexArrayHandle);
     engine->rendererBindBuffer(memory->engineMemory, quadElementBufferHandle);
     engine->rendererBindBuffer(memory->engineMemory, quadFlippedYVertexBufferHandle);
     engine->rendererBindVertexAttribute(
@@ -229,31 +230,31 @@ bool initializeEditor(EditorMemory *memory)
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     engine->rendererUnbindVertexArray();
 
-    memory->state.importedHeightmapTextureHandle =
+    state->importedHeightmapTextureHandle =
         engine->rendererCreateTexture(memory->engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
             2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    memory->state.committedHeightmap = createHeightmapRenderTexture(memory);
-    memory->state.workingBrushInfluenceMask = createHeightmapRenderTexture(memory);
-    memory->state.workingHeightmap = createHeightmapRenderTexture(memory);
-    memory->state.previewBrushInfluenceMask = createHeightmapRenderTexture(memory);
-    memory->state.previewHeightmap = createHeightmapRenderTexture(memory);
-    memory->state.temporaryHeightmap = createHeightmapRenderTexture(memory);
+    state->committedHeightmap = createHeightmapRenderTexture(memory);
+    state->workingBrushInfluenceMask = createHeightmapRenderTexture(memory);
+    state->workingHeightmap = createHeightmapRenderTexture(memory);
+    state->previewBrushInfluenceMask = createHeightmapRenderTexture(memory);
+    state->previewHeightmap = createHeightmapRenderTexture(memory);
+    state->temporaryHeightmap = createHeightmapRenderTexture(memory);
 
-    memory->state.isEditingHeightmap = false;
+    state->isEditingHeightmap = false;
 
-    memory->state.activeBrushStrokeInstanceBufferHandle = engine->rendererCreateBuffer(
+    state->activeBrushStrokeInstanceBufferHandle = engine->rendererCreateBuffer(
         memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(memory->engineMemory,
-        memory->state.activeBrushStrokeInstanceBufferHandle,
-        sizeof(memory->state.activeBrushStrokeInstanceBufferData),
-        &memory->state.activeBrushStrokeInstanceBufferData);
+        state->activeBrushStrokeInstanceBufferHandle,
+        sizeof(state->activeBrushStrokeInstanceBufferData),
+        &state->activeBrushStrokeInstanceBufferData);
     uint32 instanceBufferStride = sizeof(glm::vec2);
 
-    memory->state.activeBrushStrokeVertexArrayHandle =
+    state->activeBrushStrokeVertexArrayHandle =
         engine->rendererCreateVertexArray(memory->engineMemory);
     engine->rendererBindVertexArray(
-        memory->engineMemory, memory->state.activeBrushStrokeVertexArrayHandle);
+        memory->engineMemory, state->activeBrushStrokeVertexArrayHandle);
     engine->rendererBindBuffer(memory->engineMemory, quadElementBufferHandle);
     engine->rendererBindBuffer(memory->engineMemory, quadVertexBufferHandle);
     engine->rendererBindVertexAttribute(
@@ -261,11 +262,11 @@ bool initializeEditor(EditorMemory *memory)
     engine->rendererBindVertexAttribute(
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     engine->rendererBindBuffer(
-        memory->engineMemory, memory->state.activeBrushStrokeInstanceBufferHandle);
+        memory->engineMemory, state->activeBrushStrokeInstanceBufferHandle);
     engine->rendererBindVertexAttribute(2, GL_FLOAT, false, 2, instanceBufferStride, 0, true);
     engine->rendererUnbindVertexArray();
 
-    memory->state.activeBrushStrokeInstanceCount = 0;
+    state->activeBrushStrokeInstanceCount = 0;
 
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer =
@@ -408,9 +409,10 @@ void compositeHeightmap(EditorMemory *memory,
 {
     assert(blendProps->iterations % 2 == 1);
     EngineApi *engine = memory->engineApi;
+    EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    float brushRadius = memory->state.uiState.brushRadius / 2048.0f;
-    float brushFalloff = memory->state.uiState.brushFalloff;
+    float brushRadius = state->uiState.brushRadius / 2048.0f;
+    float brushFalloff = state->uiState.brushFalloff;
     float brushStrength = 1;
     if (blendProps->isInfluenceCumulative)
     {
@@ -420,8 +422,8 @@ void compositeHeightmap(EditorMemory *memory,
          * more. As a result, we should decrease the brush strength as the brush radius
          * increases to ensure the perceived brush strength remains constant.
          */
-        brushStrength = 0.01f + (0.15f * memory->state.uiState.brushStrength);
-        brushStrength /= pow(memory->state.uiState.brushRadius, 0.5f);
+        brushStrength = 0.01f + (0.15f * state->uiState.brushStrength);
+        brushStrength /= pow(state->uiState.brushRadius, 0.5f);
     }
 
     // render brush influence mask
@@ -430,7 +432,7 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererSetViewportSize(2048, 2048);
     engine->rendererClearBackBuffer(0, 0, 0, 1);
     engine->rendererUpdateCameraState(
-        memory->engineMemory, &memory->state.orthographicCameraTransform);
+        memory->engineMemory, &state->orthographicCameraTransform);
 
     engine->rendererUseShaderProgram(memory->engineMemory, brushMaskShaderProgramHandle);
     engine->rendererSetPolygonMode(GL_FILL);
@@ -443,7 +445,7 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererSetShaderProgramUniformFloat(
         memory->engineMemory, brushMaskShaderProgramHandle, "brushStrength", brushStrength);
     engine->rendererBindVertexArray(
-        memory->engineMemory, memory->state.activeBrushStrokeVertexArrayHandle);
+        memory->engineMemory, state->activeBrushStrokeVertexArrayHandle);
     engine->rendererDrawElementsInstanced(
         GL_TRIANGLES, 6, brushInstanceCount, brushInstanceOffset);
 
@@ -460,7 +462,7 @@ void compositeHeightmap(EditorMemory *memory,
         blendProps->shaderProgramHandle, "iterationCount", blendProps->iterations);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    engine->rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
+    engine->rendererBindVertexArray(memory->engineMemory, state->quadVertexArrayHandle);
     engine->rendererBindTexture(memory->engineMemory, brushInfluenceMask->textureHandle, 1);
 
     uint32 inputTextureHandle = baseHeightmapTextureHandle;
@@ -481,7 +483,7 @@ void compositeHeightmap(EditorMemory *memory,
             memory->engineMemory, iterationOutput->framebufferHandle);
 
         inputTextureHandle = iterationOutput->textureHandle;
-        iterationOutput = i % 2 == 0 ? &memory->state.temporaryHeightmap : output;
+        iterationOutput = i % 2 == 0 ? &state->temporaryHeightmap : output;
     }
 }
 
@@ -509,7 +511,8 @@ void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
 void commitChanges(EditorMemory *memory)
 {
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &memory->state.assets;
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorAssets *assets = &state->assets;
 
     LoadedAsset *quadShaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
@@ -517,54 +520,57 @@ void commitChanges(EditorMemory *memory)
         return;
 
     engine->rendererBindFramebuffer(
-        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
+        memory->engineMemory, state->committedHeightmap.framebufferHandle);
     engine->rendererSetViewportSize(2048, 2048);
     engine->rendererClearBackBuffer(0, 0, 0, 1);
     engine->rendererUpdateCameraState(
-        memory->engineMemory, &memory->state.orthographicCameraTransform);
+        memory->engineMemory, &state->orthographicCameraTransform);
 
     engine->rendererUseShaderProgram(
         memory->engineMemory, quadShaderProgram->shaderProgram->handle);
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     engine->rendererBindTexture(
-        memory->engineMemory, memory->state.workingHeightmap.textureHandle, 0);
-    engine->rendererBindVertexArray(memory->engineMemory, memory->state.quadVertexArrayHandle);
+        memory->engineMemory, state->workingHeightmap.textureHandle, 0);
+    engine->rendererBindVertexArray(memory->engineMemory, state->quadVertexArrayHandle);
     engine->rendererDrawElements(GL_TRIANGLES, 6);
 
     engine->rendererUnbindFramebuffer(
-        memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
+        memory->engineMemory, state->committedHeightmap.framebufferHandle);
 
-    memory->state.isEditingHeightmap = false;
-    memory->state.activeBrushStrokeInstanceCount = 0;
+    state->isEditingHeightmap = false;
+    state->activeBrushStrokeInstanceCount = 0;
 }
 
 void discardChanges(EditorMemory *memory)
 {
-    memory->state.isEditingHeightmap = false;
-    memory->state.activeBrushStrokeInstanceCount = 0;
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    state->isEditingHeightmap = false;
+    state->activeBrushStrokeInstanceCount = 0;
 
     memory->engineApi->rendererReadTexturePixels(memory->engineMemory,
-        memory->state.committedHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
-        memory->state.sceneState.heightmapTextureDataTempBuffer);
-    updateHeightfieldHeights(&memory->state.sceneState.heightfield,
-        memory->state.sceneState.heightmapTextureDataTempBuffer);
+        state->committedHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+        state->sceneState.heightmapTextureDataTempBuffer);
+    updateHeightfieldHeights(
+        &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
 }
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
-    if (!memory->isInitialized)
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    if (!state->isInitialized)
     {
         if (!initializeEditor(memory))
         {
             assert(!"Failed to initialize editor");
             return;
         }
-        memory->isInitialized = true;
+        state->isInitialized = true;
     }
 
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &memory->state.assets;
+    EditorAssets *assets = &state->assets;
 
     LoadedAsset *quadShaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
@@ -587,41 +593,40 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     LoadedAsset *importedHeightmapAsset = engine->assetsGetTexture(
         memory->engineMemory, assets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
-        && importedHeightmapAsset->version != memory->state.importedHeightmapTextureVersion)
+        && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
         engine->rendererUpdateTexture(memory->engineMemory,
-            memory->state.importedHeightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+            state->importedHeightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
             importedHeightmapAsset->texture->width, importedHeightmapAsset->texture->height,
             importedHeightmapAsset->texture->data);
 
         engine->rendererBindFramebuffer(
-            memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
+            memory->engineMemory, state->committedHeightmap.framebufferHandle);
         engine->rendererSetViewportSize(2048, 2048);
         engine->rendererClearBackBuffer(0, 0, 0, 1);
         engine->rendererUpdateCameraState(
-            memory->engineMemory, &memory->state.orthographicCameraTransform);
+            memory->engineMemory, &state->orthographicCameraTransform);
         engine->rendererUseShaderProgram(
             memory->engineMemory, quadShaderProgram->shaderProgram->handle);
         engine->rendererSetPolygonMode(GL_FILL);
         engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         engine->rendererBindTexture(
-            memory->engineMemory, memory->state.importedHeightmapTextureHandle, 0);
-        engine->rendererBindVertexArray(
-            memory->engineMemory, memory->state.quadVertexArrayHandle);
+            memory->engineMemory, state->importedHeightmapTextureHandle, 0);
+        engine->rendererBindVertexArray(memory->engineMemory, state->quadVertexArrayHandle);
         engine->rendererDrawElements(GL_TRIANGLES, 6);
         engine->rendererUnbindFramebuffer(
-            memory->engineMemory, memory->state.committedHeightmap.framebufferHandle);
+            memory->engineMemory, state->committedHeightmap.framebufferHandle);
 
-        updateHeightfieldHeights(&memory->state.sceneState.heightfield,
-            (uint16 *)importedHeightmapAsset->texture->data);
+        updateHeightfieldHeights(
+            &state->sceneState.heightfield, (uint16 *)importedHeightmapAsset->texture->data);
 
-        memory->state.importedHeightmapTextureVersion = importedHeightmapAsset->version;
+        state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
     }
 
-    SceneState *sceneState = &memory->state.sceneState;
+    SceneState *sceneState = &state->sceneState;
 
     glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
-    memory->state.isAdjustingBrushParameters = false;
+    state->isAdjustingBrushParameters = false;
 
     // the last brush instance is reserved for previewing the result of the current operation
 #define MAX_ALLOWED_BRUSH_INSTANCES (MAX_BRUSH_QUADS - 1)
@@ -674,15 +679,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         {
             memory->platformCaptureMouse();
 
-            if (memory->state.isEditingHeightmap)
+            if (state->isEditingHeightmap)
             {
                 commitChanges(memory);
             }
         }
         else
         {
-            if (memory->state.isEditingHeightmap
-                && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
+            if (state->isEditingHeightmap && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
             {
                 discardChanges(memory);
             }
@@ -695,7 +699,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 glm::vec4 worldPos = inverseViewProjection * screenPos;
 
                 glm::vec3 intersectionPoint;
-                Heightfield *heightfield = &memory->state.sceneState.heightfield;
+                Heightfield *heightfield = &state->sceneState.heightfield;
                 if (engine->heightfieldIsRayIntersecting(heightfield,
                         activeViewState->cameraPos, glm::normalize(glm::vec3(worldPos)),
                         &intersectionPoint))
@@ -709,9 +713,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z)
                         / heightfieldSize;
 
-                    if (!memory->state.isEditingHeightmap)
+                    if (!state->isEditingHeightmap)
                     {
-                        memory->state.activeBrushStrokeInitialHeight =
+                        state->activeBrushStrokeInitialHeight =
                             relativeIntersectionPoint.y / heightfield->maxHeight;
                     }
 
@@ -721,10 +725,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             input->cursorOffset.x + input->cursorOffset.y;
 
                         memory->platformCaptureMouse();
-                        memory->state.uiState.brushRadius =
-                            glm::clamp(memory->state.uiState.brushRadius + brushRadiusIncrease,
-                                32.0f, 2048.0f);
-                        memory->state.isAdjustingBrushParameters = true;
+                        state->uiState.brushRadius = glm::clamp(
+                            state->uiState.brushRadius + brushRadiusIncrease, 32.0f, 2048.0f);
+                        state->isAdjustingBrushParameters = true;
                     }
                     else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
                     {
@@ -732,10 +735,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                         memory->platformCaptureMouse();
-                        memory->state.uiState.brushFalloff = glm::clamp(
-                            memory->state.uiState.brushFalloff + brushFalloffIncrease, 0.0f,
-                            0.99f);
-                        memory->state.isAdjustingBrushParameters = true;
+                        state->uiState.brushFalloff = glm::clamp(
+                            state->uiState.brushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
+                        state->isAdjustingBrushParameters = true;
                     }
                     else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
                     {
@@ -743,27 +745,26 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                         memory->platformCaptureMouse();
-                        memory->state.uiState.brushStrength = glm::clamp(
-                            memory->state.uiState.brushStrength + brushStrengthIncrease, 0.01f,
-                            1.0f);
-                        memory->state.isAdjustingBrushParameters = true;
+                        state->uiState.brushStrength = glm::clamp(
+                            state->uiState.brushStrength + brushStrengthIncrease, 0.01f, 1.0f);
+                        state->isAdjustingBrushParameters = true;
                     }
                     else
                     {
-                        if (memory->state.isEditingHeightmap)
+                        if (state->isEditingHeightmap)
                         {
                             if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                             {
                                 glm::vec2 *nextBrushInstance =
-                                    &memory->state.activeBrushStrokeInstanceBufferData
-                                         [memory->state.activeBrushStrokeInstanceCount];
-                                if (memory->state.activeBrushStrokeInstanceCount
+                                    &state->activeBrushStrokeInstanceBufferData
+                                         [state->activeBrushStrokeInstanceCount];
+                                if (state->activeBrushStrokeInstanceCount
                                     < MAX_ALLOWED_BRUSH_INSTANCES - 1)
                                 {
-                                    if (memory->state.activeBrushStrokeInstanceCount == 0)
+                                    if (state->activeBrushStrokeInstanceCount == 0)
                                     {
                                         *nextBrushInstance++ = newBrushPos;
-                                        memory->state.activeBrushStrokeInstanceCount++;
+                                        state->activeBrushStrokeInstanceCount++;
                                     }
                                     else
                                     {
@@ -775,12 +776,12 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                                         const float BRUSH_INSTANCE_SPACING = 0.005f;
                                         while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                            && memory->state.activeBrushStrokeInstanceCount
+                                            && state->activeBrushStrokeInstanceCount
                                                 < MAX_ALLOWED_BRUSH_INSTANCES - 1)
                                         {
                                             *nextBrushInstance++ = *prevBrushInstance++
                                                 + (direction * BRUSH_INSTANCE_SPACING);
-                                            memory->state.activeBrushStrokeInstanceCount++;
+                                            state->activeBrushStrokeInstanceCount++;
 
                                             distanceRemaining -= BRUSH_INSTANCE_SPACING;
                                         }
@@ -794,13 +795,13 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         }
                         else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                         {
-                            memory->state.isEditingHeightmap = true;
-                            memory->state.activeBrushStrokeInitialHeight =
+                            state->isEditingHeightmap = true;
+                            state->activeBrushStrokeInitialHeight =
                                 relativeIntersectionPoint.y / heightfield->maxHeight;
                         }
                     }
                 }
-                else if (memory->state.isEditingHeightmap)
+                else if (state->isEditingHeightmap)
                 {
                     commitChanges(memory);
                 }
@@ -811,23 +812,23 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         discardChanges(memory);
     }
-    if (!memory->state.isEditingHeightmap)
+    if (!state->isEditingHeightmap)
     {
         if (isButtonDown(input, EDITOR_INPUT_KEY_1))
         {
-            memory->state.uiState.tool = EDITOR_TOOL_RAISE_TERRAIN;
+            state->uiState.tool = EDITOR_TOOL_RAISE_TERRAIN;
         }
         else if (isButtonDown(input, EDITOR_INPUT_KEY_2))
         {
-            memory->state.uiState.tool = EDITOR_TOOL_LOWER_TERRAIN;
+            state->uiState.tool = EDITOR_TOOL_LOWER_TERRAIN;
         }
         else if (isButtonDown(input, EDITOR_INPUT_KEY_3))
         {
-            memory->state.uiState.tool = EDITOR_TOOL_FLATTEN_TERRAIN;
+            state->uiState.tool = EDITOR_TOOL_FLATTEN_TERRAIN;
         }
         else if (isButtonDown(input, EDITOR_INPUT_KEY_4))
         {
-            memory->state.uiState.tool = EDITOR_TOOL_SMOOTH_TERRAIN;
+            state->uiState.tool = EDITOR_TOOL_SMOOTH_TERRAIN;
         }
     }
 
@@ -835,14 +836,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     sceneState->worldState.brushPos = newBrushPos;
     sceneState->worldState.brushCursorVisibleView =
         isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
-    sceneState->worldState.brushRadius = memory->state.uiState.brushRadius / 2048.0f;
-    sceneState->worldState.brushFalloff = memory->state.uiState.brushFalloff;
+    sceneState->worldState.brushRadius = state->uiState.brushRadius / 2048.0f;
+    sceneState->worldState.brushFalloff = state->uiState.brushFalloff;
 
     // update material properties
-    sceneState->worldState.materialCount = memory->state.uiState.materialCount;
+    sceneState->worldState.materialCount = state->uiState.materialCount;
     for (uint32 i = 0; i < sceneState->worldState.materialCount; i++)
     {
-        const MaterialProperties *stateProps = &memory->state.uiState.materialProps[i];
+        const MaterialProperties *stateProps = &state->uiState.materialProps[i];
         GpuMaterialProperties *gpuProps = &sceneState->worldState.materialProps[i];
 
         gpuProps->textureSizeInWorldUnits.x = stateProps->textureSizeInWorldUnits;
@@ -861,26 +862,25 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update scene lighting
     glm::vec4 lightDir = glm::vec4(0);
-    lightDir.x = sin(memory->state.uiState.lightDirection * glm::pi<float>() * -0.5);
-    lightDir.y = cos(memory->state.uiState.lightDirection * glm::pi<float>() * 0.5);
+    lightDir.x = sin(state->uiState.lightDirection * glm::pi<float>() * -0.5);
+    lightDir.y = cos(state->uiState.lightDirection * glm::pi<float>() * 0.5);
     lightDir.z = 0.2f;
     engine->rendererUpdateLightingState(
         memory->engineMemory, &lightDir, true, true, true, true, true);
 
     // update preview brush quad instance
-    memory->state.activeBrushStrokeInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] =
-        newBrushPos;
+    state->activeBrushStrokeInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] = newBrushPos;
 
     // update brush quad instance buffer
     engine->rendererUpdateBuffer(memory->engineMemory,
-        memory->state.activeBrushStrokeInstanceBufferHandle, BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
-        memory->state.activeBrushStrokeInstanceBufferData);
+        state->activeBrushStrokeInstanceBufferHandle, BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
+        state->activeBrushStrokeInstanceBufferData);
 
     // update rock instance buffer
     glm::mat4 rockTransform = glm::identity<glm::mat4>();
-    rockTransform = glm::translate(rockTransform, memory->state.uiState.rockPosition);
-    rockTransform = glm::scale(rockTransform, memory->state.uiState.rockScale);
-    glm::vec3 rockRotEuler = glm::radians(memory->state.uiState.rockRotation);
+    rockTransform = glm::translate(rockTransform, state->uiState.rockPosition);
+    rockTransform = glm::scale(rockTransform, state->uiState.rockScale);
+    glm::vec3 rockRotEuler = glm::radians(state->uiState.rockRotation);
     glm::quat rockRotQuat = glm::quat(rockRotEuler);
     glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
     rockTransform *= rockRotMat;
@@ -890,7 +890,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
 
     BrushBlendProperties blendProps = {};
-    switch (memory->state.uiState.tool)
+    switch (state->uiState.tool)
     {
     case EDITOR_TOOL_RAISE_TERRAIN:
         blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->shaderProgram->handle;
@@ -908,7 +908,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         blendProps.shaderProgramHandle = brushBlendFlattenShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = false;
         blendProps.iterations = 1;
-        blendProps.flattenHeight = memory->state.activeBrushStrokeInitialHeight;
+        blendProps.flattenHeight = state->activeBrushStrokeInitialHeight;
         break;
     case EDITOR_TOOL_SMOOTH_TERRAIN:
         blendProps.shaderProgramHandle = brushBlendSmoothShaderProgram->shaderProgram->handle;
@@ -917,18 +917,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         break;
     }
 
-    compositeHeightmap(memory, memory->state.committedHeightmap.textureHandle,
-        &memory->state.workingBrushInfluenceMask, &memory->state.workingHeightmap,
-        brushMaskShaderProgram->shaderProgram->handle,
-        memory->state.activeBrushStrokeInstanceCount, 0, &blendProps);
-    compositeHeightmap(memory, memory->state.workingHeightmap.textureHandle,
-        &memory->state.previewBrushInfluenceMask, &memory->state.previewHeightmap,
+    compositeHeightmap(memory, state->committedHeightmap.textureHandle,
+        &state->workingBrushInfluenceMask, &state->workingHeightmap,
+        brushMaskShaderProgram->shaderProgram->handle, state->activeBrushStrokeInstanceCount,
+        0, &blendProps);
+    compositeHeightmap(memory, state->workingHeightmap.textureHandle,
+        &state->previewBrushInfluenceMask, &state->previewHeightmap,
         brushMaskShaderProgram->shaderProgram->handle, 1, MAX_BRUSH_QUADS - 1, &blendProps);
 
-    if (memory->state.isEditingHeightmap)
+    if (state->isEditingHeightmap)
     {
         engine->rendererReadTexturePixels(memory->engineMemory,
-            memory->state.workingHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+            state->workingHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
             sceneState->heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(
             &sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
@@ -937,7 +937,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
 API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
 {
-    if (memory->isInitialized)
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    if (state->isInitialized)
     {
         memory->engineApi->rendererDestroyResources(memory->engineMemory);
     }
@@ -946,8 +947,9 @@ API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &memory->state.assets;
-    SceneState *sceneState = &memory->state.sceneState;
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorAssets *assets = &state->assets;
+    SceneState *sceneState = &state->sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
     {
@@ -1069,25 +1071,24 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         return;
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
-    uint32 activeHeightmapTextureHandle = memory->state.workingHeightmap.textureHandle;
-    uint32 referenceHeightmapTextureHandle = memory->state.workingHeightmap.textureHandle;
+    uint32 activeHeightmapTextureHandle = state->workingHeightmap.textureHandle;
+    uint32 referenceHeightmapTextureHandle = state->workingHeightmap.textureHandle;
 
     if (sceneState->worldState.brushCursorVisibleView == viewState)
     {
-        if (memory->state.isAdjustingBrushParameters)
+        if (state->isAdjustingBrushParameters)
         {
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
-            if (memory->state.isEditingHeightmap)
+            if (state->isEditingHeightmap)
             {
-                referenceHeightmapTextureHandle =
-                    memory->state.committedHeightmap.textureHandle;
+                referenceHeightmapTextureHandle = state->committedHeightmap.textureHandle;
             }
             else
             {
-                activeHeightmapTextureHandle = memory->state.previewHeightmap.textureHandle;
+                activeHeightmapTextureHandle = state->previewHeightmap.textureHandle;
             }
         }
-        else if (memory->state.isEditingHeightmap)
+        else if (state->isEditingHeightmap)
         {
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
         }
@@ -1230,10 +1231,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &memory->state.assets;
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorAssets *assets = &state->assets;
 
     engine->rendererUpdateCameraState(
-        memory->engineMemory, &memory->state.orthographicCameraTransform);
+        memory->engineMemory, &state->orthographicCameraTransform);
     engine->rendererSetViewportSize(view->width, view->height);
     engine->rendererClearBackBuffer(0, 0, 0, 1);
 
@@ -1248,13 +1250,145 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     engine->rendererBindTexture(
-        memory->engineMemory, memory->state.workingHeightmap.textureHandle, 0);
+        memory->engineMemory, state->workingHeightmap.textureHandle, 0);
     engine->rendererBindVertexArray(
-        memory->engineMemory, memory->state.quadFlippedYVertexArrayHandle);
+        memory->engineMemory, state->quadFlippedYVertexArrayHandle);
     engine->rendererDrawElements(GL_TRIANGLES, 6);
 }
 
 API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(editorGetImportedHeightmapAssetId)
 {
-    return memory->state.assets.textureVirtualImportedHeightmap;
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    return state->assets.textureVirtualImportedHeightmap;
+}
+
+API_EXPORT EDITOR_GET_BRUSH_TOOL(editorGetBrushTool)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    return state->uiState.tool;
+}
+
+API_EXPORT EDITOR_SET_BRUSH_TOOL(editorSetBrushTool)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    state->uiState.tool = tool;
+}
+
+API_EXPORT EDITOR_GET_BRUSH_PARAMETERS(editorGetBrushParameters)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    TerrainBrushParameters result = {};
+    result.radius = state->uiState.brushRadius;
+    result.falloff = state->uiState.brushFalloff;
+    result.strength = state->uiState.brushStrength;
+
+    return result;
+}
+
+API_EXPORT EDITOR_SET_BRUSH_PARAMETERS(editorSetBrushParameters)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    state->uiState.brushRadius = radius;
+    state->uiState.brushFalloff = falloff;
+    state->uiState.brushStrength = strength;
+}
+
+API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(state->uiState.materialCount < MAX_MATERIAL_COUNT);
+    uint32 index = state->uiState.materialCount++;
+
+    MaterialProperties *material = &state->uiState.materialProps[index];
+    material->albedoTextureAssetId = props.albedoTextureAssetId;
+    material->normalTextureAssetId = props.normalTextureAssetId;
+    material->displacementTextureAssetId = props.displacementTextureAssetId;
+    material->aoTextureAssetId = props.aoTextureAssetId;
+    material->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
+    material->slopeStart = props.slopeStart;
+    material->slopeEnd = props.slopeEnd;
+    material->altitudeStart = props.altitudeStart;
+    material->altitudeEnd = props.altitudeEnd;
+}
+
+API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(index < MAX_MATERIAL_COUNT);
+    state->uiState.materialCount--;
+    for (uint32 i = index; i < state->uiState.materialCount; i++)
+    {
+        state->uiState.materialProps[i] = state->uiState.materialProps[i + 1];
+    }
+}
+
+API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(indexA < MAX_MATERIAL_COUNT);
+    assert(indexB < MAX_MATERIAL_COUNT);
+
+    MaterialProperties temp = state->uiState.materialProps[indexA];
+    state->uiState.materialProps[indexA] = state->uiState.materialProps[indexB];
+    state->uiState.materialProps[indexB] = temp;
+}
+
+API_EXPORT EDITOR_GET_MATERIAL_PROPERTIES(editorGetMaterialProperties)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(index < MAX_MATERIAL_COUNT);
+    return state->uiState.materialProps[index];
+}
+
+API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(index < MAX_MATERIAL_COUNT);
+    MaterialProperties *matProps = &state->uiState.materialProps[index];
+    uint32 *materialTextureAssetIds[] = {
+        &matProps->albedoTextureAssetId,       //
+        &matProps->normalTextureAssetId,       //
+        &matProps->displacementTextureAssetId, //
+        &matProps->aoTextureAssetId            //
+    };
+    *materialTextureAssetIds[(uint32)textureType] = assetId;
+}
+
+API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(index < MAX_MATERIAL_COUNT);
+    MaterialProperties *matProps = &state->uiState.materialProps[index];
+    matProps->textureSizeInWorldUnits = textureSize;
+    matProps->slopeStart = slopeStart;
+    matProps->slopeEnd = slopeEnd;
+    matProps->altitudeStart = altitudeStart;
+    matProps->altitudeEnd = altitudeEnd;
+}
+
+API_EXPORT EDITOR_SET_ROCK_TRANSFORM(editorSetRockTransform)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    state->uiState.rockPosition.x = positionX;
+    state->uiState.rockPosition.y = positionY;
+    state->uiState.rockPosition.z = positionZ;
+    state->uiState.rockRotation.x = rotationX;
+    state->uiState.rockRotation.y = rotationY;
+    state->uiState.rockRotation.z = rotationZ;
+    state->uiState.rockScale.x = scaleX;
+    state->uiState.rockScale.y = scaleY;
+    state->uiState.rockScale.z = scaleZ;
+}
+
+API_EXPORT EDITOR_SET_SCENE_PARAMETERS(editorSetSceneParameters)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    state->uiState.lightDirection = lightDirection;
 }

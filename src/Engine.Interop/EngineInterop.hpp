@@ -70,7 +70,7 @@ public
     };
 
 public
-    value struct TerrainBrushParameters
+    value struct TerrainBrushParametersProxy
     {
         float Radius;
         float Falloff;
@@ -78,7 +78,7 @@ public
     };
 
 public
-    enum class TerrainMaterialTextureType
+    enum class TerrainMaterialTextureTypeProxy
     {
         Albedo = 0,
         Normal = 1,
@@ -115,15 +115,15 @@ public
         static uint32 GetImportedHeightmapAssetId();
         static EditorToolProxy GetBrushTool();
         static void SetBrushTool(EditorToolProxy tool);
-        static TerrainBrushParameters GetBrushParameters();
+        static TerrainBrushParametersProxy GetBrushParameters();
         static void SetBrushParameters(float radius, float falloff, float strength);
         static void AddMaterial(MaterialProps props);
         static void DeleteMaterial(int index);
         static void SwapMaterial(int indexA, int indexB);
         static MaterialProps GetMaterialProperties(int index);
         static void SetMaterialTexture(
-            int index, TerrainMaterialTextureType textureType, uint32 assetId);
-        static void SetMaterialParameters(int index,
+            int index, TerrainMaterialTextureTypeProxy textureType, uint32 assetId);
+        static void SetMaterialProperties(int index,
             float textureSize,
             float slopeStart,
             float slopeEnd,

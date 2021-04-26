@@ -32,7 +32,7 @@ namespace Terrain.Editor
         internal static void SetBrushTool(EditorToolProxy tool)
             => EngineInterop.SetBrushTool(tool);
 
-        internal static TerrainBrushParameters GetBrushParameters()
+        internal static TerrainBrushParametersProxy GetBrushParameters()
             => EngineInterop.GetBrushParameters();
 
         internal static void SetBrushParameters(float radius, float falloff, float strength)
@@ -51,12 +51,12 @@ namespace Terrain.Editor
             => EngineInterop.GetMaterialProperties(index);
 
         internal static void SetMaterialTexture(int index,
-            TerrainMaterialTextureType textureType, uint assetId)
+            TerrainMaterialTextureTypeProxy textureType, uint assetId)
             => EngineInterop.SetMaterialTexture(index, textureType, assetId);
 
-        internal static void SetMaterialParameters(int index, float textureSize, float slopeStart,
+        internal static void SetMaterialProperties(int index, float textureSize, float slopeStart,
             float slopeEnd, float altitudeStart, float altitudeEnd)
-            => EngineInterop.SetMaterialParameters(index, textureSize, slopeStart, slopeEnd,
+            => EngineInterop.SetMaterialProperties(index, textureSize, slopeStart, slopeEnd,
                 altitudeStart, altitudeEnd);
 
         internal static void SetRockTransform(

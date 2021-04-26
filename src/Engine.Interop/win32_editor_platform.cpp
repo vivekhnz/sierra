@@ -64,6 +64,32 @@ void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
         editorCode->editorGetImportedHeightmapAssetId =
             (EditorGetImportedHeightmapAssetId *)GetProcAddress(
                 editorCode->dllModule, "editorGetImportedHeightmapAssetId");
+        editorCode->editorGetBrushTool =
+            (EditorGetBrushTool *)GetProcAddress(editorCode->dllModule, "editorGetBrushTool");
+        editorCode->editorSetBrushTool =
+            (EditorSetBrushTool *)GetProcAddress(editorCode->dllModule, "editorSetBrushTool");
+        editorCode->editorGetBrushParameters = (EditorGetBrushParameters *)GetProcAddress(
+            editorCode->dllModule, "editorGetBrushParameters");
+        editorCode->editorSetBrushParameters = (EditorSetBrushParameters *)GetProcAddress(
+            editorCode->dllModule, "editorSetBrushParameters");
+        editorCode->editorAddMaterial =
+            (EditorAddMaterial *)GetProcAddress(editorCode->dllModule, "editorAddMaterial");
+        editorCode->editorDeleteMaterial = (EditorDeleteMaterial *)GetProcAddress(
+            editorCode->dllModule, "editorDeleteMaterial");
+        editorCode->editorSwapMaterial =
+            (EditorSwapMaterial *)GetProcAddress(editorCode->dllModule, "editorSwapMaterial");
+        editorCode->editorGetMaterialProperties =
+            (EditorGetMaterialProperties *)GetProcAddress(
+                editorCode->dllModule, "editorGetMaterialProperties");
+        editorCode->editorSetMaterialTexture = (EditorSetMaterialTexture *)GetProcAddress(
+            editorCode->dllModule, "editorSetMaterialTexture");
+        editorCode->editorSetMaterialProperties =
+            (EditorSetMaterialProperties *)GetProcAddress(
+                editorCode->dllModule, "editorSetMaterialProperties");
+        editorCode->editorSetRockTransform = (EditorSetRockTransform *)GetProcAddress(
+            editorCode->dllModule, "editorSetRockTransform");
+        editorCode->editorSetSceneParameters = (EditorSetSceneParameters *)GetProcAddress(
+            editorCode->dllModule, "editorSetSceneParameters");
     }
 }
 

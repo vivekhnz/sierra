@@ -162,123 +162,125 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     EditorToolProxy EngineInterop::GetBrushTool()
     {
-        return (EditorToolProxy)memory->editor->state.uiState.tool;
+        if (memory->editorCode.editorGetBrushTool)
+        {
+            return (EditorToolProxy)memory->editorCode.editorGetBrushTool(memory->editor);
+        }
+        return EditorToolProxy::RaiseTerrain;
     }
 
     void EngineInterop::SetBrushTool(EditorToolProxy tool)
     {
-        memory->editor->state.uiState.tool = (EditorTool)tool;
+        if (memory->editorCode.editorSetBrushTool)
+        {
+            memory->editorCode.editorSetBrushTool(memory->editor, (EditorTool)tool);
+        }
     }
 
-    TerrainBrushParameters EngineInterop::GetBrushParameters()
+    TerrainBrushParametersProxy EngineInterop::GetBrushParameters()
     {
-        TerrainBrushParameters brushParams = {};
+        TerrainBrushParametersProxy result = {};
 
-        brushParams.Radius = memory->editor->state.uiState.brushRadius;
-        brushParams.Falloff = memory->editor->state.uiState.brushFalloff;
-        brushParams.Strength = memory->editor->state.uiState.brushStrength;
+        if (memory->editorCode.editorGetBrushParameters)
+        {
+            TerrainBrushParameters params =
+                memory->editorCode.editorGetBrushParameters(memory->editor);
+            result.Radius = params.radius;
+            result.Falloff = params.falloff;
+            result.Strength = params.strength;
+        }
 
-        return brushParams;
+        return result;
     }
 
     void EngineInterop::SetBrushParameters(float radius, float falloff, float strength)
     {
-        memory->editor->state.uiState.brushRadius = radius;
-        memory->editor->state.uiState.brushFalloff = falloff;
-        memory->editor->state.uiState.brushStrength = strength;
+        if (memory->editorCode.editorSetBrushParameters)
+        {
+            memory->editorCode.editorSetBrushParameters(
+                memory->editor, radius, falloff, strength);
+        }
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)
     {
-        assert(memory->editor->state.uiState.materialCount < MAX_MATERIAL_COUNT);
-        uint32 index = memory->editor->state.uiState.materialCount++;
+        if (memory->editorCode.editorAddMaterial)
+        {
+            MaterialProperties matProps = {};
+            matProps.albedoTextureAssetId = props.albedoTextureAssetId;
+            matProps.normalTextureAssetId = props.normalTextureAssetId;
+            matProps.displacementTextureAssetId = props.displacementTextureAssetId;
+            matProps.aoTextureAssetId = props.aoTextureAssetId;
+            matProps.textureSizeInWorldUnits = props.textureSizeInWorldUnits;
+            matProps.slopeStart = props.slopeStart;
+            matProps.slopeEnd = props.slopeEnd;
+            matProps.altitudeStart = props.altitudeStart;
+            matProps.altitudeEnd = props.altitudeEnd;
 
-        MaterialProperties *material = &memory->editor->state.uiState.materialProps[index];
-        material->albedoTextureAssetId = props.albedoTextureAssetId;
-        material->normalTextureAssetId = props.normalTextureAssetId;
-        material->displacementTextureAssetId = props.displacementTextureAssetId;
-        material->aoTextureAssetId = props.aoTextureAssetId;
-        material->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
-        material->slopeStart = props.slopeStart;
-        material->slopeEnd = props.slopeEnd;
-        material->altitudeStart = props.altitudeStart;
-        material->altitudeEnd = props.altitudeEnd;
+            memory->editorCode.editorAddMaterial(memory->editor, matProps);
+        }
     }
 
     void EngineInterop::DeleteMaterial(int index)
     {
-        assert(index < MAX_MATERIAL_COUNT);
-
-        memory->editor->state.uiState.materialCount--;
-        for (uint32 i = index; i < memory->editor->state.uiState.materialCount; i++)
+        if (memory->editorCode.editorDeleteMaterial)
         {
-            memory->editor->state.uiState.materialProps[i] =
-                memory->editor->state.uiState.materialProps[i + 1];
+            memory->editorCode.editorDeleteMaterial(memory->editor, index);
         }
     }
 
     void EngineInterop::SwapMaterial(int indexA, int indexB)
     {
-        assert(indexA < MAX_MATERIAL_COUNT);
-        assert(indexB < MAX_MATERIAL_COUNT);
-
-        MaterialProperties temp = memory->editor->state.uiState.materialProps[indexA];
-        memory->editor->state.uiState.materialProps[indexA] =
-            memory->editor->state.uiState.materialProps[indexB];
-        memory->editor->state.uiState.materialProps[indexB] = temp;
+        if (memory->editorCode.editorSwapMaterial)
+        {
+            memory->editorCode.editorSwapMaterial(memory->editor, indexA, indexB);
+        }
     }
 
     MaterialProps EngineInterop::GetMaterialProperties(int index)
     {
-        assert(index < MAX_MATERIAL_COUNT);
-        MaterialProperties *state = &memory->editor->state.uiState.materialProps[index];
-
         MaterialProps result = {};
 
-        result.albedoTextureAssetId = state->albedoTextureAssetId;
-        result.normalTextureAssetId = state->normalTextureAssetId;
-        result.displacementTextureAssetId = state->displacementTextureAssetId;
-        result.aoTextureAssetId = state->aoTextureAssetId;
-        result.textureSizeInWorldUnits = state->textureSizeInWorldUnits;
-
-        result.slopeStart = state->slopeStart;
-        result.slopeEnd = state->slopeEnd;
-        result.altitudeStart = state->altitudeStart;
-        result.altitudeEnd = state->altitudeEnd;
+        if (memory->editorCode.editorGetMaterialProperties)
+        {
+            MaterialProperties props =
+                memory->editorCode.editorGetMaterialProperties(memory->editor, index);
+            result.albedoTextureAssetId = props.albedoTextureAssetId;
+            result.normalTextureAssetId = props.normalTextureAssetId;
+            result.displacementTextureAssetId = props.displacementTextureAssetId;
+            result.aoTextureAssetId = props.aoTextureAssetId;
+            result.textureSizeInWorldUnits = props.textureSizeInWorldUnits;
+            result.slopeStart = props.slopeStart;
+            result.slopeEnd = props.slopeEnd;
+            result.altitudeStart = props.altitudeStart;
+            result.altitudeEnd = props.altitudeEnd;
+        }
 
         return result;
     }
 
     void EngineInterop::SetMaterialTexture(
-        int index, TerrainMaterialTextureType textureType, uint32 assetId)
+        int index, TerrainMaterialTextureTypeProxy textureType, uint32 assetId)
     {
-        assert(index < MAX_MATERIAL_COUNT);
-
-        MaterialProperties *matProps = &memory->editor->state.uiState.materialProps[index];
-        uint32 *materialTextureAssetIds[] = {
-            &matProps->albedoTextureAssetId,       //
-            &matProps->normalTextureAssetId,       //
-            &matProps->displacementTextureAssetId, //
-            &matProps->aoTextureAssetId            //
-        };
-        *materialTextureAssetIds[(uint32)textureType] = assetId;
+        if (memory->editorCode.editorSetMaterialTexture)
+        {
+            memory->editorCode.editorSetMaterialTexture(
+                memory->editor, index, (TerrainMaterialTextureType)textureType, assetId);
+        }
     }
 
-    void EngineInterop::SetMaterialParameters(int index,
+    void EngineInterop::SetMaterialProperties(int index,
         float textureSize,
         float slopeStart,
         float slopeEnd,
         float altitudeStart,
         float altitudeEnd)
     {
-        assert(index < MAX_MATERIAL_COUNT);
-        MaterialProperties *matProps = &memory->editor->state.uiState.materialProps[index];
-
-        matProps->textureSizeInWorldUnits = textureSize;
-        matProps->slopeStart = slopeStart;
-        matProps->slopeEnd = slopeEnd;
-        matProps->altitudeStart = altitudeStart;
-        matProps->altitudeEnd = altitudeEnd;
+        if (memory->editorCode.editorSetMaterialProperties)
+        {
+            memory->editorCode.editorSetMaterialProperties(memory->editor, index, textureSize,
+                slopeStart, slopeEnd, altitudeStart, altitudeEnd);
+        }
     }
 
     void EngineInterop::SetRockTransform(float positionX,
@@ -291,19 +293,18 @@ namespace Terrain { namespace Engine { namespace Interop {
         float scaleY,
         float scaleZ)
     {
-        memory->editor->state.uiState.rockPosition.x = positionX;
-        memory->editor->state.uiState.rockPosition.y = positionY;
-        memory->editor->state.uiState.rockPosition.z = positionZ;
-        memory->editor->state.uiState.rockRotation.x = rotationX;
-        memory->editor->state.uiState.rockRotation.y = rotationY;
-        memory->editor->state.uiState.rockRotation.z = rotationZ;
-        memory->editor->state.uiState.rockScale.x = scaleX;
-        memory->editor->state.uiState.rockScale.y = scaleY;
-        memory->editor->state.uiState.rockScale.z = scaleZ;
+        if (memory->editorCode.editorSetRockTransform)
+        {
+            memory->editorCode.editorSetRockTransform(memory->editor, positionX, positionY,
+                positionZ, rotationX, rotationY, rotationZ, scaleX, scaleY, scaleZ);
+        }
     }
 
     void EngineInterop::SetSceneParameters(float lightDirection)
     {
-        memory->editor->state.uiState.lightDirection = lightDirection;
+        if (memory->editorCode.editorSetSceneParameters)
+        {
+            memory->editorCode.editorSetSceneParameters(memory->editor, lightDirection);
+        }
     }
 }}}

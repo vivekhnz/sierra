@@ -156,6 +156,8 @@ struct EditorAssets
 
 struct EditorState
 {
+    bool isInitialized;
+
     EditorAssets assets;
 
     glm::mat4 orthographicCameraTransform;
@@ -186,13 +188,10 @@ struct EditorState
 
 struct EditorMemory
 {
-    bool isInitialized;
-
-    PlatformCaptureMouse *platformCaptureMouse;
-
-    EditorState state;
     MemoryBlock data;
     uint64 dataStorageUsed;
+
+    PlatformCaptureMouse *platformCaptureMouse;
 
     EngineApi *engineApi;
     EngineMemory *engineMemory;
@@ -286,9 +285,27 @@ struct EditorViewContext
     uint32 height;
 };
 
+struct TerrainBrushParameters
+{
+    float radius;
+    float falloff;
+    float strength;
+};
+
+enum TerrainMaterialTextureType
+{
+    TERRAIN_MAT_TEXTURE_ALBEDO = 0,
+    TERRAIN_MAT_TEXTURE_NORMAL = 1,
+    TERRAIN_MAT_TEXTURE_DISPLACEMENT = 2,
+    TERRAIN_MAT_TEXTURE_AMBIENT_OCCLUSION = 3
+};
+
 #define EDITOR_UPDATE(name)                                                                   \
     void name(EditorMemory *memory, float deltaTime, EditorInput *input)
 typedef EDITOR_UPDATE(EditorUpdate);
+
+#define EDITOR_SHUTDOWN(name) void name(EditorMemory *memory)
+typedef EDITOR_SHUTDOWN(EditorShutdown);
 
 #define EDITOR_RENDER_SCENE_VIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
 typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
@@ -300,7 +317,50 @@ typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 #define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(name) uint32 name(EditorMemory *memory)
 typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(EditorGetImportedHeightmapAssetId);
 
-#define EDITOR_SHUTDOWN(name) void name(EditorMemory *memory)
-typedef EDITOR_SHUTDOWN(EditorShutdown);
+#define EDITOR_GET_BRUSH_TOOL(name) EditorTool name(EditorMemory *memory)
+typedef EDITOR_GET_BRUSH_TOOL(EditorGetBrushTool);
+
+#define EDITOR_SET_BRUSH_TOOL(name) void name(EditorMemory *memory, EditorTool tool)
+typedef EDITOR_SET_BRUSH_TOOL(EditorSetBrushTool);
+
+#define EDITOR_GET_BRUSH_PARAMETERS(name) TerrainBrushParameters name(EditorMemory *memory)
+typedef EDITOR_GET_BRUSH_PARAMETERS(EditorGetBrushParameters);
+
+#define EDITOR_SET_BRUSH_PARAMETERS(name)                                                     \
+    void name(EditorMemory *memory, float radius, float falloff, float strength)
+typedef EDITOR_SET_BRUSH_PARAMETERS(EditorSetBrushParameters);
+
+#define EDITOR_ADD_MATERIAL(name) void name(EditorMemory *memory, MaterialProperties props)
+typedef EDITOR_ADD_MATERIAL(EditorAddMaterial);
+
+#define EDITOR_DELETE_MATERIAL(name) void name(EditorMemory *memory, uint32 index)
+typedef EDITOR_DELETE_MATERIAL(EditorDeleteMaterial);
+
+#define EDITOR_SWAP_MATERIAL(name)                                                            \
+    void name(EditorMemory *memory, uint32 indexA, uint32 indexB)
+typedef EDITOR_SWAP_MATERIAL(EditorSwapMaterial);
+
+#define EDITOR_GET_MATERIAL_PROPERTIES(name)                                                  \
+    MaterialProperties name(EditorMemory *memory, uint32 index)
+typedef EDITOR_GET_MATERIAL_PROPERTIES(EditorGetMaterialProperties);
+
+#define EDITOR_SET_MATERIAL_TEXTURE(name)                                                     \
+    void name(EditorMemory *memory, uint32 index, TerrainMaterialTextureType textureType,     \
+        uint32 assetId)
+typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
+
+#define EDITOR_SET_MATERIAL_PROPERTIES(name)                                                  \
+    void name(EditorMemory *memory, uint32 index, float textureSize, float slopeStart,        \
+        float slopeEnd, float altitudeStart, float altitudeEnd)
+typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
+
+#define EDITOR_SET_ROCK_TRANSFORM(name)                                                       \
+    void name(EditorMemory *memory, float positionX, float positionY, float positionZ,        \
+        float rotationX, float rotationY, float rotationZ, float scaleX, float scaleY,        \
+        float scaleZ)
+typedef EDITOR_SET_ROCK_TRANSFORM(EditorSetRockTransform);
+
+#define EDITOR_SET_SCENE_PARAMETERS(name) void name(EditorMemory *memory, float lightDirection)
+typedef EDITOR_SET_SCENE_PARAMETERS(EditorSetSceneParameters);
 
 #endif

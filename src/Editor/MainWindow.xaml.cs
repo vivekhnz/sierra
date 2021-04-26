@@ -171,7 +171,7 @@ namespace Terrain.Editor
         {
             if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
 
-            EditorCore.SetMaterialParameters(lbMaterials.SelectedIndex,
+            EditorCore.SetMaterialProperties(lbMaterials.SelectedIndex,
                 (float)materialTextureSizeSlider.Value,
                 (float)materialSlopeStartSlider.Value, (float)materialSlopeEndSlider.Value,
                 (float)materialAltitudeStartSlider.Value, (float)materialAltitudeEndSlider.Value);
@@ -205,22 +205,22 @@ namespace Terrain.Editor
                 return;
             }
 
-            TerrainMaterialTextureType textureType = TerrainMaterialTextureType.Albedo;
+            TerrainMaterialTextureTypeProxy textureType = TerrainMaterialTextureTypeProxy.Albedo;
             if (dropdown == cbMaterialAlbedoTexture)
             {
-                textureType = TerrainMaterialTextureType.Albedo;
+                textureType = TerrainMaterialTextureTypeProxy.Albedo;
             }
             else if (dropdown == cbMaterialNormalTexture)
             {
-                textureType = TerrainMaterialTextureType.Normal;
+                textureType = TerrainMaterialTextureTypeProxy.Normal;
             }
             else if (dropdown == cbMaterialDisplacementTexture)
             {
-                textureType = TerrainMaterialTextureType.Displacement;
+                textureType = TerrainMaterialTextureTypeProxy.Displacement;
             }
             else if (dropdown == cbMaterialAoTexture)
             {
-                textureType = TerrainMaterialTextureType.AmbientOcclusion;
+                textureType = TerrainMaterialTextureTypeProxy.AmbientOcclusion;
             }
             EditorCore.SetMaterialTexture(lbMaterials.SelectedIndex, textureType, textureAssetId);
         }
