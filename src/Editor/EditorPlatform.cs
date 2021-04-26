@@ -107,12 +107,25 @@ namespace Terrain.Editor
             public string Path;
             public DateTime LastUpdatedTimeUtc;
         }
+        private class EngineCode
+        {
+            public string DllPath;
+            public string DllShadowCopyPath;
+        }
+        private class EditorCode
+        {
+            public string DllPath;
+            public string DllShadowCopyPath;
+        }
 
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
 
         private static IntPtr appInstance = Win32.GetModuleHandle(null);
         private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
         private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
+
+        private static EngineCode engineCode;
+        private static EditorCode editorCode;
 
         private static IntPtr mainWindowHwnd;
         private static IntPtr dummyWindowHwnd;
@@ -151,6 +164,20 @@ namespace Terrain.Editor
         {
             assetsDirectoryPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "../../../data");
+            engineCode = new EngineCode
+            {
+                DllPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.dll"),
+                DllShadowCopyPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy.dll")
+            };
+            editorCode = new EditorCode
+            {
+                DllPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
+                DllShadowCopyPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll")
+            };
 
             uint editorMemorySizeInBytes = 32 * 1024 * 1024;
             uint engineMemorySizeInBytes = 480 * 1024 * 1024;
@@ -195,19 +222,10 @@ namespace Terrain.Editor
                 editorMemorySize = editorMemorySizeInBytes,
                 engineMemorySize = engineMemorySizeInBytes,
 
-                engineCodeDllPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.dll"),
-                engineCodeDllShadowCopyPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy.dll"),
-                engineCodeBuildLockFilePath = Path.Combine(
+                buildLockFilePath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
-
-                editorCodeDllPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
-                editorCodeDllShadowCopyPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll"),
-                editorCodeBuildLockFilePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
+                engineCodeDllPath = engineCode.DllPath,
+                engineCodeDllShadowCopyPath = engineCode.DllShadowCopyPath,
 
                 platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(editorPlatformCaptureMouse),
                 platformLogMessage = Marshal.GetFunctionPointerForDelegate(editorPlatformLogMessage),
@@ -507,7 +525,8 @@ namespace Terrain.Editor
 
             EditorInputProxy input = GetInputState();
 
-            EngineInterop.TickPlatform();
+            EngineInterop.TickPlatform(engineCode.DllPath, engineCode.DllShadowCopyPath,
+                editorCode.DllPath, editorCode.DllShadowCopyPath);
 
             // invalidate watched assets that have changed
             foreach (var asset in watchedAssets)

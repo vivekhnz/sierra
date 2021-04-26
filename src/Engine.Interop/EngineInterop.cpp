@@ -20,16 +20,10 @@ namespace Terrain { namespace Engine { namespace Interop {
         initParams.memoryBaseAddress = (uint8 *)params.memoryPtr.ToPointer();
         initParams.editorMemorySize = params.editorMemorySize;
         initParams.engineMemorySize = params.engineMemorySize;
+        GetCStringFromManagedString(params.buildLockFilePath, initParams.buildLockFilePath);
         GetCStringFromManagedString(params.engineCodeDllPath, initParams.engineCodeDllPath);
         GetCStringFromManagedString(
             params.engineCodeDllShadowCopyPath, initParams.engineCodeDllShadowCopyPath);
-        GetCStringFromManagedString(
-            params.engineCodeBuildLockFilePath, initParams.engineCodeBuildLockFilePath);
-        GetCStringFromManagedString(params.editorCodeDllPath, initParams.editorCodeDllPath);
-        GetCStringFromManagedString(
-            params.editorCodeDllShadowCopyPath, initParams.editorCodeDllShadowCopyPath);
-        GetCStringFromManagedString(
-            params.editorCodeBuildLockFilePath, initParams.editorCodeBuildLockFilePath);
         initParams.platformCaptureMouse =
             (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
         initParams.platformLogMessage =
@@ -42,9 +36,25 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory = win32InitializePlatform(&initParams);
     }
 
-    void EngineInterop::TickPlatform()
+    void EngineInterop::TickPlatform(System::String ^ engineCodeDllPath,
+        System::String ^ engineCodeDllShadowCopyPath,
+        System::String ^ editorCodeDllPath,
+        System::String ^ editorCodeDllShadowCopyPath)
     {
-        win32TickPlatform();
+        char engineCodeDllPathCStr[MAX_PATH];
+        char engineCodeDllShadowCopyPathCStr[MAX_PATH];
+        char editorCodeDllPathCStr[MAX_PATH];
+        char editorCodeDllShadowCopyPathCStr[MAX_PATH];
+
+        GetCStringFromManagedString(engineCodeDllPath, engineCodeDllPathCStr);
+        GetCStringFromManagedString(
+            engineCodeDllShadowCopyPath, engineCodeDllShadowCopyPathCStr);
+        GetCStringFromManagedString(editorCodeDllPath, editorCodeDllPathCStr);
+        GetCStringFromManagedString(
+            editorCodeDllShadowCopyPath, editorCodeDllShadowCopyPathCStr);
+
+        win32TickPlatform(engineCodeDllPathCStr, engineCodeDllShadowCopyPathCStr,
+            editorCodeDllPathCStr, editorCodeDllShadowCopyPathCStr);
     }
 
     uint32 EngineInterop::GetRegisteredAssetCount()

@@ -5,7 +5,7 @@ using namespace System::Windows::Input;
 
 global_variable Win32PlatformMemory *platformMemory;
 
-uint64 win32GetFileLastWriteTime(char *path)
+uint64 win32GetFileLastWriteTime(const char *path)
 {
     WIN32_FILE_ATTRIBUTE_DATA attributes;
     if (!GetFileAttributesExA(path, GetFileExInfoStandard, &attributes))
@@ -28,14 +28,22 @@ void win32CopyString(const char *src, char *dst)
     }
 }
 
-void win32LoadEngineCode(Win32EngineCode *engineCode)
+void win32ReloadEngineCode(const char *dllPath, const char *dllShadowCopyPath)
 {
-    while (!CopyFileA(engineCode->dllPath, engineCode->dllShadowCopyPath, false))
+    Win32EngineCode *engineCode = &platformMemory->engineCode;
+
+    if (engineCode->dllModule)
+    {
+        FreeLibrary(engineCode->dllModule);
+        engineCode->dllModule = 0;
+    }
+
+    while (!CopyFileA(dllPath, dllShadowCopyPath, false))
     {
         Sleep(100);
     }
 
-    engineCode->dllModule = LoadLibraryA(engineCode->dllShadowCopyPath);
+    engineCode->dllModule = LoadLibraryA(dllShadowCopyPath);
     if (engineCode->dllModule)
     {
         EngineGetApi *engineGetApi =
@@ -45,21 +53,26 @@ void win32LoadEngineCode(Win32EngineCode *engineCode)
         engineCode->api.rendererInitialize(platformMemory->engine, 0);
     }
 }
-void win32UnloadEngineCode(Win32EngineCode *engineCode)
-{
-    if (engineCode->dllModule)
-    {
-        FreeLibrary(engineCode->dllModule);
-        engineCode->dllModule = 0;
-    }
-}
 
-void win32LoadEditorCode(Win32EditorCode *editorCode)
+void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
 {
-    if (!CopyFileA(editorCode->dllPath, editorCode->dllShadowCopyPath, false))
+    Win32EditorCode *editorCode = &platformMemory->editorCode;
+
+    if (editorCode->dllModule)
+    {
+        FreeLibrary(editorCode->dllModule);
+        editorCode->dllModule = 0;
+
+        editorCode->editorUpdate = 0;
+        editorCode->editorShutdown = 0;
+        editorCode->editorRenderSceneView = 0;
+        editorCode->editorRenderHeightmapPreview = 0;
+    }
+
+    if (!CopyFileA(dllPath, dllShadowCopyPath, false))
         return;
 
-    editorCode->dllModule = LoadLibraryA(editorCode->dllShadowCopyPath);
+    editorCode->dllModule = LoadLibraryA(dllShadowCopyPath);
     if (editorCode->dllModule)
     {
         editorCode->editorUpdate =
@@ -74,19 +87,6 @@ void win32LoadEditorCode(Win32EditorCode *editorCode)
         editorCode->editorGetImportedHeightmapAssetId =
             (EditorGetImportedHeightmapAssetId *)GetProcAddress(
                 editorCode->dllModule, "editorGetImportedHeightmapAssetId");
-    }
-}
-void win32UnloadEditorCode(Win32EditorCode *editorCode)
-{
-    if (editorCode->dllModule)
-    {
-        FreeLibrary(editorCode->dllModule);
-        editorCode->dllModule = 0;
-
-        editorCode->editorUpdate = 0;
-        editorCode->editorShutdown = 0;
-        editorCode->editorRenderSceneView = 0;
-        editorCode->editorRenderHeightmapPreview = 0;
     }
 }
 
@@ -104,13 +104,7 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     // initialize platform memory
     platformMemory->engine = engineMemory;
     platformMemory->editor = editorMemory;
-    win32CopyString(params->editorCodeBuildLockFilePath, platformMemory->buildLockFilePath);
-    win32CopyString(params->engineCodeDllPath, platformMemory->engineCode.dllPath);
-    win32CopyString(
-        params->engineCodeDllShadowCopyPath, platformMemory->engineCode.dllShadowCopyPath);
-    win32CopyString(params->editorCodeDllPath, platformMemory->editorCode.dllPath);
-    win32CopyString(
-        params->editorCodeDllShadowCopyPath, platformMemory->editorCode.dllShadowCopyPath);
+    win32CopyString(params->buildLockFilePath, platformMemory->buildLockFilePath);
 
     // initialize engine memory
     engineMemory->platformLogMessage = params->platformLogMessage;
@@ -128,23 +122,14 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     assert(engineMemoryOffset == actualEngineMemorySize);
 
     // load engine code
-    win32LoadEngineCode(&platformMemory->engineCode);
+    win32ReloadEngineCode(params->engineCodeDllPath, params->engineCodeDllShadowCopyPath);
     platformMemory->engineCode.dllLastWriteTime =
-        win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
+        win32GetFileLastWriteTime(params->engineCodeDllPath);
 
     // initialize editor memory
     editorMemory->engineMemory = engineMemory;
     editorMemory->engineApi = &platformMemory->engineCode.api;
     editorMemory->platformCaptureMouse = params->platformCaptureMouse;
-    editorMemory->state.uiState = {};
-    editorMemory->state.uiState.brushRadius = 128.0f;
-    editorMemory->state.uiState.brushFalloff = 0.75f;
-    editorMemory->state.uiState.brushStrength = 0.12f;
-    editorMemory->state.uiState.lightDirection = 0.5f;
-    editorMemory->state.uiState.materialCount = 0;
-    editorMemory->state.uiState.rockPosition = glm::vec3(0);
-    editorMemory->state.uiState.rockRotation = glm::vec3(0);
-    editorMemory->state.uiState.rockScale = glm::vec3(1);
     editorMemory->data.baseAddress = editorMemoryBaseAddress + sizeof(EditorMemory);
     editorMemory->data.size = params->editorMemorySize;
     editorMemory->dataStorageUsed = 0;
@@ -152,27 +137,26 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
     return platformMemory;
 }
 
-void win32TickPlatform()
+void win32TickPlatform(const char *engineCodeDllPath,
+    const char *engineCodeDllShadowCopyPath,
+    const char *editorCodeDllPath,
+    const char *editorCodeDllShadowCopyPath)
 {
     if (!win32GetFileLastWriteTime(platformMemory->buildLockFilePath))
     {
-        uint64 engineCodeDllLastWriteTime =
-            win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
+        uint64 engineCodeDllLastWriteTime = win32GetFileLastWriteTime(engineCodeDllPath);
         if (engineCodeDllLastWriteTime
             && engineCodeDllLastWriteTime > platformMemory->engineCode.dllLastWriteTime)
         {
-            win32UnloadEngineCode(&platformMemory->engineCode);
-            win32LoadEngineCode(&platformMemory->engineCode);
+            win32ReloadEngineCode(engineCodeDllPath, engineCodeDllShadowCopyPath);
             platformMemory->engineCode.dllLastWriteTime = engineCodeDllLastWriteTime;
         }
 
-        uint64 editorCodeDllLastWriteTime =
-            win32GetFileLastWriteTime(platformMemory->editorCode.dllPath);
+        uint64 editorCodeDllLastWriteTime = win32GetFileLastWriteTime(editorCodeDllPath);
         if (editorCodeDllLastWriteTime
             && editorCodeDllLastWriteTime > platformMemory->editorCode.dllLastWriteTime)
         {
-            win32UnloadEditorCode(&platformMemory->editorCode);
-            win32LoadEditorCode(&platformMemory->editorCode);
+            win32ReloadEditorCode(editorCodeDllPath, editorCodeDllShadowCopyPath);
             platformMemory->editorCode.dllLastWriteTime = editorCodeDllLastWriteTime;
         }
     }

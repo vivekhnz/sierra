@@ -159,13 +159,22 @@ bool initializeEditor(EditorMemory *memory)
 
     assets->meshRock = engine->assetsRegisterMesh(memory->engineMemory, "rock.obj");
 
-    SceneState *sceneState = &memory->state.sceneState;
-
     memory->state.orthographicCameraTransform = glm::identity<glm::mat4>();
     memory->state.orthographicCameraTransform =
         glm::scale(memory->state.orthographicCameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
     memory->state.orthographicCameraTransform = glm::translate(
         memory->state.orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
+
+    memory->state.uiState.brushRadius = 128.0f;
+    memory->state.uiState.brushFalloff = 0.75f;
+    memory->state.uiState.brushStrength = 0.12f;
+    memory->state.uiState.lightDirection = 0.5f;
+    memory->state.uiState.materialCount = 0;
+    memory->state.uiState.rockPosition = glm::vec3(0);
+    memory->state.uiState.rockRotation = glm::vec3(0);
+    memory->state.uiState.rockScale = glm::vec3(1);
+
+    SceneState *sceneState = &memory->state.sceneState;
 
     float quadVertices[16] = {
         0, 0, 0, 0, //
