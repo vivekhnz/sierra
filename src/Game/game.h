@@ -117,7 +117,7 @@ struct GameMemory
 
     GameState state;
 
-    EngineClientApi engine;
+    EngineApi *engine;
     EngineMemory *engineMemory;
 };
 

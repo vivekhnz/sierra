@@ -199,7 +199,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            platformMemory->engineApi.assetsInvalidateAsset(memory, asset->assetId);
+            platformMemory->engineCode.api.assetsInvalidateAsset(memory, asset->assetId);
         }
     }
 
@@ -212,9 +212,8 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            platformMemory->engineApi.assetsSetAssetData(
-                platformMemory->gameMemory->engineMemory, request->assetId, result.data,
-                result.size);
+            platformMemory->engineCode.api.assetsSetAssetData(
+                platformMemory->engineMemory, request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue->length--;
@@ -222,6 +221,33 @@ void win32LoadQueuedAssets(EngineMemory *memory)
             assetLoadQueue->indices[assetLoadQueue->length] = index;
             i--;
         }
+    }
+}
+
+void win32LoadEngineCode(Win32EngineCode *engineCode)
+{
+    while (!CopyFileA(engineCode->dllPath, engineCode->dllShadowCopyPath, false))
+    {
+        Sleep(100);
+    }
+
+    engineCode->dllModule = LoadLibraryA(engineCode->dllShadowCopyPath);
+    if (engineCode->dllModule)
+    {
+        EngineGetApi *engineGetApi =
+            (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
+        engineGetApi(&engineCode->api);
+
+        engineCode->api.rendererInitialize(
+            platformMemory->engineMemory, (GetGLProcAddress *)glfwGetProcAddress);
+    }
+}
+void win32UnloadEngineCode(Win32EngineCode *engineCode)
+{
+    if (engineCode->dllModule)
+    {
+        FreeLibrary(engineCode->dllModule);
+        engineCode->dllModule = 0;
     }
 }
 
@@ -239,7 +265,6 @@ void win32LoadGameCode(Win32GameCode *gameCode)
             (GameShutdown *)GetProcAddress(gameCode->dllModule, "gameShutdown");
     }
 }
-
 void win32UnloadGameCode(Win32GameCode *gameCode)
 {
     if (gameCode->dllModule)
@@ -338,47 +363,7 @@ void win32OnMouseScroll(GLFWwindow *window, double x, double y)
 
 int32 main()
 {
-#define APP_MEMORY_SIZE (500 * 1024 * 1024)
-    uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
-    uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
-    uint8 *engineMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
-    uint8 engineMemorySize =
-        APP_MEMORY_SIZE - (engineMemoryBaseAddress - platformMemoryBaseAddress);
-
-    platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
-    GameMemory *gameMemory = (GameMemory *)gameMemoryBaseAddress;
-    EngineMemory *engineMemory = (EngineMemory *)engineMemoryBaseAddress;
-
-    // initialize platform memory
-    platformMemory->gameMemory = gameMemory;
-    engineGetPlatformApi(&platformMemory->engineApi);
-    for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
-    {
-        platformMemory->assetLoadQueue.indices[i] = i;
-    }
-
-    // initialize game memory
-    gameMemory->engineMemory = engineMemory;
-    engineGetClientApi(&gameMemory->engine);
-    gameMemory->platformExitGame = win32ExitGame;
-    gameMemory->platformCaptureMouse = win32CaptureMouse;
-
-    // initialize engine memory
-    engineMemory->platformGetGlProcAddress = (PlatformGetGlProcAddress *)glfwGetProcAddress;
-    engineMemory->platformLogMessage = win32LogMessage;
-    engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
-    engineMemory->platformWatchAssetFile = win32WatchAssetFile;
-
-#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
-    uint64 engineMemoryOffset = sizeof(EngineMemory);
-    engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
-    engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
-    engineMemoryOffset += engineMemory->renderer.size;
-    engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
-    engineMemory->assets.size = engineMemorySize - engineMemoryOffset;
-    engineMemoryOffset += engineMemory->assets.size;
-    assert(engineMemoryOffset == engineMemorySize);
-
+    // create window
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
@@ -394,30 +379,90 @@ int32 main()
     glfwSetScrollCallback(window, win32OnMouseScroll);
     glfwMakeContextCurrent(window);
 
+    // initialize memory
+#define APP_MEMORY_SIZE (500 * 1024 * 1024)
+    uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
+    uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
+    uint8 *engineMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
+    uint8 engineMemorySize =
+        APP_MEMORY_SIZE - (engineMemoryBaseAddress - platformMemoryBaseAddress);
+
+    platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
+    GameMemory *gameMemory = (GameMemory *)gameMemoryBaseAddress;
+    EngineMemory *engineMemory = (EngineMemory *)engineMemoryBaseAddress;
+
+    // initialize platform memory
+    platformMemory->engineMemory = engineMemory;
+    platformMemory->gameMemory = gameMemory;
+    for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
+    {
+        platformMemory->assetLoadQueue.indices[i] = i;
+    }
+    win32GetOutputAbsolutePath("build.lock", platformMemory->buildLockFilePath);
+    win32GetOutputAbsolutePath("terrain_engine.dll", platformMemory->engineCode.dllPath);
+    win32GetOutputAbsolutePath(
+        "terrain_engine.copy.dll", platformMemory->engineCode.dllShadowCopyPath);
+    win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
+    win32GetOutputAbsolutePath(
+        "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
+
+    // initialize engine memory
+    engineMemory->platformLogMessage = win32LogMessage;
+    engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
+    engineMemory->platformWatchAssetFile = win32WatchAssetFile;
+
+#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
+    uint64 engineMemoryOffset = sizeof(EngineMemory);
+    engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+    engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+    engineMemoryOffset += engineMemory->renderer.size;
+    engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+    engineMemory->assets.size = engineMemorySize - engineMemoryOffset;
+    engineMemoryOffset += engineMemory->assets.size;
+    assert(engineMemoryOffset == engineMemorySize);
+
+    // load engine code
+    win32LoadEngineCode(&platformMemory->engineCode);
+    platformMemory->engineCode.dllLastWriteTime =
+        win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
+
+    // initialize game memory
+    gameMemory->engineMemory = platformMemory->engineMemory;
+    gameMemory->engine = &platformMemory->engineCode.api;
+    gameMemory->platformExitGame = win32ExitGame;
+    gameMemory->platformCaptureMouse = win32CaptureMouse;
+
     float lastTickTime = (float)glfwGetTime();
     GameInput input = {};
     glm::vec2 prevMousePos = glm::vec2(0, 0);
     bool wasMouseCursorTeleported = true;
 
-    win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
-    win32GetOutputAbsolutePath(
-        "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
-    win32GetOutputAbsolutePath("build.lock", platformMemory->gameCode.buildLockFilePath);
-
     while (!glfwWindowShouldClose(window))
     {
-        uint64 gameCodeDllLastWriteTime =
-            win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
-        if (gameCodeDllLastWriteTime
-            && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime
-            && !win32GetFileLastWriteTime(platformMemory->gameCode.buildLockFilePath))
+        if (!win32GetFileLastWriteTime(platformMemory->buildLockFilePath))
         {
-            win32UnloadGameCode(&platformMemory->gameCode);
-            win32LoadGameCode(&platformMemory->gameCode);
-            platformMemory->gameCode.dllLastWriteTime = gameCodeDllLastWriteTime;
+            uint64 engineCodeDllLastWriteTime =
+                win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
+            if (engineCodeDllLastWriteTime
+                && engineCodeDllLastWriteTime > platformMemory->engineCode.dllLastWriteTime)
+            {
+                win32UnloadEngineCode(&platformMemory->engineCode);
+                win32LoadEngineCode(&platformMemory->engineCode);
+                platformMemory->engineCode.dllLastWriteTime = engineCodeDllLastWriteTime;
+            }
+
+            uint64 gameCodeDllLastWriteTime =
+                win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
+            if (gameCodeDllLastWriteTime
+                && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime)
+            {
+                win32UnloadGameCode(&platformMemory->gameCode);
+                win32LoadGameCode(&platformMemory->gameCode);
+                platformMemory->gameCode.dllLastWriteTime = gameCodeDllLastWriteTime;
+            }
         }
 
-        win32LoadQueuedAssets(platformMemory->gameMemory->engineMemory);
+        win32LoadQueuedAssets(platformMemory->engineMemory);
 
         // query input
         input.prevPressedButtons = input.pressedButtons;

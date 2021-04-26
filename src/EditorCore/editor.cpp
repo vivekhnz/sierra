@@ -48,23 +48,18 @@ HeightmapRenderTexture createHeightmapRenderTexture(EditorMemory *memory)
     HeightmapRenderTexture result = {};
 
     result.textureHandle =
-        memory->engine.rendererCreateTexture(memory->engineMemory, GL_UNSIGNED_SHORT, GL_R16,
-            GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-    result.framebufferHandle =
-        memory->engine.rendererCreateFramebuffer(memory->engineMemory, result.textureHandle);
+        memory->engineApi->rendererCreateTexture(memory->engineMemory, GL_UNSIGNED_SHORT,
+            GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+    result.framebufferHandle = memory->engineApi->rendererCreateFramebuffer(
+        memory->engineMemory, result.textureHandle);
 
     return result;
 }
 
 bool initializeEditor(EditorMemory *memory)
 {
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &memory->state.assets;
-
-    if (!engine->rendererInitialize(memory->engineMemory))
-    {
-        return 0;
-    }
 
     uint32 shaderTextureVertex = engine->assetsRegisterShader(
         memory->engineMemory, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
@@ -403,7 +398,7 @@ void compositeHeightmap(EditorMemory *memory,
     BrushBlendProperties *blendProps)
 {
     assert(blendProps->iterations % 2 == 1);
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engineApi;
 
     float brushRadius = memory->state.uiState.brushRadius / 2048.0f;
     float brushFalloff = memory->state.uiState.brushFalloff;
@@ -504,7 +499,7 @@ void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
 
 void commitChanges(EditorMemory *memory)
 {
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &memory->state.assets;
 
     LoadedAsset *quadShaderProgram =
@@ -540,7 +535,7 @@ void discardChanges(EditorMemory *memory)
     memory->state.isEditingHeightmap = false;
     memory->state.activeBrushStrokeInstanceCount = 0;
 
-    memory->engine.rendererReadTexturePixels(memory->engineMemory,
+    memory->engineApi->rendererReadTexturePixels(memory->engineMemory,
         memory->state.committedHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
         memory->state.sceneState.heightmapTextureDataTempBuffer);
     updateHeightfieldHeights(&memory->state.sceneState.heightfield,
@@ -559,7 +554,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         memory->isInitialized = true;
     }
 
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &memory->state.assets;
 
     LoadedAsset *quadShaderProgram =
@@ -935,13 +930,13 @@ API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
 {
     if (memory->isInitialized)
     {
-        memory->engine.rendererDestroyResources(memory->engineMemory);
+        memory->engineApi->rendererDestroyResources(memory->engineMemory);
     }
 }
 
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &memory->state.assets;
     SceneState *sceneState = &memory->state.sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
@@ -1225,7 +1220,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &memory->state.assets;
 
     engine->rendererUpdateCameraState(

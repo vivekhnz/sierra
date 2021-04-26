@@ -13,7 +13,9 @@ enum RendererBufferType
     RENDERER_SHADER_STORAGE_BUFFER
 };
 
-#define RENDERER_INITIALIZE(name) bool name(EngineMemory *memory)
+typedef void *GetGLProcAddress(const char *procName);
+#define RENDERER_INITIALIZE(name)                                                             \
+    bool name(EngineMemory *memory, GetGLProcAddress *getGlProcAddress)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
 #define RENDERER_UPDATE_CAMERA_STATE(name)                                                    \

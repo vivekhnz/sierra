@@ -20,6 +20,11 @@ namespace Terrain { namespace Engine { namespace Interop {
         initParams.memoryBaseAddress = (uint8 *)params.memoryPtr.ToPointer();
         initParams.editorMemorySize = params.editorMemorySize;
         initParams.engineMemorySize = params.engineMemorySize;
+        GetCStringFromManagedString(params.engineCodeDllPath, initParams.engineCodeDllPath);
+        GetCStringFromManagedString(
+            params.engineCodeDllShadowCopyPath, initParams.engineCodeDllShadowCopyPath);
+        GetCStringFromManagedString(
+            params.engineCodeBuildLockFilePath, initParams.engineCodeBuildLockFilePath);
         GetCStringFromManagedString(params.editorCodeDllPath, initParams.editorCodeDllPath);
         GetCStringFromManagedString(
             params.editorCodeDllShadowCopyPath, initParams.editorCodeDllShadowCopyPath);
@@ -114,14 +119,15 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     uint32 EngineInterop::GetRegisteredAssetCount()
     {
-        return memory->engineApi.assetsGetRegisteredAssetCount(memory->editor->engineMemory);
+        return memory->engineCode.api.assetsGetRegisteredAssetCount(
+            memory->editor->engineMemory);
     }
 
     array<AssetRegistrationProxy> ^ EngineInterop::GetRegisteredAssets()
     {
         uint32 assetCount = GetRegisteredAssetCount();
         AssetRegistration *assetRegs =
-            memory->engineApi.assetsGetRegisteredAssets(memory->editor->engineMemory);
+            memory->engineCode.api.assetsGetRegisteredAssets(memory->editor->engineMemory);
 
         array<AssetRegistrationProxy> ^ result =
             gcnew array<AssetRegistrationProxy>(assetCount);
@@ -140,13 +146,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
     {
-        memory->engineApi.assetsSetAssetData(
+        memory->engineCode.api.assetsSetAssetData(
             memory->editor->engineMemory, assetId, data.ToPointer(), size);
     }
 
     void EngineInterop::InvalidateAsset(uint32 assetId)
     {
-        memory->engineApi.assetsInvalidateAsset(memory->editor->engineMemory, assetId);
+        memory->engineCode.api.assetsInvalidateAsset(memory->editor->engineMemory, assetId);
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)

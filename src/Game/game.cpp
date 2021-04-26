@@ -14,12 +14,7 @@ bool initializeGame(GameMemory *memory)
 {
     GameState *state = &memory->state;
     GameAssets *assets = &state->assets;
-    EngineClientApi *engine = &memory->engine;
-
-    if (!engine->rendererInitialize(memory->engineMemory))
-    {
-        return 0;
-    }
+    EngineApi *engine = memory->engine;
 
     uint32 shaderTerrainVertex = engine->assetsRegisterShader(
         memory->engineMemory, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
@@ -270,7 +265,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         memory->isInitialized = true;
     }
 
-    EngineClientApi *engine = &memory->engine;
+    EngineApi *engine = memory->engine;
     GameState *state = &memory->state;
     GameAssets *assets = &state->assets;
 
@@ -286,7 +281,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         engine->assetsGetTexture(memory->engineMemory, assets->textureVirtualHeightmap);
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
-        memory->engine.rendererUpdateTexture(memory->engineMemory,
+        memory->engine->rendererUpdateTexture(memory->engineMemory,
             state->heightmapTextureHandle, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
             heightmapAsset->texture->width, heightmapAsset->texture->height,
             heightmapAsset->texture->data);
@@ -664,5 +659,5 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
 API_EXPORT GAME_SHUTDOWN(gameShutdown)
 {
-    memory->engine.rendererDestroyResources(memory->engineMemory);
+    memory->engine->rendererDestroyResources(memory->engineMemory);
 }

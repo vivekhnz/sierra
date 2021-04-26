@@ -195,6 +195,13 @@ namespace Terrain.Editor
                 editorMemorySize = editorMemorySizeInBytes,
                 engineMemorySize = engineMemorySizeInBytes,
 
+                engineCodeDllPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.dll"),
+                engineCodeDllShadowCopyPath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy.dll"),
+                engineCodeBuildLockFilePath = Path.Combine(
+                    AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
+
                 editorCodeDllPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
                 editorCodeDllShadowCopyPath = Path.Combine(

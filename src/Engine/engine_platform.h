@@ -33,9 +33,6 @@ struct MemoryBlock
 
 struct EngineMemory;
 
-#define PLATFORM_GET_GL_PROC_ADDRESS(name) void *name(const char *procName)
-typedef PLATFORM_GET_GL_PROC_ADDRESS(PlatformGetGlProcAddress);
-
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
@@ -47,7 +44,6 @@ typedef PLATFORM_WATCH_ASSET_FILE(PlatformWatchAssetFile);
 
 struct EngineMemory
 {
-    PlatformGetGlProcAddress *platformGetGlProcAddress;
     PlatformLogMessage *platformLogMessage;
     PlatformQueueAssetLoad *platformQueueAssetLoad;
     PlatformWatchAssetFile *platformWatchAssetFile;

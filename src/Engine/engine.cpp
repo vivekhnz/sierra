@@ -4,16 +4,14 @@
 #include "engine_heightfield.cpp"
 #include "engine_renderer.cpp"
 
-void engineGetPlatformApi(EnginePlatformApi *api)
+#include "../../deps/glad/glad.c"
+#include "../../deps/stb/stb_image.c"
+#include "../../deps/fast_obj/fast_obj.c"
+
+API_EXPORT ENGINE_GET_API(engineGetApi)
 {
     api->assetsGetRegisteredAssetCount = assetsGetRegisteredAssetCount;
     api->assetsGetRegisteredAssets = assetsGetRegisteredAssets;
-    api->assetsSetAssetData = assetsSetAssetData;
-    api->assetsInvalidateAsset = assetsInvalidateAsset;
-}
-
-void engineGetClientApi(EngineClientApi *api)
-{
     api->assetsRegisterShader = assetsRegisterShader;
     api->assetsRegisterTexture = assetsRegisterTexture;
     api->assetsRegisterShaderProgram = assetsRegisterShaderProgram;
@@ -22,6 +20,8 @@ void engineGetClientApi(EngineClientApi *api)
     api->assetsGetShaderProgram = assetsGetShaderProgram;
     api->assetsGetTexture = assetsGetTexture;
     api->assetsGetMesh = assetsGetMesh;
+    api->assetsSetAssetData = assetsSetAssetData;
+    api->assetsInvalidateAsset = assetsInvalidateAsset;
 
     api->heightfieldGetHeight = heightfieldGetHeight;
     api->heightfieldIsRayIntersecting = heightfieldIsRayIntersecting;

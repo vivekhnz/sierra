@@ -86,7 +86,9 @@ function Invoke-Compiler {
     else {
         $linkerFlags += "/PDB:$OutputPath\$OutputName.pdb"
     }
-    $linkerFlags += $ImportLibs
+    if ($ImportLibs) {
+        $linkerFlags += $ImportLibs
+    }
     if ($BuildDll.IsPresent) {
         $linkerFlags +=  "/out:$OutputPath\$OutputName.dll"
         $linkerFlags += '/DLL'
@@ -122,15 +124,20 @@ $LockFilePath = "$OutputPath\build.lock"
 
 $builds = @()
 $builds += Invoke-Compiler `
+    -SourceFile 'src\Engine\engine.cpp' -OutputName 'terrain_engine' `
+    -IntermediateOutputDirName 'Engine' `
+    -BuildDll -RandomizePdbFilename -NoImportLib `
+    -IncludePaths @(
+        'deps',
+        'deps\nuget\glm.0.9.9.700\build\native\include'
+    )
+$builds += Invoke-Compiler `
     -SourceFile 'src\Game\game.cpp' -OutputName 'terrain_game' `
     -IntermediateOutputDirName 'Game' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
     -IncludePaths @(
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
-    ) `
-    -ImportLibs @(
-        "$OutputPath\Terrain.Engine.lib"
     )
 $builds += Invoke-Compiler `
     -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
@@ -142,7 +149,6 @@ $builds += Invoke-Compiler `
         'deps\nuget\glfw.3.3.2\build\native\include'
     ) `
     -ImportLibs @(
-        "$OutputPath\Terrain.Engine.lib",
         "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
     )
 $builds += Invoke-Compiler `
@@ -152,9 +158,6 @@ $builds += Invoke-Compiler `
     -IncludePaths @(
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
-    ) `
-    -ImportLibs @(
-        "$OutputPath\Terrain.Engine.lib"
     )
 
 $glfwDllSrcPath = "deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"

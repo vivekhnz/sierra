@@ -26,6 +26,10 @@ public
         uint64 editorMemorySize;
         uint64 engineMemorySize;
 
+        System::String ^ engineCodeDllPath;
+        System::String ^ engineCodeDllShadowCopyPath;
+        System::String ^ engineCodeBuildLockFilePath;
+
         System::String ^ editorCodeDllPath;
         System::String ^ editorCodeDllShadowCopyPath;
         System::String ^ editorCodeBuildLockFilePath;

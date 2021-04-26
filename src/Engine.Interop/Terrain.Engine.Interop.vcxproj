@@ -79,12 +79,6 @@
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="win32_editor_platform.cpp" />
   </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\Engine\Terrain.Engine.vcxproj">
-      <Project>{de081990-04f4-4989-8342-e330796eaac1}</Project>
-      <LinkLibraryDependencies>true</LinkLibraryDependencies>
-    </ProjectReference>
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />
 </Project>

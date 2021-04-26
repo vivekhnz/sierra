@@ -32,7 +32,6 @@ struct Win32GameCode
 {
     char dllPath[MAX_PATH];
     char dllShadowCopyPath[MAX_PATH];
-    char buildLockFilePath[MAX_PATH];
     HMODULE dllModule;
     uint64 dllLastWriteTime;
 
@@ -40,18 +39,31 @@ struct Win32GameCode
     GameShutdown *gameShutdown;
 };
 
+struct Win32EngineCode
+{
+    char dllPath[MAX_PATH];
+    char dllShadowCopyPath[MAX_PATH];
+    HMODULE dllModule;
+    uint64 dllLastWriteTime;
+
+    EngineApi api;
+};
+
 struct Win32PlatformMemory
 {
     Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;
+
+    char buildLockFilePath[MAX_PATH];
+    Win32EngineCode engineCode;
     Win32GameCode gameCode;
 
     bool shouldExitGame;
     bool shouldCaptureMouse;
     float mouseScrollOffset;
 
-    EnginePlatformApi engineApi;
+    EngineMemory *engineMemory;
     GameMemory *gameMemory;
 };
 

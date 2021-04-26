@@ -5,16 +5,10 @@
 #include "engine_heightfield.h"
 #include "engine_renderer.h"
 
-struct EnginePlatformApi
+struct EngineApi
 {
     AssetsGetRegisteredAssetCount *assetsGetRegisteredAssetCount;
     AssetsGetRegisteredAssets *assetsGetRegisteredAssets;
-    AssetsSetAssetData *assetsSetAssetData;
-    AssetsInvalidateAsset *assetsInvalidateAsset;
-};
-
-struct EngineClientApi
-{
     AssetsRegisterShader *assetsRegisterShader;
     AssetsRegisterTexture *assetsRegisterTexture;
     AssetsRegisterShaderProgram *assetsRegisterShaderProgram;
@@ -23,6 +17,8 @@ struct EngineClientApi
     AssetsGetShaderProgram *assetsGetShaderProgram;
     AssetsGetTexture *assetsGetTexture;
     AssetsGetMesh *assetsGetMesh;
+    AssetsSetAssetData *assetsSetAssetData;
+    AssetsInvalidateAsset *assetsInvalidateAsset;
 
     HeightfieldGetHeight *heightfieldGetHeight;
     HeightfieldIsRayIntersecting *heightfieldIsRayIntersecting;
@@ -68,7 +64,7 @@ struct EngineClientApi
     RendererDestroyResources *rendererDestroyResources;
 };
 
-EXPORT void engineGetPlatformApi(EnginePlatformApi *api);
-EXPORT void engineGetClientApi(EngineClientApi *api);
+#define ENGINE_GET_API(name) void name(EngineApi *api)
+typedef ENGINE_GET_API(EngineGetApi);
 
 #endif

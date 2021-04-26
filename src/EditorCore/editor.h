@@ -194,7 +194,7 @@ struct EditorMemory
     MemoryBlock data;
     uint64 dataStorageUsed;
 
-    EngineClientApi engine;
+    EngineApi *engineApi;
     EngineMemory *engineMemory;
 };
 
