@@ -9,16 +9,12 @@
 struct Win32EngineCode
 {
     HMODULE dllModule;
-    uint64 dllLastWriteTime;
-
     EngineApi api;
 };
 
 struct Win32EditorCode
 {
     HMODULE dllModule;
-    uint64 dllLastWriteTime;
-
     EditorUpdate *editorUpdate;
     EditorShutdown *editorShutdown;
     EditorRenderSceneView *editorRenderSceneView;
@@ -28,7 +24,6 @@ struct Win32EditorCode
 
 struct Win32PlatformMemory
 {
-    char buildLockFilePath[MAX_PATH];
     Win32EngineCode engineCode;
     Win32EditorCode editorCode;
 
@@ -42,19 +37,13 @@ struct Win32InitPlatformParams
     uint64 editorMemorySize;
     uint64 engineMemorySize;
 
-    char buildLockFilePath[MAX_PATH];
-    char engineCodeDllPath[MAX_PATH];
-    char engineCodeDllShadowCopyPath[MAX_PATH];
-
     PlatformCaptureMouse *platformCaptureMouse;
     PlatformLogMessage *platformLogMessage;
     PlatformQueueAssetLoad *platformQueueAssetLoad;
     PlatformWatchAssetFile *platformWatchAssetFile;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
-void win32TickPlatform(const char *engineCodeDllPath,
-    const char *engineCodeDllShadowCopyPath,
-    const char *editorCodeDllPath,
-    const char *editorCodeDllShadowCopyPath);
+void win32ReloadEngineCode(const char *dllPath, const char *dllShadowCopyPath);
+void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath);
 
 #endif

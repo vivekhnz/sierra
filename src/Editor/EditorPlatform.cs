@@ -107,15 +107,11 @@ namespace Terrain.Editor
             public string Path;
             public DateTime LastUpdatedTimeUtc;
         }
-        private class EngineCode
+        private class ReloadableCode
         {
             public string DllPath;
             public string DllShadowCopyPath;
-        }
-        private class EditorCode
-        {
-            public string DllPath;
-            public string DllShadowCopyPath;
+            public DateTime DllLastWriteTimeUtc;
         }
 
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
@@ -124,8 +120,9 @@ namespace Terrain.Editor
         private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
         private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
 
-        private static EngineCode engineCode;
-        private static EditorCode editorCode;
+        private static string buildLockFilePath;
+        private static ReloadableCode engineCode;
+        private static ReloadableCode editorCode;
 
         private static IntPtr mainWindowHwnd;
         private static IntPtr dummyWindowHwnd;
@@ -164,14 +161,15 @@ namespace Terrain.Editor
         {
             assetsDirectoryPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "../../../data");
-            engineCode = new EngineCode
+            buildLockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build.lock");
+            engineCode = new ReloadableCode
             {
                 DllPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.dll"),
                 DllShadowCopyPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy.dll")
             };
-            editorCode = new EditorCode
+            editorCode = new ReloadableCode
             {
                 DllPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
@@ -222,17 +220,15 @@ namespace Terrain.Editor
                 editorMemorySize = editorMemorySizeInBytes,
                 engineMemorySize = engineMemorySizeInBytes,
 
-                buildLockFilePath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "build.lock"),
-                engineCodeDllPath = engineCode.DllPath,
-                engineCodeDllShadowCopyPath = engineCode.DllShadowCopyPath,
-
                 platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(editorPlatformCaptureMouse),
                 platformLogMessage = Marshal.GetFunctionPointerForDelegate(editorPlatformLogMessage),
                 platformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(editorPlatformQueueAssetLoad),
                 platformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(editorPlatformWatchAssetFile)
             };
             EngineInterop.InitializeEngine(initParams);
+
+            EngineInterop.ReloadEngineCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+            engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
             renderTimer = new DispatcherTimer(DispatcherPriority.Send)
@@ -525,8 +521,22 @@ namespace Terrain.Editor
 
             EditorInputProxy input = GetInputState();
 
-            EngineInterop.TickPlatform(engineCode.DllPath, engineCode.DllShadowCopyPath,
-                editorCode.DllPath, editorCode.DllShadowCopyPath);
+            if (!File.Exists(buildLockFilePath))
+            {
+                DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
+                if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
+                {
+                    EngineInterop.ReloadEngineCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+                    engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
+                }
+
+                DateTime editorCodeDllLastWriteTime = File.GetLastWriteTimeUtc(editorCode.DllPath);
+                if (editorCodeDllLastWriteTime > editorCode.DllLastWriteTimeUtc)
+                {
+                    EngineInterop.ReloadEditorCode(editorCode.DllPath, editorCode.DllShadowCopyPath);
+                    editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
+                }
+            }
 
             // invalidate watched assets that have changed
             foreach (var asset in watchedAssets)

@@ -25,10 +25,6 @@ public
         uint64 editorMemorySize;
         uint64 engineMemorySize;
 
-        System::String ^ buildLockFilePath;
-        System::String ^ engineCodeDllPath;
-        System::String ^ engineCodeDllShadowCopyPath;
-
         System::IntPtr platformCaptureMouse;
         System::IntPtr platformLogMessage;
         System::IntPtr platformQueueAssetLoad;
@@ -99,10 +95,10 @@ public
     public:
         // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
-        static void TickPlatform(System::String^ engineCodeDllPath,
-            System::String^ engineCodeDllShadowCopyPath,
-            System::String^ editorCodeDllPath,
-            System::String^ editorCodeDllShadowCopyPath);
+        static void ReloadEngineCode(
+            System::String ^ dllPath, System::String ^ dllShadowCopyPath);
+        static void ReloadEditorCode(
+            System::String ^ dllPath, System::String ^ dllShadowCopyPath);
 
         // engine
         static uint32 GetRegisteredAssetCount();
