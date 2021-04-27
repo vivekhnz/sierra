@@ -199,7 +199,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            platformMemory->engineCode.api.assetsInvalidateAsset(memory, asset->assetId);
+            platformMemory->engineCode.api->assetsInvalidateAsset(memory, asset->assetId);
         }
     }
 
@@ -212,7 +212,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            platformMemory->engineCode.api.assetsSetAssetData(
+            platformMemory->engineCode.api->assetsSetAssetData(
                 platformMemory->engineMemory, request->assetId, result.data, result.size);
             win32FreeMemory(result.data);
 
@@ -236,9 +236,10 @@ void win32LoadEngineCode(Win32EngineCode *engineCode)
     {
         EngineGetApi *engineGetApi =
             (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
-        engineGetApi(&engineCode->api);
+        engineCode->api = engineGetApi();
+        platformMemory->gameMemory->engine = engineCode->api;
 
-        engineCode->api.rendererInitialize(
+        engineCode->api->rendererInitialize(
             platformMemory->engineMemory, (GetGLProcAddress *)glfwGetProcAddress);
     }
 }
@@ -428,7 +429,6 @@ int32 main()
 
     // initialize game memory
     gameMemory->engineMemory = platformMemory->engineMemory;
-    gameMemory->engine = &platformMemory->engineCode.api;
     gameMemory->platformExitGame = win32ExitGame;
     gameMemory->platformCaptureMouse = win32CaptureMouse;
 

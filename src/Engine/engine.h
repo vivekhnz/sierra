@@ -64,7 +64,7 @@ struct EngineApi
     RendererDestroyResources *rendererDestroyResources;
 };
 
-#define ENGINE_GET_API(name) void name(EngineApi *api)
+#define ENGINE_GET_API(name) EngineApi *name()
 typedef ENGINE_GET_API(EngineGetApi);
 
 #endif

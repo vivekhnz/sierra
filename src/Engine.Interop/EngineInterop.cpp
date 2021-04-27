@@ -55,7 +55,7 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     uint32 EngineInterop::GetRegisteredAssetCount()
     {
-        return memory->engineCode.api.assetsGetRegisteredAssetCount(
+        return memory->engineCode.api->assetsGetRegisteredAssetCount(
             memory->editor->engineMemory);
     }
 
@@ -63,7 +63,7 @@ namespace Terrain { namespace Engine { namespace Interop {
     {
         uint32 assetCount = GetRegisteredAssetCount();
         AssetRegistration *assetRegs =
-            memory->engineCode.api.assetsGetRegisteredAssets(memory->editor->engineMemory);
+            memory->engineCode.api->assetsGetRegisteredAssets(memory->editor->engineMemory);
 
         array<AssetRegistrationProxy> ^ result =
             gcnew array<AssetRegistrationProxy>(assetCount);
@@ -82,13 +82,13 @@ namespace Terrain { namespace Engine { namespace Interop {
 
     void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
     {
-        memory->engineCode.api.assetsSetAssetData(
+        memory->engineCode.api->assetsSetAssetData(
             memory->editor->engineMemory, assetId, data.ToPointer(), size);
     }
 
     void EngineInterop::InvalidateAsset(uint32 assetId)
     {
-        memory->engineCode.api.assetsInvalidateAsset(memory->editor->engineMemory, assetId);
+        memory->engineCode.api->assetsInvalidateAsset(memory->editor->engineMemory, assetId);
     }
 
     void EngineInterop::Update(float deltaTime, EditorInputProxy input)

@@ -25,9 +25,9 @@ void win32ReloadEngineCode(const char *dllPath, const char *dllShadowCopyPath)
     {
         EngineGetApi *engineGetApi =
             (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
-        engineGetApi(&engineCode->api);
-
-        engineCode->api.rendererInitialize(platformMemory->engine, 0);
+        engineCode->api = engineGetApi();
+        platformMemory->editor->engineApi = platformMemory->engineCode.api;
+        engineCode->api->rendererInitialize(platformMemory->engine, 0);
     }
 }
 
@@ -125,7 +125,6 @@ Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 
     // initialize editor memory
     editorMemory->engineMemory = engineMemory;
-    editorMemory->engineApi = &platformMemory->engineCode.api;
     editorMemory->platformCaptureMouse = params->platformCaptureMouse;
     editorMemory->data.baseAddress = editorMemoryBaseAddress + sizeof(EditorMemory);
     editorMemory->data.size = params->editorMemorySize;

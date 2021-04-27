@@ -46,7 +46,7 @@ struct Win32EngineCode
     HMODULE dllModule;
     uint64 dllLastWriteTime;
 
-    EngineApi api;
+    EngineApi *api;
 };
 
 struct Win32PlatformMemory

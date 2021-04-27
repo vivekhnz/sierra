@@ -9,7 +9,7 @@
 struct Win32EngineCode
 {
     HMODULE dllModule;
-    EngineApi api;
+    EngineApi *api;
 };
 
 struct Win32EditorCode
