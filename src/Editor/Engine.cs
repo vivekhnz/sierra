@@ -12,33 +12,50 @@ namespace Terrain.Editor
         Mesh
     }
 
-    internal static class Engine
+    internal class Engine
     {
-        internal static uint GetRegisteredAssetCount()
+        private EngineApi api;
+        private IntPtr memoryPtr;
+
+        public Engine(EngineApi api, IntPtr memoryPtr)
         {
-            return EngineInterop.GetRegisteredAssetCount();
+            this.api = api;
+            this.memoryPtr = memoryPtr;
         }
 
-        internal static AssetRegistrationProxy[] GetRegisteredAssets()
+        internal int GetRegisteredAssetCount()
         {
-            return EngineInterop.GetRegisteredAssets();
+            return (int)api.assetsGetRegisteredAssetCount(memoryPtr);
         }
 
-        internal static AssetType GetAssetType(AssetRegistrationProxy assetReg)
+        internal ReadOnlySpan<AssetRegistration> GetRegisteredAssets()
         {
-            return (AssetType)((assetReg.id & 0xF0000000) >> 28);
+            int assetCount = GetRegisteredAssetCount();
+            ref AssetRegistration assetsRef = ref api.assetsGetRegisteredAssets(memoryPtr);
+            return MemoryMarshal.CreateReadOnlySpan(ref assetsRef, assetCount);
         }
 
-        internal static void SetAssetData(uint assetId, byte[] data)
+        internal void SetAssetData(uint assetId, ReadOnlySpan<byte> data)
         {
-            GCHandle pinnedArray = GCHandle.Alloc(data, GCHandleType.Pinned);
-            EngineInterop.SetAssetData(assetId, pinnedArray.AddrOfPinnedObject(), (ulong)data.Length);
-            pinnedArray.Free();
+            api.assetsSetAssetData(memoryPtr, assetId, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
         }
 
-        internal static void InvalidateAsset(uint assetId)
+        internal void InvalidateAsset(uint assetId)
         {
-            EngineInterop.InvalidateAsset(assetId);
+            api.assetsInvalidateAsset(memoryPtr, assetId);
+        }
+    }
+
+    internal static class EngineExtensions
+    {
+        internal static AssetType GetAssetType(this AssetRegistration assetReg)
+        {
+            return (AssetType)((assetReg.Id & 0xF0000000) >> 28);
+        }
+
+        internal static AssetFileState GetFileState(this AssetRegistration assetReg)
+        {
+            return Marshal.PtrToStructure<AssetFileState>(assetReg.StatePtr);
         }
     }
 }

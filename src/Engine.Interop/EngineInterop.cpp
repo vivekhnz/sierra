@@ -33,7 +33,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory = win32InitializePlatform(&initParams);
     }
 
-    void EngineInterop::ReloadEngineCode(
+    System::IntPtr EngineInterop::ReloadEngineCode(
         System::String ^ dllPath, System::String ^ dllShadowCopyPath)
     {
         char dllPathCStr[MAX_PATH];
@@ -41,6 +41,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         GetCStringFromManagedString(dllPath, dllPathCStr);
         GetCStringFromManagedString(dllShadowCopyPath, dllShadowCopyPathCStr);
         win32ReloadEngineCode(dllPathCStr, dllShadowCopyPathCStr);
+        return System::IntPtr(memory->engineCode.api);
     }
 
     void EngineInterop::ReloadEditorCode(
@@ -53,42 +54,9 @@ namespace Terrain { namespace Engine { namespace Interop {
         win32ReloadEditorCode(dllPathCStr, dllShadowCopyPathCStr);
     }
 
-    uint32 EngineInterop::GetRegisteredAssetCount()
+    System::IntPtr EngineInterop::GetEngineMemory()
     {
-        return memory->engineCode.api->assetsGetRegisteredAssetCount(
-            memory->editor->engineMemory);
-    }
-
-    array<AssetRegistrationProxy> ^ EngineInterop::GetRegisteredAssets()
-    {
-        uint32 assetCount = GetRegisteredAssetCount();
-        AssetRegistration *assetRegs =
-            memory->engineCode.api->assetsGetRegisteredAssets(memory->editor->engineMemory);
-
-        array<AssetRegistrationProxy> ^ result =
-            gcnew array<AssetRegistrationProxy>(assetCount);
-        for (uint32 i = 0; i < assetCount; i++)
-        {
-            AssetRegistration *reg = &assetRegs[i];
-            AssetRegistrationProxy proxy = AssetRegistrationProxy();
-            proxy.id = reg->id;
-            proxy.relativePath = reg->regType == AssetRegistrationType::ASSET_REG_FILE
-                ? gcnew System::String(reg->fileState->relativePath)
-                : System::String::Empty;
-            result[i] = proxy;
-        }
-        return result;
-    }
-
-    void EngineInterop::SetAssetData(uint32 assetId, System::IntPtr data, uint64 size)
-    {
-        memory->engineCode.api->assetsSetAssetData(
-            memory->editor->engineMemory, assetId, data.ToPointer(), size);
-    }
-
-    void EngineInterop::InvalidateAsset(uint32 assetId)
-    {
-        memory->engineCode.api->assetsInvalidateAsset(memory->editor->engineMemory, assetId);
+        return System::IntPtr(memory->engine);
     }
 
     void EngineInterop::Update(float deltaTime, EditorInputProxy input)

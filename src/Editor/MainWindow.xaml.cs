@@ -20,7 +20,7 @@ namespace Terrain.Editor
         DispatcherTimer updateUiTimer;
         Dictionary<RadioButton, EditorToolProxy> editorToolByToolButtons;
 
-        private uint prevAssetCount;
+        private int prevAssetCount;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
             = new Dictionary<uint, string>
             {
@@ -255,16 +255,18 @@ namespace Terrain.Editor
                 }
             }
 
-            uint assetCount = Engine.GetRegisteredAssetCount();
+            int assetCount = EditorPlatform.Engine.GetRegisteredAssetCount();
             if (assetCount != prevAssetCount)
             {
-                var registeredAssets = Engine.GetRegisteredAssets();
+                var registeredAssets = EditorPlatform.Engine.GetRegisteredAssets();
                 foreach (var asset in registeredAssets)
                 {
-                    if (Engine.GetAssetType(asset) == AssetType.Texture)
+                    if (asset.RegistrationType == AssetRegistrationType.File
+                        && asset.GetAssetType() == AssetType.Texture)
                     {
-                        textureAssetIdToFilename[asset.id] = asset.relativePath;
-                        textureFilenameToAssetId[asset.relativePath] = asset.id;
+                        var fileState = asset.GetFileState();
+                        textureAssetIdToFilename[asset.Id] = fileState.RelativePath;
+                        textureFilenameToAssetId[fileState.RelativePath] = asset.Id;
                     }
                 }
 

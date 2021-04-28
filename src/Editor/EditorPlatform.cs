@@ -157,6 +157,10 @@ namespace Terrain.Editor
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
         private static PlatformWatchAssetFile editorPlatformWatchAssetFile = WatchAssetFile;
 
+        private static IntPtr engineMemoryPtr;
+
+        internal static Engine Engine { get; private set; }
+
         internal static void Initialize()
         {
             assetsDirectoryPath = Path.Combine(
@@ -227,7 +231,11 @@ namespace Terrain.Editor
             };
             EngineInterop.InitializeEngine(initParams);
 
-            EngineInterop.ReloadEngineCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+            engineMemoryPtr = EngineInterop.GetEngineMemory();
+            IntPtr engineApiPtr = EngineInterop.ReloadEngineCode(
+                engineCode.DllPath, engineCode.DllShadowCopyPath);
+            EngineApi engineApi = Marshal.PtrToStructure<EngineApi>(engineApiPtr);
+            Engine = new Engine(engineApi, engineMemoryPtr);
             engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
@@ -526,7 +534,9 @@ namespace Terrain.Editor
                 DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
                 if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
                 {
-                    EngineInterop.ReloadEngineCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+                    IntPtr engineApiPtr = EngineInterop.ReloadEngineCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+                    EngineApi engineApi = Marshal.PtrToStructure<EngineApi>(engineApiPtr);
+                    Engine = new Engine(engineApi, engineMemoryPtr);
                     engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
                 }
 

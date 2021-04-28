@@ -54,13 +54,6 @@ public
     };
 
 public
-    value struct AssetRegistrationProxy
-    {
-        uint32 id;
-        System::String ^ relativePath;
-    };
-
-public
     enum class EditorToolProxy
     {
         RaiseTerrain = 0,
@@ -95,16 +88,13 @@ public
     public:
         // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
-        static void ReloadEngineCode(
+        static System::IntPtr ReloadEngineCode(
             System::String ^ dllPath, System::String ^ dllShadowCopyPath);
         static void ReloadEditorCode(
             System::String ^ dllPath, System::String ^ dllShadowCopyPath);
 
         // engine
-        static uint32 GetRegisteredAssetCount();
-        static array<AssetRegistrationProxy> ^ GetRegisteredAssets();
-        static void SetAssetData(uint32 assetId, System::IntPtr data, uint64 size);
-        static void InvalidateAsset(uint32 assetId);
+        static System::IntPtr GetEngineMemory();
 
         // editor
         static void Update(float deltaTime, EditorInputProxy input);
