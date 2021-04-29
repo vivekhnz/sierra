@@ -12,9 +12,11 @@ void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
         editorCode->dllModule = 0;
 
         editorCode->editorUpdate = 0;
-        editorCode->editorShutdown = 0;
         editorCode->editorRenderSceneView = 0;
         editorCode->editorRenderHeightmapPreview = 0;
+        editorCode->editorGetBrushParameters = 0;
+        editorCode->editorAddMaterial = 0;
+        editorCode->editorGetMaterialProperties = 0;
     }
 
     if (!CopyFileA(dllPath, dllShadowCopyPath, false))
@@ -25,42 +27,18 @@ void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
     {
         editorCode->editorUpdate =
             (EditorUpdate *)GetProcAddress(editorCode->dllModule, "editorUpdate");
-        editorCode->editorShutdown =
-            (EditorShutdown *)GetProcAddress(editorCode->dllModule, "editorShutdown");
         editorCode->editorRenderSceneView = (EditorRenderSceneView *)GetProcAddress(
             editorCode->dllModule, "editorRenderSceneView");
         editorCode->editorRenderHeightmapPreview =
             (EditorRenderHeightmapPreview *)GetProcAddress(
                 editorCode->dllModule, "editorRenderHeightmapPreview");
-        editorCode->editorGetImportedHeightmapAssetId =
-            (EditorGetImportedHeightmapAssetId *)GetProcAddress(
-                editorCode->dllModule, "editorGetImportedHeightmapAssetId");
-        editorCode->editorGetBrushTool =
-            (EditorGetBrushTool *)GetProcAddress(editorCode->dllModule, "editorGetBrushTool");
-        editorCode->editorSetBrushTool =
-            (EditorSetBrushTool *)GetProcAddress(editorCode->dllModule, "editorSetBrushTool");
         editorCode->editorGetBrushParameters = (EditorGetBrushParameters *)GetProcAddress(
             editorCode->dllModule, "editorGetBrushParameters");
-        editorCode->editorSetBrushParameters = (EditorSetBrushParameters *)GetProcAddress(
-            editorCode->dllModule, "editorSetBrushParameters");
         editorCode->editorAddMaterial =
             (EditorAddMaterial *)GetProcAddress(editorCode->dllModule, "editorAddMaterial");
-        editorCode->editorDeleteMaterial = (EditorDeleteMaterial *)GetProcAddress(
-            editorCode->dllModule, "editorDeleteMaterial");
-        editorCode->editorSwapMaterial =
-            (EditorSwapMaterial *)GetProcAddress(editorCode->dllModule, "editorSwapMaterial");
         editorCode->editorGetMaterialProperties =
             (EditorGetMaterialProperties *)GetProcAddress(
                 editorCode->dllModule, "editorGetMaterialProperties");
-        editorCode->editorSetMaterialTexture = (EditorSetMaterialTexture *)GetProcAddress(
-            editorCode->dllModule, "editorSetMaterialTexture");
-        editorCode->editorSetMaterialProperties =
-            (EditorSetMaterialProperties *)GetProcAddress(
-                editorCode->dllModule, "editorSetMaterialProperties");
-        editorCode->editorSetRockTransform = (EditorSetRockTransform *)GetProcAddress(
-            editorCode->dllModule, "editorSetRockTransform");
-        editorCode->editorSetSceneParameters = (EditorSetSceneParameters *)GetProcAddress(
-            editorCode->dllModule, "editorSetSceneParameters");
     }
 }
 

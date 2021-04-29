@@ -33,7 +33,7 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory = win32InitializePlatform(&initParams);
     }
 
-    void EngineInterop::ReloadEditorCode(
+    System::IntPtr EngineInterop::ReloadEditorCode(
         System::String ^ dllPath, System::String ^ dllShadowCopyPath)
     {
         char dllPathCStr[MAX_PATH];
@@ -41,11 +41,18 @@ namespace Terrain { namespace Engine { namespace Interop {
         GetCStringFromManagedString(dllPath, dllPathCStr);
         GetCStringFromManagedString(dllShadowCopyPath, dllShadowCopyPathCStr);
         win32ReloadEditorCode(dllPathCStr, dllShadowCopyPathCStr);
+
+        return System::IntPtr(memory->editorCode.dllModule);
     }
 
     System::IntPtr EngineInterop::GetEngineMemory()
     {
         return System::IntPtr(memory->engine);
+    }
+
+    System::IntPtr EngineInterop::GetEditorMemory()
+    {
+        return System::IntPtr(memory->editor);
     }
 
     void EngineInterop::SetEditorEngineApi(System::IntPtr engineApiPtr)
@@ -104,41 +111,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         vctx.viewState = System::IntPtr(vctxInternal.viewState);
     }
 
-    void EngineInterop::Shutdown()
-    {
-        if (memory->editorCode.editorShutdown)
-        {
-            memory->editorCode.editorShutdown(memory->editor);
-        }
-    }
-
-    uint32 EngineInterop::GetImportedHeightmapAssetId()
-    {
-        if (memory->editorCode.editorGetImportedHeightmapAssetId)
-        {
-            return memory->editorCode.editorGetImportedHeightmapAssetId(memory->editor);
-        }
-
-        return 0;
-    }
-
-    EditorToolProxy EngineInterop::GetBrushTool()
-    {
-        if (memory->editorCode.editorGetBrushTool)
-        {
-            return (EditorToolProxy)memory->editorCode.editorGetBrushTool(memory->editor);
-        }
-        return EditorToolProxy::RaiseTerrain;
-    }
-
-    void EngineInterop::SetBrushTool(EditorToolProxy tool)
-    {
-        if (memory->editorCode.editorSetBrushTool)
-        {
-            memory->editorCode.editorSetBrushTool(memory->editor, (EditorTool)tool);
-        }
-    }
-
     TerrainBrushParametersProxy EngineInterop::GetBrushParameters()
     {
         TerrainBrushParametersProxy result = {};
@@ -153,15 +125,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         return result;
-    }
-
-    void EngineInterop::SetBrushParameters(float radius, float falloff, float strength)
-    {
-        if (memory->editorCode.editorSetBrushParameters)
-        {
-            memory->editorCode.editorSetBrushParameters(
-                memory->editor, radius, falloff, strength);
-        }
     }
 
     void EngineInterop::AddMaterial(MaterialProps props)
@@ -180,22 +143,6 @@ namespace Terrain { namespace Engine { namespace Interop {
             matProps.altitudeEnd = props.altitudeEnd;
 
             memory->editorCode.editorAddMaterial(memory->editor, matProps);
-        }
-    }
-
-    void EngineInterop::DeleteMaterial(int index)
-    {
-        if (memory->editorCode.editorDeleteMaterial)
-        {
-            memory->editorCode.editorDeleteMaterial(memory->editor, index);
-        }
-    }
-
-    void EngineInterop::SwapMaterial(int indexA, int indexB)
-    {
-        if (memory->editorCode.editorSwapMaterial)
-        {
-            memory->editorCode.editorSwapMaterial(memory->editor, indexA, indexB);
         }
     }
 
@@ -219,54 +166,5 @@ namespace Terrain { namespace Engine { namespace Interop {
         }
 
         return result;
-    }
-
-    void EngineInterop::SetMaterialTexture(
-        int index, TerrainMaterialTextureTypeProxy textureType, uint32 assetId)
-    {
-        if (memory->editorCode.editorSetMaterialTexture)
-        {
-            memory->editorCode.editorSetMaterialTexture(
-                memory->editor, index, (TerrainMaterialTextureType)textureType, assetId);
-        }
-    }
-
-    void EngineInterop::SetMaterialProperties(int index,
-        float textureSize,
-        float slopeStart,
-        float slopeEnd,
-        float altitudeStart,
-        float altitudeEnd)
-    {
-        if (memory->editorCode.editorSetMaterialProperties)
-        {
-            memory->editorCode.editorSetMaterialProperties(memory->editor, index, textureSize,
-                slopeStart, slopeEnd, altitudeStart, altitudeEnd);
-        }
-    }
-
-    void EngineInterop::SetRockTransform(float positionX,
-        float positionY,
-        float positionZ,
-        float rotationX,
-        float rotationY,
-        float rotationZ,
-        float scaleX,
-        float scaleY,
-        float scaleZ)
-    {
-        if (memory->editorCode.editorSetRockTransform)
-        {
-            memory->editorCode.editorSetRockTransform(memory->editor, positionX, positionY,
-                positionZ, rotationX, rotationY, rotationZ, scaleX, scaleY, scaleZ);
-        }
-    }
-
-    void EngineInterop::SetSceneParameters(float lightDirection)
-    {
-        if (memory->editorCode.editorSetSceneParameters)
-        {
-            memory->editorCode.editorSetSceneParameters(memory->editor, lightDirection);
-        }
     }
 }}}

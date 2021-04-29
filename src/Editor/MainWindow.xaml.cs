@@ -18,7 +18,7 @@ namespace Terrain.Editor
 
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
-        Dictionary<RadioButton, EditorToolProxy> editorToolByToolButtons;
+        Dictionary<RadioButton, EditorTool> editorToolByToolButtons;
 
         private int prevAssetCount;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
@@ -34,12 +34,12 @@ namespace Terrain.Editor
             EditorPlatform.Initialize();
             InitializeComponent();
 
-            editorToolByToolButtons = new Dictionary<RadioButton, EditorToolProxy>
+            editorToolByToolButtons = new Dictionary<RadioButton, EditorTool>
             {
-                [rbEditorToolRaiseTerrain] = EditorToolProxy.RaiseTerrain,
-                [rbEditorToolLowerTerrain] = EditorToolProxy.LowerTerrain,
-                [rbEditorToolFlattenTerrain] = EditorToolProxy.FlattenTerrain,
-                [rbEditorToolSmoothTerrain] = EditorToolProxy.SmoothTerrain
+                [rbEditorToolRaiseTerrain] = EditorTool.RaiseTerrain,
+                [rbEditorToolLowerTerrain] = EditorTool.LowerTerrain,
+                [rbEditorToolFlattenTerrain] = EditorTool.FlattenTerrain,
+                [rbEditorToolSmoothTerrain] = EditorTool.SmoothTerrain
             };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
@@ -205,22 +205,22 @@ namespace Terrain.Editor
                 return;
             }
 
-            TerrainMaterialTextureTypeProxy textureType = TerrainMaterialTextureTypeProxy.Albedo;
+            TerrainMaterialTextureType textureType = TerrainMaterialTextureType.Albedo;
             if (dropdown == cbMaterialAlbedoTexture)
             {
-                textureType = TerrainMaterialTextureTypeProxy.Albedo;
+                textureType = TerrainMaterialTextureType.Albedo;
             }
             else if (dropdown == cbMaterialNormalTexture)
             {
-                textureType = TerrainMaterialTextureTypeProxy.Normal;
+                textureType = TerrainMaterialTextureType.Normal;
             }
             else if (dropdown == cbMaterialDisplacementTexture)
             {
-                textureType = TerrainMaterialTextureTypeProxy.Displacement;
+                textureType = TerrainMaterialTextureType.Displacement;
             }
             else if (dropdown == cbMaterialAoTexture)
             {
-                textureType = TerrainMaterialTextureTypeProxy.AmbientOcclusion;
+                textureType = TerrainMaterialTextureType.AmbientOcclusion;
             }
             EditorCore.SetMaterialTexture(lbMaterials.SelectedIndex, textureType, textureAssetId);
         }
@@ -241,7 +241,7 @@ namespace Terrain.Editor
                 brushStrengthSlider.Value = brushParams.Strength;
             }
 
-            EditorToolProxy currentTool = EditorCore.GetBrushTool();
+            EditorTool currentTool = EditorCore.GetBrushTool();
             foreach (var kvp in editorToolByToolButtons)
             {
                 bool shouldBeSelected = kvp.Value == currentTool;
@@ -255,10 +255,10 @@ namespace Terrain.Editor
                 }
             }
 
-            int assetCount = EditorPlatform.Engine.GetRegisteredAssetCount();
+            int assetCount = Engine.GetRegisteredAssetCount();
             if (assetCount != prevAssetCount)
             {
-                var registeredAssets = EditorPlatform.Engine.GetRegisteredAssets();
+                var registeredAssets = Engine.GetRegisteredAssets();
                 foreach (var asset in registeredAssets)
                 {
                     if (asset.RegistrationType == AssetRegistrationType.File

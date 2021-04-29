@@ -113,8 +113,6 @@ namespace Terrain.Editor
             public string DllPath;
             public string DllShadowCopyPath;
             public DateTime DllLastWriteTimeUtc;
-
-            public IntPtr ModuleHandle;
         }
 
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
@@ -159,10 +157,6 @@ namespace Terrain.Editor
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
         private static PlatformWatchAssetFile editorPlatformWatchAssetFile = WatchAssetFile;
-
-        private static IntPtr engineMemoryPtr;
-
-        internal static Engine Engine { get; private set; }
 
         internal static void Initialize()
         {
@@ -234,8 +228,14 @@ namespace Terrain.Editor
             };
             EngineInterop.InitializeEngine(initParams);
 
-            engineMemoryPtr = EngineInterop.GetEngineMemory();
-            ReloadEngineCode();
+            IntPtr engineMemoryPtr = EngineInterop.GetEngineMemory();
+            Engine.Initialize(engineMemoryPtr);
+
+            IntPtr editorMemoryPtr = EngineInterop.GetEditorMemory();
+            EditorCore.Initialize(editorMemoryPtr);
+
+            Engine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+            EngineInterop.SetEditorEngineApi(Engine.EngineApiPtr);
             engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
@@ -534,14 +534,15 @@ namespace Terrain.Editor
                 DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
                 if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
                 {
-                    ReloadEngineCode();
+                    Engine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+                    EngineInterop.SetEditorEngineApi(Engine.EngineApiPtr);
                     engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
                 }
 
                 DateTime editorCodeDllLastWriteTime = File.GetLastWriteTimeUtc(editorCode.DllPath);
                 if (editorCodeDllLastWriteTime > editorCode.DllLastWriteTimeUtc)
                 {
-                    EngineInterop.ReloadEditorCode(editorCode.DllPath, editorCode.DllShadowCopyPath);
+                    EditorCore.ReloadCode(editorCode.DllPath, editorCode.DllShadowCopyPath);
                     editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
                 }
             }
@@ -638,45 +639,6 @@ namespace Terrain.Editor
         internal static void DestroyViewportWindow(IntPtr hwnd)
         {
             Win32.DestroyWindow(hwnd);
-        }
-
-        internal static void ReloadEngineCode()
-        {
-            if (engineCode.ModuleHandle != IntPtr.Zero)
-            {
-                Win32.FreeLibrary(engineCode.ModuleHandle);
-                engineCode.ModuleHandle = IntPtr.Zero;
-            }
-
-            bool didShadowCopySucceed = false;
-            while (!didShadowCopySucceed)
-            {
-                try
-                {
-                    File.Copy(engineCode.DllPath, engineCode.DllShadowCopyPath, true);
-                    didShadowCopySucceed = true;
-                }
-                catch
-                {
-                    Thread.Sleep(100);
-                }
-            }
-
-            engineCode.ModuleHandle = Win32.LoadLibrary(engineCode.DllShadowCopyPath);
-            if (engineCode.ModuleHandle != IntPtr.Zero)
-            {
-                IntPtr engineGetApiPtr = Win32.GetProcAddress(
-                    engineCode.ModuleHandle, "engineGetApi");
-                EngineGetApi engineGetApi = Marshal
-                    .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
-
-                IntPtr engineApiPtr = engineGetApi();
-                EngineApi engineApi = Marshal.PtrToStructure<EngineApi>(engineApiPtr);
-                Engine = new Engine(engineApi, engineMemoryPtr);
-
-                Engine.InitializeRenderer();
-                EngineInterop.SetEditorEngineApi(engineApiPtr);
-            }
         }
     }
 }

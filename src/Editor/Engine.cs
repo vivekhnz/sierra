@@ -1,5 +1,7 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 
 namespace Terrain.Editor
 {
@@ -11,40 +13,76 @@ namespace Terrain.Editor
         Mesh
     }
 
-    internal class Engine
+    internal static class Engine
     {
-        private EngineApi api;
-        private IntPtr memoryPtr;
+        private delegate IntPtr EngineGetApi();
 
-        public Engine(EngineApi api, IntPtr memoryPtr)
+        private static IntPtr memoryPtr;
+        private static IntPtr moduleHandle;
+
+        private static EngineApi api;
+
+        internal static IntPtr EngineApiPtr { get; private set; }
+
+        internal static void Initialize(IntPtr engineMemoryPtr)
         {
-            this.api = api;
-            this.memoryPtr = memoryPtr;
+            memoryPtr = engineMemoryPtr;
         }
 
-        internal bool InitializeRenderer()
+        internal static void ReloadCode(string dllPath, string dllShadowCopyPath)
         {
-            return api.rendererInitialize(memoryPtr, IntPtr.Zero);
+            if (moduleHandle != IntPtr.Zero)
+            {
+                Win32.FreeLibrary(moduleHandle);
+                moduleHandle = IntPtr.Zero;
+            }
+
+            bool didShadowCopySucceed = false;
+            while (!didShadowCopySucceed)
+            {
+                try
+                {
+                    File.Copy(dllPath, dllShadowCopyPath, true);
+                    didShadowCopySucceed = true;
+                }
+                catch
+                {
+                    Thread.Sleep(100);
+                }
+            }
+
+            moduleHandle = Win32.LoadLibrary(dllShadowCopyPath);
+            if (moduleHandle != IntPtr.Zero)
+            {
+                IntPtr engineGetApiPtr = Win32.GetProcAddress(
+                    moduleHandle, "engineGetApi");
+                EngineGetApi engineGetApi = Marshal
+                    .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
+
+                EngineApiPtr = engineGetApi();
+                api = Marshal.PtrToStructure<EngineApi>(EngineApiPtr);
+                api.rendererInitialize(memoryPtr, IntPtr.Zero);
+            }
         }
 
-        internal int GetRegisteredAssetCount()
+        internal static int GetRegisteredAssetCount()
         {
             return (int)api.assetsGetRegisteredAssetCount(memoryPtr);
         }
 
-        internal ReadOnlySpan<AssetRegistration> GetRegisteredAssets()
+        internal static ReadOnlySpan<AssetRegistration> GetRegisteredAssets()
         {
             int assetCount = GetRegisteredAssetCount();
             ref AssetRegistration assetsRef = ref api.assetsGetRegisteredAssets(memoryPtr);
             return MemoryMarshal.CreateReadOnlySpan(ref assetsRef, assetCount);
         }
 
-        internal void SetAssetData(uint assetId, ReadOnlySpan<byte> data)
+        internal static void SetAssetData(uint assetId, ReadOnlySpan<byte> data)
         {
             api.assetsSetAssetData(memoryPtr, assetId, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
         }
 
-        internal void InvalidateAsset(uint assetId)
+        internal static void InvalidateAsset(uint assetId)
         {
             api.assetsInvalidateAsset(memoryPtr, assetId);
         }

@@ -35,8 +35,6 @@ namespace Terrain.Editor
         public bool IsLoadQueued;
     }
 
-    delegate IntPtr EngineGetApi();
-
     delegate uint AssetsGetRegisteredAssetCount(IntPtr engineMemory);
     delegate ref AssetRegistration AssetsGetRegisteredAssets(IntPtr engineMemory);
     delegate void AssetsSetAssetData(IntPtr engineMemory, uint assetId, in byte data, ulong size);

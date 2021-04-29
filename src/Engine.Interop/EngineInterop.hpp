@@ -54,29 +54,11 @@ public
     };
 
 public
-    enum class EditorToolProxy
-    {
-        RaiseTerrain = 0,
-        LowerTerrain = 1,
-        FlattenTerrain = 2,
-        SmoothTerrain = 3
-    };
-
-public
     value struct TerrainBrushParametersProxy
     {
         float Radius;
         float Falloff;
         float Strength;
-    };
-
-public
-    enum class TerrainMaterialTextureTypeProxy
-    {
-        Albedo = 0,
-        Normal = 1,
-        Displacement = 2,
-        AmbientOcclusion = 3
     };
 
 public
@@ -88,45 +70,21 @@ public
     public:
         // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
-        static void ReloadEditorCode(
+        static System::IntPtr ReloadEditorCode(
             System::String ^ dllPath, System::String ^ dllShadowCopyPath);
 
         // engine
         static System::IntPtr GetEngineMemory();
 
         // editor
+        static System::IntPtr GetEditorMemory();
         static void SetEditorEngineApi(System::IntPtr engineApiPtr);
         static void Update(float deltaTime, EditorInputProxy input);
         static void RenderSceneView(EditorViewContextProxy % vctx);
         static void RenderHeightmapPreview(EditorViewContextProxy % vctx);
-        static void Shutdown();
 
-        static uint32 GetImportedHeightmapAssetId();
-        static EditorToolProxy GetBrushTool();
-        static void SetBrushTool(EditorToolProxy tool);
         static TerrainBrushParametersProxy GetBrushParameters();
-        static void SetBrushParameters(float radius, float falloff, float strength);
         static void AddMaterial(MaterialProps props);
-        static void DeleteMaterial(int index);
-        static void SwapMaterial(int indexA, int indexB);
         static MaterialProps GetMaterialProperties(int index);
-        static void SetMaterialTexture(
-            int index, TerrainMaterialTextureTypeProxy textureType, uint32 assetId);
-        static void SetMaterialProperties(int index,
-            float textureSize,
-            float slopeStart,
-            float slopeEnd,
-            float altitudeStart,
-            float altitudeEnd);
-        static void SetRockTransform(float positionX,
-            float positionY,
-            float positionZ,
-            float rotationX,
-            float rotationY,
-            float rotationZ,
-            float scaleX,
-            float scaleY,
-            float scaleZ);
-        static void SetSceneParameters(float lightDirection);
     };
 }}}

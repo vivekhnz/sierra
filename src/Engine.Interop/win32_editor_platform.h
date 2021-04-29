@@ -10,22 +10,11 @@ struct Win32EditorCode
 {
     HMODULE dllModule;
     EditorUpdate *editorUpdate;
-    EditorShutdown *editorShutdown;
     EditorRenderSceneView *editorRenderSceneView;
     EditorRenderHeightmapPreview *editorRenderHeightmapPreview;
-    EditorGetImportedHeightmapAssetId *editorGetImportedHeightmapAssetId;
-    EditorGetBrushTool *editorGetBrushTool;
-    EditorSetBrushTool *editorSetBrushTool;
     EditorGetBrushParameters *editorGetBrushParameters;
-    EditorSetBrushParameters *editorSetBrushParameters;
     EditorAddMaterial *editorAddMaterial;
-    EditorDeleteMaterial *editorDeleteMaterial;
-    EditorSwapMaterial *editorSwapMaterial;
     EditorGetMaterialProperties *editorGetMaterialProperties;
-    EditorSetMaterialTexture *editorSetMaterialTexture;
-    EditorSetMaterialProperties *editorSetMaterialProperties;
-    EditorSetRockTransform *editorSetRockTransform;
-    EditorSetSceneParameters *editorSetSceneParameters;
 };
 
 struct Win32PlatformMemory
