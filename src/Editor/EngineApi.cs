@@ -35,10 +35,14 @@ namespace Terrain.Editor
         public bool IsLoadQueued;
     }
 
+    delegate IntPtr EngineGetApi();
+
     delegate uint AssetsGetRegisteredAssetCount(IntPtr engineMemory);
     delegate ref AssetRegistration AssetsGetRegisteredAssets(IntPtr engineMemory);
     delegate void AssetsSetAssetData(IntPtr engineMemory, uint assetId, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(IntPtr engineMemory, uint assetId);
+
+    delegate bool RendererInitialize(IntPtr engineMemory, IntPtr getGlProcAddress);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi
@@ -59,7 +63,7 @@ namespace Terrain.Editor
         public IntPtr heightfieldGetHeight;
         public IntPtr heightfieldIsRayIntersecting;
 
-        public IntPtr rendererInitialize;
+        public RendererInitialize rendererInitialize;
         public IntPtr rendererUpdateCameraState;
         public IntPtr rendererUpdateLightingState;
         public IntPtr rendererCreateTexture;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -112,6 +113,8 @@ namespace Terrain.Editor
             public string DllPath;
             public string DllShadowCopyPath;
             public DateTime DllLastWriteTimeUtc;
+
+            public IntPtr ModuleHandle;
         }
 
         private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
@@ -232,10 +235,7 @@ namespace Terrain.Editor
             EngineInterop.InitializeEngine(initParams);
 
             engineMemoryPtr = EngineInterop.GetEngineMemory();
-            IntPtr engineApiPtr = EngineInterop.ReloadEngineCode(
-                engineCode.DllPath, engineCode.DllShadowCopyPath);
-            EngineApi engineApi = Marshal.PtrToStructure<EngineApi>(engineApiPtr);
-            Engine = new Engine(engineApi, engineMemoryPtr);
+            ReloadEngineCode();
             engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
@@ -534,9 +534,7 @@ namespace Terrain.Editor
                 DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
                 if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
                 {
-                    IntPtr engineApiPtr = EngineInterop.ReloadEngineCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-                    EngineApi engineApi = Marshal.PtrToStructure<EngineApi>(engineApiPtr);
-                    Engine = new Engine(engineApi, engineMemoryPtr);
+                    ReloadEngineCode();
                     engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
                 }
 
@@ -640,6 +638,45 @@ namespace Terrain.Editor
         internal static void DestroyViewportWindow(IntPtr hwnd)
         {
             Win32.DestroyWindow(hwnd);
+        }
+
+        internal static void ReloadEngineCode()
+        {
+            if (engineCode.ModuleHandle != IntPtr.Zero)
+            {
+                Win32.FreeLibrary(engineCode.ModuleHandle);
+                engineCode.ModuleHandle = IntPtr.Zero;
+            }
+
+            bool didShadowCopySucceed = false;
+            while (!didShadowCopySucceed)
+            {
+                try
+                {
+                    File.Copy(engineCode.DllPath, engineCode.DllShadowCopyPath, true);
+                    didShadowCopySucceed = true;
+                }
+                catch
+                {
+                    Thread.Sleep(100);
+                }
+            }
+
+            engineCode.ModuleHandle = Win32.LoadLibrary(engineCode.DllShadowCopyPath);
+            if (engineCode.ModuleHandle != IntPtr.Zero)
+            {
+                IntPtr engineGetApiPtr = Win32.GetProcAddress(
+                    engineCode.ModuleHandle, "engineGetApi");
+                EngineGetApi engineGetApi = Marshal
+                    .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
+
+                IntPtr engineApiPtr = engineGetApi();
+                EngineApi engineApi = Marshal.PtrToStructure<EngineApi>(engineApiPtr);
+                Engine = new Engine(engineApi, engineMemoryPtr);
+
+                Engine.InitializeRenderer();
+                EngineInterop.SetEditorEngineApi(engineApiPtr);
+            }
         }
     }
 }

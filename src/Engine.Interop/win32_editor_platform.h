@@ -6,12 +6,6 @@
 #include "../Engine/engine.h"
 #include "../EditorCore/editor.h"
 
-struct Win32EngineCode
-{
-    HMODULE dllModule;
-    EngineApi *api;
-};
-
 struct Win32EditorCode
 {
     HMODULE dllModule;
@@ -36,7 +30,6 @@ struct Win32EditorCode
 
 struct Win32PlatformMemory
 {
-    Win32EngineCode engineCode;
     Win32EditorCode editorCode;
 
     EngineMemory *engine;
@@ -55,7 +48,6 @@ struct Win32InitPlatformParams
     PlatformWatchAssetFile *platformWatchAssetFile;
 };
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params);
-void win32ReloadEngineCode(const char *dllPath, const char *dllShadowCopyPath);
 void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath);
 
 #endif

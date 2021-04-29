@@ -44,6 +44,15 @@ namespace Terrain.Editor
         [DllImport("kernel32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         internal static extern IntPtr GetModuleHandle(string lpModuleName);
 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Ansi)]
+        internal static extern IntPtr LoadLibrary(string lpFileName);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        internal static extern bool FreeLibrary(IntPtr hModule);
+
+        [DllImport("kernel32", CharSet = CharSet.Ansi, ExactSpelling = true, SetLastError = true)]
+        internal static extern IntPtr GetProcAddress(IntPtr hModule, string procName);
+
         // user32.dll
 
         internal delegate IntPtr WndProc(

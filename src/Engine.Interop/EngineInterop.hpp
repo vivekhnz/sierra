@@ -88,8 +88,6 @@ public
     public:
         // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
-        static System::IntPtr ReloadEngineCode(
-            System::String ^ dllPath, System::String ^ dllShadowCopyPath);
         static void ReloadEditorCode(
             System::String ^ dllPath, System::String ^ dllShadowCopyPath);
 
@@ -97,6 +95,7 @@ public
         static System::IntPtr GetEngineMemory();
 
         // editor
+        static void SetEditorEngineApi(System::IntPtr engineApiPtr);
         static void Update(float deltaTime, EditorInputProxy input);
         static void RenderSceneView(EditorViewContextProxy % vctx);
         static void RenderHeightmapPreview(EditorViewContextProxy % vctx);

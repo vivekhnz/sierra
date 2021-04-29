@@ -1,35 +1,6 @@
 #include "win32_editor_platform.h"
 
-using namespace System::Windows;
-using namespace System::Windows::Input;
-
 global_variable Win32PlatformMemory *platformMemory;
-
-void win32ReloadEngineCode(const char *dllPath, const char *dllShadowCopyPath)
-{
-    Win32EngineCode *engineCode = &platformMemory->engineCode;
-
-    if (engineCode->dllModule)
-    {
-        FreeLibrary(engineCode->dllModule);
-        engineCode->dllModule = 0;
-    }
-
-    while (!CopyFileA(dllPath, dllShadowCopyPath, false))
-    {
-        Sleep(100);
-    }
-
-    engineCode->dllModule = LoadLibraryA(dllShadowCopyPath);
-    if (engineCode->dllModule)
-    {
-        EngineGetApi *engineGetApi =
-            (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
-        engineCode->api = engineGetApi();
-        platformMemory->editor->engineApi = platformMemory->engineCode.api;
-        engineCode->api->rendererInitialize(platformMemory->engine, 0);
-    }
-}
 
 void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
 {

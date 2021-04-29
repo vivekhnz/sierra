@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Runtime.InteropServices;
-using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
@@ -21,6 +20,11 @@ namespace Terrain.Editor
         {
             this.api = api;
             this.memoryPtr = memoryPtr;
+        }
+
+        internal bool InitializeRenderer()
+        {
+            return api.rendererInitialize(memoryPtr, IntPtr.Zero);
         }
 
         internal int GetRegisteredAssetCount()

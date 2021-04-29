@@ -33,17 +33,6 @@ namespace Terrain { namespace Engine { namespace Interop {
         memory = win32InitializePlatform(&initParams);
     }
 
-    System::IntPtr EngineInterop::ReloadEngineCode(
-        System::String ^ dllPath, System::String ^ dllShadowCopyPath)
-    {
-        char dllPathCStr[MAX_PATH];
-        char dllShadowCopyPathCStr[MAX_PATH];
-        GetCStringFromManagedString(dllPath, dllPathCStr);
-        GetCStringFromManagedString(dllShadowCopyPath, dllShadowCopyPathCStr);
-        win32ReloadEngineCode(dllPathCStr, dllShadowCopyPathCStr);
-        return System::IntPtr(memory->engineCode.api);
-    }
-
     void EngineInterop::ReloadEditorCode(
         System::String ^ dllPath, System::String ^ dllShadowCopyPath)
     {
@@ -57,6 +46,11 @@ namespace Terrain { namespace Engine { namespace Interop {
     System::IntPtr EngineInterop::GetEngineMemory()
     {
         return System::IntPtr(memory->engine);
+    }
+
+    void EngineInterop::SetEditorEngineApi(System::IntPtr engineApiPtr)
+    {
+        memory->editor->engineApi = (EngineApi *)engineApiPtr.ToPointer();
     }
 
     void EngineInterop::Update(float deltaTime, EditorInputProxy input)
