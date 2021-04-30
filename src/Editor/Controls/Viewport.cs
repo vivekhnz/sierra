@@ -46,10 +46,10 @@ namespace Terrain.Editor.Controls
             {
                 Width = width;
                 Height = height;
-                window.ViewContext.x = (uint)location.X;
-                window.ViewContext.y = (uint)location.Y;
-                window.ViewContext.width = width;
-                window.ViewContext.height = height;
+                window.ViewContext.X = (uint)location.X;
+                window.ViewContext.Y = (uint)location.Y;
+                window.ViewContext.Width = width;
+                window.ViewContext.Height = height;
             }
         }
 

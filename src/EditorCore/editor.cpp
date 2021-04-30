@@ -843,7 +843,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     sceneState->worldState.materialCount = state->uiState.materialCount;
     for (uint32 i = 0; i < sceneState->worldState.materialCount; i++)
     {
-        const MaterialProperties *stateProps = &state->uiState.materialProps[i];
+        const TerrainMaterialProperties *stateProps = &state->uiState.materialProps[i];
         GpuMaterialProperties *gpuProps = &sceneState->worldState.materialProps[i];
 
         gpuProps->textureSizeInWorldUnits.x = stateProps->textureSizeInWorldUnits;
@@ -1301,7 +1301,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
     assert(state->uiState.materialCount < MAX_MATERIAL_COUNT);
     uint32 index = state->uiState.materialCount++;
 
-    MaterialProperties *material = &state->uiState.materialProps[index];
+    TerrainMaterialProperties *material = &state->uiState.materialProps[index];
     material->albedoTextureAssetId = props.albedoTextureAssetId;
     material->normalTextureAssetId = props.normalTextureAssetId;
     material->displacementTextureAssetId = props.displacementTextureAssetId;
@@ -1332,7 +1332,7 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
     assert(indexA < MAX_MATERIAL_COUNT);
     assert(indexB < MAX_MATERIAL_COUNT);
 
-    MaterialProperties temp = state->uiState.materialProps[indexA];
+    TerrainMaterialProperties temp = state->uiState.materialProps[indexA];
     state->uiState.materialProps[indexA] = state->uiState.materialProps[indexB];
     state->uiState.materialProps[indexB] = temp;
 }
@@ -1350,7 +1350,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    MaterialProperties *matProps = &state->uiState.materialProps[index];
+    TerrainMaterialProperties *matProps = &state->uiState.materialProps[index];
     uint32 *materialTextureAssetIds[] = {
         &matProps->albedoTextureAssetId,       //
         &matProps->normalTextureAssetId,       //
@@ -1365,7 +1365,7 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    MaterialProperties *matProps = &state->uiState.materialProps[index];
+    TerrainMaterialProperties *matProps = &state->uiState.materialProps[index];
     matProps->textureSizeInWorldUnits = textureSize;
     matProps->slopeStart = slopeStart;
     matProps->slopeEnd = slopeEnd;

@@ -10,36 +10,12 @@ void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
     {
         FreeLibrary(editorCode->dllModule);
         editorCode->dllModule = 0;
-
-        editorCode->editorUpdate = 0;
-        editorCode->editorRenderSceneView = 0;
-        editorCode->editorRenderHeightmapPreview = 0;
-        editorCode->editorGetBrushParameters = 0;
-        editorCode->editorAddMaterial = 0;
-        editorCode->editorGetMaterialProperties = 0;
     }
 
     if (!CopyFileA(dllPath, dllShadowCopyPath, false))
         return;
 
     editorCode->dllModule = LoadLibraryA(dllShadowCopyPath);
-    if (editorCode->dllModule)
-    {
-        editorCode->editorUpdate =
-            (EditorUpdate *)GetProcAddress(editorCode->dllModule, "editorUpdate");
-        editorCode->editorRenderSceneView = (EditorRenderSceneView *)GetProcAddress(
-            editorCode->dllModule, "editorRenderSceneView");
-        editorCode->editorRenderHeightmapPreview =
-            (EditorRenderHeightmapPreview *)GetProcAddress(
-                editorCode->dllModule, "editorRenderHeightmapPreview");
-        editorCode->editorGetBrushParameters = (EditorGetBrushParameters *)GetProcAddress(
-            editorCode->dllModule, "editorGetBrushParameters");
-        editorCode->editorAddMaterial =
-            (EditorAddMaterial *)GetProcAddress(editorCode->dllModule, "editorAddMaterial");
-        editorCode->editorGetMaterialProperties =
-            (EditorGetMaterialProperties *)GetProcAddress(
-                editorCode->dllModule, "editorGetMaterialProperties");
-    }
 }
 
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)

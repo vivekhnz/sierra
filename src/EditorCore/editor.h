@@ -25,7 +25,7 @@ enum EditorTool
     EDITOR_TOOL_SMOOTH_TERRAIN = 3
 };
 
-struct MaterialProperties
+struct TerrainMaterialProperties
 {
     uint32 albedoTextureAssetId;
     uint32 normalTextureAssetId;
@@ -47,7 +47,7 @@ struct EditorUiState
     float brushStrength;
     float lightDirection;
     uint32 materialCount;
-    MaterialProperties materialProps[MAX_MATERIAL_COUNT];
+    TerrainMaterialProperties materialProps[MAX_MATERIAL_COUNT];
     glm::vec3 rockPosition;
     glm::vec3 rockRotation;
     glm::vec3 rockScale;
@@ -330,7 +330,8 @@ typedef EDITOR_GET_BRUSH_PARAMETERS(EditorGetBrushParameters);
     void name(EditorMemory *memory, float radius, float falloff, float strength)
 typedef EDITOR_SET_BRUSH_PARAMETERS(EditorSetBrushParameters);
 
-#define EDITOR_ADD_MATERIAL(name) void name(EditorMemory *memory, MaterialProperties props)
+#define EDITOR_ADD_MATERIAL(name)                                                             \
+    void name(EditorMemory *memory, TerrainMaterialProperties props)
 typedef EDITOR_ADD_MATERIAL(EditorAddMaterial);
 
 #define EDITOR_DELETE_MATERIAL(name) void name(EditorMemory *memory, uint32 index)
@@ -341,7 +342,7 @@ typedef EDITOR_DELETE_MATERIAL(EditorDeleteMaterial);
 typedef EDITOR_SWAP_MATERIAL(EditorSwapMaterial);
 
 #define EDITOR_GET_MATERIAL_PROPERTIES(name)                                                  \
-    MaterialProperties name(EditorMemory *memory, uint32 index)
+    TerrainMaterialProperties name(EditorMemory *memory, uint32 index)
 typedef EDITOR_GET_MATERIAL_PROPERTIES(EditorGetMaterialProperties);
 
 #define EDITOR_SET_MATERIAL_TEXTURE(name)                                                     \

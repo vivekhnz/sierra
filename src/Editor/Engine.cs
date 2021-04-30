@@ -35,6 +35,7 @@ namespace Terrain.Editor
             {
                 Win32.FreeLibrary(moduleHandle);
                 moduleHandle = IntPtr.Zero;
+                api = default(EngineApi);
             }
 
             bool didShadowCopySucceed = false;

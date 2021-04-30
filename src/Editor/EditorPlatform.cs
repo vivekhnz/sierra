@@ -92,7 +92,7 @@ namespace Terrain.Editor
         public IntPtr Hwnd;
         public IntPtr DeviceContext;
         public EditorView View;
-        public EditorViewContextProxy ViewContext;
+        public EditorViewContext ViewContext;
     }
 
     internal static class EditorPlatform
@@ -343,9 +343,9 @@ namespace Terrain.Editor
             watchedAssets.Add(asset);
         }
 
-        private static EditorInputProxy GetInputState()
+        private static EditorInput GetInputState()
         {
-            EditorInputProxy result = new EditorInputProxy();
+            EditorInput result = new EditorInput();
 
             // query button state
             EditorInputButtons pressedButtons = 0;
@@ -454,22 +454,22 @@ namespace Terrain.Editor
                     var viewportWindow = viewportWindows[i];
                     var vctx = viewportWindow.ViewContext;
 
-                    if (actualMousePosWindowSpace.X < vctx.x
-                        || actualMousePosWindowSpace.X >= vctx.x + vctx.width
-                        || actualMousePosWindowSpace.Y < vctx.y
-                        || actualMousePosWindowSpace.Y >= vctx.y + vctx.height)
+                    if (actualMousePosWindowSpace.X < vctx.X
+                        || actualMousePosWindowSpace.X >= vctx.X + vctx.Width
+                        || actualMousePosWindowSpace.Y < vctx.Y
+                        || actualMousePosWindowSpace.Y >= vctx.Y + vctx.Height)
                     {
                         continue;
                     }
 
-                    result.activeViewState = vctx.viewState;
-                    result.prevPressedButtons = (ulong)prevPressedButtons;
-                    result.pressedButtons = (ulong)pressedButtons;
-                    result.normalizedCursorPos.X =
-                        (float)(virtualMousePosWindowSpace.X - vctx.x) / (float)vctx.width;
-                    result.normalizedCursorPos.Y =
-                        (float)(virtualMousePosWindowSpace.Y - vctx.y) / (float)vctx.height;
-                    result.scrollOffset = nextMouseScrollOffsetY;
+                    result.ActiveViewState = vctx.ViewState;
+                    result.PreviousPressedButtons = (ulong)prevPressedButtons;
+                    result.PressedButtons = (ulong)pressedButtons;
+                    result.NormalizedCursorPos.X =
+                        (float)(virtualMousePosWindowSpace.X - vctx.X) / (float)vctx.Width;
+                    result.NormalizedCursorPos.Y =
+                        (float)(virtualMousePosWindowSpace.Y - vctx.Y) / (float)vctx.Height;
+                    result.ScrollOffset = nextMouseScrollOffsetY;
 
                     if (shouldCaptureMouse)
                     {
@@ -482,8 +482,8 @@ namespace Terrain.Editor
 
                         // calculate the center of the hovered viewport relative to the window
                         Point viewportCenterWindowSpace = new Point(
-                            Math.Ceiling(vctx.x + (vctx.width * 0.5)),
-                            Math.Ceiling(vctx.y + (vctx.height * 0.5)));
+                            Math.Ceiling(vctx.X + (vctx.Width * 0.5)),
+                            Math.Ceiling(vctx.Y + (vctx.Height * 0.5)));
 
                         // convert the viewport center to screen space and move the cursor to it
                         Point viewportCenterScreenSpace =
@@ -493,20 +493,26 @@ namespace Terrain.Editor
 
                         if (wasMouseCaptured)
                         {
-                            result.cursorOffset = actualMousePosWindowSpace - viewportCenterWindowSpace;
+                            result.CursorOffset.X = (float)actualMousePosWindowSpace.X
+                                - (float)viewportCenterWindowSpace.X;
+                            result.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
+                                - (float)viewportCenterWindowSpace.Y;
                         }
                         else
                         {
                             // don't set the mouse offset on the first frame after we capture the mouse
                             // or there will be a big jump from the initial cursor position to the
                             // center of the viewport
-                            result.cursorOffset = new Vector(0, 0);
+                            result.CursorOffset = new Vector2(0, 0);
                             Win32.SetCursor(IntPtr.Zero);
                         }
                     }
                     else
                     {
-                        result.cursorOffset = actualMousePosWindowSpace - prevMousePosWindowSpace;
+                        result.CursorOffset.X = (float)actualMousePosWindowSpace.X
+                            - (float)prevMousePosWindowSpace.X;
+                        result.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
+                            - (float)prevMousePosWindowSpace.Y;
                     }
                     break;
                 }
@@ -523,12 +529,6 @@ namespace Terrain.Editor
 
         private static void OnTick(object sender, EventArgs e)
         {
-            DateTime now = DateTime.UtcNow;
-            float deltaTime = (float)((now - lastTickTime).TotalSeconds);
-            lastTickTime = now;
-
-            EditorInputProxy input = GetInputState();
-
             if (!File.Exists(buildLockFilePath))
             {
                 DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
@@ -576,12 +576,17 @@ namespace Terrain.Editor
                 }
             }
 
-            EditorCore.Update(deltaTime, input);
+            DateTime now = DateTime.UtcNow;
+            float deltaTime = (float)((now - lastTickTime).TotalSeconds);
+            lastTickTime = now;
+            EditorInput input = GetInputState();
+
+            EditorCore.Update(deltaTime, ref input);
 
             for (int i = 0; i < viewportWindows.Count; i++)
             {
                 var viewportWindow = viewportWindows[i];
-                if (viewportWindow.ViewContext.width == 0 || viewportWindow.ViewContext.height == 0)
+                if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
                     continue;
 
                 Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
@@ -622,13 +627,13 @@ namespace Terrain.Editor
                 Hwnd = hwnd,
                 DeviceContext = deviceContext,
                 View = view,
-                ViewContext = new EditorViewContextProxy
+                ViewContext = new EditorViewContext
                 {
-                    viewState = IntPtr.Zero,
-                    x = x,
-                    y = y,
-                    width = width,
-                    height = height
+                    ViewState = IntPtr.Zero,
+                    X = x,
+                    Y = y,
+                    Width = width,
+                    Height = height
                 }
             };
             viewportWindows.Add(viewportWindow);

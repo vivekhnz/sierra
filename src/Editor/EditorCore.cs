@@ -4,10 +4,39 @@ using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
-    using EditorInput = IntPtr;
-    using EditorViewContext = IntPtr;
-    using TerrainBrushParameters = IntPtr;
-    using MaterialProperties = IntPtr;
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct Vector2
+    {
+        public float X;
+        public float Y;
+
+        public Vector2(float x, float y)
+        {
+            X = x;
+            Y = y;
+        }
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct EditorInput
+    {
+        public IntPtr ActiveViewState;
+        public float ScrollOffset;
+        public Vector2 NormalizedCursorPos;
+        public Vector2 CursorOffset;
+        public ulong PressedButtons;
+        public ulong PreviousPressedButtons;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct EditorViewContext
+    {
+        public IntPtr ViewState;
+        public uint X;
+        public uint Y;
+        public uint Width;
+        public uint Height;
+    }
 
     internal enum EditorTool
     {
@@ -15,6 +44,29 @@ namespace Terrain.Editor
         LowerTerrain = 1,
         FlattenTerrain = 2,
         SmoothTerrain = 3
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct TerrainBrushParameters
+    {
+        public float Radius;
+        public float Falloff;
+        public float Strength;
+    };
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct TerrainMaterialProperties
+    {
+        public uint AlbedoTextureAssetId;
+        public uint NormalTextureAssetId;
+        public uint DisplacementTextureAssetId;
+        public uint AoTextureAssetId;
+        public float TextureSizeInWorldUnits;
+
+        public float SlopeStart;
+        public float SlopeEnd;
+        public float AltitudeStart;
+        public float AltitudeEnd;
     }
 
     internal enum TerrainMaterialTextureType
@@ -30,19 +82,19 @@ namespace Terrain.Editor
         private static IntPtr memoryPtr;
         private static IntPtr moduleHandle;
 
-        delegate void EditorUpdate(IntPtr memory, float deltaTime, EditorInput input);
+        delegate void EditorUpdate(IntPtr memory, float deltaTime, ref EditorInput input);
         delegate void EditorShutdown(IntPtr memory);
-        delegate void EditorRenderSceneView(IntPtr memory, EditorViewContext view);
-        delegate void EditorRenderHeightmapPreview(IntPtr memory, EditorViewContext view);
+        delegate void EditorRenderSceneView(IntPtr memory, ref EditorViewContext view);
+        delegate void EditorRenderHeightmapPreview(IntPtr memory, ref EditorViewContext view);
         delegate uint EditorGetImportedHeightmapAssetId(IntPtr memory);
         delegate EditorTool EditorGetBrushTool(IntPtr memory);
         delegate void EditorSetBrushTool(IntPtr memory, EditorTool tool);
         delegate TerrainBrushParameters EditorGetBrushParameters(IntPtr memory);
         delegate void EditorSetBrushParameters(IntPtr memory, float radius, float falloff, float strength);
-        delegate void EditorAddMaterial(IntPtr memory, MaterialProperties props);
+        delegate void EditorAddMaterial(IntPtr memory, TerrainMaterialProperties props);
         delegate void EditorDeleteMaterial(IntPtr memory, uint index);
         delegate void EditorSwapMaterial(IntPtr memory, uint indexA, uint indexB);
-        delegate MaterialProperties EditorGetMaterialProperties(IntPtr memory, uint index);
+        delegate TerrainMaterialProperties EditorGetMaterialProperties(IntPtr memory, uint index);
         delegate void EditorSetMaterialTexture(IntPtr memory, uint index,
             TerrainMaterialTextureType textureType, uint assetId);
         delegate void EditorSetMaterialProperties(IntPtr memory, uint index, float textureSize,
@@ -80,6 +132,8 @@ namespace Terrain.Editor
 
             T GetApi<T>(string procName) where T : Delegate
             {
+                if (moduleHandle == IntPtr.Zero) return null;
+
                 IntPtr functionPtr = Win32.GetProcAddress(moduleHandle, procName);
                 return functionPtr == IntPtr.Zero
                     ? null
@@ -105,14 +159,14 @@ namespace Terrain.Editor
             editorSetSceneParameters = GetApi<EditorSetSceneParameters>("editorSetSceneParameters");
         }
 
-        internal static void Update(float deltaTime, EditorInputProxy input)
-            => EngineInterop.Update(deltaTime, input);
+        internal static void Update(float deltaTime, ref EditorInput input)
+            => editorUpdate?.Invoke(memoryPtr, deltaTime, ref input);
 
-        internal static void RenderSceneView(ref EditorViewContextProxy vctx)
-            => EngineInterop.RenderSceneView(ref vctx);
+        internal static void RenderSceneView(ref EditorViewContext vctx)
+            => editorRenderSceneView?.Invoke(memoryPtr, ref vctx);
 
-        internal static void RenderHeightmapPreview(ref EditorViewContextProxy vctx)
-            => EngineInterop.RenderHeightmapPreview(ref vctx);
+        internal static void RenderHeightmapPreview(ref EditorViewContext vctx)
+            => editorRenderHeightmapPreview?.Invoke(memoryPtr, ref vctx);
 
         internal static void Shutdown()
             => editorShutdown?.Invoke(memoryPtr);
@@ -133,14 +187,14 @@ namespace Terrain.Editor
         internal static void SetBrushTool(EditorTool tool)
             => editorSetBrushTool?.Invoke(memoryPtr, tool);
 
-        internal static TerrainBrushParametersProxy GetBrushParameters()
-            => EngineInterop.GetBrushParameters();
+        internal static TerrainBrushParameters GetBrushParameters()
+            => editorGetBrushParameters?.Invoke(memoryPtr) ?? default(TerrainBrushParameters);
 
         internal static void SetBrushParameters(float radius, float falloff, float strength)
             => editorSetBrushParameters?.Invoke(memoryPtr, radius, falloff, strength);
 
-        internal static void AddMaterial(MaterialProps props)
-            => EngineInterop.AddMaterial(props);
+        internal static void AddMaterial(TerrainMaterialProperties props)
+            => editorAddMaterial?.Invoke(memoryPtr, props);
 
         internal static void DeleteMaterial(int index)
             => editorDeleteMaterial?.Invoke(memoryPtr, (uint)index);
@@ -148,8 +202,9 @@ namespace Terrain.Editor
         internal static void SwapMaterial(int indexA, int indexB)
             => editorSwapMaterial?.Invoke(memoryPtr, (uint)indexA, (uint)indexB);
 
-        internal static MaterialProps GetMaterialProperties(int index)
-            => EngineInterop.GetMaterialProperties(index);
+        internal static TerrainMaterialProperties GetMaterialProperties(int index)
+            => editorGetMaterialProperties?.Invoke(memoryPtr, (uint)index)
+                ?? default(TerrainMaterialProperties);
 
         internal static void SetMaterialTexture(int index,
             TerrainMaterialTextureType textureType, uint assetId)

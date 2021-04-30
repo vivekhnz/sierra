@@ -5,7 +5,6 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
@@ -113,17 +112,17 @@ namespace Terrain.Editor
 
         private void btnAddMaterial_Click(object sender, RoutedEventArgs e)
         {
-            AddMaterial(new MaterialProps
+            AddMaterial(new TerrainMaterialProperties
             {
-                albedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
-                normalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
-                displacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
-                aoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
-                textureSizeInWorldUnits = 2.5f,
-                slopeStart = 0.0f,
-                slopeEnd = 0.0f,
-                altitudeStart = 0.0f,
-                altitudeEnd = 0.0f
+                AlbedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
+                NormalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
+                DisplacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
+                AoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
+                TextureSizeInWorldUnits = 2.5f,
+                SlopeStart = 0.0f,
+                SlopeEnd = 0.0f,
+                AltitudeStart = 0.0f,
+                AltitudeEnd = 0.0f
             });
             lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
         }
@@ -272,41 +271,41 @@ namespace Terrain.Editor
 
                 if (prevAssetCount == 0)
                 {
-                    AddMaterial(new MaterialProps
+                    AddMaterial(new TerrainMaterialProperties
                     {
-                        albedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
-                        normalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
-                        displacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
-                        aoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
-                        textureSizeInWorldUnits = 2.5f,
-                        slopeStart = 0.0f,
-                        slopeEnd = 0.0f,
-                        altitudeStart = 0.0f,
-                        altitudeEnd = 0.0f
+                        AlbedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
+                        NormalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
+                        DisplacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
+                        AoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
+                        TextureSizeInWorldUnits = 2.5f,
+                        SlopeStart = 0.0f,
+                        SlopeEnd = 0.0f,
+                        AltitudeStart = 0.0f,
+                        AltitudeEnd = 0.0f
                     });
-                    AddMaterial(new MaterialProps
+                    AddMaterial(new TerrainMaterialProperties
                     {
-                        albedoTextureAssetId = textureFilenameToAssetId["rock_albedo.jpg"],
-                        normalTextureAssetId = textureFilenameToAssetId["rock_normal.jpg"],
-                        displacementTextureAssetId = textureFilenameToAssetId["rock_displacement.tga"],
-                        aoTextureAssetId = textureFilenameToAssetId["rock_ao.tga"],
-                        textureSizeInWorldUnits = 13.0f,
-                        slopeStart = 0.2f,
-                        slopeEnd = 0.4f,
-                        altitudeStart = 0,
-                        altitudeEnd = 0.001f
+                        AlbedoTextureAssetId = textureFilenameToAssetId["rock_albedo.jpg"],
+                        NormalTextureAssetId = textureFilenameToAssetId["rock_normal.jpg"],
+                        DisplacementTextureAssetId = textureFilenameToAssetId["rock_displacement.tga"],
+                        AoTextureAssetId = textureFilenameToAssetId["rock_ao.tga"],
+                        TextureSizeInWorldUnits = 13.0f,
+                        SlopeStart = 0.2f,
+                        SlopeEnd = 0.4f,
+                        AltitudeStart = 0,
+                        AltitudeEnd = 0.001f
                     });
-                    AddMaterial(new MaterialProps
+                    AddMaterial(new TerrainMaterialProperties
                     {
-                        albedoTextureAssetId = textureFilenameToAssetId["snow_albedo.jpg"],
-                        normalTextureAssetId = textureFilenameToAssetId["snow_normal.jpg"],
-                        displacementTextureAssetId = textureFilenameToAssetId["snow_displacement.tga"],
-                        aoTextureAssetId = textureFilenameToAssetId["snow_ao.tga"],
-                        textureSizeInWorldUnits = 2.0f,
-                        slopeStart = 0.4f,
-                        slopeEnd = 0.2f,
-                        altitudeStart = 0.25f,
-                        altitudeEnd = 0.28f
+                        AlbedoTextureAssetId = textureFilenameToAssetId["snow_albedo.jpg"],
+                        NormalTextureAssetId = textureFilenameToAssetId["snow_normal.jpg"],
+                        DisplacementTextureAssetId = textureFilenameToAssetId["snow_displacement.tga"],
+                        AoTextureAssetId = textureFilenameToAssetId["snow_ao.tga"],
+                        TextureSizeInWorldUnits = 2.0f,
+                        SlopeStart = 0.4f,
+                        SlopeEnd = 0.2f,
+                        AltitudeStart = 0.25f,
+                        AltitudeEnd = 0.28f
                     });
                 }
 
@@ -314,7 +313,7 @@ namespace Terrain.Editor
             }
         }
 
-        private void AddMaterial(MaterialProps props)
+        private void AddMaterial(TerrainMaterialProperties props)
         {
             EditorCore.AddMaterial(props);
             lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
@@ -334,16 +333,16 @@ namespace Terrain.Editor
             btnMoveMaterialDown.IsEnabled = !isLastMaterial;
             btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
 
-            cbMaterialAlbedoTexture.SelectedItem = textureAssetIdToFilename[props.albedoTextureAssetId];
-            cbMaterialNormalTexture.SelectedItem = textureAssetIdToFilename[props.normalTextureAssetId];
-            cbMaterialDisplacementTexture.SelectedItem = textureAssetIdToFilename[props.displacementTextureAssetId];
-            cbMaterialAoTexture.SelectedItem = textureAssetIdToFilename[props.aoTextureAssetId];
-            materialTextureSizeSlider.Value = props.textureSizeInWorldUnits;
+            cbMaterialAlbedoTexture.SelectedItem = textureAssetIdToFilename[props.AlbedoTextureAssetId];
+            cbMaterialNormalTexture.SelectedItem = textureAssetIdToFilename[props.NormalTextureAssetId];
+            cbMaterialDisplacementTexture.SelectedItem = textureAssetIdToFilename[props.DisplacementTextureAssetId];
+            cbMaterialAoTexture.SelectedItem = textureAssetIdToFilename[props.AoTextureAssetId];
+            materialTextureSizeSlider.Value = props.TextureSizeInWorldUnits;
 
-            materialSlopeStartSlider.Value = props.slopeStart;
-            materialSlopeEndSlider.Value = props.slopeEnd;
-            materialAltitudeStartSlider.Value = props.altitudeStart;
-            materialAltitudeEndSlider.Value = props.altitudeEnd;
+            materialSlopeStartSlider.Value = props.SlopeStart;
+            materialSlopeEndSlider.Value = props.SlopeEnd;
+            materialAltitudeStartSlider.Value = props.AltitudeStart;
+            materialAltitudeEndSlider.Value = props.AltitudeEnd;
 
             if (selectedMaterialIndex == 0)
             {
