@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -17,6 +18,8 @@ namespace Terrain.Editor
     {
         private delegate IntPtr EngineGetApi();
 
+        private static EngineMemory memory;
+        private static GCHandle memoryHandle;
         private static IntPtr memoryPtr;
         private static IntPtr moduleHandle;
 
@@ -24,9 +27,32 @@ namespace Terrain.Editor
 
         internal static IntPtr EngineApiPtr { get; private set; }
 
-        internal static void Initialize(IntPtr engineMemoryPtr)
+        internal static IntPtr Initialize(IntPtr engineMemoryDataPtr,
+            int engineMemorySizeInBytes, PlatformLogMessage logMessage,
+            PlatformQueueAssetLoad queueAssetLoad, PlatformWatchAssetFile watchAssetFile)
         {
-            memoryPtr = engineMemoryPtr;
+            memory = new EngineMemory
+            {
+                PlatformLogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
+                PlatformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
+                PlatformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile)
+            };
+
+            ulong offset = 0;
+            memory.Renderer.BaseAddress = engineMemoryDataPtr + (int)offset;
+            memory.Renderer.Size = 1 * 1024 * 1024;
+            offset += memory.Renderer.Size;
+
+            memory.Assets.BaseAddress = engineMemoryDataPtr + (int)offset;
+            memory.Assets.Size = (ulong)engineMemorySizeInBytes - offset;
+            offset += memory.Assets.Size;
+
+            Debug.Assert(offset == (ulong)engineMemorySizeInBytes);
+
+            memoryHandle = GCHandle.Alloc(memory, GCHandleType.Pinned);
+            memoryPtr = memoryHandle.AddrOfPinnedObject();
+
+            return memoryPtr;
         }
 
         internal static void ReloadCode(string dllPath, string dllShadowCopyPath)
@@ -62,7 +88,7 @@ namespace Terrain.Editor
 
                 EngineApiPtr = engineGetApi();
                 api = Marshal.PtrToStructure<EngineApi>(EngineApiPtr);
-                api.rendererInitialize(memoryPtr, IntPtr.Zero);
+                api.rendererInitialize(ref memory, IntPtr.Zero);
             }
         }
 
@@ -70,30 +96,31 @@ namespace Terrain.Editor
         {
             if (moduleHandle != IntPtr.Zero)
             {
-                api.rendererDestroyResources(memoryPtr);
+                api.rendererDestroyResources(ref memory);
             }
+            memoryHandle.Free();
         }
 
         internal static int GetRegisteredAssetCount()
         {
-            return (int)api.assetsGetRegisteredAssetCount(memoryPtr);
+            return (int)api.assetsGetRegisteredAssetCount(ref memory);
         }
 
         internal static ReadOnlySpan<AssetRegistration> GetRegisteredAssets()
         {
             int assetCount = GetRegisteredAssetCount();
-            ref AssetRegistration assetsRef = ref api.assetsGetRegisteredAssets(memoryPtr);
+            ref AssetRegistration assetsRef = ref api.assetsGetRegisteredAssets(ref memory);
             return MemoryMarshal.CreateReadOnlySpan(ref assetsRef, assetCount);
         }
 
         internal static void SetAssetData(uint assetId, ReadOnlySpan<byte> data)
         {
-            api.assetsSetAssetData(memoryPtr, assetId, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
+            api.assetsSetAssetData(ref memory, assetId, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
         }
 
         internal static void InvalidateAsset(uint assetId)
         {
-            api.assetsInvalidateAsset(memoryPtr, assetId);
+            api.assetsInvalidateAsset(ref memory, assetId);
         }
     }
 

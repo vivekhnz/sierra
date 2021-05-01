@@ -3,6 +3,28 @@ using System.Runtime.InteropServices;
 
 namespace Terrain.Editor
 {
+    [StructLayout(LayoutKind.Sequential)]
+    struct MemoryBlock
+    {
+        public IntPtr BaseAddress;
+        public ulong Size;
+    }
+
+    internal delegate void PlatformLogMessage(string message);
+    internal delegate bool PlatformQueueAssetLoad(uint assetId, string relativePath);
+    internal delegate void PlatformWatchAssetFile(uint assetId, string relativePath);
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct EngineMemory
+    {
+        public IntPtr PlatformLogMessage;
+        public IntPtr PlatformQueueAssetLoad;
+        public IntPtr PlatformWatchAssetFile;
+
+        public MemoryBlock Renderer;
+        public MemoryBlock Assets;
+    }
+
     enum AssetRegistrationType
     {
         File,
@@ -35,13 +57,13 @@ namespace Terrain.Editor
         public bool IsLoadQueued;
     }
 
-    delegate uint AssetsGetRegisteredAssetCount(IntPtr engineMemory);
-    delegate ref AssetRegistration AssetsGetRegisteredAssets(IntPtr engineMemory);
-    delegate void AssetsSetAssetData(IntPtr engineMemory, uint assetId, in byte data, ulong size);
-    delegate void AssetsInvalidateAsset(IntPtr engineMemory, uint assetId);
+    delegate uint AssetsGetRegisteredAssetCount(ref EngineMemory memory);
+    delegate ref AssetRegistration AssetsGetRegisteredAssets(ref EngineMemory memory);
+    delegate void AssetsSetAssetData(ref EngineMemory memory, uint assetId, in byte data, ulong size);
+    delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
 
-    delegate bool RendererInitialize(IntPtr engineMemory, IntPtr getGlProcAddress);
-    delegate bool RendererDestroyResources(IntPtr engineMemory);
+    delegate bool RendererInitialize(ref EngineMemory memory, IntPtr getGlProcAddress);
+    delegate bool RendererDestroyResources(ref EngineMemory memory);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi

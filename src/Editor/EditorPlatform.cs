@@ -3,12 +3,10 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
-using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
-using Terrain.Engine.Interop;
 
 namespace Terrain.Editor
 {
@@ -148,11 +146,6 @@ namespace Terrain.Editor
         private static List<AssetLoadRequest> assetLoadRequests = new List<AssetLoadRequest>();
         private static List<WatchedAsset> watchedAssets = new List<WatchedAsset>();
 
-        private delegate void PlatformCaptureMouse();
-        private delegate void PlatformLogMessage(string message);
-        private delegate bool PlatformQueueAssetLoad(uint assetId, string relativePath);
-        private delegate void PlatformWatchAssetFile(uint assetId, string relativePath);
-
         private static PlatformCaptureMouse editorPlatformCaptureMouse = CaptureMouse;
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
@@ -178,12 +171,20 @@ namespace Terrain.Editor
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll")
             };
 
-            uint editorMemorySizeInBytes = 32 * 1024 * 1024;
-            uint engineMemorySizeInBytes = 480 * 1024 * 1024;
-            uint appMemorySizeInBytes = editorMemorySizeInBytes + engineMemorySizeInBytes;
-            IntPtr appMemoryPtr = Win32.VirtualAlloc(IntPtr.Zero, appMemorySizeInBytes,
+            int editorMemorySizeInBytes = 32 * 1024 * 1024;
+            int engineMemorySizeInBytes = 480 * 1024 * 1024;
+            int appMemorySizeInBytes = editorMemorySizeInBytes + engineMemorySizeInBytes;
+            IntPtr appMemoryPtr = Win32.VirtualAlloc(IntPtr.Zero, (uint)appMemorySizeInBytes,
                 Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
                 Win32.MemoryProtection.ReadWrite);
+            IntPtr editorMemoryDataPtr = appMemoryPtr;
+            IntPtr engineMemoryDataPtr = editorMemoryDataPtr + editorMemorySizeInBytes;
+
+            IntPtr engineMemoryPtr = Engine.Initialize(engineMemoryDataPtr, engineMemorySizeInBytes,
+                editorPlatformLogMessage, editorPlatformQueueAssetLoad,
+                editorPlatformWatchAssetFile);
+            EditorCore.Initialize(editorMemoryDataPtr, editorMemorySizeInBytes,
+                editorPlatformCaptureMouse, engineMemoryPtr);
 
             var interopHelper = new WindowInteropHelper(Application.Current.MainWindow);
             mainWindowHwnd = interopHelper.EnsureHandle();
@@ -215,27 +216,8 @@ namespace Terrain.Editor
             };
             Win32.RegisterClass(ref viewportWindowClass);
 
-            var initParams = new EditorInitPlatformParamsProxy
-            {
-                memoryPtr = appMemoryPtr,
-                editorMemorySize = editorMemorySizeInBytes,
-                engineMemorySize = engineMemorySizeInBytes,
-
-                platformCaptureMouse = Marshal.GetFunctionPointerForDelegate(editorPlatformCaptureMouse),
-                platformLogMessage = Marshal.GetFunctionPointerForDelegate(editorPlatformLogMessage),
-                platformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(editorPlatformQueueAssetLoad),
-                platformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(editorPlatformWatchAssetFile)
-            };
-            EngineInterop.InitializeEngine(initParams);
-
-            IntPtr engineMemoryPtr = EngineInterop.GetEngineMemory();
-            Engine.Initialize(engineMemoryPtr);
-
-            IntPtr editorMemoryPtr = EngineInterop.GetEditorMemory();
-            EditorCore.Initialize(editorMemoryPtr);
-
             Engine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-            EngineInterop.SetEditorEngineApi(Engine.EngineApiPtr);
+            EditorCore.UpdateEngineApi(Engine.EngineApiPtr);
             engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
@@ -535,7 +517,7 @@ namespace Terrain.Editor
                 if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
                 {
                     Engine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-                    EngineInterop.SetEditorEngineApi(Engine.EngineApiPtr);
+                    EditorCore.UpdateEngineApi(Engine.EngineApiPtr);
                     engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
                 }
 

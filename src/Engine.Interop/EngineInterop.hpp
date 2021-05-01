@@ -6,8 +6,10 @@ namespace Terrain { namespace Engine { namespace Interop {
 public
     value struct EditorInitPlatformParamsProxy
     {
-        System::IntPtr memoryPtr;
+        System::IntPtr editorMemoryPtr;
         uint64 editorMemorySize;
+
+        System::IntPtr engineMemoryPtr;
         uint64 engineMemorySize;
 
         System::IntPtr platformCaptureMouse;
@@ -20,18 +22,13 @@ public
     ref class EngineInterop
     {
     private:
-        static EngineMemory *engineMemory = nullptr;
         static EditorMemory *editorMemory = nullptr;
 
     public:
         // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
 
-        // engine
-        static System::IntPtr GetEngineMemory();
-
         // editor
-        static System::IntPtr GetEditorMemory();
         static void SetEditorEngineApi(System::IntPtr engineApiPtr);
     };
 }}}
