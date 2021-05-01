@@ -41,6 +41,7 @@ namespace Terrain.Editor
     delegate void AssetsInvalidateAsset(IntPtr engineMemory, uint assetId);
 
     delegate bool RendererInitialize(IntPtr engineMemory, IntPtr getGlProcAddress);
+    delegate bool RendererDestroyResources(IntPtr engineMemory);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi
@@ -99,6 +100,6 @@ namespace Terrain.Editor
         public IntPtr rendererDrawElementsInstanced;
         public IntPtr rendererDispatchCompute;
         public IntPtr rendererShaderStorageMemoryBarrier;
-        public IntPtr rendererDestroyResources;
+        public RendererDestroyResources rendererDestroyResources;
     }
 }

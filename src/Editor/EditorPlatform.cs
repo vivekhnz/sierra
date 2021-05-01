@@ -606,7 +606,7 @@ namespace Terrain.Editor
         internal static void Shutdown()
         {
             renderTimer.Stop();
-            EditorCore.Shutdown();
+            Engine.Shutdown();
 
             Win32.DestroyGLContext(glRenderingContext);
             Win32.DestroyWindow(dummyWindowHwnd);

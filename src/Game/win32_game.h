@@ -36,7 +36,6 @@ struct Win32GameCode
     uint64 dllLastWriteTime;
 
     GameUpdateAndRender *gameUpdateAndRender;
-    GameShutdown *gameShutdown;
 };
 
 struct Win32EngineCode

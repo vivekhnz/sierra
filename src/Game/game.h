@@ -209,7 +209,4 @@ enum GameInputButtons : uint64
     void name(GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime)
 typedef GAME_UPDATE_AND_RENDER(GameUpdateAndRender);
 
-#define GAME_SHUTDOWN(name) void name(GameMemory *memory)
-typedef GAME_SHUTDOWN(GameShutdown);
-
 #endif

@@ -304,9 +304,6 @@ enum TerrainMaterialTextureType
     void name(EditorMemory *memory, float deltaTime, EditorInput *input)
 typedef EDITOR_UPDATE(EditorUpdate);
 
-#define EDITOR_SHUTDOWN(name) void name(EditorMemory *memory)
-typedef EDITOR_SHUTDOWN(EditorShutdown);
-
 #define EDITOR_RENDER_SCENE_VIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
 typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
 

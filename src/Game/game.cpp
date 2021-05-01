@@ -656,8 +656,3 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         engine->rendererDrawElements(GL_PATCHES, state->terrainMeshElementCount);
     }
 }
-
-API_EXPORT GAME_SHUTDOWN(gameShutdown)
-{
-    memory->engine->rendererDestroyResources(memory->engineMemory);
-}

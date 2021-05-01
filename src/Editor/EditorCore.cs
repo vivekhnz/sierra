@@ -83,7 +83,6 @@ namespace Terrain.Editor
         private static IntPtr moduleHandle;
 
         delegate void EditorUpdate(IntPtr memory, float deltaTime, ref EditorInput input);
-        delegate void EditorShutdown(IntPtr memory);
         delegate void EditorRenderSceneView(IntPtr memory, ref EditorViewContext view);
         delegate void EditorRenderHeightmapPreview(IntPtr memory, ref EditorViewContext view);
         delegate uint EditorGetImportedHeightmapAssetId(IntPtr memory);
@@ -104,7 +103,6 @@ namespace Terrain.Editor
         delegate void EditorSetSceneParameters(IntPtr memory, float lightDirection);
 
         private static EditorUpdate editorUpdate;
-        private static EditorShutdown editorShutdown;
         private static EditorRenderSceneView editorRenderSceneView;
         private static EditorRenderHeightmapPreview editorRenderHeightmapPreview;
         private static EditorGetImportedHeightmapAssetId editorGetImportedHeightmapAssetId;
@@ -141,7 +139,6 @@ namespace Terrain.Editor
             }
 
             editorUpdate = GetApi<EditorUpdate>("editorUpdate");
-            editorShutdown = GetApi<EditorShutdown>("editorShutdown");
             editorRenderSceneView = GetApi<EditorRenderSceneView>("editorRenderSceneView");
             editorRenderHeightmapPreview = GetApi<EditorRenderHeightmapPreview>("editorRenderHeightmapPreview");
             editorGetImportedHeightmapAssetId = GetApi<EditorGetImportedHeightmapAssetId>("editorGetImportedHeightmapAssetId");
@@ -167,9 +164,6 @@ namespace Terrain.Editor
 
         internal static void RenderHeightmapPreview(ref EditorViewContext vctx)
             => editorRenderHeightmapPreview?.Invoke(memoryPtr, ref vctx);
-
-        internal static void Shutdown()
-            => editorShutdown?.Invoke(memoryPtr);
 
         internal static void LoadHeightmapTexture(string path)
         {

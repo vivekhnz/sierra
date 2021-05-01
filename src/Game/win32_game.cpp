@@ -262,8 +262,6 @@ void win32LoadGameCode(Win32GameCode *gameCode)
     {
         gameCode->gameUpdateAndRender =
             (GameUpdateAndRender *)GetProcAddress(gameCode->dllModule, "gameUpdateAndRender");
-        gameCode->gameShutdown =
-            (GameShutdown *)GetProcAddress(gameCode->dllModule, "gameShutdown");
     }
 }
 void win32UnloadGameCode(Win32GameCode *gameCode)
@@ -274,7 +272,6 @@ void win32UnloadGameCode(Win32GameCode *gameCode)
         gameCode->dllModule = 0;
 
         gameCode->gameUpdateAndRender = 0;
-        gameCode->gameShutdown = 0;
     }
 }
 
@@ -525,10 +522,7 @@ int32 main()
         glfwPollEvents();
     }
 
-    if (platformMemory->gameCode.gameShutdown)
-    {
-        platformMemory->gameCode.gameShutdown(platformMemory->gameMemory);
-    }
+    platformMemory->engineCode.api->rendererDestroyResources(engineMemory);
     glfwDestroyWindow(window);
     glfwTerminate();
 

@@ -935,15 +935,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 }
 
-API_EXPORT EDITOR_SHUTDOWN(editorShutdown)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-    if (state->isInitialized)
-    {
-        memory->engineApi->rendererDestroyResources(memory->engineMemory);
-    }
-}
-
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     EngineApi *engine = memory->engineApi;

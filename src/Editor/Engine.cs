@@ -66,6 +66,14 @@ namespace Terrain.Editor
             }
         }
 
+        internal static void Shutdown()
+        {
+            if (moduleHandle != IntPtr.Zero)
+            {
+                api.rendererDestroyResources(memoryPtr);
+            }
+        }
+
         internal static int GetRegisteredAssetCount()
         {
             return (int)api.assetsGetRegisteredAssetCount(memoryPtr);
