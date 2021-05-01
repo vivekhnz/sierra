@@ -3,10 +3,8 @@
   <ItemGroup>
     <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="EngineInterop.cpp" />
-    <ClCompile Include="win32_editor_platform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="EngineInterop.hpp" />
-    <ClInclude Include="win32_editor_platform.h" />
   </ItemGroup>
 </Project>

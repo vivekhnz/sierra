@@ -1,6 +1,6 @@
 #pragma once
 
-#include "win32_editor_platform.h"
+#include "../EditorCore/editor.h"
 
 namespace Terrain { namespace Engine { namespace Interop {
 public
@@ -20,7 +20,8 @@ public
     ref class EngineInterop
     {
     private:
-        static Win32PlatformMemory *memory = nullptr;
+        static EngineMemory *engineMemory = nullptr;
+        static EditorMemory *editorMemory = nullptr;
 
     public:
         // platform

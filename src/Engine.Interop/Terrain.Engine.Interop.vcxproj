@@ -71,12 +71,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="EngineInterop.hpp" />
-    <ClInclude Include="win32_editor_platform.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="EngineInterop.cpp" />
     <ClCompile Include="AssemblyInfo.cpp" />
-    <ClCompile Include="win32_editor_platform.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets" />

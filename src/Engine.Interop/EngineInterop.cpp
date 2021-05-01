@@ -3,34 +3,51 @@
 namespace Terrain { namespace Engine { namespace Interop {
     void EngineInterop::InitializeEngine(EditorInitPlatformParamsProxy params)
     {
-        Win32InitPlatformParams initParams = {};
-        initParams.memoryBaseAddress = (uint8 *)params.memoryPtr.ToPointer();
-        initParams.editorMemorySize = params.editorMemorySize;
-        initParams.engineMemorySize = params.engineMemorySize;
-        initParams.platformCaptureMouse =
-            (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
-        initParams.platformLogMessage =
+        uint8 *editorMemoryBaseAddress = (uint8 *)params.memoryPtr.ToPointer();
+        uint8 *engineMemoryBaseAddress = editorMemoryBaseAddress + params.editorMemorySize;
+
+        editorMemory = (EditorMemory *)editorMemoryBaseAddress;
+        engineMemory = (EngineMemory *)engineMemoryBaseAddress;
+
+        // initialize engine memory
+        engineMemory->platformLogMessage =
             (PlatformLogMessage *)params.platformLogMessage.ToPointer();
-        initParams.platformQueueAssetLoad =
+        engineMemory->platformQueueAssetLoad =
             (PlatformQueueAssetLoad *)params.platformQueueAssetLoad.ToPointer();
-        initParams.platformWatchAssetFile =
+        engineMemory->platformWatchAssetFile =
             (PlatformWatchAssetFile *)params.platformWatchAssetFile.ToPointer();
 
-        memory = win32InitializePlatform(&initParams);
+#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
+        uint64 engineMemoryOffset = sizeof(EngineMemory);
+        engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+        engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
+        engineMemoryOffset += engineMemory->renderer.size;
+        engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
+        engineMemory->assets.size = params.engineMemorySize - engineMemoryOffset;
+        engineMemoryOffset += engineMemory->assets.size;
+        assert(engineMemoryOffset == params.engineMemorySize);
+
+        // initialize editor memory
+        editorMemory->engineMemory = engineMemory;
+        editorMemory->platformCaptureMouse =
+            (PlatformCaptureMouse *)params.platformCaptureMouse.ToPointer();
+        editorMemory->data.baseAddress = editorMemoryBaseAddress + sizeof(EditorMemory);
+        editorMemory->data.size = params.editorMemorySize;
+        editorMemory->dataStorageUsed = 0;
     }
 
     System::IntPtr EngineInterop::GetEngineMemory()
     {
-        return System::IntPtr(memory->engine);
+        return System::IntPtr(engineMemory);
     }
 
     System::IntPtr EngineInterop::GetEditorMemory()
     {
-        return System::IntPtr(memory->editor);
+        return System::IntPtr(editorMemory);
     }
 
     void EngineInterop::SetEditorEngineApi(System::IntPtr engineApiPtr)
     {
-        memory->editor->engineApi = (EngineApi *)engineApiPtr.ToPointer();
+        editorMemory->engineApi = (EngineApi *)engineApiPtr.ToPointer();
     }
 }}}
