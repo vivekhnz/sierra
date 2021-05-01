@@ -542,8 +542,10 @@ namespace Terrain.Editor
                 DateTime editorCodeDllLastWriteTime = File.GetLastWriteTimeUtc(editorCode.DllPath);
                 if (editorCodeDllLastWriteTime > editorCode.DllLastWriteTimeUtc)
                 {
-                    EditorCore.ReloadCode(editorCode.DllPath, editorCode.DllShadowCopyPath);
-                    editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
+                    if (EditorCore.ReloadCode(editorCode.DllPath, editorCode.DllShadowCopyPath))
+                    {
+                        editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
+                    }
                 }
             }
 

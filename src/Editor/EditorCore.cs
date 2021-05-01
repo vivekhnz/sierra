@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Runtime.InteropServices;
 using Terrain.Engine.Interop;
 
@@ -124,9 +125,29 @@ namespace Terrain.Editor
             memoryPtr = editorMemoryPtr;
         }
 
-        internal static void ReloadCode(string dllPath, string dllShadowCopyPath)
+        internal static bool ReloadCode(string dllPath, string dllShadowCopyPath)
         {
-            moduleHandle = EngineInterop.ReloadEditorCode(dllPath, dllShadowCopyPath);
+            if (moduleHandle != IntPtr.Zero)
+            {
+                Win32.FreeLibrary(moduleHandle);
+                moduleHandle = IntPtr.Zero;
+            }
+
+            bool didShadowCopySucceed = false;
+            try
+            {
+                File.Copy(dllPath, dllShadowCopyPath, true);
+                didShadowCopySucceed = true;
+            }
+            catch
+            {
+                // ignore - we will return false and retry the load again the next tick
+            }
+
+            if (didShadowCopySucceed)
+            {
+                moduleHandle = Win32.LoadLibrary(dllShadowCopyPath);
+            }
 
             T GetApi<T>(string procName) where T : Delegate
             {
@@ -154,6 +175,8 @@ namespace Terrain.Editor
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
             editorSetRockTransform = GetApi<EditorSetRockTransform>("editorSetRockTransform");
             editorSetSceneParameters = GetApi<EditorSetSceneParameters>("editorSetSceneParameters");
+
+            return moduleHandle != IntPtr.Zero;
         }
 
         internal static void Update(float deltaTime, ref EditorInput input)

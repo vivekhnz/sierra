@@ -2,22 +2,6 @@
 
 global_variable Win32PlatformMemory *platformMemory;
 
-void win32ReloadEditorCode(const char *dllPath, const char *dllShadowCopyPath)
-{
-    Win32EditorCode *editorCode = &platformMemory->editorCode;
-
-    if (editorCode->dllModule)
-    {
-        FreeLibrary(editorCode->dllModule);
-        editorCode->dllModule = 0;
-    }
-
-    if (!CopyFileA(dllPath, dllShadowCopyPath, false))
-        return;
-
-    editorCode->dllModule = LoadLibraryA(dllShadowCopyPath);
-}
-
 Win32PlatformMemory *win32InitializePlatform(Win32InitPlatformParams *params)
 {
     uint8 *platformMemoryBaseAddress = params->memoryBaseAddress;

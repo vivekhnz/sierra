@@ -25,8 +25,6 @@ public
     public:
         // platform
         static void InitializeEngine(EditorInitPlatformParamsProxy params);
-        static System::IntPtr ReloadEditorCode(
-            System::String ^ dllPath, System::String ^ dllShadowCopyPath);
 
         // engine
         static System::IntPtr GetEngineMemory();

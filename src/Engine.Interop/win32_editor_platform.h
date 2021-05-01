@@ -6,15 +6,8 @@
 #include "../Engine/engine.h"
 #include "../EditorCore/editor.h"
 
-struct Win32EditorCode
-{
-    HMODULE dllModule;
-};
-
 struct Win32PlatformMemory
 {
-    Win32EditorCode editorCode;
-
     EngineMemory *engine;
     EditorMemory *editor;
 };
