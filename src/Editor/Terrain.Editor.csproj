@@ -13,8 +13,4 @@
     -->
   </PropertyGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Engine.Interop\Terrain.Engine.Interop.vcxproj" />
-  </ItemGroup>
-
 </Project>

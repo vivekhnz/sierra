@@ -11,8 +11,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		NuGet.config = NuGet.config
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Terrain.Engine.Interop", "src\Engine.Interop\Terrain.Engine.Interop.vcxproj", "{29BFE0D0-933E-403B-A573-8F1CA164124E}"
-EndProject
 Project("{911E67C6-3D85-4FCE-B560-20A9C3E3FF48}") = "win32_terrain", "C:\temp\terrain_mirror\bin\Debug\x64\win32_terrain.exe", "{248AFB8D-80C2-400A-A339-22D037480CEE}"
 	ProjectSection(DebuggerProjectSystem) = preProject
 		PortSupplier = 00000000-0000-0000-0000-000000000000
@@ -37,10 +35,6 @@ Global
 		{430FAED2-5D2A-40A7-82D9-A4D2B4E52FBE}.Debug|x64.Build.0 = Debug|x64
 		{430FAED2-5D2A-40A7-82D9-A4D2B4E52FBE}.Release|x64.ActiveCfg = Release|x64
 		{430FAED2-5D2A-40A7-82D9-A4D2B4E52FBE}.Release|x64.Build.0 = Release|x64
-		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x64.ActiveCfg = Debug|x64
-		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Debug|x64.Build.0 = Debug|x64
-		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x64.ActiveCfg = Release|x64
-		{29BFE0D0-933E-403B-A573-8F1CA164124E}.Release|x64.Build.0 = Release|x64
 		{248AFB8D-80C2-400A-A339-22D037480CEE}.Debug|x64.ActiveCfg = Release|x64
 		{248AFB8D-80C2-400A-A339-22D037480CEE}.Release|x64.ActiveCfg = Release|x64
 	EndGlobalSection
