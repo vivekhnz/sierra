@@ -54,7 +54,7 @@ function Initialize-Environment([string] $Platform) {
     }
 }
 
-function Invoke-Compiler {
+function Invoke-Msvc {
     param
     (
         [Parameter(Mandatory = $true)] [string] $SourceFile,
@@ -109,6 +109,29 @@ function Invoke-Compiler {
     }
 }
 
+function Invoke-Dotnet
+{
+    param
+    (
+        [Parameter(Mandatory = $true)] [string] $SolutionFile,
+        [Parameter(Mandatory = $true)] [string] $OutputName
+    )
+
+    $args = @(
+        'build',
+        $SolutionFile,
+        '--noLogo',
+        '--verbosity:quiet',
+        '--no-incremental'
+    )
+    $proc = Start-Process dotnet -ArgumentList $args -NoNewWindow -PassThru
+    
+    return @{
+        OutputName = $OutputName;
+        Process = $proc;
+    }
+}
+
 Initialize-Environment -Platform $platform
 
 if (!(Test-Path $OutputPath)) {
@@ -123,7 +146,7 @@ $LockFilePath = "$OutputPath\build.lock"
 "build" | Out-File $LockFilePath
 
 $builds = @()
-$builds += Invoke-Compiler `
+$builds += Invoke-Msvc `
     -SourceFile 'src\Engine\engine.cpp' -OutputName 'terrain_engine' `
     -IntermediateOutputDirName 'Engine' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
@@ -131,7 +154,7 @@ $builds += Invoke-Compiler `
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
     )
-$builds += Invoke-Compiler `
+$builds += Invoke-Msvc `
     -SourceFile 'src\Game\game.cpp' -OutputName 'terrain_game' `
     -IntermediateOutputDirName 'Game' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
@@ -139,7 +162,7 @@ $builds += Invoke-Compiler `
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
     )
-$builds += Invoke-Compiler `
+$builds += Invoke-Msvc `
     -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
     -IntermediateOutputDirName 'Game' `
     -NoImportLib `
@@ -151,7 +174,7 @@ $builds += Invoke-Compiler `
     -ImportLibs @(
         "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
     )
-$builds += Invoke-Compiler `
+$builds += Invoke-Msvc `
     -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
     -IntermediateOutputDirName 'EditorCore' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
@@ -159,6 +182,7 @@ $builds += Invoke-Compiler `
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
     )
+$builds += Invoke-Dotnet -SolutionFile 'Terrain.sln' -OutputName 'Editor'
 
 $glfwDllSrcPath = "deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"
 $glfwDllDstPath = "$OutputPath\glfw3.dll"
