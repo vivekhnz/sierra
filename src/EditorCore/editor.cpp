@@ -167,14 +167,15 @@ bool initializeEditor(EditorMemory *memory)
     state->orthographicCameraTransform =
         glm::translate(state->orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
-    state->uiState.brushRadius = 128.0f;
-    state->uiState.brushFalloff = 0.75f;
-    state->uiState.brushStrength = 0.12f;
-    state->uiState.lightDirection = 0.5f;
-    state->uiState.materialCount = 0;
-    state->uiState.rockPosition = glm::vec3(0);
-    state->uiState.rockRotation = glm::vec3(0);
-    state->uiState.rockScale = glm::vec3(1);
+    state->uiState.terrainBrushRadius = 128.0f;
+    state->uiState.terrainBrushFalloff = 0.75f;
+    state->uiState.terrainBrushStrength = 0.12f;
+    state->uiState.sceneLightDirection = 0.5f;
+
+    state->docState.materialCount = 0;
+    state->docState.rockPosition = glm::vec3(0);
+    state->docState.rockRotation = glm::vec3(0);
+    state->docState.rockScale = glm::vec3(1);
 
     SceneState *sceneState = &state->sceneState;
 
@@ -411,8 +412,8 @@ void compositeHeightmap(EditorMemory *memory,
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    float brushRadius = state->uiState.brushRadius / 2048.0f;
-    float brushFalloff = state->uiState.brushFalloff;
+    float brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
+    float brushFalloff = state->uiState.terrainBrushFalloff;
     float brushStrength = 1;
     if (blendProps->isInfluenceCumulative)
     {
@@ -422,8 +423,8 @@ void compositeHeightmap(EditorMemory *memory,
          * more. As a result, we should decrease the brush strength as the brush radius
          * increases to ensure the perceived brush strength remains constant.
          */
-        brushStrength = 0.01f + (0.15f * state->uiState.brushStrength);
-        brushStrength /= pow(state->uiState.brushRadius, 0.5f);
+        brushStrength = 0.01f + (0.15f * state->uiState.terrainBrushStrength);
+        brushStrength /= pow(state->uiState.terrainBrushRadius, 0.5f);
     }
 
     // render brush influence mask
@@ -725,8 +726,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             input->cursorOffset.x + input->cursorOffset.y;
 
                         memory->platformCaptureMouse();
-                        state->uiState.brushRadius = glm::clamp(
-                            state->uiState.brushRadius + brushRadiusIncrease, 32.0f, 2048.0f);
+                        state->uiState.terrainBrushRadius =
+                            glm::clamp(state->uiState.terrainBrushRadius + brushRadiusIncrease,
+                                32.0f, 2048.0f);
                         state->isAdjustingBrushParameters = true;
                     }
                     else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
@@ -735,8 +737,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                         memory->platformCaptureMouse();
-                        state->uiState.brushFalloff = glm::clamp(
-                            state->uiState.brushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
+                        state->uiState.terrainBrushFalloff = glm::clamp(
+                            state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f,
+                            0.99f);
                         state->isAdjustingBrushParameters = true;
                     }
                     else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
@@ -745,8 +748,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                         memory->platformCaptureMouse();
-                        state->uiState.brushStrength = glm::clamp(
-                            state->uiState.brushStrength + brushStrengthIncrease, 0.01f, 1.0f);
+                        state->uiState.terrainBrushStrength = glm::clamp(
+                            state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f,
+                            1.0f);
                         state->isAdjustingBrushParameters = true;
                     }
                     else
@@ -816,19 +820,19 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         if (isButtonDown(input, EDITOR_INPUT_KEY_1))
         {
-            state->uiState.tool = EDITOR_TOOL_RAISE_TERRAIN;
+            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_RAISE;
         }
         else if (isButtonDown(input, EDITOR_INPUT_KEY_2))
         {
-            state->uiState.tool = EDITOR_TOOL_LOWER_TERRAIN;
+            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_LOWER;
         }
         else if (isButtonDown(input, EDITOR_INPUT_KEY_3))
         {
-            state->uiState.tool = EDITOR_TOOL_FLATTEN_TERRAIN;
+            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_FLATTEN;
         }
         else if (isButtonDown(input, EDITOR_INPUT_KEY_4))
         {
-            state->uiState.tool = EDITOR_TOOL_SMOOTH_TERRAIN;
+            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_SMOOTH;
         }
     }
 
@@ -836,14 +840,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     sceneState->worldState.brushPos = newBrushPos;
     sceneState->worldState.brushCursorVisibleView =
         isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
-    sceneState->worldState.brushRadius = state->uiState.brushRadius / 2048.0f;
-    sceneState->worldState.brushFalloff = state->uiState.brushFalloff;
+    sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
+    sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
     // update material properties
-    sceneState->worldState.materialCount = state->uiState.materialCount;
+    sceneState->worldState.materialCount = state->docState.materialCount;
     for (uint32 i = 0; i < sceneState->worldState.materialCount; i++)
     {
-        const TerrainMaterialProperties *stateProps = &state->uiState.materialProps[i];
+        const TerrainMaterialProperties *stateProps = &state->docState.materialProps[i];
         GpuMaterialProperties *gpuProps = &sceneState->worldState.materialProps[i];
 
         gpuProps->textureSizeInWorldUnits.x = stateProps->textureSizeInWorldUnits;
@@ -862,8 +866,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update scene lighting
     glm::vec4 lightDir = glm::vec4(0);
-    lightDir.x = sin(state->uiState.lightDirection * glm::pi<float>() * -0.5);
-    lightDir.y = cos(state->uiState.lightDirection * glm::pi<float>() * 0.5);
+    lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
+    lightDir.y = cos(state->uiState.sceneLightDirection * glm::pi<float>() * 0.5);
     lightDir.z = 0.2f;
     engine->rendererUpdateLightingState(
         memory->engineMemory, &lightDir, true, true, true, true, true);
@@ -878,9 +882,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update rock instance buffer
     glm::mat4 rockTransform = glm::identity<glm::mat4>();
-    rockTransform = glm::translate(rockTransform, state->uiState.rockPosition);
-    rockTransform = glm::scale(rockTransform, state->uiState.rockScale);
-    glm::vec3 rockRotEuler = glm::radians(state->uiState.rockRotation);
+    rockTransform = glm::translate(rockTransform, state->docState.rockPosition);
+    rockTransform = glm::scale(rockTransform, state->docState.rockScale);
+    glm::vec3 rockRotEuler = glm::radians(state->docState.rockRotation);
     glm::quat rockRotQuat = glm::quat(rockRotEuler);
     glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
     rockTransform *= rockRotMat;
@@ -890,27 +894,27 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
 
     BrushBlendProperties blendProps = {};
-    switch (state->uiState.tool)
+    switch (state->uiState.terrainBrushTool)
     {
-    case EDITOR_TOOL_RAISE_TERRAIN:
+    case TERRAIN_BRUSH_TOOL_RAISE:
         blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 1;
         blendProps.addSubSign = 1;
         break;
-    case EDITOR_TOOL_LOWER_TERRAIN:
+    case TERRAIN_BRUSH_TOOL_LOWER:
         blendProps.shaderProgramHandle = brushBlendAddSubShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 1;
         blendProps.addSubSign = -1;
         break;
-    case EDITOR_TOOL_FLATTEN_TERRAIN:
+    case TERRAIN_BRUSH_TOOL_FLATTEN:
         blendProps.shaderProgramHandle = brushBlendFlattenShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = false;
         blendProps.iterations = 1;
         blendProps.flattenHeight = state->activeBrushStrokeInitialHeight;
         break;
-    case EDITOR_TOOL_SMOOTH_TERRAIN:
+    case TERRAIN_BRUSH_TOOL_SMOOTH:
         blendProps.shaderProgramHandle = brushBlendSmoothShaderProgram->shaderProgram->handle;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 3;
@@ -1247,52 +1251,26 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererDrawElements(GL_TRIANGLES, 6);
 }
 
+API_EXPORT EDITOR_GET_UI_STATE(editorGetUiState)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    return &state->uiState;
+}
+
 API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(editorGetImportedHeightmapAssetId)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
     return state->assets.textureVirtualImportedHeightmap;
 }
 
-API_EXPORT EDITOR_GET_BRUSH_TOOL(editorGetBrushTool)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-    return state->uiState.tool;
-}
-
-API_EXPORT EDITOR_SET_BRUSH_TOOL(editorSetBrushTool)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-    state->uiState.tool = tool;
-}
-
-API_EXPORT EDITOR_GET_BRUSH_PARAMETERS(editorGetBrushParameters)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-
-    TerrainBrushParameters result = {};
-    result.radius = state->uiState.brushRadius;
-    result.falloff = state->uiState.brushFalloff;
-    result.strength = state->uiState.brushStrength;
-
-    return result;
-}
-
-API_EXPORT EDITOR_SET_BRUSH_PARAMETERS(editorSetBrushParameters)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-    state->uiState.brushRadius = radius;
-    state->uiState.brushFalloff = falloff;
-    state->uiState.brushStrength = strength;
-}
-
 API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(state->uiState.materialCount < MAX_MATERIAL_COUNT);
-    uint32 index = state->uiState.materialCount++;
+    assert(state->docState.materialCount < MAX_MATERIAL_COUNT);
+    uint32 index = state->docState.materialCount++;
 
-    TerrainMaterialProperties *material = &state->uiState.materialProps[index];
+    TerrainMaterialProperties *material = &state->docState.materialProps[index];
     material->albedoTextureAssetId = props.albedoTextureAssetId;
     material->normalTextureAssetId = props.normalTextureAssetId;
     material->displacementTextureAssetId = props.displacementTextureAssetId;
@@ -1309,10 +1287,10 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    state->uiState.materialCount--;
-    for (uint32 i = index; i < state->uiState.materialCount; i++)
+    state->docState.materialCount--;
+    for (uint32 i = index; i < state->docState.materialCount; i++)
     {
-        state->uiState.materialProps[i] = state->uiState.materialProps[i + 1];
+        state->docState.materialProps[i] = state->docState.materialProps[i + 1];
     }
 }
 
@@ -1323,9 +1301,9 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
     assert(indexA < MAX_MATERIAL_COUNT);
     assert(indexB < MAX_MATERIAL_COUNT);
 
-    TerrainMaterialProperties temp = state->uiState.materialProps[indexA];
-    state->uiState.materialProps[indexA] = state->uiState.materialProps[indexB];
-    state->uiState.materialProps[indexB] = temp;
+    TerrainMaterialProperties temp = state->docState.materialProps[indexA];
+    state->docState.materialProps[indexA] = state->docState.materialProps[indexB];
+    state->docState.materialProps[indexB] = temp;
 }
 
 API_EXPORT EDITOR_GET_MATERIAL_PROPERTIES(editorGetMaterialProperties)
@@ -1333,7 +1311,7 @@ API_EXPORT EDITOR_GET_MATERIAL_PROPERTIES(editorGetMaterialProperties)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    return state->uiState.materialProps[index];
+    return state->docState.materialProps[index];
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
@@ -1341,7 +1319,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    TerrainMaterialProperties *matProps = &state->uiState.materialProps[index];
+    TerrainMaterialProperties *matProps = &state->docState.materialProps[index];
     uint32 *materialTextureAssetIds[] = {
         &matProps->albedoTextureAssetId,       //
         &matProps->normalTextureAssetId,       //
@@ -1356,7 +1334,7 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    TerrainMaterialProperties *matProps = &state->uiState.materialProps[index];
+    TerrainMaterialProperties *matProps = &state->docState.materialProps[index];
     matProps->textureSizeInWorldUnits = textureSize;
     matProps->slopeStart = slopeStart;
     matProps->slopeEnd = slopeEnd;
@@ -1367,19 +1345,13 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 API_EXPORT EDITOR_SET_ROCK_TRANSFORM(editorSetRockTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
-    state->uiState.rockPosition.x = positionX;
-    state->uiState.rockPosition.y = positionY;
-    state->uiState.rockPosition.z = positionZ;
-    state->uiState.rockRotation.x = rotationX;
-    state->uiState.rockRotation.y = rotationY;
-    state->uiState.rockRotation.z = rotationZ;
-    state->uiState.rockScale.x = scaleX;
-    state->uiState.rockScale.y = scaleY;
-    state->uiState.rockScale.z = scaleZ;
-}
-
-API_EXPORT EDITOR_SET_SCENE_PARAMETERS(editorSetSceneParameters)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-    state->uiState.lightDirection = lightDirection;
+    state->docState.rockPosition.x = positionX;
+    state->docState.rockPosition.y = positionY;
+    state->docState.rockPosition.z = positionZ;
+    state->docState.rockRotation.x = rotationX;
+    state->docState.rockRotation.y = rotationY;
+    state->docState.rockRotation.z = rotationZ;
+    state->docState.rockScale.x = scaleX;
+    state->docState.rockScale.y = scaleY;
+    state->docState.rockScale.z = scaleZ;
 }

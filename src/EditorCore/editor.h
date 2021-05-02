@@ -17,12 +17,12 @@
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 
-enum EditorTool
+enum TerrainBrushTool
 {
-    EDITOR_TOOL_RAISE_TERRAIN = 0,
-    EDITOR_TOOL_LOWER_TERRAIN = 1,
-    EDITOR_TOOL_FLATTEN_TERRAIN = 2,
-    EDITOR_TOOL_SMOOTH_TERRAIN = 3
+    TERRAIN_BRUSH_TOOL_RAISE = 0,
+    TERRAIN_BRUSH_TOOL_LOWER = 1,
+    TERRAIN_BRUSH_TOOL_FLATTEN = 2,
+    TERRAIN_BRUSH_TOOL_SMOOTH = 3
 };
 
 struct TerrainMaterialProperties
@@ -41,11 +41,16 @@ struct TerrainMaterialProperties
 
 struct EditorUiState
 {
-    EditorTool tool;
-    float brushRadius;
-    float brushFalloff;
-    float brushStrength;
-    float lightDirection;
+    TerrainBrushTool terrainBrushTool;
+    float terrainBrushRadius;
+    float terrainBrushFalloff;
+    float terrainBrushStrength;
+
+    float sceneLightDirection;
+};
+
+struct EditorDocumentState
+{
     uint32 materialCount;
     TerrainMaterialProperties materialProps[MAX_MATERIAL_COUNT];
     glm::vec3 rockPosition;
@@ -183,6 +188,7 @@ struct EditorState
     float activeBrushStrokeInitialHeight;
 
     EditorUiState uiState;
+    EditorDocumentState docState;
     SceneState sceneState;
 };
 
@@ -285,13 +291,6 @@ struct EditorViewContext
     uint32 height;
 };
 
-struct TerrainBrushParameters
-{
-    float radius;
-    float falloff;
-    float strength;
-};
-
 enum TerrainMaterialTextureType
 {
     TERRAIN_MAT_TEXTURE_ALBEDO = 0,
@@ -314,18 +313,8 @@ typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 #define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(name) uint32 name(EditorMemory *memory)
 typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(EditorGetImportedHeightmapAssetId);
 
-#define EDITOR_GET_BRUSH_TOOL(name) EditorTool name(EditorMemory *memory)
-typedef EDITOR_GET_BRUSH_TOOL(EditorGetBrushTool);
-
-#define EDITOR_SET_BRUSH_TOOL(name) void name(EditorMemory *memory, EditorTool tool)
-typedef EDITOR_SET_BRUSH_TOOL(EditorSetBrushTool);
-
-#define EDITOR_GET_BRUSH_PARAMETERS(name) TerrainBrushParameters name(EditorMemory *memory)
-typedef EDITOR_GET_BRUSH_PARAMETERS(EditorGetBrushParameters);
-
-#define EDITOR_SET_BRUSH_PARAMETERS(name)                                                     \
-    void name(EditorMemory *memory, float radius, float falloff, float strength)
-typedef EDITOR_SET_BRUSH_PARAMETERS(EditorSetBrushParameters);
+#define EDITOR_GET_UI_STATE(name) EditorUiState *name(EditorMemory *memory)
+typedef EDITOR_GET_UI_STATE(EditorGetUiState);
 
 #define EDITOR_ADD_MATERIAL(name)                                                             \
     void name(EditorMemory *memory, TerrainMaterialProperties props)
@@ -357,8 +346,5 @@ typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
         float rotationX, float rotationY, float rotationZ, float scaleX, float scaleY,        \
         float scaleZ)
 typedef EDITOR_SET_ROCK_TRANSFORM(EditorSetRockTransform);
-
-#define EDITOR_SET_SCENE_PARAMETERS(name) void name(EditorMemory *memory, float lightDirection)
-typedef EDITOR_SET_SCENE_PARAMETERS(EditorSetSceneParameters);
 
 #endif

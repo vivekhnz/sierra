@@ -17,7 +17,7 @@ namespace Terrain.Editor
 
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
-        Dictionary<RadioButton, EditorTool> editorToolByToolButtons;
+        Dictionary<RadioButton, TerrainBrushTool> editorToolByToolButtons;
 
         private int prevAssetCount;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
@@ -33,12 +33,12 @@ namespace Terrain.Editor
             EditorPlatform.Initialize();
             InitializeComponent();
 
-            editorToolByToolButtons = new Dictionary<RadioButton, EditorTool>
+            editorToolByToolButtons = new Dictionary<RadioButton, TerrainBrushTool>
             {
-                [rbEditorToolRaiseTerrain] = EditorTool.RaiseTerrain,
-                [rbEditorToolLowerTerrain] = EditorTool.LowerTerrain,
-                [rbEditorToolFlattenTerrain] = EditorTool.FlattenTerrain,
-                [rbEditorToolSmoothTerrain] = EditorTool.SmoothTerrain
+                [rbEditorToolRaiseTerrain] = TerrainBrushTool.Raise,
+                [rbEditorToolLowerTerrain] = TerrainBrushTool.Lower,
+                [rbEditorToolFlattenTerrain] = TerrainBrushTool.Flatten,
+                [rbEditorToolSmoothTerrain] = TerrainBrushTool.Smooth
             };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
@@ -81,10 +81,10 @@ namespace Terrain.Editor
         {
             if (!isUiInitialized) return;
 
-            EditorCore.SetBrushParameters(
-                (float)brushRadiusSlider.Value,
-                (float)brushFalloffSlider.Value,
-                (float)brushStrengthSlider.Value);
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+            uiState.TerrainBrushRadius = (float)brushRadiusSlider.Value;
+            uiState.TerrainBrushFalloff = (float)brushFalloffSlider.Value;
+            uiState.TerrainBrushStrength = (float)brushStrengthSlider.Value;
         }
 
         private void rockTransformSlider_ValueChanged(object sender,
@@ -107,7 +107,8 @@ namespace Terrain.Editor
         private void lightDirectionSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
-            EditorCore.SetSceneParameters((float)lightDirectionSlider.Value);
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+            uiState.SceneLightDirection = (float)lightDirectionSlider.Value;
         }
 
         private void btnAddMaterial_Click(object sender, RoutedEventArgs e)
@@ -183,7 +184,8 @@ namespace Terrain.Editor
             var senderBtn = sender as RadioButton;
             if (senderBtn == null) return;
 
-            EditorCore.SetBrushTool(editorToolByToolButtons[senderBtn]);
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+            uiState.TerrainBrushTool = editorToolByToolButtons[senderBtn];
         }
 
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -226,24 +228,24 @@ namespace Terrain.Editor
 
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
-            var brushParams = EditorCore.GetBrushParameters();
-            if (brushRadiusSlider.Value != brushParams.Radius)
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+
+            if (brushRadiusSlider.Value != uiState.TerrainBrushRadius)
             {
-                brushRadiusSlider.Value = brushParams.Radius;
+                brushRadiusSlider.Value = uiState.TerrainBrushRadius;
             }
-            if (brushFalloffSlider.Value != brushParams.Falloff)
+            if (brushFalloffSlider.Value != uiState.TerrainBrushFalloff)
             {
-                brushFalloffSlider.Value = brushParams.Falloff;
+                brushFalloffSlider.Value = uiState.TerrainBrushFalloff;
             }
-            if (brushStrengthSlider.Value != brushParams.Strength)
+            if (brushStrengthSlider.Value != uiState.TerrainBrushStrength)
             {
-                brushStrengthSlider.Value = brushParams.Strength;
+                brushStrengthSlider.Value = uiState.TerrainBrushStrength;
             }
 
-            EditorTool currentTool = EditorCore.GetBrushTool();
             foreach (var kvp in editorToolByToolButtons)
             {
-                bool shouldBeSelected = kvp.Value == currentTool;
+                bool shouldBeSelected = kvp.Value == uiState.TerrainBrushTool;
                 if (shouldBeSelected && kvp.Key.IsChecked != true)
                 {
                     kvp.Key.IsChecked = true;
