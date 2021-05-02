@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Terrain.Editor
+namespace Terrain.Editor.Engine
 {
     [StructLayout(LayoutKind.Sequential)]
     struct MemoryBlock

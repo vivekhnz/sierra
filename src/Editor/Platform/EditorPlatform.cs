@@ -7,8 +7,10 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Threading;
+using Terrain.Editor.Core;
+using Terrain.Editor.Engine;
 
-namespace Terrain.Editor
+namespace Terrain.Editor.Platform
 {
     public enum EditorView
     {
@@ -16,74 +18,6 @@ namespace Terrain.Editor
         Scene = 1,
         HeightmapPreview = 2
     };
-
-    [Flags]
-    internal enum EditorInputButtons : ulong
-    {
-        MouseLeft = 1L << 0,
-        MouseMiddle = 1L << 1,
-        MouseRight = 1L << 2,
-        KeySpace = 1L << 3,
-        Key0 = 1L << 4,
-        Key1 = 1L << 5,
-        Key2 = 1L << 6,
-        Key3 = 1L << 7,
-        Key4 = 1L << 8,
-        Key5 = 1L << 9,
-        Key6 = 1L << 10,
-        Key7 = 1L << 11,
-        Key8 = 1L << 12,
-        Key9 = 1L << 13,
-        KeyA = 1L << 14,
-        KeyB = 1L << 15,
-        KeyC = 1L << 16,
-        KeyD = 1L << 17,
-        KeyE = 1L << 18,
-        KeyF = 1L << 19,
-        KeyG = 1L << 20,
-        KeyH = 1L << 21,
-        KeyI = 1L << 22,
-        KeyJ = 1L << 23,
-        KeyK = 1L << 24,
-        KeyL = 1L << 25,
-        KeyM = 1L << 26,
-        KeyN = 1L << 27,
-        KeyO = 1L << 28,
-        KeyP = 1L << 29,
-        KeyQ = 1L << 30,
-        KeyR = 1L << 31,
-        KeyS = 1L << 32,
-        KeyT = 1L << 33,
-        KeyU = 1L << 34,
-        KeyV = 1L << 35,
-        KeyW = 1L << 36,
-        KeyX = 1L << 37,
-        KeyY = 1L << 38,
-        KeyZ = 1L << 39,
-        KeyEscape = 1L << 40,
-        KeyEnter = 1L << 41,
-        KeyRight = 1L << 42,
-        KeyLeft = 1L << 43,
-        KeyDown = 1L << 44,
-        KeyUp = 1L << 45,
-        KeyF1 = 1L << 46,
-        KeyF2 = 1L << 47,
-        KeyF3 = 1L << 48,
-        KeyF4 = 1L << 49,
-        KeyF5 = 1L << 50,
-        KeyF6 = 1L << 51,
-        KeyF7 = 1L << 52,
-        KeyF8 = 1L << 53,
-        KeyF9 = 1L << 54,
-        KeyF10 = 1L << 55,
-        KeyF11 = 1L << 56,
-        KeyF12 = 1L << 57,
-        KeyLeftShift = 1L << 58,
-        KeyLeftControl = 1L << 59,
-        KeyRightShift = 1L << 60,
-        KeyRightControl = 1L << 61,
-        KeyAlt = 1L << 62
-    }
 
     internal class EditorViewportWindow
     {
@@ -180,11 +114,13 @@ namespace Terrain.Editor
             IntPtr editorMemoryDataPtr = appMemoryPtr;
             IntPtr engineMemoryDataPtr = editorMemoryDataPtr + editorMemorySizeInBytes;
 
-            IntPtr engineMemoryPtr = Engine.Initialize(engineMemoryDataPtr, engineMemorySizeInBytes,
+            IntPtr engineMemoryPtr = TerrainEngine.Initialize(engineMemoryDataPtr, engineMemorySizeInBytes,
                 editorPlatformLogMessage, editorPlatformQueueAssetLoad,
-                editorPlatformWatchAssetFile);
+                editorPlatformWatchAssetFile, Win32.LoadLibrary, Win32.GetProcAddress,
+                Win32.FreeLibrary);
             EditorCore.Initialize(editorMemoryDataPtr, editorMemorySizeInBytes,
-                editorPlatformCaptureMouse, engineMemoryPtr);
+                editorPlatformCaptureMouse, engineMemoryPtr, Win32.LoadLibrary,
+                Win32.GetProcAddress, Win32.FreeLibrary);
 
             var interopHelper = new WindowInteropHelper(Application.Current.MainWindow);
             mainWindowHwnd = interopHelper.EnsureHandle();
@@ -216,8 +152,8 @@ namespace Terrain.Editor
             };
             Win32.RegisterClass(ref viewportWindowClass);
 
-            Engine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-            EditorCore.UpdateEngineApi(Engine.EngineApiPtr);
+            TerrainEngine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+            EditorCore.UpdateEngineApi(TerrainEngine.EngineApiPtr);
             engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
@@ -516,8 +452,8 @@ namespace Terrain.Editor
                 DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
                 if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
                 {
-                    Engine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-                    EditorCore.UpdateEngineApi(Engine.EngineApiPtr);
+                    TerrainEngine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
+                    EditorCore.UpdateEngineApi(TerrainEngine.EngineApiPtr);
                     engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
                 }
 
@@ -538,7 +474,7 @@ namespace Terrain.Editor
                 if (lastWriteTimeUtc > asset.LastUpdatedTimeUtc)
                 {
                     asset.LastUpdatedTimeUtc = lastWriteTimeUtc;
-                    Engine.InvalidateAsset(asset.AssetId);
+                    TerrainEngine.InvalidateAsset(asset.AssetId);
                 }
             }
 
@@ -549,7 +485,7 @@ namespace Terrain.Editor
                 try
                 {
                     var data = File.ReadAllBytes(request.Path);
-                    Engine.SetAssetData(request.AssetId, data);
+                    TerrainEngine.SetAssetData(request.AssetId, data);
 
                     assetLoadRequests.RemoveAt(i);
                     i--;
@@ -590,7 +526,7 @@ namespace Terrain.Editor
         internal static void Shutdown()
         {
             renderTimer.Stop();
-            Engine.Shutdown();
+            TerrainEngine.Shutdown();
 
             Win32.DestroyGLContext(glRenderingContext);
             Win32.DestroyWindow(dummyWindowHwnd);

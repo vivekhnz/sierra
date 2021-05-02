@@ -5,6 +5,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using Terrain.Editor.Core;
+using Terrain.Editor.Engine;
+using Terrain.Editor.Platform;
 
 namespace Terrain.Editor
 {
@@ -72,7 +75,11 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                EditorCore.LoadHeightmapTexture(ofd.FileName);
+                uint? heightmapAssetId = EditorCore.GetImportedHeightmapAssetId();
+                if (heightmapAssetId.HasValue)
+                {
+                    EditorPlatform.QueueAssetLoad(heightmapAssetId.Value, ofd.FileName);
+                }
             }
         }
 
@@ -256,10 +263,10 @@ namespace Terrain.Editor
                 }
             }
 
-            int assetCount = Engine.GetRegisteredAssetCount();
+            int assetCount = TerrainEngine.GetRegisteredAssetCount();
             if (assetCount != prevAssetCount)
             {
-                var registeredAssets = Engine.GetRegisteredAssets();
+                var registeredAssets = TerrainEngine.GetRegisteredAssets();
                 foreach (var asset in registeredAssets)
                 {
                     if (asset.RegistrationType == AssetRegistrationType.File

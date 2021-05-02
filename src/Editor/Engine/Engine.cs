@@ -4,7 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
 
-namespace Terrain.Editor
+namespace Terrain.Editor.Engine
 {
     internal enum AssetType
     {
@@ -14,7 +14,7 @@ namespace Terrain.Editor
         Mesh
     }
 
-    internal static class Engine
+    internal static class TerrainEngine
     {
         private delegate IntPtr EngineGetApi();
 
@@ -23,14 +23,24 @@ namespace Terrain.Editor
         private static IntPtr memoryPtr;
         private static IntPtr moduleHandle;
 
+        private static Func<string, IntPtr> loadLibrary;
+        private static Func<IntPtr, string, IntPtr> getProcAddress;
+        private static Func<IntPtr, bool> freeLibrary;
+
         private static EngineApi api;
 
         internal static IntPtr EngineApiPtr { get; private set; }
 
         internal static IntPtr Initialize(IntPtr engineMemoryDataPtr,
             int engineMemorySizeInBytes, PlatformLogMessage logMessage,
-            PlatformQueueAssetLoad queueAssetLoad, PlatformWatchAssetFile watchAssetFile)
+            PlatformQueueAssetLoad queueAssetLoad, PlatformWatchAssetFile watchAssetFile,
+            Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
+            Func<IntPtr, bool> freeLibrary)
         {
+            TerrainEngine.loadLibrary = loadLibrary;
+            TerrainEngine.getProcAddress = getProcAddress;
+            TerrainEngine.freeLibrary = freeLibrary;
+
             memory = new EngineMemory
             {
                 PlatformLogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
@@ -59,7 +69,7 @@ namespace Terrain.Editor
         {
             if (moduleHandle != IntPtr.Zero)
             {
-                Win32.FreeLibrary(moduleHandle);
+                freeLibrary(moduleHandle);
                 moduleHandle = IntPtr.Zero;
                 api = default(EngineApi);
             }
@@ -78,11 +88,10 @@ namespace Terrain.Editor
                 }
             }
 
-            moduleHandle = Win32.LoadLibrary(dllShadowCopyPath);
+            moduleHandle = loadLibrary(dllShadowCopyPath);
             if (moduleHandle != IntPtr.Zero)
             {
-                IntPtr engineGetApiPtr = Win32.GetProcAddress(
-                    moduleHandle, "engineGetApi");
+                IntPtr engineGetApiPtr = getProcAddress(moduleHandle, "engineGetApi");
                 EngineGetApi engineGetApi = Marshal
                     .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
 

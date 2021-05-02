@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Interop;
 using System.Windows.Media;
+using Terrain.Editor.Platform;
 
 namespace Terrain.Editor.Controls
 {
