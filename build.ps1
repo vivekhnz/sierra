@@ -122,7 +122,8 @@ function Invoke-Dotnet
         $SolutionFile,
         '--noLogo',
         '--verbosity:quiet',
-        '--no-incremental'
+        '--no-incremental',
+        '-p:CopyRetryCount=0'
     )
     $proc = Start-Process dotnet -ArgumentList $args -NoNewWindow -PassThru
     
