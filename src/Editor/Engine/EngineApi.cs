@@ -25,7 +25,7 @@ namespace Terrain.Editor.Engine
         public MemoryBlock Assets;
     }
 
-    enum AssetRegistrationType
+    public enum AssetRegistrationType
     {
         File,
         Composite,

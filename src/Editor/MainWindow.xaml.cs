@@ -1,13 +1,15 @@
 ﻿using Microsoft.Win32;
 using System;
-using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using System.Windows.Threading;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 using Terrain.Editor.Platform;
+using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor
 {
@@ -19,18 +21,12 @@ namespace Terrain.Editor
         const int maxMaterialCount = 8;
 
         private EditorUiStateViewModel editorUiState;
+        private EditorAssetsViewModel editorAssets;
 
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
 
         private int prevAssetCount;
-        private readonly static Dictionary<uint, string> textureAssetIdToFilename
-            = new Dictionary<uint, string>
-            {
-                [0] = null
-            };
-        private static Dictionary<string, uint> textureFilenameToAssetId
-            = new Dictionary<string, uint>();
 
         public MainWindow()
         {
@@ -38,6 +34,11 @@ namespace Terrain.Editor
             InitializeComponent();
 
             editorUiState = (EditorUiStateViewModel)FindResource("EditorUiState");
+            editorAssets = (EditorAssetsViewModel)FindResource("EditorAssets");
+
+            var cvsTextureFileAssets = (CollectionViewSource)FindResource("TextureFileAssets");
+            cvsTextureFileAssets.Filter += EditorAssetsViewModel.BuildAssetFilter(
+                new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
@@ -45,11 +46,6 @@ namespace Terrain.Editor
             };
             updateUiTimer.Tick += updateUiTimer_Tick;
             updateUiTimer.Start();
-
-            cbMaterialAlbedoTexture.ItemsSource = textureFilenameToAssetId.Keys;
-            cbMaterialNormalTexture.ItemsSource = textureFilenameToAssetId.Keys;
-            cbMaterialAoTexture.ItemsSource = textureFilenameToAssetId.Keys;
-            cbMaterialDisplacementTexture.ItemsSource = textureFilenameToAssetId.Keys;
 
             UpdateMaterialDetails(0);
 
@@ -97,12 +93,19 @@ namespace Terrain.Editor
 
         private void btnAddMaterial_Click(object sender, RoutedEventArgs e)
         {
+            uint GetTextureAssetId(string relativePath)
+            {
+                var assetVm = editorAssets.RegisteredAssets.FirstOrDefault(
+                    asset => asset.FileRelativePath == relativePath);
+                return assetVm?.AssetId ?? 0;
+            }
+
             AddMaterial(new TerrainMaterialProperties
             {
-                AlbedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
-                NormalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
-                DisplacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
-                AoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
+                AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
+                NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
+                DisplacementTextureAssetId = GetTextureAssetId("ground_displacement.tga"),
+                AoTextureAssetId = GetTextureAssetId("ground_ao.tga"),
                 TextureSizeInWorldUnits = 2.5f,
                 SlopeStart = 0.0f,
                 SlopeEnd = 0.0f,
@@ -171,13 +174,9 @@ namespace Terrain.Editor
         private void OnMaterialTextureComboBoxSelectionChanged(object sender,
             SelectionChangedEventArgs e)
         {
-            if (!(sender is ComboBox dropdown) || lbMaterials.SelectedIndex < 0) return;
-
-            string textureFilename = dropdown.SelectedItem.ToString();
-            if (!textureFilenameToAssetId.TryGetValue(textureFilename, out uint textureAssetId))
-            {
-                return;
-            }
+            int materialIdx = lbMaterials.SelectedIndex;
+            if (!(sender is ComboBox dropdown) || materialIdx < 0) return;
+            if (!(dropdown.SelectedItem is AssetViewModel assetVm)) return;
 
             TerrainMaterialTextureType textureType = TerrainMaterialTextureType.Albedo;
             if (dropdown == cbMaterialAlbedoTexture)
@@ -196,36 +195,32 @@ namespace Terrain.Editor
             {
                 textureType = TerrainMaterialTextureType.AmbientOcclusion;
             }
-            EditorCore.SetMaterialTexture(lbMaterials.SelectedIndex, textureType, textureAssetId);
+            EditorCore.SetMaterialTexture(materialIdx, textureType, assetVm.AssetId);
         }
 
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
             editorUiState.CheckForChanges();
+            editorAssets.CheckForChanges();
 
             int assetCount = TerrainEngine.GetRegisteredAssetCount();
             if (assetCount != prevAssetCount)
             {
-                var registeredAssets = TerrainEngine.GetRegisteredAssets();
-                foreach (var asset in registeredAssets)
-                {
-                    if (asset.RegistrationType == AssetRegistrationType.File
-                        && asset.GetAssetType() == AssetType.Texture)
-                    {
-                        var fileState = asset.GetFileState();
-                        textureAssetIdToFilename[asset.Id] = fileState.RelativePath;
-                        textureFilenameToAssetId[fileState.RelativePath] = asset.Id;
-                    }
-                }
-
                 if (prevAssetCount == 0)
                 {
+                    uint GetTextureAssetId(string relativePath)
+                    {
+                        var assetVm = editorAssets.RegisteredAssets.FirstOrDefault(
+                            asset => asset.FileRelativePath == relativePath);
+                        return assetVm?.AssetId ?? 0;
+                    }
+
                     AddMaterial(new TerrainMaterialProperties
                     {
-                        AlbedoTextureAssetId = textureFilenameToAssetId["ground_albedo.bmp"],
-                        NormalTextureAssetId = textureFilenameToAssetId["ground_normal.bmp"],
-                        DisplacementTextureAssetId = textureFilenameToAssetId["ground_displacement.tga"],
-                        AoTextureAssetId = textureFilenameToAssetId["ground_ao.tga"],
+                        AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
+                        NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
+                        DisplacementTextureAssetId = GetTextureAssetId("ground_displacement.tga"),
+                        AoTextureAssetId = GetTextureAssetId("ground_ao.tga"),
                         TextureSizeInWorldUnits = 2.5f,
                         SlopeStart = 0.0f,
                         SlopeEnd = 0.0f,
@@ -234,10 +229,10 @@ namespace Terrain.Editor
                     });
                     AddMaterial(new TerrainMaterialProperties
                     {
-                        AlbedoTextureAssetId = textureFilenameToAssetId["rock_albedo.jpg"],
-                        NormalTextureAssetId = textureFilenameToAssetId["rock_normal.jpg"],
-                        DisplacementTextureAssetId = textureFilenameToAssetId["rock_displacement.tga"],
-                        AoTextureAssetId = textureFilenameToAssetId["rock_ao.tga"],
+                        AlbedoTextureAssetId = GetTextureAssetId("rock_albedo.jpg"),
+                        NormalTextureAssetId = GetTextureAssetId("rock_normal.jpg"),
+                        DisplacementTextureAssetId = GetTextureAssetId("rock_displacement.tga"),
+                        AoTextureAssetId = GetTextureAssetId("rock_ao.tga"),
                         TextureSizeInWorldUnits = 13.0f,
                         SlopeStart = 0.2f,
                         SlopeEnd = 0.4f,
@@ -246,10 +241,10 @@ namespace Terrain.Editor
                     });
                     AddMaterial(new TerrainMaterialProperties
                     {
-                        AlbedoTextureAssetId = textureFilenameToAssetId["snow_albedo.jpg"],
-                        NormalTextureAssetId = textureFilenameToAssetId["snow_normal.jpg"],
-                        DisplacementTextureAssetId = textureFilenameToAssetId["snow_displacement.tga"],
-                        AoTextureAssetId = textureFilenameToAssetId["snow_ao.tga"],
+                        AlbedoTextureAssetId = GetTextureAssetId("snow_albedo.jpg"),
+                        NormalTextureAssetId = GetTextureAssetId("snow_normal.jpg"),
+                        DisplacementTextureAssetId = GetTextureAssetId("snow_displacement.tga"),
+                        AoTextureAssetId = GetTextureAssetId("snow_ao.tga"),
                         TextureSizeInWorldUnits = 2.0f,
                         SlopeStart = 0.4f,
                         SlopeEnd = 0.2f,
@@ -282,10 +277,16 @@ namespace Terrain.Editor
             btnMoveMaterialDown.IsEnabled = !isLastMaterial;
             btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
 
-            cbMaterialAlbedoTexture.SelectedItem = textureAssetIdToFilename[props.AlbedoTextureAssetId];
-            cbMaterialNormalTexture.SelectedItem = textureAssetIdToFilename[props.NormalTextureAssetId];
-            cbMaterialDisplacementTexture.SelectedItem = textureAssetIdToFilename[props.DisplacementTextureAssetId];
-            cbMaterialAoTexture.SelectedItem = textureAssetIdToFilename[props.AoTextureAssetId];
+            AssetViewModel FindAssetViewModel(uint assetId)
+            {
+                return editorAssets.RegisteredAssets.FirstOrDefault(
+                    asset => asset.AssetId == assetId);
+            }
+
+            cbMaterialAlbedoTexture.SelectedItem = FindAssetViewModel(props.AlbedoTextureAssetId);
+            cbMaterialNormalTexture.SelectedItem = FindAssetViewModel(props.NormalTextureAssetId);
+            cbMaterialDisplacementTexture.SelectedItem = FindAssetViewModel(props.DisplacementTextureAssetId);
+            cbMaterialAoTexture.SelectedItem = FindAssetViewModel(props.AoTextureAssetId);
             materialTextureSizeSlider.Value = props.TextureSizeInWorldUnits;
 
             materialSlopeStartSlider.Value = props.SlopeStart;

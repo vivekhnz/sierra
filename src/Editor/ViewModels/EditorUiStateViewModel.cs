@@ -1,16 +1,9 @@
-using System.ComponentModel;
 using Terrain.Editor.Core;
 
-namespace Terrain.Editor
+namespace Terrain.Editor.ViewModels
 {
-    public class EditorUiStateViewModel : INotifyPropertyChanged
+    public class EditorUiStateViewModel : ViewModelBase
     {
-        public event PropertyChangedEventHandler PropertyChanged;
-        private void NotifyPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
-        }
-
         private EditorUiState lastReadState;
 
         public TerrainBrushTool TerrainBrushTool
@@ -41,6 +34,7 @@ namespace Terrain.Editor
                 NotifyPropertyChanged(nameof(TerrainBrushRadius));
             }
         }
+
         public float TerrainBrushFalloff
         {
             get

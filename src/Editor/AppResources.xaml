@@ -1,9 +1,10 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:editor="clr-namespace:Terrain.Editor"
+    xmlns:vm="clr-namespace:Terrain.Editor.ViewModels"
     xmlns:utils="clr-namespace:Terrain.Editor.Utilities">
 
-  <editor:EditorUiStateViewModel x:Key="EditorUiState" />
+  <vm:EditorUiStateViewModel x:Key="EditorUiState" />
+  <vm:EditorAssetsViewModel x:Key="EditorAssets" />
 
   <utils:ComparisonConverter x:Key="ComparisonConverter" />
 

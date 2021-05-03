@@ -6,7 +6,7 @@ using System.Threading;
 
 namespace Terrain.Editor.Engine
 {
-    internal enum AssetType
+    public enum AssetType
     {
         Shader = 1,
         ShaderProgram,

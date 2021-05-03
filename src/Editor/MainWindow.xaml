@@ -6,6 +6,10 @@
     xmlns:controls="clr-namespace:Terrain.Editor.Controls"
     xmlns:core="clr-namespace:Terrain.Editor.Core" mc:Ignorable="d" Title="Terrain Editor"
     Width="1280" Height="720" Closing="Window_Closing">
+  <Window.Resources>
+    <CollectionViewSource x:Key="TextureFileAssets"
+        Source="{Binding Source={StaticResource EditorAssets}, Path=RegisteredAssets}" />
+  </Window.Resources>
   <Grid Background="#333">
     <Grid.ColumnDefinitions>
       <ColumnDefinition Width="*" />
@@ -145,7 +149,10 @@
                   <TextBlock Text="Albedo" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
                   <ComboBox x:Name="cbMaterialAlbedoTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                      ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      IsSynchronizedWithCurrentItem="False"
+                      DisplayMemberPath="FileRelativePath" />
                 </Grid>
                 <Grid Margin="0 0 0 8">
                   <Grid.ColumnDefinitions>
@@ -155,7 +162,10 @@
                   <TextBlock Text="Normal" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
                   <ComboBox x:Name="cbMaterialNormalTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                      ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      IsSynchronizedWithCurrentItem="False"
+                      DisplayMemberPath="FileRelativePath" />
                 </Grid>
                 <Grid Margin="0 0 0 8">
                   <Grid.ColumnDefinitions>
@@ -165,7 +175,10 @@
                   <TextBlock Text="Displacement" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
                   <ComboBox x:Name="cbMaterialDisplacementTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                      ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      IsSynchronizedWithCurrentItem="False"
+                      DisplayMemberPath="FileRelativePath" />
                 </Grid>
                 <Grid Margin="0 0 0 8">
                   <Grid.ColumnDefinitions>
@@ -175,7 +188,10 @@
                   <TextBlock Text="AO" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
                   <ComboBox x:Name="cbMaterialAoTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                      ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      IsSynchronizedWithCurrentItem="False"
+                      DisplayMemberPath="FileRelativePath" />
                 </Grid>
                 <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
                 <Grid Margin="0 0 0 8">
