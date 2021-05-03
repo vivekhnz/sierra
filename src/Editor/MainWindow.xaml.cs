@@ -18,6 +18,8 @@ namespace Terrain.Editor
     {
         const int maxMaterialCount = 8;
 
+        private EditorUiStateViewModel editorUiState;
+
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
         Dictionary<RadioButton, TerrainBrushTool> editorToolByToolButtons;
@@ -35,6 +37,8 @@ namespace Terrain.Editor
         {
             EditorPlatform.Initialize();
             InitializeComponent();
+
+            editorUiState = (EditorUiStateViewModel)FindResource("EditorUiState");
 
             editorToolByToolButtons = new Dictionary<RadioButton, TerrainBrushTool>
             {
@@ -83,17 +87,6 @@ namespace Terrain.Editor
             }
         }
 
-        private void OnBrushParameterSliderValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (!isUiInitialized) return;
-
-            ref EditorUiState uiState = ref EditorCore.GetUiState();
-            uiState.TerrainBrushRadius = (float)brushRadiusSlider.Value;
-            uiState.TerrainBrushFalloff = (float)brushFalloffSlider.Value;
-            uiState.TerrainBrushStrength = (float)brushStrengthSlider.Value;
-        }
-
         private void rockTransformSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
@@ -109,13 +102,6 @@ namespace Terrain.Editor
                 (float)rockScaleXSlider.Value,
                 (float)rockScaleYSlider.Value,
                 (float)rockScaleZSlider.Value);
-        }
-
-        private void lightDirectionSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            ref EditorUiState uiState = ref EditorCore.GetUiState();
-            uiState.SceneLightDirection = (float)lightDirectionSlider.Value;
         }
 
         private void btnAddMaterial_Click(object sender, RoutedEventArgs e)
@@ -235,21 +221,9 @@ namespace Terrain.Editor
 
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
+            editorUiState.CheckForChanges();
+
             ref EditorUiState uiState = ref EditorCore.GetUiState();
-
-            if (brushRadiusSlider.Value != uiState.TerrainBrushRadius)
-            {
-                brushRadiusSlider.Value = uiState.TerrainBrushRadius;
-            }
-            if (brushFalloffSlider.Value != uiState.TerrainBrushFalloff)
-            {
-                brushFalloffSlider.Value = uiState.TerrainBrushFalloff;
-            }
-            if (brushStrengthSlider.Value != uiState.TerrainBrushStrength)
-            {
-                brushStrengthSlider.Value = uiState.TerrainBrushStrength;
-            }
-
             foreach (var kvp in editorToolByToolButtons)
             {
                 bool shouldBeSelected = kvp.Value == uiState.TerrainBrushTool;

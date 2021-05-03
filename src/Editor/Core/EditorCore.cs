@@ -108,7 +108,7 @@ namespace Terrain.Editor.Core
         public uint Height;
     }
 
-    internal enum TerrainBrushTool
+    public enum TerrainBrushTool
     {
         Raise = 0,
         Lower = 1,

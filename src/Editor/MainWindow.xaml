@@ -65,11 +65,11 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="32" />
                                     </Grid.ColumnDefinitions>
-                                    <Slider x:Name="brushRadiusSlider" Minimum="32" Maximum="2048" Value="128"
+                                    <Slider Minimum="32" Maximum="2048"
+                                            Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
                                             SmallChange="1" LargeChange="16" TickFrequency="1"
-                                            IsSnapToTickEnabled="True"
-                                            ValueChanged="OnBrushParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=brushRadiusSlider, Path=Value}"
+                                            IsSnapToTickEnabled="True" />
+                                    <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
                                                Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                                 </Grid>
                                 <TextBlock Text="Brush Falloff" Foreground="#888" Margin="0 0 0 8" />
@@ -78,11 +78,11 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="32" />
                                     </Grid.ColumnDefinitions>
-                                    <Slider x:Name="brushFalloffSlider" Minimum="0" Maximum="0.99"
-                                            Value="0.75" SmallChange="0.01" LargeChange="0.1"
-                                            TickFrequency="0.01" IsSnapToTickEnabled="True"
-                                            ValueChanged="OnBrushParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=brushFalloffSlider, Path=Value}"
+                                    <Slider Minimum="0" Maximum="0.99"
+                                            Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
+                                            SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                                            IsSnapToTickEnabled="True" />
+                                    <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
                                                Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                                 </Grid>
                                 <TextBlock Text="Brush Strength" Foreground="#888" Margin="0 0 0 8" />
@@ -91,11 +91,11 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="32" />
                                     </Grid.ColumnDefinitions>
-                                    <Slider x:Name="brushStrengthSlider" Minimum="0.01" Maximum="1"
-                                            Value="0.12" SmallChange="0.01" LargeChange="0.1"
-                                            TickFrequency="0.01" IsSnapToTickEnabled="True"
-                                            ValueChanged="OnBrushParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=brushStrengthSlider, Path=Value}"
+                                    <Slider Minimum="0.01" Maximum="1"
+                                            Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
+                                            SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                                            IsSnapToTickEnabled="True" />
+                                    <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
                                                Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                                 </Grid>
                             </StackPanel>
@@ -387,12 +387,12 @@
                                     <ColumnDefinition Width="*" />
                                     <ColumnDefinition Width="32" />
                                 </Grid.ColumnDefinitions>
-                                <Slider x:Name="lightDirectionSlider" Minimum="-1" Maximum="1" Value="0.5"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="lightDirectionSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=lightDirectionSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                                <Slider Minimum="-1" Maximum="1"
+                                        Value="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
+                                        SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                                        IsSnapToTickEnabled="True" />
+                                <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
+                                           Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                             </Grid>
                         </StackPanel>
                     </Expander>
