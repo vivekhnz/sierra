@@ -1,403 +1,400 @@
 ﻿<Window x:Class="Terrain.Editor.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:controls="clr-namespace:Terrain.Editor.Controls"
-        mc:Ignorable="d"
-        Title="Terrain Editor" Width="1280" Height="720"
-        Closing="Window_Closing">
-    <Grid Background="#333">
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
-        <Grid.RowDefinitions>
-            <RowDefinition Height="32" />
-            <RowDefinition Height="*" />
-        </Grid.RowDefinitions>
-        <Border Background="#282828" BorderBrush="#333" BorderThickness="0 0 1 0">
-            <Menu VerticalAlignment="Center" Background="Transparent"
-                  Foreground="#888">
-                <MenuItem Header="File">
-                    <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
-                </MenuItem>
-            </Menu>
-        </Border>
-        <controls:Viewport Grid.Row="1" View="Scene" />
-        <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Width="360" Background="#282828">
-            <TabControl>
-                <TabItem Header="TERRAIN">
-                    <StackPanel Orientation="Vertical">
-                        <Expander Style="{StaticResource SidebarExpanderStyle}" Header="HEIGHTMAP"
-                                  IsExpanded="True" d:IsExpanded="False" Visibility="Collapsed">
-                            <controls:Viewport Width="360" Height="360" View="HeightmapPreview" />
-                        </Expander>
-                        <Expander Style="{StaticResource SidebarExpanderStyle}" Header="BRUSH"
-                                  IsExpanded="True" d:IsExpanded="False">
-                            <StackPanel Orientation="Vertical" Margin="12 6 12 12">
-                                <StackPanel Orientation="Horizontal" Grid.Row="1"
-                                            HorizontalAlignment="Center" Margin="0 0 0 8">
-                                    <RadioButton x:Name="rbEditorToolRaiseTerrain" Content="Raise"
-                                             GroupName="EditorTool" IsChecked="True"
-                                             Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
-                                             Width="56" Height="32" Background="#60FFFFFF"
-                                             Margin="0 0 2 0" Checked="OnEditorToolButtonSelected" />
-                                    <RadioButton x:Name="rbEditorToolLowerTerrain" Content="Lower"
-                                             GroupName="EditorTool"
-                                             Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
-                                             Width="56" Height="32" Background="#60FFFFFF"
-                                             Margin="0 0 2 0" Checked="OnEditorToolButtonSelected" />
-                                    <RadioButton x:Name="rbEditorToolFlattenTerrain" Content="Flatten"
-                                             GroupName="EditorTool"
-                                             Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
-                                             Width="56" Height="32" Background="#60FFFFFF"
-                                             Margin="0 0 2 0" Checked="OnEditorToolButtonSelected" />
-                                    <RadioButton x:Name="rbEditorToolSmoothTerrain" Content="Smooth"
-                                             GroupName="EditorTool"
-                                             Style="{StaticResource {x:Type ToggleButton}}" Padding="4"
-                                             Width="56" Height="32" Background="#60FFFFFF"
-                                             Checked="OnEditorToolButtonSelected" />
-                                </StackPanel>
-                                <TextBlock Text="Brush Radius" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Minimum="32" Maximum="2048"
-                                            Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
-                                            SmallChange="1" LargeChange="16" TickFrequency="1"
-                                            IsSnapToTickEnabled="True" />
-                                    <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
-                                               Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                                <TextBlock Text="Brush Falloff" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Minimum="0" Maximum="0.99"
-                                            Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
-                                            SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                            IsSnapToTickEnabled="True" />
-                                    <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
-                                               Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                                <TextBlock Text="Brush Strength" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider Minimum="0.01" Maximum="1"
-                                            Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
-                                            SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                            IsSnapToTickEnabled="True" />
-                                    <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
-                                               Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-                        <Grid>
-                            <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
-                                      IsExpanded="True">
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto" />
-                                        <RowDefinition Height="24" />
-                                    </Grid.RowDefinitions>
-                                    <ListBox x:Name="lbMaterials"
-                                     SelectionChanged="OnMaterialSelectionChanged"
-                                     SelectedIndex="0" Background="Transparent"
-                                     Foreground="#CCC" FontSize="14"
-                                     Grid.ColumnSpan="3" Margin="0 0 0 8">
-                                        <ListBox.ItemContainerStyle>
-                                            <Style TargetType="ListBoxItem">
-                                                <Setter Property="Padding" Value="18 2" />
-                                            </Style>
-                                        </ListBox.ItemContainerStyle>
-                                    </ListBox>
-                                    <Button x:Name="btnDeleteMaterial" Content="Delete"
-                                    Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
-                                    Click="btnDeleteMaterial_Click" />
-                                    <Button x:Name="btnMoveMaterialUp" Content="Move Up"
-                                    Grid.Column="1" Grid.Row="1" Margin="12 0"
-                                    Click="btnMoveMaterialUp_Click" />
-                                    <Button x:Name="btnMoveMaterialDown" Content="Move Down"
-                                    Grid.Column="2" Grid.Row="1" Margin="0 0 12 0"
-                                    Click="btnMoveMaterialDown_Click" />
-                                </Grid>
-                            </Expander>
-                            <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
-                                HorizontalAlignment="Right">
-                                <Button x:Name="btnAddMaterial" Content="+" Width="27" FontSize="16"
-                                FontWeight="Bold" VerticalContentAlignment="Top" Click="btnAddMaterial_Click" />
-                            </StackPanel>
-                        </Grid>
-                        <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
-                                  IsExpanded="True">
-                            <StackPanel Orientation="Vertical" Margin="12">
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Albedo" Foreground="#888" VerticalAlignment="Center"
-                                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                                    <ComboBox x:Name="cbMaterialAlbedoTexture" Grid.Column="1"
-                                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
-                                </Grid>
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Normal" Foreground="#888" VerticalAlignment="Center"
-                                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                                    <ComboBox x:Name="cbMaterialNormalTexture" Grid.Column="1"
-                                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
-                                </Grid>
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="Displacement" Foreground="#888" VerticalAlignment="Center"
-                                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                                    <ComboBox x:Name="cbMaterialDisplacementTexture" Grid.Column="1"
-                                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
-                                </Grid>
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="80" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <TextBlock Text="AO" Foreground="#888" VerticalAlignment="Center"
-                                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                                    <ComboBox x:Name="cbMaterialAoTexture" Grid.Column="1"
-                                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
-                                </Grid>
-                                <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider x:Name="materialTextureSizeSlider" Minimum="0.1" Maximum="16" Value="13"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True" ValueChanged="OnMaterialParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=materialTextureSizeSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                                <Rectangle Height="1" Stroke="#222" Margin="0 0 0 12" SnapsToDevicePixels="True" />
-                                <TextBlock Text="Slope Start" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider x:Name="materialSlopeStartSlider" Minimum="0" Maximum="1" Value="0.6"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="OnMaterialParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=materialSlopeStartSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                                <TextBlock Text="Slope End" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider x:Name="materialSlopeEndSlider" Minimum="0" Maximum="1" Value="0.8"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="OnMaterialParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=materialSlopeEndSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                                <TextBlock Text="Altitude Start" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider x:Name="materialAltitudeStartSlider" Minimum="0" Maximum="1" Value="0"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="OnMaterialParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=materialAltitudeStartSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                                <TextBlock Text="Altitude End" Foreground="#888" Margin="0 0 0 8" />
-                                <Grid Margin="0 0 0 8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="32" />
-                                    </Grid.ColumnDefinitions>
-                                    <Slider x:Name="materialAltitudeEndSlider" Minimum="0" Maximum="1" Value="0.001"
-                                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                    IsSnapToTickEnabled="True"
-                                    ValueChanged="OnMaterialParameterSliderValueChanged" />
-                                    <TextBlock Text="{Binding ElementName=materialAltitudeEndSlider, Path=Value}"
-                                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                                </Grid>
-                            </StackPanel>
-                        </Expander>
-                    </StackPanel>
-                </TabItem>
-                <TabItem Header="OBJECTS">
-                    <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
-                          IsExpanded="True" d:IsExpanded="False">
-                        <StackPanel Orientation="Vertical" Margin="12">
-                            <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
-                            <Grid Margin="0 0 0 8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="32" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="32" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="X" Foreground="#888" Grid.Row="0"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockPositionXSlider" Minimum="-100" Maximum="100" Value="0"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockPositionXSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:controls="clr-namespace:Terrain.Editor.Controls"
+    xmlns:core="clr-namespace:Terrain.Editor.Core" mc:Ignorable="d" Title="Terrain Editor"
+    Width="1280" Height="720" Closing="Window_Closing">
+  <Grid Background="#333">
+    <Grid.ColumnDefinitions>
+      <ColumnDefinition Width="*" />
+      <ColumnDefinition Width="Auto" />
+    </Grid.ColumnDefinitions>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="32" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+    <Border Background="#282828" BorderBrush="#333" BorderThickness="0 0 1 0">
+      <Menu VerticalAlignment="Center" Background="Transparent" Foreground="#888">
+        <MenuItem Header="File">
+          <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
+        </MenuItem>
+      </Menu>
+    </Border>
+    <controls:Viewport Grid.Row="1" View="Scene" />
+    <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Width="360" Background="#282828">
+      <TabControl>
+        <TabItem Header="TERRAIN">
+          <StackPanel Orientation="Vertical">
+            <Expander Style="{StaticResource SidebarExpanderStyle}" Header="HEIGHTMAP"
+                IsExpanded="True" d:IsExpanded="False" Visibility="Collapsed">
+              <controls:Viewport Width="360" Height="360" View="HeightmapPreview" />
+            </Expander>
+            <Expander Style="{StaticResource SidebarExpanderStyle}" Header="BRUSH"
+                IsExpanded="True" d:IsExpanded="False">
+              <StackPanel Orientation="Vertical" Margin="12 6 12 12">
+                <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center"
+                    Margin="0 0 0 8">
+                  <RadioButton Content="Raise"
+                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Raise}}"
+                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="56"
+                      Height="32" Background="#60FFFFFF" Margin="0 0 2 0" />
+                  <RadioButton Content="Lower"
+                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Lower}}"
+                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="56"
+                      Height="32" Background="#60FFFFFF" Margin="0 0 2 0" />
+                  <RadioButton Content="Flatten"
+                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Flatten}}"
+                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="56"
+                      Height="32" Background="#60FFFFFF" Margin="0 0 2 0" />
+                  <RadioButton Content="Smooth"
+                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Smooth}}"
+                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="56"
+                      Height="32" Background="#60FFFFFF" />
+                </StackPanel>
+                <TextBlock Text="Brush Radius" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider Minimum="32" Maximum="2048"
+                      Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
+                      SmallChange="1" LargeChange="16" TickFrequency="1"
+                      IsSnapToTickEnabled="True" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Brush Falloff" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider Minimum="0" Maximum="0.99"
+                      Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Brush Strength" Foreground="#888" Margin="0 0 0 8" />
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider Minimum="0.01" Maximum="1"
+                      Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+            <Grid>
+              <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
+                  IsExpanded="True">
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="24" />
+                  </Grid.RowDefinitions>
+                  <ListBox x:Name="lbMaterials" SelectionChanged="OnMaterialSelectionChanged"
+                      SelectedIndex="0" Background="Transparent" Foreground="#CCC"
+                      FontSize="14" Grid.ColumnSpan="3" Margin="0 0 0 8">
+                    <ListBox.ItemContainerStyle>
+                      <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="18 2" />
+                      </Style>
+                    </ListBox.ItemContainerStyle>
+                  </ListBox>
+                  <Button x:Name="btnDeleteMaterial" Content="Delete" Grid.Column="0"
+                      Grid.Row="1" Margin="12 0 0 0" Click="btnDeleteMaterial_Click" />
+                  <Button x:Name="btnMoveMaterialUp" Content="Move Up" Grid.Column="1"
+                      Grid.Row="1" Margin="12 0" Click="btnMoveMaterialUp_Click" />
+                  <Button x:Name="btnMoveMaterialDown" Content="Move Down" Grid.Column="2"
+                      Grid.Row="1" Margin="0 0 12 0" Click="btnMoveMaterialDown_Click" />
+                </Grid>
+              </Expander>
+              <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
+                  HorizontalAlignment="Right">
+                <Button x:Name="btnAddMaterial" Content="+" Width="27" FontSize="16"
+                    FontWeight="Bold" VerticalContentAlignment="Top"
+                    Click="btnAddMaterial_Click" />
+              </StackPanel>
+            </Grid>
+            <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
+                IsExpanded="True">
+              <StackPanel Orientation="Vertical" Margin="12">
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Albedo" Foreground="#888" VerticalAlignment="Center"
+                      HorizontalAlignment="Right" Margin="0 0 8 0" />
+                  <ComboBox x:Name="cbMaterialAlbedoTexture" Grid.Column="1"
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                </Grid>
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Normal" Foreground="#888" VerticalAlignment="Center"
+                      HorizontalAlignment="Right" Margin="0 0 8 0" />
+                  <ComboBox x:Name="cbMaterialNormalTexture" Grid.Column="1"
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                </Grid>
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="Displacement" Foreground="#888" VerticalAlignment="Center"
+                      HorizontalAlignment="Right" Margin="0 0 8 0" />
+                  <ComboBox x:Name="cbMaterialDisplacementTexture" Grid.Column="1"
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                </Grid>
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="80" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <TextBlock Text="AO" Foreground="#888" VerticalAlignment="Center"
+                      HorizontalAlignment="Right" Margin="0 0 8 0" />
+                  <ComboBox x:Name="cbMaterialAoTexture" Grid.Column="1"
+                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged" />
+                </Grid>
+                <TextBlock Text="Texture Size (world units)" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider x:Name="materialTextureSizeSlider" Minimum="0.1" Maximum="16"
+                      Value="13" SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True"
+                      ValueChanged="OnMaterialParameterSliderValueChanged" />
+                  <TextBlock Text="{Binding ElementName=materialTextureSizeSlider, Path=Value}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <Rectangle Height="1" Stroke="#222" Margin="0 0 0 12"
+                    SnapsToDevicePixels="True" />
+                <TextBlock Text="Slope Start" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider x:Name="materialSlopeStartSlider" Minimum="0" Maximum="1" Value="0.6"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True"
+                      ValueChanged="OnMaterialParameterSliderValueChanged" />
+                  <TextBlock Text="{Binding ElementName=materialSlopeStartSlider, Path=Value}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Slope End" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider x:Name="materialSlopeEndSlider" Minimum="0" Maximum="1" Value="0.8"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True"
+                      ValueChanged="OnMaterialParameterSliderValueChanged" />
+                  <TextBlock Text="{Binding ElementName=materialSlopeEndSlider, Path=Value}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Altitude Start" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider x:Name="materialAltitudeStartSlider" Minimum="0" Maximum="1"
+                      Value="0" SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True"
+                      ValueChanged="OnMaterialParameterSliderValueChanged" />
+                  <TextBlock
+                      Text="{Binding ElementName=materialAltitudeStartSlider, Path=Value}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Altitude End" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Slider x:Name="materialAltitudeEndSlider" Minimum="0" Maximum="1"
+                      Value="0.001" SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True"
+                      ValueChanged="OnMaterialParameterSliderValueChanged" />
+                  <TextBlock Text="{Binding ElementName=materialAltitudeEndSlider, Path=Value}"
+                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
+        </TabItem>
+        <TabItem Header="OBJECTS">
+          <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
+              IsExpanded="True" d:IsExpanded="False">
+            <StackPanel Orientation="Vertical" Margin="12">
+              <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
+              <Grid Margin="0 0 0 8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="32" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="32" />
+                  <RowDefinition Height="32" />
+                  <RowDefinition Height="32" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockPositionXSlider" Minimum="-100" Maximum="100" Value="0"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockPositionXSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
-                                <TextBlock Text="Y" Foreground="#888" Grid.Row="1"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockPositionYSlider" Minimum="-100" Maximum="100" Value="0"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockPositionYSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockPositionYSlider" Minimum="-100" Maximum="100" Value="0"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockPositionYSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
-                                <TextBlock Text="Z" Foreground="#888" Grid.Row="2"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockPositionZSlider" Minimum="-100" Maximum="100" Value="0"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockPositionZSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
-                            </Grid>
-                            <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
-                            <Grid Margin="0 0 0 8">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="32" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="32" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="X" Foreground="#888" Grid.Row="0"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockRotationXSlider" Minimum="-360" Maximum="360" Value="0"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockRotationXSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockPositionZSlider" Minimum="-100" Maximum="100" Value="0"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockPositionZSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+              </Grid>
+              <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
+              <Grid Margin="0 0 0 8">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="32" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="32" />
+                  <RowDefinition Height="32" />
+                  <RowDefinition Height="32" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockRotationXSlider" Minimum="-360" Maximum="360" Value="0"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockRotationXSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
-                                <TextBlock Text="Y" Foreground="#888" Grid.Row="1"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockRotationYSlider" Minimum="-360" Maximum="360" Value="0"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockRotationYSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockRotationYSlider" Minimum="-360" Maximum="360" Value="0"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockRotationYSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
-                                <TextBlock Text="Z" Foreground="#888" Grid.Row="2"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockRotationZSlider" Minimum="-360" Maximum="360" Value="0"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockRotationZSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
-                            </Grid>
-                            <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="32" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="32" />
-                                </Grid.ColumnDefinitions>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="32" />
-                                    <RowDefinition Height="32" />
-                                </Grid.RowDefinitions>
-                                <TextBlock Text="X" Foreground="#888" Grid.Row="0"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockScaleXSlider" Minimum="0" Maximum="10" Value="1"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockScaleXSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockRotationZSlider" Minimum="-360" Maximum="360" Value="0"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockRotationZSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+              </Grid>
+              <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="32" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="32" />
+                  <RowDefinition Height="32" />
+                  <RowDefinition Height="32" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockScaleXSlider" Minimum="0" Maximum="10" Value="1"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockScaleXSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
-                                <TextBlock Text="Y" Foreground="#888" Grid.Row="1"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockScaleYSlider" Minimum="0" Maximum="10" Value="1"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
-                                    ValueChanged="rockTransformSlider_ValueChanged"  />
-                                <TextBlock Text="{Binding ElementName=rockScaleYSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockScaleYSlider" Minimum="0" Maximum="10" Value="1"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockScaleYSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
-                                <TextBlock Text="Z" Foreground="#888" Grid.Row="2"
-                                       Margin="0 0 8 0" HorizontalAlignment="Right" />
-                                <Slider x:Name="rockScaleZSlider" Minimum="0" Maximum="10" Value="1"
-                                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
-                                    ValueChanged="rockTransformSlider_ValueChanged" />
-                                <TextBlock Text="{Binding ElementName=rockScaleZSlider, Path=Value}"
-                                       Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
-                            </Grid>
-                        </StackPanel>
-                    </Expander>
-                </TabItem>
-                <TabItem Header="SCENE">
-                    <Expander Style="{StaticResource SidebarExpanderStyle}" Header="SCENE"
-                          IsExpanded="True">
-                        <StackPanel Orientation="Vertical" Margin="12">
-                            <TextBlock Text="Light Direction" Foreground="#888" Margin="0 0 0 8" />
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="32" />
-                                </Grid.ColumnDefinitions>
-                                <Slider Minimum="-1" Maximum="1"
-                                        Value="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
-                                        SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                                        IsSnapToTickEnabled="True" />
-                                <TextBlock Text="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
-                                           Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
-                            </Grid>
-                        </StackPanel>
-                    </Expander>
-                </TabItem>
-            </TabControl>
-        </Grid>
+                <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
+                    HorizontalAlignment="Right" />
+                <Slider x:Name="rockScaleZSlider" Minimum="0" Maximum="10" Value="1"
+                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
+                    ValueChanged="rockTransformSlider_ValueChanged" />
+                <TextBlock Text="{Binding ElementName=rockScaleZSlider, Path=Value}"
+                    Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+              </Grid>
+            </StackPanel>
+          </Expander>
+        </TabItem>
+        <TabItem Header="SCENE">
+          <Expander Style="{StaticResource SidebarExpanderStyle}" Header="SCENE"
+              IsExpanded="True">
+            <StackPanel Orientation="Vertical" Margin="12">
+              <TextBlock Text="Light Direction" Foreground="#888" Margin="0 0 0 8" />
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="32" />
+                </Grid.ColumnDefinitions>
+                <Slider Minimum="-1" Maximum="1"
+                    Value="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
+                    SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                    IsSnapToTickEnabled="True" />
+                <TextBlock
+                    Text="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
+                    Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+              </Grid>
+            </StackPanel>
+          </Expander>
+        </TabItem>
+      </TabControl>
     </Grid>
+  </Grid>
 </Window>

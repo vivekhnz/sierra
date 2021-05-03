@@ -22,7 +22,6 @@ namespace Terrain.Editor
 
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
-        Dictionary<RadioButton, TerrainBrushTool> editorToolByToolButtons;
 
         private int prevAssetCount;
         private readonly static Dictionary<uint, string> textureAssetIdToFilename
@@ -39,14 +38,6 @@ namespace Terrain.Editor
             InitializeComponent();
 
             editorUiState = (EditorUiStateViewModel)FindResource("EditorUiState");
-
-            editorToolByToolButtons = new Dictionary<RadioButton, TerrainBrushTool>
-            {
-                [rbEditorToolRaiseTerrain] = TerrainBrushTool.Raise,
-                [rbEditorToolLowerTerrain] = TerrainBrushTool.Lower,
-                [rbEditorToolFlattenTerrain] = TerrainBrushTool.Flatten,
-                [rbEditorToolSmoothTerrain] = TerrainBrushTool.Smooth
-            };
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
@@ -170,17 +161,6 @@ namespace Terrain.Editor
                 (float)materialAltitudeStartSlider.Value, (float)materialAltitudeEndSlider.Value);
         }
 
-        private void OnEditorToolButtonSelected(object sender, RoutedEventArgs e)
-        {
-            if (editorToolByToolButtons == null) return;
-
-            var senderBtn = sender as RadioButton;
-            if (senderBtn == null) return;
-
-            ref EditorUiState uiState = ref EditorCore.GetUiState();
-            uiState.TerrainBrushTool = editorToolByToolButtons[senderBtn];
-        }
-
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
@@ -222,20 +202,6 @@ namespace Terrain.Editor
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
             editorUiState.CheckForChanges();
-
-            ref EditorUiState uiState = ref EditorCore.GetUiState();
-            foreach (var kvp in editorToolByToolButtons)
-            {
-                bool shouldBeSelected = kvp.Value == uiState.TerrainBrushTool;
-                if (shouldBeSelected && kvp.Key.IsChecked != true)
-                {
-                    kvp.Key.IsChecked = true;
-                }
-                else if (!shouldBeSelected && kvp.Key.IsChecked != false)
-                {
-                    kvp.Key.IsChecked = false;
-                }
-            }
 
             int assetCount = TerrainEngine.GetRegisteredAssetCount();
             if (assetCount != prevAssetCount)
