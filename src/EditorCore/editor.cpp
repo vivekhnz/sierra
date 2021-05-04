@@ -1292,24 +1292,19 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(index < MAX_MATERIAL_COUNT);
-    state->docState.materialCount--;
-    for (uint32 i = index; i < state->docState.materialCount; i++)
-    {
-        state->docState.materialProps[i] = state->docState.materialProps[i + 1];
-    }
+    EditorTransaction *tx = transactionsCreate(&state->transactions);
+    DeleteMaterialCommand *cmd = transactionsPushCommand(tx, DeleteMaterialCommand);
+    cmd->index = index;
 }
 
 API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(indexA < MAX_MATERIAL_COUNT);
-    assert(indexB < MAX_MATERIAL_COUNT);
-
-    TerrainMaterialProperties temp = state->docState.materialProps[indexA];
-    state->docState.materialProps[indexA] = state->docState.materialProps[indexB];
-    state->docState.materialProps[indexB] = temp;
+    EditorTransaction *tx = transactionsCreate(&state->transactions);
+    SwapMaterialCommand *cmd = transactionsPushCommand(tx, SwapMaterialCommand);
+    cmd->indexA = indexA;
+    cmd->indexB = indexB;
 }
 
 API_EXPORT EDITOR_GET_MATERIAL_PROPERTIES(editorGetMaterialProperties)
@@ -1324,28 +1319,26 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(index < MAX_MATERIAL_COUNT);
-    TerrainMaterialProperties *matProps = &state->docState.materialProps[index];
-    uint32 *materialTextureAssetIds[] = {
-        &matProps->albedoTextureAssetId,       //
-        &matProps->normalTextureAssetId,       //
-        &matProps->displacementTextureAssetId, //
-        &matProps->aoTextureAssetId            //
-    };
-    *materialTextureAssetIds[(uint32)textureType] = assetId;
+    EditorTransaction *tx = transactionsCreate(&state->transactions);
+    SetMaterialTextureCommand *cmd = transactionsPushCommand(tx, SetMaterialTextureCommand);
+    cmd->index = index;
+    cmd->textureType = textureType;
+    cmd->assetId = assetId;
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(index < MAX_MATERIAL_COUNT);
-    TerrainMaterialProperties *matProps = &state->docState.materialProps[index];
-    matProps->textureSizeInWorldUnits = textureSize;
-    matProps->slopeStart = slopeStart;
-    matProps->slopeEnd = slopeEnd;
-    matProps->altitudeStart = altitudeStart;
-    matProps->altitudeEnd = altitudeEnd;
+    EditorTransaction *tx = transactionsCreate(&state->transactions);
+    SetMaterialPropertiesCommand *cmd =
+        transactionsPushCommand(tx, SetMaterialPropertiesCommand);
+    cmd->index = index;
+    cmd->textureSizeInWorldUnits = textureSize;
+    cmd->slopeStart = slopeStart;
+    cmd->slopeEnd = slopeEnd;
+    cmd->altitudeStart = altitudeStart;
+    cmd->altitudeEnd = altitudeEnd;
 }
 
 API_EXPORT EDITOR_SET_ROCK_TRANSFORM(editorSetRockTransform)

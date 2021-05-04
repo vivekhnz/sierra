@@ -294,14 +294,6 @@ struct EditorViewContext
     uint32 height;
 };
 
-enum TerrainMaterialTextureType
-{
-    TERRAIN_MAT_TEXTURE_ALBEDO = 0,
-    TERRAIN_MAT_TEXTURE_NORMAL = 1,
-    TERRAIN_MAT_TEXTURE_DISPLACEMENT = 2,
-    TERRAIN_MAT_TEXTURE_AMBIENT_OCCLUSION = 3
-};
-
 #define EDITOR_UPDATE(name)                                                                   \
     void name(EditorMemory *memory, float deltaTime, EditorInput *input)
 typedef EDITOR_UPDATE(EditorUpdate);

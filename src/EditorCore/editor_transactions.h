@@ -11,7 +11,11 @@ struct EditorTransactionQueue
 
 enum EditorCommandType
 {
-    EDITOR_COMMAND_AddMaterialCommand
+    EDITOR_COMMAND_AddMaterialCommand,
+    EDITOR_COMMAND_DeleteMaterialCommand,
+    EDITOR_COMMAND_SwapMaterialCommand,
+    EDITOR_COMMAND_SetMaterialTextureCommand,
+    EDITOR_COMMAND_SetMaterialPropertiesCommand
 };
 
 struct EditorTransaction
@@ -28,6 +32,41 @@ struct AddMaterialCommand
     uint32 aoTextureAssetId;
     float textureSizeInWorldUnits;
 
+    float slopeStart;
+    float slopeEnd;
+    float altitudeStart;
+    float altitudeEnd;
+};
+
+struct DeleteMaterialCommand
+{
+    uint32 index;
+};
+
+struct SwapMaterialCommand
+{
+    uint32 indexA;
+    uint32 indexB;
+};
+
+enum TerrainMaterialTextureType
+{
+    TERRAIN_MAT_TEXTURE_ALBEDO = 0,
+    TERRAIN_MAT_TEXTURE_NORMAL = 1,
+    TERRAIN_MAT_TEXTURE_DISPLACEMENT = 2,
+    TERRAIN_MAT_TEXTURE_AMBIENT_OCCLUSION = 3
+};
+struct SetMaterialTextureCommand
+{
+    uint32 index;
+    TerrainMaterialTextureType textureType;
+    uint32 assetId;
+};
+
+struct SetMaterialPropertiesCommand
+{
+    uint32 index;
+    float textureSizeInWorldUnits;
     float slopeStart;
     float slopeEnd;
     float altitudeStart;

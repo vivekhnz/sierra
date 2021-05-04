@@ -69,6 +69,70 @@ void transactionsApplyChanges(EditorTransactionQueue *queue, EditorState *state)
                 offset += sizeof(*cmd);
             }
             break;
+            case EDITOR_COMMAND_DeleteMaterialCommand:
+            {
+                DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)commandData;
+
+                assert(cmd->index < MAX_MATERIAL_COUNT);
+                state->docState.materialCount--;
+                for (uint32 i = cmd->index; i < state->docState.materialCount; i++)
+                {
+                    state->docState.materialProps[i] = state->docState.materialProps[i + 1];
+                }
+
+                offset += sizeof(*cmd);
+            }
+            break;
+            case EDITOR_COMMAND_SwapMaterialCommand:
+            {
+                SwapMaterialCommand *cmd = (SwapMaterialCommand *)commandData;
+
+                assert(cmd->indexA < MAX_MATERIAL_COUNT);
+                assert(cmd->indexB < MAX_MATERIAL_COUNT);
+
+                TerrainMaterialProperties temp = state->docState.materialProps[cmd->indexA];
+                state->docState.materialProps[cmd->indexA] =
+                    state->docState.materialProps[cmd->indexB];
+                state->docState.materialProps[cmd->indexB] = temp;
+
+                offset += sizeof(*cmd);
+            }
+            break;
+            case EDITOR_COMMAND_SetMaterialTextureCommand:
+            {
+                SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)commandData;
+
+                assert(cmd->index < MAX_MATERIAL_COUNT);
+                TerrainMaterialProperties *matProps =
+                    &state->docState.materialProps[cmd->index];
+                uint32 *materialTextureAssetIds[] = {
+                    &matProps->albedoTextureAssetId,       //
+                    &matProps->normalTextureAssetId,       //
+                    &matProps->displacementTextureAssetId, //
+                    &matProps->aoTextureAssetId            //
+                };
+                *materialTextureAssetIds[(uint32)cmd->textureType] = cmd->assetId;
+
+                offset += sizeof(*cmd);
+            }
+            break;
+            case EDITOR_COMMAND_SetMaterialPropertiesCommand:
+            {
+                SetMaterialPropertiesCommand *cmd =
+                    (SetMaterialPropertiesCommand *)commandData;
+
+                assert(cmd->index < MAX_MATERIAL_COUNT);
+                TerrainMaterialProperties *matProps =
+                    &state->docState.materialProps[cmd->index];
+                matProps->textureSizeInWorldUnits = cmd->textureSizeInWorldUnits;
+                matProps->slopeStart = cmd->slopeStart;
+                matProps->slopeEnd = cmd->slopeEnd;
+                matProps->altitudeStart = cmd->altitudeStart;
+                matProps->altitudeEnd = cmd->altitudeEnd;
+
+                offset += sizeof(*cmd);
+            }
+            break;
             }
         }
     }
