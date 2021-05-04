@@ -203,10 +203,10 @@ namespace Terrain.Editor
             editorUiState.CheckForChanges();
             editorAssets.CheckForChanges();
 
-            int assetCount = TerrainEngine.GetRegisteredAssetCount();
-            if (assetCount != prevAssetCount)
+            if (prevAssetCount == 0)
             {
-                if (prevAssetCount == 0)
+                int assetCount = TerrainEngine.GetRegisteredAssetCount();
+                if (assetCount != prevAssetCount)
                 {
                     uint GetTextureAssetId(string relativePath)
                     {
@@ -251,9 +251,9 @@ namespace Terrain.Editor
                         AltitudeStart = 0.25f,
                         AltitudeEnd = 0.28f
                     });
-                }
 
-                prevAssetCount = assetCount;
+                    prevAssetCount = assetCount;
+                }
             }
         }
 

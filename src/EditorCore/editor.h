@@ -2,7 +2,8 @@
 #define EDITOR_H
 
 #include <glm/gtc/type_ptr.hpp>
-#include "../Engine/engine.h"
+
+#include "editor_transactions.h"
 
 #define MAX_MATERIAL_COUNT 8
 #define MAX_BRUSH_QUADS 2048
@@ -190,6 +191,8 @@ struct EditorState
     EditorUiState uiState;
     EditorDocumentState docState;
     SceneState sceneState;
+
+    EditorTransactionQueue transactions;
 };
 
 struct EditorMemory

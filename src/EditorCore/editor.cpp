@@ -1,5 +1,7 @@
 #include "editor.h"
 
+#include "editor_transactions.cpp"
+
 #include <glm/gtx/quaternion.hpp>
 
 #define arrayCount(array) (sizeof(array) / sizeof(array[0]))
@@ -396,6 +398,10 @@ bool initializeEditor(EditorMemory *memory)
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
     sceneState->rockInstanceCount = 1;
 
+    state->transactions.data.size = 1 * 1024 * 1024;
+    state->transactions.data.baseAddress =
+        pushEditorData(memory, state->transactions.data.size);
+
     return 1;
 }
 
@@ -569,6 +575,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         }
         state->isInitialized = true;
     }
+
+    transactionsApplyChanges(&state->transactions, state);
 
     EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &state->assets;
@@ -1267,19 +1275,17 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(state->docState.materialCount < MAX_MATERIAL_COUNT);
-    uint32 index = state->docState.materialCount++;
-
-    TerrainMaterialProperties *material = &state->docState.materialProps[index];
-    material->albedoTextureAssetId = props.albedoTextureAssetId;
-    material->normalTextureAssetId = props.normalTextureAssetId;
-    material->displacementTextureAssetId = props.displacementTextureAssetId;
-    material->aoTextureAssetId = props.aoTextureAssetId;
-    material->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
-    material->slopeStart = props.slopeStart;
-    material->slopeEnd = props.slopeEnd;
-    material->altitudeStart = props.altitudeStart;
-    material->altitudeEnd = props.altitudeEnd;
+    EditorTransaction *tx = transactionsCreate(&state->transactions);
+    AddMaterialCommand *cmd = transactionsPushCommand(tx, AddMaterialCommand);
+    cmd->albedoTextureAssetId = props.albedoTextureAssetId;
+    cmd->normalTextureAssetId = props.normalTextureAssetId;
+    cmd->displacementTextureAssetId = props.displacementTextureAssetId;
+    cmd->aoTextureAssetId = props.aoTextureAssetId;
+    cmd->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
+    cmd->slopeStart = props.slopeStart;
+    cmd->slopeEnd = props.slopeEnd;
+    cmd->altitudeStart = props.altitudeStart;
+    cmd->altitudeEnd = props.altitudeEnd;
 }
 
 API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
