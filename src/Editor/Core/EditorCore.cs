@@ -240,7 +240,7 @@ namespace Terrain.Editor.Core
         private static EditorSetMaterialProperties editorSetMaterialProperties;
         private static EditorSetRockTransform editorSetRockTransform;
 
-        internal delegate void TransactionPublishedEventHandler(Span<byte> commandBuffer);
+        internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
 
         internal static void Initialize(IntPtr editorMemoryDataPtr, int editorMemorySizeInBytes,
@@ -326,7 +326,8 @@ namespace Terrain.Editor.Core
         {
             Span<byte> byteSpan = MemoryMarshal.CreateSpan(
                 ref commandBufferBaseAddress, (int)commandBufferSize);
-            TransactionPublished?.Invoke(byteSpan);
+            EditorCommandList commands = new EditorCommandList(byteSpan);
+            TransactionPublished?.Invoke(commands);
         }
 
         internal static void Update(float deltaTime, ref EditorInput input)

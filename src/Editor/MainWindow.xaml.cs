@@ -2,8 +2,6 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -319,54 +317,17 @@ namespace Terrain.Editor
             }
         }
 
-        private void OnTransactionPublished(Span<byte> commandBuffer)
+        private void OnTransactionPublished(EditorCommandList commands)
         {
-            int offset = 0;
-
-            ref T Pop<T>(Span<byte> span)
-                where T : struct
+            EditorCommandList.Span span;
+            while ((span = commands.Pop()).IsValid)
             {
-                int size = Unsafe.SizeOf<T>();
-                Span<byte> sliceSpan = span.Slice(offset, size);
-                offset += size;
-
-                return ref MemoryMarshal.AsRef<T>(sliceSpan);
-            }
-
-            while (offset < commandBuffer.Length)
-            {
-                switch (Pop<EditorCommandType>(commandBuffer))
+                if (span.Type == EditorCommandType.AddMaterial)
                 {
-                    case EditorCommandType.AddMaterial:
-                        {
-                            ref readonly var cmd = ref Pop<AddMaterialCommand>(commandBuffer);
-
-                            lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
-                            btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
-                            lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
-
-                            break;
-                        }
-                    case EditorCommandType.DeleteMaterial:
-                        {
-                            ref readonly var cmd = ref Pop<DeleteMaterialCommand>(commandBuffer);
-                            break;
-                        }
-                    case EditorCommandType.SwapMaterial:
-                        {
-                            ref readonly var cmd = ref Pop<SwapMaterialCommand>(commandBuffer);
-                            break;
-                        }
-                    case EditorCommandType.SetMaterialTexture:
-                        {
-                            ref readonly var cmd = ref Pop<SetMaterialTextureCommand>(commandBuffer);
-                            break;
-                        }
-                    case EditorCommandType.SetMaterialProperties:
-                        {
-                            ref readonly var cmd = ref Pop<SetMaterialPropertiesCommand>(commandBuffer);
-                            break;
-                        }
+                    ref AddMaterialCommand cmd = ref commands.Get<AddMaterialCommand>(span);
+                    lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
+                    btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
+                    lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
                 }
             }
         }
