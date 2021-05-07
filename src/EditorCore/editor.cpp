@@ -401,6 +401,7 @@ bool initializeEditor(EditorMemory *memory)
     state->transactions.data.size = 1 * 1024 * 1024;
     state->transactions.data.baseAddress =
         pushEditorData(memory, state->transactions.data.size);
+    state->transactions.publishTransaction = memory->platformPublishTransaction;
 
     return 1;
 }
@@ -576,7 +577,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->isInitialized = true;
     }
 
-    transactionsApplyChanges(&state->transactions, state);
+    applyTransactions(&state->transactions, state);
 
     EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &state->assets;
@@ -1275,8 +1276,8 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = transactionsCreate(&state->transactions);
-    AddMaterialCommand *cmd = transactionsPushCommand(tx, AddMaterialCommand);
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
     cmd->albedoTextureAssetId = props.albedoTextureAssetId;
     cmd->normalTextureAssetId = props.normalTextureAssetId;
     cmd->displacementTextureAssetId = props.displacementTextureAssetId;
@@ -1292,8 +1293,8 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = transactionsCreate(&state->transactions);
-    DeleteMaterialCommand *cmd = transactionsPushCommand(tx, DeleteMaterialCommand);
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    DeleteMaterialCommand *cmd = pushCommand(tx, DeleteMaterialCommand);
     cmd->index = index;
 }
 
@@ -1301,8 +1302,8 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = transactionsCreate(&state->transactions);
-    SwapMaterialCommand *cmd = transactionsPushCommand(tx, SwapMaterialCommand);
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    SwapMaterialCommand *cmd = pushCommand(tx, SwapMaterialCommand);
     cmd->indexA = indexA;
     cmd->indexB = indexB;
 }
@@ -1319,8 +1320,8 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = transactionsCreate(&state->transactions);
-    SetMaterialTextureCommand *cmd = transactionsPushCommand(tx, SetMaterialTextureCommand);
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
     cmd->index = index;
     cmd->textureType = textureType;
     cmd->assetId = assetId;
@@ -1330,9 +1331,8 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = transactionsCreate(&state->transactions);
-    SetMaterialPropertiesCommand *cmd =
-        transactionsPushCommand(tx, SetMaterialPropertiesCommand);
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
     cmd->index = index;
     cmd->textureSizeInWorldUnits = textureSize;
     cmd->slopeStart = slopeStart;

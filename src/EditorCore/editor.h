@@ -201,6 +201,7 @@ struct EditorMemory
     uint64 dataStorageUsed;
 
     PlatformCaptureMouse *platformCaptureMouse;
+    PlatformPublishTransaction *platformPublishTransaction;
 
     EngineApi *engineApi;
     EngineMemory *engineMemory;

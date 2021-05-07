@@ -6,6 +6,8 @@ using Terrain.Editor.Engine;
 namespace Terrain.Editor.Core
 {
     internal delegate void PlatformCaptureMouse();
+    internal delegate void PlatformPublishTransaction(
+        ref byte commandBufferBaseAddress, ulong commandBufferSize);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorMemory
@@ -14,6 +16,7 @@ namespace Terrain.Editor.Core
         public ulong DataStorageUsed;
 
         public PlatformCaptureMouse PlatformCaptureMouse;
+        public PlatformPublishTransaction PlatformPublishTransaction;
 
         public IntPtr EngineApiPtr;
         public IntPtr EngineMemoryPtr;
@@ -148,7 +151,54 @@ namespace Terrain.Editor.Core
         Normal = 1,
         Displacement = 2,
         AmbientOcclusion = 3
-    };
+    }
+
+    internal enum EditorCommandType
+    {
+        AddMaterial,
+        DeleteMaterial,
+        SwapMaterial,
+        SetMaterialTexture,
+        SetMaterialProperties
+    }
+
+    struct AddMaterialCommand
+    {
+        public uint AlbedoTextureAssetId;
+        public uint NormalTextureAssetId;
+        public uint DisplacementTextureAssetId;
+        public uint AoTextureAssetId;
+        public float TextureSizeInWorldUnits;
+
+        public float SlopeStart;
+        public float SlopeEnd;
+        public float AltitudeStart;
+        public float AltitudeEnd;
+    }
+    struct DeleteMaterialCommand
+    {
+        public uint Index;
+    }
+    struct SwapMaterialCommand
+    {
+        public uint IndexA;
+        public uint IndexB;
+    }
+    struct SetMaterialTextureCommand
+    {
+        public uint Index;
+        public TerrainMaterialTextureType TextureType;
+        public uint AssetId;
+    }
+    struct SetMaterialPropertiesCommand
+    {
+        public uint Index;
+        public float TextureSizeInWorldUnits;
+        public float SlopeStart;
+        public float SlopeEnd;
+        public float AltitudeStart;
+        public float AltitudeEnd;
+    }
 
     internal static class EditorCore
     {
@@ -190,6 +240,9 @@ namespace Terrain.Editor.Core
         private static EditorSetMaterialProperties editorSetMaterialProperties;
         private static EditorSetRockTransform editorSetRockTransform;
 
+        internal delegate void TransactionPublishedEventHandler(Span<byte> commandBuffer);
+        internal static event TransactionPublishedEventHandler TransactionPublished;
+
         internal static void Initialize(IntPtr editorMemoryDataPtr, int editorMemorySizeInBytes,
             PlatformCaptureMouse captureMouse, IntPtr engineMemoryPtr,
             Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
@@ -208,6 +261,7 @@ namespace Terrain.Editor.Core
                 },
                 DataStorageUsed = 0,
                 PlatformCaptureMouse = captureMouse,
+                PlatformPublishTransaction = OnTransactionPublished,
                 EngineMemoryPtr = engineMemoryPtr
             };
         }
@@ -265,6 +319,14 @@ namespace Terrain.Editor.Core
             editorSetRockTransform = GetApi<EditorSetRockTransform>("editorSetRockTransform");
 
             return moduleHandle != IntPtr.Zero;
+        }
+
+        private static void OnTransactionPublished(
+            ref byte commandBufferBaseAddress, ulong commandBufferSize)
+        {
+            Span<byte> byteSpan = MemoryMarshal.CreateSpan(
+                ref commandBufferBaseAddress, (int)commandBufferSize);
+            TransactionPublished?.Invoke(byteSpan);
         }
 
         internal static void Update(float deltaTime, ref EditorInput input)

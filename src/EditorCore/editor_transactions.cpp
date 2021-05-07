@@ -11,7 +11,7 @@ void *pushTransactionData(EditorTransactionQueue *queue, uint64 size)
     return address;
 }
 
-EditorTransaction *transactionsCreate(EditorTransactionQueue *queue)
+EditorTransaction *createTransaction(EditorTransactionQueue *queue)
 {
     EditorTransaction *tx =
         (EditorTransaction *)pushTransactionData(queue, sizeof(EditorTransaction));
@@ -21,18 +21,17 @@ EditorTransaction *transactionsCreate(EditorTransactionQueue *queue)
     return tx;
 }
 
-void *transactionsPushCommandInternal(
-    EditorTransaction *tx, EditorCommandType type, uint64 size)
+void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 size)
 {
     *((EditorCommandType *)pushTransactionData(tx->queue, sizeof(EditorCommandType))) = type;
     void *commandData = pushTransactionData(tx->queue, size);
     tx->commandCount++;
     return commandData;
 }
-#define transactionsPushCommand(tx, type)                                                     \
-    (type *)transactionsPushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
+#define pushCommand(tx, type)                                                                 \
+    (type *)pushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
 
-void transactionsApplyChanges(EditorTransactionQueue *queue, EditorState *state)
+void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
 {
     uint8 *baseAddress = (uint8 *)queue->data.baseAddress;
     uint64 offset = 0;
@@ -41,6 +40,7 @@ void transactionsApplyChanges(EditorTransactionQueue *queue, EditorState *state)
         EditorTransaction *tx = (EditorTransaction *)(baseAddress + offset);
         offset += sizeof(*tx);
 
+        uint8 *commandBufferBaseAddress = baseAddress + offset;
         for (uint32 i = 0; i < tx->commandCount; i++)
         {
             EditorCommandType commandType = *((EditorCommandType *)(baseAddress + offset));
@@ -135,6 +135,9 @@ void transactionsApplyChanges(EditorTransactionQueue *queue, EditorState *state)
             break;
             }
         }
+
+        uint64 commandBufferSize = (baseAddress + offset) - commandBufferBaseAddress;
+        queue->publishTransaction(commandBufferBaseAddress, commandBufferSize);
     }
 
     queue->dataStorageUsed = 0;

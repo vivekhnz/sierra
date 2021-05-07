@@ -2,6 +2,8 @@
 using System;
 using System.ComponentModel;
 using System.Linq;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -32,6 +34,8 @@ namespace Terrain.Editor
         {
             EditorPlatform.Initialize();
             InitializeComponent();
+
+            EditorCore.TransactionPublished += OnTransactionPublished;
 
             editorUiState = (EditorUiStateViewModel)FindResource("EditorUiState");
             editorAssets = (EditorAssetsViewModel)FindResource("EditorAssets");
@@ -100,7 +104,7 @@ namespace Terrain.Editor
                 return assetVm?.AssetId ?? 0;
             }
 
-            AddMaterial(new TerrainMaterialProperties
+            EditorCore.AddMaterial(new TerrainMaterialProperties
             {
                 AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
                 NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
@@ -112,7 +116,6 @@ namespace Terrain.Editor
                 AltitudeStart = 0.0f,
                 AltitudeEnd = 0.0f
             });
-            lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
         }
 
         private void btnDeleteMaterial_Click(object sender, RoutedEventArgs e)
@@ -215,7 +218,7 @@ namespace Terrain.Editor
                         return assetVm?.AssetId ?? 0;
                     }
 
-                    AddMaterial(new TerrainMaterialProperties
+                    EditorCore.AddMaterial(new TerrainMaterialProperties
                     {
                         AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
                         NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
@@ -227,7 +230,7 @@ namespace Terrain.Editor
                         AltitudeStart = 0.0f,
                         AltitudeEnd = 0.0f
                     });
-                    AddMaterial(new TerrainMaterialProperties
+                    EditorCore.AddMaterial(new TerrainMaterialProperties
                     {
                         AlbedoTextureAssetId = GetTextureAssetId("rock_albedo.jpg"),
                         NormalTextureAssetId = GetTextureAssetId("rock_normal.jpg"),
@@ -239,7 +242,7 @@ namespace Terrain.Editor
                         AltitudeStart = 0,
                         AltitudeEnd = 0.001f
                     });
-                    AddMaterial(new TerrainMaterialProperties
+                    EditorCore.AddMaterial(new TerrainMaterialProperties
                     {
                         AlbedoTextureAssetId = GetTextureAssetId("snow_albedo.jpg"),
                         NormalTextureAssetId = GetTextureAssetId("snow_normal.jpg"),
@@ -255,14 +258,6 @@ namespace Terrain.Editor
                     prevAssetCount = assetCount;
                 }
             }
-        }
-
-        private void AddMaterial(TerrainMaterialProperties props)
-        {
-            EditorCore.AddMaterial(props);
-            lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
-
-            btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
         }
 
         private void UpdateMaterialDetails(int selectedMaterialIndex)
@@ -321,6 +316,58 @@ namespace Terrain.Editor
 
                 materialAltitudeEndSlider.IsEnabled = true;
                 materialAltitudeEndSlider.Opacity = 1;
+            }
+        }
+
+        private void OnTransactionPublished(Span<byte> commandBuffer)
+        {
+            int offset = 0;
+
+            ref T Pop<T>(Span<byte> span)
+                where T : struct
+            {
+                int size = Unsafe.SizeOf<T>();
+                Span<byte> sliceSpan = span.Slice(offset, size);
+                offset += size;
+
+                return ref MemoryMarshal.AsRef<T>(sliceSpan);
+            }
+
+            while (offset < commandBuffer.Length)
+            {
+                switch (Pop<EditorCommandType>(commandBuffer))
+                {
+                    case EditorCommandType.AddMaterial:
+                        {
+                            ref readonly var cmd = ref Pop<AddMaterialCommand>(commandBuffer);
+
+                            lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
+                            btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
+                            lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
+
+                            break;
+                        }
+                    case EditorCommandType.DeleteMaterial:
+                        {
+                            ref readonly var cmd = ref Pop<DeleteMaterialCommand>(commandBuffer);
+                            break;
+                        }
+                    case EditorCommandType.SwapMaterial:
+                        {
+                            ref readonly var cmd = ref Pop<SwapMaterialCommand>(commandBuffer);
+                            break;
+                        }
+                    case EditorCommandType.SetMaterialTexture:
+                        {
+                            ref readonly var cmd = ref Pop<SetMaterialTextureCommand>(commandBuffer);
+                            break;
+                        }
+                    case EditorCommandType.SetMaterialProperties:
+                        {
+                            ref readonly var cmd = ref Pop<SetMaterialPropertiesCommand>(commandBuffer);
+                            break;
+                        }
+                }
             }
         }
     }

@@ -3,10 +3,15 @@
 
 #include "../Engine/engine.h"
 
+#define PLATFORM_PUBLISH_TRANSACTION(name)                                                    \
+    void name(void *commandBufferBaseAddress, uint64 commandBufferSize)
+typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
+
 struct EditorTransactionQueue
 {
     MemoryBlock data;
     uint64 dataStorageUsed;
+    PlatformPublishTransaction *publishTransaction;
 };
 
 enum EditorCommandType
