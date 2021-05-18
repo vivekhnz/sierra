@@ -120,12 +120,6 @@ namespace Terrain.Editor
             if (selectedMaterialIndex < 0) return;
 
             EditorCore.DeleteMaterial(selectedMaterialIndex);
-            lbMaterials.Items.RemoveAt(selectedMaterialIndex);
-
-            if (lbMaterials.Items.Count > 0)
-            {
-                lbMaterials.SelectedIndex = selectedMaterialIndex;
-            }
         }
 
         private void btnMoveMaterialUp_Click(object sender, RoutedEventArgs e)
@@ -134,10 +128,6 @@ namespace Terrain.Editor
             if (selectedMaterialIndex < 0) return;
 
             EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex - 1);
-            var temp = lbMaterials.Items[selectedMaterialIndex];
-            lbMaterials.Items[selectedMaterialIndex] = lbMaterials.Items[selectedMaterialIndex - 1];
-            lbMaterials.Items[selectedMaterialIndex - 1] = temp;
-            lbMaterials.SelectedIndex = selectedMaterialIndex - 1;
         }
 
         private void btnMoveMaterialDown_Click(object sender, RoutedEventArgs e)
@@ -146,10 +136,6 @@ namespace Terrain.Editor
             if (selectedMaterialIndex < 0) return;
 
             EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex + 1);
-            var temp = lbMaterials.Items[selectedMaterialIndex];
-            lbMaterials.Items[selectedMaterialIndex] = lbMaterials.Items[selectedMaterialIndex + 1];
-            lbMaterials.Items[selectedMaterialIndex + 1] = temp;
-            lbMaterials.SelectedIndex = selectedMaterialIndex + 1;
         }
 
         private void OnMaterialParameterSliderValueChanged(object sender,
@@ -269,9 +255,32 @@ namespace Terrain.Editor
                 if (entry.Type == EditorCommandType.AddMaterial)
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
+
                     lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
                     btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
                     lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
+                }
+                else if (entry.Type == EditorCommandType.DeleteMaterial)
+                {
+                    ref readonly DeleteMaterialCommand cmd = ref entry.As<DeleteMaterialCommand>();
+
+                    lbMaterials.Items.RemoveAt((int)cmd.Index);
+                    if (lbMaterials.Items.Count > 0)
+                    {
+                        lbMaterials.SelectedIndex = (int)cmd.Index;
+                    }
+                    btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
+                }
+                else if (entry.Type == EditorCommandType.SwapMaterial)
+                {
+                    ref readonly SwapMaterialCommand cmd = ref entry.As<SwapMaterialCommand>();
+
+                    int indexA = (int)cmd.IndexA;
+                    int indexB = (int)cmd.IndexB;
+                    var temp = lbMaterials.Items[indexA];
+                    lbMaterials.Items[indexA] = lbMaterials.Items[indexB];
+                    lbMaterials.Items[indexB] = temp;
+                    lbMaterials.SelectedIndex = indexB;
                 }
             }
         }
