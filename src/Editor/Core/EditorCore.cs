@@ -324,7 +324,7 @@ namespace Terrain.Editor.Core
         private static void OnTransactionPublished(
             ref byte commandBufferBaseAddress, ulong commandBufferSize)
         {
-            Span<byte> byteSpan = MemoryMarshal.CreateSpan(
+            ReadOnlySpan<byte> byteSpan = MemoryMarshal.CreateReadOnlySpan(
                 ref commandBufferBaseAddress, (int)commandBufferSize);
             EditorCommandList commands = new EditorCommandList(byteSpan);
             TransactionPublished?.Invoke(commands);

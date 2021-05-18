@@ -4,36 +4,52 @@ using System.Runtime.InteropServices;
 
 namespace Terrain.Editor.Core
 {
+    internal ref struct EditorCommandEntry
+    {
+        public EditorCommandType Type;
+        public ReadOnlySpan<byte> Data;
+
+        public ref readonly T As<T>() where T : struct
+            => ref MemoryMarshal.AsRef<T>(Data);
+    }
+
     internal ref struct EditorCommandList
     {
-        internal ref struct Span
-        {
-            public bool IsValid;
-            public EditorCommandType Type;
-            public int Offset;
-            public int Size;
-        }
+        private readonly ReadOnlySpan<byte> commandBuffer;
 
-        Span<byte> commandBuffer;
-        int offset;
+        public Enumerator GetEnumerator() => new Enumerator(commandBuffer);
 
-        public EditorCommandList(Span<byte> commandBuffer)
+        public EditorCommandList(ReadOnlySpan<byte> commandBuffer)
         {
             this.commandBuffer = commandBuffer;
-            offset = 0;
         }
 
-        public Span Pop()
+        public ref struct Enumerator
         {
-            if (offset >= commandBuffer.Length) return new Span { IsValid = false };
+            private ReadOnlySpan<byte> commandBuffer;
+            private int offset;
 
-            EditorCommandType type = PopInternal<EditorCommandType>();
-            Span result = new Span
+            private EditorCommandEntry currentEntry;
+
+            public Enumerator(ReadOnlySpan<byte> commandBuffer)
             {
-                IsValid = true,
-                Type = type,
-                Offset = offset,
-                Size = type switch
+                this.commandBuffer = commandBuffer;
+                this.offset = 0;
+                currentEntry = new EditorCommandEntry();
+            }
+
+            public EditorCommandEntry Current => currentEntry;
+
+            public bool MoveNext()
+            {
+                if (offset >= commandBuffer.Length) return false;
+
+                ReadOnlySpan<byte> cmdTypeSpan = commandBuffer.Slice(offset, sizeof(uint));
+                ref readonly EditorCommandType cmdType =
+                    ref MemoryMarshal.AsRef<EditorCommandType>(cmdTypeSpan);
+                offset += cmdTypeSpan.Length;
+
+                int dataSize = cmdType switch
                 {
                     EditorCommandType.AddMaterial => Unsafe.SizeOf<AddMaterialCommand>(),
                     EditorCommandType.DeleteMaterial => Unsafe.SizeOf<DeleteMaterialCommand>(),
@@ -41,27 +57,14 @@ namespace Terrain.Editor.Core
                     EditorCommandType.SetMaterialTexture => Unsafe.SizeOf<SetMaterialTextureCommand>(),
                     EditorCommandType.SetMaterialProperties => Unsafe.SizeOf<SetMaterialPropertiesCommand>(),
                     _ => 0
-                }
-            };
-            offset += result.Size;
+                };
 
-            return result;
-        }
+                currentEntry.Type = cmdType;
+                currentEntry.Data = commandBuffer.Slice(offset, dataSize);
+                offset += dataSize;
 
-        private ref T PopInternal<T>()
-            where T : struct
-        {
-            int size = Unsafe.SizeOf<T>();
-            Span<byte> sliceSpan = commandBuffer.Slice(offset, size);
-            offset += size;
-            return ref MemoryMarshal.AsRef<T>(sliceSpan);
-        }
-
-        public ref T Get<T>(Span span)
-            where T : struct
-        {
-            Span<byte> sliceSpan = commandBuffer.Slice(span.Offset, span.Size);
-            return ref MemoryMarshal.AsRef<T>(sliceSpan);
+                return true;
+            }
         }
     }
 }

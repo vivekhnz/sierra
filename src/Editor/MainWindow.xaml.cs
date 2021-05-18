@@ -319,12 +319,11 @@ namespace Terrain.Editor
 
         private void OnTransactionPublished(EditorCommandList commands)
         {
-            EditorCommandList.Span span;
-            while ((span = commands.Pop()).IsValid)
+            foreach (var entry in commands)
             {
-                if (span.Type == EditorCommandType.AddMaterial)
+                if (entry.Type == EditorCommandType.AddMaterial)
                 {
-                    ref AddMaterialCommand cmd = ref commands.Get<AddMaterialCommand>(span);
+                    ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
                     lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
                     btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
                     lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
