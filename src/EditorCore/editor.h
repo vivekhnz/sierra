@@ -155,6 +155,18 @@ struct EditorAssets
     uint32 shaderProgramBrushBlendSmooth;
     uint32 shaderProgramRock;
 
+    uint32 textureGroundAlbedo;
+    uint32 textureGroundNormal;
+    uint32 textureGroundDisplacement;
+    uint32 textureGroundAo;
+    uint32 textureRockAlbedo;
+    uint32 textureRockNormal;
+    uint32 textureRockDisplacement;
+    uint32 textureRockAo;
+    uint32 textureSnowAlbedo;
+    uint32 textureSnowNormal;
+    uint32 textureSnowDisplacement;
+    uint32 textureSnowAo;
     uint32 textureVirtualImportedHeightmap;
 
     uint32 meshRock;

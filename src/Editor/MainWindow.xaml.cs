@@ -26,8 +26,6 @@ namespace Terrain.Editor
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
 
-        private int prevAssetCount;
-
         public MainWindow()
         {
             EditorPlatform.Initialize();
@@ -203,59 +201,6 @@ namespace Terrain.Editor
         {
             editorUiState.CheckForChanges();
             editorAssets.CheckForChanges();
-
-            if (prevAssetCount == 0)
-            {
-                int assetCount = TerrainEngine.GetRegisteredAssetCount();
-                if (assetCount != prevAssetCount)
-                {
-                    uint GetTextureAssetId(string relativePath)
-                    {
-                        var assetVm = editorAssets.RegisteredAssets.FirstOrDefault(
-                            asset => asset.FileRelativePath == relativePath);
-                        return assetVm?.AssetId ?? 0;
-                    }
-
-                    EditorCore.AddMaterial(new TerrainMaterialProperties
-                    {
-                        AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
-                        NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
-                        DisplacementTextureAssetId = GetTextureAssetId("ground_displacement.tga"),
-                        AoTextureAssetId = GetTextureAssetId("ground_ao.tga"),
-                        TextureSizeInWorldUnits = 2.5f,
-                        SlopeStart = 0.0f,
-                        SlopeEnd = 0.0f,
-                        AltitudeStart = 0.0f,
-                        AltitudeEnd = 0.0f
-                    });
-                    EditorCore.AddMaterial(new TerrainMaterialProperties
-                    {
-                        AlbedoTextureAssetId = GetTextureAssetId("rock_albedo.jpg"),
-                        NormalTextureAssetId = GetTextureAssetId("rock_normal.jpg"),
-                        DisplacementTextureAssetId = GetTextureAssetId("rock_displacement.tga"),
-                        AoTextureAssetId = GetTextureAssetId("rock_ao.tga"),
-                        TextureSizeInWorldUnits = 13.0f,
-                        SlopeStart = 0.2f,
-                        SlopeEnd = 0.4f,
-                        AltitudeStart = 0,
-                        AltitudeEnd = 0.001f
-                    });
-                    EditorCore.AddMaterial(new TerrainMaterialProperties
-                    {
-                        AlbedoTextureAssetId = GetTextureAssetId("snow_albedo.jpg"),
-                        NormalTextureAssetId = GetTextureAssetId("snow_normal.jpg"),
-                        DisplacementTextureAssetId = GetTextureAssetId("snow_displacement.tga"),
-                        AoTextureAssetId = GetTextureAssetId("snow_ao.tga"),
-                        TextureSizeInWorldUnits = 2.0f,
-                        SlopeStart = 0.4f,
-                        SlopeEnd = 0.2f,
-                        AltitudeStart = 0.25f,
-                        AltitudeEnd = 0.28f
-                    });
-
-                    prevAssetCount = assetCount;
-                }
-            }
         }
 
         private void UpdateMaterialDetails(int selectedMaterialIndex)

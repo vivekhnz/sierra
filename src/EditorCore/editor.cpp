@@ -146,18 +146,30 @@ bool initializeEditor(EditorMemory *memory)
     assets->shaderProgramRock = engine->assetsRegisterShaderProgram(
         memory->engineMemory, rockShaderAssetIds, arrayCount(rockShaderAssetIds));
 
-    engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "ground_normal.bmp", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "ground_displacement.tga", true);
-    engine->assetsRegisterTexture(memory->engineMemory, "ground_ao.tga", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "rock_albedo.jpg", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "rock_normal.jpg", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "rock_displacement.tga", true);
-    engine->assetsRegisterTexture(memory->engineMemory, "rock_ao.tga", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "snow_albedo.jpg", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
-    engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
-    engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
+    assets->textureGroundAlbedo =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
+    assets->textureGroundNormal =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_normal.bmp", false);
+    assets->textureGroundDisplacement =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_displacement.tga", true);
+    assets->textureGroundAo =
+        engine->assetsRegisterTexture(memory->engineMemory, "ground_ao.tga", false);
+    assets->textureRockAlbedo =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_albedo.jpg", false);
+    assets->textureRockNormal =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_normal.jpg", false);
+    assets->textureRockDisplacement =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_displacement.tga", true);
+    assets->textureRockAo =
+        engine->assetsRegisterTexture(memory->engineMemory, "rock_ao.tga", false);
+    assets->textureSnowAlbedo =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_albedo.jpg", false);
+    assets->textureSnowNormal =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
+    assets->textureSnowDisplacement =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
+    assets->textureSnowAo =
+        engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
     assets->textureVirtualImportedHeightmap =
         engine->assetsRegisterTexture(memory->engineMemory, 0, true);
 
@@ -402,6 +414,41 @@ bool initializeEditor(EditorMemory *memory)
     state->transactions.data.baseAddress =
         pushEditorData(memory, state->transactions.data.size);
     state->transactions.publishTransaction = memory->platformPublishTransaction;
+
+    // add default materials
+    EditorTransaction *addMaterialsTx = createTransaction(&state->transactions);
+    AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+    cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
+    cmd->normalTextureAssetId = assets->textureGroundNormal;
+    cmd->displacementTextureAssetId = assets->textureGroundDisplacement;
+    cmd->aoTextureAssetId = assets->textureGroundAo;
+    cmd->textureSizeInWorldUnits = 2.5f;
+    cmd->slopeStart = 0;
+    cmd->slopeEnd = 0;
+    cmd->altitudeStart = 0;
+    cmd->altitudeEnd = 0;
+
+    cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+    cmd->albedoTextureAssetId = assets->textureRockAlbedo;
+    cmd->normalTextureAssetId = assets->textureRockNormal;
+    cmd->displacementTextureAssetId = assets->textureRockDisplacement;
+    cmd->aoTextureAssetId = assets->textureRockAo;
+    cmd->textureSizeInWorldUnits = 13;
+    cmd->slopeStart = 0.2f;
+    cmd->slopeEnd = 0.4f;
+    cmd->altitudeStart = 0;
+    cmd->altitudeEnd = 0.001f;
+
+    cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+    cmd->albedoTextureAssetId = assets->textureSnowAlbedo;
+    cmd->normalTextureAssetId = assets->textureSnowNormal;
+    cmd->displacementTextureAssetId = assets->textureSnowDisplacement;
+    cmd->aoTextureAssetId = assets->textureSnowAo;
+    cmd->textureSizeInWorldUnits = 2;
+    cmd->slopeStart = 0.4f;
+    cmd->slopeEnd = 0.2f;
+    cmd->altitudeStart = 0.25f;
+    cmd->altitudeEnd = 0.28f;
 
     return 1;
 }
