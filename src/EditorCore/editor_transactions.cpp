@@ -41,7 +41,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
         offset += sizeof(*tx);
 
         uint8 *commandBufferBaseAddress = baseAddress + offset;
-        for (uint32 i = 0; i < tx->commandCount; i++)
+        for (uint32 cmdIdx = 0; cmdIdx < tx->commandCount; cmdIdx++)
         {
             EditorCommandType commandType = *((EditorCommandType *)(baseAddress + offset));
             offset += sizeof(commandType);
@@ -53,18 +53,25 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             {
                 AddMaterialCommand *cmd = (AddMaterialCommand *)commandData;
 
-                assert(state->docState.materialCount < MAX_MATERIAL_COUNT);
-                uint32 index = state->docState.materialCount++;
-                TerrainMaterialProperties *material = &state->docState.materialProps[index];
-                material->albedoTextureAssetId = cmd->albedoTextureAssetId;
-                material->normalTextureAssetId = cmd->normalTextureAssetId;
-                material->displacementTextureAssetId = cmd->displacementTextureAssetId;
-                material->aoTextureAssetId = cmd->aoTextureAssetId;
-                material->textureSizeInWorldUnits = cmd->textureSizeInWorldUnits;
-                material->slopeStart = cmd->slopeStart;
-                material->slopeEnd = cmd->slopeEnd;
-                material->altitudeStart = cmd->altitudeStart;
-                material->altitudeEnd = cmd->altitudeEnd;
+                assert(state->sceneState.worldState.materialCount < MAX_MATERIAL_COUNT);
+                uint32 index = state->sceneState.worldState.materialCount++;
+
+                GpuMaterialProperties *material =
+                    &state->sceneState.worldState.materialProps[index];
+                material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
+                material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
+                material->rampParams.x = cmd->slopeStart;
+                material->rampParams.y = cmd->slopeEnd;
+                material->rampParams.z = cmd->altitudeStart;
+                material->rampParams.w = cmd->altitudeEnd;
+
+                state->sceneState.worldState.albedoTextureAssetIds[index] =
+                    cmd->albedoTextureAssetId;
+                state->sceneState.worldState.normalTextureAssetIds[index] =
+                    cmd->normalTextureAssetId;
+                state->sceneState.worldState.displacementTextureAssetIds[index] =
+                    cmd->displacementTextureAssetId;
+                state->sceneState.worldState.aoTextureAssetIds[index] = cmd->aoTextureAssetId;
 
                 offset += sizeof(*cmd);
             }
@@ -74,10 +81,20 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)commandData;
 
                 assert(cmd->index < MAX_MATERIAL_COUNT);
-                state->docState.materialCount--;
-                for (uint32 i = cmd->index; i < state->docState.materialCount; i++)
+                state->sceneState.worldState.materialCount--;
+                for (uint32 i = cmd->index; i < state->sceneState.worldState.materialCount;
+                     i++)
                 {
-                    state->docState.materialProps[i] = state->docState.materialProps[i + 1];
+                    state->sceneState.worldState.materialProps[i] =
+                        state->sceneState.worldState.materialProps[i + 1];
+                    state->sceneState.worldState.albedoTextureAssetIds[i] =
+                        state->sceneState.worldState.albedoTextureAssetIds[i + 1];
+                    state->sceneState.worldState.normalTextureAssetIds[i] =
+                        state->sceneState.worldState.normalTextureAssetIds[i + 1];
+                    state->sceneState.worldState.displacementTextureAssetIds[i] =
+                        state->sceneState.worldState.displacementTextureAssetIds[i + 1];
+                    state->sceneState.worldState.aoTextureAssetIds[i] =
+                        state->sceneState.worldState.aoTextureAssetIds[i + 1];
                 }
 
                 offset += sizeof(*cmd);
@@ -90,10 +107,17 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 assert(cmd->indexA < MAX_MATERIAL_COUNT);
                 assert(cmd->indexB < MAX_MATERIAL_COUNT);
 
-                TerrainMaterialProperties temp = state->docState.materialProps[cmd->indexA];
-                state->docState.materialProps[cmd->indexA] =
-                    state->docState.materialProps[cmd->indexB];
-                state->docState.materialProps[cmd->indexB] = temp;
+#define swap(type, array)                                                                     \
+    type temp_##array = state->sceneState.worldState.array[cmd->indexA];                      \
+    state->sceneState.worldState.array[cmd->indexA] =                                         \
+        state->sceneState.worldState.array[cmd->indexB];                                      \
+    state->sceneState.worldState.array[cmd->indexB] = temp_##array;
+
+                swap(GpuMaterialProperties, materialProps);
+                swap(uint32, albedoTextureAssetIds);
+                swap(uint32, normalTextureAssetIds);
+                swap(uint32, displacementTextureAssetIds);
+                swap(uint32, aoTextureAssetIds);
 
                 offset += sizeof(*cmd);
             }
@@ -103,15 +127,15 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)commandData;
 
                 assert(cmd->index < MAX_MATERIAL_COUNT);
-                TerrainMaterialProperties *matProps =
-                    &state->docState.materialProps[cmd->index];
+
                 uint32 *materialTextureAssetIds[] = {
-                    &matProps->albedoTextureAssetId,       //
-                    &matProps->normalTextureAssetId,       //
-                    &matProps->displacementTextureAssetId, //
-                    &matProps->aoTextureAssetId            //
+                    state->sceneState.worldState.albedoTextureAssetIds,       //
+                    state->sceneState.worldState.normalTextureAssetIds,       //
+                    state->sceneState.worldState.displacementTextureAssetIds, //
+                    state->sceneState.worldState.aoTextureAssetIds            //
                 };
-                *materialTextureAssetIds[(uint32)cmd->textureType] = cmd->assetId;
+                uint32 *textureAssetIds = materialTextureAssetIds[(uint32)cmd->textureType];
+                textureAssetIds[cmd->index] = cmd->assetId;
 
                 offset += sizeof(*cmd);
             }
@@ -122,13 +146,14 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                     (SetMaterialPropertiesCommand *)commandData;
 
                 assert(cmd->index < MAX_MATERIAL_COUNT);
-                TerrainMaterialProperties *matProps =
-                    &state->docState.materialProps[cmd->index];
-                matProps->textureSizeInWorldUnits = cmd->textureSizeInWorldUnits;
-                matProps->slopeStart = cmd->slopeStart;
-                matProps->slopeEnd = cmd->slopeEnd;
-                matProps->altitudeStart = cmd->altitudeStart;
-                matProps->altitudeEnd = cmd->altitudeEnd;
+                GpuMaterialProperties *material =
+                    &state->sceneState.worldState.materialProps[cmd->index];
+                material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
+                material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
+                material->rampParams.x = cmd->slopeStart;
+                material->rampParams.y = cmd->slopeEnd;
+                material->rampParams.z = cmd->altitudeStart;
+                material->rampParams.w = cmd->altitudeEnd;
 
                 offset += sizeof(*cmd);
             }

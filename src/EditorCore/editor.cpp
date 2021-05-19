@@ -186,7 +186,6 @@ bool initializeEditor(EditorMemory *memory)
     state->uiState.terrainBrushStrength = 0.12f;
     state->uiState.sceneLightDirection = 0.5f;
 
-    state->docState.materialCount = 0;
     state->docState.rockPosition = glm::vec3(0);
     state->docState.rockRotation = glm::vec3(0);
     state->docState.rockScale = glm::vec3(1);
@@ -899,27 +898,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
     sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
-    // update material properties
-    sceneState->worldState.materialCount = state->docState.materialCount;
-    for (uint32 i = 0; i < sceneState->worldState.materialCount; i++)
-    {
-        const TerrainMaterialProperties *stateProps = &state->docState.materialProps[i];
-        GpuMaterialProperties *gpuProps = &sceneState->worldState.materialProps[i];
-
-        gpuProps->textureSizeInWorldUnits.x = stateProps->textureSizeInWorldUnits;
-        gpuProps->textureSizeInWorldUnits.y = stateProps->textureSizeInWorldUnits;
-        gpuProps->rampParams.x = stateProps->slopeStart;
-        gpuProps->rampParams.y = stateProps->slopeEnd;
-        gpuProps->rampParams.z = stateProps->altitudeStart;
-        gpuProps->rampParams.w = stateProps->altitudeEnd;
-
-        sceneState->worldState.albedoTextureAssetIds[i] = stateProps->albedoTextureAssetId;
-        sceneState->worldState.normalTextureAssetIds[i] = stateProps->normalTextureAssetId;
-        sceneState->worldState.displacementTextureAssetIds[i] =
-            stateProps->displacementTextureAssetId;
-        sceneState->worldState.aoTextureAssetIds[i] = stateProps->aoTextureAssetId;
-    }
-
     // update scene lighting
     glm::vec4 lightDir = glm::vec4(0);
     lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
@@ -1360,7 +1338,21 @@ API_EXPORT EDITOR_GET_MATERIAL_PROPERTIES(editorGetMaterialProperties)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     assert(index < MAX_MATERIAL_COUNT);
-    return state->docState.materialProps[index];
+    GpuMaterialProperties *gpuProps = &state->sceneState.worldState.materialProps[index];
+
+    TerrainMaterialProperties result = {};
+    result.albedoTextureAssetId = state->sceneState.worldState.albedoTextureAssetIds[index];
+    result.normalTextureAssetId = state->sceneState.worldState.normalTextureAssetIds[index];
+    result.displacementTextureAssetId =
+        state->sceneState.worldState.displacementTextureAssetIds[index];
+    result.aoTextureAssetId = state->sceneState.worldState.aoTextureAssetIds[index];
+    result.textureSizeInWorldUnits = gpuProps->textureSizeInWorldUnits.x;
+    result.slopeStart = gpuProps->rampParams.x;
+    result.slopeEnd = gpuProps->rampParams.y;
+    result.altitudeStart = gpuProps->rampParams.z;
+    result.altitudeEnd = gpuProps->rampParams.w;
+
+    return result;
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)

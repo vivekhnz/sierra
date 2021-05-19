@@ -52,8 +52,6 @@ struct EditorUiState
 
 struct EditorDocumentState
 {
-    uint32 materialCount;
-    TerrainMaterialProperties materialProps[MAX_MATERIAL_COUNT];
     glm::vec3 rockPosition;
     glm::vec3 rockRotation;
     glm::vec3 rockScale;

@@ -47,8 +47,6 @@ namespace Terrain.Editor
             updateUiTimer.Tick += updateUiTimer_Tick;
             updateUiTimer.Start();
 
-            UpdateMaterialDetails(0);
-
             isUiInitialized = true;
         }
 
