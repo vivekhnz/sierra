@@ -9,6 +9,15 @@
   <Window.Resources>
     <CollectionViewSource x:Key="TextureFileAssets"
         Source="{Binding Source={StaticResource EditorAssets}, Path=RegisteredAssets}" />
+    <CollectionViewSource x:Key="TerrainMaterials"
+        Source="{Binding Source={StaticResource EditorDocument}, Path=TerrainMaterials}" />
+    <Style x:Key="SliderStyle" TargetType="Slider">
+      <Style.Triggers>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.2" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
   </Window.Resources>
   <Grid Background="#333">
     <Grid.ColumnDefinitions>
@@ -115,8 +124,10 @@
                     <RowDefinition Height="24" />
                   </Grid.RowDefinitions>
                   <ListBox x:Name="lbMaterials" SelectionChanged="OnMaterialSelectionChanged"
-                      SelectedIndex="0" Background="Transparent" Foreground="#CCC"
-                      FontSize="14" Grid.ColumnSpan="3" Margin="0 0 0 8">
+                      ItemsSource="{Binding Source={StaticResource TerrainMaterials}}"
+                      IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Name"
+                      Background="Transparent" Foreground="#CCC" FontSize="14"
+                      Grid.ColumnSpan="3" Margin="0 0 0 8">
                     <ListBox.ItemContainerStyle>
                       <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="18 2" />
@@ -199,11 +210,12 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider x:Name="materialTextureSizeSlider" Minimum="0.1" Maximum="16"
-                      Value="13" SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                      IsSnapToTickEnabled="True"
-                      ValueChanged="OnMaterialParameterSliderValueChanged" />
-                  <TextBlock Text="{Binding ElementName=materialTextureSizeSlider, Path=Value}"
+                  <Slider Minimum="0.1" Maximum="16"
+                      Value="{Binding Source={StaticResource TerrainMaterials}, Path=/TextureSizeInWorldUnits}"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True" Style="{StaticResource SliderStyle}" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource TerrainMaterials}, Path=/TextureSizeInWorldUnits}"
                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
                 <Rectangle Height="1" Stroke="#222" Margin="0 0 0 12"
@@ -214,11 +226,13 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider x:Name="materialSlopeStartSlider" Minimum="0" Maximum="1" Value="0.6"
+                  <Slider Minimum="0" Maximum="1"
+                      Value="{Binding Source={StaticResource TerrainMaterials}, Path=/SlopeStart}"
+                      IsEnabled="{Binding Source={StaticResource TerrainMaterials}, Path=/Index, Converter={StaticResource InvertedComparisonConverter}, ConverterParameter={StaticResource IntZero}}"
                       SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                      IsSnapToTickEnabled="True"
-                      ValueChanged="OnMaterialParameterSliderValueChanged" />
-                  <TextBlock Text="{Binding ElementName=materialSlopeStartSlider, Path=Value}"
+                      IsSnapToTickEnabled="True" Style="{StaticResource SliderStyle}" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource TerrainMaterials}, Path=/SlopeStart}"
                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
                 <TextBlock Text="Slope End" Foreground="#888" Margin="0 0 0 8" />
@@ -227,11 +241,13 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider x:Name="materialSlopeEndSlider" Minimum="0" Maximum="1" Value="0.8"
+                  <Slider Minimum="0" Maximum="1"
+                      Value="{Binding Source={StaticResource TerrainMaterials}, Path=/SlopeEnd}"
+                      IsEnabled="{Binding Source={StaticResource TerrainMaterials}, Path=/Index, Converter={StaticResource InvertedComparisonConverter}, ConverterParameter={StaticResource IntZero}}"
                       SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                      IsSnapToTickEnabled="True"
-                      ValueChanged="OnMaterialParameterSliderValueChanged" />
-                  <TextBlock Text="{Binding ElementName=materialSlopeEndSlider, Path=Value}"
+                      IsSnapToTickEnabled="True" Style="{StaticResource SliderStyle}" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource TerrainMaterials}, Path=/SlopeEnd}"
                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
                 <TextBlock Text="Altitude Start" Foreground="#888" Margin="0 0 0 8" />
@@ -240,12 +256,13 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider x:Name="materialAltitudeStartSlider" Minimum="0" Maximum="1"
-                      Value="0" SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                      IsSnapToTickEnabled="True"
-                      ValueChanged="OnMaterialParameterSliderValueChanged" />
+                  <Slider Minimum="0" Maximum="1"
+                      Value="{Binding Source={StaticResource TerrainMaterials}, Path=/AltitudeStart}"
+                      IsEnabled="{Binding Source={StaticResource TerrainMaterials}, Path=/Index, Converter={StaticResource InvertedComparisonConverter}, ConverterParameter={StaticResource IntZero}}"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True" Style="{StaticResource SliderStyle}" />
                   <TextBlock
-                      Text="{Binding ElementName=materialAltitudeStartSlider, Path=Value}"
+                      Text="{Binding Source={StaticResource TerrainMaterials}, Path=/AltitudeStart}"
                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
                 <TextBlock Text="Altitude End" Foreground="#888" Margin="0 0 0 8" />
@@ -254,11 +271,13 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider x:Name="materialAltitudeEndSlider" Minimum="0" Maximum="1"
-                      Value="0.001" SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
-                      IsSnapToTickEnabled="True"
-                      ValueChanged="OnMaterialParameterSliderValueChanged" />
-                  <TextBlock Text="{Binding ElementName=materialAltitudeEndSlider, Path=Value}"
+                  <Slider Minimum="0" Maximum="1"
+                      Value="{Binding Source={StaticResource TerrainMaterials}, Path=/AltitudeEnd}"
+                      IsEnabled="{Binding Source={StaticResource TerrainMaterials}, Path=/Index, Converter={StaticResource InvertedComparisonConverter}, ConverterParameter={StaticResource IntZero}}"
+                      SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
+                      IsSnapToTickEnabled="True" Style="{StaticResource SliderStyle}" />
+                  <TextBlock
+                      Text="{Binding Source={StaticResource TerrainMaterials}, Path=/AltitudeEnd}"
                       Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
               </StackPanel>

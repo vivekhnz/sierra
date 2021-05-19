@@ -8,10 +8,12 @@ namespace Terrain.Editor.Utilities
 
     public class ComparisonConverter : IValueConverter
     {
+        public bool Invert { get; set; }
+
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
-            => value?.Equals(parameter);
+            => value?.Equals(parameter) != Invert;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => value?.Equals(true) == true ? parameter : Binding.DoNothing;
+            => value?.Equals(true) != Invert ? parameter : Binding.DoNothing;
     }
 }

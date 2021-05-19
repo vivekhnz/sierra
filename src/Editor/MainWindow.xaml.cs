@@ -22,6 +22,7 @@ namespace Terrain.Editor
 
         private EditorUiStateViewModel editorUiState;
         private EditorAssetsViewModel editorAssets;
+        private EditorDocumentViewModel editorDocument;
 
         bool isUiInitialized = false;
         DispatcherTimer updateUiTimer;
@@ -31,10 +32,12 @@ namespace Terrain.Editor
             EditorPlatform.Initialize();
             InitializeComponent();
 
-            EditorCore.TransactionPublished += OnTransactionPublished;
-
             editorUiState = (EditorUiStateViewModel)FindResource("EditorUiState");
             editorAssets = (EditorAssetsViewModel)FindResource("EditorAssets");
+            editorDocument = (EditorDocumentViewModel)FindResource("EditorDocument");
+
+            EditorCore.TransactionPublished += editorDocument.OnTransactionPublished;
+            EditorCore.TransactionPublished += OnTransactionPublished;
 
             var cvsTextureFileAssets = (CollectionViewSource)FindResource("TextureFileAssets");
             cvsTextureFileAssets.Filter += EditorAssetsViewModel.BuildAssetFilter(
@@ -136,22 +139,31 @@ namespace Terrain.Editor
             EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex + 1);
         }
 
-        private void OnMaterialParameterSliderValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
-
-            EditorCore.SetMaterialProperties(lbMaterials.SelectedIndex,
-                (float)materialTextureSizeSlider.Value,
-                (float)materialSlopeStartSlider.Value, (float)materialSlopeEndSlider.Value,
-                (float)materialAltitudeStartSlider.Value, (float)materialAltitudeEndSlider.Value);
-        }
-
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (!isUiInitialized || lbMaterials.SelectedIndex < 0) return;
+            int selectedMaterialIndex = lbMaterials.SelectedIndex;
+            if (!isUiInitialized || selectedMaterialIndex < 0) return;
 
-            UpdateMaterialDetails(lbMaterials.SelectedIndex);
+            var props = EditorCore.GetMaterialProperties(selectedMaterialIndex);
+
+            bool isFirstMaterial = selectedMaterialIndex == 0;
+            bool isLastMaterial = selectedMaterialIndex == lbMaterials.Items.Count - 1;
+
+            btnMoveMaterialUp.IsEnabled = !isFirstMaterial;
+            btnMoveMaterialUp.Opacity = btnMoveMaterialUp.IsEnabled ? 1 : 0.2;
+            btnMoveMaterialDown.IsEnabled = !isLastMaterial;
+            btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
+
+            AssetViewModel FindAssetViewModel(uint assetId)
+            {
+                return editorAssets.RegisteredAssets.FirstOrDefault(
+                    asset => asset.AssetId == assetId);
+            }
+
+            cbMaterialAlbedoTexture.SelectedItem = FindAssetViewModel(props.AlbedoTextureAssetId);
+            cbMaterialNormalTexture.SelectedItem = FindAssetViewModel(props.NormalTextureAssetId);
+            cbMaterialDisplacementTexture.SelectedItem = FindAssetViewModel(props.DisplacementTextureAssetId);
+            cbMaterialAoTexture.SelectedItem = FindAssetViewModel(props.AoTextureAssetId);
         }
 
         private void OnMaterialTextureComboBoxSelectionChanged(object sender,
@@ -187,65 +199,6 @@ namespace Terrain.Editor
             editorAssets.CheckForChanges();
         }
 
-        private void UpdateMaterialDetails(int selectedMaterialIndex)
-        {
-            var props = EditorCore.GetMaterialProperties(selectedMaterialIndex);
-
-            bool isFirstMaterial = selectedMaterialIndex == 0;
-            bool isLastMaterial = selectedMaterialIndex == lbMaterials.Items.Count - 1;
-
-            btnMoveMaterialUp.IsEnabled = !isFirstMaterial;
-            btnMoveMaterialUp.Opacity = btnMoveMaterialUp.IsEnabled ? 1 : 0.2;
-            btnMoveMaterialDown.IsEnabled = !isLastMaterial;
-            btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
-
-            AssetViewModel FindAssetViewModel(uint assetId)
-            {
-                return editorAssets.RegisteredAssets.FirstOrDefault(
-                    asset => asset.AssetId == assetId);
-            }
-
-            cbMaterialAlbedoTexture.SelectedItem = FindAssetViewModel(props.AlbedoTextureAssetId);
-            cbMaterialNormalTexture.SelectedItem = FindAssetViewModel(props.NormalTextureAssetId);
-            cbMaterialDisplacementTexture.SelectedItem = FindAssetViewModel(props.DisplacementTextureAssetId);
-            cbMaterialAoTexture.SelectedItem = FindAssetViewModel(props.AoTextureAssetId);
-            materialTextureSizeSlider.Value = props.TextureSizeInWorldUnits;
-
-            materialSlopeStartSlider.Value = props.SlopeStart;
-            materialSlopeEndSlider.Value = props.SlopeEnd;
-            materialAltitudeStartSlider.Value = props.AltitudeStart;
-            materialAltitudeEndSlider.Value = props.AltitudeEnd;
-
-            if (selectedMaterialIndex == 0)
-            {
-                materialSlopeStartSlider.IsEnabled = false;
-                materialSlopeStartSlider.Opacity = 0.2;
-
-                materialSlopeEndSlider.IsEnabled = false;
-                materialSlopeEndSlider.Opacity = 0.2;
-
-                materialAltitudeStartSlider.IsEnabled = false;
-                materialAltitudeStartSlider.Opacity = 0.2;
-
-                materialAltitudeEndSlider.IsEnabled = false;
-                materialAltitudeEndSlider.Opacity = 0.2;
-            }
-            else
-            {
-                materialSlopeStartSlider.IsEnabled = true;
-                materialSlopeStartSlider.Opacity = 1;
-
-                materialSlopeEndSlider.IsEnabled = true;
-                materialSlopeEndSlider.Opacity = 1;
-
-                materialAltitudeStartSlider.IsEnabled = true;
-                materialAltitudeStartSlider.Opacity = 1;
-
-                materialAltitudeEndSlider.IsEnabled = true;
-                materialAltitudeEndSlider.Opacity = 1;
-            }
-        }
-
         private void OnTransactionPublished(EditorCommandList commands)
         {
             foreach (var entry in commands)
@@ -254,7 +207,6 @@ namespace Terrain.Editor
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
 
-                    lbMaterials.Items.Add($"Material {lbMaterials.Items.Count + 1}");
                     btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
                     lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
                 }
@@ -262,7 +214,6 @@ namespace Terrain.Editor
                 {
                     ref readonly DeleteMaterialCommand cmd = ref entry.As<DeleteMaterialCommand>();
 
-                    lbMaterials.Items.RemoveAt((int)cmd.Index);
                     if (lbMaterials.Items.Count > 0)
                     {
                         lbMaterials.SelectedIndex = (int)cmd.Index;
@@ -275,10 +226,15 @@ namespace Terrain.Editor
 
                     int indexA = (int)cmd.IndexA;
                     int indexB = (int)cmd.IndexB;
-                    var temp = lbMaterials.Items[indexA];
-                    lbMaterials.Items[indexA] = lbMaterials.Items[indexB];
-                    lbMaterials.Items[indexB] = temp;
                     lbMaterials.SelectedIndex = indexB;
+
+                    bool isFirstMaterial = indexB == 0;
+                    bool isLastMaterial = indexB == lbMaterials.Items.Count - 1;
+
+                    btnMoveMaterialUp.IsEnabled = !isFirstMaterial;
+                    btnMoveMaterialUp.Opacity = btnMoveMaterialUp.IsEnabled ? 1 : 0.2;
+                    btnMoveMaterialDown.IsEnabled = !isLastMaterial;
+                    btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
                 }
             }
         }
