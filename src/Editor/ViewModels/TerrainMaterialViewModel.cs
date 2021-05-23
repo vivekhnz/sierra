@@ -5,69 +5,37 @@ namespace Terrain.Editor.ViewModels
     public class TerrainMaterialViewModel : ViewModelBase
     {
         private int index;
-        public int Index
-        {
-            get => index;
-            set
-            {
-                index = value;
-                NotifyPropertyChanged(nameof(Index));
-            }
-        }
+        public int Index { get => index; set => SetAndNotify(ref index, value); }
 
         private string name;
-        public string Name
-        {
-            get => name;
-            set
-            {
-                name = value;
-                NotifyPropertyChanged(nameof(Name));
-            }
-        }
+        public string Name { get => name; set => SetAndNotify(ref name, value); }
 
         private uint albedoTextureAssetId;
         public uint AlbedoTextureAssetId
         {
             get => albedoTextureAssetId;
-            set
-            {
-                albedoTextureAssetId = value;
-                NotifyPropertyChanged(nameof(AlbedoTextureAssetId));
-            }
+            set => SetAndNotify(ref albedoTextureAssetId, value);
         }
 
         private uint normalTextureAssetId;
         public uint NormalTextureAssetId
         {
             get => normalTextureAssetId;
-            set
-            {
-                normalTextureAssetId = value;
-                NotifyPropertyChanged(nameof(NormalTextureAssetId));
-            }
+            set => SetAndNotify(ref normalTextureAssetId, value);
         }
 
         private uint displacementTextureAssetId;
         public uint DisplacementTextureAssetId
         {
             get => displacementTextureAssetId;
-            set
-            {
-                displacementTextureAssetId = value;
-                NotifyPropertyChanged(nameof(DisplacementTextureAssetId));
-            }
+            set => SetAndNotify(ref displacementTextureAssetId, value);
         }
 
         private uint aoTextureAssetId;
         public uint AoTextureAssetId
         {
             get => aoTextureAssetId;
-            set
-            {
-                aoTextureAssetId = value;
-                NotifyPropertyChanged(nameof(AoTextureAssetId));
-            }
+            set => SetAndNotify(ref aoTextureAssetId, value);
         }
 
         private float textureSizeInWorldUnits;
@@ -76,8 +44,7 @@ namespace Terrain.Editor.ViewModels
             get => textureSizeInWorldUnits;
             set
             {
-                textureSizeInWorldUnits = value;
-                NotifyPropertyChanged(nameof(TextureSizeInWorldUnits));
+                SetAndNotify(ref textureSizeInWorldUnits, value);
                 UpdateMaterialProperties();
             }
         }
@@ -88,8 +55,7 @@ namespace Terrain.Editor.ViewModels
             get => slopeStart;
             set
             {
-                slopeStart = value;
-                NotifyPropertyChanged(nameof(SlopeStart));
+                SetAndNotify(ref slopeStart, value);
                 UpdateMaterialProperties();
             }
         }
@@ -100,8 +66,7 @@ namespace Terrain.Editor.ViewModels
             get => slopeEnd;
             set
             {
-                slopeEnd = value;
-                NotifyPropertyChanged(nameof(SlopeEnd));
+                SetAndNotify(ref slopeEnd, value);
                 UpdateMaterialProperties();
             }
         }
@@ -112,8 +77,7 @@ namespace Terrain.Editor.ViewModels
             get => altitudeStart;
             set
             {
-                altitudeStart = value;
-                NotifyPropertyChanged(nameof(AltitudeStart));
+                SetAndNotify(ref altitudeStart, value);
                 UpdateMaterialProperties();
             }
         }
@@ -124,11 +88,16 @@ namespace Terrain.Editor.ViewModels
             get => altitudeEnd;
             set
             {
-                altitudeEnd = value;
-                NotifyPropertyChanged(nameof(AltitudeEnd));
+                SetAndNotify(ref altitudeEnd, value);
                 UpdateMaterialProperties();
             }
         }
+
+        private bool canMoveDown;
+        public bool CanMoveDown { get => canMoveDown; set => SetAndNotify(ref canMoveDown, value); }
+
+        private bool canMoveUp;
+        public bool CanMoveUp { get => canMoveUp; set => SetAndNotify(ref canMoveUp, value); }
 
         private void UpdateMaterialProperties()
         {

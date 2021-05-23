@@ -146,14 +146,6 @@ namespace Terrain.Editor
 
             var props = EditorCore.GetMaterialProperties(selectedMaterialIndex);
 
-            bool isFirstMaterial = selectedMaterialIndex == 0;
-            bool isLastMaterial = selectedMaterialIndex == lbMaterials.Items.Count - 1;
-
-            btnMoveMaterialUp.IsEnabled = !isFirstMaterial;
-            btnMoveMaterialUp.Opacity = btnMoveMaterialUp.IsEnabled ? 1 : 0.2;
-            btnMoveMaterialDown.IsEnabled = !isLastMaterial;
-            btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
-
             AssetViewModel FindAssetViewModel(uint assetId)
             {
                 return editorAssets.RegisteredAssets.FirstOrDefault(
@@ -224,17 +216,7 @@ namespace Terrain.Editor
                 {
                     ref readonly SwapMaterialCommand cmd = ref entry.As<SwapMaterialCommand>();
 
-                    int indexA = (int)cmd.IndexA;
-                    int indexB = (int)cmd.IndexB;
-                    lbMaterials.SelectedIndex = indexB;
-
-                    bool isFirstMaterial = indexB == 0;
-                    bool isLastMaterial = indexB == lbMaterials.Items.Count - 1;
-
-                    btnMoveMaterialUp.IsEnabled = !isFirstMaterial;
-                    btnMoveMaterialUp.Opacity = btnMoveMaterialUp.IsEnabled ? 1 : 0.2;
-                    btnMoveMaterialDown.IsEnabled = !isLastMaterial;
-                    btnMoveMaterialDown.Opacity = btnMoveMaterialDown.IsEnabled ? 1 : 0.2;
+                    lbMaterials.SelectedIndex = (int)cmd.IndexB;
                 }
             }
         }

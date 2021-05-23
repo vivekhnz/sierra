@@ -28,7 +28,9 @@ namespace Terrain.Editor.ViewModels
                         SlopeStart = cmd.SlopeStart,
                         SlopeEnd = cmd.SlopeEnd,
                         AltitudeStart = cmd.AltitudeStart,
-                        AltitudeEnd = cmd.AltitudeEnd
+                        AltitudeEnd = cmd.AltitudeEnd,
+                        CanMoveDown = false,
+                        CanMoveUp = TerrainMaterials.Count > 0
                     };
                     TerrainMaterials.Add(materialVm);
                 }
@@ -47,7 +49,10 @@ namespace Terrain.Editor.ViewModels
             }
             for (int i = 0; i < TerrainMaterials.Count; i++)
             {
-                TerrainMaterials[i].Index = i;
+                var materialVm = TerrainMaterials[i];
+                materialVm.Index = i;
+                materialVm.CanMoveUp = i > 0;
+                materialVm.CanMoveDown = i < TerrainMaterials.Count - 1;
             }
         }
     }

@@ -18,6 +18,13 @@
         </Trigger>
       </Style.Triggers>
     </Style>
+    <Style x:Key="ButtonStyle" TargetType="Button">
+      <Style.Triggers>
+        <Trigger Property="IsEnabled" Value="False">
+          <Setter Property="Opacity" Value="0.2" />
+        </Trigger>
+      </Style.Triggers>
+    </Style>
   </Window.Resources>
   <Grid Background="#333">
     <Grid.ColumnDefinitions>
@@ -136,10 +143,14 @@
                   </ListBox>
                   <Button x:Name="btnDeleteMaterial" Content="Delete" Grid.Column="0"
                       Grid.Row="1" Margin="12 0 0 0" Click="btnDeleteMaterial_Click" />
-                  <Button x:Name="btnMoveMaterialUp" Content="Move Up" Grid.Column="1"
-                      Grid.Row="1" Margin="12 0" Click="btnMoveMaterialUp_Click" />
-                  <Button x:Name="btnMoveMaterialDown" Content="Move Down" Grid.Column="2"
-                      Grid.Row="1" Margin="0 0 12 0" Click="btnMoveMaterialDown_Click" />
+                  <Button Content="Move Up" Grid.Column="1"
+                      IsEnabled="{Binding Source={StaticResource TerrainMaterials}, Path=/CanMoveUp}"
+                      Style="{StaticResource ButtonStyle}" Grid.Row="1" Margin="12 0"
+                      Click="btnMoveMaterialUp_Click" />
+                  <Button Content="Move Down" Grid.Column="2"
+                      IsEnabled="{Binding Source={StaticResource TerrainMaterials}, Path=/CanMoveDown}"
+                      Style="{StaticResource ButtonStyle}" Grid.Row="1" Margin="0 0 12 0"
+                      Click="btnMoveMaterialDown_Click" />
                 </Grid>
               </Expander>
               <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
