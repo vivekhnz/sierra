@@ -123,22 +123,6 @@ namespace Terrain.Editor
             EditorCore.DeleteMaterial(selectedMaterialIndex);
         }
 
-        private void btnMoveMaterialUp_Click(object sender, RoutedEventArgs e)
-        {
-            int selectedMaterialIndex = lbMaterials.SelectedIndex;
-            if (selectedMaterialIndex < 0) return;
-
-            EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex - 1);
-        }
-
-        private void btnMoveMaterialDown_Click(object sender, RoutedEventArgs e)
-        {
-            int selectedMaterialIndex = lbMaterials.SelectedIndex;
-            if (selectedMaterialIndex < 0) return;
-
-            EditorCore.SwapMaterial(selectedMaterialIndex, selectedMaterialIndex + 1);
-        }
-
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             int selectedMaterialIndex = lbMaterials.SelectedIndex;

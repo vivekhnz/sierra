@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using Terrain.Editor.Core;
+using Terrain.Editor.Utilities;
 
 namespace Terrain.Editor.ViewModels
 {
@@ -7,6 +8,36 @@ namespace Terrain.Editor.ViewModels
     {
         public ObservableCollection<TerrainMaterialViewModel> TerrainMaterials { get; private set; }
             = new ObservableCollection<TerrainMaterialViewModel>();
+
+        public DelegateCommand<TerrainMaterialViewModel> MoveMaterialUpCommand { get; private set; }
+        public DelegateCommand<TerrainMaterialViewModel> MoveMaterialDownCommand { get; private set; }
+
+        public EditorDocumentViewModel()
+        {
+            MoveMaterialUpCommand = new DelegateCommand<TerrainMaterialViewModel>(
+                materialVm =>
+                {
+                    if (materialVm == null) return;
+
+                    int index = TerrainMaterials.IndexOf(materialVm);
+                    if (index == -1) return;
+
+                    EditorCore.SwapMaterial(index, index - 1);
+                },
+                materialVm => materialVm != null && TerrainMaterials.IndexOf(materialVm) > 0);
+            MoveMaterialDownCommand = new DelegateCommand<TerrainMaterialViewModel>(
+                materialVm =>
+                {
+                    if (materialVm == null) return;
+
+                    int index = TerrainMaterials.IndexOf(materialVm);
+                    if (index == -1) return;
+
+                    EditorCore.SwapMaterial(index, index + 1);
+                },
+                materialVm => materialVm != null
+                    && TerrainMaterials.IndexOf(materialVm) < TerrainMaterials.Count - 1);
+        }
 
         internal void OnTransactionPublished(EditorCommandList commands)
         {
@@ -18,7 +49,6 @@ namespace Terrain.Editor.ViewModels
 
                     var materialVm = new TerrainMaterialViewModel
                     {
-                        Index = TerrainMaterials.Count,
                         Name = $"Material {TerrainMaterials.Count + 1}",
                         AlbedoTextureAssetId = cmd.AlbedoTextureAssetId,
                         NormalTextureAssetId = cmd.NormalTextureAssetId,
@@ -28,9 +58,7 @@ namespace Terrain.Editor.ViewModels
                         SlopeStart = cmd.SlopeStart,
                         SlopeEnd = cmd.SlopeEnd,
                         AltitudeStart = cmd.AltitudeStart,
-                        AltitudeEnd = cmd.AltitudeEnd,
-                        CanMoveDown = false,
-                        CanMoveUp = TerrainMaterials.Count > 0
+                        AltitudeEnd = cmd.AltitudeEnd
                     };
                     TerrainMaterials.Add(materialVm);
                 }
@@ -47,13 +75,14 @@ namespace Terrain.Editor.ViewModels
                     TerrainMaterials.Move((int)cmd.IndexA, (int)cmd.IndexB);
                 }
             }
+
             for (int i = 0; i < TerrainMaterials.Count; i++)
             {
-                var materialVm = TerrainMaterials[i];
-                materialVm.Index = i;
-                materialVm.CanMoveUp = i > 0;
-                materialVm.CanMoveDown = i < TerrainMaterials.Count - 1;
+                TerrainMaterials[i].Index = i;
             }
+
+            MoveMaterialUpCommand.NotifyCanExecuteChanged();
+            MoveMaterialDownCommand.NotifyCanExecuteChanged();
         }
     }
 }

@@ -93,12 +93,6 @@ namespace Terrain.Editor.ViewModels
             }
         }
 
-        private bool canMoveDown;
-        public bool CanMoveDown { get => canMoveDown; set => SetAndNotify(ref canMoveDown, value); }
-
-        private bool canMoveUp;
-        public bool CanMoveUp { get => canMoveUp; set => SetAndNotify(ref canMoveUp, value); }
-
         private void UpdateMaterialProperties()
         {
             if (Index == -1) return;
