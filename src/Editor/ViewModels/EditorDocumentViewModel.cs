@@ -15,6 +15,7 @@ namespace Terrain.Editor.ViewModels
         public DelegateCommand AddMaterialCommand { get; private set; }
         public DelegateCommand<TerrainMaterialViewModel> MoveMaterialUpCommand { get; private set; }
         public DelegateCommand<TerrainMaterialViewModel> MoveMaterialDownCommand { get; private set; }
+        public DelegateCommand<TerrainMaterialViewModel> DeleteMaterialCommand { get; private set; }
 
         public EditorDocumentViewModel()
         {
@@ -65,6 +66,17 @@ namespace Terrain.Editor.ViewModels
                 },
                 materialVm => materialVm != null
                     && TerrainMaterials.IndexOf(materialVm) < TerrainMaterials.Count - 1);
+            DeleteMaterialCommand = new DelegateCommand<TerrainMaterialViewModel>(
+                materialVm =>
+                {
+                    if (materialVm == null) return;
+
+                    int index = TerrainMaterials.IndexOf(materialVm);
+                    if (index == -1) return;
+
+                    EditorCore.DeleteMaterial(index);
+                },
+                materialVm => materialVm != null && TerrainMaterials.IndexOf(materialVm) != -1);
         }
 
         internal void OnTransactionPublished(EditorCommandList commands)
@@ -112,6 +124,7 @@ namespace Terrain.Editor.ViewModels
             AddMaterialCommand.NotifyCanExecuteChanged();
             MoveMaterialUpCommand.NotifyCanExecuteChanged();
             MoveMaterialDownCommand.NotifyCanExecuteChanged();
+            DeleteMaterialCommand.NotifyCanExecuteChanged();
         }
     }
 }

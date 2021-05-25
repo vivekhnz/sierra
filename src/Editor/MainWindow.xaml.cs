@@ -71,14 +71,6 @@ namespace Terrain.Editor
                 (float)rockScaleZSlider.Value);
         }
 
-        private void btnDeleteMaterial_Click(object sender, RoutedEventArgs e)
-        {
-            int selectedMaterialIndex = lbMaterials.SelectedIndex;
-            if (selectedMaterialIndex < 0) return;
-
-            EditorCore.DeleteMaterial(selectedMaterialIndex);
-        }
-
         private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             int selectedMaterialIndex = lbMaterials.SelectedIndex;

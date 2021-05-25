@@ -141,8 +141,10 @@
                       </Style>
                     </ListBox.ItemContainerStyle>
                   </ListBox>
-                  <Button x:Name="btnDeleteMaterial" Content="Delete" Grid.Column="0"
-                      Grid.Row="1" Margin="12 0 0 0" Click="btnDeleteMaterial_Click" />
+                  <Button Content="Delete" Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
+                      Style="{StaticResource ButtonStyle}"
+                      Command="{Binding Source={StaticResource EditorDocument}, Path=DeleteMaterialCommand}"
+                      CommandParameter="{Binding Source={StaticResource TerrainMaterials}, Path=/}" />
                   <Button Content="Move Up" Grid.Column="1"
                       Style="{StaticResource ButtonStyle}" Grid.Row="1" Margin="12 0"
                       Command="{Binding Source={StaticResource EditorDocument}, Path=MoveMaterialUpCommand}"
