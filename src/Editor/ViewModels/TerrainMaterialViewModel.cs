@@ -1,4 +1,5 @@
 using Terrain.Editor.Core;
+using Terrain.Editor.Utilities;
 
 namespace Terrain.Editor.ViewModels
 {
@@ -91,6 +92,20 @@ namespace Terrain.Editor.ViewModels
                 SetAndNotify(ref altitudeEnd, value);
                 UpdateMaterialProperties();
             }
+        }
+
+        public DelegateCommand MoveMaterialUpCommand { get; private set; }
+        public DelegateCommand MoveMaterialDownCommand { get; private set; }
+        public DelegateCommand DeleteMaterialCommand { get; private set; }
+
+        public TerrainMaterialViewModel(
+            DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialUpCommandFactory,
+            DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialDownCommandFactory,
+            DelegateCommandFactory<TerrainMaterialViewModel> deleteMaterialCommandFactory)
+        {
+            MoveMaterialUpCommand = moveMaterialUpCommandFactory.Create(this);
+            MoveMaterialDownCommand = moveMaterialDownCommandFactory.Create(this);
+            DeleteMaterialCommand = deleteMaterialCommandFactory.Create(this);
         }
 
         private void UpdateMaterialProperties()

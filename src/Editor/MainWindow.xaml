@@ -23,6 +23,9 @@
         <Trigger Property="IsEnabled" Value="False">
           <Setter Property="Opacity" Value="0.2" />
         </Trigger>
+        <Trigger Property="Command" Value="{x:Null}">
+          <Setter Property="IsEnabled" Value="False" />
+        </Trigger>
       </Style.Triggers>
     </Style>
   </Window.Resources>
@@ -143,16 +146,13 @@
                   </ListBox>
                   <Button Content="Delete" Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
                       Style="{StaticResource ButtonStyle}"
-                      Command="{Binding Source={StaticResource EditorDocument}, Path=DeleteMaterialCommand}"
-                      CommandParameter="{Binding Source={StaticResource TerrainMaterials}, Path=/}" />
+                      Command="{Binding Source={StaticResource TerrainMaterials}, Path=/DeleteMaterialCommand}" />
                   <Button Content="Move Up" Grid.Column="1"
                       Style="{StaticResource ButtonStyle}" Grid.Row="1" Margin="12 0"
-                      Command="{Binding Source={StaticResource EditorDocument}, Path=MoveMaterialUpCommand}"
-                      CommandParameter="{Binding Source={StaticResource TerrainMaterials}, Path=/}" />
+                      Command="{Binding Source={StaticResource TerrainMaterials}, Path=/MoveMaterialUpCommand}" />
                   <Button Content="Move Down" Grid.Column="2"
                       Style="{StaticResource ButtonStyle}" Grid.Row="1" Margin="0 0 12 0"
-                      Command="{Binding Source={StaticResource EditorDocument}, Path=MoveMaterialDownCommand}"
-                      CommandParameter="{Binding Source={StaticResource TerrainMaterials}, Path=/}" />
+                      Command="{Binding Source={StaticResource TerrainMaterials}, Path=/MoveMaterialDownCommand}" />
                 </Grid>
               </Expander>
               <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"

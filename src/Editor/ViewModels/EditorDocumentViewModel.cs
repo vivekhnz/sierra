@@ -9,13 +9,14 @@ namespace Terrain.Editor.ViewModels
     {
         const int maxMaterialCount = 8;
 
+        private readonly DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialUpCommandFactory;
+        private readonly DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialDownCommandFactory;
+        private readonly DelegateCommandFactory<TerrainMaterialViewModel> deleteMaterialCommandFactory;
+
         public ObservableCollection<TerrainMaterialViewModel> TerrainMaterials { get; private set; }
             = new ObservableCollection<TerrainMaterialViewModel>();
 
         public DelegateCommand AddMaterialCommand { get; private set; }
-        public DelegateCommand<TerrainMaterialViewModel> MoveMaterialUpCommand { get; private set; }
-        public DelegateCommand<TerrainMaterialViewModel> MoveMaterialDownCommand { get; private set; }
-        public DelegateCommand<TerrainMaterialViewModel> DeleteMaterialCommand { get; private set; }
 
         public EditorDocumentViewModel()
         {
@@ -43,7 +44,7 @@ namespace Terrain.Editor.ViewModels
                     });
                 },
                 () => TerrainMaterials.Count < maxMaterialCount);
-            MoveMaterialUpCommand = new DelegateCommand<TerrainMaterialViewModel>(
+            moveMaterialUpCommandFactory = new DelegateCommandFactory<TerrainMaterialViewModel>(
                 materialVm =>
                 {
                     if (materialVm == null) return;
@@ -54,7 +55,7 @@ namespace Terrain.Editor.ViewModels
                     EditorCore.SwapMaterial(index, index - 1);
                 },
                 materialVm => materialVm != null && TerrainMaterials.IndexOf(materialVm) > 0);
-            MoveMaterialDownCommand = new DelegateCommand<TerrainMaterialViewModel>(
+            moveMaterialDownCommandFactory = new DelegateCommandFactory<TerrainMaterialViewModel>(
                 materialVm =>
                 {
                     if (materialVm == null) return;
@@ -66,7 +67,7 @@ namespace Terrain.Editor.ViewModels
                 },
                 materialVm => materialVm != null
                     && TerrainMaterials.IndexOf(materialVm) < TerrainMaterials.Count - 1);
-            DeleteMaterialCommand = new DelegateCommand<TerrainMaterialViewModel>(
+            deleteMaterialCommandFactory = new DelegateCommandFactory<TerrainMaterialViewModel>(
                 materialVm =>
                 {
                     if (materialVm == null) return;
@@ -87,7 +88,9 @@ namespace Terrain.Editor.ViewModels
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
 
-                    var materialVm = new TerrainMaterialViewModel
+                    var materialVm = new TerrainMaterialViewModel(
+                        moveMaterialUpCommandFactory, moveMaterialDownCommandFactory,
+                        deleteMaterialCommandFactory)
                     {
                         Name = $"Material {TerrainMaterials.Count + 1}",
                         AlbedoTextureAssetId = cmd.AlbedoTextureAssetId,
@@ -122,9 +125,9 @@ namespace Terrain.Editor.ViewModels
             }
 
             AddMaterialCommand.NotifyCanExecuteChanged();
-            MoveMaterialUpCommand.NotifyCanExecuteChanged();
-            MoveMaterialDownCommand.NotifyCanExecuteChanged();
-            DeleteMaterialCommand.NotifyCanExecuteChanged();
+            moveMaterialUpCommandFactory.NotifyCanExecuteChanged();
+            moveMaterialDownCommandFactory.NotifyCanExecuteChanged();
+            deleteMaterialCommandFactory.NotifyCanExecuteChanged();
         }
     }
 }

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Windows.Input;
 
 namespace Terrain.Editor.Utilities
@@ -22,22 +23,27 @@ namespace Terrain.Editor.Utilities
         internal void NotifyCanExecuteChanged() => CanExecuteChanged?.Invoke(null, null);
     }
 
-    public class DelegateCommand<T> : ICommand
+    public class DelegateCommandFactory<T>
     {
         Action<T> execute;
         Func<T, bool> canExecute;
 
-        public event EventHandler CanExecuteChanged;
+        private readonly List<DelegateCommand> commands = new List<DelegateCommand>();
 
-        public DelegateCommand(Action<T> execute, Func<T, bool> canExecute = null)
+        public DelegateCommandFactory(Action<T> execute, Func<T, bool> canExecute = null)
         {
             this.execute = execute;
             this.canExecute = canExecute;
         }
 
-        public bool CanExecute(object parameter) => canExecute?.Invoke((T)parameter) ?? true;
-        public void Execute(object parameter) => execute((T)parameter);
+        public DelegateCommand Create(T parameter)
+        {
+            var cmd = new DelegateCommand(() => execute(parameter), () => canExecute(parameter));
+            commands.Add(cmd);
+            return cmd;
+        }
 
-        internal void NotifyCanExecuteChanged() => CanExecuteChanged?.Invoke(null, null);
+        internal void NotifyCanExecuteChanged()
+            => commands.ForEach(cmd => cmd.NotifyCanExecuteChanged());
     }
 }
