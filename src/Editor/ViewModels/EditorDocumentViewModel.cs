@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Linq;
 using Terrain.Editor.Core;
 using Terrain.Editor.Utilities;
 
@@ -6,14 +7,41 @@ namespace Terrain.Editor.ViewModels
 {
     public class EditorDocumentViewModel : ViewModelBase
     {
+        const int maxMaterialCount = 8;
+
         public ObservableCollection<TerrainMaterialViewModel> TerrainMaterials { get; private set; }
             = new ObservableCollection<TerrainMaterialViewModel>();
 
+        public DelegateCommand AddMaterialCommand { get; private set; }
         public DelegateCommand<TerrainMaterialViewModel> MoveMaterialUpCommand { get; private set; }
         public DelegateCommand<TerrainMaterialViewModel> MoveMaterialDownCommand { get; private set; }
 
         public EditorDocumentViewModel()
         {
+            AddMaterialCommand = new DelegateCommand(
+                () =>
+                {
+                    uint GetTextureAssetId(string relativePath)
+                    {
+                        var assetVm = App.Current.Assets.RegisteredAssets.FirstOrDefault(
+                            asset => asset.FileRelativePath == relativePath);
+                        return assetVm?.AssetId ?? 0;
+                    }
+
+                    EditorCore.AddMaterial(new TerrainMaterialProperties
+                    {
+                        AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
+                        NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
+                        DisplacementTextureAssetId = GetTextureAssetId("ground_displacement.tga"),
+                        AoTextureAssetId = GetTextureAssetId("ground_ao.tga"),
+                        TextureSizeInWorldUnits = 2.5f,
+                        SlopeStart = 0.0f,
+                        SlopeEnd = 0.0f,
+                        AltitudeStart = 0.0f,
+                        AltitudeEnd = 0.0f
+                    });
+                },
+                () => TerrainMaterials.Count < maxMaterialCount);
             MoveMaterialUpCommand = new DelegateCommand<TerrainMaterialViewModel>(
                 materialVm =>
                 {
@@ -81,6 +109,7 @@ namespace Terrain.Editor.ViewModels
                 TerrainMaterials[i].Index = i;
             }
 
+            AddMaterialCommand.NotifyCanExecuteChanged();
             MoveMaterialUpCommand.NotifyCanExecuteChanged();
             MoveMaterialDownCommand.NotifyCanExecuteChanged();
         }

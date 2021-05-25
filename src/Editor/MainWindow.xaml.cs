@@ -1,11 +1,9 @@
 ﻿using Microsoft.Win32;
-using System;
 using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
-using System.Windows.Threading;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 using Terrain.Editor.Platform;
@@ -18,37 +16,18 @@ namespace Terrain.Editor
     /// </summary>
     public partial class MainWindow : Window
     {
-        const int maxMaterialCount = 8;
-
-        private EditorUiStateViewModel editorUiState;
-        private EditorAssetsViewModel editorAssets;
-        private EditorDocumentViewModel editorDocument;
-
         bool isUiInitialized = false;
-        DispatcherTimer updateUiTimer;
 
         public MainWindow()
         {
             EditorPlatform.Initialize();
             InitializeComponent();
 
-            editorUiState = (EditorUiStateViewModel)FindResource("EditorUiState");
-            editorAssets = (EditorAssetsViewModel)FindResource("EditorAssets");
-            editorDocument = (EditorDocumentViewModel)FindResource("EditorDocument");
-
-            EditorCore.TransactionPublished += editorDocument.OnTransactionPublished;
             EditorCore.TransactionPublished += OnTransactionPublished;
 
             var cvsTextureFileAssets = (CollectionViewSource)FindResource("TextureFileAssets");
             cvsTextureFileAssets.Filter += EditorAssetsViewModel.BuildAssetFilter(
                 new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
-
-            updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
-            {
-                Interval = TimeSpan.FromMilliseconds(50)
-            };
-            updateUiTimer.Tick += updateUiTimer_Tick;
-            updateUiTimer.Start();
 
             isUiInitialized = true;
         }
@@ -92,29 +71,6 @@ namespace Terrain.Editor
                 (float)rockScaleZSlider.Value);
         }
 
-        private void btnAddMaterial_Click(object sender, RoutedEventArgs e)
-        {
-            uint GetTextureAssetId(string relativePath)
-            {
-                var assetVm = editorAssets.RegisteredAssets.FirstOrDefault(
-                    asset => asset.FileRelativePath == relativePath);
-                return assetVm?.AssetId ?? 0;
-            }
-
-            EditorCore.AddMaterial(new TerrainMaterialProperties
-            {
-                AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
-                NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
-                DisplacementTextureAssetId = GetTextureAssetId("ground_displacement.tga"),
-                AoTextureAssetId = GetTextureAssetId("ground_ao.tga"),
-                TextureSizeInWorldUnits = 2.5f,
-                SlopeStart = 0.0f,
-                SlopeEnd = 0.0f,
-                AltitudeStart = 0.0f,
-                AltitudeEnd = 0.0f
-            });
-        }
-
         private void btnDeleteMaterial_Click(object sender, RoutedEventArgs e)
         {
             int selectedMaterialIndex = lbMaterials.SelectedIndex;
@@ -132,7 +88,7 @@ namespace Terrain.Editor
 
             AssetViewModel FindAssetViewModel(uint assetId)
             {
-                return editorAssets.RegisteredAssets.FirstOrDefault(
+                return App.Current.Assets.RegisteredAssets.FirstOrDefault(
                     asset => asset.AssetId == assetId);
             }
 
@@ -169,12 +125,6 @@ namespace Terrain.Editor
             EditorCore.SetMaterialTexture(materialIdx, textureType, assetVm.AssetId);
         }
 
-        private void updateUiTimer_Tick(object sender, EventArgs e)
-        {
-            editorUiState.CheckForChanges();
-            editorAssets.CheckForChanges();
-        }
-
         private void OnTransactionPublished(EditorCommandList commands)
         {
             foreach (var entry in commands)
@@ -183,7 +133,6 @@ namespace Terrain.Editor
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
 
-                    btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
                     lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
                 }
                 else if (entry.Type == EditorCommandType.DeleteMaterial)
@@ -194,7 +143,6 @@ namespace Terrain.Editor
                     {
                         lbMaterials.SelectedIndex = (int)cmd.Index;
                     }
-                    btnAddMaterial.IsEnabled = lbMaterials.Items.Count < maxMaterialCount;
                 }
                 else if (entry.Type == EditorCommandType.SwapMaterial)
                 {

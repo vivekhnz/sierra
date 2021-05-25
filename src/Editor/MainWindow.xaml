@@ -155,9 +155,10 @@
               </Expander>
               <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
                   HorizontalAlignment="Right">
-                <Button x:Name="btnAddMaterial" Content="+" Width="27" FontSize="16"
-                    FontWeight="Bold" VerticalContentAlignment="Top"
-                    Click="btnAddMaterial_Click" />
+                <Button Content="+" Width="27" FontSize="16" FontWeight="Bold"
+                    Style="{StaticResource ButtonStyle}"
+                    Command="{Binding Source={StaticResource EditorDocument}, Path=AddMaterialCommand}"
+                    VerticalContentAlignment="Top" />
               </StackPanel>
             </Grid>
             <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
