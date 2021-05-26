@@ -31,6 +31,8 @@ struct EditorTransaction
 
 struct AddMaterialCommand
 {
+    uint32 materialId;
+
     uint32 albedoTextureAssetId;
     uint32 normalTextureAssetId;
     uint32 displacementTextureAssetId;
@@ -70,7 +72,7 @@ struct SetMaterialTextureCommand
 
 struct SetMaterialPropertiesCommand
 {
-    uint32 index;
+    uint32 materialId;
     float textureSizeInWorldUnits;
     float slopeStart;
     float slopeEnd;

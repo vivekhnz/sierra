@@ -5,8 +5,7 @@ namespace Terrain.Editor.ViewModels
 {
     public class TerrainMaterialViewModel : ViewModelBase
     {
-        private int index;
-        public int Index { get => index; set => SetAndNotify(ref index, value); }
+        private readonly uint materialId;
 
         private string name;
         public string Name { get => name; set => SetAndNotify(ref name, value); }
@@ -94,15 +93,24 @@ namespace Terrain.Editor.ViewModels
             }
         }
 
+        private bool canSetMaterialProperties;
+        public bool CanSetMaterialProperties
+        {
+            get => canSetMaterialProperties;
+            set => SetAndNotify(ref canSetMaterialProperties, value);
+        }
+
         public DelegateCommand MoveMaterialUpCommand { get; private set; }
         public DelegateCommand MoveMaterialDownCommand { get; private set; }
         public DelegateCommand DeleteMaterialCommand { get; private set; }
 
         public TerrainMaterialViewModel(
+            uint materialId,
             DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialUpCommandFactory,
             DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialDownCommandFactory,
             DelegateCommandFactory<TerrainMaterialViewModel> deleteMaterialCommandFactory)
         {
+            this.materialId = materialId;
             MoveMaterialUpCommand = moveMaterialUpCommandFactory.Create(this);
             MoveMaterialDownCommand = moveMaterialDownCommandFactory.Create(this);
             DeleteMaterialCommand = deleteMaterialCommandFactory.Create(this);
@@ -110,9 +118,7 @@ namespace Terrain.Editor.ViewModels
 
         private void UpdateMaterialProperties()
         {
-            if (Index == -1) return;
-
-            EditorCore.SetMaterialProperties(Index,
+            EditorCore.SetMaterialProperties(materialId,
                 textureSizeInWorldUnits, slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
     }

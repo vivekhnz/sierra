@@ -164,6 +164,8 @@ namespace Terrain.Editor.Core
 
     struct AddMaterialCommand
     {
+        public uint MaterialId;
+
         public uint AlbedoTextureAssetId;
         public uint NormalTextureAssetId;
         public uint DisplacementTextureAssetId;
@@ -192,7 +194,7 @@ namespace Terrain.Editor.Core
     }
     struct SetMaterialPropertiesCommand
     {
-        public uint Index;
+        public uint MaterialId;
         public float TextureSizeInWorldUnits;
         public float SlopeStart;
         public float SlopeEnd;
@@ -371,10 +373,10 @@ namespace Terrain.Editor.Core
             TerrainMaterialTextureType textureType, uint assetId)
             => editorSetMaterialTexture?.Invoke(ref memory, (uint)index, textureType, assetId);
 
-        internal static void SetMaterialProperties(int index, float textureSize,
+        internal static void SetMaterialProperties(uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd)
         {
-            editorSetMaterialProperties?.Invoke(ref memory, (uint)index, textureSize,
+            editorSetMaterialProperties?.Invoke(ref memory, materialId, textureSize,
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
 

@@ -56,6 +56,8 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 assert(state->sceneState.worldState.materialCount < MAX_MATERIAL_COUNT);
                 uint32 index = state->sceneState.worldState.materialCount++;
 
+                state->sceneState.worldState.materialIds[index] = cmd->materialId;
+
                 GpuMaterialProperties *material =
                     &state->sceneState.worldState.materialProps[index];
                 material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
@@ -145,15 +147,29 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 SetMaterialPropertiesCommand *cmd =
                     (SetMaterialPropertiesCommand *)commandData;
 
-                assert(cmd->index < MAX_MATERIAL_COUNT);
-                GpuMaterialProperties *material =
-                    &state->sceneState.worldState.materialProps[cmd->index];
-                material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
-                material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
-                material->rampParams.x = cmd->slopeStart;
-                material->rampParams.y = cmd->slopeEnd;
-                material->rampParams.z = cmd->altitudeStart;
-                material->rampParams.w = cmd->altitudeEnd;
+                bool foundMaterial = false;
+                uint32 index = 0;
+                for (uint32 i = 0; i < state->sceneState.worldState.materialCount; i++)
+                {
+                    if (state->sceneState.worldState.materialIds[i] == cmd->materialId)
+                    {
+                        foundMaterial = true;
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (foundMaterial)
+                {
+                    GpuMaterialProperties *material =
+                        &state->sceneState.worldState.materialProps[index];
+                    material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
+                    material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
+                    material->rampParams.x = cmd->slopeStart;
+                    material->rampParams.y = cmd->slopeEnd;
+                    material->rampParams.z = cmd->altitudeStart;
+                    material->rampParams.w = cmd->altitudeEnd;
+                }
 
                 offset += sizeof(*cmd);
             }

@@ -88,11 +88,11 @@ namespace Terrain.Editor.ViewModels
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
 
-                    var materialVm = new TerrainMaterialViewModel(
+                    var materialVm = new TerrainMaterialViewModel(cmd.MaterialId,
                         moveMaterialUpCommandFactory, moveMaterialDownCommandFactory,
                         deleteMaterialCommandFactory)
                     {
-                        Name = $"Material {TerrainMaterials.Count + 1}",
+                        Name = $"Material {cmd.MaterialId}",
                         AlbedoTextureAssetId = cmd.AlbedoTextureAssetId,
                         NormalTextureAssetId = cmd.NormalTextureAssetId,
                         DisplacementTextureAssetId = cmd.DisplacementTextureAssetId,
@@ -121,7 +121,7 @@ namespace Terrain.Editor.ViewModels
 
             for (int i = 0; i < TerrainMaterials.Count; i++)
             {
-                TerrainMaterials[i].Index = i;
+                TerrainMaterials[i].CanSetMaterialProperties = i > 0;
             }
 
             AddMaterialCommand.NotifyCanExecuteChanged();

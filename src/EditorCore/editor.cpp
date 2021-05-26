@@ -384,6 +384,7 @@ bool initializeEditor(EditorMemory *memory)
             GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     sceneState->worldState.materialCount = 0;
+    sceneState->worldState.nextMaterialId = 1;
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
         sceneState->worldState.materialProps[i] = {};
@@ -417,6 +418,7 @@ bool initializeEditor(EditorMemory *memory)
     // add default materials
     EditorTransaction *addMaterialsTx = createTransaction(&state->transactions);
     AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+    cmd->materialId = sceneState->worldState.nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
     cmd->normalTextureAssetId = assets->textureGroundNormal;
     cmd->displacementTextureAssetId = assets->textureGroundDisplacement;
@@ -428,6 +430,7 @@ bool initializeEditor(EditorMemory *memory)
     cmd->altitudeEnd = 0;
 
     cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+    cmd->materialId = sceneState->worldState.nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureRockAlbedo;
     cmd->normalTextureAssetId = assets->textureRockNormal;
     cmd->displacementTextureAssetId = assets->textureRockDisplacement;
@@ -439,6 +442,7 @@ bool initializeEditor(EditorMemory *memory)
     cmd->altitudeEnd = 0.001f;
 
     cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+    cmd->materialId = sceneState->worldState.nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureSnowAlbedo;
     cmd->normalTextureAssetId = assets->textureSnowNormal;
     cmd->displacementTextureAssetId = assets->textureSnowDisplacement;
@@ -1303,6 +1307,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 
     EditorTransaction *tx = createTransaction(&state->transactions);
     AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
+    cmd->materialId = state->sceneState.worldState.nextMaterialId++;
     cmd->albedoTextureAssetId = props.albedoTextureAssetId;
     cmd->normalTextureAssetId = props.normalTextureAssetId;
     cmd->displacementTextureAssetId = props.displacementTextureAssetId;
@@ -1372,7 +1377,7 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 
     EditorTransaction *tx = createTransaction(&state->transactions);
     SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
-    cmd->index = index;
+    cmd->materialId = materialId;
     cmd->textureSizeInWorldUnits = textureSize;
     cmd->slopeStart = slopeStart;
     cmd->slopeEnd = slopeEnd;

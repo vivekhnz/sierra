@@ -128,6 +128,8 @@ struct SceneState
         SceneViewState *brushCursorVisibleView;
 
         uint32 materialCount;
+        uint32 nextMaterialId;
+        uint32 materialIds[MAX_MATERIAL_COUNT];
         GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
         uint32 albedoTextureAssetIds[MAX_MATERIAL_COUNT];
         uint32 normalTextureAssetIds[MAX_MATERIAL_COUNT];
@@ -343,7 +345,7 @@ typedef EDITOR_GET_MATERIAL_PROPERTIES(EditorGetMaterialProperties);
 typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
 
 #define EDITOR_SET_MATERIAL_PROPERTIES(name)                                                  \
-    void name(EditorMemory *memory, uint32 index, float textureSize, float slopeStart,        \
+    void name(EditorMemory *memory, uint32 materialId, float textureSize, float slopeStart,   \
         float slopeEnd, float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
