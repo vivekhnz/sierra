@@ -13,6 +13,7 @@ namespace Terrain.Editor.Engine
     internal delegate void PlatformLogMessage(string message);
     internal delegate bool PlatformQueueAssetLoad(uint assetId, string relativePath);
     internal delegate void PlatformWatchAssetFile(uint assetId, string relativePath);
+    internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
 
     [StructLayout(LayoutKind.Sequential)]
     struct EngineMemory
@@ -20,6 +21,7 @@ namespace Terrain.Editor.Engine
         public IntPtr PlatformLogMessage;
         public IntPtr PlatformQueueAssetLoad;
         public IntPtr PlatformWatchAssetFile;
+        public IntPtr PlatformNotifyAssetRegistered;
 
         public MemoryBlock Renderer;
         public MemoryBlock Assets;
@@ -57,8 +59,6 @@ namespace Terrain.Editor.Engine
         public bool IsLoadQueued;
     }
 
-    delegate uint AssetsGetRegisteredAssetCount(ref EngineMemory memory);
-    delegate ref AssetRegistration AssetsGetRegisteredAssets(ref EngineMemory memory);
     delegate void AssetsSetAssetData(ref EngineMemory memory, uint assetId, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
 
@@ -68,8 +68,6 @@ namespace Terrain.Editor.Engine
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi
     {
-        public AssetsGetRegisteredAssetCount assetsGetRegisteredAssetCount;
-        public AssetsGetRegisteredAssets assetsGetRegisteredAssets;
         public IntPtr assetsRegisterShader;
         public IntPtr assetsRegisterTexture;
         public IntPtr assetsRegisterShaderProgram;

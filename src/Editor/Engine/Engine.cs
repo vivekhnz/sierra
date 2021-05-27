@@ -26,10 +26,15 @@ namespace Terrain.Editor.Engine
         private static Func<string, IntPtr> loadLibrary;
         private static Func<IntPtr, string, IntPtr> getProcAddress;
         private static Func<IntPtr, bool> freeLibrary;
+        private static PlatformNotifyAssetRegistered onAssetRegistered
+            = new PlatformNotifyAssetRegistered(TerrainEngine.OnAssetRegistered);
 
         private static EngineApi api;
 
         internal static IntPtr EngineApiPtr { get; private set; }
+
+        internal delegate void AssetRegisteredEventHandler(in AssetRegistration assetReg);
+        internal static event AssetRegisteredEventHandler AssetRegistered;
 
         internal static IntPtr Initialize(IntPtr engineMemoryDataPtr,
             int engineMemorySizeInBytes, PlatformLogMessage logMessage,
@@ -45,7 +50,8 @@ namespace Terrain.Editor.Engine
             {
                 PlatformLogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
                 PlatformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
-                PlatformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile)
+                PlatformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile),
+                PlatformNotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
             };
 
             ulong offset = 0;
@@ -110,16 +116,9 @@ namespace Terrain.Editor.Engine
             memoryHandle.Free();
         }
 
-        internal static int GetRegisteredAssetCount()
+        private static void OnAssetRegistered(in AssetRegistration assetReg)
         {
-            return (int)api.assetsGetRegisteredAssetCount(ref memory);
-        }
-
-        internal static ReadOnlySpan<AssetRegistration> GetRegisteredAssets()
-        {
-            int assetCount = GetRegisteredAssetCount();
-            ref AssetRegistration assetsRef = ref api.assetsGetRegisteredAssets(ref memory);
-            return MemoryMarshal.CreateReadOnlySpan(ref assetsRef, assetCount);
+            AssetRegistered?.Invoke(in assetReg);
         }
 
         internal static void SetAssetData(uint assetId, ReadOnlySpan<byte> data)

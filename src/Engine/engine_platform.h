@@ -31,8 +31,6 @@ struct MemoryBlock
     uint64 size;
 };
 
-struct EngineMemory;
-
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
@@ -42,11 +40,16 @@ typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
 #define PLATFORM_WATCH_ASSET_FILE(name) void name(uint32 assetId, const char *relativePath)
 typedef PLATFORM_WATCH_ASSET_FILE(PlatformWatchAssetFile);
 
+struct AssetRegistration;
+#define PLATFORM_NOTIFY_ASSET_REGISTERED(name) void name(AssetRegistration *assetReg)
+typedef PLATFORM_NOTIFY_ASSET_REGISTERED(PlatformNotifyAssetRegistered);
+
 struct EngineMemory
 {
     PlatformLogMessage *platformLogMessage;
     PlatformQueueAssetLoad *platformQueueAssetLoad;
     PlatformWatchAssetFile *platformWatchAssetFile;
+    PlatformNotifyAssetRegistered *platformNotifyAssetRegistered;
 
     MemoryBlock renderer;
     MemoryBlock assets;

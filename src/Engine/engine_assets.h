@@ -105,12 +105,6 @@ typedef ASSETS_REGISTER_SHADER_PROGRAM(AssetsRegisterShaderProgram);
 #define ASSETS_REGISTER_MESH(name) uint32 name(EngineMemory *memory, const char *relativePath)
 typedef ASSETS_REGISTER_MESH(AssetsRegisterMesh);
 
-#define ASSETS_GET_REGISTERED_ASSET_COUNT(name) uint32 name(EngineMemory *memory)
-typedef ASSETS_GET_REGISTERED_ASSET_COUNT(AssetsGetRegisteredAssetCount);
-
-#define ASSETS_GET_REGISTERED_ASSETS(name) AssetRegistration *name(EngineMemory *memory)
-typedef ASSETS_GET_REGISTERED_ASSETS(AssetsGetRegisteredAssets);
-
 #define ASSETS_GET_SHADER(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
 typedef ASSETS_GET_SHADER(AssetsGetShader);
 

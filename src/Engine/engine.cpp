@@ -12,8 +12,6 @@ global_variable EngineApi api;
 
 API_EXPORT ENGINE_GET_API(engineGetApi)
 {
-    api.assetsGetRegisteredAssetCount = assetsGetRegisteredAssetCount;
-    api.assetsGetRegisteredAssets = assetsGetRegisteredAssets;
     api.assetsRegisterShader = assetsRegisterShader;
     api.assetsRegisterTexture = assetsRegisterTexture;
     api.assetsRegisterShaderProgram = assetsRegisterShaderProgram;

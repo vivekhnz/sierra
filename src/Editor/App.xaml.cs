@@ -2,6 +2,7 @@
 using System.Windows;
 using System.Windows.Threading;
 using Terrain.Editor.Core;
+using Terrain.Editor.Engine;
 using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor
@@ -25,6 +26,7 @@ namespace Terrain.Editor
             Assets = (EditorAssetsViewModel)FindResource("EditorAssets");
             Document = (EditorDocumentViewModel)FindResource("EditorDocument");
 
+            TerrainEngine.AssetRegistered += Assets.OnAssetRegistered;
             EditorCore.TransactionPublished += Document.OnTransactionPublished;
 
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
@@ -40,7 +42,6 @@ namespace Terrain.Editor
         private void updateUiTimer_Tick(object sender, EventArgs e)
         {
             UiState.CheckForChanges();
-            Assets.CheckForChanges();
         }
     }
 }

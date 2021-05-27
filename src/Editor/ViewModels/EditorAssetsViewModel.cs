@@ -9,37 +9,23 @@ namespace Terrain.Editor.ViewModels
 {
     public class EditorAssetsViewModel : ViewModelBase
     {
-        private int prevAssetCount;
-
         public ObservableCollection<AssetViewModel> RegisteredAssets { get; private set; }
             = new ObservableCollection<AssetViewModel>();
 
-        public void CheckForChanges()
+        internal void OnAssetRegistered(in AssetRegistration assetReg)
         {
-            int assetCount = TerrainEngine.GetRegisteredAssetCount();
-            if (assetCount != prevAssetCount)
+            var assetVm = new AssetViewModel
             {
-                var registeredAssets = TerrainEngine.GetRegisteredAssets();
-                var newAssets = registeredAssets.Slice(prevAssetCount);
-
-                foreach (var asset in newAssets)
-                {
-                    var assetVm = new AssetViewModel
-                    {
-                        AssetId = asset.Id,
-                        RegistrationType = asset.RegistrationType,
-                        AssetType = asset.GetAssetType()
-                    };
-                    if (assetVm.RegistrationType == AssetRegistrationType.File)
-                    {
-                        var fileState = asset.GetFileState();
-                        assetVm.FileRelativePath = fileState.RelativePath;
-                    }
-                    RegisteredAssets.Add(assetVm);
-                }
-
-                prevAssetCount = assetCount;
+                AssetId = assetReg.Id,
+                RegistrationType = assetReg.RegistrationType,
+                AssetType = assetReg.GetAssetType()
+            };
+            if (assetVm.RegistrationType == AssetRegistrationType.File)
+            {
+                var fileState = assetReg.GetFileState();
+                assetVm.FileRelativePath = fileState.RelativePath;
             }
+            RegisteredAssets.Add(assetVm);
         }
 
         internal static FilterEventHandler BuildAssetFilter(

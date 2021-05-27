@@ -95,6 +95,11 @@ AssetRegistration *registerAsset(EngineMemory *memory,
     }
 
     state->registeredAssetCount++;
+    if (memory->platformNotifyAssetRegistered)
+    {
+        memory->platformNotifyAssetRegistered(reg);
+    }
+
     return reg;
 }
 
@@ -122,19 +127,6 @@ ASSETS_REGISTER_MESH(assetsRegisterMesh)
 {
     AssetRegistration *reg = registerAsset(memory, ASSET_TYPE_MESH, relativePath, 0, 0);
     return reg->id;
-}
-
-ASSETS_GET_REGISTERED_ASSET_COUNT(assetsGetRegisteredAssetCount)
-{
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-    return state->registeredAssetCount;
-}
-ASSETS_GET_REGISTERED_ASSETS(assetsGetRegisteredAssets)
-{
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-    return state->registeredAssets;
 }
 
 bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAsset **deps)
