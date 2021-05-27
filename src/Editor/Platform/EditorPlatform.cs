@@ -6,7 +6,6 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
-using System.Windows.Threading;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 
@@ -61,7 +60,6 @@ namespace Terrain.Editor.Platform
         private static IntPtr dummyWindowHwnd;
         private static IntPtr glRenderingContext;
 
-        private static DispatcherTimer renderTimer;
         private static DateTime lastTickTime;
 
         private static Point prevMousePosWindowSpace;
@@ -122,9 +120,6 @@ namespace Terrain.Editor.Platform
                 editorPlatformCaptureMouse, engineMemoryPtr, Win32.LoadLibrary,
                 Win32.GetProcAddress, Win32.FreeLibrary);
 
-            var interopHelper = new WindowInteropHelper(Application.Current.MainWindow);
-            mainWindowHwnd = interopHelper.EnsureHandle();
-
             var dummyWindowClass = new Win32.WindowClass
             {
                 lpfnWndProc = Marshal.GetFunctionPointerForDelegate(defWndProc),
@@ -157,12 +152,6 @@ namespace Terrain.Editor.Platform
             engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
-            renderTimer = new DispatcherTimer(DispatcherPriority.Send)
-            {
-                Interval = TimeSpan.FromMilliseconds(1)
-            };
-            renderTimer.Tick += OnTick;
-            renderTimer.Start();
         }
 
         private static void ConfigureDeviceContextForOpenGL(IntPtr deviceContext)
@@ -335,104 +324,112 @@ namespace Terrain.Editor.Platform
             Win32.GetCursorPos(out var mousePosScreenSpaceWin32Point);
             Point mousePosScreenSpaceWpfPoint = new Point(
                 mousePosScreenSpaceWin32Point.X, mousePosScreenSpaceWin32Point.Y);
-            Point mousePosWindowSpaceWpfPoint =
-                App.Current.MainWindow.PointFromScreen(mousePosScreenSpaceWpfPoint);
-
-            var appWindow = App.Current.MainWindow;
-            Point actualMousePosWindowSpace = mousePosWindowSpaceWpfPoint;
+            Point actualMousePosWindowSpace = new Point();
             Point virtualMousePosWindowSpace = actualMousePosWindowSpace;
 
-            if (Win32.GetForegroundWindow() == mainWindowHwnd)
+            var appWindow = App.Current.MainWindow;
+            if (appWindow != null)
             {
-                if (wasMouseCaptured)
+                actualMousePosWindowSpace = appWindow.PointFromScreen(mousePosScreenSpaceWpfPoint);
+                virtualMousePosWindowSpace = actualMousePosWindowSpace;
+
+                if (mainWindowHwnd == IntPtr.Zero)
                 {
-                    /*
-                     * If we are capturing the mouse, we need to keep both the actual mouse position
-                     * and a simulated 'virtual' mouse position. The actual mouse position is used for
-                     * cursor offset calculations and the virtual mouse position is used when the
-                     * cursor position is queried.
-                     */
-                    virtualMousePosWindowSpace = capturedMousePosWindowSpace;
-
-                    if (!shouldCaptureMouse)
-                    {
-                        // move the cursor back to its original position when the mouse is released
-                        Point capturedMousePosScreenSpace =
-                            appWindow.PointToScreen(capturedMousePosWindowSpace);
-                        Win32.SetCursorPos(
-                            (int)capturedMousePosScreenSpace.X,
-                            (int)capturedMousePosScreenSpace.Y);
-
-                        actualMousePosWindowSpace = capturedMousePosWindowSpace;
-                    }
+                    var interopHelper = new WindowInteropHelper(appWindow);
+                    mainWindowHwnd = interopHelper.EnsureHandle();
                 }
-
-                for (int i = 0; i < viewportWindows.Count; i++)
+                if (mainWindowHwnd != IntPtr.Zero && Win32.GetForegroundWindow() == mainWindowHwnd)
                 {
-                    var viewportWindow = viewportWindows[i];
-                    var vctx = viewportWindow.ViewContext;
-
-                    if (actualMousePosWindowSpace.X < vctx.X
-                        || actualMousePosWindowSpace.X >= vctx.X + vctx.Width
-                        || actualMousePosWindowSpace.Y < vctx.Y
-                        || actualMousePosWindowSpace.Y >= vctx.Y + vctx.Height)
+                    if (wasMouseCaptured)
                     {
-                        continue;
+                        /*
+                         * If we are capturing the mouse, we need to keep both the actual mouse position
+                         * and a simulated 'virtual' mouse position. The actual mouse position is used for
+                         * cursor offset calculations and the virtual mouse position is used when the
+                         * cursor position is queried.
+                         */
+                        virtualMousePosWindowSpace = capturedMousePosWindowSpace;
+
+                        if (!shouldCaptureMouse)
+                        {
+                            // move the cursor back to its original position when the mouse is released
+                            Point capturedMousePosScreenSpace =
+                                appWindow.PointToScreen(capturedMousePosWindowSpace);
+                            Win32.SetCursorPos(
+                                (int)capturedMousePosScreenSpace.X,
+                                (int)capturedMousePosScreenSpace.Y);
+
+                            actualMousePosWindowSpace = capturedMousePosWindowSpace;
+                        }
                     }
 
-                    result.ActiveViewState = vctx.ViewState;
-                    result.PreviousPressedButtons = (ulong)prevPressedButtons;
-                    result.PressedButtons = (ulong)pressedButtons;
-                    result.NormalizedCursorPos.X =
-                        (float)(virtualMousePosWindowSpace.X - vctx.X) / (float)vctx.Width;
-                    result.NormalizedCursorPos.Y =
-                        (float)(virtualMousePosWindowSpace.Y - vctx.Y) / (float)vctx.Height;
-                    result.ScrollOffset = nextMouseScrollOffsetY;
-
-                    if (shouldCaptureMouse)
+                    for (int i = 0; i < viewportWindows.Count; i++)
                     {
-                        if (!wasMouseCaptured)
+                        var viewportWindow = viewportWindows[i];
+                        var vctx = viewportWindow.ViewContext;
+
+                        if (actualMousePosWindowSpace.X < vctx.X
+                            || actualMousePosWindowSpace.X >= vctx.X + vctx.Width
+                            || actualMousePosWindowSpace.Y < vctx.Y
+                            || actualMousePosWindowSpace.Y >= vctx.Y + vctx.Height)
                         {
-                            // store the cursor position so we can move the cursor back to it when
-                            // the mouse is released
-                            capturedMousePosWindowSpace = actualMousePosWindowSpace;
+                            continue;
                         }
 
-                        // calculate the center of the hovered viewport relative to the window
-                        Point viewportCenterWindowSpace = new Point(
-                            Math.Ceiling(vctx.X + (vctx.Width * 0.5)),
-                            Math.Ceiling(vctx.Y + (vctx.Height * 0.5)));
+                        result.ActiveViewState = vctx.ViewState;
+                        result.PreviousPressedButtons = (ulong)prevPressedButtons;
+                        result.PressedButtons = (ulong)pressedButtons;
+                        result.NormalizedCursorPos.X =
+                            (float)(virtualMousePosWindowSpace.X - vctx.X) / (float)vctx.Width;
+                        result.NormalizedCursorPos.Y =
+                            (float)(virtualMousePosWindowSpace.Y - vctx.Y) / (float)vctx.Height;
+                        result.ScrollOffset = nextMouseScrollOffsetY;
 
-                        // convert the viewport center to screen space and move the cursor to it
-                        Point viewportCenterScreenSpace =
-                            appWindow.PointToScreen(viewportCenterWindowSpace);
-                        Win32.SetCursorPos(
-                            (int)viewportCenterScreenSpace.X, (int)viewportCenterScreenSpace.Y);
-
-                        if (wasMouseCaptured)
+                        if (shouldCaptureMouse)
                         {
-                            result.CursorOffset.X = (float)actualMousePosWindowSpace.X
-                                - (float)viewportCenterWindowSpace.X;
-                            result.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
-                                - (float)viewportCenterWindowSpace.Y;
+                            if (!wasMouseCaptured)
+                            {
+                                // store the cursor position so we can move the cursor back to it when
+                                // the mouse is released
+                                capturedMousePosWindowSpace = actualMousePosWindowSpace;
+                            }
+
+                            // calculate the center of the hovered viewport relative to the window
+                            Point viewportCenterWindowSpace = new Point(
+                                Math.Ceiling(vctx.X + (vctx.Width * 0.5)),
+                                Math.Ceiling(vctx.Y + (vctx.Height * 0.5)));
+
+                            // convert the viewport center to screen space and move the cursor to it
+                            Point viewportCenterScreenSpace =
+                                appWindow.PointToScreen(viewportCenterWindowSpace);
+                            Win32.SetCursorPos(
+                                (int)viewportCenterScreenSpace.X, (int)viewportCenterScreenSpace.Y);
+
+                            if (wasMouseCaptured)
+                            {
+                                result.CursorOffset.X = (float)actualMousePosWindowSpace.X
+                                    - (float)viewportCenterWindowSpace.X;
+                                result.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
+                                    - (float)viewportCenterWindowSpace.Y;
+                            }
+                            else
+                            {
+                                // don't set the mouse offset on the first frame after we capture the mouse
+                                // or there will be a big jump from the initial cursor position to the
+                                // center of the viewport
+                                result.CursorOffset = new Vector2(0, 0);
+                                Win32.SetCursor(IntPtr.Zero);
+                            }
                         }
                         else
                         {
-                            // don't set the mouse offset on the first frame after we capture the mouse
-                            // or there will be a big jump from the initial cursor position to the
-                            // center of the viewport
-                            result.CursorOffset = new Vector2(0, 0);
-                            Win32.SetCursor(IntPtr.Zero);
+                            result.CursorOffset.X = (float)actualMousePosWindowSpace.X
+                                - (float)prevMousePosWindowSpace.X;
+                            result.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
+                                - (float)prevMousePosWindowSpace.Y;
                         }
+                        break;
                     }
-                    else
-                    {
-                        result.CursorOffset.X = (float)actualMousePosWindowSpace.X
-                            - (float)prevMousePosWindowSpace.X;
-                        result.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
-                            - (float)prevMousePosWindowSpace.Y;
-                    }
-                    break;
                 }
             }
 
@@ -445,7 +442,7 @@ namespace Terrain.Editor.Platform
             return result;
         }
 
-        private static void OnTick(object sender, EventArgs e)
+        internal static void Tick()
         {
             if (!File.Exists(buildLockFilePath))
             {
@@ -525,7 +522,6 @@ namespace Terrain.Editor.Platform
 
         internal static void Shutdown()
         {
-            renderTimer.Stop();
             TerrainEngine.Shutdown();
 
             Win32.DestroyGLContext(glRenderingContext);

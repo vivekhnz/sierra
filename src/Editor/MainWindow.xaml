@@ -5,7 +5,7 @@
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:controls="clr-namespace:Terrain.Editor.Controls"
     xmlns:core="clr-namespace:Terrain.Editor.Core" mc:Ignorable="d" Title="Terrain Editor"
-    Width="1280" Height="720" Closing="Window_Closing">
+    Width="1280" Height="720">
   <Window.Resources>
     <CollectionViewSource x:Key="TextureFileAssets"
         Source="{Binding Source={StaticResource EditorAssets}, Path=RegisteredAssets}" />
@@ -133,7 +133,7 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="24" />
                   </Grid.RowDefinitions>
-                  <ListBox x:Name="lbMaterials" SelectionChanged="OnMaterialSelectionChanged"
+                  <ListBox x:Name="lbMaterials"
                       ItemsSource="{Binding Source={StaticResource TerrainMaterials}}"
                       IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Name"
                       Background="Transparent" Foreground="#CCC" FontSize="14"
@@ -173,9 +173,9 @@
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="Albedo" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                  <ComboBox x:Name="cbMaterialAlbedoTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                  <ComboBox Grid.Column="1"
                       ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      SelectedItem="{Binding Source={StaticResource TerrainMaterials}, Path=/AlbedoTexture}"
                       IsSynchronizedWithCurrentItem="False"
                       DisplayMemberPath="FileRelativePath" />
                 </Grid>
@@ -186,9 +186,9 @@
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="Normal" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                  <ComboBox x:Name="cbMaterialNormalTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                  <ComboBox Grid.Column="1"
                       ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      SelectedItem="{Binding Source={StaticResource TerrainMaterials}, Path=/NormalTexture}"
                       IsSynchronizedWithCurrentItem="False"
                       DisplayMemberPath="FileRelativePath" />
                 </Grid>
@@ -199,9 +199,9 @@
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="Displacement" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                  <ComboBox x:Name="cbMaterialDisplacementTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                  <ComboBox Grid.Column="1"
                       ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      SelectedItem="{Binding Source={StaticResource TerrainMaterials}, Path=/DisplacementTexture}"
                       IsSynchronizedWithCurrentItem="False"
                       DisplayMemberPath="FileRelativePath" />
                 </Grid>
@@ -212,9 +212,9 @@
                   </Grid.ColumnDefinitions>
                   <TextBlock Text="AO" Foreground="#888" VerticalAlignment="Center"
                       HorizontalAlignment="Right" Margin="0 0 8 0" />
-                  <ComboBox x:Name="cbMaterialAoTexture" Grid.Column="1"
-                      SelectionChanged="OnMaterialTextureComboBoxSelectionChanged"
+                  <ComboBox Grid.Column="1"
                       ItemsSource="{Binding Source={StaticResource TextureFileAssets}}"
+                      SelectedItem="{Binding Source={StaticResource TerrainMaterials}, Path=/AoTexture}"
                       IsSynchronizedWithCurrentItem="False"
                       DisplayMemberPath="FileRelativePath" />
                 </Grid>

@@ -1366,7 +1366,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 
     EditorTransaction *tx = createTransaction(&state->transactions);
     SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
-    cmd->index = index;
+    cmd->materialId = materialId;
     cmd->textureType = textureType;
     cmd->assetId = assetId;
 }

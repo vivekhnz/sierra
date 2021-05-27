@@ -65,7 +65,7 @@ enum TerrainMaterialTextureType
 };
 struct SetMaterialTextureCommand
 {
-    uint32 index;
+    uint32 materialId;
     TerrainMaterialTextureType textureType;
     uint32 assetId;
 };

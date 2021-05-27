@@ -87,6 +87,8 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 for (uint32 i = cmd->index; i < state->sceneState.worldState.materialCount;
                      i++)
                 {
+                    state->sceneState.worldState.materialIds[i] =
+                        state->sceneState.worldState.materialIds[i + 1];
                     state->sceneState.worldState.materialProps[i] =
                         state->sceneState.worldState.materialProps[i + 1];
                     state->sceneState.worldState.albedoTextureAssetIds[i] =
@@ -115,6 +117,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
         state->sceneState.worldState.array[cmd->indexB];                                      \
     state->sceneState.worldState.array[cmd->indexB] = temp_##array;
 
+                swap(uint32, materialIds);
                 swap(GpuMaterialProperties, materialProps);
                 swap(uint32, albedoTextureAssetIds);
                 swap(uint32, normalTextureAssetIds);
@@ -128,16 +131,30 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             {
                 SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)commandData;
 
-                assert(cmd->index < MAX_MATERIAL_COUNT);
+                bool foundMaterial = false;
+                uint32 index = 0;
+                for (uint32 i = 0; i < state->sceneState.worldState.materialCount; i++)
+                {
+                    if (state->sceneState.worldState.materialIds[i] == cmd->materialId)
+                    {
+                        foundMaterial = true;
+                        index = i;
+                        break;
+                    }
+                }
 
-                uint32 *materialTextureAssetIds[] = {
-                    state->sceneState.worldState.albedoTextureAssetIds,       //
-                    state->sceneState.worldState.normalTextureAssetIds,       //
-                    state->sceneState.worldState.displacementTextureAssetIds, //
-                    state->sceneState.worldState.aoTextureAssetIds            //
-                };
-                uint32 *textureAssetIds = materialTextureAssetIds[(uint32)cmd->textureType];
-                textureAssetIds[cmd->index] = cmd->assetId;
+                if (foundMaterial)
+                {
+                    uint32 *materialTextureAssetIds[] = {
+                        state->sceneState.worldState.albedoTextureAssetIds,       //
+                        state->sceneState.worldState.normalTextureAssetIds,       //
+                        state->sceneState.worldState.displacementTextureAssetIds, //
+                        state->sceneState.worldState.aoTextureAssetIds            //
+                    };
+                    uint32 *textureAssetIds =
+                        materialTextureAssetIds[(uint32)cmd->textureType];
+                    textureAssetIds[index] = cmd->assetId;
+                }
 
                 offset += sizeof(*cmd);
             }

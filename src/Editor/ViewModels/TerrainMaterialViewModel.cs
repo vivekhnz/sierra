@@ -10,32 +10,52 @@ namespace Terrain.Editor.ViewModels
         private string name;
         public string Name { get => name; set => SetAndNotify(ref name, value); }
 
-        private uint albedoTextureAssetId;
-        public uint AlbedoTextureAssetId
+        private AssetViewModel albedoTexture;
+        public AssetViewModel AlbedoTexture
         {
-            get => albedoTextureAssetId;
-            set => SetAndNotify(ref albedoTextureAssetId, value);
+            get => albedoTexture;
+            set
+            {
+                SetAndNotify(ref albedoTexture, value);
+                EditorCore.SetMaterialTexture(materialId,
+                    TerrainMaterialTextureType.Albedo, value.AssetId);
+            }
         }
 
-        private uint normalTextureAssetId;
-        public uint NormalTextureAssetId
+        private AssetViewModel normalTexture;
+        public AssetViewModel NormalTexture
         {
-            get => normalTextureAssetId;
-            set => SetAndNotify(ref normalTextureAssetId, value);
+            get => normalTexture;
+            set
+            {
+                SetAndNotify(ref normalTexture, value);
+                EditorCore.SetMaterialTexture(materialId,
+                    TerrainMaterialTextureType.Normal, value.AssetId);
+            }
         }
 
-        private uint displacementTextureAssetId;
-        public uint DisplacementTextureAssetId
+        private AssetViewModel displacementTexture;
+        public AssetViewModel DisplacementTexture
         {
-            get => displacementTextureAssetId;
-            set => SetAndNotify(ref displacementTextureAssetId, value);
+            get => displacementTexture;
+            set
+            {
+                SetAndNotify(ref displacementTexture, value);
+                EditorCore.SetMaterialTexture(materialId,
+                    TerrainMaterialTextureType.Displacement, value.AssetId);
+            }
         }
 
-        private uint aoTextureAssetId;
-        public uint AoTextureAssetId
+        private AssetViewModel aoTexture;
+        public AssetViewModel AoTexture
         {
-            get => aoTextureAssetId;
-            set => SetAndNotify(ref aoTextureAssetId, value);
+            get => aoTexture;
+            set
+            {
+                SetAndNotify(ref aoTexture, value);
+                EditorCore.SetMaterialTexture(materialId,
+                    TerrainMaterialTextureType.AmbientOcclusion, value.AssetId);
+            }
         }
 
         private float textureSizeInWorldUnits;

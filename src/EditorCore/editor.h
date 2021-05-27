@@ -340,8 +340,8 @@ typedef EDITOR_SWAP_MATERIAL(EditorSwapMaterial);
 typedef EDITOR_GET_MATERIAL_PROPERTIES(EditorGetMaterialProperties);
 
 #define EDITOR_SET_MATERIAL_TEXTURE(name)                                                     \
-    void name(EditorMemory *memory, uint32 index, TerrainMaterialTextureType textureType,     \
-        uint32 assetId)
+    void name(EditorMemory *memory, uint32 materialId,                                        \
+        TerrainMaterialTextureType textureType, uint32 assetId)
 typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
 
 #define EDITOR_SET_MATERIAL_PROPERTIES(name)                                                  \

@@ -222,9 +222,9 @@ namespace Terrain.Editor.Core
         delegate void EditorDeleteMaterial(ref EditorMemory memory, uint index);
         delegate void EditorSwapMaterial(ref EditorMemory memory, uint indexA, uint indexB);
         delegate TerrainMaterialProperties EditorGetMaterialProperties(ref EditorMemory memory, uint index);
-        delegate void EditorSetMaterialTexture(ref EditorMemory memory, uint index,
+        delegate void EditorSetMaterialTexture(ref EditorMemory memory, uint materialId,
             TerrainMaterialTextureType textureType, uint assetId);
-        delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint index, float textureSize,
+        delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
         delegate void EditorSetRockTransform(ref EditorMemory memory, float positionX, float positionY,
             float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX, float scaleY, float scaleZ);
@@ -369,9 +369,9 @@ namespace Terrain.Editor.Core
             => editorGetMaterialProperties?.Invoke(ref memory, (uint)index)
                 ?? default(TerrainMaterialProperties);
 
-        internal static void SetMaterialTexture(int index,
+        internal static void SetMaterialTexture(uint materialId,
             TerrainMaterialTextureType textureType, uint assetId)
-            => editorSetMaterialTexture?.Invoke(ref memory, (uint)index, textureType, assetId);
+            => editorSetMaterialTexture?.Invoke(ref memory, materialId, textureType, assetId);
 
         internal static void SetMaterialProperties(uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd)

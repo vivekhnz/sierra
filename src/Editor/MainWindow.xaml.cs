@@ -1,8 +1,5 @@
 ﻿using Microsoft.Win32;
-using System.ComponentModel;
-using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
@@ -20,7 +17,6 @@ namespace Terrain.Editor
 
         public MainWindow()
         {
-            EditorPlatform.Initialize();
             InitializeComponent();
 
             EditorCore.TransactionPublished += OnTransactionPublished;
@@ -30,11 +26,6 @@ namespace Terrain.Editor
                 new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
 
             isUiInitialized = true;
-        }
-
-        private void Window_Closing(object sender, CancelEventArgs e)
-        {
-            EditorPlatform.Shutdown();
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)
@@ -69,52 +60,6 @@ namespace Terrain.Editor
                 (float)rockScaleXSlider.Value,
                 (float)rockScaleYSlider.Value,
                 (float)rockScaleZSlider.Value);
-        }
-
-        private void OnMaterialSelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            int selectedMaterialIndex = lbMaterials.SelectedIndex;
-            if (!isUiInitialized || selectedMaterialIndex < 0) return;
-
-            var props = EditorCore.GetMaterialProperties(selectedMaterialIndex);
-
-            AssetViewModel FindAssetViewModel(uint assetId)
-            {
-                return App.Current.Assets.RegisteredAssets.FirstOrDefault(
-                    asset => asset.AssetId == assetId);
-            }
-
-            cbMaterialAlbedoTexture.SelectedItem = FindAssetViewModel(props.AlbedoTextureAssetId);
-            cbMaterialNormalTexture.SelectedItem = FindAssetViewModel(props.NormalTextureAssetId);
-            cbMaterialDisplacementTexture.SelectedItem = FindAssetViewModel(props.DisplacementTextureAssetId);
-            cbMaterialAoTexture.SelectedItem = FindAssetViewModel(props.AoTextureAssetId);
-        }
-
-        private void OnMaterialTextureComboBoxSelectionChanged(object sender,
-            SelectionChangedEventArgs e)
-        {
-            int materialIdx = lbMaterials.SelectedIndex;
-            if (!(sender is ComboBox dropdown) || materialIdx < 0) return;
-            if (!(dropdown.SelectedItem is AssetViewModel assetVm)) return;
-
-            TerrainMaterialTextureType textureType = TerrainMaterialTextureType.Albedo;
-            if (dropdown == cbMaterialAlbedoTexture)
-            {
-                textureType = TerrainMaterialTextureType.Albedo;
-            }
-            else if (dropdown == cbMaterialNormalTexture)
-            {
-                textureType = TerrainMaterialTextureType.Normal;
-            }
-            else if (dropdown == cbMaterialDisplacementTexture)
-            {
-                textureType = TerrainMaterialTextureType.Displacement;
-            }
-            else if (dropdown == cbMaterialAoTexture)
-            {
-                textureType = TerrainMaterialTextureType.AmbientOcclusion;
-            }
-            EditorCore.SetMaterialTexture(materialIdx, textureType, assetVm.AssetId);
         }
 
         private void OnTransactionPublished(EditorCommandList commands)

@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Threading;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
+using Terrain.Editor.Platform;
 using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor
@@ -12,7 +13,7 @@ namespace Terrain.Editor
     /// </summary>
     public partial class App : Application
     {
-        private DispatcherTimer updateUiTimer;
+        private DispatcherTimer renderTimer;
 
         public EditorUiStateViewModel UiState { get; private set; }
         public EditorAssetsViewModel Assets { get; private set; }
@@ -29,19 +30,30 @@ namespace Terrain.Editor
             TerrainEngine.AssetRegistered += Assets.OnAssetRegistered;
             EditorCore.TransactionPublished += Document.OnTransactionPublished;
 
-            updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
+            EditorPlatform.Initialize();
+
+            renderTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
-                Interval = TimeSpan.FromMilliseconds(50)
+                Interval = TimeSpan.FromMilliseconds(1)
             };
-            updateUiTimer.Tick += updateUiTimer_Tick;
-            updateUiTimer.Start();
+            renderTimer.Tick += OnTick;
+            renderTimer.Start();
 
             base.OnStartup(e);
         }
 
-        private void updateUiTimer_Tick(object sender, EventArgs e)
+        protected override void OnExit(ExitEventArgs e)
+        {
+            renderTimer.Stop();
+            EditorPlatform.Shutdown();
+
+            base.OnExit(e);
+        }
+
+        private void OnTick(object sender, EventArgs e)
         {
             UiState.CheckForChanges();
+            EditorPlatform.Tick();
         }
     }
 }

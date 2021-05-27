@@ -82,6 +82,12 @@ namespace Terrain.Editor.ViewModels
 
         internal void OnTransactionPublished(EditorCommandList commands)
         {
+            AssetViewModel FindAssetViewModel(uint assetId)
+            {
+                return App.Current.Assets.RegisteredAssets.FirstOrDefault(
+                    asset => asset.AssetId == assetId);
+            }
+
             foreach (var entry in commands)
             {
                 if (entry.Type == EditorCommandType.AddMaterial)
@@ -93,10 +99,10 @@ namespace Terrain.Editor.ViewModels
                         deleteMaterialCommandFactory)
                     {
                         Name = $"Material {cmd.MaterialId}",
-                        AlbedoTextureAssetId = cmd.AlbedoTextureAssetId,
-                        NormalTextureAssetId = cmd.NormalTextureAssetId,
-                        DisplacementTextureAssetId = cmd.DisplacementTextureAssetId,
-                        AoTextureAssetId = cmd.AoTextureAssetId,
+                        AlbedoTexture = FindAssetViewModel(cmd.AlbedoTextureAssetId),
+                        NormalTexture = FindAssetViewModel(cmd.NormalTextureAssetId),
+                        DisplacementTexture = FindAssetViewModel(cmd.DisplacementTextureAssetId),
+                        AoTexture = FindAssetViewModel(cmd.AoTextureAssetId),
                         TextureSizeInWorldUnits = cmd.TextureSizeInWorldUnits,
                         SlopeStart = cmd.SlopeStart,
                         SlopeEnd = cmd.SlopeEnd,
