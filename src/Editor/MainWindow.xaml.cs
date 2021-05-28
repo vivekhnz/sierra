@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System.Linq;
 using System.Windows;
 using System.Windows.Data;
 using Terrain.Editor.Core;
@@ -13,6 +14,8 @@ namespace Terrain.Editor
     /// </summary>
     public partial class MainWindow : Window
     {
+        private readonly CollectionViewSource cvsTerrainMaterials;
+
         bool isUiInitialized = false;
 
         public MainWindow()
@@ -24,6 +27,8 @@ namespace Terrain.Editor
             var cvsTextureFileAssets = (CollectionViewSource)FindResource("TextureFileAssets");
             cvsTextureFileAssets.Filter += EditorAssetsViewModel.BuildAssetFilter(
                 new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
+
+            cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
 
             isUiInitialized = true;
         }
@@ -69,23 +74,14 @@ namespace Terrain.Editor
                 if (entry.Type == EditorCommandType.AddMaterial)
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
+                    uint materialId = cmd.MaterialId;
 
-                    lbMaterials.SelectedIndex = lbMaterials.Items.Count - 1;
-                }
-                else if (entry.Type == EditorCommandType.DeleteMaterial)
-                {
-                    ref readonly DeleteMaterialCommand cmd = ref entry.As<DeleteMaterialCommand>();
-
-                    if (lbMaterials.Items.Count > 0)
+                    var materialVm = App.Current.Document.TerrainMaterials.FirstOrDefault(
+                        vm => vm.MaterialId == materialId);
+                    if (materialVm != null)
                     {
-                        lbMaterials.SelectedIndex = (int)cmd.Index;
+                        cvsTerrainMaterials.View.MoveCurrentTo(materialVm);
                     }
-                }
-                else if (entry.Type == EditorCommandType.SwapMaterial)
-                {
-                    ref readonly SwapMaterialCommand cmd = ref entry.As<SwapMaterialCommand>();
-
-                    lbMaterials.SelectedIndex = (int)cmd.IndexB;
                 }
             }
         }

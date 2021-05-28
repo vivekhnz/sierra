@@ -5,7 +5,7 @@ namespace Terrain.Editor.ViewModels
 {
     public class TerrainMaterialViewModel : ViewModelBase
     {
-        private readonly uint materialId;
+        public uint MaterialId { get; private set; }
 
         private string name;
         public string Name { get => name; set => SetAndNotify(ref name, value); }
@@ -17,7 +17,7 @@ namespace Terrain.Editor.ViewModels
             set
             {
                 SetAndNotify(ref albedoTexture, value);
-                EditorCore.SetMaterialTexture(materialId,
+                EditorCore.SetMaterialTexture(MaterialId,
                     TerrainMaterialTextureType.Albedo, value.AssetId);
             }
         }
@@ -29,7 +29,7 @@ namespace Terrain.Editor.ViewModels
             set
             {
                 SetAndNotify(ref normalTexture, value);
-                EditorCore.SetMaterialTexture(materialId,
+                EditorCore.SetMaterialTexture(MaterialId,
                     TerrainMaterialTextureType.Normal, value.AssetId);
             }
         }
@@ -41,7 +41,7 @@ namespace Terrain.Editor.ViewModels
             set
             {
                 SetAndNotify(ref displacementTexture, value);
-                EditorCore.SetMaterialTexture(materialId,
+                EditorCore.SetMaterialTexture(MaterialId,
                     TerrainMaterialTextureType.Displacement, value.AssetId);
             }
         }
@@ -53,7 +53,7 @@ namespace Terrain.Editor.ViewModels
             set
             {
                 SetAndNotify(ref aoTexture, value);
-                EditorCore.SetMaterialTexture(materialId,
+                EditorCore.SetMaterialTexture(MaterialId,
                     TerrainMaterialTextureType.AmbientOcclusion, value.AssetId);
             }
         }
@@ -130,7 +130,7 @@ namespace Terrain.Editor.ViewModels
             DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialDownCommandFactory,
             DelegateCommandFactory<TerrainMaterialViewModel> deleteMaterialCommandFactory)
         {
-            this.materialId = materialId;
+            MaterialId = materialId;
             MoveMaterialUpCommand = moveMaterialUpCommandFactory.Create(this);
             MoveMaterialDownCommand = moveMaterialDownCommandFactory.Create(this);
             DeleteMaterialCommand = deleteMaterialCommandFactory.Create(this);
@@ -138,7 +138,7 @@ namespace Terrain.Editor.ViewModels
 
         private void UpdateMaterialProperties()
         {
-            EditorCore.SetMaterialProperties(materialId,
+            EditorCore.SetMaterialProperties(MaterialId,
                 textureSizeInWorldUnits, slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
     }
