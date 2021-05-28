@@ -9,10 +9,6 @@ namespace Terrain.Editor.ViewModels
     {
         const int maxMaterialCount = 8;
 
-        private readonly DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialUpCommandFactory;
-        private readonly DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialDownCommandFactory;
-        private readonly DelegateCommandFactory<TerrainMaterialViewModel> deleteMaterialCommandFactory;
-
         public ObservableCollection<TerrainMaterialViewModel> TerrainMaterials { get; private set; }
             = new ObservableCollection<TerrainMaterialViewModel>();
 
@@ -44,40 +40,6 @@ namespace Terrain.Editor.ViewModels
                     });
                 },
                 () => TerrainMaterials.Count < maxMaterialCount);
-            moveMaterialUpCommandFactory = new DelegateCommandFactory<TerrainMaterialViewModel>(
-                materialVm =>
-                {
-                    if (materialVm == null) return;
-
-                    int index = TerrainMaterials.IndexOf(materialVm);
-                    if (index == -1) return;
-
-                    EditorCore.SwapMaterial(index, index - 1);
-                },
-                materialVm => materialVm != null && TerrainMaterials.IndexOf(materialVm) > 0);
-            moveMaterialDownCommandFactory = new DelegateCommandFactory<TerrainMaterialViewModel>(
-                materialVm =>
-                {
-                    if (materialVm == null) return;
-
-                    int index = TerrainMaterials.IndexOf(materialVm);
-                    if (index == -1) return;
-
-                    EditorCore.SwapMaterial(index, index + 1);
-                },
-                materialVm => materialVm != null
-                    && TerrainMaterials.IndexOf(materialVm) < TerrainMaterials.Count - 1);
-            deleteMaterialCommandFactory = new DelegateCommandFactory<TerrainMaterialViewModel>(
-                materialVm =>
-                {
-                    if (materialVm == null) return;
-
-                    int index = TerrainMaterials.IndexOf(materialVm);
-                    if (index == -1) return;
-
-                    EditorCore.DeleteMaterial(index);
-                },
-                materialVm => materialVm != null && TerrainMaterials.IndexOf(materialVm) != -1);
         }
 
         internal void OnTransactionPublished(EditorCommandList commands)
@@ -94,9 +56,7 @@ namespace Terrain.Editor.ViewModels
                 {
                     ref readonly AddMaterialCommand cmd = ref entry.As<AddMaterialCommand>();
 
-                    var materialVm = new TerrainMaterialViewModel(cmd.MaterialId,
-                        moveMaterialUpCommandFactory, moveMaterialDownCommandFactory,
-                        deleteMaterialCommandFactory)
+                    var materialVm = new TerrainMaterialViewModel(cmd.MaterialId, TerrainMaterials)
                     {
                         Name = $"Material {cmd.MaterialId}",
                         AlbedoTexture = FindAssetViewModel(cmd.AlbedoTextureAssetId),
@@ -125,15 +85,18 @@ namespace Terrain.Editor.ViewModels
                 }
             }
 
+            AddMaterialCommand.NotifyCanExecuteChanged();
             for (int i = 0; i < TerrainMaterials.Count; i++)
             {
-                TerrainMaterials[i].CanSetMaterialProperties = i > 0;
+                var materialVm = TerrainMaterials[i];
+                materialVm.CanSetMaterialProperties = i > 0;
+                materialVm.MoveMaterialUpCommand.NotifyCanExecuteChanged();
+                materialVm.MoveMaterialDownCommand.NotifyCanExecuteChanged();
+                materialVm.DeleteMaterialCommand.NotifyCanExecuteChanged();
             }
-
-            AddMaterialCommand.NotifyCanExecuteChanged();
-            moveMaterialUpCommandFactory.NotifyCanExecuteChanged();
-            moveMaterialDownCommandFactory.NotifyCanExecuteChanged();
-            deleteMaterialCommandFactory.NotifyCanExecuteChanged();
         }
+
+        internal int GetMaterialIndex(TerrainMaterialViewModel materialVm)
+            => TerrainMaterials.IndexOf(materialVm);
     }
 }

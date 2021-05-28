@@ -1,3 +1,4 @@
+using System.Collections.ObjectModel;
 using Terrain.Editor.Core;
 using Terrain.Editor.Utilities;
 
@@ -124,16 +125,38 @@ namespace Terrain.Editor.ViewModels
         public DelegateCommand MoveMaterialDownCommand { get; private set; }
         public DelegateCommand DeleteMaterialCommand { get; private set; }
 
-        public TerrainMaterialViewModel(
-            uint materialId,
-            DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialUpCommandFactory,
-            DelegateCommandFactory<TerrainMaterialViewModel> moveMaterialDownCommandFactory,
-            DelegateCommandFactory<TerrainMaterialViewModel> deleteMaterialCommandFactory)
+        public TerrainMaterialViewModel(uint materialId,
+            ObservableCollection<TerrainMaterialViewModel> materials)
         {
             MaterialId = materialId;
-            MoveMaterialUpCommand = moveMaterialUpCommandFactory.Create(this);
-            MoveMaterialDownCommand = moveMaterialDownCommandFactory.Create(this);
-            DeleteMaterialCommand = deleteMaterialCommandFactory.Create(this);
+
+            MoveMaterialUpCommand = new DelegateCommand(
+                () =>
+                {
+                    int index = materials.IndexOf(this);
+                    if (index == -1) return;
+
+                    EditorCore.SwapMaterial(index, index - 1);
+                },
+                () => materials.IndexOf(this) > 0);
+            MoveMaterialDownCommand = new DelegateCommand(
+                () =>
+                {
+                    int index = materials.IndexOf(this);
+                    if (index == -1) return;
+
+                    EditorCore.SwapMaterial(index, index + 1);
+                },
+                () => materials.IndexOf(this) < materials.Count - 1);
+            DeleteMaterialCommand = new DelegateCommand(
+                () =>
+                {
+                    int index = materials.IndexOf(this);
+                    if (index == -1) return;
+
+                    EditorCore.DeleteMaterial(index);
+                },
+                () => materials.IndexOf(this) != -1);
         }
 
         private void UpdateMaterialProperties()
