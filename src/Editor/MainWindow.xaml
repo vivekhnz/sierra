@@ -299,8 +299,15 @@
         </TabItem>
         <TabItem Header="OBJECTS">
           <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
-              IsExpanded="True" d:IsExpanded="False">
-            <StackPanel Orientation="Vertical" Margin="12">
+              IsExpanded="True">
+            <StackPanel Orientation="Vertical" Margin="12 4">
+              <ComboBox x:Name="cbObjects" Margin="0 0 0 8" SelectedIndex="0"
+                  SelectionChanged="cbObjects_SelectionChanged">
+                <ComboBoxItem Content="Rock 1" />
+                <ComboBoxItem Content="Rock 2" />
+                <ComboBoxItem Content="Rock 3" />
+                <ComboBoxItem Content="Rock 4" />
+              </ComboBox>
               <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
               <Grid Margin="0 0 0 8">
                 <Grid.ColumnDefinitions>

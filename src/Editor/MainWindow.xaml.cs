@@ -50,12 +50,31 @@ namespace Terrain.Editor
             }
         }
 
+        private void cbObjects_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
+        {
+            if (!isUiInitialized) return;
+            if (cbObjects.SelectedIndex < 0) return;
+
+            var transform = EditorCore.GetRockTransform(cbObjects.SelectedIndex);
+            rockPositionXSlider.Value = transform.Position.X;
+            rockPositionYSlider.Value = transform.Position.Y;
+            rockPositionZSlider.Value = transform.Position.Z;
+            rockRotationXSlider.Value = transform.Rotation.X;
+            rockRotationYSlider.Value = transform.Rotation.Y;
+            rockRotationZSlider.Value = transform.Rotation.Z;
+            rockScaleXSlider.Value = transform.Scale.X;
+            rockScaleYSlider.Value = transform.Scale.Y;
+            rockScaleZSlider.Value = transform.Scale.Z;
+        }
+
         private void rockTransformSlider_ValueChanged(object sender,
             RoutedPropertyChangedEventArgs<double> e)
         {
             if (!isUiInitialized) return;
+            if (cbObjects.SelectedIndex < 0) return;
 
             EditorCore.SetRockTransform(
+                cbObjects.SelectedIndex,
                 (float)rockPositionXSlider.Value,
                 (float)rockPositionYSlider.Value,
                 (float)rockPositionZSlider.Value,

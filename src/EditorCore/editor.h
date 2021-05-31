@@ -50,11 +50,16 @@ struct EditorUiState
     float sceneLightDirection;
 };
 
+struct ObjectTransform
+{
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
+};
+
 struct EditorDocumentState
 {
-    glm::vec3 rockPosition;
-    glm::vec3 rockRotation;
-    glm::vec3 rockScale;
+    ObjectTransform rockTransforms[MAX_ROCK_INSTANCES];
 };
 
 struct TextureAssetBinding
@@ -349,10 +354,14 @@ typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
         float slopeEnd, float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
+#define EDITOR_GET_ROCK_TRANSFORM(name)                                                       \
+    ObjectTransform name(EditorMemory *memory, uint32 index)
+typedef EDITOR_GET_ROCK_TRANSFORM(EditorGetRockTransform);
+
 #define EDITOR_SET_ROCK_TRANSFORM(name)                                                       \
-    void name(EditorMemory *memory, float positionX, float positionY, float positionZ,        \
-        float rotationX, float rotationY, float rotationZ, float scaleX, float scaleY,        \
-        float scaleZ)
+    void name(EditorMemory *memory, uint32 index, float positionX, float positionY,           \
+        float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX,     \
+        float scaleY, float scaleZ)
 typedef EDITOR_SET_ROCK_TRANSFORM(EditorSetRockTransform);
 
 #endif

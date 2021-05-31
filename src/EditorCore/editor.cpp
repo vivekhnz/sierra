@@ -186,9 +186,13 @@ bool initializeEditor(EditorMemory *memory)
     state->uiState.terrainBrushStrength = 0.12f;
     state->uiState.sceneLightDirection = 0.5f;
 
-    state->docState.rockPosition = glm::vec3(0);
-    state->docState.rockRotation = glm::vec3(0);
-    state->docState.rockScale = glm::vec3(1);
+    for (uint32 i = 0; i < 4; i++)
+    {
+        ObjectTransform *transform = &state->docState.rockTransforms[i];
+        transform->position = glm::vec3(0, 0, 5.0f * i);
+        transform->rotation = glm::vec3(0);
+        transform->scale = glm::vec3(1);
+    }
 
     SceneState *sceneState = &state->sceneState;
 
@@ -408,7 +412,7 @@ bool initializeEditor(EditorMemory *memory)
         memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle,
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
-    sceneState->rockInstanceCount = 1;
+    sceneState->rockInstanceCount = 4;
 
     state->transactions.data.size = 1 * 1024 * 1024;
     state->transactions.data.baseAddress =
@@ -919,15 +923,19 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->activeBrushStrokeInstanceBufferData);
 
     // update rock instance buffer
-    glm::mat4 rockTransform = glm::identity<glm::mat4>();
-    rockTransform = glm::translate(rockTransform, state->docState.rockPosition);
-    rockTransform = glm::scale(rockTransform, state->docState.rockScale);
-    glm::vec3 rockRotEuler = glm::radians(state->docState.rockRotation);
-    glm::quat rockRotQuat = glm::quat(rockRotEuler);
-    glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
-    rockTransform *= rockRotMat;
+    for (uint32 i = 0; i < sceneState->rockInstanceCount; i++)
+    {
+        ObjectTransform *transform = &state->docState.rockTransforms[i];
+        glm::mat4 matrix = glm::identity<glm::mat4>();
+        matrix = glm::translate(matrix, transform->position);
+        matrix = glm::scale(matrix, transform->scale);
+        glm::vec3 rockRotEuler = glm::radians(transform->rotation);
+        glm::quat rockRotQuat = glm::quat(rockRotEuler);
+        glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
+        matrix *= rockRotMat;
 
-    sceneState->rockInstanceBufferData[0] = rockTransform;
+        sceneState->rockInstanceBufferData[i] = matrix;
+    }
     engine->rendererUpdateBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle,
         sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
 
@@ -1385,16 +1393,26 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     cmd->altitudeEnd = altitudeEnd;
 }
 
+API_EXPORT EDITOR_GET_ROCK_TRANSFORM(editorGetRockTransform)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    assert(index < MAX_ROCK_INSTANCES);
+    return state->docState.rockTransforms[index];
+}
+
 API_EXPORT EDITOR_SET_ROCK_TRANSFORM(editorSetRockTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
-    state->docState.rockPosition.x = positionX;
-    state->docState.rockPosition.y = positionY;
-    state->docState.rockPosition.z = positionZ;
-    state->docState.rockRotation.x = rotationX;
-    state->docState.rockRotation.y = rotationY;
-    state->docState.rockRotation.z = rotationZ;
-    state->docState.rockScale.x = scaleX;
-    state->docState.rockScale.y = scaleY;
-    state->docState.rockScale.z = scaleZ;
+    assert(index < state->sceneState.rockInstanceCount);
+    ObjectTransform *transform = &state->docState.rockTransforms[index];
+    transform->position.x = positionX;
+    transform->position.y = positionY;
+    transform->position.z = positionZ;
+    transform->rotation.x = rotationX;
+    transform->rotation.y = rotationY;
+    transform->rotation.z = rotationZ;
+    transform->scale.x = scaleX;
+    transform->scale.y = scaleY;
+    transform->scale.z = scaleZ;
 }

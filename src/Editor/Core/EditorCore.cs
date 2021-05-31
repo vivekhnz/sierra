@@ -153,6 +153,14 @@ namespace Terrain.Editor.Core
         AmbientOcclusion = 3
     }
 
+    [StructLayout(LayoutKind.Sequential)]
+    struct ObjectTransform
+    {
+        public Vector3 Position;
+        public Vector3 Rotation;
+        public Vector3 Scale;
+    }
+
     internal enum EditorCommandType
     {
         AddMaterial,
@@ -226,8 +234,11 @@ namespace Terrain.Editor.Core
             TerrainMaterialTextureType textureType, uint assetId);
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
-        delegate void EditorSetRockTransform(ref EditorMemory memory, float positionX, float positionY,
-            float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX, float scaleY, float scaleZ);
+        delegate ObjectTransform EditorGetRockTransform(ref EditorMemory memory, uint index);
+        delegate void EditorSetRockTransform(ref EditorMemory memory, uint index,
+            float positionX, float positionY, float positionZ,
+            float rotationX, float rotationY, float rotationZ,
+            float scaleX, float scaleY, float scaleZ);
 
         private static EditorUpdate editorUpdate;
         private static EditorRenderSceneView editorRenderSceneView;
@@ -240,6 +251,7 @@ namespace Terrain.Editor.Core
         private static EditorGetMaterialProperties editorGetMaterialProperties;
         private static EditorSetMaterialTexture editorSetMaterialTexture;
         private static EditorSetMaterialProperties editorSetMaterialProperties;
+        private static EditorGetRockTransform editorGetRockTransform;
         private static EditorSetRockTransform editorSetRockTransform;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -318,6 +330,7 @@ namespace Terrain.Editor.Core
             editorGetMaterialProperties = GetApi<EditorGetMaterialProperties>("editorGetMaterialProperties");
             editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
+            editorGetRockTransform = GetApi<EditorGetRockTransform>("editorGetRockTransform");
             editorSetRockTransform = GetApi<EditorSetRockTransform>("editorSetRockTransform");
 
             return moduleHandle != IntPtr.Zero;
@@ -380,12 +393,17 @@ namespace Terrain.Editor.Core
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
 
+        internal static ObjectTransform GetRockTransform(int index)
+            => editorGetRockTransform?.Invoke(ref memory, (uint)index)
+                ?? default(ObjectTransform);
+
         internal static void SetRockTransform(
+            int index,
             float positionX, float positionY, float positionZ,
             float rotationX, float rotationY, float rotationZ,
             float scaleX, float scaleY, float scaleZ)
         {
-            editorSetRockTransform?.Invoke(ref memory,
+            editorSetRockTransform?.Invoke(ref memory, (uint)index,
                 positionX, positionY, positionZ,
                 rotationX, rotationY, rotationZ,
                 scaleX, scaleY, scaleZ);
