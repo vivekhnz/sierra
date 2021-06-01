@@ -153,14 +153,6 @@ namespace Terrain.Editor.Core
         AmbientOcclusion = 3
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    struct ObjectTransform
-    {
-        public Vector3 Position;
-        public Vector3 Rotation;
-        public Vector3 Scale;
-    }
-
     internal enum EditorCommandType
     {
         AddMaterial,
@@ -249,12 +241,10 @@ namespace Terrain.Editor.Core
         delegate void EditorAddMaterial(ref EditorMemory memory, TerrainMaterialProperties props);
         delegate void EditorDeleteMaterial(ref EditorMemory memory, uint index);
         delegate void EditorSwapMaterial(ref EditorMemory memory, uint indexA, uint indexB);
-        delegate TerrainMaterialProperties EditorGetMaterialProperties(ref EditorMemory memory, uint index);
         delegate void EditorSetMaterialTexture(ref EditorMemory memory, uint materialId,
             TerrainMaterialTextureType textureType, uint assetId);
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
-        delegate ObjectTransform EditorGetObjectTransform(ref EditorMemory memory, uint objectId);
         delegate void EditorSetObjectTransform(ref EditorMemory memory, uint objectId,
             float positionX, float positionY, float positionZ,
             float rotationX, float rotationY, float rotationZ,
@@ -268,10 +258,8 @@ namespace Terrain.Editor.Core
         private static EditorAddMaterial editorAddMaterial;
         private static EditorDeleteMaterial editorDeleteMaterial;
         private static EditorSwapMaterial editorSwapMaterial;
-        private static EditorGetMaterialProperties editorGetMaterialProperties;
         private static EditorSetMaterialTexture editorSetMaterialTexture;
         private static EditorSetMaterialProperties editorSetMaterialProperties;
-        private static EditorGetObjectTransform editorGetObjectTransform;
         private static EditorSetObjectTransform editorSetObjectTransform;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -347,10 +335,8 @@ namespace Terrain.Editor.Core
             editorAddMaterial = GetApi<EditorAddMaterial>("editorAddMaterial");
             editorDeleteMaterial = GetApi<EditorDeleteMaterial>("editorDeleteMaterial");
             editorSwapMaterial = GetApi<EditorSwapMaterial>("editorSwapMaterial");
-            editorGetMaterialProperties = GetApi<EditorGetMaterialProperties>("editorGetMaterialProperties");
             editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
-            editorGetObjectTransform = GetApi<EditorGetObjectTransform>("editorGetObjectTransform");
             editorSetObjectTransform = GetApi<EditorSetObjectTransform>("editorSetObjectTransform");
 
             return moduleHandle != IntPtr.Zero;
@@ -398,10 +384,6 @@ namespace Terrain.Editor.Core
         internal static void SwapMaterial(int indexA, int indexB)
             => editorSwapMaterial?.Invoke(ref memory, (uint)indexA, (uint)indexB);
 
-        internal static TerrainMaterialProperties GetMaterialProperties(int index)
-            => editorGetMaterialProperties?.Invoke(ref memory, (uint)index)
-                ?? default(TerrainMaterialProperties);
-
         internal static void SetMaterialTexture(uint materialId,
             TerrainMaterialTextureType textureType, uint assetId)
             => editorSetMaterialTexture?.Invoke(ref memory, materialId, textureType, assetId);
@@ -412,10 +394,6 @@ namespace Terrain.Editor.Core
             editorSetMaterialProperties?.Invoke(ref memory, materialId, textureSize,
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
-
-        internal static ObjectTransform GetObjectTransform(uint objectId)
-            => editorGetObjectTransform?.Invoke(ref memory, objectId)
-                ?? default(ObjectTransform);
 
         internal static void SetObjectTransform(
             uint objectId,

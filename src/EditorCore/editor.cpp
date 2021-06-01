@@ -1354,28 +1354,6 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
     cmd->indexB = indexB;
 }
 
-API_EXPORT EDITOR_GET_MATERIAL_PROPERTIES(editorGetMaterialProperties)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-
-    assert(index < MAX_MATERIAL_COUNT);
-    GpuMaterialProperties *gpuProps = &state->sceneState.worldState.materialProps[index];
-
-    TerrainMaterialProperties result = {};
-    result.albedoTextureAssetId = state->sceneState.worldState.albedoTextureAssetIds[index];
-    result.normalTextureAssetId = state->sceneState.worldState.normalTextureAssetIds[index];
-    result.displacementTextureAssetId =
-        state->sceneState.worldState.displacementTextureAssetIds[index];
-    result.aoTextureAssetId = state->sceneState.worldState.aoTextureAssetIds[index];
-    result.textureSizeInWorldUnits = gpuProps->textureSizeInWorldUnits.x;
-    result.slopeStart = gpuProps->rampParams.x;
-    result.slopeEnd = gpuProps->rampParams.y;
-    result.altitudeStart = gpuProps->rampParams.z;
-    result.altitudeEnd = gpuProps->rampParams.w;
-
-    return result;
-}
-
 API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
@@ -1399,24 +1377,6 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     cmd->slopeEnd = slopeEnd;
     cmd->altitudeStart = altitudeStart;
     cmd->altitudeEnd = altitudeEnd;
-}
-
-API_EXPORT EDITOR_GET_OBJECT_TRANSFORM(editorGetObjectTransform)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-
-    bool foundObject = false;
-    uint32 index = 0;
-    for (uint32 i = 0; i < state->sceneState.objectInstanceCount; i++)
-    {
-        if (state->sceneState.objectIds[i] == objectId)
-        {
-            return state->sceneState.objectTransforms[i];
-        }
-    }
-
-    // todo: maybe this should return an error?
-    return {};
 }
 
 API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)

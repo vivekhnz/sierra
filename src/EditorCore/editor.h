@@ -337,10 +337,6 @@ typedef EDITOR_DELETE_MATERIAL(EditorDeleteMaterial);
     void name(EditorMemory *memory, uint32 indexA, uint32 indexB)
 typedef EDITOR_SWAP_MATERIAL(EditorSwapMaterial);
 
-#define EDITOR_GET_MATERIAL_PROPERTIES(name)                                                  \
-    TerrainMaterialProperties name(EditorMemory *memory, uint32 index)
-typedef EDITOR_GET_MATERIAL_PROPERTIES(EditorGetMaterialProperties);
-
 #define EDITOR_SET_MATERIAL_TEXTURE(name)                                                     \
     void name(EditorMemory *memory, uint32 materialId,                                        \
         TerrainMaterialTextureType textureType, uint32 assetId)
@@ -351,12 +347,8 @@ typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
         float slopeEnd, float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
-#define EDITOR_GET_OBJECT_TRANSFORM(name)                                                     \
-    ObjectTransform name(EditorMemory *memory, uint32 objectId)
-typedef EDITOR_GET_OBJECT_TRANSFORM(EditorGetObjectTransform);
-
 #define EDITOR_SET_OBJECT_TRANSFORM(name)                                                     \
-    void name(EditorMemory *memory, uint32 objectId, float positionX, float positionY,           \
+    void name(EditorMemory *memory, uint32 objectId, float positionX, float positionY,        \
         float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX,     \
         float scaleY, float scaleZ)
 typedef EDITOR_SET_OBJECT_TRANSFORM(EditorSetObjectTransform);
