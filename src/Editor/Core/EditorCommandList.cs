@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -47,6 +48,7 @@ namespace Terrain.Editor.Core
                 ReadOnlySpan<byte> cmdTypeSpan = commandBuffer.Slice(offset, sizeof(uint));
                 ref readonly EditorCommandType cmdType =
                     ref MemoryMarshal.AsRef<EditorCommandType>(cmdTypeSpan);
+                Debug.Assert(Enum.IsDefined(typeof(EditorCommandType), cmdType));
                 offset += cmdTypeSpan.Length;
 
                 int dataSize = cmdType switch
@@ -56,7 +58,9 @@ namespace Terrain.Editor.Core
                     EditorCommandType.SwapMaterial => Unsafe.SizeOf<SwapMaterialCommand>(),
                     EditorCommandType.SetMaterialTexture => Unsafe.SizeOf<SetMaterialTextureCommand>(),
                     EditorCommandType.SetMaterialProperties => Unsafe.SizeOf<SetMaterialPropertiesCommand>(),
-                    _ => 0
+                    EditorCommandType.AddObject => Unsafe.SizeOf<AddObjectCommand>(),
+                    EditorCommandType.SetObjectTransform => Unsafe.SizeOf<SetObjectTransformCommand>(),
+                    _ => throw new NotImplementedException($"Unknown command type: {cmdType}")
                 };
 
                 currentEntry.Type = cmdType;

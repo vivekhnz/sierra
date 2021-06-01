@@ -20,7 +20,9 @@ enum EditorCommandType
     EDITOR_COMMAND_DeleteMaterialCommand,
     EDITOR_COMMAND_SwapMaterialCommand,
     EDITOR_COMMAND_SetMaterialTextureCommand,
-    EDITOR_COMMAND_SetMaterialPropertiesCommand
+    EDITOR_COMMAND_SetMaterialPropertiesCommand,
+    EDITOR_COMMAND_AddObjectCommand,
+    EDITOR_COMMAND_SetObjectTransformCommand
 };
 
 struct EditorTransaction
@@ -78,6 +80,19 @@ struct SetMaterialPropertiesCommand
     float slopeEnd;
     float altitudeStart;
     float altitudeEnd;
+};
+
+struct AddObjectCommand
+{
+    uint32 objectId;
+};
+
+struct SetObjectTransformCommand
+{
+    uint32 objectId;
+    glm::vec3 position;
+    glm::vec3 rotation;
+    glm::vec3 scale;
 };
 
 #endif

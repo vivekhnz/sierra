@@ -9,7 +9,7 @@
 #define MAX_BRUSH_QUADS 2048
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
-#define MAX_ROCK_INSTANCES 32
+#define MAX_OBJECT_INSTANCES 32
 #define HEIGHTFIELD_COLUMNS 256
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTMAP_WIDTH 2048
@@ -57,11 +57,6 @@ struct ObjectTransform
     glm::vec3 scale;
 };
 
-struct EditorDocumentState
-{
-    ObjectTransform rockTransforms[MAX_ROCK_INSTANCES];
-};
-
 struct TextureAssetBinding
 {
     uint32 assetId;
@@ -107,9 +102,12 @@ struct SceneState
         uint32 vertexArrayHandle;
     } rockMesh;
 
-    uint32 rockInstanceBufferHandle;
-    glm::mat4 rockInstanceBufferData[MAX_ROCK_INSTANCES];
-    uint32 rockInstanceCount;
+    uint32 nextObjectId;
+    uint32 objectInstanceCount;
+    uint32 objectIds[MAX_OBJECT_INSTANCES];
+    ObjectTransform objectTransforms[MAX_OBJECT_INSTANCES];
+    glm::mat4 objectInstanceBufferData[MAX_OBJECT_INSTANCES];
+    uint32 objectInstanceBufferHandle;
 
     uint32 albedoTextureArrayHandle;
     uint32 normalTextureArrayHandle;
@@ -206,7 +204,6 @@ struct EditorState
     float activeBrushStrokeInitialHeight;
 
     EditorUiState uiState;
-    EditorDocumentState docState;
     SceneState sceneState;
 
     EditorTransactionQueue transactions;
@@ -354,14 +351,14 @@ typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
         float slopeEnd, float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
-#define EDITOR_GET_ROCK_TRANSFORM(name)                                                       \
-    ObjectTransform name(EditorMemory *memory, uint32 index)
-typedef EDITOR_GET_ROCK_TRANSFORM(EditorGetRockTransform);
+#define EDITOR_GET_OBJECT_TRANSFORM(name)                                                     \
+    ObjectTransform name(EditorMemory *memory, uint32 objectId)
+typedef EDITOR_GET_OBJECT_TRANSFORM(EditorGetObjectTransform);
 
-#define EDITOR_SET_ROCK_TRANSFORM(name)                                                       \
-    void name(EditorMemory *memory, uint32 index, float positionX, float positionY,           \
+#define EDITOR_SET_OBJECT_TRANSFORM(name)                                                     \
+    void name(EditorMemory *memory, uint32 objectId, float positionX, float positionY,           \
         float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX,     \
         float scaleY, float scaleZ)
-typedef EDITOR_SET_ROCK_TRANSFORM(EditorSetRockTransform);
+typedef EDITOR_SET_OBJECT_TRANSFORM(EditorSetObjectTransform);
 
 #endif

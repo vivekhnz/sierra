@@ -186,14 +186,6 @@ bool initializeEditor(EditorMemory *memory)
     state->uiState.terrainBrushStrength = 0.12f;
     state->uiState.sceneLightDirection = 0.5f;
 
-    for (uint32 i = 0; i < 4; i++)
-    {
-        ObjectTransform *transform = &state->docState.rockTransforms[i];
-        transform->position = glm::vec3(0, 0, 5.0f * i);
-        transform->rotation = glm::vec3(0);
-        transform->scale = glm::vec3(1);
-    }
-
     SceneState *sceneState = &state->sceneState;
 
     float quadVertices[16] = {
@@ -408,11 +400,12 @@ bool initializeEditor(EditorMemory *memory)
         sizeof(sceneState->worldState.materialProps), 0);
 
     sceneState->rockMesh = {};
-    sceneState->rockInstanceBufferHandle = engine->rendererCreateBuffer(
+
+    sceneState->nextObjectId = 1;
+    sceneState->objectInstanceBufferHandle = engine->rendererCreateBuffer(
         memory->engineMemory, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle,
-        sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
-    sceneState->rockInstanceCount = 4;
+    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->objectInstanceBufferHandle,
+        sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 
     state->transactions.data.size = 1 * 1024 * 1024;
     state->transactions.data.baseAddress =
@@ -456,6 +449,21 @@ bool initializeEditor(EditorMemory *memory)
     cmd->slopeEnd = 0.2f;
     cmd->altitudeStart = 0.25f;
     cmd->altitudeEnd = 0.28f;
+
+    // add default objects
+    EditorTransaction *addObjectsTx = createTransaction(&state->transactions);
+    for (uint32 i = 0; i < 4; i++)
+    {
+        AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
+        addCmd->objectId = sceneState->nextObjectId++;
+
+        SetObjectTransformCommand *setTransformCmd =
+            pushCommand(addObjectsTx, SetObjectTransformCommand);
+        setTransformCmd->objectId = addCmd->objectId;
+        setTransformCmd->position = glm::vec3(0, 0, 5.0f * i);
+        setTransformCmd->rotation = glm::vec3(0);
+        setTransformCmd->scale = glm::vec3(1);
+    }
 
     return 1;
 }
@@ -922,10 +930,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->activeBrushStrokeInstanceBufferHandle, BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
         state->activeBrushStrokeInstanceBufferData);
 
-    // update rock instance buffer
-    for (uint32 i = 0; i < sceneState->rockInstanceCount; i++)
+    // update object instance buffer
+    for (uint32 i = 0; i < sceneState->objectInstanceCount; i++)
     {
-        ObjectTransform *transform = &state->docState.rockTransforms[i];
+        ObjectTransform *transform = &sceneState->objectTransforms[i];
         glm::mat4 matrix = glm::identity<glm::mat4>();
         matrix = glm::translate(matrix, transform->position);
         matrix = glm::scale(matrix, transform->scale);
@@ -934,10 +942,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
         matrix *= rockRotMat;
 
-        sceneState->rockInstanceBufferData[i] = matrix;
+        sceneState->objectInstanceBufferData[i] = matrix;
     }
-    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->rockInstanceBufferHandle,
-        sizeof(sceneState->rockInstanceBufferData), &sceneState->rockInstanceBufferData);
+    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->objectInstanceBufferHandle,
+        sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 
     BrushBlendProperties blendProps = {};
     switch (state->uiState.terrainBrushTool)
@@ -1240,7 +1248,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             engine->rendererBindVertexAttribute(
                 1, GL_FLOAT, false, 3, rockVertexBufferStride, 3 * sizeof(float), false);
             engine->rendererBindBuffer(
-                memory->engineMemory, sceneState->rockInstanceBufferHandle);
+                memory->engineMemory, sceneState->objectInstanceBufferHandle);
             engine->rendererBindVertexAttribute(
                 2, GL_FLOAT, false, 4, rockInstanceBufferStride, 0, true);
             engine->rendererBindVertexAttribute(
@@ -1266,7 +1274,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererBindVertexArray(
         memory->engineMemory, sceneState->rockMesh.vertexArrayHandle);
     engine->rendererDrawElementsInstanced(
-        GL_TRIANGLES, sceneState->rockMesh.elementCount, sceneState->rockInstanceCount, 0);
+        GL_TRIANGLES, sceneState->rockMesh.elementCount, sceneState->objectInstanceCount, 0);
 }
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
@@ -1393,26 +1401,38 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     cmd->altitudeEnd = altitudeEnd;
 }
 
-API_EXPORT EDITOR_GET_ROCK_TRANSFORM(editorGetRockTransform)
+API_EXPORT EDITOR_GET_OBJECT_TRANSFORM(editorGetObjectTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    assert(index < MAX_ROCK_INSTANCES);
-    return state->docState.rockTransforms[index];
+    bool foundObject = false;
+    uint32 index = 0;
+    for (uint32 i = 0; i < state->sceneState.objectInstanceCount; i++)
+    {
+        if (state->sceneState.objectIds[i] == objectId)
+        {
+            return state->sceneState.objectTransforms[i];
+        }
+    }
+
+    // todo: maybe this should return an error?
+    return {};
 }
 
-API_EXPORT EDITOR_SET_ROCK_TRANSFORM(editorSetRockTransform)
+API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
-    assert(index < state->sceneState.rockInstanceCount);
-    ObjectTransform *transform = &state->docState.rockTransforms[index];
-    transform->position.x = positionX;
-    transform->position.y = positionY;
-    transform->position.z = positionZ;
-    transform->rotation.x = rotationX;
-    transform->rotation.y = rotationY;
-    transform->rotation.z = rotationZ;
-    transform->scale.x = scaleX;
-    transform->scale.y = scaleY;
-    transform->scale.z = scaleZ;
+
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+    cmd->objectId = objectId;
+    cmd->position.x = positionX;
+    cmd->position.y = positionY;
+    cmd->position.z = positionZ;
+    cmd->rotation.x = rotationX;
+    cmd->rotation.y = rotationY;
+    cmd->rotation.z = rotationZ;
+    cmd->scale.x = scaleX;
+    cmd->scale.y = scaleY;
+    cmd->scale.z = scaleZ;
 }

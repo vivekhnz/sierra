@@ -167,9 +167,12 @@ namespace Terrain.Editor.Core
         DeleteMaterial,
         SwapMaterial,
         SetMaterialTexture,
-        SetMaterialProperties
+        SetMaterialProperties,
+        AddObject,
+        SetObjectTransform
     }
 
+    [StructLayout(LayoutKind.Sequential)]
     struct AddMaterialCommand
     {
         public uint MaterialId;
@@ -185,21 +188,25 @@ namespace Terrain.Editor.Core
         public float AltitudeStart;
         public float AltitudeEnd;
     }
+    [StructLayout(LayoutKind.Sequential)]
     struct DeleteMaterialCommand
     {
         public uint Index;
     }
+    [StructLayout(LayoutKind.Sequential)]
     struct SwapMaterialCommand
     {
         public uint IndexA;
         public uint IndexB;
     }
+    [StructLayout(LayoutKind.Sequential)]
     struct SetMaterialTextureCommand
     {
         public uint Index;
         public TerrainMaterialTextureType TextureType;
         public uint AssetId;
     }
+    [StructLayout(LayoutKind.Sequential)]
     struct SetMaterialPropertiesCommand
     {
         public uint MaterialId;
@@ -208,6 +215,19 @@ namespace Terrain.Editor.Core
         public float SlopeEnd;
         public float AltitudeStart;
         public float AltitudeEnd;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    struct AddObjectCommand
+    {
+        public uint ObjectId;
+    }
+    [StructLayout(LayoutKind.Sequential)]
+    struct SetObjectTransformCommand
+    {
+        public uint ObjectId;
+        public Vector3 Position;
+        public Vector3 Rotation;
+        public Vector3 Scale;
     }
 
     internal static class EditorCore
@@ -234,8 +254,8 @@ namespace Terrain.Editor.Core
             TerrainMaterialTextureType textureType, uint assetId);
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
-        delegate ObjectTransform EditorGetRockTransform(ref EditorMemory memory, uint index);
-        delegate void EditorSetRockTransform(ref EditorMemory memory, uint index,
+        delegate ObjectTransform EditorGetObjectTransform(ref EditorMemory memory, uint objectId);
+        delegate void EditorSetObjectTransform(ref EditorMemory memory, uint objectId,
             float positionX, float positionY, float positionZ,
             float rotationX, float rotationY, float rotationZ,
             float scaleX, float scaleY, float scaleZ);
@@ -251,8 +271,8 @@ namespace Terrain.Editor.Core
         private static EditorGetMaterialProperties editorGetMaterialProperties;
         private static EditorSetMaterialTexture editorSetMaterialTexture;
         private static EditorSetMaterialProperties editorSetMaterialProperties;
-        private static EditorGetRockTransform editorGetRockTransform;
-        private static EditorSetRockTransform editorSetRockTransform;
+        private static EditorGetObjectTransform editorGetObjectTransform;
+        private static EditorSetObjectTransform editorSetObjectTransform;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
@@ -330,8 +350,8 @@ namespace Terrain.Editor.Core
             editorGetMaterialProperties = GetApi<EditorGetMaterialProperties>("editorGetMaterialProperties");
             editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
-            editorGetRockTransform = GetApi<EditorGetRockTransform>("editorGetRockTransform");
-            editorSetRockTransform = GetApi<EditorSetRockTransform>("editorSetRockTransform");
+            editorGetObjectTransform = GetApi<EditorGetObjectTransform>("editorGetObjectTransform");
+            editorSetObjectTransform = GetApi<EditorSetObjectTransform>("editorSetObjectTransform");
 
             return moduleHandle != IntPtr.Zero;
         }
@@ -393,17 +413,17 @@ namespace Terrain.Editor.Core
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
 
-        internal static ObjectTransform GetRockTransform(int index)
-            => editorGetRockTransform?.Invoke(ref memory, (uint)index)
+        internal static ObjectTransform GetObjectTransform(uint objectId)
+            => editorGetObjectTransform?.Invoke(ref memory, objectId)
                 ?? default(ObjectTransform);
 
-        internal static void SetRockTransform(
-            int index,
+        internal static void SetObjectTransform(
+            uint objectId,
             float positionX, float positionY, float positionZ,
             float rotationX, float rotationY, float rotationZ,
             float scaleX, float scaleY, float scaleZ)
         {
-            editorSetRockTransform?.Invoke(ref memory, (uint)index,
+            editorSetObjectTransform?.Invoke(ref memory, objectId,
                 positionX, positionY, positionZ,
                 rotationX, rotationY, rotationZ,
                 scaleX, scaleY, scaleZ);

@@ -191,6 +191,50 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 offset += sizeof(*cmd);
             }
             break;
+            case EDITOR_COMMAND_AddObjectCommand:
+            {
+                AddObjectCommand *cmd = (AddObjectCommand *)commandData;
+
+                assert(state->sceneState.objectInstanceCount < MAX_OBJECT_INSTANCES);
+                uint32 index = state->sceneState.objectInstanceCount++;
+
+                state->sceneState.objectIds[index] = cmd->objectId;
+
+                ObjectTransform *transform = &state->sceneState.objectTransforms[index];
+                transform->position = glm::vec3(0);
+                transform->rotation = glm::vec3(0);
+                transform->scale = glm::vec3(1);
+
+                offset += sizeof(*cmd);
+            }
+            break;
+            case EDITOR_COMMAND_SetObjectTransformCommand:
+            {
+                SetObjectTransformCommand *cmd = (SetObjectTransformCommand *)commandData;
+
+                bool foundObject = false;
+                uint32 index = 0;
+                for (uint32 i = 0; i < state->sceneState.objectInstanceCount; i++)
+                {
+                    if (state->sceneState.objectIds[i] == cmd->objectId)
+                    {
+                        foundObject = true;
+                        index = i;
+                        break;
+                    }
+                }
+
+                if (foundObject)
+                {
+                    ObjectTransform *transform = &state->sceneState.objectTransforms[index];
+                    transform->position = cmd->position;
+                    transform->rotation = cmd->rotation;
+                    transform->scale = cmd->scale;
+                }
+
+                offset += sizeof(*cmd);
+            }
+            break;
             }
         }
 

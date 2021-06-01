@@ -55,7 +55,7 @@ namespace Terrain.Editor
             if (!isUiInitialized) return;
             if (cbObjects.SelectedIndex < 0) return;
 
-            var transform = EditorCore.GetRockTransform(cbObjects.SelectedIndex);
+            var transform = EditorCore.GetObjectTransform((uint)cbObjects.SelectedIndex + 1);
             rockPositionXSlider.Value = transform.Position.X;
             rockPositionYSlider.Value = transform.Position.Y;
             rockPositionZSlider.Value = transform.Position.Z;
@@ -73,8 +73,8 @@ namespace Terrain.Editor
             if (!isUiInitialized) return;
             if (cbObjects.SelectedIndex < 0) return;
 
-            EditorCore.SetRockTransform(
-                cbObjects.SelectedIndex,
+            EditorCore.SetObjectTransform(
+                (uint)cbObjects.SelectedIndex + 1,
                 (float)rockPositionXSlider.Value,
                 (float)rockPositionYSlider.Value,
                 (float)rockPositionZSlider.Value,
@@ -101,6 +101,13 @@ namespace Terrain.Editor
                     {
                         cvsTerrainMaterials.View.MoveCurrentTo(materialVm);
                     }
+                }
+                else if (entry.Type == EditorCommandType.AddObject)
+                {
+                    ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
+
+                    cbObjects.Items.Add($"Object {cmd.ObjectId}");
+                    cbObjects.SelectedIndex = cbObjects.Items.Count - 1;
                 }
             }
         }
