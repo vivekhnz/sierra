@@ -50,42 +50,6 @@ namespace Terrain.Editor
             }
         }
 
-        private void cbObjects_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
-        {
-            if (!isUiInitialized) return;
-            if (cbObjects.SelectedIndex < 0) return;
-
-            var transform = EditorCore.GetObjectTransform((uint)cbObjects.SelectedIndex + 1);
-            rockPositionXSlider.Value = transform.Position.X;
-            rockPositionYSlider.Value = transform.Position.Y;
-            rockPositionZSlider.Value = transform.Position.Z;
-            rockRotationXSlider.Value = transform.Rotation.X;
-            rockRotationYSlider.Value = transform.Rotation.Y;
-            rockRotationZSlider.Value = transform.Rotation.Z;
-            rockScaleXSlider.Value = transform.Scale.X;
-            rockScaleYSlider.Value = transform.Scale.Y;
-            rockScaleZSlider.Value = transform.Scale.Z;
-        }
-
-        private void rockTransformSlider_ValueChanged(object sender,
-            RoutedPropertyChangedEventArgs<double> e)
-        {
-            if (!isUiInitialized) return;
-            if (cbObjects.SelectedIndex < 0) return;
-
-            EditorCore.SetObjectTransform(
-                (uint)cbObjects.SelectedIndex + 1,
-                (float)rockPositionXSlider.Value,
-                (float)rockPositionYSlider.Value,
-                (float)rockPositionZSlider.Value,
-                (float)rockRotationXSlider.Value,
-                (float)rockRotationYSlider.Value,
-                (float)rockRotationZSlider.Value,
-                (float)rockScaleXSlider.Value,
-                (float)rockScaleYSlider.Value,
-                (float)rockScaleZSlider.Value);
-        }
-
         private void OnTransactionPublished(EditorCommandList commands)
         {
             foreach (var entry in commands)
@@ -101,13 +65,6 @@ namespace Terrain.Editor
                     {
                         cvsTerrainMaterials.View.MoveCurrentTo(materialVm);
                     }
-                }
-                else if (entry.Type == EditorCommandType.AddObject)
-                {
-                    ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
-
-                    cbObjects.Items.Add($"Object {cmd.ObjectId}");
-                    cbObjects.SelectedIndex = cbObjects.Items.Count - 1;
                 }
             }
         }

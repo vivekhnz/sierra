@@ -11,6 +11,8 @@
         Source="{Binding Source={StaticResource EditorAssets}, Path=RegisteredAssets}" />
     <CollectionViewSource x:Key="TerrainMaterials"
         Source="{Binding Source={StaticResource EditorDocument}, Path=TerrainMaterials}" />
+    <CollectionViewSource x:Key="Objects"
+        Source="{Binding Source={StaticResource EditorDocument}, Path=Objects}" />
     <Style x:Key="SliderStyle" TargetType="Slider">
       <Style.Triggers>
         <Trigger Property="IsEnabled" Value="False">
@@ -301,8 +303,9 @@
           <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
               IsExpanded="True">
             <StackPanel Orientation="Vertical" Margin="12 4">
-              <ComboBox x:Name="cbObjects" Margin="0 0 0 8"
-                  SelectionChanged="cbObjects_SelectionChanged" />
+              <ComboBox Margin="0 0 0 8"
+                  ItemsSource="{Binding Source={StaticResource Objects}}"
+                  DisplayMemberPath="Name" IsSynchronizedWithCurrentItem="True" />
               <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
               <Grid Margin="0 0 0 8">
                 <Grid.ColumnDefinitions>
@@ -317,29 +320,29 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockPositionXSlider" Minimum="-100" Maximum="100" Value="0"
+                <Slider Minimum="-100" Maximum="100"
+                    Value="{Binding Source={StaticResource Objects}, Path=/PositionX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockPositionXSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/PositionX}"
                     Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockPositionYSlider" Minimum="-100" Maximum="100" Value="0"
+                <Slider Minimum="-100" Maximum="100"
+                    Value="{Binding Source={StaticResource Objects}, Path=/PositionY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockPositionYSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/PositionY}"
                     Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockPositionZSlider" Minimum="-100" Maximum="100" Value="0"
+                <Slider Minimum="-100" Maximum="100"
+                    Value="{Binding Source={StaticResource Objects}, Path=/PositionZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockPositionZSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/PositionZ}"
                     Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
               </Grid>
               <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
@@ -356,29 +359,29 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockRotationXSlider" Minimum="-360" Maximum="360" Value="0"
+                <Slider Minimum="-360" Maximum="360"
+                    Value="{Binding Source={StaticResource Objects}, Path=/RotationX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockRotationXSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/RotationX}"
                     Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockRotationYSlider" Minimum="-360" Maximum="360" Value="0"
+                <Slider Minimum="-360" Maximum="360"
+                    Value="{Binding Source={StaticResource Objects}, Path=/RotationY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockRotationYSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/RotationY}"
                     Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockRotationZSlider" Minimum="-360" Maximum="360" Value="0"
+                <Slider Minimum="-360" Maximum="360"
+                    Value="{Binding Source={StaticResource Objects}, Path=/RotationZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockRotationZSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/RotationZ}"
                     Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
               </Grid>
               <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
@@ -395,29 +398,29 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockScaleXSlider" Minimum="0" Maximum="10" Value="1"
+                <Slider Minimum="0" Maximum="10"
+                    Value="{Binding Source={StaticResource Objects}, Path=/ScaleX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockScaleXSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/ScaleX}"
                     Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockScaleYSlider" Minimum="0" Maximum="10" Value="1"
+                <Slider Minimum="0" Maximum="10"
+                    Value="{Binding Source={StaticResource Objects}, Path=/ScaleY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockScaleYSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/ScaleY}"
                     Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider x:Name="rockScaleZSlider" Minimum="0" Maximum="10" Value="1"
+                <Slider Minimum="0" Maximum="10"
+                    Value="{Binding Source={StaticResource Objects}, Path=/ScaleZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2"
-                    ValueChanged="rockTransformSlider_ValueChanged" />
-                <TextBlock Text="{Binding ElementName=rockScaleZSlider, Path=Value}"
+                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
+                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/ScaleZ}"
                     Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
               </Grid>
             </StackPanel>
