@@ -347,6 +347,9 @@ typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
         float slopeEnd, float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
+#define EDITOR_ADD_OBJECT(name) void name(EditorMemory *memory)
+typedef EDITOR_ADD_OBJECT(EditorAddObject);
+
 #define EDITOR_SET_OBJECT_TRANSFORM(name)                                                     \
     void name(EditorMemory *memory, uint32 objectId, float positionX, float positionY,        \
         float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX,     \

@@ -1379,6 +1379,15 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     cmd->altitudeEnd = altitudeEnd;
 }
 
+API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    EditorTransaction *tx = createTransaction(&state->transactions);
+    AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
+    cmd->objectId = state->sceneState.nextObjectId++;
+}
+
 API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;

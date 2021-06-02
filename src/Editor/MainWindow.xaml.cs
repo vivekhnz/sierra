@@ -15,6 +15,7 @@ namespace Terrain.Editor
     public partial class MainWindow : Window
     {
         private readonly CollectionViewSource cvsTerrainMaterials;
+        private readonly CollectionViewSource cvsObjects;
 
         bool isUiInitialized = false;
 
@@ -29,6 +30,7 @@ namespace Terrain.Editor
                 new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
 
             cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
+            cvsObjects = (CollectionViewSource)FindResource("Objects");
 
             isUiInitialized = true;
         }
@@ -64,6 +66,18 @@ namespace Terrain.Editor
                     if (materialVm != null)
                     {
                         cvsTerrainMaterials.View.MoveCurrentTo(materialVm);
+                    }
+                }
+                else if (entry.Type == EditorCommandType.AddObject)
+                {
+                    ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
+                    uint objectId = cmd.ObjectId;
+
+                    var objectVm = App.Current.Document.Objects.FirstOrDefault(
+                        vm => vm.ObjectId == objectId);
+                    if (objectVm != null)
+                    {
+                        cvsObjects.View.MoveCurrentTo(objectVm);
                     }
                 }
             }

@@ -245,6 +245,7 @@ namespace Terrain.Editor.Core
             TerrainMaterialTextureType textureType, uint assetId);
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
+        delegate void EditorAddObject(ref EditorMemory memory);
         delegate void EditorSetObjectTransform(ref EditorMemory memory, uint objectId,
             float positionX, float positionY, float positionZ,
             float rotationX, float rotationY, float rotationZ,
@@ -260,6 +261,7 @@ namespace Terrain.Editor.Core
         private static EditorSwapMaterial editorSwapMaterial;
         private static EditorSetMaterialTexture editorSetMaterialTexture;
         private static EditorSetMaterialProperties editorSetMaterialProperties;
+        private static EditorAddObject editorAddObject;
         private static EditorSetObjectTransform editorSetObjectTransform;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -337,6 +339,7 @@ namespace Terrain.Editor.Core
             editorSwapMaterial = GetApi<EditorSwapMaterial>("editorSwapMaterial");
             editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
+            editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorSetObjectTransform = GetApi<EditorSetObjectTransform>("editorSetObjectTransform");
 
             return moduleHandle != IntPtr.Zero;
@@ -394,6 +397,9 @@ namespace Terrain.Editor.Core
             editorSetMaterialProperties?.Invoke(ref memory, materialId, textureSize,
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
+
+        internal static void AddObject()
+            => editorAddObject?.Invoke(ref memory);
 
         internal static void SetObjectTransform(
             uint objectId,

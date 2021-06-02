@@ -303,9 +303,19 @@
           <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
               IsExpanded="True">
             <StackPanel Orientation="Vertical" Margin="12 4">
-              <ComboBox Margin="0 0 0 8"
-                  ItemsSource="{Binding Source={StaticResource Objects}}"
-                  DisplayMemberPath="Name" IsSynchronizedWithCurrentItem="True" />
+              <Grid Margin="0 0 0 8" Height="27">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <ComboBox ItemsSource="{Binding Source={StaticResource Objects}}"
+                    DisplayMemberPath="Name" IsSynchronizedWithCurrentItem="True"
+                    VerticalContentAlignment="Center" />
+                <Button Content="+" Grid.Column="1" Width="27" FontSize="16" FontWeight="Bold"
+                    Margin="4 0 0 0" Style="{StaticResource ButtonStyle}"
+                    Command="{Binding Source={StaticResource EditorDocument}, Path=AddObjectCommand}"
+                    VerticalContentAlignment="Top" />
+              </Grid>
               <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
               <Grid Margin="0 0 0 8">
                 <Grid.ColumnDefinitions>
