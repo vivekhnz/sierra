@@ -32,6 +32,40 @@ void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 
 #define pushCommand(tx, type)                                                                 \
     (type *)pushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
 
+struct EditorCommandIterator
+{
+    uint8 *baseAddress;
+    uint32 offset;
+    uint32 position;
+    uint32 commandCount;
+};
+struct EditorCommandEntry
+{
+    EditorCommandType type;
+    void *data;
+};
+bool isIteratorFinished(EditorCommandIterator *iterator)
+{
+    return iterator->position >= iterator->commandCount;
+}
+EditorCommandEntry getNextCommand(EditorCommandIterator *iterator)
+{
+    EditorCommandEntry entry;
+
+    entry.type = *((EditorCommandType *)(iterator->baseAddress + iterator->offset));
+    iterator->offset += sizeof(entry.type);
+
+    uint64 commandSize = *((uint64 *)(iterator->baseAddress + iterator->offset));
+    iterator->offset += sizeof(commandSize);
+
+    entry.data = iterator->baseAddress + iterator->offset;
+    iterator->offset += commandSize;
+
+    iterator->position++;
+
+    return entry;
+}
+
 void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
 {
     uint8 *baseAddress = (uint8 *)queue->data.baseAddress;
@@ -41,23 +75,21 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
         EditorTransaction *tx = (EditorTransaction *)(baseAddress + offset);
         offset += sizeof(*tx);
 
-        uint8 *commandBufferBaseAddress = baseAddress + offset;
-        for (uint32 cmdIdx = 0; cmdIdx < tx->commandCount; cmdIdx++)
+        EditorCommandIterator cmdIterator;
+        cmdIterator.baseAddress = baseAddress + offset;
+        cmdIterator.offset = 0;
+        cmdIterator.position = 0;
+        cmdIterator.commandCount = tx->commandCount;
+
+        while (!isIteratorFinished(&cmdIterator))
         {
-            EditorCommandType commandType = *((EditorCommandType *)(baseAddress + offset));
-            offset += sizeof(commandType);
+            EditorCommandEntry cmdEntry = getNextCommand(&cmdIterator);
 
-            uint64 commandSize = *((uint64 *)(baseAddress + offset));
-            offset += sizeof(commandSize);
-
-            void *commandData = baseAddress + offset;
-            offset += commandSize;
-
-            switch (commandType)
+            switch (cmdEntry.type)
             {
             case EDITOR_COMMAND_AddMaterialCommand:
             {
-                AddMaterialCommand *cmd = (AddMaterialCommand *)commandData;
+                AddMaterialCommand *cmd = (AddMaterialCommand *)cmdEntry.data;
 
                 assert(state->sceneState.worldState.materialCount < MAX_MATERIAL_COUNT);
                 uint32 index = state->sceneState.worldState.materialCount++;
@@ -84,7 +116,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             break;
             case EDITOR_COMMAND_DeleteMaterialCommand:
             {
-                DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)commandData;
+                DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)cmdEntry.data;
 
                 assert(cmd->index < MAX_MATERIAL_COUNT);
                 state->sceneState.worldState.materialCount--;
@@ -108,7 +140,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             break;
             case EDITOR_COMMAND_SwapMaterialCommand:
             {
-                SwapMaterialCommand *cmd = (SwapMaterialCommand *)commandData;
+                SwapMaterialCommand *cmd = (SwapMaterialCommand *)cmdEntry.data;
 
                 assert(cmd->indexA < MAX_MATERIAL_COUNT);
                 assert(cmd->indexB < MAX_MATERIAL_COUNT);
@@ -129,7 +161,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             break;
             case EDITOR_COMMAND_SetMaterialTextureCommand:
             {
-                SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)commandData;
+                SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)cmdEntry.data;
 
                 bool foundMaterial = false;
                 uint32 index = 0;
@@ -160,7 +192,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             case EDITOR_COMMAND_SetMaterialPropertiesCommand:
             {
                 SetMaterialPropertiesCommand *cmd =
-                    (SetMaterialPropertiesCommand *)commandData;
+                    (SetMaterialPropertiesCommand *)cmdEntry.data;
 
                 bool foundMaterial = false;
                 uint32 index = 0;
@@ -189,7 +221,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             break;
             case EDITOR_COMMAND_AddObjectCommand:
             {
-                AddObjectCommand *cmd = (AddObjectCommand *)commandData;
+                AddObjectCommand *cmd = (AddObjectCommand *)cmdEntry.data;
 
                 assert(state->sceneState.objectInstanceCount < MAX_OBJECT_INSTANCES);
                 uint32 index = state->sceneState.objectInstanceCount++;
@@ -204,7 +236,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             break;
             case EDITOR_COMMAND_SetObjectTransformCommand:
             {
-                SetObjectTransformCommand *cmd = (SetObjectTransformCommand *)commandData;
+                SetObjectTransformCommand *cmd = (SetObjectTransformCommand *)cmdEntry.data;
 
                 bool foundObject = false;
                 uint32 index = 0;
@@ -230,8 +262,10 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             }
         }
 
-        uint64 commandBufferSize = (baseAddress + offset) - commandBufferBaseAddress;
-        queue->publishTransaction(commandBufferBaseAddress, commandBufferSize);
+        uint64 commandBufferSize = cmdIterator.offset;
+        queue->publishTransaction(cmdIterator.baseAddress, commandBufferSize);
+
+        offset += commandBufferSize;
     }
 
     queue->dataStorageUsed = 0;
