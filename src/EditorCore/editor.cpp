@@ -907,6 +907,35 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         }
     }
 
+    // move object with arrow keys
+    glm::vec3 objectTranslation = glm::vec3(0);
+    if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT))
+    {
+        objectTranslation += glm::vec3(-1.0f, 0, 0);
+    }
+    if (isButtonDown(input, EDITOR_INPUT_KEY_RIGHT))
+    {
+        objectTranslation += glm::vec3(1.0f, 0, 0);
+    }
+    if (isButtonDown(input, EDITOR_INPUT_KEY_UP))
+    {
+        objectTranslation += glm::vec3(0, 0, -1.0f);
+    }
+    if (isButtonDown(input, EDITOR_INPUT_KEY_DOWN))
+    {
+        objectTranslation += glm::vec3(0, 0, 1.0f);
+    }
+    if (objectTranslation != glm::vec3(0))
+    {
+        ObjectTransform *transform = &sceneState->objectTransforms[0];
+        EditorTransaction *tx = createTransaction(&state->transactions);
+        SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+        cmd->objectId = sceneState->objectIds[0];
+        cmd->position = transform->position + (objectTranslation * 10.0f * deltaTime);
+        cmd->rotation = transform->rotation;
+        cmd->scale = transform->scale;
+    }
+
     // update brush highlight
     sceneState->worldState.brushPos = newBrushPos;
     sceneState->worldState.brushCursorVisibleView =
