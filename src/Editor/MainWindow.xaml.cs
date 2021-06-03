@@ -17,11 +17,14 @@ namespace Terrain.Editor
         private readonly CollectionViewSource cvsTerrainMaterials;
         private readonly CollectionViewSource cvsObjects;
 
-        bool isUiInitialized = false;
-
         public MainWindow()
         {
             InitializeComponent();
+
+            PreviewKeyDown += (sender, e) =>
+            {
+                e.Handled = EditorPlatform.IsViewportHovered;
+            };
 
             EditorCore.TransactionPublished += OnTransactionPublished;
 
@@ -31,8 +34,6 @@ namespace Terrain.Editor
 
             cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
             cvsObjects = (CollectionViewSource)FindResource("Objects");
-
-            isUiInitialized = true;
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)

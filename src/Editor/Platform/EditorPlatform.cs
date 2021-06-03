@@ -83,6 +83,8 @@ namespace Terrain.Editor.Platform
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
         private static PlatformWatchAssetFile editorPlatformWatchAssetFile = WatchAssetFile;
 
+        public static bool IsViewportHovered { get; private set; } = false;
+
         internal static void Initialize()
         {
             assetsDirectoryPath = Path.Combine(
@@ -498,6 +500,7 @@ namespace Terrain.Editor.Platform
             lastTickTime = now;
             EditorInput input = GetInputState();
 
+            IsViewportHovered = input.ActiveViewState != IntPtr.Zero;
             EditorCore.Update(deltaTime, ref input);
 
             for (int i = 0; i < viewportWindows.Count; i++)
