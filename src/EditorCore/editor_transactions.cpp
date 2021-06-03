@@ -24,6 +24,7 @@ EditorTransaction *createTransaction(EditorTransactionQueue *queue)
 void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 size)
 {
     *((EditorCommandType *)pushTransactionData(tx->queue, sizeof(EditorCommandType))) = type;
+    *((uint64 *)pushTransactionData(tx->queue, sizeof(uint64))) = size;
     void *commandData = pushTransactionData(tx->queue, size);
     tx->commandCount++;
     return commandData;
@@ -45,7 +46,12 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
         {
             EditorCommandType commandType = *((EditorCommandType *)(baseAddress + offset));
             offset += sizeof(commandType);
+
+            uint64 commandSize = *((uint64 *)(baseAddress + offset));
+            offset += sizeof(commandSize);
+
             void *commandData = baseAddress + offset;
+            offset += commandSize;
 
             switch (commandType)
             {
@@ -74,8 +80,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 state->sceneState.worldState.displacementTextureAssetIds[index] =
                     cmd->displacementTextureAssetId;
                 state->sceneState.worldState.aoTextureAssetIds[index] = cmd->aoTextureAssetId;
-
-                offset += sizeof(*cmd);
             }
             break;
             case EDITOR_COMMAND_DeleteMaterialCommand:
@@ -100,8 +104,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                     state->sceneState.worldState.aoTextureAssetIds[i] =
                         state->sceneState.worldState.aoTextureAssetIds[i + 1];
                 }
-
-                offset += sizeof(*cmd);
             }
             break;
             case EDITOR_COMMAND_SwapMaterialCommand:
@@ -123,8 +125,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 swap(uint32, normalTextureAssetIds);
                 swap(uint32, displacementTextureAssetIds);
                 swap(uint32, aoTextureAssetIds);
-
-                offset += sizeof(*cmd);
             }
             break;
             case EDITOR_COMMAND_SetMaterialTextureCommand:
@@ -155,8 +155,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                         materialTextureAssetIds[(uint32)cmd->textureType];
                     textureAssetIds[index] = cmd->assetId;
                 }
-
-                offset += sizeof(*cmd);
             }
             break;
             case EDITOR_COMMAND_SetMaterialPropertiesCommand:
@@ -187,8 +185,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                     material->rampParams.z = cmd->altitudeStart;
                     material->rampParams.w = cmd->altitudeEnd;
                 }
-
-                offset += sizeof(*cmd);
             }
             break;
             case EDITOR_COMMAND_AddObjectCommand:
@@ -204,8 +200,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                 transform->position = glm::vec3(0);
                 transform->rotation = glm::vec3(0);
                 transform->scale = glm::vec3(1);
-
-                offset += sizeof(*cmd);
             }
             break;
             case EDITOR_COMMAND_SetObjectTransformCommand:
@@ -231,8 +225,6 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
                     transform->rotation = cmd->rotation;
                     transform->scale = cmd->scale;
                 }
-
-                offset += sizeof(*cmd);
             }
             break;
             }

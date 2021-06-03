@@ -1,6 +1,5 @@
 using System;
 using System.Diagnostics;
-using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Terrain.Editor.Core
@@ -51,21 +50,13 @@ namespace Terrain.Editor.Core
                 Debug.Assert(Enum.IsDefined(typeof(EditorCommandType), cmdType));
                 offset += cmdTypeSpan.Length;
 
-                int dataSize = cmdType switch
-                {
-                    EditorCommandType.AddMaterial => Unsafe.SizeOf<AddMaterialCommand>(),
-                    EditorCommandType.DeleteMaterial => Unsafe.SizeOf<DeleteMaterialCommand>(),
-                    EditorCommandType.SwapMaterial => Unsafe.SizeOf<SwapMaterialCommand>(),
-                    EditorCommandType.SetMaterialTexture => Unsafe.SizeOf<SetMaterialTextureCommand>(),
-                    EditorCommandType.SetMaterialProperties => Unsafe.SizeOf<SetMaterialPropertiesCommand>(),
-                    EditorCommandType.AddObject => Unsafe.SizeOf<AddObjectCommand>(),
-                    EditorCommandType.SetObjectTransform => Unsafe.SizeOf<SetObjectTransformCommand>(),
-                    _ => throw new NotImplementedException($"Unknown command type: {cmdType}")
-                };
+                ReadOnlySpan<byte> cmdSizeSpan = commandBuffer.Slice(offset, sizeof(ulong));
+                ref readonly ulong cmdSize = ref MemoryMarshal.AsRef<ulong>(cmdSizeSpan);
+                offset += cmdSizeSpan.Length;
 
                 currentEntry.Type = cmdType;
-                currentEntry.Data = commandBuffer.Slice(offset, dataSize);
-                offset += dataSize;
+                currentEntry.Data = commandBuffer.Slice(offset, (int)cmdSize);
+                offset += (int)cmdSize;
 
                 return true;
             }
