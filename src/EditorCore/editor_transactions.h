@@ -29,6 +29,7 @@ struct EditorTransaction
 {
     EditorTransactionQueue *queue;
     uint32 commandCount;
+    uint32 commandBufferSize;
 };
 
 struct AddMaterialCommand

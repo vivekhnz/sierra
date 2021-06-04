@@ -17,6 +17,7 @@ EditorTransaction *createTransaction(EditorTransactionQueue *queue)
         (EditorTransaction *)pushTransactionData(queue, sizeof(EditorTransaction));
     tx->queue = queue;
     tx->commandCount = 0;
+    tx->commandBufferSize = 0;
 
     return tx;
 }
@@ -27,6 +28,7 @@ void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 
     *((uint64 *)pushTransactionData(tx->queue, sizeof(uint64))) = size;
     void *commandData = pushTransactionData(tx->queue, size);
     tx->commandCount++;
+    tx->commandBufferSize += sizeof(EditorCommandType) + sizeof(uint64) + size;
     return commandData;
 }
 #define pushCommand(tx, type)                                                                 \
@@ -262,10 +264,9 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             }
         }
 
-        uint64 commandBufferSize = cmdIterator.offset;
-        queue->publishTransaction(cmdIterator.baseAddress, commandBufferSize);
+        queue->publishTransaction(cmdIterator.baseAddress, tx->commandBufferSize);
 
-        offset += commandBufferSize;
+        offset += tx->commandBufferSize;
     }
 
     queue->dataStorageUsed = 0;
