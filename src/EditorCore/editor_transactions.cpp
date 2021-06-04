@@ -16,7 +16,6 @@ EditorTransaction *createTransaction(EditorTransactionQueue *queue)
     EditorTransaction *tx =
         (EditorTransaction *)pushTransactionData(queue, sizeof(EditorTransaction));
     tx->queue = queue;
-    tx->commandCount = 0;
     tx->commandBufferSize = 0;
 
     return tx;
@@ -27,7 +26,6 @@ void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 
     *((EditorCommandType *)pushTransactionData(tx->queue, sizeof(EditorCommandType))) = type;
     *((uint64 *)pushTransactionData(tx->queue, sizeof(uint64))) = size;
     void *commandData = pushTransactionData(tx->queue, size);
-    tx->commandCount++;
     tx->commandBufferSize += sizeof(EditorCommandType) + sizeof(uint64) + size;
     return commandData;
 }
@@ -36,10 +34,8 @@ void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 
 
 struct EditorCommandIterator
 {
-    uint8 *baseAddress;
-    uint32 offset;
-    uint32 position;
-    uint32 commandCount;
+    uint8 *position;
+    uint8 *end;
 };
 struct EditorCommandEntry
 {
@@ -48,44 +44,76 @@ struct EditorCommandEntry
 };
 bool isIteratorFinished(EditorCommandIterator *iterator)
 {
-    return iterator->position >= iterator->commandCount;
+    return iterator->position >= iterator->end;
 }
 EditorCommandEntry getNextCommand(EditorCommandIterator *iterator)
 {
     EditorCommandEntry entry;
 
-    entry.type = *((EditorCommandType *)(iterator->baseAddress + iterator->offset));
-    iterator->offset += sizeof(entry.type);
+    entry.type = *((EditorCommandType *)iterator->position);
+    iterator->position += sizeof(entry.type);
 
-    uint64 commandSize = *((uint64 *)(iterator->baseAddress + iterator->offset));
-    iterator->offset += sizeof(commandSize);
+    uint64 commandSize = *((uint64 *)iterator->position);
+    iterator->position += sizeof(commandSize);
 
-    entry.data = iterator->baseAddress + iterator->offset;
-    iterator->offset += commandSize;
+    entry.data = iterator->position;
+    iterator->position += commandSize;
 
-    iterator->position++;
+    return entry;
+}
+
+struct EditorTransactionIterator
+{
+    uint8 *position;
+    uint8 *end;
+};
+struct EditorTransactionEntry
+{
+    struct
+    {
+        uint8 *start;
+        uint32 size;
+        EditorCommandIterator iterator;
+    } commandBuffer;
+};
+EditorTransactionIterator getIterator(EditorTransactionQueue *queue)
+{
+    EditorTransactionIterator iterator;
+    iterator.position = (uint8 *)queue->data.baseAddress;
+    iterator.end = iterator.position + queue->dataStorageUsed;
+
+    return iterator;
+}
+bool isIteratorFinished(EditorTransactionIterator *iterator)
+{
+    return iterator->position >= iterator->end;
+}
+EditorTransactionEntry getNextTransaction(EditorTransactionIterator *iterator)
+{
+    EditorTransactionEntry entry;
+
+    EditorTransaction *tx = (EditorTransaction *)iterator->position;
+    iterator->position += sizeof(*tx);
+
+    entry.commandBuffer.start = iterator->position;
+    entry.commandBuffer.size = tx->commandBufferSize;
+    entry.commandBuffer.iterator.position = entry.commandBuffer.start;
+    entry.commandBuffer.iterator.end = entry.commandBuffer.start + entry.commandBuffer.size;
+
+    iterator->position = entry.commandBuffer.iterator.end;
 
     return entry;
 }
 
 void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
 {
-    uint8 *baseAddress = (uint8 *)queue->data.baseAddress;
-    uint64 offset = 0;
-    while (offset < queue->dataStorageUsed)
+    EditorTransactionIterator txIterator = getIterator(queue);
+    while (!isIteratorFinished(&txIterator))
     {
-        EditorTransaction *tx = (EditorTransaction *)(baseAddress + offset);
-        offset += sizeof(*tx);
-
-        EditorCommandIterator cmdIterator;
-        cmdIterator.baseAddress = baseAddress + offset;
-        cmdIterator.offset = 0;
-        cmdIterator.position = 0;
-        cmdIterator.commandCount = tx->commandCount;
-
-        while (!isIteratorFinished(&cmdIterator))
+        EditorTransactionEntry tx = getNextTransaction(&txIterator);
+        while (!isIteratorFinished(&tx.commandBuffer.iterator))
         {
-            EditorCommandEntry cmdEntry = getNextCommand(&cmdIterator);
+            EditorCommandEntry cmdEntry = getNextCommand(&tx.commandBuffer.iterator);
 
             switch (cmdEntry.type)
             {
@@ -264,9 +292,7 @@ void applyTransactions(EditorTransactionQueue *queue, EditorState *state)
             }
         }
 
-        queue->publishTransaction(cmdIterator.baseAddress, tx->commandBufferSize);
-
-        offset += tx->commandBufferSize;
+        queue->publishTransaction(tx.commandBuffer.start, tx.commandBuffer.size);
     }
 
     queue->dataStorageUsed = 0;
