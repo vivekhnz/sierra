@@ -379,16 +379,8 @@ bool initializeEditor(EditorMemory *memory)
         engine->rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_BYTE, GL_R8,
             GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
-    sceneState->worldState.materialCount = 0;
-    sceneState->worldState.nextMaterialId = 1;
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
-        sceneState->worldState.materialProps[i] = {};
-        sceneState->worldState.albedoTextureAssetIds[i] = {};
-        sceneState->worldState.normalTextureAssetIds[i] = {};
-        sceneState->worldState.displacementTextureAssetIds[i] = {};
-        sceneState->worldState.aoTextureAssetIds[i] = {};
-
         sceneState->albedoTextures[i] = {};
         sceneState->normalTextures[i] = {};
         sceneState->displacementTextures[i] = {};
@@ -396,8 +388,7 @@ bool initializeEditor(EditorMemory *memory)
     }
     sceneState->materialPropsBufferHandle = engine->rendererCreateBuffer(
         memory->engineMemory, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
-    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->materialPropsBufferHandle,
-        sizeof(sceneState->worldState.materialProps), 0);
+    sceneState->nextMaterialId = 1;
 
     sceneState->rockMesh = {};
 
@@ -407,6 +398,17 @@ bool initializeEditor(EditorMemory *memory)
     engine->rendererUpdateBuffer(memory->engineMemory, sceneState->objectInstanceBufferHandle,
         sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 
+    // initialize document state
+    state->docState.materialCount = 0;
+    for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
+    {
+        state->docState.materialProps[i] = {};
+        state->docState.albedoTextureAssetIds[i] = {};
+        state->docState.normalTextureAssetIds[i] = {};
+        state->docState.displacementTextureAssetIds[i] = {};
+        state->docState.aoTextureAssetIds[i] = {};
+    }
+
     state->transactions.data.size = 1 * 1024 * 1024;
     state->transactions.data.baseAddress =
         pushEditorData(memory, state->transactions.data.size);
@@ -414,7 +416,7 @@ bool initializeEditor(EditorMemory *memory)
     // add default materials
     EditorTransaction *addMaterialsTx = createTransaction(&state->transactions);
     AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
-    cmd->materialId = sceneState->worldState.nextMaterialId++;
+    cmd->materialId = sceneState->nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
     cmd->normalTextureAssetId = assets->textureGroundNormal;
     cmd->displacementTextureAssetId = assets->textureGroundDisplacement;
@@ -426,7 +428,7 @@ bool initializeEditor(EditorMemory *memory)
     cmd->altitudeEnd = 0;
 
     cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
-    cmd->materialId = sceneState->worldState.nextMaterialId++;
+    cmd->materialId = sceneState->nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureRockAlbedo;
     cmd->normalTextureAssetId = assets->textureRockNormal;
     cmd->displacementTextureAssetId = assets->textureRockDisplacement;
@@ -438,7 +440,7 @@ bool initializeEditor(EditorMemory *memory)
     cmd->altitudeEnd = 0.001f;
 
     cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
-    cmd->materialId = sceneState->worldState.nextMaterialId++;
+    cmd->materialId = sceneState->nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureSnowAlbedo;
     cmd->normalTextureAssetId = assets->textureSnowNormal;
     cmd->displacementTextureAssetId = assets->textureSnowDisplacement;
@@ -625,7 +627,7 @@ void discardChanges(EditorMemory *memory)
 }
 
 void applyTransactions(EditorTransactionQueue *queue,
-    EditorState *state,
+    EditorDocumentState *docState,
     PlatformPublishTransaction *publishTransaction)
 {
     EditorTransactionIterator txIterator = getIterator(queue);
@@ -642,13 +644,12 @@ void applyTransactions(EditorTransactionQueue *queue,
             {
                 AddMaterialCommand *cmd = (AddMaterialCommand *)cmdEntry.data;
 
-                assert(state->sceneState.worldState.materialCount < MAX_MATERIAL_COUNT);
-                uint32 index = state->sceneState.worldState.materialCount++;
+                assert(docState->materialCount < MAX_MATERIAL_COUNT);
+                uint32 index = docState->materialCount++;
 
-                state->sceneState.worldState.materialIds[index] = cmd->materialId;
+                docState->materialIds[index] = cmd->materialId;
 
-                GpuMaterialProperties *material =
-                    &state->sceneState.worldState.materialProps[index];
+                GpuMaterialProperties *material = &docState->materialProps[index];
                 material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
                 material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
                 material->rampParams.x = cmd->slopeStart;
@@ -656,13 +657,10 @@ void applyTransactions(EditorTransactionQueue *queue,
                 material->rampParams.z = cmd->altitudeStart;
                 material->rampParams.w = cmd->altitudeEnd;
 
-                state->sceneState.worldState.albedoTextureAssetIds[index] =
-                    cmd->albedoTextureAssetId;
-                state->sceneState.worldState.normalTextureAssetIds[index] =
-                    cmd->normalTextureAssetId;
-                state->sceneState.worldState.displacementTextureAssetIds[index] =
-                    cmd->displacementTextureAssetId;
-                state->sceneState.worldState.aoTextureAssetIds[index] = cmd->aoTextureAssetId;
+                docState->albedoTextureAssetIds[index] = cmd->albedoTextureAssetId;
+                docState->normalTextureAssetIds[index] = cmd->normalTextureAssetId;
+                docState->displacementTextureAssetIds[index] = cmd->displacementTextureAssetId;
+                docState->aoTextureAssetIds[index] = cmd->aoTextureAssetId;
             }
             break;
             case EDITOR_COMMAND_DeleteMaterialCommand:
@@ -670,22 +668,18 @@ void applyTransactions(EditorTransactionQueue *queue,
                 DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)cmdEntry.data;
 
                 assert(cmd->index < MAX_MATERIAL_COUNT);
-                state->sceneState.worldState.materialCount--;
-                for (uint32 i = cmd->index; i < state->sceneState.worldState.materialCount;
-                     i++)
+                docState->materialCount--;
+                for (uint32 i = cmd->index; i < docState->materialCount; i++)
                 {
-                    state->sceneState.worldState.materialIds[i] =
-                        state->sceneState.worldState.materialIds[i + 1];
-                    state->sceneState.worldState.materialProps[i] =
-                        state->sceneState.worldState.materialProps[i + 1];
-                    state->sceneState.worldState.albedoTextureAssetIds[i] =
-                        state->sceneState.worldState.albedoTextureAssetIds[i + 1];
-                    state->sceneState.worldState.normalTextureAssetIds[i] =
-                        state->sceneState.worldState.normalTextureAssetIds[i + 1];
-                    state->sceneState.worldState.displacementTextureAssetIds[i] =
-                        state->sceneState.worldState.displacementTextureAssetIds[i + 1];
-                    state->sceneState.worldState.aoTextureAssetIds[i] =
-                        state->sceneState.worldState.aoTextureAssetIds[i + 1];
+                    docState->materialIds[i] = docState->materialIds[i + 1];
+                    docState->materialProps[i] = docState->materialProps[i + 1];
+                    docState->albedoTextureAssetIds[i] =
+                        docState->albedoTextureAssetIds[i + 1];
+                    docState->normalTextureAssetIds[i] =
+                        docState->normalTextureAssetIds[i + 1];
+                    docState->displacementTextureAssetIds[i] =
+                        docState->displacementTextureAssetIds[i + 1];
+                    docState->aoTextureAssetIds[i] = docState->aoTextureAssetIds[i + 1];
                 }
             }
             break;
@@ -697,10 +691,9 @@ void applyTransactions(EditorTransactionQueue *queue,
                 assert(cmd->indexB < MAX_MATERIAL_COUNT);
 
 #define swap(type, array)                                                                     \
-    type temp_##array = state->sceneState.worldState.array[cmd->indexA];                      \
-    state->sceneState.worldState.array[cmd->indexA] =                                         \
-        state->sceneState.worldState.array[cmd->indexB];                                      \
-    state->sceneState.worldState.array[cmd->indexB] = temp_##array;
+    type temp_##array = docState->array[cmd->indexA];                                         \
+    docState->array[cmd->indexA] = docState->array[cmd->indexB];                              \
+    docState->array[cmd->indexB] = temp_##array;
 
                 swap(uint32, materialIds);
                 swap(GpuMaterialProperties, materialProps);
@@ -716,9 +709,9 @@ void applyTransactions(EditorTransactionQueue *queue,
 
                 bool foundMaterial = false;
                 uint32 index = 0;
-                for (uint32 i = 0; i < state->sceneState.worldState.materialCount; i++)
+                for (uint32 i = 0; i < docState->materialCount; i++)
                 {
-                    if (state->sceneState.worldState.materialIds[i] == cmd->materialId)
+                    if (docState->materialIds[i] == cmd->materialId)
                     {
                         foundMaterial = true;
                         index = i;
@@ -729,10 +722,10 @@ void applyTransactions(EditorTransactionQueue *queue,
                 if (foundMaterial)
                 {
                     uint32 *materialTextureAssetIds[] = {
-                        state->sceneState.worldState.albedoTextureAssetIds,       //
-                        state->sceneState.worldState.normalTextureAssetIds,       //
-                        state->sceneState.worldState.displacementTextureAssetIds, //
-                        state->sceneState.worldState.aoTextureAssetIds            //
+                        docState->albedoTextureAssetIds,       //
+                        docState->normalTextureAssetIds,       //
+                        docState->displacementTextureAssetIds, //
+                        docState->aoTextureAssetIds            //
                     };
                     uint32 *textureAssetIds =
                         materialTextureAssetIds[(uint32)cmd->textureType];
@@ -747,9 +740,9 @@ void applyTransactions(EditorTransactionQueue *queue,
 
                 bool foundMaterial = false;
                 uint32 index = 0;
-                for (uint32 i = 0; i < state->sceneState.worldState.materialCount; i++)
+                for (uint32 i = 0; i < docState->materialCount; i++)
                 {
-                    if (state->sceneState.worldState.materialIds[i] == cmd->materialId)
+                    if (docState->materialIds[i] == cmd->materialId)
                     {
                         foundMaterial = true;
                         index = i;
@@ -759,8 +752,7 @@ void applyTransactions(EditorTransactionQueue *queue,
 
                 if (foundMaterial)
                 {
-                    GpuMaterialProperties *material =
-                        &state->sceneState.worldState.materialProps[index];
+                    GpuMaterialProperties *material = &docState->materialProps[index];
                     material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
                     material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
                     material->rampParams.x = cmd->slopeStart;
@@ -774,12 +766,12 @@ void applyTransactions(EditorTransactionQueue *queue,
             {
                 AddObjectCommand *cmd = (AddObjectCommand *)cmdEntry.data;
 
-                assert(state->sceneState.objectInstanceCount < MAX_OBJECT_INSTANCES);
-                uint32 index = state->sceneState.objectInstanceCount++;
+                assert(docState->objectInstanceCount < MAX_OBJECT_INSTANCES);
+                uint32 index = docState->objectInstanceCount++;
 
-                state->sceneState.objectIds[index] = cmd->objectId;
+                docState->objectIds[index] = cmd->objectId;
 
-                ObjectTransform *transform = &state->sceneState.objectTransforms[index];
+                ObjectTransform *transform = &docState->objectTransforms[index];
                 transform->position = glm::vec3(0);
                 transform->rotation = glm::vec3(0);
                 transform->scale = glm::vec3(1);
@@ -791,9 +783,9 @@ void applyTransactions(EditorTransactionQueue *queue,
 
                 bool foundObject = false;
                 uint32 index = 0;
-                for (uint32 i = 0; i < state->sceneState.objectInstanceCount; i++)
+                for (uint32 i = 0; i < docState->objectInstanceCount; i++)
                 {
-                    if (state->sceneState.objectIds[i] == cmd->objectId)
+                    if (docState->objectIds[i] == cmd->objectId)
                     {
                         foundObject = true;
                         index = i;
@@ -803,7 +795,7 @@ void applyTransactions(EditorTransactionQueue *queue,
 
                 if (foundObject)
                 {
-                    ObjectTransform *transform = &state->sceneState.objectTransforms[index];
+                    ObjectTransform *transform = &docState->objectTransforms[index];
                     transform->position = cmd->position;
                     transform->rotation = cmd->rotation;
                     transform->scale = cmd->scale;
@@ -819,9 +811,116 @@ void applyTransactions(EditorTransactionQueue *queue,
     queue->dataStorageUsed = 0;
 }
 
+void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    SceneState *sceneState = &state->sceneState;
+    EngineApi *engine = memory->engineApi;
+
+    // update material state
+    sceneState->materialCount = docState->materialCount;
+    for (uint32 layerIdx = 0; layerIdx < docState->materialCount; layerIdx++)
+    {
+        uint32 assetId;
+        LoadedAsset *asset;
+        TextureAssetBinding *binding;
+
+        assetId = docState->albedoTextureAssetIds[layerIdx];
+        if (assetId)
+        {
+            binding = &sceneState->albedoTextures[layerIdx];
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
+            {
+                engine->rendererUpdateTextureArray(memory->engineMemory,
+                    sceneState->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
+                binding->assetId = assetId;
+                binding->version = asset->version;
+            }
+        }
+
+        assetId = docState->normalTextureAssetIds[layerIdx];
+        if (assetId)
+        {
+            binding = &sceneState->normalTextures[layerIdx];
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
+            {
+                engine->rendererUpdateTextureArray(memory->engineMemory,
+                    sceneState->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
+                binding->assetId = assetId;
+                binding->version = asset->version;
+            }
+        }
+
+        assetId = docState->displacementTextureAssetIds[layerIdx];
+        if (assetId)
+        {
+            binding = &sceneState->displacementTextures[layerIdx];
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
+            {
+                engine->rendererUpdateTextureArray(memory->engineMemory,
+                    sceneState->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
+                binding->assetId = assetId;
+                binding->version = asset->version;
+            }
+        }
+
+        assetId = docState->aoTextureAssetIds[layerIdx];
+        if (assetId)
+        {
+            binding = &sceneState->aoTextures[layerIdx];
+            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            if (asset->texture
+                && (assetId != binding->assetId || asset->version > binding->version))
+            {
+                engine->rendererUpdateTextureArray(memory->engineMemory,
+                    sceneState->aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED,
+                    asset->texture->width, asset->texture->height, layerIdx,
+                    asset->texture->data);
+                binding->assetId = assetId;
+                binding->version = asset->version;
+            }
+        }
+    }
+    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->materialPropsBufferHandle,
+        sizeof(docState->materialProps), docState->materialProps);
+
+    // update object instance state
+    sceneState->objectInstanceCount = docState->objectInstanceCount;
+    for (uint32 i = 0; i < docState->objectInstanceCount; i++)
+    {
+        ObjectTransform *transform = &docState->objectTransforms[i];
+        glm::mat4 matrix = glm::identity<glm::mat4>();
+        matrix = glm::translate(matrix, transform->position);
+        matrix = glm::scale(matrix, transform->scale);
+        glm::vec3 rockRotEuler = glm::radians(transform->rotation);
+        glm::quat rockRotQuat = glm::quat(rockRotEuler);
+        glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
+        matrix *= rockRotMat;
+
+        sceneState->objectIds[i] = docState->objectIds[i];
+        sceneState->objectInstanceTransforms[i] = *transform;
+        sceneState->objectInstanceBufferData[i] = matrix;
+    }
+    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->objectInstanceBufferHandle,
+        sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
+}
+
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
+    SceneState *sceneState = &state->sceneState;
 
     if (!state->isInitialized)
     {
@@ -833,7 +932,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->isInitialized = true;
     }
 
-    applyTransactions(&state->transactions, state, memory->platformPublishTransaction);
+    {
+#if 0
+        // apply transactions for this tick only
+        EditorDocumentState tempDocState = state->docState;
+        EditorDocumentState *docStateToUpdate = &tempDocState;
+#else
+        EditorDocumentState *docStateToUpdate = &state->docState;
+#endif
+        applyTransactions(
+            &state->transactions, docStateToUpdate, memory->platformPublishTransaction);
+        updateFromDocumentState(memory, docStateToUpdate);
+    }
 
     EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &state->assets;
@@ -888,8 +998,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
         state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
     }
-
-    SceneState *sceneState = &state->sceneState;
 
     glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
     state->isAdjustingBrushParameters = false;
@@ -1121,7 +1229,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
     if (objectTranslation != glm::vec3(0))
     {
-        ObjectTransform *transform = &sceneState->objectTransforms[0];
+        ObjectTransform *transform = &sceneState->objectInstanceTransforms[0];
         EditorTransaction *tx = createTransaction(&state->transactions);
         SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
         cmd->objectId = sceneState->objectIds[0];
@@ -1152,23 +1260,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     engine->rendererUpdateBuffer(memory->engineMemory,
         state->activeBrushStrokeInstanceBufferHandle, BRUSH_QUAD_INSTANCE_BUFFER_SIZE,
         state->activeBrushStrokeInstanceBufferData);
-
-    // update object instance buffer
-    for (uint32 i = 0; i < sceneState->objectInstanceCount; i++)
-    {
-        ObjectTransform *transform = &sceneState->objectTransforms[i];
-        glm::mat4 matrix = glm::identity<glm::mat4>();
-        matrix = glm::translate(matrix, transform->position);
-        matrix = glm::scale(matrix, transform->scale);
-        glm::vec3 rockRotEuler = glm::radians(transform->rotation);
-        glm::quat rockRotQuat = glm::quat(rockRotEuler);
-        glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
-        matrix *= rockRotMat;
-
-        sceneState->objectInstanceBufferData[i] = matrix;
-    }
-    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->objectInstanceBufferHandle,
-        sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 
     BrushBlendProperties blendProps = {};
     switch (state->uiState.terrainBrushTool)
@@ -1255,82 +1346,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererSetViewportSize(view->width, view->height);
     engine->rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
 
-    // get textures
-    for (uint32 layerIdx = 0; layerIdx < sceneState->worldState.materialCount; layerIdx++)
-    {
-        uint32 assetId;
-        LoadedAsset *asset;
-        TextureAssetBinding *binding;
-
-        assetId = sceneState->worldState.albedoTextureAssetIds[layerIdx];
-        if (assetId)
-        {
-            binding = &sceneState->albedoTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
-            {
-                engine->rendererUpdateTextureArray(memory->engineMemory,
-                    sceneState->albedoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                    asset->texture->width, asset->texture->height, layerIdx,
-                    asset->texture->data);
-                binding->assetId = assetId;
-                binding->version = asset->version;
-            }
-        }
-
-        assetId = sceneState->worldState.normalTextureAssetIds[layerIdx];
-        if (assetId)
-        {
-            binding = &sceneState->normalTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
-            {
-                engine->rendererUpdateTextureArray(memory->engineMemory,
-                    sceneState->normalTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RGB,
-                    asset->texture->width, asset->texture->height, layerIdx,
-                    asset->texture->data);
-                binding->assetId = assetId;
-                binding->version = asset->version;
-            }
-        }
-
-        assetId = sceneState->worldState.displacementTextureAssetIds[layerIdx];
-        if (assetId)
-        {
-            binding = &sceneState->displacementTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
-            {
-                engine->rendererUpdateTextureArray(memory->engineMemory,
-                    sceneState->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
-                    asset->texture->width, asset->texture->height, layerIdx,
-                    asset->texture->data);
-                binding->assetId = assetId;
-                binding->version = asset->version;
-            }
-        }
-
-        assetId = sceneState->worldState.aoTextureAssetIds[layerIdx];
-        if (assetId)
-        {
-            binding = &sceneState->aoTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
-            if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
-            {
-                engine->rendererUpdateTextureArray(memory->engineMemory,
-                    sceneState->aoTextureArrayHandle, GL_UNSIGNED_BYTE, GL_RED,
-                    asset->texture->width, asset->texture->height, layerIdx,
-                    asset->texture->data);
-                binding->assetId = assetId;
-                binding->version = asset->version;
-            }
-        }
-    }
-
     // get shader programs
     LoadedAsset *calcTessLevelShaderProgramAsset = engine->assetsGetShaderProgram(
         memory->engineMemory, assets->shaderProgramTerrainCalcTessLevel);
@@ -1395,8 +1410,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererShaderStorageMemoryBarrier();
 
     // draw terrain mesh
-    engine->rendererUpdateBuffer(memory->engineMemory, sceneState->materialPropsBufferHandle,
-        sizeof(sceneState->worldState.materialProps), sceneState->worldState.materialProps);
     uint32 terrainShaderProgramHandle = terrainShaderProgramAsset->shaderProgram->handle;
     engine->rendererUseShaderProgram(memory->engineMemory, terrainShaderProgramHandle);
     engine->rendererSetPolygonMode(GL_FILL);
@@ -1416,7 +1429,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererBindVertexArray(
         memory->engineMemory, sceneState->terrainMesh.vertexArrayHandle);
     engine->rendererSetShaderProgramUniformInteger(memory->engineMemory,
-        terrainShaderProgramHandle, "materialCount", sceneState->worldState.materialCount);
+        terrainShaderProgramHandle, "materialCount", sceneState->materialCount);
     engine->rendererSetShaderProgramUniformVector3(memory->engineMemory,
         terrainShaderProgramHandle, "terrainDimensions",
         glm::vec3(sceneState->heightfield.spacing * sceneState->heightfield.columns,
@@ -1546,7 +1559,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 
     EditorTransaction *tx = createTransaction(&state->transactions);
     AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
-    cmd->materialId = state->sceneState.worldState.nextMaterialId++;
+    cmd->materialId = state->sceneState.nextMaterialId++;
     cmd->albedoTextureAssetId = props.albedoTextureAssetId;
     cmd->normalTextureAssetId = props.normalTextureAssetId;
     cmd->displacementTextureAssetId = props.displacementTextureAssetId;

@@ -107,11 +107,11 @@ struct SceneState
     } rockMesh;
 
     uint32 nextObjectId;
-    uint32 objectInstanceCount;
     uint32 objectIds[MAX_OBJECT_INSTANCES];
-    ObjectTransform objectTransforms[MAX_OBJECT_INSTANCES];
+    ObjectTransform objectInstanceTransforms[MAX_OBJECT_INSTANCES];
     glm::mat4 objectInstanceBufferData[MAX_OBJECT_INSTANCES];
     uint32 objectInstanceBufferHandle;
+    uint32 objectInstanceCount;
 
     uint32 albedoTextureArrayHandle;
     uint32 normalTextureArrayHandle;
@@ -124,6 +124,8 @@ struct SceneState
     TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 
     uint32 materialPropsBufferHandle;
+    uint32 nextMaterialId;
+    uint32 materialCount;
 
     uint16 *heightmapTextureDataTempBuffer;
 
@@ -133,15 +135,6 @@ struct SceneState
         float brushRadius;
         float brushFalloff;
         SceneViewState *brushCursorVisibleView;
-
-        uint32 materialCount;
-        uint32 nextMaterialId;
-        uint32 materialIds[MAX_MATERIAL_COUNT];
-        GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
-        uint32 albedoTextureAssetIds[MAX_MATERIAL_COUNT];
-        uint32 normalTextureAssetIds[MAX_MATERIAL_COUNT];
-        uint32 displacementTextureAssetIds[MAX_MATERIAL_COUNT];
-        uint32 aoTextureAssetIds[MAX_MATERIAL_COUNT];
     } worldState;
 };
 
@@ -179,6 +172,21 @@ struct EditorAssets
     uint32 meshRock;
 };
 
+struct EditorDocumentState
+{
+    uint32 materialCount;
+    uint32 materialIds[MAX_MATERIAL_COUNT];
+    GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
+    uint32 albedoTextureAssetIds[MAX_MATERIAL_COUNT];
+    uint32 normalTextureAssetIds[MAX_MATERIAL_COUNT];
+    uint32 displacementTextureAssetIds[MAX_MATERIAL_COUNT];
+    uint32 aoTextureAssetIds[MAX_MATERIAL_COUNT];
+
+    uint32 objectInstanceCount;
+    uint32 objectIds[MAX_OBJECT_INSTANCES];
+    ObjectTransform objectTransforms[MAX_OBJECT_INSTANCES];
+};
+
 struct EditorState
 {
     bool isInitialized;
@@ -207,7 +215,14 @@ struct EditorState
     uint32 activeBrushStrokeInstanceCount;
     float activeBrushStrokeInitialHeight;
 
+    // state related to the user interface e.g. current brush tool, brush radius etc.
+    // can be directly read from and written to by the editor UI
     EditorUiState uiState;
+
+    // state related to the document currently being edited e.g. object transforms
+    // all changes are made via transactions to support undo/redo
+    EditorDocumentState docState;
+
     SceneState sceneState;
 
     EditorTransactionQueue transactions;
