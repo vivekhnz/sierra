@@ -18,6 +18,10 @@
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 
+#define PLATFORM_PUBLISH_TRANSACTION(name)                                                    \
+    void name(void *commandBufferBaseAddress, uint64 commandBufferSize)
+typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
+
 enum TerrainBrushTool
 {
     TERRAIN_BRUSH_TOOL_RAISE = 0,
