@@ -409,9 +409,10 @@ bool initializeEditor(EditorMemory *memory)
         state->docState.aoTextureAssetIds[i] = {};
     }
 
-    state->activeTransactions.data.size = 1 * 1024 * 1024;
-    state->activeTransactions.data.baseAddress =
-        pushEditorData(memory, state->activeTransactions.data.size);
+    state->activeTransactionData.size = 1 * 1024 * 1024;
+    state->activeTransactionData.baseAddress =
+        pushEditorData(memory, state->activeTransactionData.size);
+    state->activeTransactionDataUsed = 0;
 
     state->committedTransactions.data.size = 1 * 1024 * 1024;
     state->committedTransactions.data.baseAddress =
@@ -630,29 +631,122 @@ void discardChanges(EditorMemory *memory)
         &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
 }
 
-void applyTransactions(EditorTransactionQueue *queue,
-    EditorDocumentState *docState,
-    PlatformPublishTransaction *publishTransaction)
+void applyTransaction(EditorCommandIterator *iterator, EditorDocumentState *docState)
 {
-    EditorTransactionIterator txIterator = getIterator(queue);
-    while (!isIteratorFinished(&txIterator))
+    while (!isIteratorFinished(iterator))
     {
-        EditorTransactionEntry tx = getNextTransaction(&txIterator);
-        while (!isIteratorFinished(&tx.commandBuffer.iterator))
+        EditorCommandEntry cmdEntry = getNextCommand(iterator);
+
+        switch (cmdEntry.type)
         {
-            EditorCommandEntry cmdEntry = getNextCommand(&tx.commandBuffer.iterator);
+        case EDITOR_COMMAND_AddMaterialCommand:
+        {
+            AddMaterialCommand *cmd = (AddMaterialCommand *)cmdEntry.data;
 
-            switch (cmdEntry.type)
+            assert(docState->materialCount < MAX_MATERIAL_COUNT);
+            uint32 index = docState->materialCount++;
+
+            docState->materialIds[index] = cmd->materialId;
+
+            GpuMaterialProperties *material = &docState->materialProps[index];
+            material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
+            material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
+            material->rampParams.x = cmd->slopeStart;
+            material->rampParams.y = cmd->slopeEnd;
+            material->rampParams.z = cmd->altitudeStart;
+            material->rampParams.w = cmd->altitudeEnd;
+
+            docState->albedoTextureAssetIds[index] = cmd->albedoTextureAssetId;
+            docState->normalTextureAssetIds[index] = cmd->normalTextureAssetId;
+            docState->displacementTextureAssetIds[index] = cmd->displacementTextureAssetId;
+            docState->aoTextureAssetIds[index] = cmd->aoTextureAssetId;
+        }
+        break;
+        case EDITOR_COMMAND_DeleteMaterialCommand:
+        {
+            DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)cmdEntry.data;
+
+            assert(cmd->index < MAX_MATERIAL_COUNT);
+            docState->materialCount--;
+            for (uint32 i = cmd->index; i < docState->materialCount; i++)
             {
-            case EDITOR_COMMAND_AddMaterialCommand:
+                docState->materialIds[i] = docState->materialIds[i + 1];
+                docState->materialProps[i] = docState->materialProps[i + 1];
+                docState->albedoTextureAssetIds[i] = docState->albedoTextureAssetIds[i + 1];
+                docState->normalTextureAssetIds[i] = docState->normalTextureAssetIds[i + 1];
+                docState->displacementTextureAssetIds[i] =
+                    docState->displacementTextureAssetIds[i + 1];
+                docState->aoTextureAssetIds[i] = docState->aoTextureAssetIds[i + 1];
+            }
+        }
+        break;
+        case EDITOR_COMMAND_SwapMaterialCommand:
+        {
+            SwapMaterialCommand *cmd = (SwapMaterialCommand *)cmdEntry.data;
+
+            assert(cmd->indexA < MAX_MATERIAL_COUNT);
+            assert(cmd->indexB < MAX_MATERIAL_COUNT);
+
+#define swap(type, array)                                                                     \
+    type temp_##array = docState->array[cmd->indexA];                                         \
+    docState->array[cmd->indexA] = docState->array[cmd->indexB];                              \
+    docState->array[cmd->indexB] = temp_##array;
+
+            swap(uint32, materialIds);
+            swap(GpuMaterialProperties, materialProps);
+            swap(uint32, albedoTextureAssetIds);
+            swap(uint32, normalTextureAssetIds);
+            swap(uint32, displacementTextureAssetIds);
+            swap(uint32, aoTextureAssetIds);
+        }
+        break;
+        case EDITOR_COMMAND_SetMaterialTextureCommand:
+        {
+            SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)cmdEntry.data;
+
+            bool foundMaterial = false;
+            uint32 index = 0;
+            for (uint32 i = 0; i < docState->materialCount; i++)
             {
-                AddMaterialCommand *cmd = (AddMaterialCommand *)cmdEntry.data;
+                if (docState->materialIds[i] == cmd->materialId)
+                {
+                    foundMaterial = true;
+                    index = i;
+                    break;
+                }
+            }
 
-                assert(docState->materialCount < MAX_MATERIAL_COUNT);
-                uint32 index = docState->materialCount++;
+            if (foundMaterial)
+            {
+                uint32 *materialTextureAssetIds[] = {
+                    docState->albedoTextureAssetIds,       //
+                    docState->normalTextureAssetIds,       //
+                    docState->displacementTextureAssetIds, //
+                    docState->aoTextureAssetIds            //
+                };
+                uint32 *textureAssetIds = materialTextureAssetIds[(uint32)cmd->textureType];
+                textureAssetIds[index] = cmd->assetId;
+            }
+        }
+        break;
+        case EDITOR_COMMAND_SetMaterialPropertiesCommand:
+        {
+            SetMaterialPropertiesCommand *cmd = (SetMaterialPropertiesCommand *)cmdEntry.data;
 
-                docState->materialIds[index] = cmd->materialId;
+            bool foundMaterial = false;
+            uint32 index = 0;
+            for (uint32 i = 0; i < docState->materialCount; i++)
+            {
+                if (docState->materialIds[i] == cmd->materialId)
+                {
+                    foundMaterial = true;
+                    index = i;
+                    break;
+                }
+            }
 
+            if (foundMaterial)
+            {
                 GpuMaterialProperties *material = &docState->materialProps[index];
                 material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
                 material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
@@ -660,158 +754,49 @@ void applyTransactions(EditorTransactionQueue *queue,
                 material->rampParams.y = cmd->slopeEnd;
                 material->rampParams.z = cmd->altitudeStart;
                 material->rampParams.w = cmd->altitudeEnd;
-
-                docState->albedoTextureAssetIds[index] = cmd->albedoTextureAssetId;
-                docState->normalTextureAssetIds[index] = cmd->normalTextureAssetId;
-                docState->displacementTextureAssetIds[index] = cmd->displacementTextureAssetId;
-                docState->aoTextureAssetIds[index] = cmd->aoTextureAssetId;
-            }
-            break;
-            case EDITOR_COMMAND_DeleteMaterialCommand:
-            {
-                DeleteMaterialCommand *cmd = (DeleteMaterialCommand *)cmdEntry.data;
-
-                assert(cmd->index < MAX_MATERIAL_COUNT);
-                docState->materialCount--;
-                for (uint32 i = cmd->index; i < docState->materialCount; i++)
-                {
-                    docState->materialIds[i] = docState->materialIds[i + 1];
-                    docState->materialProps[i] = docState->materialProps[i + 1];
-                    docState->albedoTextureAssetIds[i] =
-                        docState->albedoTextureAssetIds[i + 1];
-                    docState->normalTextureAssetIds[i] =
-                        docState->normalTextureAssetIds[i + 1];
-                    docState->displacementTextureAssetIds[i] =
-                        docState->displacementTextureAssetIds[i + 1];
-                    docState->aoTextureAssetIds[i] = docState->aoTextureAssetIds[i + 1];
-                }
-            }
-            break;
-            case EDITOR_COMMAND_SwapMaterialCommand:
-            {
-                SwapMaterialCommand *cmd = (SwapMaterialCommand *)cmdEntry.data;
-
-                assert(cmd->indexA < MAX_MATERIAL_COUNT);
-                assert(cmd->indexB < MAX_MATERIAL_COUNT);
-
-#define swap(type, array)                                                                     \
-    type temp_##array = docState->array[cmd->indexA];                                         \
-    docState->array[cmd->indexA] = docState->array[cmd->indexB];                              \
-    docState->array[cmd->indexB] = temp_##array;
-
-                swap(uint32, materialIds);
-                swap(GpuMaterialProperties, materialProps);
-                swap(uint32, albedoTextureAssetIds);
-                swap(uint32, normalTextureAssetIds);
-                swap(uint32, displacementTextureAssetIds);
-                swap(uint32, aoTextureAssetIds);
-            }
-            break;
-            case EDITOR_COMMAND_SetMaterialTextureCommand:
-            {
-                SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)cmdEntry.data;
-
-                bool foundMaterial = false;
-                uint32 index = 0;
-                for (uint32 i = 0; i < docState->materialCount; i++)
-                {
-                    if (docState->materialIds[i] == cmd->materialId)
-                    {
-                        foundMaterial = true;
-                        index = i;
-                        break;
-                    }
-                }
-
-                if (foundMaterial)
-                {
-                    uint32 *materialTextureAssetIds[] = {
-                        docState->albedoTextureAssetIds,       //
-                        docState->normalTextureAssetIds,       //
-                        docState->displacementTextureAssetIds, //
-                        docState->aoTextureAssetIds            //
-                    };
-                    uint32 *textureAssetIds =
-                        materialTextureAssetIds[(uint32)cmd->textureType];
-                    textureAssetIds[index] = cmd->assetId;
-                }
-            }
-            break;
-            case EDITOR_COMMAND_SetMaterialPropertiesCommand:
-            {
-                SetMaterialPropertiesCommand *cmd =
-                    (SetMaterialPropertiesCommand *)cmdEntry.data;
-
-                bool foundMaterial = false;
-                uint32 index = 0;
-                for (uint32 i = 0; i < docState->materialCount; i++)
-                {
-                    if (docState->materialIds[i] == cmd->materialId)
-                    {
-                        foundMaterial = true;
-                        index = i;
-                        break;
-                    }
-                }
-
-                if (foundMaterial)
-                {
-                    GpuMaterialProperties *material = &docState->materialProps[index];
-                    material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
-                    material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
-                    material->rampParams.x = cmd->slopeStart;
-                    material->rampParams.y = cmd->slopeEnd;
-                    material->rampParams.z = cmd->altitudeStart;
-                    material->rampParams.w = cmd->altitudeEnd;
-                }
-            }
-            break;
-            case EDITOR_COMMAND_AddObjectCommand:
-            {
-                AddObjectCommand *cmd = (AddObjectCommand *)cmdEntry.data;
-
-                assert(docState->objectInstanceCount < MAX_OBJECT_INSTANCES);
-                uint32 index = docState->objectInstanceCount++;
-
-                docState->objectIds[index] = cmd->objectId;
-
-                ObjectTransform *transform = &docState->objectTransforms[index];
-                transform->position = glm::vec3(0);
-                transform->rotation = glm::vec3(0);
-                transform->scale = glm::vec3(1);
-            }
-            break;
-            case EDITOR_COMMAND_SetObjectTransformCommand:
-            {
-                SetObjectTransformCommand *cmd = (SetObjectTransformCommand *)cmdEntry.data;
-
-                bool foundObject = false;
-                uint32 index = 0;
-                for (uint32 i = 0; i < docState->objectInstanceCount; i++)
-                {
-                    if (docState->objectIds[i] == cmd->objectId)
-                    {
-                        foundObject = true;
-                        index = i;
-                        break;
-                    }
-                }
-
-                if (foundObject)
-                {
-                    ObjectTransform *transform = &docState->objectTransforms[index];
-                    transform->position = cmd->position;
-                    transform->rotation = cmd->rotation;
-                    transform->scale = cmd->scale;
-                }
-            }
-            break;
             }
         }
-
-        if (publishTransaction)
+        break;
+        case EDITOR_COMMAND_AddObjectCommand:
         {
-            publishTransaction(tx.commandBuffer.start, tx.commandBuffer.size);
+            AddObjectCommand *cmd = (AddObjectCommand *)cmdEntry.data;
+
+            assert(docState->objectInstanceCount < MAX_OBJECT_INSTANCES);
+            uint32 index = docState->objectInstanceCount++;
+
+            docState->objectIds[index] = cmd->objectId;
+
+            ObjectTransform *transform = &docState->objectTransforms[index];
+            transform->position = glm::vec3(0);
+            transform->rotation = glm::vec3(0);
+            transform->scale = glm::vec3(1);
+        }
+        break;
+        case EDITOR_COMMAND_SetObjectTransformCommand:
+        {
+            SetObjectTransformCommand *cmd = (SetObjectTransformCommand *)cmdEntry.data;
+
+            bool foundObject = false;
+            uint32 index = 0;
+            for (uint32 i = 0; i < docState->objectInstanceCount; i++)
+            {
+                if (docState->objectIds[i] == cmd->objectId)
+                {
+                    foundObject = true;
+                    index = i;
+                    break;
+                }
+            }
+
+            if (foundObject)
+            {
+                ObjectTransform *transform = &docState->objectTransforms[index];
+                transform->position = cmd->position;
+                transform->rotation = cmd->rotation;
+                transform->scale = cmd->scale;
+            }
+        }
+        break;
         }
     }
 }
@@ -935,21 +920,30 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->isInitialized = true;
     }
 
+    // apply committed transactions
+    EditorTransactionIterator txIterator = getIterator(&state->committedTransactions);
+    while (!isIteratorFinished(&txIterator))
     {
-        applyTransactions(&state->committedTransactions, &state->docState,
-            memory->platformPublishTransaction);
-        state->committedTransactions.dataStorageUsed = 0;
+        EditorTransactionEntry tx = getNextTransaction(&txIterator);
+        applyTransaction(&tx.commandBuffer.iterator, &state->docState);
+        memory->platformPublishTransaction(tx.commandBuffer.start, tx.commandBuffer.size);
+    }
+    state->committedTransactions.dataStorageUsed = 0;
 
-        if (state->activeTransactionOwner == ACTIVE_TX_NONE)
-        {
-            updateFromDocumentState(memory, &state->docState);
-        }
-        else
-        {
-            EditorDocumentState tempDocState = state->docState;
-            applyTransactions(&state->activeTransactions, &tempDocState, 0);
-            updateFromDocumentState(memory, &tempDocState);
-        }
+    if (state->activeTransactionOwner == ACTIVE_TX_NONE)
+    {
+        updateFromDocumentState(memory, &state->docState);
+    }
+    else
+    {
+        // apply active transaction
+        EditorDocumentState tempDocState = state->docState;
+        EditorCommandIterator cmdIterator;
+        cmdIterator.position = (uint8 *)state->activeTransactionData.baseAddress;
+        cmdIterator.end = cmdIterator.position + state->activeTransactionDataUsed;
+        applyTransaction(&cmdIterator, &tempDocState);
+
+        updateFromDocumentState(memory, &tempDocState);
     }
 
     EngineApi *engine = memory->engineApi;
@@ -1251,10 +1245,23 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 }
                 state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
 
-                state->activeTransactions.dataStorageUsed = 0;
+                state->activeTransactionDataUsed = 0;
+
+#define pushActive(type, value)                                                               \
+    *(type *)((uint8 *)state->activeTransactionData.baseAddress                               \
+        + state->activeTransactionDataUsed) = value;                                          \
+    state->activeTransactionDataUsed += sizeof(type);
+
+                pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
+                pushActive(uint64, sizeof(SetObjectTransformCommand));
+
+                SetObjectTransformCommand *cmd =
+                    (SetObjectTransformCommand *)((uint8 *)
+                                                      state->activeTransactionData.baseAddress
+                        + state->activeTransactionDataUsed);
+                state->activeTransactionDataUsed += sizeof(SetObjectTransformCommand);
+
                 ObjectTransform *transform = &state->docState.objectTransforms[0];
-                EditorTransaction *tx = createTransaction(&state->activeTransactions);
-                SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
                 cmd->objectId = state->docState.objectIds[0];
                 cmd->position = transform->position + state->moveObjectTxDelta;
                 cmd->rotation = transform->rotation;
@@ -1304,10 +1311,22 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             }
             state->moveObjectTxDelta = objectTranslation * 10.0f * deltaTime;
 
-            state->activeTransactions.dataStorageUsed = 0;
+            state->activeTransactionDataUsed = 0;
+
+#define pushActive(type, value)                                                               \
+    *(type *)((uint8 *)state->activeTransactionData.baseAddress                               \
+        + state->activeTransactionDataUsed) = value;                                          \
+    state->activeTransactionDataUsed += sizeof(type);
+
+            pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
+            pushActive(uint64, sizeof(SetObjectTransformCommand));
+
+            SetObjectTransformCommand *cmd =
+                (SetObjectTransformCommand *)((uint8 *)state->activeTransactionData.baseAddress
+                    + state->activeTransactionDataUsed);
+            state->activeTransactionDataUsed += sizeof(SetObjectTransformCommand);
+
             ObjectTransform *transform = &state->docState.objectTransforms[0];
-            EditorTransaction *tx = createTransaction(&state->activeTransactions);
-            SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
             cmd->objectId = state->docState.objectIds[0];
             cmd->position = transform->position + state->moveObjectTxDelta;
             cmd->rotation = transform->rotation;

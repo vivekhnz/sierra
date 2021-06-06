@@ -232,7 +232,9 @@ struct EditorState
     SceneState sceneState;
 
     ActiveTransactionOwner activeTransactionOwner;
-    EditorTransactionQueue activeTransactions;
+    MemoryBlock activeTransactionData;
+    uint64 activeTransactionDataUsed;
+
     EditorTransactionQueue committedTransactions;
 };
 
