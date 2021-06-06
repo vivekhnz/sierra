@@ -409,12 +409,16 @@ bool initializeEditor(EditorMemory *memory)
         state->docState.aoTextureAssetIds[i] = {};
     }
 
-    state->transactions.data.size = 1 * 1024 * 1024;
-    state->transactions.data.baseAddress =
-        pushEditorData(memory, state->transactions.data.size);
+    state->activeTransactions.data.size = 1 * 1024 * 1024;
+    state->activeTransactions.data.baseAddress =
+        pushEditorData(memory, state->activeTransactions.data.size);
+
+    state->committedTransactions.data.size = 1 * 1024 * 1024;
+    state->committedTransactions.data.baseAddress =
+        pushEditorData(memory, state->committedTransactions.data.size);
 
     // add default materials
-    EditorTransaction *addMaterialsTx = createTransaction(&state->transactions);
+    EditorTransaction *addMaterialsTx = createTransaction(&state->committedTransactions);
     AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
     cmd->materialId = sceneState->nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
@@ -452,7 +456,7 @@ bool initializeEditor(EditorMemory *memory)
     cmd->altitudeEnd = 0.28f;
 
     // add default objects
-    EditorTransaction *addObjectsTx = createTransaction(&state->transactions);
+    EditorTransaction *addObjectsTx = createTransaction(&state->committedTransactions);
     for (uint32 i = 0; i < 4; i++)
     {
         AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
@@ -805,10 +809,11 @@ void applyTransactions(EditorTransactionQueue *queue,
             }
         }
 
-        publishTransaction(tx.commandBuffer.start, tx.commandBuffer.size);
+        if (publishTransaction)
+        {
+            publishTransaction(tx.commandBuffer.start, tx.commandBuffer.size);
+        }
     }
-
-    queue->dataStorageUsed = 0;
 }
 
 void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState)
@@ -909,8 +914,6 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
         matrix *= rockRotMat;
 
-        sceneState->objectIds[i] = docState->objectIds[i];
-        sceneState->objectInstanceTransforms[i] = *transform;
         sceneState->objectInstanceBufferData[i] = matrix;
     }
     engine->rendererUpdateBuffer(memory->engineMemory, sceneState->objectInstanceBufferHandle,
@@ -933,16 +936,20 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     {
-#if 0
-        // apply transactions for this tick only
-        EditorDocumentState tempDocState = state->docState;
-        EditorDocumentState *docStateToUpdate = &tempDocState;
-#else
-        EditorDocumentState *docStateToUpdate = &state->docState;
-#endif
-        applyTransactions(
-            &state->transactions, docStateToUpdate, memory->platformPublishTransaction);
-        updateFromDocumentState(memory, docStateToUpdate);
+        applyTransactions(&state->committedTransactions, &state->docState,
+            memory->platformPublishTransaction);
+        state->committedTransactions.dataStorageUsed = 0;
+
+        if (state->activeTransactionOwner == ACTIVE_TX_NONE)
+        {
+            updateFromDocumentState(memory, &state->docState);
+        }
+        else
+        {
+            EditorDocumentState tempDocState = state->docState;
+            applyTransactions(&state->activeTransactions, &tempDocState, 0);
+            updateFromDocumentState(memory, &tempDocState);
+        }
     }
 
     EngineApi *engine = memory->engineApi;
@@ -1210,32 +1217,102 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // move object with arrow keys
-    glm::vec3 objectTranslation = glm::vec3(0);
-    if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT))
+    if (state->activeTransactionOwner == ACTIVE_TX_MOVE_OBJECT)
     {
-        objectTranslation += glm::vec3(-1.0f, 0, 0);
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
+        {
+            // discard changes
+            state->activeTransactionOwner = ACTIVE_TX_NONE;
+        }
+        else
+        {
+            bool isContinuingTransaction = isButtonDown(input, EDITOR_INPUT_KEY_LEFT)
+                || isButtonDown(input, EDITOR_INPUT_KEY_RIGHT)
+                || isButtonDown(input, EDITOR_INPUT_KEY_UP)
+                || isButtonDown(input, EDITOR_INPUT_KEY_DOWN);
+            if (isContinuingTransaction)
+            {
+                glm::vec3 objectTranslation = glm::vec3(0);
+                if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT))
+                {
+                    objectTranslation += glm::vec3(-1.0f, 0, 0);
+                }
+                if (isButtonDown(input, EDITOR_INPUT_KEY_RIGHT))
+                {
+                    objectTranslation += glm::vec3(1.0f, 0, 0);
+                }
+                if (isButtonDown(input, EDITOR_INPUT_KEY_UP))
+                {
+                    objectTranslation += glm::vec3(0, 0, -1.0f);
+                }
+                if (isButtonDown(input, EDITOR_INPUT_KEY_DOWN))
+                {
+                    objectTranslation += glm::vec3(0, 0, 1.0f);
+                }
+                state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
+
+                state->activeTransactions.dataStorageUsed = 0;
+                ObjectTransform *transform = &state->docState.objectTransforms[0];
+                EditorTransaction *tx = createTransaction(&state->activeTransactions);
+                SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+                cmd->objectId = state->docState.objectIds[0];
+                cmd->position = transform->position + state->moveObjectTxDelta;
+                cmd->rotation = transform->rotation;
+                cmd->scale = transform->scale;
+            }
+            else
+            {
+                // commit changes
+                state->activeTransactionOwner = ACTIVE_TX_NONE;
+
+                ObjectTransform *transform = &state->docState.objectTransforms[0];
+                EditorTransaction *tx = createTransaction(&state->committedTransactions);
+                SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+                cmd->objectId = state->docState.objectIds[0];
+                cmd->position = transform->position + state->moveObjectTxDelta;
+                cmd->rotation = transform->rotation;
+                cmd->scale = transform->scale;
+            }
+        }
     }
-    if (isButtonDown(input, EDITOR_INPUT_KEY_RIGHT))
+    else
     {
-        objectTranslation += glm::vec3(1.0f, 0, 0);
-    }
-    if (isButtonDown(input, EDITOR_INPUT_KEY_UP))
-    {
-        objectTranslation += glm::vec3(0, 0, -1.0f);
-    }
-    if (isButtonDown(input, EDITOR_INPUT_KEY_DOWN))
-    {
-        objectTranslation += glm::vec3(0, 0, 1.0f);
-    }
-    if (objectTranslation != glm::vec3(0))
-    {
-        ObjectTransform *transform = &sceneState->objectInstanceTransforms[0];
-        EditorTransaction *tx = createTransaction(&state->transactions);
-        SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
-        cmd->objectId = sceneState->objectIds[0];
-        cmd->position = transform->position + (objectTranslation * 10.0f * deltaTime);
-        cmd->rotation = transform->rotation;
-        cmd->scale = transform->scale;
+        bool isStartingTransaction = isNewButtonPress(input, EDITOR_INPUT_KEY_LEFT)
+            || isNewButtonPress(input, EDITOR_INPUT_KEY_RIGHT)
+            || isNewButtonPress(input, EDITOR_INPUT_KEY_UP)
+            || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN);
+        if (isStartingTransaction)
+        {
+            state->activeTransactionOwner = ACTIVE_TX_MOVE_OBJECT;
+
+            glm::vec3 objectTranslation = glm::vec3(0);
+            if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT))
+            {
+                objectTranslation += glm::vec3(-1.0f, 0, 0);
+            }
+            if (isButtonDown(input, EDITOR_INPUT_KEY_RIGHT))
+            {
+                objectTranslation += glm::vec3(1.0f, 0, 0);
+            }
+            if (isButtonDown(input, EDITOR_INPUT_KEY_UP))
+            {
+                objectTranslation += glm::vec3(0, 0, -1.0f);
+            }
+            if (isButtonDown(input, EDITOR_INPUT_KEY_DOWN))
+            {
+                objectTranslation += glm::vec3(0, 0, 1.0f);
+            }
+            state->moveObjectTxDelta = objectTranslation * 10.0f * deltaTime;
+
+            state->activeTransactions.dataStorageUsed = 0;
+            ObjectTransform *transform = &state->docState.objectTransforms[0];
+            EditorTransaction *tx = createTransaction(&state->activeTransactions);
+            SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+            cmd->objectId = state->docState.objectIds[0];
+            cmd->position = transform->position + state->moveObjectTxDelta;
+            cmd->rotation = transform->rotation;
+            cmd->scale = transform->scale;
+        }
     }
 
     // update brush highlight
@@ -1557,7 +1634,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
     cmd->materialId = state->sceneState.nextMaterialId++;
     cmd->albedoTextureAssetId = props.albedoTextureAssetId;
@@ -1575,7 +1652,7 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     DeleteMaterialCommand *cmd = pushCommand(tx, DeleteMaterialCommand);
     cmd->index = index;
 }
@@ -1584,7 +1661,7 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     SwapMaterialCommand *cmd = pushCommand(tx, SwapMaterialCommand);
     cmd->indexA = indexA;
     cmd->indexB = indexB;
@@ -1594,7 +1671,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
     cmd->materialId = materialId;
     cmd->textureType = textureType;
@@ -1605,7 +1682,7 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
     cmd->materialId = materialId;
     cmd->textureSizeInWorldUnits = textureSize;
@@ -1619,7 +1696,7 @@ API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
     cmd->objectId = state->sceneState.nextObjectId++;
 }
@@ -1628,7 +1705,7 @@ API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->transactions);
+    EditorTransaction *tx = createTransaction(&state->committedTransactions);
     SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
     cmd->objectId = objectId;
     cmd->position.x = positionX;

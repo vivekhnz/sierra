@@ -107,8 +107,6 @@ struct SceneState
     } rockMesh;
 
     uint32 nextObjectId;
-    uint32 objectIds[MAX_OBJECT_INSTANCES];
-    ObjectTransform objectInstanceTransforms[MAX_OBJECT_INSTANCES];
     glm::mat4 objectInstanceBufferData[MAX_OBJECT_INSTANCES];
     uint32 objectInstanceBufferHandle;
     uint32 objectInstanceCount;
@@ -187,6 +185,12 @@ struct EditorDocumentState
     ObjectTransform objectTransforms[MAX_OBJECT_INSTANCES];
 };
 
+enum ActiveTransactionOwner
+{
+    ACTIVE_TX_NONE = 0,
+    ACTIVE_TX_MOVE_OBJECT
+};
+
 struct EditorState
 {
     bool isInitialized;
@@ -215,6 +219,8 @@ struct EditorState
     uint32 activeBrushStrokeInstanceCount;
     float activeBrushStrokeInitialHeight;
 
+    glm::vec3 moveObjectTxDelta;
+
     // state related to the user interface e.g. current brush tool, brush radius etc.
     // can be directly read from and written to by the editor UI
     EditorUiState uiState;
@@ -225,7 +231,9 @@ struct EditorState
 
     SceneState sceneState;
 
-    EditorTransactionQueue transactions;
+    ActiveTransactionOwner activeTransactionOwner;
+    EditorTransactionQueue activeTransactions;
+    EditorTransactionQueue committedTransactions;
 };
 
 struct EditorMemory
