@@ -409,10 +409,16 @@ bool initializeEditor(EditorMemory *memory)
         state->docState.aoTextureAssetIds[i] = {};
     }
 
-    state->activeTransactionData.size = 1 * 1024 * 1024;
-    state->activeTransactionData.baseAddress =
-        pushEditorData(memory, state->activeTransactionData.size);
-    state->activeTransactionDataUsed = 0;
+    ActiveTransactionDataBlock *prevBlock = 0;
+    for (uint32 i = 0; i < MAX_CONCURRENT_ACTIVE_TRANSACTIONS; i++)
+    {
+        ActiveTransactionDataBlock *block = &state->activeTransactions.data[i];
+        block->size = 1 * 1024;
+        block->baseAddress = pushEditorData(memory, block->size);
+        block->prev = prevBlock;
+        prevBlock = block;
+    }
+    state->activeTransactions.nextFree = prevBlock;
 
     state->committedTransactions.data.size = 1 * 1024 * 1024;
     state->committedTransactions.data.baseAddress =
@@ -930,20 +936,25 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
     state->committedTransactions.dataStorageUsed = 0;
 
-    if (state->activeTransactionOwner == ACTIVE_TX_NONE)
+    if (state->activeTransactions.first)
     {
-        updateFromDocumentState(memory, &state->docState);
+        // apply active transactions
+        EditorDocumentState tempDocState = state->docState;
+        ActiveTransactionDataBlock *currentTx = state->activeTransactions.first;
+        do
+        {
+            EditorCommandIterator cmdIterator;
+            cmdIterator.position = (uint8 *)currentTx->baseAddress;
+            cmdIterator.end = cmdIterator.position + currentTx->used;
+            applyTransaction(&cmdIterator, &tempDocState);
+            currentTx = currentTx->next;
+        } while (currentTx);
+
+        updateFromDocumentState(memory, &tempDocState);
     }
     else
     {
-        // apply active transaction
-        EditorDocumentState tempDocState = state->docState;
-        EditorCommandIterator cmdIterator;
-        cmdIterator.position = (uint8 *)state->activeTransactionData.baseAddress;
-        cmdIterator.end = cmdIterator.position + state->activeTransactionDataUsed;
-        applyTransaction(&cmdIterator, &tempDocState);
-
-        updateFromDocumentState(memory, &tempDocState);
+        updateFromDocumentState(memory, &state->docState);
     }
 
     EngineApi *engine = memory->engineApi;
@@ -1211,75 +1222,30 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // move object with arrow keys
-    if (state->activeTransactionOwner == ACTIVE_TX_MOVE_OBJECT)
+    ActiveTransactionDataBlock *activeTx =
+        state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT];
+    if (activeTx)
     {
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
         {
             // discard changes
-            state->activeTransactionOwner = ACTIVE_TX_NONE;
-        }
-        else
-        {
-            bool isContinuingTransaction = isButtonDown(input, EDITOR_INPUT_KEY_LEFT)
-                || isButtonDown(input, EDITOR_INPUT_KEY_RIGHT)
-                || isButtonDown(input, EDITOR_INPUT_KEY_UP)
-                || isButtonDown(input, EDITOR_INPUT_KEY_DOWN);
-            if (isContinuingTransaction)
+            if (activeTx->prev)
             {
-                glm::vec3 objectTranslation = glm::vec3(0);
-                if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT))
-                {
-                    objectTranslation += glm::vec3(-1.0f, 0, 0);
-                }
-                if (isButtonDown(input, EDITOR_INPUT_KEY_RIGHT))
-                {
-                    objectTranslation += glm::vec3(1.0f, 0, 0);
-                }
-                if (isButtonDown(input, EDITOR_INPUT_KEY_UP))
-                {
-                    objectTranslation += glm::vec3(0, 0, -1.0f);
-                }
-                if (isButtonDown(input, EDITOR_INPUT_KEY_DOWN))
-                {
-                    objectTranslation += glm::vec3(0, 0, 1.0f);
-                }
-                state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
-
-                state->activeTransactionDataUsed = 0;
-
-#define pushActive(type, value)                                                               \
-    *(type *)((uint8 *)state->activeTransactionData.baseAddress                               \
-        + state->activeTransactionDataUsed) = value;                                          \
-    state->activeTransactionDataUsed += sizeof(type);
-
-                pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
-                pushActive(uint64, sizeof(SetObjectTransformCommand));
-
-                SetObjectTransformCommand *cmd =
-                    (SetObjectTransformCommand *)((uint8 *)
-                                                      state->activeTransactionData.baseAddress
-                        + state->activeTransactionDataUsed);
-                state->activeTransactionDataUsed += sizeof(SetObjectTransformCommand);
-
-                ObjectTransform *transform = &state->docState.objectTransforms[0];
-                cmd->objectId = state->docState.objectIds[0];
-                cmd->position = transform->position + state->moveObjectTxDelta;
-                cmd->rotation = transform->rotation;
-                cmd->scale = transform->scale;
+                activeTx->prev->next = activeTx->next;
             }
             else
             {
-                // commit changes
-                state->activeTransactionOwner = ACTIVE_TX_NONE;
-
-                ObjectTransform *transform = &state->docState.objectTransforms[0];
-                EditorTransaction *tx = createTransaction(&state->committedTransactions);
-                SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
-                cmd->objectId = state->docState.objectIds[0];
-                cmd->position = transform->position + state->moveObjectTxDelta;
-                cmd->rotation = transform->rotation;
-                cmd->scale = transform->scale;
+                state->activeTransactions.first = activeTx->next;
             }
+            if (activeTx->next)
+            {
+                activeTx->next->prev = activeTx->prev;
+            }
+            activeTx->next = 0;
+            activeTx->prev = state->activeTransactions.nextFree;
+            state->activeTransactions.nextFree = activeTx;
+            state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT] = 0;
+            activeTx = 0;
         }
     }
     else
@@ -1290,47 +1256,93 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN);
         if (isStartingTransaction)
         {
-            state->activeTransactionOwner = ACTIVE_TX_MOVE_OBJECT;
+            if (state->activeTransactions.nextFree)
+            {
+                activeTx = state->activeTransactions.nextFree;
+                state->activeTransactions.nextFree = state->activeTransactions.nextFree->prev;
 
+                if (state->activeTransactions.first)
+                {
+                    ActiveTransactionDataBlock *lastTx = state->activeTransactions.first;
+                    while (lastTx->next)
+                    {
+                        lastTx = lastTx->next;
+                    }
+                    activeTx->prev = lastTx;
+                    lastTx->next = activeTx;
+                }
+                else
+                {
+                    activeTx->prev = 0;
+                    state->activeTransactions.first = activeTx;
+                }
+                state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT] = activeTx;
+
+                state->moveObjectTxDelta = glm::vec3(0);
+            }
+        }
+    }
+    if (activeTx)
+    {
+        bool isContinuingTransaction = isButtonDown(input, EDITOR_INPUT_KEY_LEFT)
+            || isButtonDown(input, EDITOR_INPUT_KEY_RIGHT)
+            || isButtonDown(input, EDITOR_INPUT_KEY_UP)
+            || isButtonDown(input, EDITOR_INPUT_KEY_DOWN);
+        if (isContinuingTransaction)
+        {
             glm::vec3 objectTranslation = glm::vec3(0);
-            if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT))
-            {
-                objectTranslation += glm::vec3(-1.0f, 0, 0);
-            }
-            if (isButtonDown(input, EDITOR_INPUT_KEY_RIGHT))
-            {
-                objectTranslation += glm::vec3(1.0f, 0, 0);
-            }
-            if (isButtonDown(input, EDITOR_INPUT_KEY_UP))
-            {
-                objectTranslation += glm::vec3(0, 0, -1.0f);
-            }
-            if (isButtonDown(input, EDITOR_INPUT_KEY_DOWN))
-            {
-                objectTranslation += glm::vec3(0, 0, 1.0f);
-            }
-            state->moveObjectTxDelta = objectTranslation * 10.0f * deltaTime;
-
-            state->activeTransactionDataUsed = 0;
+            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_LEFT) * -1.0f;
+            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
+            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
+            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
+            state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
 
 #define pushActive(type, value)                                                               \
-    *(type *)((uint8 *)state->activeTransactionData.baseAddress                               \
-        + state->activeTransactionDataUsed) = value;                                          \
-    state->activeTransactionDataUsed += sizeof(type);
+    *(type *)((uint8 *)activeTx->baseAddress + activeTx->used) = value;                       \
+    activeTx->used += sizeof(type);
 
+            activeTx->used = 0;
             pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
             pushActive(uint64, sizeof(SetObjectTransformCommand));
 
             SetObjectTransformCommand *cmd =
-                (SetObjectTransformCommand *)((uint8 *)state->activeTransactionData.baseAddress
-                    + state->activeTransactionDataUsed);
-            state->activeTransactionDataUsed += sizeof(SetObjectTransformCommand);
+                (SetObjectTransformCommand *)((uint8 *)activeTx->baseAddress + activeTx->used);
+            activeTx->used += sizeof(SetObjectTransformCommand);
 
             ObjectTransform *transform = &state->docState.objectTransforms[0];
             cmd->objectId = state->docState.objectIds[0];
             cmd->position = transform->position + state->moveObjectTxDelta;
             cmd->rotation = transform->rotation;
             cmd->scale = transform->scale;
+        }
+        else
+        {
+            // commit changes
+            ObjectTransform *transform = &state->docState.objectTransforms[0];
+            EditorTransaction *tx = createTransaction(&state->committedTransactions);
+            SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+            cmd->objectId = state->docState.objectIds[0];
+            cmd->position = transform->position + state->moveObjectTxDelta;
+            cmd->rotation = transform->rotation;
+            cmd->scale = transform->scale;
+
+            if (activeTx->prev)
+            {
+                activeTx->prev->next = activeTx->next;
+            }
+            else
+            {
+                state->activeTransactions.first = activeTx->next;
+            }
+            if (activeTx->next)
+            {
+                activeTx->next->prev = activeTx->prev;
+            }
+            activeTx->next = 0;
+            activeTx->prev = state->activeTransactions.nextFree;
+            state->activeTransactions.nextFree = activeTx;
+            state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT] = 0;
+            activeTx = 0;
         }
     }
 
