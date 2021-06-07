@@ -3,11 +3,7 @@
 
 #include "../Engine/engine.h"
 
-struct EditorTransactionQueue
-{
-    MemoryBlock data;
-    uint64 dataStorageUsed;
-};
+#define MAX_CONCURRENT_ACTIVE_TRANSACTIONS 4
 
 enum EditorCommandType
 {
@@ -20,10 +16,11 @@ enum EditorCommandType
     EDITOR_COMMAND_SetObjectTransformCommand
 };
 
-struct EditorTransaction
+enum ActiveTransactionType
 {
-    EditorTransactionQueue *queue;
-    uint32 commandBufferSize;
+    ACTIVE_TX_MOVE_OBJECT = 0,
+
+    ACTIVE_TX_COUNT
 };
 
 struct CommandBuffer
@@ -31,6 +28,36 @@ struct CommandBuffer
     void *baseAddress;
     uint64 size;
     uint64 used;
+};
+
+struct TransactionState;
+struct ActiveTransactionDataBlock
+{
+    TransactionState *transactions;
+    ActiveTransactionType type;
+    CommandBuffer commandBuffer;
+    ActiveTransactionDataBlock *prev;
+    ActiveTransactionDataBlock *next;
+};
+
+struct TransactionState
+{
+    ActiveTransactionDataBlock activeData[MAX_CONCURRENT_ACTIVE_TRANSACTIONS];
+    ActiveTransactionDataBlock *firstActive;
+    ActiveTransactionDataBlock *activeByType[ACTIVE_TX_COUNT];
+    ActiveTransactionDataBlock *nextFreeActive;
+
+    void *committedBaseAddress;
+    uint64 committedSize;
+    uint64 committedUsed;
+
+    bool isInTransaction;
+};
+
+struct EditorTransaction
+{
+    TransactionState *state;
+    CommandBuffer commandBuffer;
 };
 
 struct AddMaterialCommand

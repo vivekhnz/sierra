@@ -1,15 +1,5 @@
 #include "editor_transactions.h"
 
-void *pushTransactionData(EditorTransactionQueue *queue, uint64 size)
-{
-    uint64 availableStorage = queue->data.size - queue->dataStorageUsed;
-    assert(availableStorage >= size);
-
-    void *address = (uint8 *)queue->data.baseAddress + queue->dataStorageUsed;
-    queue->dataStorageUsed += size;
-
-    return address;
-}
 void *pushCommandBufferData(CommandBuffer *buffer, uint64 size)
 {
     uint64 availableStorage = buffer->size - buffer->used;
@@ -21,39 +11,105 @@ void *pushCommandBufferData(CommandBuffer *buffer, uint64 size)
     return address;
 }
 
-EditorTransaction *createTransaction(EditorTransactionQueue *queue)
+EditorTransaction *beginTransaction(TransactionState *state)
 {
-    EditorTransaction *tx =
-        (EditorTransaction *)pushTransactionData(queue, sizeof(EditorTransaction));
-    tx->queue = queue;
-    tx->commandBufferSize = 0;
+    assert(!state->isInTransaction);
+    state->isInTransaction = true;
+
+    uint8 *baseAddress = (uint8 *)state->committedBaseAddress + state->committedUsed;
+    EditorTransaction *tx = (EditorTransaction *)baseAddress;
+    tx->state = state;
+    tx->commandBuffer.baseAddress = baseAddress + sizeof(EditorTransaction);
+    tx->commandBuffer.used = 0;
+    tx->commandBuffer.size =
+        state->committedSize - (state->committedUsed + sizeof(EditorTransaction));
 
     return tx;
 }
-
-void pushCommandBuffer(EditorTransaction *tx, CommandBuffer *buffer)
+void endTransaction(EditorTransaction *tx)
 {
-    void *dst = pushTransactionData(tx->queue, buffer->used);
-    memcpy(dst, buffer->baseAddress, buffer->used);
-    tx->commandBufferSize += buffer->used;
+    assert(tx->state->isInTransaction);
+    tx->state->isInTransaction = false;
+
+    tx->commandBuffer.size = tx->commandBuffer.used;
+    tx->state->committedUsed += sizeof(EditorTransaction) + tx->commandBuffer.size;
 }
 
-void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 size)
+ActiveTransactionDataBlock *beginActiveTransaction(
+    TransactionState *state, ActiveTransactionType type)
 {
-    *((EditorCommandType *)pushTransactionData(tx->queue, sizeof(EditorCommandType))) = type;
-    *((uint64 *)pushTransactionData(tx->queue, sizeof(uint64))) = size;
-    void *commandData = pushTransactionData(tx->queue, size);
-    tx->commandBufferSize += sizeof(EditorCommandType) + sizeof(uint64) + size;
-    return commandData;
+    ActiveTransactionDataBlock *result = 0;
+    if (state->nextFreeActive)
+    {
+        result = state->nextFreeActive;
+        state->nextFreeActive = state->nextFreeActive->prev;
+
+        if (state->firstActive)
+        {
+            ActiveTransactionDataBlock *lastTx = state->firstActive;
+            while (lastTx->next)
+            {
+                lastTx = lastTx->next;
+            }
+            result->prev = lastTx;
+            lastTx->next = result;
+        }
+        else
+        {
+            result->prev = 0;
+            state->firstActive = result;
+        }
+        result->type = type;
+        state->activeByType[type] = result;
+    }
+
+    return result;
 }
+void discardActiveTransaction(ActiveTransactionDataBlock *tx)
+{
+    if (tx->prev)
+    {
+        tx->prev->next = tx->next;
+    }
+    else
+    {
+        tx->transactions->firstActive = tx->next;
+    }
+    if (tx->next)
+    {
+        tx->next->prev = tx->prev;
+    }
+    tx->next = 0;
+    tx->prev = tx->transactions->nextFreeActive;
+    tx->transactions->nextFreeActive = tx;
+    tx->transactions->activeByType[tx->type] = 0;
+}
+void commitActiveTransaction(ActiveTransactionDataBlock *activeTx)
+{
+    EditorTransaction *commitTx = beginTransaction(activeTx->transactions);
+
+    CommandBuffer *srcBuffer = &activeTx->commandBuffer;
+    CommandBuffer *dstBuffer = &commitTx->commandBuffer;
+    void *dst = pushCommandBufferData(dstBuffer, srcBuffer->used);
+    memcpy(dst, srcBuffer->baseAddress, srcBuffer->used);
+
+    endTransaction(commitTx);
+    discardActiveTransaction(activeTx);
+}
+ActiveTransactionDataBlock *getActiveTransaction(
+    TransactionState *state, ActiveTransactionType type)
+{
+    return state->activeByType[type];
+}
+
 void *pushCommandInternal(CommandBuffer *buffer, EditorCommandType type, uint64 size)
 {
     *((EditorCommandType *)pushCommandBufferData(buffer, sizeof(EditorCommandType))) = type;
     *((uint64 *)pushCommandBufferData(buffer, sizeof(uint64))) = size;
     return pushCommandBufferData(buffer, size);
 }
-#define pushCommand(storage, type)                                                            \
-    (type *)pushCommandInternal(storage, EDITOR_COMMAND_##type, sizeof(type))
+#define pushCommand(tx, type)                                                                 \
+    (type *)pushCommandInternal(&tx->commandBuffer, EDITOR_COMMAND_##type, sizeof(type))
 
 struct EditorCommandIterator
 {
@@ -92,18 +148,14 @@ struct EditorTransactionIterator
 };
 struct EditorTransactionEntry
 {
-    struct
-    {
-        uint8 *start;
-        uint32 size;
-        EditorCommandIterator iterator;
-    } commandBuffer;
+    CommandBuffer commandBuffer;
+    EditorCommandIterator commandIterator;
 };
-EditorTransactionIterator getIterator(EditorTransactionQueue *queue)
+EditorTransactionIterator getIterator(TransactionState *state)
 {
     EditorTransactionIterator iterator;
-    iterator.position = (uint8 *)queue->data.baseAddress;
-    iterator.end = iterator.position + queue->dataStorageUsed;
+    iterator.position = (uint8 *)state->committedBaseAddress;
+    iterator.end = iterator.position + state->committedUsed;
 
     return iterator;
 }
@@ -118,12 +170,14 @@ EditorTransactionEntry getNextTransaction(EditorTransactionIterator *iterator)
     EditorTransaction *tx = (EditorTransaction *)iterator->position;
     iterator->position += sizeof(*tx);
 
-    entry.commandBuffer.start = iterator->position;
-    entry.commandBuffer.size = tx->commandBufferSize;
-    entry.commandBuffer.iterator.position = entry.commandBuffer.start;
-    entry.commandBuffer.iterator.end = entry.commandBuffer.start + entry.commandBuffer.size;
+    entry.commandBuffer.baseAddress = iterator->position;
+    entry.commandBuffer.size = tx->commandBuffer.used;
+    entry.commandBuffer.used = tx->commandBuffer.used;
+    entry.commandIterator.position = (uint8 *)entry.commandBuffer.baseAddress;
+    entry.commandIterator.end =
+        (uint8 *)entry.commandBuffer.baseAddress + entry.commandBuffer.size;
 
-    iterator->position = entry.commandBuffer.iterator.end;
+    iterator->position = entry.commandIterator.end;
 
     return entry;
 }

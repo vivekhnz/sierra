@@ -14,7 +14,6 @@
 #define HEIGHTFIELD_ROWS 256
 #define HEIGHTMAP_WIDTH 2048
 #define HEIGHTMAP_HEIGHT 2048
-#define MAX_CONCURRENT_ACTIVE_TRANSACTIONS 4
 
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
@@ -186,21 +185,6 @@ struct EditorDocumentState
     ObjectTransform objectTransforms[MAX_OBJECT_INSTANCES];
 };
 
-enum ActiveTransactionType
-{
-    ACTIVE_TX_MOVE_OBJECT = 0,
-
-    ACTIVE_TX_COUNT
-};
-
-struct ActiveTransactionDataBlock
-{
-    ActiveTransactionType type;
-    CommandBuffer commandBuffer;
-    ActiveTransactionDataBlock *prev;
-    ActiveTransactionDataBlock *next;
-};
-
 struct EditorState
 {
     bool isInitialized;
@@ -238,18 +222,9 @@ struct EditorState
     // state related to the document currently being edited e.g. object transforms
     // all changes are made via transactions to support undo/redo
     EditorDocumentState docState;
+    TransactionState transactions;
 
     SceneState sceneState;
-
-    struct
-    {
-        ActiveTransactionDataBlock data[MAX_CONCURRENT_ACTIVE_TRANSACTIONS];
-        ActiveTransactionDataBlock *first;
-        ActiveTransactionDataBlock *byType[ACTIVE_TX_COUNT];
-        ActiveTransactionDataBlock *nextFree;
-    } activeTransactions;
-
-    EditorTransactionQueue committedTransactions;
 };
 
 struct EditorMemory

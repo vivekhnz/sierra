@@ -409,23 +409,25 @@ bool initializeEditor(EditorMemory *memory)
         state->docState.aoTextureAssetIds[i] = {};
     }
 
+    // setup transaction state
     ActiveTransactionDataBlock *prevBlock = 0;
     for (uint32 i = 0; i < MAX_CONCURRENT_ACTIVE_TRANSACTIONS; i++)
     {
-        ActiveTransactionDataBlock *block = &state->activeTransactions.data[i];
+        ActiveTransactionDataBlock *block = &state->transactions.activeData[i];
+        block->transactions = &state->transactions;
         block->commandBuffer.size = 1 * 1024;
         block->commandBuffer.baseAddress = pushEditorData(memory, block->commandBuffer.size);
         block->prev = prevBlock;
         prevBlock = block;
     }
-    state->activeTransactions.nextFree = prevBlock;
-
-    state->committedTransactions.data.size = 1 * 1024 * 1024;
-    state->committedTransactions.data.baseAddress =
-        pushEditorData(memory, state->committedTransactions.data.size);
+    state->transactions.nextFreeActive = prevBlock;
+    state->transactions.committedSize = 1 * 1024 * 1024;
+    state->transactions.committedBaseAddress =
+        pushEditorData(memory, state->transactions.committedSize);
 
     // add default materials
-    EditorTransaction *addMaterialsTx = createTransaction(&state->committedTransactions);
+    EditorTransaction *addMaterialsTx = beginTransaction(&state->transactions);
+
     AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
     cmd->materialId = sceneState->nextMaterialId++;
     cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
@@ -462,8 +464,10 @@ bool initializeEditor(EditorMemory *memory)
     cmd->altitudeStart = 0.25f;
     cmd->altitudeEnd = 0.28f;
 
+    endTransaction(addMaterialsTx);
+
     // add default objects
-    EditorTransaction *addObjectsTx = createTransaction(&state->committedTransactions);
+    EditorTransaction *addObjectsTx = beginTransaction(&state->transactions);
     for (uint32 i = 0; i < 4; i++)
     {
         AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
@@ -476,6 +480,7 @@ bool initializeEditor(EditorMemory *memory)
         setTransformCmd->rotation = glm::vec3(0);
         setTransformCmd->scale = glm::vec3(1);
     }
+    endTransaction(addObjectsTx);
 
     return 1;
 }
@@ -911,70 +916,6 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 }
 
-ActiveTransactionDataBlock *getActiveTransaction(
-    EditorState *state, ActiveTransactionType type)
-{
-    return state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT];
-}
-
-ActiveTransactionDataBlock *beginActiveTransaction(
-    EditorState *state, ActiveTransactionType type)
-{
-    ActiveTransactionDataBlock *result = 0;
-    if (state->activeTransactions.nextFree)
-    {
-        result = state->activeTransactions.nextFree;
-        state->activeTransactions.nextFree = state->activeTransactions.nextFree->prev;
-
-        if (state->activeTransactions.first)
-        {
-            ActiveTransactionDataBlock *lastTx = state->activeTransactions.first;
-            while (lastTx->next)
-            {
-                lastTx = lastTx->next;
-            }
-            result->prev = lastTx;
-            lastTx->next = result;
-        }
-        else
-        {
-            result->prev = 0;
-            state->activeTransactions.first = result;
-        }
-        result->type = type;
-        state->activeTransactions.byType[type] = result;
-    }
-
-    return result;
-}
-
-void discardActiveTransaction(EditorState *state, ActiveTransactionDataBlock *tx)
-{
-    if (tx->prev)
-    {
-        tx->prev->next = tx->next;
-    }
-    else
-    {
-        state->activeTransactions.first = tx->next;
-    }
-    if (tx->next)
-    {
-        tx->next->prev = tx->prev;
-    }
-    tx->next = 0;
-    tx->prev = state->activeTransactions.nextFree;
-    state->activeTransactions.nextFree = tx;
-    state->activeTransactions.byType[tx->type] = 0;
-}
-
-void commitActiveTransaction(EditorState *state, ActiveTransactionDataBlock *activeTx)
-{
-    EditorTransaction *commitTx = createTransaction(&state->committedTransactions);
-    pushCommandBuffer(commitTx, &activeTx->commandBuffer);
-    discardActiveTransaction(state, activeTx);
-}
-
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
@@ -991,20 +932,22 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // apply committed transactions
-    EditorTransactionIterator txIterator = getIterator(&state->committedTransactions);
+    TransactionState *transactions = &state->transactions;
+    EditorTransactionIterator txIterator = getIterator(transactions);
     while (!isIteratorFinished(&txIterator))
     {
         EditorTransactionEntry tx = getNextTransaction(&txIterator);
-        applyTransaction(&tx.commandBuffer.iterator, &state->docState);
-        memory->platformPublishTransaction(tx.commandBuffer.start, tx.commandBuffer.size);
+        applyTransaction(&tx.commandIterator, &state->docState);
+        memory->platformPublishTransaction(
+            tx.commandBuffer.baseAddress, tx.commandBuffer.used);
     }
-    state->committedTransactions.dataStorageUsed = 0;
+    transactions->committedUsed = 0;
 
-    if (state->activeTransactions.first)
+    if (transactions->firstActive)
     {
         // apply active transactions
         EditorDocumentState tempDocState = state->docState;
-        ActiveTransactionDataBlock *currentTx = state->activeTransactions.first;
+        ActiveTransactionDataBlock *currentTx = transactions->firstActive;
         do
         {
             EditorCommandIterator cmdIterator;
@@ -1286,7 +1229,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // move object with arrow keys
-    ActiveTransactionDataBlock *activeTx = getActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+    ActiveTransactionDataBlock *activeTx =
+        getActiveTransaction(transactions, ACTIVE_TX_MOVE_OBJECT);
     if (!activeTx)
     {
         bool isStartingTransaction = isNewButtonPress(input, EDITOR_INPUT_KEY_LEFT)
@@ -1295,7 +1239,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN);
         if (isStartingTransaction)
         {
-            activeTx = beginActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+            activeTx = beginActiveTransaction(transactions, ACTIVE_TX_MOVE_OBJECT);
             if (activeTx)
             {
                 state->moveObjectTxDelta = glm::vec3(0);
@@ -1306,7 +1250,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
         {
-            discardActiveTransaction(state, activeTx);
+            discardActiveTransaction(activeTx);
         }
         else
         {
@@ -1327,7 +1271,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                 activeTx->commandBuffer.used = 0;
                 SetObjectTransformCommand *cmd =
-                    pushCommand(&activeTx->commandBuffer, SetObjectTransformCommand);
+                    pushCommand(activeTx, SetObjectTransformCommand);
                 cmd->objectId = state->docState.objectIds[0];
                 cmd->position = transform->position + state->moveObjectTxDelta;
                 cmd->rotation = transform->rotation;
@@ -1335,7 +1279,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             }
             else
             {
-                commitActiveTransaction(state, activeTx);
+                commitActiveTransaction(activeTx);
             }
         }
     }
@@ -1659,7 +1603,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
     cmd->materialId = state->sceneState.nextMaterialId++;
     cmd->albedoTextureAssetId = props.albedoTextureAssetId;
@@ -1671,43 +1615,47 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
     cmd->slopeEnd = props.slopeEnd;
     cmd->altitudeStart = props.altitudeStart;
     cmd->altitudeEnd = props.altitudeEnd;
+    endTransaction(tx);
 }
 
 API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     DeleteMaterialCommand *cmd = pushCommand(tx, DeleteMaterialCommand);
     cmd->index = index;
+    endTransaction(tx);
 }
 
 API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     SwapMaterialCommand *cmd = pushCommand(tx, SwapMaterialCommand);
     cmd->indexA = indexA;
     cmd->indexB = indexB;
+    endTransaction(tx);
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
     cmd->materialId = materialId;
     cmd->textureType = textureType;
     cmd->assetId = assetId;
+    endTransaction(tx);
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
     cmd->materialId = materialId;
     cmd->textureSizeInWorldUnits = textureSize;
@@ -1715,22 +1663,24 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     cmd->slopeEnd = slopeEnd;
     cmd->altitudeStart = altitudeStart;
     cmd->altitudeEnd = altitudeEnd;
+    endTransaction(tx);
 }
 
 API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
     cmd->objectId = state->sceneState.nextObjectId++;
+    endTransaction(tx);
 }
 
 API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = createTransaction(&state->committedTransactions);
+    EditorTransaction *tx = beginTransaction(&state->transactions);
     SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
     cmd->objectId = objectId;
     cmd->position.x = positionX;
@@ -1742,4 +1692,5 @@ API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
     cmd->scale.x = scaleX;
     cmd->scale.y = scaleY;
     cmd->scale.z = scaleZ;
+    endTransaction(tx);
 }
