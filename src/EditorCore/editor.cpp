@@ -911,6 +911,63 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 }
 
+ActiveTransactionDataBlock *getActiveTransaction(
+    EditorState *state, ActiveTransactionType type)
+{
+    return state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT];
+}
+
+void discardActiveTransaction(EditorState *state, ActiveTransactionType type)
+{
+    ActiveTransactionDataBlock *tx = getActiveTransaction(state, type);
+    if (tx->prev)
+    {
+        tx->prev->next = tx->next;
+    }
+    else
+    {
+        state->activeTransactions.first = tx->next;
+    }
+    if (tx->next)
+    {
+        tx->next->prev = tx->prev;
+    }
+    tx->next = 0;
+    tx->prev = state->activeTransactions.nextFree;
+    state->activeTransactions.nextFree = tx;
+    state->activeTransactions.byType[type] = 0;
+}
+
+ActiveTransactionDataBlock *beginActiveTransaction(
+    EditorState *state, ActiveTransactionType type)
+{
+    ActiveTransactionDataBlock *result = 0;
+    if (state->activeTransactions.nextFree)
+    {
+        result = state->activeTransactions.nextFree;
+        state->activeTransactions.nextFree = state->activeTransactions.nextFree->prev;
+
+        if (state->activeTransactions.first)
+        {
+            ActiveTransactionDataBlock *lastTx = state->activeTransactions.first;
+            while (lastTx->next)
+            {
+                lastTx = lastTx->next;
+            }
+            result->prev = lastTx;
+            lastTx->next = result;
+        }
+        else
+        {
+            result->prev = 0;
+            state->activeTransactions.first = result;
+        }
+        state->activeTransactions.byType[type] = result;
+    }
+
+    return result;
+}
+
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
@@ -1222,33 +1279,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // move object with arrow keys
-    ActiveTransactionDataBlock *activeTx =
-        state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT];
-    if (activeTx)
-    {
-        if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
-        {
-            // discard changes
-            if (activeTx->prev)
-            {
-                activeTx->prev->next = activeTx->next;
-            }
-            else
-            {
-                state->activeTransactions.first = activeTx->next;
-            }
-            if (activeTx->next)
-            {
-                activeTx->next->prev = activeTx->prev;
-            }
-            activeTx->next = 0;
-            activeTx->prev = state->activeTransactions.nextFree;
-            state->activeTransactions.nextFree = activeTx;
-            state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT] = 0;
-            activeTx = 0;
-        }
-    }
-    else
+    ActiveTransactionDataBlock *activeTx = getActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+    if (!activeTx)
     {
         bool isStartingTransaction = isNewButtonPress(input, EDITOR_INPUT_KEY_LEFT)
             || isNewButtonPress(input, EDITOR_INPUT_KEY_RIGHT)
@@ -1256,93 +1288,67 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN);
         if (isStartingTransaction)
         {
-            if (state->activeTransactions.nextFree)
+            activeTx = beginActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+            if (activeTx)
             {
-                activeTx = state->activeTransactions.nextFree;
-                state->activeTransactions.nextFree = state->activeTransactions.nextFree->prev;
-
-                if (state->activeTransactions.first)
-                {
-                    ActiveTransactionDataBlock *lastTx = state->activeTransactions.first;
-                    while (lastTx->next)
-                    {
-                        lastTx = lastTx->next;
-                    }
-                    activeTx->prev = lastTx;
-                    lastTx->next = activeTx;
-                }
-                else
-                {
-                    activeTx->prev = 0;
-                    state->activeTransactions.first = activeTx;
-                }
-                state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT] = activeTx;
-
                 state->moveObjectTxDelta = glm::vec3(0);
             }
         }
     }
     if (activeTx)
     {
-        bool isContinuingTransaction = isButtonDown(input, EDITOR_INPUT_KEY_LEFT)
-            || isButtonDown(input, EDITOR_INPUT_KEY_RIGHT)
-            || isButtonDown(input, EDITOR_INPUT_KEY_UP)
-            || isButtonDown(input, EDITOR_INPUT_KEY_DOWN);
-        if (isContinuingTransaction)
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
         {
-            glm::vec3 objectTranslation = glm::vec3(0);
-            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_LEFT) * -1.0f;
-            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
-            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
-            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
-            state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
+            discardActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+        }
+        else
+        {
+            bool isContinuingTransaction = isButtonDown(input, EDITOR_INPUT_KEY_LEFT)
+                || isButtonDown(input, EDITOR_INPUT_KEY_RIGHT)
+                || isButtonDown(input, EDITOR_INPUT_KEY_UP)
+                || isButtonDown(input, EDITOR_INPUT_KEY_DOWN);
+            if (isContinuingTransaction)
+            {
+                glm::vec3 objectTranslation = glm::vec3(0);
+                objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_LEFT) * -1.0f;
+                objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
+                objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
+                objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
+                state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
 
 #define pushActive(type, value)                                                               \
     *(type *)((uint8 *)activeTx->baseAddress + activeTx->used) = value;                       \
     activeTx->used += sizeof(type);
 
-            activeTx->used = 0;
-            pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
-            pushActive(uint64, sizeof(SetObjectTransformCommand));
+                activeTx->used = 0;
+                pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
+                pushActive(uint64, sizeof(SetObjectTransformCommand));
 
-            SetObjectTransformCommand *cmd =
-                (SetObjectTransformCommand *)((uint8 *)activeTx->baseAddress + activeTx->used);
-            activeTx->used += sizeof(SetObjectTransformCommand);
+                SetObjectTransformCommand *cmd =
+                    (SetObjectTransformCommand *)((uint8 *)activeTx->baseAddress
+                        + activeTx->used);
+                activeTx->used += sizeof(SetObjectTransformCommand);
 
-            ObjectTransform *transform = &state->docState.objectTransforms[0];
-            cmd->objectId = state->docState.objectIds[0];
-            cmd->position = transform->position + state->moveObjectTxDelta;
-            cmd->rotation = transform->rotation;
-            cmd->scale = transform->scale;
-        }
-        else
-        {
-            // commit changes
-            ObjectTransform *transform = &state->docState.objectTransforms[0];
-            EditorTransaction *tx = createTransaction(&state->committedTransactions);
-            SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
-            cmd->objectId = state->docState.objectIds[0];
-            cmd->position = transform->position + state->moveObjectTxDelta;
-            cmd->rotation = transform->rotation;
-            cmd->scale = transform->scale;
-
-            if (activeTx->prev)
-            {
-                activeTx->prev->next = activeTx->next;
+                ObjectTransform *transform = &state->docState.objectTransforms[0];
+                cmd->objectId = state->docState.objectIds[0];
+                cmd->position = transform->position + state->moveObjectTxDelta;
+                cmd->rotation = transform->rotation;
+                cmd->scale = transform->scale;
             }
             else
             {
-                state->activeTransactions.first = activeTx->next;
+                // commit changes
+                ObjectTransform *transform = &state->docState.objectTransforms[0];
+                EditorTransaction *tx = createTransaction(&state->committedTransactions);
+                SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
+                cmd->objectId = state->docState.objectIds[0];
+                cmd->position = transform->position + state->moveObjectTxDelta;
+                cmd->rotation = transform->rotation;
+                cmd->scale = transform->scale;
+
+                discardActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+                activeTx = 0;
             }
-            if (activeTx->next)
-            {
-                activeTx->next->prev = activeTx->prev;
-            }
-            activeTx->next = 0;
-            activeTx->prev = state->activeTransactions.nextFree;
-            state->activeTransactions.nextFree = activeTx;
-            state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT] = 0;
-            activeTx = 0;
         }
     }
 
