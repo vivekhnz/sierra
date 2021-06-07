@@ -413,8 +413,8 @@ bool initializeEditor(EditorMemory *memory)
     for (uint32 i = 0; i < MAX_CONCURRENT_ACTIVE_TRANSACTIONS; i++)
     {
         ActiveTransactionDataBlock *block = &state->activeTransactions.data[i];
-        block->size = 1 * 1024;
-        block->baseAddress = pushEditorData(memory, block->size);
+        block->commandBuffer.size = 1 * 1024;
+        block->commandBuffer.baseAddress = pushEditorData(memory, block->commandBuffer.size);
         block->prev = prevBlock;
         prevBlock = block;
     }
@@ -917,27 +917,6 @@ ActiveTransactionDataBlock *getActiveTransaction(
     return state->activeTransactions.byType[ACTIVE_TX_MOVE_OBJECT];
 }
 
-void discardActiveTransaction(EditorState *state, ActiveTransactionType type)
-{
-    ActiveTransactionDataBlock *tx = getActiveTransaction(state, type);
-    if (tx->prev)
-    {
-        tx->prev->next = tx->next;
-    }
-    else
-    {
-        state->activeTransactions.first = tx->next;
-    }
-    if (tx->next)
-    {
-        tx->next->prev = tx->prev;
-    }
-    tx->next = 0;
-    tx->prev = state->activeTransactions.nextFree;
-    state->activeTransactions.nextFree = tx;
-    state->activeTransactions.byType[type] = 0;
-}
-
 ActiveTransactionDataBlock *beginActiveTransaction(
     EditorState *state, ActiveTransactionType type)
 {
@@ -962,10 +941,38 @@ ActiveTransactionDataBlock *beginActiveTransaction(
             result->prev = 0;
             state->activeTransactions.first = result;
         }
+        result->type = type;
         state->activeTransactions.byType[type] = result;
     }
 
     return result;
+}
+
+void discardActiveTransaction(EditorState *state, ActiveTransactionDataBlock *tx)
+{
+    if (tx->prev)
+    {
+        tx->prev->next = tx->next;
+    }
+    else
+    {
+        state->activeTransactions.first = tx->next;
+    }
+    if (tx->next)
+    {
+        tx->next->prev = tx->prev;
+    }
+    tx->next = 0;
+    tx->prev = state->activeTransactions.nextFree;
+    state->activeTransactions.nextFree = tx;
+    state->activeTransactions.byType[tx->type] = 0;
+}
+
+void commitActiveTransaction(EditorState *state, ActiveTransactionDataBlock *activeTx)
+{
+    EditorTransaction *commitTx = createTransaction(&state->committedTransactions);
+    pushCommandBuffer(commitTx, &activeTx->commandBuffer);
+    discardActiveTransaction(state, activeTx);
 }
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
@@ -1001,8 +1008,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         do
         {
             EditorCommandIterator cmdIterator;
-            cmdIterator.position = (uint8 *)currentTx->baseAddress;
-            cmdIterator.end = cmdIterator.position + currentTx->used;
+            cmdIterator.position = (uint8 *)currentTx->commandBuffer.baseAddress;
+            cmdIterator.end = cmdIterator.position + currentTx->commandBuffer.used;
             applyTransaction(&cmdIterator, &tempDocState);
             currentTx = currentTx->next;
         } while (currentTx);
@@ -1299,7 +1306,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
         {
-            discardActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
+            discardActiveTransaction(state, activeTx);
         }
         else
         {
@@ -1316,20 +1323,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
                 state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
 
-#define pushActive(type, value)                                                               \
-    *(type *)((uint8 *)activeTx->baseAddress + activeTx->used) = value;                       \
-    activeTx->used += sizeof(type);
-
-                activeTx->used = 0;
-                pushActive(EditorCommandType, EDITOR_COMMAND_SetObjectTransformCommand);
-                pushActive(uint64, sizeof(SetObjectTransformCommand));
-
-                SetObjectTransformCommand *cmd =
-                    (SetObjectTransformCommand *)((uint8 *)activeTx->baseAddress
-                        + activeTx->used);
-                activeTx->used += sizeof(SetObjectTransformCommand);
-
                 ObjectTransform *transform = &state->docState.objectTransforms[0];
+
+                activeTx->commandBuffer.used = 0;
+                SetObjectTransformCommand *cmd =
+                    pushCommand(&activeTx->commandBuffer, SetObjectTransformCommand);
                 cmd->objectId = state->docState.objectIds[0];
                 cmd->position = transform->position + state->moveObjectTxDelta;
                 cmd->rotation = transform->rotation;
@@ -1337,17 +1335,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             }
             else
             {
-                // commit changes
-                ObjectTransform *transform = &state->docState.objectTransforms[0];
-                EditorTransaction *tx = createTransaction(&state->committedTransactions);
-                SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
-                cmd->objectId = state->docState.objectIds[0];
-                cmd->position = transform->position + state->moveObjectTxDelta;
-                cmd->rotation = transform->rotation;
-                cmd->scale = transform->scale;
-
-                discardActiveTransaction(state, ACTIVE_TX_MOVE_OBJECT);
-                activeTx = 0;
+                commitActiveTransaction(state, activeTx);
             }
         }
     }

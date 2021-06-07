@@ -10,6 +10,16 @@ void *pushTransactionData(EditorTransactionQueue *queue, uint64 size)
 
     return address;
 }
+void *pushCommandBufferData(CommandBuffer *buffer, uint64 size)
+{
+    uint64 availableStorage = buffer->size - buffer->used;
+    assert(availableStorage >= size);
+
+    void *address = (uint8 *)buffer->baseAddress + buffer->used;
+    buffer->used += size;
+
+    return address;
+}
 
 EditorTransaction *createTransaction(EditorTransactionQueue *queue)
 {
@@ -21,6 +31,13 @@ EditorTransaction *createTransaction(EditorTransactionQueue *queue)
     return tx;
 }
 
+void pushCommandBuffer(EditorTransaction *tx, CommandBuffer *buffer)
+{
+    void *dst = pushTransactionData(tx->queue, buffer->used);
+    memcpy(dst, buffer->baseAddress, buffer->used);
+    tx->commandBufferSize += buffer->used;
+}
+
 void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 size)
 {
     *((EditorCommandType *)pushTransactionData(tx->queue, sizeof(EditorCommandType))) = type;
@@ -29,8 +46,14 @@ void *pushCommandInternal(EditorTransaction *tx, EditorCommandType type, uint64 
     tx->commandBufferSize += sizeof(EditorCommandType) + sizeof(uint64) + size;
     return commandData;
 }
-#define pushCommand(tx, type)                                                                 \
-    (type *)pushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
+void *pushCommandInternal(CommandBuffer *buffer, EditorCommandType type, uint64 size)
+{
+    *((EditorCommandType *)pushCommandBufferData(buffer, sizeof(EditorCommandType))) = type;
+    *((uint64 *)pushCommandBufferData(buffer, sizeof(uint64))) = size;
+    return pushCommandBufferData(buffer, size);
+}
+#define pushCommand(storage, type)                                                            \
+    (type *)pushCommandInternal(storage, EDITOR_COMMAND_##type, sizeof(type))
 
 struct EditorCommandIterator
 {

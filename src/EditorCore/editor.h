@@ -195,9 +195,8 @@ enum ActiveTransactionType
 
 struct ActiveTransactionDataBlock
 {
-    void *baseAddress;
-    uint64 size;
-    uint64 used;
+    ActiveTransactionType type;
+    CommandBuffer commandBuffer;
     ActiveTransactionDataBlock *prev;
     ActiveTransactionDataBlock *next;
 };

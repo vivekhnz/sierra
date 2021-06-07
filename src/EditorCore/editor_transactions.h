@@ -26,6 +26,13 @@ struct EditorTransaction
     uint32 commandBufferSize;
 };
 
+struct CommandBuffer
+{
+    void *baseAddress;
+    uint64 size;
+    uint64 used;
+};
+
 struct AddMaterialCommand
 {
     uint32 materialId;
