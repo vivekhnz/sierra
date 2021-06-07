@@ -111,7 +111,7 @@ void *pushCommandInternal(CommandBuffer *buffer, EditorCommandType type, uint64 
 #define pushCommand(tx, type)                                                                 \
     (type *)pushCommandInternal(&tx->commandBuffer, EDITOR_COMMAND_##type, sizeof(type))
 
-struct EditorCommandIterator
+struct CommandIterator
 {
     uint8 *position;
     uint8 *end;
@@ -121,11 +121,18 @@ struct EditorCommandEntry
     EditorCommandType type;
     void *data;
 };
-bool isIteratorFinished(EditorCommandIterator *iterator)
+CommandIterator getIterator(CommandBuffer *commandBuffer)
+{
+    CommandIterator iterator;
+    iterator.position = (uint8 *)commandBuffer->baseAddress;
+    iterator.end = (uint8 *)commandBuffer->baseAddress + commandBuffer->used;
+    return iterator;
+}
+bool isIteratorFinished(CommandIterator *iterator)
 {
     return iterator->position >= iterator->end;
 }
-EditorCommandEntry getNextCommand(EditorCommandIterator *iterator)
+EditorCommandEntry getNextCommand(CommandIterator *iterator)
 {
     EditorCommandEntry entry;
 
@@ -146,11 +153,6 @@ struct EditorTransactionIterator
     uint8 *position;
     uint8 *end;
 };
-struct EditorTransactionEntry
-{
-    CommandBuffer commandBuffer;
-    EditorCommandIterator commandIterator;
-};
 EditorTransactionIterator getIterator(TransactionState *state)
 {
     EditorTransactionIterator iterator;
@@ -163,21 +165,9 @@ bool isIteratorFinished(EditorTransactionIterator *iterator)
 {
     return iterator->position >= iterator->end;
 }
-EditorTransactionEntry getNextTransaction(EditorTransactionIterator *iterator)
+EditorTransaction *getNextTransaction(EditorTransactionIterator *iterator)
 {
-    EditorTransactionEntry entry;
-
     EditorTransaction *tx = (EditorTransaction *)iterator->position;
-    iterator->position += sizeof(*tx);
-
-    entry.commandBuffer.baseAddress = iterator->position;
-    entry.commandBuffer.size = tx->commandBuffer.used;
-    entry.commandBuffer.used = tx->commandBuffer.used;
-    entry.commandIterator.position = (uint8 *)entry.commandBuffer.baseAddress;
-    entry.commandIterator.end =
-        (uint8 *)entry.commandBuffer.baseAddress + entry.commandBuffer.size;
-
-    iterator->position = entry.commandIterator.end;
-
-    return entry;
+    iterator->position += sizeof(*tx) + tx->commandBuffer.size;
+    return tx;
 }

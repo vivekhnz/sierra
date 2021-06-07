@@ -642,11 +642,12 @@ void discardChanges(EditorMemory *memory)
         &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
 }
 
-void applyTransaction(EditorCommandIterator *iterator, EditorDocumentState *docState)
+void applyTransaction(CommandBuffer *commandBuffer, EditorDocumentState *docState)
 {
-    while (!isIteratorFinished(iterator))
+    CommandIterator iterator = getIterator(commandBuffer);
+    while (!isIteratorFinished(&iterator))
     {
-        EditorCommandEntry cmdEntry = getNextCommand(iterator);
+        EditorCommandEntry cmdEntry = getNextCommand(&iterator);
 
         switch (cmdEntry.type)
         {
@@ -936,10 +937,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     EditorTransactionIterator txIterator = getIterator(transactions);
     while (!isIteratorFinished(&txIterator))
     {
-        EditorTransactionEntry tx = getNextTransaction(&txIterator);
-        applyTransaction(&tx.commandIterator, &state->docState);
+        EditorTransaction *tx = getNextTransaction(&txIterator);
+        applyTransaction(&tx->commandBuffer, &state->docState);
         memory->platformPublishTransaction(
-            tx.commandBuffer.baseAddress, tx.commandBuffer.used);
+            tx->commandBuffer.baseAddress, tx->commandBuffer.used);
     }
     transactions->committedUsed = 0;
 
@@ -950,10 +951,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         ActiveTransactionDataBlock *currentTx = transactions->firstActive;
         do
         {
-            EditorCommandIterator cmdIterator;
-            cmdIterator.position = (uint8 *)currentTx->commandBuffer.baseAddress;
-            cmdIterator.end = cmdIterator.position + currentTx->commandBuffer.used;
-            applyTransaction(&cmdIterator, &tempDocState);
+            applyTransaction(&currentTx->commandBuffer, &tempDocState);
             currentTx = currentTx->next;
         } while (currentTx);
 
