@@ -21,6 +21,9 @@ namespace Terrain.Editor
 
         public new static App Current => Application.Current as App;
 
+        internal delegate void TickEventHandler();
+        internal static event TickEventHandler CoreTick;
+
         protected override void OnStartup(StartupEventArgs e)
         {
             UiState = (EditorUiStateViewModel)FindResource("EditorUiState");
@@ -54,6 +57,7 @@ namespace Terrain.Editor
         {
             UiState.CheckForChanges();
             EditorPlatform.Tick();
+            CoreTick?.Invoke();
         }
     }
 }

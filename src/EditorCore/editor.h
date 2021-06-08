@@ -224,6 +224,9 @@ struct EditorState
     EditorDocumentState docState;
     TransactionState transactions;
 
+    // committed document state + any active transactions
+    EditorDocumentState previewDocState;
+
     SceneState sceneState;
 };
 
@@ -373,5 +376,9 @@ typedef EDITOR_ADD_OBJECT(EditorAddObject);
         float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX,     \
         float scaleY, float scaleZ)
 typedef EDITOR_SET_OBJECT_TRANSFORM(EditorSetObjectTransform);
+
+#define EDITOR_GET_OBJECT_PROPERTY(name)                                                      \
+    float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
+typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);
 
 #endif

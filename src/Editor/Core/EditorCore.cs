@@ -262,6 +262,8 @@ namespace Terrain.Editor.Core
             float positionX, float positionY, float positionZ,
             float rotationX, float rotationY, float rotationZ,
             float scaleX, float scaleY, float scaleZ);
+        delegate float EditorGetObjectProperty(ref EditorMemory memory, uint objectId,
+            ObjectProperty property);
 
         private static EditorUpdate editorUpdate;
         private static EditorRenderSceneView editorRenderSceneView;
@@ -275,6 +277,7 @@ namespace Terrain.Editor.Core
         private static EditorSetMaterialProperties editorSetMaterialProperties;
         private static EditorAddObject editorAddObject;
         private static EditorSetObjectTransform editorSetObjectTransform;
+        private static EditorGetObjectProperty editorGetObjectProperty;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
@@ -353,6 +356,7 @@ namespace Terrain.Editor.Core
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorSetObjectTransform = GetApi<EditorSetObjectTransform>("editorSetObjectTransform");
+            editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
 
             return moduleHandle != IntPtr.Zero;
         }
@@ -424,5 +428,8 @@ namespace Terrain.Editor.Core
                 rotationX, rotationY, rotationZ,
                 scaleX, scaleY, scaleZ);
         }
+
+        internal static float GetObjectProperty(uint objectId, ObjectProperty property)
+            => editorGetObjectProperty?.Invoke(ref memory, objectId, property) ?? 0;
     }
 }

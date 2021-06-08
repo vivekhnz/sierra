@@ -34,6 +34,31 @@ namespace Terrain.Editor
 
             cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
             cvsObjects = (CollectionViewSource)FindResource("Objects");
+
+            App.CoreTick += () =>
+            {
+                var objectVm = cvsObjects.View.CurrentItem as EditorObjectViewModel;
+                if (objectVm == null) return;
+
+                tbObjectPositionX.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectPositionX).ToString();
+                tbObjectPositionY.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectPositionY).ToString();
+                tbObjectPositionZ.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectPositionZ).ToString();
+                tbObjectRotationX.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectRotationX).ToString();
+                tbObjectRotationY.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectRotationY).ToString();
+                tbObjectRotationZ.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectRotationZ).ToString();
+                tbObjectScaleX.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectScaleX).ToString();
+                tbObjectScaleY.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectScaleY).ToString();
+                tbObjectScaleZ.Text = EditorCore.GetObjectProperty(
+                    objectVm.ObjectId, ObjectProperty.ObjectScaleZ).ToString();
+            };
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)

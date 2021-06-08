@@ -6,14 +6,6 @@
 
 #define arrayCount(array) (sizeof(array) / sizeof(array[0]))
 
-#define setProperty(tx, id, prop, val)                                                        \
-    {                                                                                         \
-        SetObjectPropertyCommand *cmd = pushCommand(tx, SetObjectPropertyCommand);            \
-        cmd->objectId = (id);                                                                 \
-        cmd->property = (prop);                                                               \
-        cmd->value = (val);                                                                   \
-    }
-
 struct BrushBlendProperties
 {
     uint32 shaderProgramHandle;
@@ -51,6 +43,52 @@ bool isButtonDown(EditorInput *input, EditorInputButtons button)
 bool isNewButtonPress(EditorInput *input, EditorInputButtons button)
 {
     return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
+}
+
+#define setProperty(tx, id, prop, val)                                                        \
+    {                                                                                         \
+        SetObjectPropertyCommand *cmd = pushCommand(tx, SetObjectPropertyCommand);            \
+        cmd->objectId = (id);                                                                 \
+        cmd->property = (prop);                                                               \
+        cmd->value = (val);                                                                   \
+    }
+
+float *getObjectProperty(
+    EditorDocumentState *docState, uint32 objIndex, ObjectProperty property)
+{
+    assert(objIndex < docState->objectInstanceCount);
+    ObjectTransform *transform = &docState->objectTransforms[objIndex];
+    switch (property)
+    {
+    case PROP_OBJ_POSITION_X:
+        return &transform->position.x;
+        break;
+    case PROP_OBJ_POSITION_Y:
+        return &transform->position.y;
+        break;
+    case PROP_OBJ_POSITION_Z:
+        return &transform->position.z;
+        break;
+    case PROP_OBJ_ROTATION_X:
+        return &transform->rotation.x;
+        break;
+    case PROP_OBJ_ROTATION_Y:
+        return &transform->rotation.y;
+        break;
+    case PROP_OBJ_ROTATION_Z:
+        return &transform->rotation.z;
+        break;
+    case PROP_OBJ_SCALE_X:
+        return &transform->scale.x;
+        break;
+    case PROP_OBJ_SCALE_Y:
+        return &transform->scale.y;
+        break;
+    case PROP_OBJ_SCALE_Z:
+        return &transform->scale.z;
+        break;
+    }
+    return 0;
 }
 
 HeightmapRenderTexture createHeightmapRenderTexture(EditorMemory *memory)
@@ -416,6 +454,7 @@ bool initializeEditor(EditorMemory *memory)
         state->docState.displacementTextureAssetIds[i] = {};
         state->docState.aoTextureAssetIds[i] = {};
     }
+    state->previewDocState = state->docState;
 
     // setup transaction state
     ActiveTransactionDataBlock *prevBlock = 0;
@@ -787,44 +826,11 @@ void applyTransaction(CommandBuffer *commandBuffer, EditorDocumentState *docStat
             {
                 if (docState->objectIds[i] == cmd->objectId)
                 {
-                    ObjectTransform *transform = &docState->objectTransforms[i];
-
-                    float *prop = 0;
-                    switch (cmd->property)
-                    {
-                    case PROP_OBJ_POSITION_X:
-                        prop = &transform->position.x;
-                        break;
-                    case PROP_OBJ_POSITION_Y:
-                        prop = &transform->position.y;
-                        break;
-                    case PROP_OBJ_POSITION_Z:
-                        prop = &transform->position.z;
-                        break;
-                    case PROP_OBJ_ROTATION_X:
-                        prop = &transform->rotation.x;
-                        break;
-                    case PROP_OBJ_ROTATION_Y:
-                        prop = &transform->rotation.y;
-                        break;
-                    case PROP_OBJ_ROTATION_Z:
-                        prop = &transform->rotation.z;
-                        break;
-                    case PROP_OBJ_SCALE_X:
-                        prop = &transform->scale.x;
-                        break;
-                    case PROP_OBJ_SCALE_Y:
-                        prop = &transform->scale.y;
-                        break;
-                    case PROP_OBJ_SCALE_Z:
-                        prop = &transform->scale.z;
-                        break;
-                    }
+                    float *prop = getObjectProperty(docState, i, cmd->property);
                     if (prop)
                     {
                         *prop = cmd->value;
                     }
-
                     break;
                 }
             }
@@ -965,23 +971,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
     transactions->committedUsed = 0;
 
+    state->previewDocState = state->docState;
     if (transactions->firstActive)
     {
         // apply active transactions
-        EditorDocumentState tempDocState = state->docState;
         ActiveTransactionDataBlock *currentTx = transactions->firstActive;
         do
         {
-            applyTransaction(&currentTx->commandBuffer, &tempDocState);
+            applyTransaction(&currentTx->commandBuffer, &state->previewDocState);
             currentTx = currentTx->next;
         } while (currentTx);
-
-        updateFromDocumentState(memory, &tempDocState);
     }
-    else
-    {
-        updateFromDocumentState(memory, &state->docState);
-    }
+    updateFromDocumentState(memory, &state->previewDocState);
 
     EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &state->assets;
@@ -1709,4 +1710,19 @@ API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
     setProperty(tx, objectId, PROP_OBJ_SCALE_Y, scaleY);
     setProperty(tx, objectId, PROP_OBJ_SCALE_Z, scaleZ);
     endTransaction(tx);
+}
+
+API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorDocumentState *docState = &state->previewDocState;
+
+    for (uint32 i = 0; i < docState->objectInstanceCount; i++)
+    {
+        if (docState->objectIds[i] == objectId)
+        {
+            return *getObjectProperty(docState, i, property);
+        }
+    }
+    return 0;
 }

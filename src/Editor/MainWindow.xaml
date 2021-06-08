@@ -334,8 +334,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/PositionX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/PositionX}"
-                    Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectPositionX" Grid.Column="2" Grid.Row="0"
+                    Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
@@ -343,8 +343,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/PositionY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/PositionY}"
-                    Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectPositionY" Grid.Column="2" Grid.Row="1"
+                    Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
@@ -352,8 +352,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/PositionZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/PositionZ}"
-                    Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectPositionZ" Grid.Column="2" Grid.Row="2"
+                    Foreground="#888" Margin="4 0 0 0" />
               </Grid>
               <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
               <Grid Margin="0 0 0 8">
@@ -373,8 +373,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/RotationX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/RotationX}"
-                    Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectRotationX" Grid.Column="2" Grid.Row="0"
+                    Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
@@ -382,8 +382,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/RotationY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/RotationY}"
-                    Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectRotationY" Grid.Column="2" Grid.Row="1"
+                    Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
@@ -391,8 +391,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/RotationZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/RotationZ}"
-                    Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectRotationZ" Grid.Column="2" Grid.Row="2"
+                    Foreground="#888" Margin="4 0 0 0" />
               </Grid>
               <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
               <Grid>
@@ -412,8 +412,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/ScaleX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/ScaleX}"
-                    Grid.Column="2" Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectScaleX" Grid.Column="2" Grid.Row="0"
+                    Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
@@ -421,8 +421,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/ScaleY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/ScaleY}"
-                    Grid.Column="2" Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectScaleY" Grid.Column="2" Grid.Row="1"
+                    Foreground="#888" Margin="4 0 0 0" />
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
@@ -430,8 +430,8 @@
                     Value="{Binding Source={StaticResource Objects}, Path=/ScaleZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
-                <TextBlock Text="{Binding Source={StaticResource Objects}, Path=/ScaleZ}"
-                    Grid.Column="2" Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock x:Name="tbObjectScaleZ" Grid.Column="2" Grid.Row="2"
+                    Foreground="#888" Margin="4 0 0 0" />
               </Grid>
             </StackPanel>
           </Expander>
