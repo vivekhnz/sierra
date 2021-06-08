@@ -46,6 +46,8 @@ struct TerrainMaterialProperties
 
 struct EditorUiState
 {
+    uint32 selectedObjectId;
+
     TerrainBrushTool terrainBrushTool;
     float terrainBrushRadius;
     float terrainBrushFalloff;
@@ -213,6 +215,8 @@ struct EditorState
     uint32 activeBrushStrokeInstanceCount;
     float activeBrushStrokeInitialHeight;
 
+    uint32 moveObjectId;
+    ObjectTransform *moveObjectTransform;
     glm::vec3 moveObjectTxDelta;
 
     // state related to the user interface e.g. current brush tool, brush radius etc.

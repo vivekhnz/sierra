@@ -34,6 +34,11 @@ namespace Terrain.Editor
 
             cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
             cvsObjects = (CollectionViewSource)FindResource("Objects");
+            cvsObjects.View.CurrentChanged += (sender, args) =>
+            {
+                var objectVm = cvsObjects.View.CurrentItem as EditorObjectViewModel;
+                App.Current.UiState.SelectedObjectId = objectVm?.ObjectId ?? 0;
+            };
 
             App.CoreTick += () =>
             {

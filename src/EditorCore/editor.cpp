@@ -227,6 +227,7 @@ bool initializeEditor(EditorMemory *memory)
     state->orthographicCameraTransform =
         glm::translate(state->orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
 
+    state->uiState.selectedObjectId = 0;
     state->uiState.terrainBrushRadius = 128.0f;
     state->uiState.terrainBrushFalloff = 0.75f;
     state->uiState.terrainBrushStrength = 0.12f;
@@ -1253,16 +1254,32 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         getActiveTransaction(transactions, ACTIVE_TX_MOVE_OBJECT);
     if (!activeTx)
     {
-        bool isStartingTransaction = isNewButtonPress(input, EDITOR_INPUT_KEY_LEFT)
-            || isNewButtonPress(input, EDITOR_INPUT_KEY_RIGHT)
-            || isNewButtonPress(input, EDITOR_INPUT_KEY_UP)
-            || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN);
+        ObjectTransform *transform = 0;
+        if (state->uiState.selectedObjectId)
+        {
+            for (uint32 i = 0; i < state->docState.objectInstanceCount; i++)
+            {
+                if (state->docState.objectIds[i] == state->uiState.selectedObjectId)
+                {
+                    transform = &state->docState.objectTransforms[i];
+                    break;
+                }
+            }
+        }
+
+        bool isStartingTransaction = transform
+            && (isNewButtonPress(input, EDITOR_INPUT_KEY_LEFT)
+                || isNewButtonPress(input, EDITOR_INPUT_KEY_RIGHT)
+                || isNewButtonPress(input, EDITOR_INPUT_KEY_UP)
+                || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN));
         if (isStartingTransaction)
         {
             activeTx = beginActiveTransaction(transactions, ACTIVE_TX_MOVE_OBJECT);
             if (activeTx)
             {
                 state->moveObjectTxDelta = glm::vec3(0);
+                state->moveObjectId = state->uiState.selectedObjectId;
+                state->moveObjectTransform = transform;
             }
         }
     }
@@ -1287,14 +1304,13 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
                 state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
 
-                ObjectTransform *transform = &state->docState.objectTransforms[0];
-                uint32 objectId = state->docState.objectIds[0];
-                float x = transform->position.x + state->moveObjectTxDelta.x;
-                float z = transform->position.z + state->moveObjectTxDelta.z;
+                uint32 objectId = state->uiState.selectedObjectId;
+                float x = state->moveObjectTransform->position.x + state->moveObjectTxDelta.x;
+                float z = state->moveObjectTransform->position.z + state->moveObjectTxDelta.z;
 
                 activeTx->commandBuffer.used = 0;
-                setProperty(activeTx, state->docState.objectIds[0], PROP_OBJ_POSITION_X, x);
-                setProperty(activeTx, state->docState.objectIds[0], PROP_OBJ_POSITION_Z, z);
+                setProperty(activeTx, objectId, PROP_OBJ_POSITION_X, x);
+                setProperty(activeTx, objectId, PROP_OBJ_POSITION_Z, z);
             }
             else
             {

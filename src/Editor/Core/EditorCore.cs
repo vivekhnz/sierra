@@ -122,6 +122,8 @@ namespace Terrain.Editor.Core
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorUiState
     {
+        public uint SelectedObjectId;
+
         public TerrainBrushTool TerrainBrushTool;
         public float TerrainBrushRadius;
         public float TerrainBrushFalloff;

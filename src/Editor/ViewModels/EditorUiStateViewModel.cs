@@ -6,6 +6,21 @@ namespace Terrain.Editor.ViewModels
     {
         private EditorUiState lastReadState;
 
+        public uint SelectedObjectId
+        {
+            get
+            {
+                lastReadState.SelectedObjectId = EditorCore.GetUiState().SelectedObjectId;
+                return lastReadState.SelectedObjectId;
+            }
+            set
+            {
+                EditorCore.GetUiState().SelectedObjectId = value;
+                lastReadState.SelectedObjectId = value;
+                NotifyPropertyChanged(nameof(SelectedObjectId));
+            }
+        }
+
         public TerrainBrushTool TerrainBrushTool
         {
             get
@@ -20,6 +35,7 @@ namespace Terrain.Editor.ViewModels
                 NotifyPropertyChanged(nameof(TerrainBrushTool));
             }
         }
+
         public float TerrainBrushRadius
         {
             get
@@ -82,6 +98,11 @@ namespace Terrain.Editor.ViewModels
         {
             ref EditorUiState state = ref EditorCore.GetUiState();
 
+            if (state.SelectedObjectId != lastReadState.SelectedObjectId)
+            {
+                lastReadState.SelectedObjectId = state.SelectedObjectId;
+                NotifyPropertyChanged(nameof(SelectedObjectId));
+            }
             if (state.TerrainBrushTool != lastReadState.TerrainBrushTool)
             {
                 lastReadState.TerrainBrushTool = state.TerrainBrushTool;
