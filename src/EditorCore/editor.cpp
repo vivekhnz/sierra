@@ -644,10 +644,10 @@ void discardChanges(EditorMemory *memory)
 
 void applyTransaction(CommandBuffer *commandBuffer, EditorDocumentState *docState)
 {
-    CommandIterator iterator = getIterator(commandBuffer);
+    Iterator iterator = getIterator(commandBuffer);
     while (!isIteratorFinished(&iterator))
     {
-        EditorCommandEntry cmdEntry = getNextCommand(&iterator);
+        CommandEntry cmdEntry = getNextCommand(&iterator);
 
         switch (cmdEntry.type)
         {
@@ -934,7 +934,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // apply committed transactions
     TransactionState *transactions = &state->transactions;
-    EditorTransactionIterator txIterator = getIterator(transactions);
+    Iterator txIterator = getIterator(transactions);
     while (!isIteratorFinished(&txIterator))
     {
         EditorTransaction *tx = getNextTransaction(&txIterator);

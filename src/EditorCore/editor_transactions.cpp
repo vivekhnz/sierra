@@ -111,30 +111,43 @@ void *pushCommandInternal(CommandBuffer *buffer, EditorCommandType type, uint64 
 #define pushCommand(tx, type)                                                                 \
     (type *)pushCommandInternal(&tx->commandBuffer, EDITOR_COMMAND_##type, sizeof(type))
 
-struct CommandIterator
+struct Iterator
 {
     uint8 *position;
     uint8 *end;
 };
-struct EditorCommandEntry
+struct CommandEntry
 {
     EditorCommandType type;
     void *data;
 };
-CommandIterator getIterator(CommandBuffer *commandBuffer)
+Iterator getIterator(CommandBuffer *commandBuffer)
 {
-    CommandIterator iterator;
+    Iterator iterator;
     iterator.position = (uint8 *)commandBuffer->baseAddress;
     iterator.end = (uint8 *)commandBuffer->baseAddress + commandBuffer->used;
     return iterator;
 }
-bool isIteratorFinished(CommandIterator *iterator)
+Iterator getIterator(TransactionState *state)
+{
+    Iterator iterator;
+    iterator.position = (uint8 *)state->committedBaseAddress;
+    iterator.end = iterator.position + state->committedUsed;
+    return iterator;
+}
+bool isIteratorFinished(Iterator *iterator)
 {
     return iterator->position >= iterator->end;
 }
-EditorCommandEntry getNextCommand(CommandIterator *iterator)
+EditorTransaction *getNextTransaction(Iterator *iterator)
 {
-    EditorCommandEntry entry;
+    EditorTransaction *tx = (EditorTransaction *)iterator->position;
+    iterator->position += sizeof(*tx) + tx->commandBuffer.size;
+    return tx;
+}
+CommandEntry getNextCommand(Iterator *iterator)
+{
+    CommandEntry entry;
 
     entry.type = *((EditorCommandType *)iterator->position);
     iterator->position += sizeof(entry.type);
@@ -146,28 +159,4 @@ EditorCommandEntry getNextCommand(CommandIterator *iterator)
     iterator->position += commandSize;
 
     return entry;
-}
-
-struct EditorTransactionIterator
-{
-    uint8 *position;
-    uint8 *end;
-};
-EditorTransactionIterator getIterator(TransactionState *state)
-{
-    EditorTransactionIterator iterator;
-    iterator.position = (uint8 *)state->committedBaseAddress;
-    iterator.end = iterator.position + state->committedUsed;
-
-    return iterator;
-}
-bool isIteratorFinished(EditorTransactionIterator *iterator)
-{
-    return iterator->position >= iterator->end;
-}
-EditorTransaction *getNextTransaction(EditorTransactionIterator *iterator)
-{
-    EditorTransaction *tx = (EditorTransaction *)iterator->position;
-    iterator->position += sizeof(*tx) + tx->commandBuffer.size;
-    return tx;
 }
