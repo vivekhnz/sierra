@@ -6,6 +6,14 @@
 
 #define arrayCount(array) (sizeof(array) / sizeof(array[0]))
 
+#define setProperty(tx, id, prop, val)                                                        \
+    {                                                                                         \
+        SetObjectPropertyCommand *cmd = pushCommand(tx, SetObjectPropertyCommand);            \
+        cmd->objectId = (id);                                                                 \
+        cmd->property = (prop);                                                               \
+        cmd->value = (val);                                                                   \
+    }
+
 struct BrushBlendProperties
 {
     uint32 shaderProgramHandle;
@@ -473,12 +481,15 @@ bool initializeEditor(EditorMemory *memory)
         AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
         addCmd->objectId = sceneState->nextObjectId++;
 
-        SetObjectTransformCommand *setTransformCmd =
-            pushCommand(addObjectsTx, SetObjectTransformCommand);
-        setTransformCmd->objectId = addCmd->objectId;
-        setTransformCmd->position = glm::vec3(0, 0, 5.0f * i);
-        setTransformCmd->rotation = glm::vec3(0);
-        setTransformCmd->scale = glm::vec3(1);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_X, 0);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_Y, 0);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_Z, 5.0f * i);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_X, 0);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_Y, 0);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_Z, 0);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_X, 1);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_Y, 1);
+        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_Z, 1);
     }
     endTransaction(addObjectsTx);
 
@@ -715,57 +726,42 @@ void applyTransaction(CommandBuffer *commandBuffer, EditorDocumentState *docStat
         case EDITOR_COMMAND_SetMaterialTextureCommand:
         {
             SetMaterialTextureCommand *cmd = (SetMaterialTextureCommand *)cmdEntry.data;
-
-            bool foundMaterial = false;
-            uint32 index = 0;
             for (uint32 i = 0; i < docState->materialCount; i++)
             {
                 if (docState->materialIds[i] == cmd->materialId)
                 {
-                    foundMaterial = true;
-                    index = i;
+                    uint32 *materialTextureAssetIds[] = {
+                        docState->albedoTextureAssetIds,       //
+                        docState->normalTextureAssetIds,       //
+                        docState->displacementTextureAssetIds, //
+                        docState->aoTextureAssetIds            //
+                    };
+                    uint32 *textureAssetIds =
+                        materialTextureAssetIds[(uint32)cmd->textureType];
+                    textureAssetIds[i] = cmd->assetId;
+
                     break;
                 }
-            }
-
-            if (foundMaterial)
-            {
-                uint32 *materialTextureAssetIds[] = {
-                    docState->albedoTextureAssetIds,       //
-                    docState->normalTextureAssetIds,       //
-                    docState->displacementTextureAssetIds, //
-                    docState->aoTextureAssetIds            //
-                };
-                uint32 *textureAssetIds = materialTextureAssetIds[(uint32)cmd->textureType];
-                textureAssetIds[index] = cmd->assetId;
             }
         }
         break;
         case EDITOR_COMMAND_SetMaterialPropertiesCommand:
         {
             SetMaterialPropertiesCommand *cmd = (SetMaterialPropertiesCommand *)cmdEntry.data;
-
-            bool foundMaterial = false;
-            uint32 index = 0;
             for (uint32 i = 0; i < docState->materialCount; i++)
             {
                 if (docState->materialIds[i] == cmd->materialId)
                 {
-                    foundMaterial = true;
-                    index = i;
+                    GpuMaterialProperties *material = &docState->materialProps[i];
+                    material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
+                    material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
+                    material->rampParams.x = cmd->slopeStart;
+                    material->rampParams.y = cmd->slopeEnd;
+                    material->rampParams.z = cmd->altitudeStart;
+                    material->rampParams.w = cmd->altitudeEnd;
+
                     break;
                 }
-            }
-
-            if (foundMaterial)
-            {
-                GpuMaterialProperties *material = &docState->materialProps[index];
-                material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
-                material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
-                material->rampParams.x = cmd->slopeStart;
-                material->rampParams.y = cmd->slopeEnd;
-                material->rampParams.z = cmd->altitudeStart;
-                material->rampParams.w = cmd->altitudeEnd;
             }
         }
         break;
@@ -784,28 +780,53 @@ void applyTransaction(CommandBuffer *commandBuffer, EditorDocumentState *docStat
             transform->scale = glm::vec3(1);
         }
         break;
-        case EDITOR_COMMAND_SetObjectTransformCommand:
+        case EDITOR_COMMAND_SetObjectPropertyCommand:
         {
-            SetObjectTransformCommand *cmd = (SetObjectTransformCommand *)cmdEntry.data;
-
-            bool foundObject = false;
-            uint32 index = 0;
+            SetObjectPropertyCommand *cmd = (SetObjectPropertyCommand *)cmdEntry.data;
             for (uint32 i = 0; i < docState->objectInstanceCount; i++)
             {
                 if (docState->objectIds[i] == cmd->objectId)
                 {
-                    foundObject = true;
-                    index = i;
+                    ObjectTransform *transform = &docState->objectTransforms[i];
+
+                    float *prop = 0;
+                    switch (cmd->property)
+                    {
+                    case PROP_OBJ_POSITION_X:
+                        prop = &transform->position.x;
+                        break;
+                    case PROP_OBJ_POSITION_Y:
+                        prop = &transform->position.y;
+                        break;
+                    case PROP_OBJ_POSITION_Z:
+                        prop = &transform->position.z;
+                        break;
+                    case PROP_OBJ_ROTATION_X:
+                        prop = &transform->rotation.x;
+                        break;
+                    case PROP_OBJ_ROTATION_Y:
+                        prop = &transform->rotation.y;
+                        break;
+                    case PROP_OBJ_ROTATION_Z:
+                        prop = &transform->rotation.z;
+                        break;
+                    case PROP_OBJ_SCALE_X:
+                        prop = &transform->scale.x;
+                        break;
+                    case PROP_OBJ_SCALE_Y:
+                        prop = &transform->scale.y;
+                        break;
+                    case PROP_OBJ_SCALE_Z:
+                        prop = &transform->scale.z;
+                        break;
+                    }
+                    if (prop)
+                    {
+                        *prop = cmd->value;
+                    }
+
                     break;
                 }
-            }
-
-            if (foundObject)
-            {
-                ObjectTransform *transform = &docState->objectTransforms[index];
-                transform->position = cmd->position;
-                transform->rotation = cmd->rotation;
-                transform->scale = cmd->scale;
             }
         }
         break;
@@ -1266,14 +1287,13 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
 
                 ObjectTransform *transform = &state->docState.objectTransforms[0];
+                uint32 objectId = state->docState.objectIds[0];
+                float x = transform->position.x + state->moveObjectTxDelta.x;
+                float z = transform->position.z + state->moveObjectTxDelta.z;
 
                 activeTx->commandBuffer.used = 0;
-                SetObjectTransformCommand *cmd =
-                    pushCommand(activeTx, SetObjectTransformCommand);
-                cmd->objectId = state->docState.objectIds[0];
-                cmd->position = transform->position + state->moveObjectTxDelta;
-                cmd->rotation = transform->rotation;
-                cmd->scale = transform->scale;
+                setProperty(activeTx, state->docState.objectIds[0], PROP_OBJ_POSITION_X, x);
+                setProperty(activeTx, state->docState.objectIds[0], PROP_OBJ_POSITION_Z, z);
             }
             else
             {
@@ -1679,16 +1699,14 @@ API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     EditorTransaction *tx = beginTransaction(&state->transactions);
-    SetObjectTransformCommand *cmd = pushCommand(tx, SetObjectTransformCommand);
-    cmd->objectId = objectId;
-    cmd->position.x = positionX;
-    cmd->position.y = positionY;
-    cmd->position.z = positionZ;
-    cmd->rotation.x = rotationX;
-    cmd->rotation.y = rotationY;
-    cmd->rotation.z = rotationZ;
-    cmd->scale.x = scaleX;
-    cmd->scale.y = scaleY;
-    cmd->scale.z = scaleZ;
+    setProperty(tx, objectId, PROP_OBJ_POSITION_X, positionX);
+    setProperty(tx, objectId, PROP_OBJ_POSITION_Y, positionY);
+    setProperty(tx, objectId, PROP_OBJ_POSITION_Z, positionZ);
+    setProperty(tx, objectId, PROP_OBJ_ROTATION_X, rotationX);
+    setProperty(tx, objectId, PROP_OBJ_ROTATION_Y, rotationY);
+    setProperty(tx, objectId, PROP_OBJ_ROTATION_Z, rotationZ);
+    setProperty(tx, objectId, PROP_OBJ_SCALE_X, scaleX);
+    setProperty(tx, objectId, PROP_OBJ_SCALE_Y, scaleY);
+    setProperty(tx, objectId, PROP_OBJ_SCALE_Z, scaleZ);
     endTransaction(tx);
 }

@@ -101,13 +101,13 @@ namespace Terrain.Editor.ViewModels
                     };
                     Objects.Add(objectVm);
                 }
-                else if (entry.Type == EditorCommandType.SetObjectTransform)
+                else if (entry.Type == EditorCommandType.SetObjectProperty)
                 {
-                    ref readonly SetObjectTransformCommand cmd =
-                        ref entry.As<SetObjectTransformCommand>();
+                    ref readonly SetObjectPropertyCommand cmd =
+                        ref entry.As<SetObjectPropertyCommand>();
                     uint objectId = cmd.ObjectId;
                     var objectVm = Objects.FirstOrDefault(vm => vm.ObjectId == objectId);
-                    objectVm?.SetTransform(cmd.Position, cmd.Rotation, cmd.Scale);
+                    objectVm?.SetProperty(cmd.Property, cmd.Value);
                 }
             }
 

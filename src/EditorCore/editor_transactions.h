@@ -13,7 +13,7 @@ enum EditorCommandType
     EDITOR_COMMAND_SetMaterialTextureCommand,
     EDITOR_COMMAND_SetMaterialPropertiesCommand,
     EDITOR_COMMAND_AddObjectCommand,
-    EDITOR_COMMAND_SetObjectTransformCommand
+    EDITOR_COMMAND_SetObjectPropertyCommand
 };
 
 enum ActiveTransactionType
@@ -116,12 +116,23 @@ struct AddObjectCommand
     uint32 objectId;
 };
 
-struct SetObjectTransformCommand
+enum ObjectProperty
+{
+    PROP_OBJ_POSITION_X,
+    PROP_OBJ_POSITION_Y,
+    PROP_OBJ_POSITION_Z,
+    PROP_OBJ_ROTATION_X,
+    PROP_OBJ_ROTATION_Y,
+    PROP_OBJ_ROTATION_Z,
+    PROP_OBJ_SCALE_X,
+    PROP_OBJ_SCALE_Y,
+    PROP_OBJ_SCALE_Z,
+};
+struct SetObjectPropertyCommand
 {
     uint32 objectId;
-    glm::vec3 position;
-    glm::vec3 rotation;
-    glm::vec3 scale;
+    ObjectProperty property;
+    float value;
 };
 
 #endif

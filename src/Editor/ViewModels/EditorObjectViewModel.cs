@@ -71,29 +71,46 @@ namespace Terrain.Editor.ViewModels
             scale = new Vector3(1, 1, 1);
         }
 
-        internal void SetTransform(Vector3 position, Vector3 rotation, Vector3 scale)
-        {
-            this.position = position;
-            this.rotation = rotation;
-            this.scale = scale;
-
-            NotifyPropertyChanged(nameof(PositionX));
-            NotifyPropertyChanged(nameof(PositionY));
-            NotifyPropertyChanged(nameof(PositionZ));
-            NotifyPropertyChanged(nameof(RotationX));
-            NotifyPropertyChanged(nameof(RotationY));
-            NotifyPropertyChanged(nameof(RotationZ));
-            NotifyPropertyChanged(nameof(ScaleX));
-            NotifyPropertyChanged(nameof(ScaleY));
-            NotifyPropertyChanged(nameof(ScaleZ));
-        }
-
         private void UpdateTransform()
         {
             EditorCore.SetObjectTransform(ObjectId,
                 position.X, position.Y, position.Z,
                 rotation.X, rotation.Y, rotation.Z,
                 scale.X, scale.Y, scale.Z);
+        }
+
+        internal void SetProperty(ObjectProperty property, float value)
+        {
+            switch (property)
+            {
+                case ObjectProperty.ObjectPositionX:
+                    SetAndNotify(ref position.X, value, nameof(PositionX));
+                    break;
+                case ObjectProperty.ObjectPositionY:
+                    SetAndNotify(ref position.Y, value, nameof(PositionY));
+                    break;
+                case ObjectProperty.ObjectPositionZ:
+                    SetAndNotify(ref position.Z, value, nameof(PositionZ));
+                    break;
+                case ObjectProperty.ObjectRotationX:
+                    SetAndNotify(ref rotation.X, value, nameof(RotationX));
+                    break;
+                case ObjectProperty.ObjectRotationY:
+                    SetAndNotify(ref rotation.Y, value, nameof(RotationY));
+                    break;
+                case ObjectProperty.ObjectRotationZ:
+                    SetAndNotify(ref rotation.Z, value, nameof(RotationZ));
+                    break;
+                case ObjectProperty.ObjectScaleX:
+                    SetAndNotify(ref scale.X, value, nameof(ScaleX));
+                    break;
+                case ObjectProperty.ObjectScaleY:
+                    SetAndNotify(ref scale.Y, value, nameof(ScaleY));
+                    break;
+                case ObjectProperty.ObjectScaleZ:
+                    SetAndNotify(ref scale.Z, value, nameof(ScaleZ));
+                    break;
+            }
         }
     }
 }

@@ -161,7 +161,20 @@ namespace Terrain.Editor.Core
         SetMaterialTexture,
         SetMaterialProperties,
         AddObject,
-        SetObjectTransform
+        SetObjectProperty
+    }
+
+    internal enum ObjectProperty
+    {
+        ObjectPositionX,
+        ObjectPositionY,
+        ObjectPositionZ,
+        ObjectRotationX,
+        ObjectRotationY,
+        ObjectRotationZ,
+        ObjectScaleX,
+        ObjectScaleY,
+        ObjectScaleZ,
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -214,12 +227,11 @@ namespace Terrain.Editor.Core
         public uint ObjectId;
     }
     [StructLayout(LayoutKind.Sequential)]
-    struct SetObjectTransformCommand
+    struct SetObjectPropertyCommand
     {
         public uint ObjectId;
-        public Vector3 Position;
-        public Vector3 Rotation;
-        public Vector3 Scale;
+        public ObjectProperty Property;
+        public float Value;
     }
 
     internal static class EditorCore
