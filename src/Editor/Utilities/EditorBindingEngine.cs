@@ -8,10 +8,12 @@ namespace Terrain.Editor.Utilities
     {
         private static readonly List<EditorBinding> bindings = new List<EditorBinding>();
 
-        internal static void SetBinding(this DependencyObject targetObject,
+        internal static EditorBinding SetBinding(this DependencyObject targetObject,
             DependencyProperty targetProperty, ObjectProperty sourceProperty)
         {
-            bindings.Add(new EditorBinding(targetObject, targetProperty, sourceProperty));
+            var binding = new EditorBinding(targetObject, targetProperty, sourceProperty);
+            bindings.Add(binding);
+            return binding;
         }
 
         internal static void UpdateBindings()

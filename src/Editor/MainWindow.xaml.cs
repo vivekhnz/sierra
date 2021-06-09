@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -35,6 +36,7 @@ namespace Terrain.Editor
                 new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
 
             cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
+
             cvsObjects = (CollectionViewSource)FindResource("Objects");
             cvsObjects.View.CurrentChanged += (sender, args) =>
             {
@@ -42,15 +44,25 @@ namespace Terrain.Editor
                 App.Current.UiState.SelectedObjectId = objectVm?.ObjectId ?? 0;
             };
 
-            tbObjectPositionX.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectPositionX);
-            tbObjectPositionY.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectPositionY);
-            tbObjectPositionZ.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectPositionZ);
-            tbObjectRotationX.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectRotationX);
-            tbObjectRotationY.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectRotationY);
-            tbObjectRotationZ.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectRotationZ);
-            tbObjectScaleX.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectScaleX);
-            tbObjectScaleY.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectScaleY);
-            tbObjectScaleZ.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectScaleZ);
+            var selectedObjectIdBinding = new Binding(nameof(EditorUiState.SelectedObjectId))
+            {
+                Source = App.Current.UiState
+            };
+            void Bind(TextBlock target, ObjectProperty prop)
+            {
+                var editorBinding = target.SetBinding(TextBlock.TextProperty, prop);
+                BindingOperations.SetBinding(editorBinding,
+                    EditorBinding.SourceObjectIdProperty, selectedObjectIdBinding);
+            }
+            Bind(tbObjectPositionX, ObjectProperty.ObjectPositionX);
+            Bind(tbObjectPositionY, ObjectProperty.ObjectPositionY);
+            Bind(tbObjectPositionZ, ObjectProperty.ObjectPositionZ);
+            Bind(tbObjectRotationX, ObjectProperty.ObjectRotationX);
+            Bind(tbObjectRotationY, ObjectProperty.ObjectRotationY);
+            Bind(tbObjectRotationZ, ObjectProperty.ObjectRotationZ);
+            Bind(tbObjectScaleX, ObjectProperty.ObjectScaleX);
+            Bind(tbObjectScaleY, ObjectProperty.ObjectScaleY);
+            Bind(tbObjectScaleZ, ObjectProperty.ObjectScaleZ);
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)

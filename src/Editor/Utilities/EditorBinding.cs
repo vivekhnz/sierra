@@ -6,7 +6,7 @@ using Terrain.Editor.Core;
 
 namespace Terrain.Editor.Utilities
 {
-    internal class EditorBinding
+    internal class EditorBinding : DependencyObject
     {
         static readonly Type[] AllowedTargetPropertyTypes = new[]
         {
@@ -19,6 +19,18 @@ namespace Terrain.Editor.Utilities
         ObjectProperty sourceProperty;
 
         bool isStringProperty;
+
+        public uint SourceObjectId
+        {
+            get { return (uint)GetValue(SourceObjectIdProperty); }
+            set { SetValue(SourceObjectIdProperty, value); }
+        }
+        public static readonly DependencyProperty SourceObjectIdProperty =
+            DependencyProperty.Register(
+                nameof(SourceObjectId),
+                typeof(uint),
+                typeof(EditorBinding),
+                new PropertyMetadata(0U));
 
         public EditorBinding(
             DependencyObject targetObject, DependencyProperty targetProperty,
@@ -35,10 +47,9 @@ namespace Terrain.Editor.Utilities
 
         public void UpdateFromSource()
         {
-            uint objectId = App.Current.UiState.SelectedObjectId;
-            float value = objectId == 0
+            float value = SourceObjectId == 0
                 ? 0
-                : EditorCore.GetObjectProperty(objectId, sourceProperty);
+                : EditorCore.GetObjectProperty(SourceObjectId, sourceProperty);
 
             if (isStringProperty)
             {
