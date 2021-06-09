@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 using Terrain.Editor.Platform;
+using Terrain.Editor.Utilities;
 using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor
@@ -20,9 +21,6 @@ namespace Terrain.Editor
         public EditorDocumentViewModel Document { get; private set; }
 
         public new static App Current => Application.Current as App;
-
-        internal delegate void TickEventHandler();
-        internal static event TickEventHandler CoreTick;
 
         protected override void OnStartup(StartupEventArgs e)
         {
@@ -57,7 +55,7 @@ namespace Terrain.Editor
         {
             UiState.CheckForChanges();
             EditorPlatform.Tick();
-            CoreTick?.Invoke();
+            EditorBindingEngine.UpdateBindings();
         }
     }
 }

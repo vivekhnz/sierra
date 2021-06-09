@@ -1,10 +1,12 @@
 ﻿using Microsoft.Win32;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Data;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 using Terrain.Editor.Platform;
+using Terrain.Editor.Utilities;
 using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor
@@ -40,30 +42,15 @@ namespace Terrain.Editor
                 App.Current.UiState.SelectedObjectId = objectVm?.ObjectId ?? 0;
             };
 
-            App.CoreTick += () =>
-            {
-                var objectVm = cvsObjects.View.CurrentItem as EditorObjectViewModel;
-                if (objectVm == null) return;
-
-                tbObjectPositionX.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectPositionX).ToString();
-                tbObjectPositionY.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectPositionY).ToString();
-                tbObjectPositionZ.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectPositionZ).ToString();
-                tbObjectRotationX.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectRotationX).ToString();
-                tbObjectRotationY.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectRotationY).ToString();
-                tbObjectRotationZ.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectRotationZ).ToString();
-                tbObjectScaleX.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectScaleX).ToString();
-                tbObjectScaleY.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectScaleY).ToString();
-                tbObjectScaleZ.Text = EditorCore.GetObjectProperty(
-                    objectVm.ObjectId, ObjectProperty.ObjectScaleZ).ToString();
-            };
+            tbObjectPositionX.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectPositionX);
+            tbObjectPositionY.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectPositionY);
+            tbObjectPositionZ.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectPositionZ);
+            tbObjectRotationX.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectRotationX);
+            tbObjectRotationY.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectRotationY);
+            tbObjectRotationZ.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectRotationZ);
+            tbObjectScaleX.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectScaleX);
+            tbObjectScaleY.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectScaleY);
+            tbObjectScaleZ.SetBinding(TextBlock.TextProperty, ObjectProperty.ObjectScaleZ);
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)
