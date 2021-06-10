@@ -1,5 +1,4 @@
 ﻿using Microsoft.Win32;
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
@@ -44,15 +43,12 @@ namespace Terrain.Editor
                 App.Current.UiState.SelectedObjectId = objectVm?.ObjectId ?? 0;
             };
 
-            var selectedObjectIdBinding = new Binding(nameof(EditorUiState.SelectedObjectId))
-            {
-                Source = App.Current.UiState
-            };
+            var selectedObjectRef = new ObjectReference(
+                () => App.Current.UiState.SelectedObjectId);
             void Bind(TextBlock target, ObjectProperty prop)
             {
                 var editorBinding = target.SetBinding(TextBlock.TextProperty, prop);
-                BindingOperations.SetBinding(editorBinding,
-                    EditorBinding.SourceObjectIdProperty, selectedObjectIdBinding);
+                editorBinding.Source = selectedObjectRef;
             }
             Bind(tbObjectPositionX, ObjectProperty.ObjectPositionX);
             Bind(tbObjectPositionY, ObjectProperty.ObjectPositionY);
