@@ -14,6 +14,8 @@ namespace Terrain.Editor.Utilities
             => value?.Equals(parameter) != Invert;
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
-            => value?.Equals(true) != Invert ? parameter : Binding.DoNothing;
+            => value?.Equals(true) != Invert
+                ? parameter
+                : System.Windows.Data.Binding.DoNothing;
     }
 }

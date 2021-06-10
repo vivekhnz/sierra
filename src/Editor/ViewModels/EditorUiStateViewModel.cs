@@ -1,4 +1,5 @@
 using Terrain.Editor.Core;
+using Terrain.Editor.Utilities.Binding;
 
 namespace Terrain.Editor.ViewModels
 {
@@ -20,6 +21,7 @@ namespace Terrain.Editor.ViewModels
                 NotifyPropertyChanged(nameof(SelectedObjectId));
             }
         }
+        public ObjectReference SelectedObject { get; }
 
         public TerrainBrushTool TerrainBrushTool
         {
@@ -92,6 +94,11 @@ namespace Terrain.Editor.ViewModels
                 lastReadState.SceneLightDirection = value;
                 NotifyPropertyChanged(nameof(SceneLightDirection));
             }
+        }
+
+        public EditorUiStateViewModel()
+        {
+            SelectedObject = new ObjectReference(() => SelectedObjectId);
         }
 
         public void CheckForChanges()

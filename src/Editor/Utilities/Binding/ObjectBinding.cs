@@ -4,9 +4,9 @@ using System.Linq;
 using System.Windows;
 using Terrain.Editor.Core;
 
-namespace Terrain.Editor.Utilities
+namespace Terrain.Editor.Utilities.Binding
 {
-    internal class EditorBinding : DependencyObject
+    internal class ObjectBinding : DependencyObject
     {
         static readonly Type[] AllowedTargetPropertyTypes = new[]
         {
@@ -29,10 +29,10 @@ namespace Terrain.Editor.Utilities
             DependencyProperty.Register(
                 nameof(Source),
                 typeof(ObjectReference),
-                typeof(EditorBinding),
+                typeof(ObjectBinding),
                 new PropertyMetadata(ObjectReference.None));
 
-        public EditorBinding(
+        public ObjectBinding(
             DependencyObject targetObject, DependencyProperty targetProperty,
             ObjectProperty sourceProperty)
         {
@@ -42,13 +42,13 @@ namespace Terrain.Editor.Utilities
             this.targetProperty = targetProperty;
             this.sourceProperty = sourceProperty;
 
-            this.isStringProperty = targetProperty.PropertyType == typeof(string);
+            isStringProperty = targetProperty.PropertyType == typeof(string);
         }
 
         public void UpdateFromSource()
         {
             uint objectId = Source.GetObjectId();
-            float value = objectId == 0
+            float value = objectId == 0U
                 ? 0
                 : EditorCore.GetObjectProperty(objectId, sourceProperty);
 
@@ -61,20 +61,5 @@ namespace Terrain.Editor.Utilities
                 targetObject.SetValue(targetProperty, value);
             }
         }
-    }
-
-    internal class ObjectReference
-    {
-        internal static ObjectReference None { get; } = new ObjectReference(() => 0U);
-        internal static ObjectReference ById(uint id) => new ObjectReference(() => id);
-
-        private readonly Func<uint> getObjectId;
-
-        public ObjectReference(Func<uint> getObjectId)
-        {
-            this.getObjectId = getObjectId;
-        }
-
-        internal uint GetObjectId() => getObjectId();
     }
 }

@@ -4,7 +4,7 @@ using System.Windows.Threading;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 using Terrain.Editor.Platform;
-using Terrain.Editor.Utilities;
+using Terrain.Editor.Utilities.Binding;
 using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor

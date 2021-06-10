@@ -1,12 +1,10 @@
 ﻿using Microsoft.Win32;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Data;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 using Terrain.Editor.Platform;
-using Terrain.Editor.Utilities;
 using Terrain.Editor.ViewModels;
 
 namespace Terrain.Editor
@@ -42,23 +40,6 @@ namespace Terrain.Editor
                 var objectVm = cvsObjects.View.CurrentItem as EditorObjectViewModel;
                 App.Current.UiState.SelectedObjectId = objectVm?.ObjectId ?? 0;
             };
-
-            var selectedObjectRef = new ObjectReference(
-                () => App.Current.UiState.SelectedObjectId);
-            void Bind(TextBlock target, ObjectProperty prop)
-            {
-                var editorBinding = target.SetBinding(TextBlock.TextProperty, prop);
-                editorBinding.Source = selectedObjectRef;
-            }
-            Bind(tbObjectPositionX, ObjectProperty.ObjectPositionX);
-            Bind(tbObjectPositionY, ObjectProperty.ObjectPositionY);
-            Bind(tbObjectPositionZ, ObjectProperty.ObjectPositionZ);
-            Bind(tbObjectRotationX, ObjectProperty.ObjectRotationX);
-            Bind(tbObjectRotationY, ObjectProperty.ObjectRotationY);
-            Bind(tbObjectRotationZ, ObjectProperty.ObjectRotationZ);
-            Bind(tbObjectScaleX, ObjectProperty.ObjectScaleX);
-            Bind(tbObjectScaleY, ObjectProperty.ObjectScaleY);
-            Bind(tbObjectScaleZ, ObjectProperty.ObjectScaleZ);
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)
