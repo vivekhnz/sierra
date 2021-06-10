@@ -33,7 +33,7 @@ namespace Terrain.Editor.Utilities.Binding
                     return sourceProperty.ToString();
                 }
 
-                return null;
+                return targetProperty.DefaultMetadata.DefaultValue;
             }
 
             return null;

@@ -11,14 +11,13 @@ namespace Terrain.Editor.Utilities.Binding
         static readonly Type[] AllowedTargetPropertyTypes = new[]
         {
             typeof(float),
+            typeof(double),
             typeof(string)
         };
 
         DependencyObject targetObject;
         DependencyProperty targetProperty;
         ObjectProperty sourceProperty;
-
-        bool isStringProperty;
 
         public ObjectReference Source
         {
@@ -36,30 +35,30 @@ namespace Terrain.Editor.Utilities.Binding
             DependencyObject targetObject, DependencyProperty targetProperty,
             ObjectProperty sourceProperty)
         {
-            Debug.Assert(AllowedTargetPropertyTypes.Contains(targetProperty.PropertyType));
+            if (!AllowedTargetPropertyTypes.Contains(targetProperty.PropertyType))
+            {
+                throw new NotSupportedException(
+                    $"Unable to bind object property to target property of type '{targetProperty.PropertyType}'.");
+            }
 
             this.targetObject = targetObject;
             this.targetProperty = targetProperty;
             this.sourceProperty = sourceProperty;
-
-            isStringProperty = targetProperty.PropertyType == typeof(string);
         }
 
         public void UpdateFromSource()
         {
             uint objectId = Source.GetObjectId();
-            float value = objectId == 0U
-                ? 0
-                : EditorCore.GetObjectProperty(objectId, sourceProperty);
+            if (objectId == 0U)
+            {
+                targetObject.SetValue(targetProperty,
+                    targetProperty.DefaultMetadata.DefaultValue);
+                return;
+            }
 
-            if (isStringProperty)
-            {
-                targetObject.SetValue(targetProperty, value.ToString());
-            }
-            else
-            {
-                targetObject.SetValue(targetProperty, value);
-            }
+            float value = EditorCore.GetObjectProperty(objectId, sourceProperty);
+            object convertedValue = Convert.ChangeType(value, targetProperty.PropertyType);
+            targetObject.SetValue(targetProperty, convertedValue);
         }
     }
 }
