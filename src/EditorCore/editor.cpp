@@ -1711,23 +1711,6 @@ API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
     endTransaction(tx);
 }
 
-API_EXPORT EDITOR_SET_OBJECT_TRANSFORM(editorSetObjectTransform)
-{
-    EditorState *state = (EditorState *)memory->data.baseAddress;
-
-    EditorTransaction *tx = beginTransaction(&state->transactions);
-    setProperty(tx, objectId, PROP_OBJ_POSITION_X, positionX);
-    setProperty(tx, objectId, PROP_OBJ_POSITION_Y, positionY);
-    setProperty(tx, objectId, PROP_OBJ_POSITION_Z, positionZ);
-    setProperty(tx, objectId, PROP_OBJ_ROTATION_X, rotationX);
-    setProperty(tx, objectId, PROP_OBJ_ROTATION_Y, rotationY);
-    setProperty(tx, objectId, PROP_OBJ_ROTATION_Z, rotationZ);
-    setProperty(tx, objectId, PROP_OBJ_SCALE_X, scaleX);
-    setProperty(tx, objectId, PROP_OBJ_SCALE_Y, scaleY);
-    setProperty(tx, objectId, PROP_OBJ_SCALE_Z, scaleZ);
-    endTransaction(tx);
-}
-
 API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
@@ -1741,4 +1724,13 @@ API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
         }
     }
     return 0;
+}
+
+API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    EditorTransaction *tx = beginTransaction(&state->transactions);
+    setProperty(tx, objectId, property, value);
+    endTransaction(tx);
 }

@@ -375,14 +375,12 @@ typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 #define EDITOR_ADD_OBJECT(name) void name(EditorMemory *memory)
 typedef EDITOR_ADD_OBJECT(EditorAddObject);
 
-#define EDITOR_SET_OBJECT_TRANSFORM(name)                                                     \
-    void name(EditorMemory *memory, uint32 objectId, float positionX, float positionY,        \
-        float positionZ, float rotationX, float rotationY, float rotationZ, float scaleX,     \
-        float scaleY, float scaleZ)
-typedef EDITOR_SET_OBJECT_TRANSFORM(EditorSetObjectTransform);
-
 #define EDITOR_GET_OBJECT_PROPERTY(name)                                                      \
     float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
 typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);
+
+#define EDITOR_SET_OBJECT_PROPERTY(name)                                                      \
+    void name(EditorMemory *memory, uint32 objectId, ObjectProperty property, float value)
+typedef EDITOR_SET_OBJECT_PROPERTY(EditorSetObjectProperty);
 
 #endif

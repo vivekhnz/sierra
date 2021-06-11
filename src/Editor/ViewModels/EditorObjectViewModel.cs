@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using Terrain.Editor.Core;
 using Terrain.Editor.Engine;
 
@@ -17,49 +18,49 @@ namespace Terrain.Editor.ViewModels
         public float PositionX
         {
             get => position.X;
-            set { SetAndNotify(ref position.X, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref position.X, ObjectProperty.ObjectPositionX, value);
         }
         public float PositionY
         {
             get => position.Y;
-            set { SetAndNotify(ref position.Y, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref position.Y, ObjectProperty.ObjectPositionY, value);
         }
         public float PositionZ
         {
             get => position.Z;
-            set { SetAndNotify(ref position.Z, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref position.Z, ObjectProperty.ObjectPositionZ, value);
         }
 
         public float RotationX
         {
             get => rotation.X;
-            set { SetAndNotify(ref rotation.X, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref rotation.X, ObjectProperty.ObjectRotationX, value);
         }
         public float RotationY
         {
             get => rotation.Y;
-            set { SetAndNotify(ref rotation.Y, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref rotation.Y, ObjectProperty.ObjectRotationY, value);
         }
         public float RotationZ
         {
             get => rotation.Z;
-            set { SetAndNotify(ref rotation.Z, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref rotation.Z, ObjectProperty.ObjectRotationZ, value);
         }
 
         public float ScaleX
         {
             get => scale.X;
-            set { SetAndNotify(ref scale.X, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref scale.X, ObjectProperty.ObjectScaleX, value);
         }
         public float ScaleY
         {
             get => scale.Y;
-            set { SetAndNotify(ref scale.Y, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref scale.Y, ObjectProperty.ObjectScaleY, value);
         }
         public float ScaleZ
         {
             get => scale.Z;
-            set { SetAndNotify(ref scale.Z, value); UpdateTransform(); }
+            set => SetObjectPropertyInternal(ref scale.Z, ObjectProperty.ObjectScaleZ, value);
         }
 
         public EditorObjectViewModel(uint objectId)
@@ -71,12 +72,12 @@ namespace Terrain.Editor.ViewModels
             scale = new Vector3(1, 1, 1);
         }
 
-        private void UpdateTransform()
+        private void SetObjectPropertyInternal(
+            ref float field, ObjectProperty property,
+            float value, [CallerMemberName] string propertyName = null)
         {
-            EditorCore.SetObjectTransform(ObjectId,
-                position.X, position.Y, position.Z,
-                rotation.X, rotation.Y, rotation.Z,
-                scale.X, scale.Y, scale.Z);
+            SetAndNotify(ref field, value, propertyName);
+            EditorCore.SetObjectProperty(ObjectId, property, value);
         }
 
         internal void SetProperty(ObjectProperty property, float value)
