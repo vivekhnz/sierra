@@ -1,5 +1,5 @@
 using System;
-using System.Diagnostics;
+using System.ComponentModel;
 using System.Linq;
 using System.Windows;
 using Terrain.Editor.Core;
@@ -18,6 +18,8 @@ namespace Terrain.Editor.Utilities.Binding
         DependencyObject targetObject;
         DependencyProperty targetProperty;
         ObjectProperty sourceProperty;
+
+        bool isSettingTargetProperty;
 
         public ObjectReference Source
         {
@@ -44,6 +46,27 @@ namespace Terrain.Editor.Utilities.Binding
             this.targetObject = targetObject;
             this.targetProperty = targetProperty;
             this.sourceProperty = sourceProperty;
+
+            var targetPropMetadata = targetProperty.GetMetadata(targetProperty.OwnerType);
+            if (targetPropMetadata is FrameworkPropertyMetadata frameworkPropertyMetadata &&
+                frameworkPropertyMetadata.BindsTwoWayByDefault)
+            {
+                var targetPropDescriptor = DependencyPropertyDescriptor.FromProperty(
+                    targetProperty, targetProperty.OwnerType);
+                targetPropDescriptor.AddValueChanged(targetObject, OnTargetPropertyValueChanged);
+            }
+        }
+
+        private void OnTargetPropertyValueChanged(object sender, EventArgs e)
+        {
+            if (isSettingTargetProperty) return;
+
+            uint objectId = Source.GetObjectId();
+            if (objectId == 0U) return;
+
+            object value = targetObject.GetValue(targetProperty);
+            float convertedValue = (float)Convert.ChangeType(value, typeof(float));
+            EditorCore.SetObjectProperty(objectId, sourceProperty, convertedValue);
         }
 
         public void UpdateFromSource()
@@ -51,14 +74,20 @@ namespace Terrain.Editor.Utilities.Binding
             uint objectId = Source.GetObjectId();
             if (objectId == 0U)
             {
-                targetObject.SetValue(targetProperty,
-                    targetProperty.DefaultMetadata.DefaultValue);
+                SetTargetPropertyValue(targetProperty.DefaultMetadata.DefaultValue);
                 return;
             }
 
             float value = EditorCore.GetObjectProperty(objectId, sourceProperty);
             object convertedValue = Convert.ChangeType(value, targetProperty.PropertyType);
-            targetObject.SetValue(targetProperty, convertedValue);
+            SetTargetPropertyValue(convertedValue);
+        }
+
+        private void SetTargetPropertyValue(object value)
+        {
+            isSettingTargetProperty = true;
+            targetObject.SetValue(targetProperty, value);
+            isSettingTargetProperty = false;
         }
     }
 }

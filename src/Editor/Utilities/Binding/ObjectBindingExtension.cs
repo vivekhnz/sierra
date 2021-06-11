@@ -27,12 +27,6 @@ namespace Terrain.Editor.Utilities.Binding
                 var binding = EditorBindingEngine.SetBinding(
                     targetObject, targetProperty, sourceProperty);
                 binding.Source = App.Current?.UiState?.SelectedObject ?? ObjectReference.None;
-
-                if (targetProperty.PropertyType == typeof(string))
-                {
-                    return sourceProperty.ToString();
-                }
-
                 return targetProperty.DefaultMetadata.DefaultValue;
             }
 

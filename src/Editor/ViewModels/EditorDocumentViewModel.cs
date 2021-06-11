@@ -95,19 +95,7 @@ namespace Terrain.Editor.ViewModels
                 {
                     ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
 
-                    var objectVm = new EditorObjectViewModel(cmd.ObjectId)
-                    {
-                        Name = $"Object {cmd.ObjectId}"
-                    };
-                    Objects.Add(objectVm);
-                }
-                else if (entry.Type == EditorCommandType.SetObjectProperty)
-                {
-                    ref readonly SetObjectPropertyCommand cmd =
-                        ref entry.As<SetObjectPropertyCommand>();
-                    uint objectId = cmd.ObjectId;
-                    var objectVm = Objects.FirstOrDefault(vm => vm.ObjectId == objectId);
-                    objectVm?.SetProperty(cmd.Property, cmd.Value);
+                    Objects.Add(new EditorObjectViewModel(cmd.ObjectId));
                 }
             }
 

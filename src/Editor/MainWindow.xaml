@@ -331,8 +331,7 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="-100" Maximum="100"
-                    Value="{Binding Source={StaticResource Objects}, Path=/PositionX}"
+                <Slider Minimum="-100" Maximum="100" Value="{b:ObjectBinding ObjectPositionX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
                 <TextBlock Text="{b:ObjectBinding ObjectPositionX}" Grid.Column="2"
@@ -340,8 +339,7 @@
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="-100" Maximum="100"
-                    Value="{Binding Source={StaticResource Objects}, Path=/PositionY}"
+                <Slider Minimum="-100" Maximum="100" Value="{b:ObjectBinding ObjectPositionY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
                 <TextBlock Text="{b:ObjectBinding ObjectPositionY}" Grid.Column="2"
@@ -349,8 +347,7 @@
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="-100" Maximum="100"
-                    Value="{Binding Source={StaticResource Objects}, Path=/PositionZ}"
+                <Slider Minimum="-100" Maximum="100" Value="{b:ObjectBinding ObjectPositionZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
                 <TextBlock Text="{b:ObjectBinding ObjectPositionZ}" Grid.Column="2"
@@ -370,8 +367,7 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="-360" Maximum="360"
-                    Value="{Binding Source={StaticResource Objects}, Path=/RotationX}"
+                <Slider Minimum="-360" Maximum="360" Value="{b:ObjectBinding ObjectRotationX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
                 <TextBlock Text="{b:ObjectBinding ObjectRotationX}" Grid.Column="2"
@@ -379,8 +375,7 @@
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="-360" Maximum="360"
-                    Value="{Binding Source={StaticResource Objects}, Path=/RotationY}"
+                <Slider Minimum="-360" Maximum="360" Value="{b:ObjectBinding ObjectRotationY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
                 <TextBlock Text="{b:ObjectBinding ObjectRotationY}" Grid.Column="2"
@@ -388,8 +383,7 @@
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="-360" Maximum="360"
-                    Value="{Binding Source={StaticResource Objects}, Path=/RotationZ}"
+                <Slider Minimum="-360" Maximum="360" Value="{b:ObjectBinding ObjectRotationZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
                 <TextBlock Text="{b:ObjectBinding ObjectRotationZ}" Grid.Column="2"
@@ -409,8 +403,7 @@
                 </Grid.RowDefinitions>
                 <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="0" Maximum="10"
-                    Value="{Binding Source={StaticResource Objects}, Path=/ScaleX}"
+                <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleX}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
                 <TextBlock Text="{b:ObjectBinding ObjectScaleX}" Grid.Column="2" Grid.Row="0"
@@ -418,8 +411,7 @@
 
                 <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="0" Maximum="10"
-                    Value="{Binding Source={StaticResource Objects}, Path=/ScaleY}"
+                <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleY}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
                 <TextBlock Text="{b:ObjectBinding ObjectScaleY}" Grid.Column="2" Grid.Row="1"
@@ -427,8 +419,7 @@
 
                 <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
                     HorizontalAlignment="Right" />
-                <Slider Minimum="0" Maximum="10"
-                    Value="{Binding Source={StaticResource Objects}, Path=/ScaleZ}"
+                <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleZ}"
                     SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
                     IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
                 <TextBlock Text="{b:ObjectBinding ObjectScaleZ}" Grid.Column="2" Grid.Row="2"
