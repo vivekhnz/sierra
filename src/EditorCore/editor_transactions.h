@@ -16,17 +16,18 @@ enum EditorCommandType
     EDITOR_COMMAND_SetObjectPropertyCommand
 };
 
-struct CommandBuffer
+struct TransactionState;
+struct Transaction
 {
-    void *baseAddress;
-    uint64 size;
+    TransactionState *transactions;
+    void *commandBufferBaseAddress;
+    uint64 commandBufferMaxSize;
 };
 
-struct TransactionState;
 struct ActiveTransactionDataBlock
 {
     TransactionState *transactions;
-    CommandBuffer commandBuffer;
+    Transaction tx;
     ActiveTransactionDataBlock *prev;
     ActiveTransactionDataBlock *next;
 };
@@ -42,12 +43,6 @@ struct TransactionState
     uint64 committedUsed;
 
     bool isInTransaction;
-};
-
-struct EditorTransaction
-{
-    TransactionState *state;
-    CommandBuffer commandBuffer;
 };
 
 struct AddMaterialCommand

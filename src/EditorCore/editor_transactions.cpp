@@ -1,44 +1,44 @@
 #include "editor_transactions.h"
 
-void *pushCommandBufferData(CommandBuffer *buffer, uint64 size)
+void *pushTransactionData(Transaction *tx, uint64 size)
 {
-    uint64 *used = (uint64 *)buffer->baseAddress;
+    uint64 *used = (uint64 *)tx->commandBufferBaseAddress;
 
-    uint64 availableStorage = buffer->size - *used;
+    uint64 availableStorage = tx->commandBufferMaxSize - *used;
     assert(availableStorage >= size);
 
-    void *address = (uint8 *)buffer->baseAddress + *used;
+    void *address = (uint8 *)tx->commandBufferBaseAddress + *used;
     *used += size;
 
     return address;
 }
 
-EditorTransaction *beginTransaction(TransactionState *state)
+Transaction *beginTransaction(TransactionState *state)
 {
     assert(!state->isInTransaction);
     state->isInTransaction = true;
 
     uint8 *baseAddress = (uint8 *)state->committedBaseAddress + state->committedUsed;
-    EditorTransaction *tx = (EditorTransaction *)baseAddress;
-    tx->state = state;
-    tx->commandBuffer.baseAddress = baseAddress + sizeof(EditorTransaction);
-    tx->commandBuffer.size =
-        state->committedSize - (state->committedUsed + sizeof(EditorTransaction));
+    Transaction *tx = (Transaction *)baseAddress;
+    tx->transactions = state;
+    tx->commandBufferBaseAddress = baseAddress + sizeof(Transaction);
+    tx->commandBufferMaxSize =
+        state->committedSize - (state->committedUsed + sizeof(Transaction));
 
     // the first 8 bytes of the command buffer is the no. of bytes used within the buffer
     // this is inclusive of the 8 bytes storing the amount used
-    *((uint64 *)tx->commandBuffer.baseAddress) = sizeof(uint64);
+    *((uint64 *)tx->commandBufferBaseAddress) = sizeof(uint64);
 
     return tx;
 }
-void endTransaction(EditorTransaction *tx)
+void endTransaction(Transaction *tx)
 {
-    assert(tx->state->isInTransaction);
-    tx->state->isInTransaction = false;
+    assert(tx->transactions->isInTransaction);
+    tx->transactions->isInTransaction = false;
 
-    uint64 *used = (uint64 *)tx->commandBuffer.baseAddress;
-    tx->commandBuffer.size = *used;
-    tx->state->committedUsed += sizeof(EditorTransaction) + tx->commandBuffer.size;
+    uint64 *used = (uint64 *)tx->commandBufferBaseAddress;
+    tx->commandBufferMaxSize = *used;
+    tx->transactions->committedUsed += sizeof(Transaction) + tx->commandBufferMaxSize;
 }
 
 ActiveTransactionDataBlock *beginActiveTransaction(TransactionState *state)
@@ -88,29 +88,27 @@ void discardActiveTransaction(ActiveTransactionDataBlock *tx)
 }
 void commitActiveTransaction(ActiveTransactionDataBlock *activeTx)
 {
-    CommandBuffer *srcBuffer = &activeTx->commandBuffer;
-    uint64 *srcBufferUsed = (uint64 *)srcBuffer->baseAddress;
+    uint64 *srcBufferUsed = (uint64 *)activeTx->tx.commandBufferBaseAddress;
     uint64 usedExcludingSize = *srcBufferUsed - sizeof(uint64);
-    uint8 *srcBufferCommands = (uint8 *)srcBuffer->baseAddress + sizeof(uint64);
+    uint8 *srcBufferCommands = (uint8 *)activeTx->tx.commandBufferBaseAddress + sizeof(uint64);
 
-    EditorTransaction *commitTx = beginTransaction(activeTx->transactions);
-    CommandBuffer *dstBuffer = &commitTx->commandBuffer;
+    Transaction *commitTx = beginTransaction(activeTx->transactions);
 
-    void *dst = pushCommandBufferData(dstBuffer, usedExcludingSize);
+    void *dst = pushTransactionData(commitTx, usedExcludingSize);
     memcpy(dst, srcBufferCommands, usedExcludingSize);
 
     endTransaction(commitTx);
     discardActiveTransaction(activeTx);
 }
 
-void *pushCommandInternal(CommandBuffer *buffer, EditorCommandType type, uint64 size)
+void *pushCommandInternal(Transaction *tx, EditorCommandType type, uint64 size)
 {
-    *((EditorCommandType *)pushCommandBufferData(buffer, sizeof(EditorCommandType))) = type;
-    *((uint64 *)pushCommandBufferData(buffer, sizeof(uint64))) = size;
-    return pushCommandBufferData(buffer, size);
+    *((EditorCommandType *)pushTransactionData(tx, sizeof(EditorCommandType))) = type;
+    *((uint64 *)pushTransactionData(tx, sizeof(uint64))) = size;
+    return pushTransactionData(tx, size);
 }
 #define pushCommand(tx, type)                                                                 \
-    (type *)pushCommandInternal(&tx->commandBuffer, EDITOR_COMMAND_##type, sizeof(type))
+    (type *)pushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
 
 struct Iterator
 {
@@ -122,13 +120,13 @@ struct CommandEntry
     EditorCommandType type;
     void *data;
 };
-Iterator getIterator(CommandBuffer *commandBuffer)
+Iterator getIterator(Transaction *tx)
 {
-    uint64 *used = (uint64 *)commandBuffer->baseAddress;
+    uint64 *used = (uint64 *)tx->commandBufferBaseAddress;
 
     Iterator iterator;
-    iterator.position = (uint8 *)commandBuffer->baseAddress + sizeof(uint64);
-    iterator.end = (uint8 *)commandBuffer->baseAddress + *used;
+    iterator.position = (uint8 *)tx->commandBufferBaseAddress + sizeof(uint64);
+    iterator.end = (uint8 *)tx->commandBufferBaseAddress + *used;
     return iterator;
 }
 Iterator getIterator(TransactionState *state)
@@ -142,10 +140,10 @@ bool isIteratorFinished(Iterator *iterator)
 {
     return iterator->position >= iterator->end;
 }
-EditorTransaction *getNextTransaction(Iterator *iterator)
+Transaction *getNextTransaction(Iterator *iterator)
 {
-    EditorTransaction *tx = (EditorTransaction *)iterator->position;
-    iterator->position += sizeof(*tx) + tx->commandBuffer.size;
+    Transaction *tx = (Transaction *)iterator->position;
+    iterator->position += sizeof(*tx) + tx->commandBufferMaxSize;
     return tx;
 }
 CommandEntry getNextCommand(Iterator *iterator)

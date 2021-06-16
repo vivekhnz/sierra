@@ -463,12 +463,14 @@ bool initializeEditor(EditorMemory *memory)
     {
         ActiveTransactionDataBlock *block = &state->transactions.activeData[i];
         block->transactions = &state->transactions;
-        block->commandBuffer.size = 1 * 1024;
-        block->commandBuffer.baseAddress = pushEditorData(memory, block->commandBuffer.size);
+        block->tx.transactions = &state->transactions;
+        block->tx.commandBufferMaxSize = 1 * 1024;
+        block->tx.commandBufferBaseAddress =
+            pushEditorData(memory, block->tx.commandBufferMaxSize);
 
         // the first 8 bytes of the command buffer is the no. of bytes used within the buffer
         // this is inclusive of the 8 bytes storing the amount used
-        *((uint64 *)block->commandBuffer.baseAddress) = sizeof(uint64);
+        *((uint64 *)block->tx.commandBufferBaseAddress) = sizeof(uint64);
 
         block->prev = prevBlock;
         prevBlock = block;
@@ -479,7 +481,7 @@ bool initializeEditor(EditorMemory *memory)
         pushEditorData(memory, state->transactions.committedSize);
 
     // add default materials
-    EditorTransaction *addMaterialsTx = beginTransaction(&state->transactions);
+    Transaction *addMaterialsTx = beginTransaction(&state->transactions);
 
     AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
     cmd->materialId = sceneState->nextMaterialId++;
@@ -520,7 +522,7 @@ bool initializeEditor(EditorMemory *memory)
     endTransaction(addMaterialsTx);
 
     // add default objects
-    EditorTransaction *addObjectsTx = beginTransaction(&state->transactions);
+    Transaction *addObjectsTx = beginTransaction(&state->transactions);
     for (uint32 i = 0; i < 4; i++)
     {
         AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
@@ -698,9 +700,9 @@ void discardChanges(EditorMemory *memory)
         &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
 }
 
-void applyTransaction(CommandBuffer *commandBuffer, EditorDocumentState *docState)
+void applyTransaction(Transaction *tx, EditorDocumentState *docState)
 {
-    Iterator iterator = getIterator(commandBuffer);
+    Iterator iterator = getIterator(tx);
     while (!isIteratorFinished(&iterator))
     {
         CommandEntry cmdEntry = getNextCommand(&iterator);
@@ -970,9 +972,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     Iterator txIterator = getIterator(transactions);
     while (!isIteratorFinished(&txIterator))
     {
-        EditorTransaction *tx = getNextTransaction(&txIterator);
-        applyTransaction(&tx->commandBuffer, &state->docState);
-        memory->platformPublishTransaction(tx->commandBuffer.baseAddress);
+        Transaction *tx = getNextTransaction(&txIterator);
+        applyTransaction(tx, &state->docState);
+        memory->platformPublishTransaction(tx->commandBufferBaseAddress);
     }
     transactions->committedUsed = 0;
 
@@ -983,7 +985,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         ActiveTransactionDataBlock *currentTx = transactions->firstActive;
         do
         {
-            applyTransaction(&currentTx->commandBuffer, &state->previewDocState);
+            applyTransaction(&currentTx->tx, &state->previewDocState);
             currentTx = currentTx->next;
         } while (currentTx);
     }
@@ -1297,9 +1299,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             float x = transform->position.x + state->moveObjectTx.delta.x;
             float z = transform->position.z + state->moveObjectTx.delta.z;
 
-            *((uint64 *)state->moveObjectTx.tx->commandBuffer.baseAddress) = sizeof(uint64);
-            setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
-            setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
+            *((uint64 *)state->moveObjectTx.tx->tx.commandBufferBaseAddress) = sizeof(uint64);
+            setProperty(&state->moveObjectTx.tx->tx, objectId, PROP_OBJ_POSITION_X, x);
+            setProperty(&state->moveObjectTx.tx->tx, objectId, PROP_OBJ_POSITION_Z, z);
         }
         else
         {
@@ -1627,7 +1629,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
     cmd->materialId = state->sceneState.nextMaterialId++;
     cmd->albedoTextureAssetId = props.albedoTextureAssetId;
@@ -1646,7 +1648,7 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     DeleteMaterialCommand *cmd = pushCommand(tx, DeleteMaterialCommand);
     cmd->index = index;
     endTransaction(tx);
@@ -1656,7 +1658,7 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     SwapMaterialCommand *cmd = pushCommand(tx, SwapMaterialCommand);
     cmd->indexA = indexA;
     cmd->indexB = indexB;
@@ -1667,7 +1669,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
     cmd->materialId = materialId;
     cmd->textureType = textureType;
@@ -1679,7 +1681,7 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
     cmd->materialId = materialId;
     cmd->textureSizeInWorldUnits = textureSize;
@@ -1694,7 +1696,7 @@ API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
     cmd->objectId = state->sceneState.nextObjectId++;
     endTransaction(tx);
@@ -1719,7 +1721,7 @@ API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
-    EditorTransaction *tx = beginTransaction(&state->transactions);
+    Transaction *tx = beginTransaction(&state->transactions);
     setProperty(tx, objectId, property, value);
     endTransaction(tx);
 }
