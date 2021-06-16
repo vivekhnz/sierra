@@ -465,6 +465,11 @@ bool initializeEditor(EditorMemory *memory)
         block->transactions = &state->transactions;
         block->commandBuffer.size = 1 * 1024;
         block->commandBuffer.baseAddress = pushEditorData(memory, block->commandBuffer.size);
+
+        // the first 8 bytes of the command buffer is the no. of bytes used within the buffer
+        // this is inclusive of the 8 bytes storing the amount used
+        *((uint64 *)block->commandBuffer.baseAddress) = sizeof(uint64);
+
         block->prev = prevBlock;
         prevBlock = block;
     }
@@ -967,8 +972,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         EditorTransaction *tx = getNextTransaction(&txIterator);
         applyTransaction(&tx->commandBuffer, &state->docState);
-        memory->platformPublishTransaction(
-            tx->commandBuffer.baseAddress, tx->commandBuffer.used);
+        memory->platformPublishTransaction(tx->commandBuffer.baseAddress);
     }
     transactions->committedUsed = 0;
 
@@ -1293,7 +1297,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             float x = transform->position.x + state->moveObjectTx.delta.x;
             float z = transform->position.z + state->moveObjectTx.delta.z;
 
-            state->moveObjectTx.tx->commandBuffer.used = 0;
+            *((uint64 *)state->moveObjectTx.tx->commandBuffer.baseAddress) = sizeof(uint64);
             setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
             setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
         }

@@ -2,11 +2,13 @@
 
 void *pushCommandBufferData(CommandBuffer *buffer, uint64 size)
 {
-    uint64 availableStorage = buffer->size - buffer->used;
+    uint64 *used = (uint64 *)buffer->baseAddress;
+
+    uint64 availableStorage = buffer->size - *used;
     assert(availableStorage >= size);
 
-    void *address = (uint8 *)buffer->baseAddress + buffer->used;
-    buffer->used += size;
+    void *address = (uint8 *)buffer->baseAddress + *used;
+    *used += size;
 
     return address;
 }
@@ -20,9 +22,12 @@ EditorTransaction *beginTransaction(TransactionState *state)
     EditorTransaction *tx = (EditorTransaction *)baseAddress;
     tx->state = state;
     tx->commandBuffer.baseAddress = baseAddress + sizeof(EditorTransaction);
-    tx->commandBuffer.used = 0;
     tx->commandBuffer.size =
         state->committedSize - (state->committedUsed + sizeof(EditorTransaction));
+
+    // the first 8 bytes of the command buffer is the no. of bytes used within the buffer
+    // this is inclusive of the 8 bytes storing the amount used
+    *((uint64 *)tx->commandBuffer.baseAddress) = sizeof(uint64);
 
     return tx;
 }
@@ -31,7 +36,8 @@ void endTransaction(EditorTransaction *tx)
     assert(tx->state->isInTransaction);
     tx->state->isInTransaction = false;
 
-    tx->commandBuffer.size = tx->commandBuffer.used;
+    uint64 *used = (uint64 *)tx->commandBuffer.baseAddress;
+    tx->commandBuffer.size = *used;
     tx->state->committedUsed += sizeof(EditorTransaction) + tx->commandBuffer.size;
 }
 
@@ -82,12 +88,16 @@ void discardActiveTransaction(ActiveTransactionDataBlock *tx)
 }
 void commitActiveTransaction(ActiveTransactionDataBlock *activeTx)
 {
-    EditorTransaction *commitTx = beginTransaction(activeTx->transactions);
-
     CommandBuffer *srcBuffer = &activeTx->commandBuffer;
+    uint64 *srcBufferUsed = (uint64 *)srcBuffer->baseAddress;
+    uint64 usedExcludingSize = *srcBufferUsed - sizeof(uint64);
+    uint8 *srcBufferCommands = (uint8 *)srcBuffer->baseAddress + sizeof(uint64);
+
+    EditorTransaction *commitTx = beginTransaction(activeTx->transactions);
     CommandBuffer *dstBuffer = &commitTx->commandBuffer;
-    void *dst = pushCommandBufferData(dstBuffer, srcBuffer->used);
-    memcpy(dst, srcBuffer->baseAddress, srcBuffer->used);
+
+    void *dst = pushCommandBufferData(dstBuffer, usedExcludingSize);
+    memcpy(dst, srcBufferCommands, usedExcludingSize);
 
     endTransaction(commitTx);
     discardActiveTransaction(activeTx);
@@ -114,9 +124,11 @@ struct CommandEntry
 };
 Iterator getIterator(CommandBuffer *commandBuffer)
 {
+    uint64 *used = (uint64 *)commandBuffer->baseAddress;
+
     Iterator iterator;
-    iterator.position = (uint8 *)commandBuffer->baseAddress;
-    iterator.end = (uint8 *)commandBuffer->baseAddress + commandBuffer->used;
+    iterator.position = (uint8 *)commandBuffer->baseAddress + sizeof(uint64);
+    iterator.end = (uint8 *)commandBuffer->baseAddress + *used;
     return iterator;
 }
 Iterator getIterator(TransactionState *state)

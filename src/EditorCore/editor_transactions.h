@@ -20,7 +20,6 @@ struct CommandBuffer
 {
     void *baseAddress;
     uint64 size;
-    uint64 used;
 };
 
 struct TransactionState;

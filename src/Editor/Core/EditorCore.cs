@@ -6,8 +6,7 @@ using Terrain.Editor.Engine;
 namespace Terrain.Editor.Core
 {
     internal delegate void PlatformCaptureMouse();
-    internal delegate void PlatformPublishTransaction(
-        ref byte commandBufferBaseAddress, ulong commandBufferSize);
+    internal delegate void PlatformPublishTransaction(ref byte commandBufferBaseAddress);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorMemory
@@ -361,12 +360,17 @@ namespace Terrain.Editor.Core
             return moduleHandle != IntPtr.Zero;
         }
 
-        private static void OnTransactionPublished(
-            ref byte commandBufferBaseAddress, ulong commandBufferSize)
+        private static void OnTransactionPublished(ref byte commandBufferBaseAddress)
         {
+            // the first 8 bytes contain the size of the command buffer
+            ReadOnlySpan<byte> bufferSizeSpan = MemoryMarshal.CreateReadOnlySpan<byte>(
+                ref commandBufferBaseAddress, sizeof(ulong));
+            ref readonly ulong bufferSize = ref MemoryMarshal.AsRef<ulong>(bufferSizeSpan);
+
             ReadOnlySpan<byte> byteSpan = MemoryMarshal.CreateReadOnlySpan(
-                ref commandBufferBaseAddress, (int)commandBufferSize);
-            EditorCommandList commands = new EditorCommandList(byteSpan);
+                ref commandBufferBaseAddress, (int)bufferSize);
+            ReadOnlySpan<byte> commandsSpan = byteSpan.Slice(sizeof(ulong));
+            EditorCommandList commands = new EditorCommandList(commandsSpan);
             TransactionPublished?.Invoke(commands);
         }
 
