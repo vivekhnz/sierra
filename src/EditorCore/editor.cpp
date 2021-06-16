@@ -465,13 +465,10 @@ bool initializeEditor(EditorMemory *memory)
         block->transactions = &state->transactions;
         block->tx.transactions = &state->transactions;
         block->tx.block = block;
-        block->tx.commandBufferMaxSize = 1 * 1024;
+        block->tx.commandBufferMaxSize = 1 * 1024 * 1024;
         block->tx.commandBufferBaseAddress =
             pushEditorData(memory, block->tx.commandBufferMaxSize);
-
-        // the first 8 bytes of the command buffer is the no. of bytes used within the buffer
-        // this is inclusive of the 8 bytes storing the amount used
-        *((uint64 *)block->tx.commandBufferBaseAddress) = sizeof(uint64);
+        clearTransaction(&block->tx);
 
         block->prev = prevBlock;
         prevBlock = block;
@@ -483,63 +480,68 @@ bool initializeEditor(EditorMemory *memory)
 
     // add default materials
     Transaction *addMaterialsTx = beginTransaction(&state->transactions);
+    if (addMaterialsTx)
+    {
+        AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+        cmd->materialId = sceneState->nextMaterialId++;
+        cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
+        cmd->normalTextureAssetId = assets->textureGroundNormal;
+        cmd->displacementTextureAssetId = assets->textureGroundDisplacement;
+        cmd->aoTextureAssetId = assets->textureGroundAo;
+        cmd->textureSizeInWorldUnits = 2.5f;
+        cmd->slopeStart = 0;
+        cmd->slopeEnd = 0;
+        cmd->altitudeStart = 0;
+        cmd->altitudeEnd = 0;
 
-    AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
-    cmd->materialId = sceneState->nextMaterialId++;
-    cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
-    cmd->normalTextureAssetId = assets->textureGroundNormal;
-    cmd->displacementTextureAssetId = assets->textureGroundDisplacement;
-    cmd->aoTextureAssetId = assets->textureGroundAo;
-    cmd->textureSizeInWorldUnits = 2.5f;
-    cmd->slopeStart = 0;
-    cmd->slopeEnd = 0;
-    cmd->altitudeStart = 0;
-    cmd->altitudeEnd = 0;
+        cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+        cmd->materialId = sceneState->nextMaterialId++;
+        cmd->albedoTextureAssetId = assets->textureRockAlbedo;
+        cmd->normalTextureAssetId = assets->textureRockNormal;
+        cmd->displacementTextureAssetId = assets->textureRockDisplacement;
+        cmd->aoTextureAssetId = assets->textureRockAo;
+        cmd->textureSizeInWorldUnits = 13;
+        cmd->slopeStart = 0.2f;
+        cmd->slopeEnd = 0.4f;
+        cmd->altitudeStart = 0;
+        cmd->altitudeEnd = 0.001f;
 
-    cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
-    cmd->materialId = sceneState->nextMaterialId++;
-    cmd->albedoTextureAssetId = assets->textureRockAlbedo;
-    cmd->normalTextureAssetId = assets->textureRockNormal;
-    cmd->displacementTextureAssetId = assets->textureRockDisplacement;
-    cmd->aoTextureAssetId = assets->textureRockAo;
-    cmd->textureSizeInWorldUnits = 13;
-    cmd->slopeStart = 0.2f;
-    cmd->slopeEnd = 0.4f;
-    cmd->altitudeStart = 0;
-    cmd->altitudeEnd = 0.001f;
+        cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
+        cmd->materialId = sceneState->nextMaterialId++;
+        cmd->albedoTextureAssetId = assets->textureSnowAlbedo;
+        cmd->normalTextureAssetId = assets->textureSnowNormal;
+        cmd->displacementTextureAssetId = assets->textureSnowDisplacement;
+        cmd->aoTextureAssetId = assets->textureSnowAo;
+        cmd->textureSizeInWorldUnits = 2;
+        cmd->slopeStart = 0.4f;
+        cmd->slopeEnd = 0.2f;
+        cmd->altitudeStart = 0.25f;
+        cmd->altitudeEnd = 0.28f;
 
-    cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
-    cmd->materialId = sceneState->nextMaterialId++;
-    cmd->albedoTextureAssetId = assets->textureSnowAlbedo;
-    cmd->normalTextureAssetId = assets->textureSnowNormal;
-    cmd->displacementTextureAssetId = assets->textureSnowDisplacement;
-    cmd->aoTextureAssetId = assets->textureSnowAo;
-    cmd->textureSizeInWorldUnits = 2;
-    cmd->slopeStart = 0.4f;
-    cmd->slopeEnd = 0.2f;
-    cmd->altitudeStart = 0.25f;
-    cmd->altitudeEnd = 0.28f;
-
-    endTransaction(addMaterialsTx);
+        commitTransaction(addMaterialsTx);
+    }
 
     // add default objects
     Transaction *addObjectsTx = beginTransaction(&state->transactions);
-    for (uint32 i = 0; i < 4; i++)
+    if (addObjectsTx)
     {
-        AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
-        addCmd->objectId = sceneState->nextObjectId++;
+        for (uint32 i = 0; i < 4; i++)
+        {
+            AddObjectCommand *addCmd = pushCommand(addObjectsTx, AddObjectCommand);
+            addCmd->objectId = sceneState->nextObjectId++;
 
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_X, 0);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_Y, 0);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_Z, 5.0f * i);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_X, 0);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_Y, 0);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_Z, 0);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_X, 1);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_Y, 1);
-        setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_Z, 1);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_X, 0);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_Y, 0);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_POSITION_Z, 5.0f * i);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_X, 0);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_Y, 0);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_ROTATION_Z, 0);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_X, 1);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_Y, 1);
+            setProperty(addObjectsTx, addCmd->objectId, PROP_OBJ_SCALE_Z, 1);
+        }
+        commitTransaction(addObjectsTx);
     }
-    endTransaction(addObjectsTx);
 
     return 1;
 }
@@ -973,9 +975,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     Iterator txIterator = getIterator(transactions);
     while (!isIteratorFinished(&txIterator))
     {
-        Transaction *tx = getNextTransaction(&txIterator);
-        applyTransaction(tx, &state->docState);
-        memory->platformPublishTransaction(tx->commandBufferBaseAddress);
+        Transaction tx = getNextTransaction(&txIterator);
+        applyTransaction(&tx, &state->docState);
+        memory->platformPublishTransaction(tx.commandBufferBaseAddress);
     }
     transactions->committedUsed = 0;
 
@@ -1268,7 +1270,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         {
             if (state->docState.objectIds[i] == state->uiState.selectedObjectId)
             {
-                state->moveObjectTx.tx = beginActiveTransaction(transactions);
+                state->moveObjectTx.tx = beginTransaction(transactions);
                 if (state->moveObjectTx.tx)
                 {
                     state->moveObjectTx.delta = glm::vec3(0);
@@ -1283,7 +1285,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
         {
-            discardActiveTransaction(state->moveObjectTx.tx);
+            discardTransaction(state->moveObjectTx.tx);
             state->moveObjectTx.tx = 0;
         }
         else if (moveBtnsCurrentlyPressed)
@@ -1300,13 +1302,13 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             float x = transform->position.x + state->moveObjectTx.delta.x;
             float z = transform->position.z + state->moveObjectTx.delta.z;
 
-            *((uint64 *)state->moveObjectTx.tx->commandBufferBaseAddress) = sizeof(uint64);
+            clearTransaction(state->moveObjectTx.tx);
             setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
             setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
         }
         else
         {
-            commitActiveTransaction(state->moveObjectTx.tx);
+            commitTransaction(state->moveObjectTx.tx);
             state->moveObjectTx.tx = 0;
         }
     }
@@ -1631,18 +1633,21 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
-    cmd->materialId = state->sceneState.nextMaterialId++;
-    cmd->albedoTextureAssetId = props.albedoTextureAssetId;
-    cmd->normalTextureAssetId = props.normalTextureAssetId;
-    cmd->displacementTextureAssetId = props.displacementTextureAssetId;
-    cmd->aoTextureAssetId = props.aoTextureAssetId;
-    cmd->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
-    cmd->slopeStart = props.slopeStart;
-    cmd->slopeEnd = props.slopeEnd;
-    cmd->altitudeStart = props.altitudeStart;
-    cmd->altitudeEnd = props.altitudeEnd;
-    endTransaction(tx);
+    if (tx)
+    {
+        AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
+        cmd->materialId = state->sceneState.nextMaterialId++;
+        cmd->albedoTextureAssetId = props.albedoTextureAssetId;
+        cmd->normalTextureAssetId = props.normalTextureAssetId;
+        cmd->displacementTextureAssetId = props.displacementTextureAssetId;
+        cmd->aoTextureAssetId = props.aoTextureAssetId;
+        cmd->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
+        cmd->slopeStart = props.slopeStart;
+        cmd->slopeEnd = props.slopeEnd;
+        cmd->altitudeStart = props.altitudeStart;
+        cmd->altitudeEnd = props.altitudeEnd;
+        commitTransaction(tx);
+    }
 }
 
 API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
@@ -1650,9 +1655,12 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    DeleteMaterialCommand *cmd = pushCommand(tx, DeleteMaterialCommand);
-    cmd->index = index;
-    endTransaction(tx);
+    if (tx)
+    {
+        DeleteMaterialCommand *cmd = pushCommand(tx, DeleteMaterialCommand);
+        cmd->index = index;
+        commitTransaction(tx);
+    }
 }
 
 API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
@@ -1660,10 +1668,13 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    SwapMaterialCommand *cmd = pushCommand(tx, SwapMaterialCommand);
-    cmd->indexA = indexA;
-    cmd->indexB = indexB;
-    endTransaction(tx);
+    if (tx)
+    {
+        SwapMaterialCommand *cmd = pushCommand(tx, SwapMaterialCommand);
+        cmd->indexA = indexA;
+        cmd->indexB = indexB;
+        commitTransaction(tx);
+    }
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
@@ -1671,11 +1682,14 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
-    cmd->materialId = materialId;
-    cmd->textureType = textureType;
-    cmd->assetId = assetId;
-    endTransaction(tx);
+    if (tx)
+    {
+        SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
+        cmd->materialId = materialId;
+        cmd->textureType = textureType;
+        cmd->assetId = assetId;
+        commitTransaction(tx);
+    }
 }
 
 API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
@@ -1683,14 +1697,17 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
-    cmd->materialId = materialId;
-    cmd->textureSizeInWorldUnits = textureSize;
-    cmd->slopeStart = slopeStart;
-    cmd->slopeEnd = slopeEnd;
-    cmd->altitudeStart = altitudeStart;
-    cmd->altitudeEnd = altitudeEnd;
-    endTransaction(tx);
+    if (tx)
+    {
+        SetMaterialPropertiesCommand *cmd = pushCommand(tx, SetMaterialPropertiesCommand);
+        cmd->materialId = materialId;
+        cmd->textureSizeInWorldUnits = textureSize;
+        cmd->slopeStart = slopeStart;
+        cmd->slopeEnd = slopeEnd;
+        cmd->altitudeStart = altitudeStart;
+        cmd->altitudeEnd = altitudeEnd;
+        commitTransaction(tx);
+    }
 }
 
 API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
@@ -1698,9 +1715,12 @@ API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
-    cmd->objectId = state->sceneState.nextObjectId++;
-    endTransaction(tx);
+    if (tx)
+    {
+        AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
+        cmd->objectId = state->sceneState.nextObjectId++;
+        commitTransaction(tx);
+    }
 }
 
 API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
@@ -1723,6 +1743,9 @@ API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
     EditorState *state = (EditorState *)memory->data.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
-    setProperty(tx, objectId, property, value);
-    endTransaction(tx);
+    if (tx)
+    {
+        setProperty(tx, objectId, property, value);
+        commitTransaction(tx);
+    }
 }

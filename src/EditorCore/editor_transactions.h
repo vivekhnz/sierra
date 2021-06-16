@@ -43,8 +43,6 @@ struct TransactionState
     void *committedBaseAddress;
     uint64 committedSize;
     uint64 committedUsed;
-
-    bool isInTransaction;
 };
 
 struct AddMaterialCommand
