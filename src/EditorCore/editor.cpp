@@ -464,6 +464,7 @@ bool initializeEditor(EditorMemory *memory)
         ActiveTransactionDataBlock *block = &state->transactions.activeData[i];
         block->transactions = &state->transactions;
         block->tx.transactions = &state->transactions;
+        block->tx.block = block;
         block->tx.commandBufferMaxSize = 1 * 1024;
         block->tx.commandBufferBaseAddress =
             pushEditorData(memory, block->tx.commandBufferMaxSize);
@@ -1299,9 +1300,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             float x = transform->position.x + state->moveObjectTx.delta.x;
             float z = transform->position.z + state->moveObjectTx.delta.z;
 
-            *((uint64 *)state->moveObjectTx.tx->tx.commandBufferBaseAddress) = sizeof(uint64);
-            setProperty(&state->moveObjectTx.tx->tx, objectId, PROP_OBJ_POSITION_X, x);
-            setProperty(&state->moveObjectTx.tx->tx, objectId, PROP_OBJ_POSITION_Z, z);
+            *((uint64 *)state->moveObjectTx.tx->commandBufferBaseAddress) = sizeof(uint64);
+            setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
+            setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
         }
         else
         {

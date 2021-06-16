@@ -216,7 +216,7 @@ struct EditorState
 
     struct
     {
-        ActiveTransactionDataBlock *tx;
+        Transaction *tx;
         uint32 objectId;
         ObjectTransform *transform;
         glm::vec3 delta;

@@ -17,9 +17,11 @@ enum EditorCommandType
 };
 
 struct TransactionState;
+struct ActiveTransactionDataBlock;
 struct Transaction
 {
     TransactionState *transactions;
+    ActiveTransactionDataBlock *block;
     void *commandBufferBaseAddress;
     uint64 commandBufferMaxSize;
 };

@@ -21,6 +21,7 @@ Transaction *beginTransaction(TransactionState *state)
     uint8 *baseAddress = (uint8 *)state->committedBaseAddress + state->committedUsed;
     Transaction *tx = (Transaction *)baseAddress;
     tx->transactions = state;
+    tx->block = 0;
     tx->commandBufferBaseAddress = baseAddress + sizeof(Transaction);
     tx->commandBufferMaxSize =
         state->committedSize - (state->committedUsed + sizeof(Transaction));
@@ -41,7 +42,7 @@ void endTransaction(Transaction *tx)
     tx->transactions->committedUsed += sizeof(Transaction) + tx->commandBufferMaxSize;
 }
 
-ActiveTransactionDataBlock *beginActiveTransaction(TransactionState *state)
+Transaction *beginActiveTransaction(TransactionState *state)
 {
     ActiveTransactionDataBlock *result = 0;
     if (state->nextFreeActive)
@@ -66,33 +67,36 @@ ActiveTransactionDataBlock *beginActiveTransaction(TransactionState *state)
         }
     }
 
-    return result;
+    return result ? &result->tx : 0;
 }
-void discardActiveTransaction(ActiveTransactionDataBlock *tx)
+void discardActiveTransaction(Transaction *tx)
 {
-    if (tx->prev)
+    assert(tx->block);
+    ActiveTransactionDataBlock *block = tx->block;
+    if (block->prev)
     {
-        tx->prev->next = tx->next;
+        block->prev->next = block->next;
     }
     else
     {
-        tx->transactions->firstActive = tx->next;
+        block->transactions->firstActive = block->next;
     }
-    if (tx->next)
+    if (block->next)
     {
-        tx->next->prev = tx->prev;
+        block->next->prev = block->prev;
     }
-    tx->next = 0;
-    tx->prev = tx->transactions->nextFreeActive;
-    tx->transactions->nextFreeActive = tx;
+    block->next = 0;
+    block->prev = block->transactions->nextFreeActive;
+    block->transactions->nextFreeActive = block;
 }
-void commitActiveTransaction(ActiveTransactionDataBlock *activeTx)
+void commitActiveTransaction(Transaction *activeTx)
 {
-    uint64 *srcBufferUsed = (uint64 *)activeTx->tx.commandBufferBaseAddress;
+    assert(activeTx->block);
+    uint64 *srcBufferUsed = (uint64 *)activeTx->commandBufferBaseAddress;
     uint64 usedExcludingSize = *srcBufferUsed - sizeof(uint64);
-    uint8 *srcBufferCommands = (uint8 *)activeTx->tx.commandBufferBaseAddress + sizeof(uint64);
+    uint8 *srcBufferCommands = (uint8 *)activeTx->commandBufferBaseAddress + sizeof(uint64);
 
-    Transaction *commitTx = beginTransaction(activeTx->transactions);
+    Transaction *commitTx = beginTransaction(activeTx->block->transactions);
 
     void *dst = pushTransactionData(commitTx, usedExcludingSize);
     memcpy(dst, srcBufferCommands, usedExcludingSize);
