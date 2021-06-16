@@ -1250,9 +1250,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // move object with arrow keys
-    ActiveTransactionDataBlock *activeTx =
-        getActiveTransaction(transactions, ACTIVE_TX_MOVE_OBJECT);
-    if (!activeTx)
+    if (!state->moveObjectTx.tx)
     {
         ObjectTransform *transform = 0;
         if (state->uiState.selectedObjectId)
@@ -1274,20 +1272,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 || isNewButtonPress(input, EDITOR_INPUT_KEY_DOWN));
         if (isStartingTransaction)
         {
-            activeTx = beginActiveTransaction(transactions, ACTIVE_TX_MOVE_OBJECT);
-            if (activeTx)
+            state->moveObjectTx.tx = beginActiveTransaction(transactions);
+            if (state->moveObjectTx.tx)
             {
-                state->moveObjectTxDelta = glm::vec3(0);
-                state->moveObjectId = state->uiState.selectedObjectId;
-                state->moveObjectTransform = transform;
+                state->moveObjectTx.delta = glm::vec3(0);
+                state->moveObjectTx.objectId = state->uiState.selectedObjectId;
+                state->moveObjectTx.transform = transform;
             }
         }
     }
-    if (activeTx)
+    if (state->moveObjectTx.tx)
     {
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
         {
-            discardActiveTransaction(activeTx);
+            discardActiveTransaction(state->moveObjectTx.tx);
+            state->moveObjectTx.tx = 0;
         }
         else
         {
@@ -1302,19 +1301,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
                 objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
                 objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
-                state->moveObjectTxDelta += objectTranslation * 10.0f * deltaTime;
+                state->moveObjectTx.delta += objectTranslation * 10.0f * deltaTime;
 
-                uint32 objectId = state->uiState.selectedObjectId;
-                float x = state->moveObjectTransform->position.x + state->moveObjectTxDelta.x;
-                float z = state->moveObjectTransform->position.z + state->moveObjectTxDelta.z;
+                uint32 objectId = state->moveObjectTx.objectId;
+                ObjectTransform *transform = state->moveObjectTx.transform;
+                float x = transform->position.x + state->moveObjectTx.delta.x;
+                float z = transform->position.z + state->moveObjectTx.delta.z;
 
-                activeTx->commandBuffer.used = 0;
-                setProperty(activeTx, objectId, PROP_OBJ_POSITION_X, x);
-                setProperty(activeTx, objectId, PROP_OBJ_POSITION_Z, z);
+                state->moveObjectTx.tx->commandBuffer.used = 0;
+                setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
+                setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
             }
             else
             {
-                commitActiveTransaction(activeTx);
+                commitActiveTransaction(state->moveObjectTx.tx);
+                state->moveObjectTx.tx = 0;
             }
         }
     }

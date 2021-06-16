@@ -16,13 +16,6 @@ enum EditorCommandType
     EDITOR_COMMAND_SetObjectPropertyCommand
 };
 
-enum ActiveTransactionType
-{
-    ACTIVE_TX_MOVE_OBJECT = 0,
-
-    ACTIVE_TX_COUNT
-};
-
 struct CommandBuffer
 {
     void *baseAddress;
@@ -34,7 +27,6 @@ struct TransactionState;
 struct ActiveTransactionDataBlock
 {
     TransactionState *transactions;
-    ActiveTransactionType type;
     CommandBuffer commandBuffer;
     ActiveTransactionDataBlock *prev;
     ActiveTransactionDataBlock *next;
@@ -44,7 +36,6 @@ struct TransactionState
 {
     ActiveTransactionDataBlock activeData[MAX_CONCURRENT_ACTIVE_TRANSACTIONS];
     ActiveTransactionDataBlock *firstActive;
-    ActiveTransactionDataBlock *activeByType[ACTIVE_TX_COUNT];
     ActiveTransactionDataBlock *nextFreeActive;
 
     void *committedBaseAddress;

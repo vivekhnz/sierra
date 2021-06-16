@@ -35,8 +35,7 @@ void endTransaction(EditorTransaction *tx)
     tx->state->committedUsed += sizeof(EditorTransaction) + tx->commandBuffer.size;
 }
 
-ActiveTransactionDataBlock *beginActiveTransaction(
-    TransactionState *state, ActiveTransactionType type)
+ActiveTransactionDataBlock *beginActiveTransaction(TransactionState *state)
 {
     ActiveTransactionDataBlock *result = 0;
     if (state->nextFreeActive)
@@ -59,8 +58,6 @@ ActiveTransactionDataBlock *beginActiveTransaction(
             result->prev = 0;
             state->firstActive = result;
         }
-        result->type = type;
-        state->activeByType[type] = result;
     }
 
     return result;
@@ -82,7 +79,6 @@ void discardActiveTransaction(ActiveTransactionDataBlock *tx)
     tx->next = 0;
     tx->prev = tx->transactions->nextFreeActive;
     tx->transactions->nextFreeActive = tx;
-    tx->transactions->activeByType[tx->type] = 0;
 }
 void commitActiveTransaction(ActiveTransactionDataBlock *activeTx)
 {
@@ -95,11 +91,6 @@ void commitActiveTransaction(ActiveTransactionDataBlock *activeTx)
 
     endTransaction(commitTx);
     discardActiveTransaction(activeTx);
-}
-ActiveTransactionDataBlock *getActiveTransaction(
-    TransactionState *state, ActiveTransactionType type)
-{
-    return state->activeByType[type];
 }
 
 void *pushCommandInternal(CommandBuffer *buffer, EditorCommandType type, uint64 size)

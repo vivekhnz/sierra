@@ -215,9 +215,13 @@ struct EditorState
     uint32 activeBrushStrokeInstanceCount;
     float activeBrushStrokeInitialHeight;
 
-    uint32 moveObjectId;
-    ObjectTransform *moveObjectTransform;
-    glm::vec3 moveObjectTxDelta;
+    struct
+    {
+        ActiveTransactionDataBlock *tx;
+        uint32 objectId;
+        ObjectTransform *transform;
+        glm::vec3 delta;
+    } moveObjectTx;
 
     // state related to the user interface e.g. current brush tool, brush radius etc.
     // can be directly read from and written to by the editor UI
