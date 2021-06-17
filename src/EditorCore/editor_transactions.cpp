@@ -22,7 +22,7 @@ void clearTransaction(Transaction *tx)
 
 Transaction *beginTransaction(TransactionState *state)
 {
-    ActiveTransactionDataBlock *result = 0;
+    TransactionDataBlock *result = 0;
     if (state->nextFreeActive)
     {
         result = state->nextFreeActive;
@@ -32,7 +32,7 @@ Transaction *beginTransaction(TransactionState *state)
 
         if (state->firstActive)
         {
-            ActiveTransactionDataBlock *lastTx = state->firstActive;
+            TransactionDataBlock *lastTx = state->firstActive;
             while (lastTx->next)
             {
                 lastTx = lastTx->next;
@@ -61,8 +61,7 @@ void *pushCommandInternal(Transaction *tx, EditorCommandType type, uint64 size)
 
 void discardTransaction(Transaction *tx)
 {
-    assert(tx->block);
-    ActiveTransactionDataBlock *block = tx->block;
+    TransactionDataBlock *block = (TransactionDataBlock *)tx;
     if (block->prev)
     {
         block->prev->next = block->next;
@@ -82,10 +81,10 @@ void discardTransaction(Transaction *tx)
 
 void commitTransaction(Transaction *tx)
 {
-    assert(tx->block);
+    TransactionDataBlock *block = (TransactionDataBlock *)tx;
     uint64 *srcCommandBufferSize = (uint64 *)tx->commandBufferBaseAddress;
 
-    TransactionState *transactions = tx->block->transactions;
+    TransactionState *transactions = block->transactions;
     uint64 availableStorage = transactions->committedSize - transactions->committedUsed;
     assert(availableStorage >= *srcCommandBufferSize);
 
@@ -129,8 +128,6 @@ bool isIteratorFinished(Iterator *iterator)
 Transaction getNextTransaction(Iterator *iterator)
 {
     Transaction tx;
-    tx.transactions = 0;
-    tx.block = 0;
     tx.commandBufferBaseAddress = iterator->position;
     tx.commandBufferMaxSize = *((uint64 *)iterator->position);
 

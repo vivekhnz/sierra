@@ -3,7 +3,7 @@
 
 #include "../Engine/engine.h"
 
-#define MAX_CONCURRENT_ACTIVE_TRANSACTIONS 4
+#define MAX_CONCURRENT_TRANSACTIONS 4
 
 enum EditorCommandType
 {
@@ -17,28 +17,28 @@ enum EditorCommandType
 };
 
 struct TransactionState;
-struct ActiveTransactionDataBlock;
 struct Transaction
 {
-    TransactionState *transactions;
-    ActiveTransactionDataBlock *block;
     void *commandBufferBaseAddress;
     uint64 commandBufferMaxSize;
 };
 
-struct ActiveTransactionDataBlock
+struct TransactionDataBlock
 {
-    TransactionState *transactions;
+    // the Transaction should be the first element of the struct so we can cast between
+    // Transaction* and TransactionDataBlock*
     Transaction tx;
-    ActiveTransactionDataBlock *prev;
-    ActiveTransactionDataBlock *next;
+
+    TransactionState *transactions;
+    TransactionDataBlock *prev;
+    TransactionDataBlock *next;
 };
 
 struct TransactionState
 {
-    ActiveTransactionDataBlock activeData[MAX_CONCURRENT_ACTIVE_TRANSACTIONS];
-    ActiveTransactionDataBlock *firstActive;
-    ActiveTransactionDataBlock *nextFreeActive;
+    TransactionDataBlock txData[MAX_CONCURRENT_TRANSACTIONS];
+    TransactionDataBlock *firstActive;
+    TransactionDataBlock *nextFreeActive;
 
     void *committedBaseAddress;
     uint64 committedSize;

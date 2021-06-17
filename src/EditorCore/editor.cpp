@@ -458,13 +458,11 @@ bool initializeEditor(EditorMemory *memory)
     state->previewDocState = state->docState;
 
     // setup transaction state
-    ActiveTransactionDataBlock *prevBlock = 0;
-    for (uint32 i = 0; i < MAX_CONCURRENT_ACTIVE_TRANSACTIONS; i++)
+    TransactionDataBlock *prevBlock = 0;
+    for (uint32 i = 0; i < MAX_CONCURRENT_TRANSACTIONS; i++)
     {
-        ActiveTransactionDataBlock *block = &state->transactions.activeData[i];
+        TransactionDataBlock *block = &state->transactions.txData[i];
         block->transactions = &state->transactions;
-        block->tx.transactions = &state->transactions;
-        block->tx.block = block;
         block->tx.commandBufferMaxSize = 1 * 1024 * 1024;
         block->tx.commandBufferBaseAddress =
             pushEditorData(memory, block->tx.commandBufferMaxSize);
@@ -985,7 +983,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     if (transactions->firstActive)
     {
         // apply active transactions
-        ActiveTransactionDataBlock *currentTx = transactions->firstActive;
+        TransactionDataBlock *currentTx = transactions->firstActive;
         do
         {
             applyTransaction(&currentTx->tx, &state->previewDocState);
