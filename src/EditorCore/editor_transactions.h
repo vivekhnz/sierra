@@ -16,13 +16,13 @@ enum EditorCommandType
     EDITOR_COMMAND_SetObjectPropertyCommand
 };
 
-struct TransactionState;
 struct Transaction
 {
     void *commandBufferBaseAddress;
     uint64 commandBufferMaxSize;
 };
 
+struct TransactionState;
 struct TransactionDataBlock
 {
     // the Transaction should be the first element of the struct so we can cast between
@@ -43,6 +43,18 @@ struct TransactionState
     void *committedBaseAddress;
     uint64 committedSize;
     uint64 committedUsed;
+};
+
+struct TransactionEntry
+{
+    void *commandBufferBaseAddress;
+    void *owner;
+};
+struct CommandEntry
+{
+    EditorCommandType type;
+    void *data;
+    uint64 size;
 };
 
 struct AddMaterialCommand

@@ -701,13 +701,11 @@ void discardChanges(EditorMemory *memory)
         &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
 }
 
-void applyTransaction(Transaction *tx, EditorDocumentState *docState)
+void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
 {
-    Iterator iterator = getIterator(tx);
-    while (!isIteratorFinished(&iterator))
+    for (CommandEntry cmdEntry = getFirstCommand(tx); isCommandValid(&cmdEntry);
+         cmdEntry = getNextCommand(tx, &cmdEntry))
     {
-        CommandEntry cmdEntry = getNextCommand(&iterator);
-
         switch (cmdEntry.type)
         {
         case EDITOR_COMMAND_AddMaterialCommand:
@@ -969,26 +967,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // apply committed transactions
-    TransactionState *transactions = &state->transactions;
-    Iterator txIterator = getIterator(transactions);
-    while (!isIteratorFinished(&txIterator))
+    for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions);
+         isTransactionValid(&tx); tx = getNextCommittedTransaction(&tx))
     {
-        Transaction tx = getNextTransaction(&txIterator);
         applyTransaction(&tx, &state->docState);
         memory->platformPublishTransaction(tx.commandBufferBaseAddress);
     }
-    transactions->committedUsed = 0;
+    state->transactions.committedUsed = 0;
 
+    // apply active transactions
     state->previewDocState = state->docState;
-    if (transactions->firstActive)
+    for (TransactionEntry tx = getFirstActiveTransaction(&state->transactions);
+         isTransactionValid(&tx); tx = getNextActiveTransaction(&tx))
     {
-        // apply active transactions
-        TransactionDataBlock *currentTx = transactions->firstActive;
-        do
-        {
-            applyTransaction(&currentTx->tx, &state->previewDocState);
-            currentTx = currentTx->next;
-        } while (currentTx);
+        applyTransaction(&tx, &state->previewDocState);
+        memory->platformPublishTransaction(tx.commandBufferBaseAddress);
     }
     updateFromDocumentState(memory, &state->previewDocState);
 
@@ -1268,7 +1261,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         {
             if (state->docState.objectIds[i] == state->uiState.selectedObjectId)
             {
-                state->moveObjectTx.tx = beginTransaction(transactions);
+                state->moveObjectTx.tx = beginTransaction(&state->transactions);
                 if (state->moveObjectTx.tx)
                 {
                     state->moveObjectTx.delta = glm::vec3(0);

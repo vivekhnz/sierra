@@ -95,58 +95,125 @@ void commitTransaction(Transaction *tx)
     discardTransaction(tx);
 }
 
-struct Iterator
+bool isTransactionValid(TransactionEntry *tx)
 {
-    uint8 *position;
-    uint8 *end;
-};
-struct CommandEntry
-{
-    EditorCommandType type;
-    void *data;
-};
-Iterator getIterator(Transaction *tx)
-{
-    uint64 *used = (uint64 *)tx->commandBufferBaseAddress;
-
-    Iterator iterator;
-    iterator.position = (uint8 *)tx->commandBufferBaseAddress + sizeof(uint64);
-    iterator.end = (uint8 *)tx->commandBufferBaseAddress + *used;
-    return iterator;
+    return tx->commandBufferBaseAddress;
 }
-Iterator getIterator(TransactionState *state)
+
+TransactionEntry getFirstCommittedTransaction(TransactionState *transactions)
 {
-    Iterator iterator;
-    iterator.position = (uint8 *)state->committedBaseAddress;
-    iterator.end = iterator.position + state->committedUsed;
-    return iterator;
+    TransactionEntry result = {};
+    result.owner = transactions;
+    result.commandBufferBaseAddress = 0;
+
+    if (transactions->committedUsed > 0)
+    {
+        result.commandBufferBaseAddress = transactions->committedBaseAddress;
+    }
+
+    return result;
 }
-bool isIteratorFinished(Iterator *iterator)
+TransactionEntry getNextCommittedTransaction(TransactionEntry *tx)
 {
-    return iterator->position >= iterator->end;
+    TransactionEntry result = {};
+    result.commandBufferBaseAddress = 0;
+
+    TransactionState *transactions = (TransactionState *)tx->owner;
+
+    uint64 commandBufferSize = *((uint64 *)tx->commandBufferBaseAddress);
+    void *nextCommandBufferBaseAddress =
+        (uint8 *)tx->commandBufferBaseAddress + commandBufferSize;
+    void *endOfCommittedTransactions =
+        (uint8 *)transactions->committedBaseAddress + transactions->committedUsed;
+
+    if (nextCommandBufferBaseAddress < endOfCommittedTransactions)
+    {
+        result.owner = tx->owner;
+        result.commandBufferBaseAddress = nextCommandBufferBaseAddress;
+    }
+
+    return result;
 }
-Transaction getNextTransaction(Iterator *iterator)
+
+TransactionEntry getFirstActiveTransaction(TransactionState *transactions)
 {
-    Transaction tx;
-    tx.commandBufferBaseAddress = iterator->position;
-    tx.commandBufferMaxSize = *((uint64 *)iterator->position);
+    TransactionEntry result = {};
+    result.owner = 0;
+    result.commandBufferBaseAddress = 0;
 
-    iterator->position += tx.commandBufferMaxSize;
+    if (transactions->firstActive)
+    {
+        result.owner = transactions->firstActive;
+        result.commandBufferBaseAddress =
+            transactions->firstActive->tx.commandBufferBaseAddress;
+    }
 
-    return tx;
+    return result;
 }
-CommandEntry getNextCommand(Iterator *iterator)
+TransactionEntry getNextActiveTransaction(TransactionEntry *tx)
 {
-    CommandEntry entry;
+    TransactionEntry result = {};
+    result.commandBufferBaseAddress = 0;
 
-    entry.type = *((EditorCommandType *)iterator->position);
-    iterator->position += sizeof(entry.type);
+    TransactionDataBlock *block = (TransactionDataBlock *)tx->owner;
+    if (block->next)
+    {
+        result.owner = block->next;
+        result.commandBufferBaseAddress = block->next->tx.commandBufferBaseAddress;
+    }
 
-    uint64 commandSize = *((uint64 *)iterator->position);
-    iterator->position += sizeof(commandSize);
+    return result;
+}
 
-    entry.data = iterator->position;
-    iterator->position += commandSize;
+CommandEntry getFirstCommand(TransactionEntry *tx)
+{
+    CommandEntry result = {};
+    result.data = 0;
+    result.size = 0;
 
-    return entry;
+    uint8 *position = (uint8 *)tx->commandBufferBaseAddress;
+
+    uint64 commandBufferSize = *((uint64 *)position);
+    position += sizeof(uint64);
+
+    if (commandBufferSize > sizeof(uint64))
+    {
+        result.type = *((EditorCommandType *)position);
+        position += sizeof(result.type);
+
+        result.size = *((uint64 *)position);
+        position += sizeof(result.size);
+
+        result.data = position;
+    }
+
+    return result;
+}
+bool isCommandValid(CommandEntry *cmdEntry)
+{
+    return cmdEntry->data;
+}
+CommandEntry getNextCommand(TransactionEntry *tx, CommandEntry *cmdEntry)
+{
+    CommandEntry result = {};
+    result.data = 0;
+
+    uint64 commandBufferSize = *((uint64 *)tx->commandBufferBaseAddress);
+    void *nextCommandAddress = (uint8 *)cmdEntry->data + cmdEntry->size;
+    void *endOfCommandBuffer = (uint8 *)tx->commandBufferBaseAddress + commandBufferSize;
+
+    if (nextCommandAddress < endOfCommandBuffer)
+    {
+        uint8 *position = (uint8 *)nextCommandAddress;
+
+        result.type = *((EditorCommandType *)position);
+        position += sizeof(result.type);
+
+        result.size = *((uint64 *)position);
+        position += sizeof(result.size);
+
+        result.data = position;
+    }
+
+    return result;
 }
