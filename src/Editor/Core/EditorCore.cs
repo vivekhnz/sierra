@@ -235,6 +235,18 @@ namespace Terrain.Editor.Core
         public float Value;
     }
 
+    internal struct Transaction
+    {
+        internal static Transaction Invalid { get; } = new Transaction(IntPtr.Zero);
+
+        internal readonly IntPtr Pointer;
+
+        internal Transaction(IntPtr ptr)
+        {
+            Pointer = ptr;
+        }
+    }
+
     internal static class EditorCore
     {
         private static EditorMemory memory;
@@ -261,7 +273,9 @@ namespace Terrain.Editor.Core
         delegate void EditorAddObject(ref EditorMemory memory);
         delegate float EditorGetObjectProperty(ref EditorMemory memory, uint objectId,
             ObjectProperty property);
-        delegate void EditorSetObjectProperty(ref EditorMemory memory, uint objectId,
+        delegate IntPtr EditorBeginTransaction(ref EditorMemory memory);
+        delegate void EditorCommitTransaction(IntPtr tx);
+        delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
 
         private static EditorUpdate editorUpdate;
@@ -276,6 +290,8 @@ namespace Terrain.Editor.Core
         private static EditorSetMaterialProperties editorSetMaterialProperties;
         private static EditorAddObject editorAddObject;
         private static EditorGetObjectProperty editorGetObjectProperty;
+        private static EditorBeginTransaction editorBeginTransaction;
+        private static EditorCommitTransaction editorCommitTransaction;
         private static EditorSetObjectProperty editorSetObjectProperty;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -355,6 +371,8 @@ namespace Terrain.Editor.Core
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
+            editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
+            editorCommitTransaction = GetApi<EditorCommitTransaction>("editorCommitTransaction");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
 
             return moduleHandle != IntPtr.Zero;
@@ -424,8 +442,17 @@ namespace Terrain.Editor.Core
         internal static float GetObjectProperty(uint objectId, ObjectProperty property)
             => editorGetObjectProperty?.Invoke(ref memory, objectId, property) ?? 0;
 
+        internal static bool BeginTransaction(out Transaction tx)
+        {
+            tx = new Transaction(editorBeginTransaction?.Invoke(ref memory) ?? IntPtr.Zero);
+            return tx.Pointer != IntPtr.Zero;
+        }
+
+        internal static void CommitTransaction(Transaction tx)
+            => editorCommitTransaction?.Invoke(tx.Pointer);
+
         internal static void SetObjectProperty(
-            uint objectId, ObjectProperty property, float value)
-            => editorSetObjectProperty?.Invoke(ref memory, objectId, property, value);
+            Transaction tx, uint objectId, ObjectProperty property, float value)
+            => editorSetObjectProperty?.Invoke(tx.Pointer, objectId, property, value);
     }
 }

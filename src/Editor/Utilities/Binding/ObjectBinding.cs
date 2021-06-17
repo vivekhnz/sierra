@@ -66,7 +66,12 @@ namespace Terrain.Editor.Utilities.Binding
 
             object value = targetObject.GetValue(targetProperty);
             float convertedValue = (float)Convert.ChangeType(value, typeof(float));
-            EditorCore.SetObjectProperty(objectId, sourceProperty, convertedValue);
+
+            if (EditorCore.BeginTransaction(out var tx))
+            {
+                EditorCore.SetObjectProperty(tx, objectId, sourceProperty, convertedValue);
+                EditorCore.CommitTransaction(tx);
+            }
         }
 
         public void UpdateFromSource()

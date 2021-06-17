@@ -1729,14 +1729,21 @@ API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
     return 0;
 }
 
-API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
+API_EXPORT EDITOR_BEGIN_TRANSACTION(editorBeginTransaction)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
-
     Transaction *tx = beginTransaction(&state->transactions);
-    if (tx)
-    {
-        setProperty(tx, objectId, property, value);
-        commitTransaction(tx);
-    }
+    return tx;
+}
+
+API_EXPORT EDITOR_COMMIT_TRANSACTION(editorCommitTransaction)
+{
+    assert(tx);
+    commitTransaction(tx);
+}
+
+API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
+{
+    assert(tx);
+    setProperty(tx, objectId, property, value);
 }

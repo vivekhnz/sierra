@@ -382,8 +382,14 @@ typedef EDITOR_ADD_OBJECT(EditorAddObject);
     float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
 typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);
 
+#define EDITOR_BEGIN_TRANSACTION(name) Transaction *name(EditorMemory *memory)
+typedef EDITOR_BEGIN_TRANSACTION(EditorBeginTransaction);
+
+#define EDITOR_COMMIT_TRANSACTION(name) void name(Transaction *tx)
+typedef EDITOR_COMMIT_TRANSACTION(EditorCommitTransaction);
+
 #define EDITOR_SET_OBJECT_PROPERTY(name)                                                      \
-    void name(EditorMemory *memory, uint32 objectId, ObjectProperty property, float value)
+    void name(Transaction *tx, uint32 objectId, ObjectProperty property, float value)
 typedef EDITOR_SET_OBJECT_PROPERTY(EditorSetObjectProperty);
 
 #endif
