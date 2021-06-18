@@ -1736,6 +1736,12 @@ API_EXPORT EDITOR_BEGIN_TRANSACTION(editorBeginTransaction)
     return tx;
 }
 
+API_EXPORT EDITOR_CLEAR_TRANSACTION(editorClearTransaction)
+{
+    assert(tx);
+    clearTransaction(tx);
+}
+
 API_EXPORT EDITOR_COMMIT_TRANSACTION(editorCommitTransaction)
 {
     assert(tx);

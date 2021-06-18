@@ -240,6 +240,7 @@ namespace Terrain.Editor.Core
         internal static Transaction Invalid { get; } = new Transaction(IntPtr.Zero);
 
         internal readonly IntPtr Pointer;
+        internal bool IsValid => Pointer != IntPtr.Zero;
 
         internal Transaction(IntPtr ptr)
         {
@@ -274,6 +275,7 @@ namespace Terrain.Editor.Core
         delegate float EditorGetObjectProperty(ref EditorMemory memory, uint objectId,
             ObjectProperty property);
         delegate IntPtr EditorBeginTransaction(ref EditorMemory memory);
+        delegate void EditorClearTransaction(IntPtr tx);
         delegate void EditorCommitTransaction(IntPtr tx);
         delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
@@ -291,6 +293,7 @@ namespace Terrain.Editor.Core
         private static EditorAddObject editorAddObject;
         private static EditorGetObjectProperty editorGetObjectProperty;
         private static EditorBeginTransaction editorBeginTransaction;
+        private static EditorClearTransaction editorClearTransaction;
         private static EditorCommitTransaction editorCommitTransaction;
         private static EditorSetObjectProperty editorSetObjectProperty;
 
@@ -372,6 +375,7 @@ namespace Terrain.Editor.Core
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
             editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
+            editorClearTransaction = GetApi<EditorClearTransaction>("editorClearTransaction");
             editorCommitTransaction = GetApi<EditorCommitTransaction>("editorCommitTransaction");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
 
@@ -447,6 +451,9 @@ namespace Terrain.Editor.Core
             tx = new Transaction(editorBeginTransaction?.Invoke(ref memory) ?? IntPtr.Zero);
             return tx.Pointer != IntPtr.Zero;
         }
+
+        internal static void ClearTransaction(Transaction tx)
+            => editorClearTransaction?.Invoke(tx.Pointer);
 
         internal static void CommitTransaction(Transaction tx)
             => editorCommitTransaction?.Invoke(tx.Pointer);

@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Windows;
 using Terrain.Editor.Core;
@@ -20,6 +21,7 @@ namespace Terrain.Editor.Utilities.Binding
         ObjectProperty sourceProperty;
 
         bool isSettingTargetProperty;
+        Transaction activeTx;
 
         public ObjectReference Source
         {
@@ -54,6 +56,26 @@ namespace Terrain.Editor.Utilities.Binding
                 var targetPropDescriptor = DependencyPropertyDescriptor.FromProperty(
                     targetProperty, targetProperty.OwnerType);
                 targetPropDescriptor.AddValueChanged(targetObject, OnTargetPropertyValueChanged);
+                UITransactionHelper.RegisterTransactionEventHandlers(
+                    targetObject, targetProperty, BeginTransaction, CommitTransaction);
+            }
+        }
+
+        private void BeginTransaction()
+        {
+            Debug.Assert(!activeTx.IsValid);
+            if (EditorCore.BeginTransaction(out var tx))
+            {
+                activeTx = tx;
+            }
+        }
+
+        private void CommitTransaction()
+        {
+            if (activeTx.IsValid)
+            {
+                EditorCore.CommitTransaction(activeTx);
+                activeTx = Transaction.Invalid;
             }
         }
 
@@ -67,10 +89,18 @@ namespace Terrain.Editor.Utilities.Binding
             object value = targetObject.GetValue(targetProperty);
             float convertedValue = (float)Convert.ChangeType(value, typeof(float));
 
-            if (EditorCore.BeginTransaction(out var tx))
+            if (activeTx.IsValid)
             {
-                EditorCore.SetObjectProperty(tx, objectId, sourceProperty, convertedValue);
-                EditorCore.CommitTransaction(tx);
+                EditorCore.ClearTransaction(activeTx);
+                EditorCore.SetObjectProperty(activeTx, objectId, sourceProperty, convertedValue);
+            }
+            else
+            {
+                if (EditorCore.BeginTransaction(out var tx))
+                {
+                    EditorCore.SetObjectProperty(tx, objectId, sourceProperty, convertedValue);
+                    EditorCore.CommitTransaction(tx);
+                }
             }
         }
 

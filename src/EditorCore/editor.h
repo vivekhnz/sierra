@@ -385,6 +385,9 @@ typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);
 #define EDITOR_BEGIN_TRANSACTION(name) Transaction *name(EditorMemory *memory)
 typedef EDITOR_BEGIN_TRANSACTION(EditorBeginTransaction);
 
+#define EDITOR_CLEAR_TRANSACTION(name) void name(Transaction *tx)
+typedef EDITOR_CLEAR_TRANSACTION(EditorClearTransaction);
+
 #define EDITOR_COMMIT_TRANSACTION(name) void name(Transaction *tx)
 typedef EDITOR_COMMIT_TRANSACTION(EditorCommitTransaction);
 
