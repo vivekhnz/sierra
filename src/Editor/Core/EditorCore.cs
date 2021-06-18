@@ -277,6 +277,7 @@ namespace Terrain.Editor.Core
         delegate IntPtr EditorBeginTransaction(ref EditorMemory memory);
         delegate void EditorClearTransaction(IntPtr tx);
         delegate void EditorCommitTransaction(IntPtr tx);
+        delegate void EditorDiscardTransaction(IntPtr tx);
         delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
 
@@ -295,6 +296,7 @@ namespace Terrain.Editor.Core
         private static EditorBeginTransaction editorBeginTransaction;
         private static EditorClearTransaction editorClearTransaction;
         private static EditorCommitTransaction editorCommitTransaction;
+        private static EditorDiscardTransaction editorDiscardTransaction;
         private static EditorSetObjectProperty editorSetObjectProperty;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -377,6 +379,7 @@ namespace Terrain.Editor.Core
             editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
             editorClearTransaction = GetApi<EditorClearTransaction>("editorClearTransaction");
             editorCommitTransaction = GetApi<EditorCommitTransaction>("editorCommitTransaction");
+            editorDiscardTransaction = GetApi<EditorDiscardTransaction>("editorDiscardTransaction");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
 
             return moduleHandle != IntPtr.Zero;
@@ -457,6 +460,9 @@ namespace Terrain.Editor.Core
 
         internal static void CommitTransaction(Transaction tx)
             => editorCommitTransaction?.Invoke(tx.Pointer);
+
+        internal static void DiscardTransaction(Transaction tx)
+            => editorDiscardTransaction?.Invoke(tx.Pointer);
 
         internal static void SetObjectProperty(
             Transaction tx, uint objectId, ObjectProperty property, float value)

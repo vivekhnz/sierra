@@ -391,6 +391,9 @@ typedef EDITOR_CLEAR_TRANSACTION(EditorClearTransaction);
 #define EDITOR_COMMIT_TRANSACTION(name) void name(Transaction *tx)
 typedef EDITOR_COMMIT_TRANSACTION(EditorCommitTransaction);
 
+#define EDITOR_DISCARD_TRANSACTION(name) void name(Transaction *tx)
+typedef EDITOR_DISCARD_TRANSACTION(EditorDiscardTransaction);
+
 #define EDITOR_SET_OBJECT_PROPERTY(name)                                                      \
     void name(Transaction *tx, uint32 objectId, ObjectProperty property, float value)
 typedef EDITOR_SET_OBJECT_PROPERTY(EditorSetObjectProperty);

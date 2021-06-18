@@ -57,7 +57,8 @@ namespace Terrain.Editor.Utilities.Binding
                     targetProperty, targetProperty.OwnerType);
                 targetPropDescriptor.AddValueChanged(targetObject, OnTargetPropertyValueChanged);
                 UITransactionHelper.RegisterTransactionEventHandlers(
-                    targetObject, targetProperty, BeginTransaction, CommitTransaction);
+                    targetObject, targetProperty,
+                    BeginTransaction, CommitTransaction, DiscardTransaction);
             }
         }
 
@@ -75,6 +76,15 @@ namespace Terrain.Editor.Utilities.Binding
             if (activeTx.IsValid)
             {
                 EditorCore.CommitTransaction(activeTx);
+                activeTx = Transaction.Invalid;
+            }
+        }
+
+        private void DiscardTransaction()
+        {
+            if (activeTx.IsValid)
+            {
+                EditorCore.DiscardTransaction(activeTx);
                 activeTx = Transaction.Invalid;
             }
         }

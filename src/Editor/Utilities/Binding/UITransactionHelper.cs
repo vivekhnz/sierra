@@ -1,6 +1,8 @@
 using System;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
+using System.Windows.Input;
 
 namespace Terrain.Editor.Utilities.Binding
 {
@@ -8,15 +10,29 @@ namespace Terrain.Editor.Utilities.Binding
     {
         internal static void RegisterTransactionEventHandlers(
             DependencyObject targetObject, DependencyProperty targetProperty,
-            Action beginTransaction, Action commitTransaction)
+            Action beginTransaction, Action commitTransaction, Action discardTransaction)
         {
-            if (targetObject is RangeBase rangeBase
-                && targetProperty == RangeBase.ValueProperty)
+            if (targetObject is Slider slider && targetProperty == RangeBase.ValueProperty)
             {
-                rangeBase.AddHandler(Thumb.DragStartedEvent,
+                slider.AddHandler(Thumb.DragStartedEvent,
                     new DragStartedEventHandler((sender, e) => beginTransaction()));
-                rangeBase.AddHandler(Thumb.DragCompletedEvent,
+                slider.AddHandler(Thumb.DragCompletedEvent,
                     new DragCompletedEventHandler((sender, e) => commitTransaction()));
+                slider.AddHandler(Thumb.DragDeltaEvent,
+                    new DragDeltaEventHandler((sender, e) => e.Handled = true));
+                slider.KeyDown += (sender, args) =>
+                {
+                    if (args.Key == Key.Escape)
+                    {
+                        var track = slider.Template.FindName("PART_Track", slider) as Track;
+                        var thumb = track?.Thumb;
+                        if (thumb != null)
+                        {
+                            discardTransaction();
+                            thumb.CancelDrag();
+                        }
+                    }
+                };
             }
         }
     }

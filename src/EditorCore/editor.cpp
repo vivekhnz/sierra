@@ -1748,6 +1748,12 @@ API_EXPORT EDITOR_COMMIT_TRANSACTION(editorCommitTransaction)
     commitTransaction(tx);
 }
 
+API_EXPORT EDITOR_DISCARD_TRANSACTION(editorDiscardTransaction)
+{
+    assert(tx);
+    discardTransaction(tx);
+}
+
 API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
 {
     assert(tx);
