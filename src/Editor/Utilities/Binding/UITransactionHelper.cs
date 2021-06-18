@@ -18,8 +18,6 @@ namespace Terrain.Editor.Utilities.Binding
                     new DragStartedEventHandler((sender, e) => beginTransaction()));
                 slider.AddHandler(Thumb.DragCompletedEvent,
                     new DragCompletedEventHandler((sender, e) => commitTransaction()));
-                slider.AddHandler(Thumb.DragDeltaEvent,
-                    new DragDeltaEventHandler((sender, e) => e.Handled = true));
                 slider.KeyDown += (sender, args) =>
                 {
                     if (args.Key == Key.Escape)
