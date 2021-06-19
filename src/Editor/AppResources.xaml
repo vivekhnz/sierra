@@ -1,10 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-    xmlns:sys="clr-namespace:System;assembly=mscorlib"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:vm="clr-namespace:Terrain.Editor.ViewModels"
     xmlns:utils="clr-namespace:Terrain.Editor.Utilities">
-
-  <sys:Int32 x:Key="IntZero">0</sys:Int32>
 
   <vm:EditorUiStateViewModel x:Key="EditorUiState" />
   <vm:EditorAssetsViewModel x:Key="EditorAssets" />
@@ -14,6 +11,15 @@
   <utils:ComparisonConverter x:Key="InvertedComparisonConverter" Invert="True" />
 
   <SolidColorBrush x:Key="PrimaryThemeBrush" Color="#FF8218" />
+
+  <PathGeometry x:Key="RaiseTerrainIcon"
+      Figures="M 33.089453,0 25.11888,11.947076 h 4.896342 v 9.898622 h 6.150528 v -9.898622 h 4.894276 z M 12.829191,10.729061 0,31.438908 H 66.145832 L 53.316642,10.729061 h -9.88777 l 2.578655,3.864882 h -7.195425 v 9.898105 H 27.368873 V 14.593943 H 20.173444 L 22.7521,10.729061 Z" />
+  <PathGeometry x:Key="LowerTerrainIcon"
+      Figures="m 30.015218,0 v 9.89811 h -4.89634 l 1.82676,2.73833 6.14381,9.20926 6.14381,-9.20926 1.82677,-2.73833 h -4.89428 V 0 Z M 12.828672,12.63644 0,33.34629 H 66.145828 L 53.316638,12.63644 h -10.90062 l -8.22534,12.32638 -1.09916,1.64848 -9.32605,-13.97486 z" />
+  <PathGeometry x:Key="FlattenTerrainIcon"
+      Figures="M 16.859954,0 0,28.832349 31.485416,28.741915 V 5.7422864 L 26.780794,12.494845 Z M 34.660416,16.9261 V 28.832349 H 66.145833 V 16.9261 Z" />
+  <PathGeometry x:Key="SmoothTerrainIcon"
+      Figures="M 43.623688,8.0313728e-5 C 41.063923,0.01537031 38.065743,2.2191803 34.310062,7.6099513 V 35.067706 H 65.79495 C 55.669003,23.250078 51.985631,-0.04991069 43.623688,8.0313728e-5 Z M 16.859953,6.6591053 0,35.491454 31.485424,35.401024 V 12.401393 l -4.704636,6.752561 z" />
 
   <Style TargetType="{x:Type TabControl}">
     <Setter Property="OverridesDefaultStyle" Value="True" />
