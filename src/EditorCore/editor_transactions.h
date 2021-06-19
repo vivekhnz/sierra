@@ -13,6 +13,7 @@ enum EditorCommandType
     EDITOR_COMMAND_SetMaterialTextureCommand,
     EDITOR_COMMAND_SetMaterialPropertiesCommand,
     EDITOR_COMMAND_AddObjectCommand,
+    EDITOR_COMMAND_DeleteObjectCommand,
     EDITOR_COMMAND_SetObjectPropertyCommand
 };
 
@@ -109,6 +110,11 @@ struct SetMaterialPropertiesCommand
 };
 
 struct AddObjectCommand
+{
+    uint32 objectId;
+};
+
+struct DeleteObjectCommand
 {
     uint32 objectId;
 };

@@ -97,6 +97,17 @@ namespace Terrain.Editor.ViewModels
 
                     Objects.Add(new EditorObjectViewModel(cmd.ObjectId));
                 }
+                else if (entry.Type == EditorCommandType.DeleteObject)
+                {
+                    ref readonly DeleteObjectCommand cmd = ref entry.As<DeleteObjectCommand>();
+
+                    uint objectId = cmd.ObjectId;
+                    var objectVm = Objects.FirstOrDefault(vm => vm.ObjectId == objectId);
+                    if (objectVm != null)
+                    {
+                        Objects.Remove(objectVm);
+                    }
+                }
             }
 
             AddMaterialCommand.NotifyCanExecuteChanged();

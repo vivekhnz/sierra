@@ -826,6 +826,30 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             transform->scale = glm::vec3(1);
         }
         break;
+        case EDITOR_COMMAND_DeleteObjectCommand:
+        {
+            DeleteObjectCommand *cmd = (DeleteObjectCommand *)cmdEntry.data;
+
+            bool foundObject = false;
+            for (uint32 i = 0; i < docState->objectInstanceCount; i++)
+            {
+                if (docState->objectIds[i] == cmd->objectId)
+                {
+                    foundObject = true;
+                    docState->objectIds[i] =
+                        docState->objectIds[docState->objectInstanceCount - 1];
+                    docState->objectTransforms[i] =
+                        docState->objectTransforms[docState->objectInstanceCount - 1];
+                    break;
+                }
+            }
+            assert(foundObject);
+            if (foundObject)
+            {
+                docState->objectInstanceCount--;
+            }
+        }
+        break;
         case EDITOR_COMMAND_SetObjectPropertyCommand:
         {
             SetObjectPropertyCommand *cmd = (SetObjectPropertyCommand *)cmdEntry.data;
@@ -1710,6 +1734,19 @@ API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
     {
         AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
         cmd->objectId = state->sceneState.nextObjectId++;
+        commitTransaction(tx);
+    }
+}
+
+API_EXPORT EDITOR_DELETE_OBJECT(editorDeleteObject)
+{
+    EditorState *state = (EditorState *)memory->data.baseAddress;
+
+    Transaction *tx = beginTransaction(&state->transactions);
+    if (tx)
+    {
+        DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
+        cmd->objectId = objectId;
         commitTransaction(tx);
     }
 }

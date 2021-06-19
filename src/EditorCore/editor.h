@@ -378,6 +378,9 @@ typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 #define EDITOR_ADD_OBJECT(name) void name(EditorMemory *memory)
 typedef EDITOR_ADD_OBJECT(EditorAddObject);
 
+#define EDITOR_DELETE_OBJECT(name) void name(EditorMemory *memory, uint32 objectId)
+typedef EDITOR_DELETE_OBJECT(EditorDeleteObject);
+
 #define EDITOR_GET_OBJECT_PROPERTY(name)                                                      \
     float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
 typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);

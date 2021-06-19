@@ -162,6 +162,7 @@ namespace Terrain.Editor.Core
         SetMaterialTexture,
         SetMaterialProperties,
         AddObject,
+        DeleteObject,
         SetObjectProperty
     }
 
@@ -228,6 +229,11 @@ namespace Terrain.Editor.Core
         public uint ObjectId;
     }
     [StructLayout(LayoutKind.Sequential)]
+    struct DeleteObjectCommand
+    {
+        public uint ObjectId;
+    }
+    [StructLayout(LayoutKind.Sequential)]
     struct SetObjectPropertyCommand
     {
         public uint ObjectId;
@@ -272,6 +278,7 @@ namespace Terrain.Editor.Core
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
         delegate void EditorAddObject(ref EditorMemory memory);
+        delegate void EditorDeleteObject(ref EditorMemory memory, uint objectId);
         delegate float EditorGetObjectProperty(ref EditorMemory memory, uint objectId,
             ObjectProperty property);
         delegate IntPtr EditorBeginTransaction(ref EditorMemory memory);
@@ -292,6 +299,7 @@ namespace Terrain.Editor.Core
         private static EditorSetMaterialTexture editorSetMaterialTexture;
         private static EditorSetMaterialProperties editorSetMaterialProperties;
         private static EditorAddObject editorAddObject;
+        private static EditorDeleteObject editorDeleteObject;
         private static EditorGetObjectProperty editorGetObjectProperty;
         private static EditorBeginTransaction editorBeginTransaction;
         private static EditorClearTransaction editorClearTransaction;
@@ -375,6 +383,7 @@ namespace Terrain.Editor.Core
             editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
+            editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
             editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
             editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
             editorClearTransaction = GetApi<EditorClearTransaction>("editorClearTransaction");
@@ -445,6 +454,9 @@ namespace Terrain.Editor.Core
 
         internal static void AddObject()
             => editorAddObject?.Invoke(ref memory);
+
+        internal static void DeleteObject(uint objectId)
+            => editorDeleteObject?.Invoke(ref memory, objectId);
 
         internal static float GetObjectProperty(uint objectId, ObjectProperty property)
             => editorGetObjectProperty?.Invoke(ref memory, objectId, property) ?? 0;
