@@ -6,21 +6,36 @@ namespace Terrain.Editor.Utilities.Binding
 {
     internal static class EditorBindingEngine
     {
-        private static readonly List<ObjectBinding> bindings = new List<ObjectBinding>();
+        private static readonly List<ObjectBinding> objectBindings = new List<ObjectBinding>();
+        private static readonly List<UiBinding> uiBindings = new List<UiBinding>();
 
-        internal static ObjectBinding SetBinding(this DependencyObject targetObject,
+        internal static ObjectBinding SetObjectBinding(this DependencyObject targetObject,
             DependencyProperty targetProperty, ObjectProperty sourceProperty)
         {
             var binding = new ObjectBinding(targetObject, targetProperty, sourceProperty);
-            bindings.Add(binding);
+            objectBindings.Add(binding);
+            return binding;
+        }
+
+        internal static UiBinding SetUiBinding(this DependencyObject targetObject,
+            DependencyProperty targetProperty, UiProperty sourceProperty)
+        {
+            var binding = new UiBinding(targetObject, targetProperty, sourceProperty);
+            uiBindings.Add(binding);
             return binding;
         }
 
         internal static void UpdateBindings()
         {
-            foreach (var binding in bindings)
+            foreach (var binding in objectBindings)
             {
                 binding.UpdateFromSource();
+            }
+
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+            foreach (var binding in uiBindings)
+            {
+                binding.Update(ref uiState);
             }
         }
     }

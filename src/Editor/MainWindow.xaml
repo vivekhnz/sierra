@@ -85,13 +85,11 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider Minimum="32" Maximum="2048"
-                      Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
+                  <Slider Minimum="32" Maximum="2048" Value="{b:UiBinding TerrainBrushRadius}"
                       SmallChange="1" LargeChange="16" TickFrequency="1"
                       IsSnapToTickEnabled="True" />
-                  <TextBlock
-                      Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushRadius}"
-                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="{b:UiBinding TerrainBrushRadius}" Grid.Column="1"
+                      Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
                 <TextBlock Text="Brush Falloff" Foreground="#888" Margin="0 0 0 8" />
                 <Grid Margin="0 0 0 8">
@@ -99,13 +97,11 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider Minimum="0" Maximum="0.99"
-                      Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
+                  <Slider Minimum="0" Maximum="0.99" Value="{b:UiBinding TerrainBrushFalloff}"
                       SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                       IsSnapToTickEnabled="True" />
-                  <TextBlock
-                      Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushFalloff}"
-                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="{b:UiBinding TerrainBrushFalloff}" Grid.Column="1"
+                      Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
                 <TextBlock Text="Brush Strength" Foreground="#888" Margin="0 0 0 8" />
                 <Grid>
@@ -113,13 +109,11 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider Minimum="0.01" Maximum="1"
-                      Value="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
+                  <Slider Minimum="0.01" Maximum="1" Value="{b:UiBinding TerrainBrushStrength}"
                       SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                       IsSnapToTickEnabled="True" />
-                  <TextBlock
-                      Text="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushStrength}"
-                      Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="{b:UiBinding TerrainBrushStrength}" Grid.Column="1"
+                      Foreground="#888" Margin="4 0 0 0" />
                 </Grid>
               </StackPanel>
             </Expander>
@@ -441,13 +435,11 @@
                   <ColumnDefinition Width="*" />
                   <ColumnDefinition Width="32" />
                 </Grid.ColumnDefinitions>
-                <Slider Minimum="-1" Maximum="1"
-                    Value="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
+                <Slider Minimum="-1" Maximum="1" Value="{b:UiBinding SceneLightDirection}"
                     SmallChange="0.01" LargeChange="0.1" TickFrequency="0.01"
                     IsSnapToTickEnabled="True" />
-                <TextBlock
-                    Text="{Binding Source={StaticResource EditorUiState}, Path=SceneLightDirection}"
-                    Grid.Column="1" Foreground="#888" Margin="4 0 0 0" />
+                <TextBlock Text="{b:UiBinding SceneLightDirection}" Grid.Column="1"
+                    Foreground="#888" Margin="4 0 0 0" />
               </Grid>
             </StackPanel>
           </Expander>

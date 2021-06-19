@@ -1,16 +1,15 @@
 using System;
 using System.Windows;
 using System.Windows.Markup;
-using Terrain.Editor.Core;
 
 namespace Terrain.Editor.Utilities.Binding
 {
     [MarkupExtensionReturnType(typeof(object))]
-    internal class ObjectBindingExtension : MarkupExtension
+    internal class UiBindingExtension : MarkupExtension
     {
-        private ObjectProperty sourceProperty;
+        private UiProperty sourceProperty;
 
-        public ObjectBindingExtension(ObjectProperty sourceProperty)
+        public UiBindingExtension(UiProperty sourceProperty)
         {
             this.sourceProperty = sourceProperty;
         }
@@ -24,9 +23,7 @@ namespace Terrain.Editor.Utilities.Binding
             if (provideValueTarget.TargetObject is DependencyObject targetObject &&
                 provideValueTarget.TargetProperty is DependencyProperty targetProperty)
             {
-                var binding = EditorBindingEngine.SetObjectBinding(
-                    targetObject, targetProperty, sourceProperty);
-                binding.Source = App.Current?.UiState?.SelectedObject ?? ObjectReference.None;
+                EditorBindingEngine.SetUiBinding(targetObject, targetProperty, sourceProperty);
                 return targetProperty.DefaultMetadata.DefaultValue;
             }
 
