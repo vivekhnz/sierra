@@ -23,21 +23,6 @@ namespace Terrain.Editor.ViewModels
         }
         public ObjectReference SelectedObject { get; }
 
-        public TerrainBrushTool TerrainBrushTool
-        {
-            get
-            {
-                lastReadState.TerrainBrushTool = EditorCore.GetUiState().TerrainBrushTool;
-                return lastReadState.TerrainBrushTool;
-            }
-            set
-            {
-                EditorCore.GetUiState().TerrainBrushTool = value;
-                lastReadState.TerrainBrushTool = value;
-                NotifyPropertyChanged(nameof(TerrainBrushTool));
-            }
-        }
-
         public EditorUiStateViewModel()
         {
             SelectedObject = new ObjectReference(() => SelectedObjectId);
@@ -51,11 +36,6 @@ namespace Terrain.Editor.ViewModels
             {
                 lastReadState.SelectedObjectId = state.SelectedObjectId;
                 NotifyPropertyChanged(nameof(SelectedObjectId));
-            }
-            if (state.TerrainBrushTool != lastReadState.TerrainBrushTool)
-            {
-                lastReadState.TerrainBrushTool = state.TerrainBrushTool;
-                NotifyPropertyChanged(nameof(TerrainBrushTool));
             }
         }
     }

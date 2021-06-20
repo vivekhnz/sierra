@@ -1,6 +1,5 @@
 using System;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows;
 using Terrain.Editor.Core;
 
@@ -8,13 +7,6 @@ namespace Terrain.Editor.Utilities.Binding
 {
     internal class UiBinding : DependencyObject
     {
-        static readonly Type[] AllowedTargetPropertyTypes = new[]
-        {
-            typeof(float),
-            typeof(double),
-            typeof(string)
-        };
-
         DependencyObject targetObject;
         DependencyProperty targetProperty;
         UiProperty sourceProperty;
@@ -26,12 +18,6 @@ namespace Terrain.Editor.Utilities.Binding
             DependencyObject targetObject, DependencyProperty targetProperty,
             UiProperty sourceProperty)
         {
-            if (!AllowedTargetPropertyTypes.Contains(targetProperty.PropertyType))
-            {
-                throw new NotSupportedException(
-                    $"Unable to bind UI property to target property of type '{targetProperty.PropertyType}'.");
-            }
-
             this.targetObject = targetObject;
             this.targetProperty = targetProperty;
             this.sourceProperty = sourceProperty;
@@ -60,6 +46,7 @@ namespace Terrain.Editor.Utilities.Binding
                 // update target
                 object value = sourceProperty switch
                 {
+                    UiProperty.TerrainBrushTool => state.TerrainBrushTool,
                     UiProperty.TerrainBrushRadius => state.TerrainBrushRadius,
                     UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
                     UiProperty.TerrainBrushStrength => state.TerrainBrushStrength,
@@ -84,6 +71,9 @@ namespace Terrain.Editor.Utilities.Binding
                 }
                 switch (sourceProperty)
                 {
+                    case UiProperty.TerrainBrushTool:
+                        SetSourceProperty(ref state.TerrainBrushTool);
+                        break;
                     case UiProperty.TerrainBrushRadius:
                         SetSourceProperty(ref state.TerrainBrushRadius);
                         break;
@@ -111,6 +101,7 @@ namespace Terrain.Editor.Utilities.Binding
 
     internal enum UiProperty
     {
+        TerrainBrushTool,
         TerrainBrushRadius,
         TerrainBrushFalloff,
         TerrainBrushStrength,

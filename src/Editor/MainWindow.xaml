@@ -61,7 +61,7 @@
                 IsExpanded="True">
               <StackPanel Orientation="Vertical" Margin="12 6 12 12">
                 <controls:ToggleButtonStrip HorizontalAlignment="Center" Margin="0 0 0 8"
-                    SelectedValue="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool}">
+                    SelectedValue="{b:UiBinding TerrainBrushTool}">
                   <controls:ToggleButtonStripItem Text="Raise"
                       Icon="{StaticResource RaiseTerrainIcon}"
                       Value="{x:Static core:TerrainBrushTool.Raise}" />
