@@ -4,7 +4,15 @@
     <ShowAllFiles>false</ShowAllFiles>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Update="Controls\ToggleButtonStrip.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
     <Page Update="AppResources.xaml">
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Update="Controls\ToggleButtonStrip.xaml">
       <SubType>Designer</SubType>
     </Page>
   </ItemGroup>

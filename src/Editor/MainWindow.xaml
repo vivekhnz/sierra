@@ -58,63 +58,23 @@
               <controls:Viewport Width="360" Height="360" View="HeightmapPreview" />
             </Expander>
             <Expander Style="{StaticResource SidebarExpanderStyle}" Header="BRUSH"
-                IsExpanded="True" d:IsExpanded="False">
+                IsExpanded="True">
               <StackPanel Orientation="Vertical" Margin="12 6 12 12">
-                <StackPanel Orientation="Horizontal" Grid.Row="1" HorizontalAlignment="Center"
-                    Margin="0 0 0 8">
-                  <RadioButton
-                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Raise}}"
-                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="64"
-                      Height="48" Background="#60FFFFFF" Margin="0 0 2 0">
-                    <RadioButton.Content>
-                      <StackPanel Orientation="Vertical">
-                        <Viewbox Height="20" Margin="0 2">
-                          <Path Data="{StaticResource RaiseTerrainIcon}" Fill="#333" />
-                        </Viewbox>
-                        <TextBlock Text="Raise" HorizontalAlignment="Center" FontSize="11" />
-                      </StackPanel>
-                    </RadioButton.Content>
-                  </RadioButton>
-                  <RadioButton
-                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Lower}}"
-                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="64"
-                      Height="48" Background="#60FFFFFF" Margin="0 0 2 0">
-                    <RadioButton.Content>
-                      <StackPanel Orientation="Vertical">
-                        <Viewbox Height="20" Margin="0 2">
-                          <Path Data="{StaticResource LowerTerrainIcon}" Fill="#333" />
-                        </Viewbox>
-                        <TextBlock Text="Lower" HorizontalAlignment="Center" FontSize="11" />
-                      </StackPanel>
-                    </RadioButton.Content>
-                  </RadioButton>
-                  <RadioButton
-                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Flatten}}"
-                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="64"
-                      Height="48" Background="#60FFFFFF" Margin="0 0 2 0">
-                    <RadioButton.Content>
-                      <StackPanel Orientation="Vertical">
-                        <Viewbox Height="20" Margin="0 2">
-                          <Path Data="{StaticResource FlattenTerrainIcon}" Fill="#333" />
-                        </Viewbox>
-                        <TextBlock Text="Flatten" HorizontalAlignment="Center" FontSize="11" />
-                      </StackPanel>
-                    </RadioButton.Content>
-                  </RadioButton>
-                  <RadioButton
-                      IsChecked="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool, Converter={StaticResource ComparisonConverter}, ConverterParameter={x:Static core:TerrainBrushTool.Smooth}}"
-                      Style="{StaticResource {x:Type ToggleButton}}" Padding="4" Width="64"
-                      Height="48" Background="#60FFFFFF" Margin="0 0 2 0">
-                    <RadioButton.Content>
-                      <StackPanel Orientation="Vertical">
-                        <Viewbox Height="20" Margin="0 2">
-                          <Path Data="{StaticResource SmoothTerrainIcon}" Fill="#333" />
-                        </Viewbox>
-                        <TextBlock Text="Smooth" HorizontalAlignment="Center" FontSize="11" />
-                      </StackPanel>
-                    </RadioButton.Content>
-                  </RadioButton>
-                </StackPanel>
+                <controls:ToggleButtonStrip HorizontalAlignment="Center" Margin="0 0 0 8"
+                    SelectedValue="{Binding Source={StaticResource EditorUiState}, Path=TerrainBrushTool}">
+                  <controls:ToggleButtonStripItem Text="Raise"
+                      Icon="{StaticResource RaiseTerrainIcon}"
+                      Value="{x:Static core:TerrainBrushTool.Raise}" />
+                  <controls:ToggleButtonStripItem Text="Lower"
+                      Icon="{StaticResource LowerTerrainIcon}"
+                      Value="{x:Static core:TerrainBrushTool.Lower}" />
+                  <controls:ToggleButtonStripItem Text="Flatten"
+                      Icon="{StaticResource FlattenTerrainIcon}"
+                      Value="{x:Static core:TerrainBrushTool.Flatten}" />
+                  <controls:ToggleButtonStripItem Text="Smooth"
+                      Icon="{StaticResource SmoothTerrainIcon}"
+                      Value="{x:Static core:TerrainBrushTool.Smooth}" />
+                </controls:ToggleButtonStrip>
                 <TextBlock Text="Brush Radius" Foreground="#888" Margin="0 0 0 8" />
                 <Grid Margin="0 0 0 8">
                   <Grid.ColumnDefinitions>
