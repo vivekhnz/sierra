@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Controls.Primitives;
 using System.Windows.Markup;
-using System.Windows.Media;
-using System.Windows.Shapes;
 
 namespace Terrain.Editor.Controls
 {
@@ -28,6 +24,10 @@ namespace Terrain.Editor.Controls
             = new Dictionary<RadioButton, ToggleButtonStripItem>();
         private bool isSettingValueFromSource;
         private bool isSettingValueFromUi;
+
+        private Style firstToggleButtonStyle;
+        private Style middleToggleButtonStyle;
+        private Style lastToggleButtonStyle;
 
         public object SelectedValue
         {
@@ -51,6 +51,9 @@ namespace Terrain.Editor.Controls
         {
             InitializeComponent();
 
+            firstToggleButtonStyle = FindResource("FirstToggleButtonStyle") as Style;
+            middleToggleButtonStyle = FindResource("ToggleButtonStyle") as Style;
+            lastToggleButtonStyle = FindResource("LastToggleButtonStyle") as Style;
             Options.CollectionChanged += OnOptionsChanged;
         }
 
@@ -65,42 +68,16 @@ namespace Terrain.Editor.Controls
             optionToButtonMap.Clear();
             buttonToOptionMap.Clear();
 
-            var backgroundBrush = new SolidColorBrush(Color.FromArgb(96, 255, 255, 255));
-            var foregroundBrush = new SolidColorBrush(Color.FromArgb(255, 48, 48, 48));
-
             for (int i = 0; i < Options.Count; i++)
             {
                 var option = Options[i];
-                var contentStackPanel = new StackPanel
-                {
-                    Orientation = Orientation.Vertical
-                };
-                contentStackPanel.Children.Add(new Viewbox
-                {
-                    Height = 20,
-                    Margin = new Thickness(0, 2, 0, 2),
-                    Child = new Path
-                    {
-                        Data = option.Icon,
-                        Fill = foregroundBrush
-                    }
-                });
-                contentStackPanel.Children.Add(new TextBlock
-                {
-                    Text = option.Text,
-                    HorizontalAlignment = HorizontalAlignment.Center,
-                    FontSize = 11
-                });
                 var radioButton = new RadioButton
                 {
                     IsChecked = false,
-                    Padding = new Thickness(4),
-                    Width = 64,
-                    Height = 48,
-                    Background = backgroundBrush,
-                    Margin = new Thickness(0, 0, i == Options.Count - 1 ? 0 : 2, 0),
-                    Content = contentStackPanel,
-                    Style = FindResource(typeof(ToggleButton)) as Style
+                    DataContext = option,
+                    Style = i == 0
+                        ? firstToggleButtonStyle
+                        : (i == Options.Count - 1 ? lastToggleButtonStyle : middleToggleButtonStyle)
                 };
                 radioButton.Checked += OnRadioButtonValueChanged;
                 radioButton.Unchecked += OnRadioButtonValueChanged;

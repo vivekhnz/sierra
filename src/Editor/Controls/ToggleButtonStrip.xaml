@@ -3,7 +3,64 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008" mc:Ignorable="d">
-  <Border>
-    <StackPanel x:Name="spOptions" Orientation="Horizontal" HorizontalAlignment="Center" />
+  <UserControl.Resources>
+    <Style x:Key="ToggleButtonStyle" TargetType="RadioButton">
+      <Setter Property="Margin" Value="0 0 1 0" />
+      <!-- HACK: Store CornerRadius in 'Tag' property -->
+      <Setter Property="Tag">
+        <Setter.Value>
+          <CornerRadius />
+        </Setter.Value>
+      </Setter>
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border Name="Background" Width="64" Height="48" Background="#222"
+                CornerRadius="{TemplateBinding Tag}">
+              <StackPanel Orientation="Vertical" VerticalAlignment="Center">
+                <Viewbox Height="20" Margin="0 0 0 2">
+                  <Path Name="Icon" Data="{Binding Icon}" Fill="#555" />
+                </Viewbox>
+                <TextBlock Name="Label" Text="{Binding Text}" Foreground="#555" HorizontalAlignment="Center" />
+              </StackPanel>
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger SourceName="Background" Property="IsMouseOver" Value="True">
+                <Setter TargetName="Background" Property="Background" Value="#333" />
+                <Setter TargetName="Icon" Property="Fill" Value="#888" />
+                <Setter TargetName="Label" Property="Foreground" Value="#888" />
+              </Trigger>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter TargetName="Background" Property="Background"
+                    Value="{StaticResource PrimaryThemeBrush}" />
+                <Setter TargetName="Icon" Property="Fill" Value="#222" />
+                <Setter TargetName="Label" Property="Foreground" Value="#222" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="FirstToggleButtonStyle" TargetType="RadioButton" BasedOn="{StaticResource ToggleButtonStyle}">
+      <!-- HACK: Store CornerRadius in 'Tag' property -->
+      <Setter Property="Tag">
+        <Setter.Value>
+          <CornerRadius TopLeft="3" TopRight="0" BottomLeft="3" BottomRight="0" />
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="LastToggleButtonStyle" TargetType="RadioButton"
+        BasedOn="{StaticResource ToggleButtonStyle}">
+      <Setter Property="Margin" Value="0" />
+      <!-- HACK: Store CornerRadius in 'Tag' property -->
+      <Setter Property="Tag">
+        <Setter.Value>
+          <CornerRadius TopLeft="0" TopRight="3" BottomLeft="0" BottomRight="3" />
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </UserControl.Resources>
+  <Border Background="#111" BorderBrush="#111" CornerRadius="3" BorderThickness="1">
+    <StackPanel x:Name="spOptions" Orientation="Horizontal" />
   </Border>
 </UserControl>
