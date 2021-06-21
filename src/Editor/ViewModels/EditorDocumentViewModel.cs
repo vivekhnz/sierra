@@ -11,8 +11,8 @@ namespace Terrain.Editor.ViewModels
 
         public ObservableCollection<TerrainMaterialViewModel> TerrainMaterials { get; private set; }
             = new ObservableCollection<TerrainMaterialViewModel>();
-        public ObservableCollection<EditorObjectViewModel> Objects { get; private set; }
-            = new ObservableCollection<EditorObjectViewModel>();
+        public ObservableCollection<uint> ObjectIds { get; private set; }
+            = new ObservableCollection<uint>();
 
         public DelegateCommand AddMaterialCommand { get; private set; }
 
@@ -89,18 +89,13 @@ namespace Terrain.Editor.ViewModels
                 {
                     ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
 
-                    Objects.Add(new EditorObjectViewModel(cmd.ObjectId));
+                    ObjectIds.Add(cmd.ObjectId);
                 }
                 else if (entry.Type == EditorCommandType.DeleteObject)
                 {
                     ref readonly DeleteObjectCommand cmd = ref entry.As<DeleteObjectCommand>();
 
-                    uint objectId = cmd.ObjectId;
-                    var objectVm = Objects.FirstOrDefault(vm => vm.ObjectId == objectId);
-                    if (objectVm != null)
-                    {
-                        Objects.Remove(objectVm);
-                    }
+                    ObjectIds.Remove(cmd.ObjectId);
                 }
             }
 

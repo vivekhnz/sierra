@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime"
     xmlns:editor="clr-namespace:Terrain.Editor"
     xmlns:controls="clr-namespace:Terrain.Editor.Controls"
     xmlns:core="clr-namespace:Terrain.Editor.Core"
@@ -13,8 +14,8 @@
         Source="{Binding Source={StaticResource EditorAssets}, Path=RegisteredAssets}" />
     <CollectionViewSource x:Key="TerrainMaterials"
         Source="{Binding Source={StaticResource EditorDocument}, Path=TerrainMaterials}" />
-    <CollectionViewSource x:Key="Objects"
-        Source="{Binding Source={StaticResource EditorDocument}, Path=Objects}" />
+    <CollectionViewSource x:Key="ObjectIds"
+        Source="{Binding Source={StaticResource EditorDocument}, Path=ObjectIds}" />
     <Style x:Key="SliderStyle" TargetType="Slider">
       <Style.Triggers>
         <Trigger Property="IsEnabled" Value="False">
@@ -306,15 +307,20 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="24" />
                   </Grid.RowDefinitions>
-                  <ListBox ItemsSource="{Binding Source={StaticResource Objects}}"
-                      IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Name"
-                      Background="Transparent" Foreground="#CCC" FontSize="14"
-                      Grid.ColumnSpan="3" Margin="0 0 0 8">
+                  <ListBox ItemsSource="{Binding Source={StaticResource ObjectIds}}"
+                      IsSynchronizedWithCurrentItem="True" Background="Transparent"
+                      Foreground="#CCC" FontSize="14" Grid.ColumnSpan="3" Margin="0 0 0 8"
+                      Height="300">
                     <ListBox.ItemContainerStyle>
                       <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="18 2" />
                       </Style>
                     </ListBox.ItemContainerStyle>
+                    <ListBox.ItemTemplate>
+                      <DataTemplate DataType="{x:Type sys:UInt32}">
+                        <TextBlock Text="{Binding StringFormat=Object {0}}" />
+                      </DataTemplate>
+                    </ListBox.ItemTemplate>
                   </ListBox>
                   <Button Content="Delete" Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
                       Style="{StaticResource ButtonStyle}"

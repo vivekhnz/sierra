@@ -9,7 +9,7 @@ namespace Terrain.Editor
 
         public static DelegateCommand AddObject { get; private set; } = new DelegateCommand(
             () => EditorCore.AddObject(),
-            () => (App.Current?.Document?.Objects?.Count ?? 0) < maxObjectCount);
+            () => (App.Current?.Document?.ObjectIds?.Count ?? 0) < maxObjectCount);
 
         public static DelegateCommand DeletedSelectedObject { get; private set; } = new DelegateCommand(
             () => EditorCore.DeleteObject(App.Current.UiState.SelectedObjectId),
