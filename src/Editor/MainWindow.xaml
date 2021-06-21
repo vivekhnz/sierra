@@ -3,6 +3,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:editor="clr-namespace:Terrain.Editor"
     xmlns:controls="clr-namespace:Terrain.Editor.Controls"
     xmlns:core="clr-namespace:Terrain.Editor.Core"
     xmlns:b="clr-namespace:Terrain.Editor.Utilities.Binding" mc:Ignorable="d"
@@ -317,14 +318,14 @@
                   </ListBox>
                   <Button Content="Delete" Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
                       Style="{StaticResource ButtonStyle}"
-                      Command="{Binding Source={StaticResource Objects}, Path=/DeleteObjectCommand}" />
+                      Command="{x:Static editor:EditorCommands.DeletedSelectedObject}" />
                 </Grid>
               </Expander>
               <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
                   HorizontalAlignment="Right">
                 <Button Content="+" Width="27" FontSize="16" FontWeight="Bold"
                     Style="{StaticResource ButtonStyle}"
-                    Command="{Binding Source={StaticResource EditorDocument}, Path=AddObjectCommand}"
+                    Command="{x:Static editor:EditorCommands.AddObject}"
                     VerticalContentAlignment="Top" />
               </StackPanel>
             </Grid>

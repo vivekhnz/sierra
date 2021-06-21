@@ -56,6 +56,7 @@ namespace Terrain.Editor
             UiState.CheckForChanges();
             EditorPlatform.Tick();
             EditorBindingEngine.UpdateBindings();
+            EditorCommands.Update();
         }
     }
 }

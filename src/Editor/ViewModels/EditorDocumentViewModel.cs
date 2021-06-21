@@ -8,7 +8,6 @@ namespace Terrain.Editor.ViewModels
     public class EditorDocumentViewModel : ViewModelBase
     {
         const int maxMaterialCount = 8;
-        const int maxObjectCount = 32;
 
         public ObservableCollection<TerrainMaterialViewModel> TerrainMaterials { get; private set; }
             = new ObservableCollection<TerrainMaterialViewModel>();
@@ -16,7 +15,6 @@ namespace Terrain.Editor.ViewModels
             = new ObservableCollection<EditorObjectViewModel>();
 
         public DelegateCommand AddMaterialCommand { get; private set; }
-        public DelegateCommand AddObjectCommand { get; private set; }
 
         public EditorDocumentViewModel()
         {
@@ -44,10 +42,6 @@ namespace Terrain.Editor.ViewModels
                     });
                 },
                 () => TerrainMaterials.Count < maxMaterialCount);
-
-            AddObjectCommand = new DelegateCommand(
-                () => EditorCore.AddObject(),
-                () => Objects.Count < maxObjectCount);
         }
 
         internal void OnTransactionPublished(EditorCommandList commands)
@@ -119,7 +113,6 @@ namespace Terrain.Editor.ViewModels
                 materialVm.MoveMaterialDownCommand.NotifyCanExecuteChanged();
                 materialVm.DeleteMaterialCommand.NotifyCanExecuteChanged();
             }
-            AddObjectCommand.NotifyCanExecuteChanged();
         }
 
         internal int GetMaterialIndex(TerrainMaterialViewModel materialVm)
