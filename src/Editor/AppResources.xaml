@@ -3,7 +3,6 @@
     xmlns:vm="clr-namespace:Terrain.Editor.ViewModels"
     xmlns:utils="clr-namespace:Terrain.Editor.Utilities">
 
-  <vm:EditorUiStateViewModel x:Key="EditorUiState" />
   <vm:EditorAssetsViewModel x:Key="EditorAssets" />
   <vm:EditorDocumentViewModel x:Key="EditorDocument" />
 

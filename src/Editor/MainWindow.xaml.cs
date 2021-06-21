@@ -15,7 +15,6 @@ namespace Terrain.Editor
     public partial class MainWindow : Window
     {
         private readonly CollectionViewSource cvsTerrainMaterials;
-        private readonly CollectionViewSource cvsObjectIds;
 
         public MainWindow()
         {
@@ -33,13 +32,6 @@ namespace Terrain.Editor
                 new[] { AssetRegistrationType.File }, new[] { AssetType.Texture });
 
             cvsTerrainMaterials = (CollectionViewSource)FindResource("TerrainMaterials");
-
-            cvsObjectIds = (CollectionViewSource)FindResource("ObjectIds");
-            cvsObjectIds.View.CurrentChanged += (sender, args) =>
-            {
-                uint? objectId = (uint?)cvsObjectIds.View?.CurrentItem;
-                App.Current.UiState.SelectedObjectId = objectId ?? 0U;
-            };
         }
 
         private void miOpen_Click(object sender, RoutedEventArgs e)
@@ -78,7 +70,8 @@ namespace Terrain.Editor
                 else if (entry.Type == EditorCommandType.AddObject)
                 {
                     ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
-                    cvsObjectIds.View.MoveCurrentTo(cmd.ObjectId);
+                    ref EditorUiState state = ref EditorCore.GetUiState();
+                    state.SelectedObjectId = cmd.ObjectId;
                 }
             }
         }

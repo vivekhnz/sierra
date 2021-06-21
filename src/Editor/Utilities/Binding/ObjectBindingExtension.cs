@@ -10,6 +10,9 @@ namespace Terrain.Editor.Utilities.Binding
     {
         private ObjectProperty sourceProperty;
 
+        private static ObjectReference selectedObjectRef = new ObjectReference(
+            () => EditorCore.GetUiState().SelectedObjectId);
+
         public ObjectBindingExtension(ObjectProperty sourceProperty)
         {
             this.sourceProperty = sourceProperty;
@@ -26,7 +29,7 @@ namespace Terrain.Editor.Utilities.Binding
             {
                 var binding = EditorBindingEngine.SetObjectBinding(
                     targetObject, targetProperty, sourceProperty);
-                binding.Source = App.Current?.UiState?.SelectedObject ?? ObjectReference.None;
+                binding.Source = selectedObjectRef;
                 return targetProperty.DefaultMetadata.DefaultValue;
             }
 

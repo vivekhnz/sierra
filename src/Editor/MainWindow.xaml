@@ -14,8 +14,6 @@
         Source="{Binding Source={StaticResource EditorAssets}, Path=RegisteredAssets}" />
     <CollectionViewSource x:Key="TerrainMaterials"
         Source="{Binding Source={StaticResource EditorDocument}, Path=TerrainMaterials}" />
-    <CollectionViewSource x:Key="ObjectIds"
-        Source="{Binding Source={StaticResource EditorDocument}, Path=ObjectIds}" />
     <Style x:Key="SliderStyle" TargetType="Slider">
       <Style.Triggers>
         <Trigger Property="IsEnabled" Value="False">
@@ -307,8 +305,9 @@
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="24" />
                   </Grid.RowDefinitions>
-                  <ListBox ItemsSource="{Binding Source={StaticResource ObjectIds}}"
-                      IsSynchronizedWithCurrentItem="True" Background="Transparent"
+                  <ListBox
+                      ItemsSource="{Binding Source={StaticResource EditorDocument}, Path=ObjectIds}"
+                      SelectedValue="{b:UiBinding SelectedObjectId}" Background="Transparent"
                       Foreground="#CCC" FontSize="14" Grid.ColumnSpan="3" Margin="0 0 0 8"
                       Height="300">
                     <ListBox.ItemContainerStyle>

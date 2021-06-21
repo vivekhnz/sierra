@@ -11,8 +11,9 @@ namespace Terrain.Editor.Utilities.Binding
         DependencyProperty targetProperty;
         UiProperty sourceProperty;
 
-        bool isSettingTargetProperty;
-        object newValueFromTarget;
+        bool isTargetUpdatingFromBinding;
+        bool isTargetUpdatingFromUi;
+        object newValueFromUi;
 
         public UiBinding(
             DependencyObject targetObject, DependencyProperty targetProperty,
@@ -34,40 +35,22 @@ namespace Terrain.Editor.Utilities.Binding
 
         private void OnTargetPropertyValueChanged(object sender, EventArgs e)
         {
-            if (isSettingTargetProperty) return;
+            if (isTargetUpdatingFromBinding) return;
 
-            newValueFromTarget = targetObject.GetValue(targetProperty);
+            isTargetUpdatingFromUi = true;
+            newValueFromUi = targetObject.GetValue(targetProperty);
         }
 
         public void Update(ref EditorUiState state)
         {
-            if (newValueFromTarget == null)
-            {
-                // update target
-                object value = sourceProperty switch
-                {
-                    UiProperty.TerrainBrushTool => state.TerrainBrushTool,
-                    UiProperty.TerrainBrushRadius => state.TerrainBrushRadius,
-                    UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
-                    UiProperty.TerrainBrushStrength => state.TerrainBrushStrength,
-                    UiProperty.SceneLightDirection => state.SceneLightDirection,
-                    _ => null
-                };
-                if (value == null)
-                {
-                    SetTargetPropertyValue(targetProperty.DefaultMetadata.DefaultValue);
-                    return;
-                }
-
-                object convertedValue = Convert.ChangeType(value, targetProperty.PropertyType);
-                SetTargetPropertyValue(convertedValue);
-            }
-            else
+            if (isTargetUpdatingFromUi)
             {
                 // update source
                 void SetSourceProperty<T>(ref T prop)
                 {
-                    prop = (T)Convert.ChangeType(newValueFromTarget, typeof(T));
+                    prop = newValueFromUi == null
+                        ? default(T)
+                        : (T)Convert.ChangeType(newValueFromUi, typeof(T));
                 }
                 switch (sourceProperty)
                 {
@@ -83,19 +66,46 @@ namespace Terrain.Editor.Utilities.Binding
                     case UiProperty.TerrainBrushStrength:
                         SetSourceProperty(ref state.TerrainBrushStrength);
                         break;
+                    case UiProperty.SelectedObjectId:
+                        SetSourceProperty(ref state.SelectedObjectId);
+                        break;
                     case UiProperty.SceneLightDirection:
                         SetSourceProperty(ref state.SceneLightDirection);
                         break;
                 }
-                newValueFromTarget = null;
+
+                newValueFromUi = null;
+                isTargetUpdatingFromUi = false;
+            }
+            else
+            {
+                // update target
+                object value = sourceProperty switch
+                {
+                    UiProperty.TerrainBrushTool => state.TerrainBrushTool,
+                    UiProperty.TerrainBrushRadius => state.TerrainBrushRadius,
+                    UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
+                    UiProperty.TerrainBrushStrength => state.TerrainBrushStrength,
+                    UiProperty.SelectedObjectId => state.SelectedObjectId,
+                    UiProperty.SceneLightDirection => state.SceneLightDirection,
+                    _ => null
+                };
+                if (value == null)
+                {
+                    SetTargetPropertyValue(targetProperty.DefaultMetadata.DefaultValue);
+                    return;
+                }
+
+                object convertedValue = Convert.ChangeType(value, targetProperty.PropertyType);
+                SetTargetPropertyValue(convertedValue);
             }
         }
 
         private void SetTargetPropertyValue(object value)
         {
-            isSettingTargetProperty = true;
+            isTargetUpdatingFromBinding = true;
             targetObject.SetValue(targetProperty, value);
-            isSettingTargetProperty = false;
+            isTargetUpdatingFromBinding = false;
         }
     }
 
@@ -105,6 +115,7 @@ namespace Terrain.Editor.Utilities.Binding
         TerrainBrushRadius,
         TerrainBrushFalloff,
         TerrainBrushStrength,
+        SelectedObjectId,
         SceneLightDirection,
     }
 }

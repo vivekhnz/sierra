@@ -12,8 +12,16 @@ namespace Terrain.Editor
             () => (App.Current?.Document?.ObjectIds?.Count ?? 0) < maxObjectCount);
 
         public static DelegateCommand DeletedSelectedObject { get; private set; } = new DelegateCommand(
-            () => EditorCore.DeleteObject(App.Current.UiState.SelectedObjectId),
-            () => (App.Current?.UiState?.SelectedObjectId ?? 0U) != 0U);
+            () =>
+            {
+                ref EditorUiState state = ref EditorCore.GetUiState();
+                EditorCore.DeleteObject(state.SelectedObjectId);
+            },
+            () =>
+            {
+                ref EditorUiState state = ref EditorCore.GetUiState();
+                return state.SelectedObjectId != 0U;
+            });
 
         public static void Update()
         {

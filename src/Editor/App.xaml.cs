@@ -16,7 +16,6 @@ namespace Terrain.Editor
     {
         private DispatcherTimer renderTimer;
 
-        public EditorUiStateViewModel UiState { get; private set; }
         public EditorAssetsViewModel Assets { get; private set; }
         public EditorDocumentViewModel Document { get; private set; }
 
@@ -24,7 +23,6 @@ namespace Terrain.Editor
 
         protected override void OnStartup(StartupEventArgs e)
         {
-            UiState = (EditorUiStateViewModel)FindResource("EditorUiState");
             Assets = (EditorAssetsViewModel)FindResource("EditorAssets");
             Document = (EditorDocumentViewModel)FindResource("EditorDocument");
 
@@ -53,7 +51,6 @@ namespace Terrain.Editor
 
         private void OnTick(object sender, EventArgs e)
         {
-            UiState.CheckForChanges();
             EditorPlatform.Tick();
             EditorBindingEngine.UpdateBindings();
             EditorCommands.Update();
