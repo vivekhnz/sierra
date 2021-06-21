@@ -323,7 +323,7 @@
                   </ListBox>
                   <Button Content="Delete" Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
                       Style="{StaticResource ButtonStyle}"
-                      Command="{x:Static editor:EditorCommands.DeletedSelectedObject}" />
+                      Command="{x:Static editor:EditorCommands.DeleteSelectedObject}" />
                 </Grid>
               </Expander>
               <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"

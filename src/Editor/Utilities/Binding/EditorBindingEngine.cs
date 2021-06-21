@@ -25,14 +25,12 @@ namespace Terrain.Editor.Utilities.Binding
             return binding;
         }
 
-        internal static void UpdateBindings()
+        internal static void UpdateBindings(ref EditorUiState uiState)
         {
             foreach (var binding in objectBindings)
             {
                 binding.UpdateFromSource();
             }
-
-            ref EditorUiState uiState = ref EditorCore.GetUiState();
             foreach (var binding in uiBindings)
             {
                 binding.Update(ref uiState);

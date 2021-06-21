@@ -52,8 +52,10 @@ namespace Terrain.Editor
         private void OnTick(object sender, EventArgs e)
         {
             EditorPlatform.Tick();
-            EditorBindingEngine.UpdateBindings();
-            EditorCommands.Update();
+
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+            EditorBindingEngine.UpdateBindings(ref uiState);
+            EditorCommands.Update(Document, ref uiState);
         }
     }
 }
