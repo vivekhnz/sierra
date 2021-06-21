@@ -291,135 +291,163 @@
           </StackPanel>
         </TabItem>
         <TabItem Header="OBJECTS">
-          <Expander Style="{StaticResource SidebarExpanderStyle}" Header="ROCK TRANSFORM"
-              IsExpanded="True">
-            <StackPanel Orientation="Vertical" Margin="12 4">
-              <Grid Margin="0 0 0 8" Height="27">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <ComboBox ItemsSource="{Binding Source={StaticResource Objects}}"
-                    DisplayMemberPath="Name" IsSynchronizedWithCurrentItem="True"
-                    VerticalContentAlignment="Center" />
-                <Button Content="+" Grid.Column="1" Width="27" FontSize="16" FontWeight="Bold"
-                    Margin="4 0 0 0" Style="{StaticResource ButtonStyle}"
+          <StackPanel Orientation="Vertical">
+            <Grid>
+              <Expander Style="{StaticResource SidebarExpanderStyle}" Header="OUTLINE"
+                  IsExpanded="True">
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="*" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="24" />
+                  </Grid.RowDefinitions>
+                  <ListBox ItemsSource="{Binding Source={StaticResource Objects}}"
+                      IsSynchronizedWithCurrentItem="True" DisplayMemberPath="Name"
+                      Background="Transparent" Foreground="#CCC" FontSize="14"
+                      Grid.ColumnSpan="3" Margin="0 0 0 8">
+                    <ListBox.ItemContainerStyle>
+                      <Style TargetType="ListBoxItem">
+                        <Setter Property="Padding" Value="18 2" />
+                      </Style>
+                    </ListBox.ItemContainerStyle>
+                  </ListBox>
+                  <Button Content="Delete" Grid.Column="0" Grid.Row="1" Margin="12 0 0 0"
+                      Style="{StaticResource ButtonStyle}"
+                      Command="{Binding Source={StaticResource Objects}, Path=/DeleteObjectCommand}" />
+                </Grid>
+              </Expander>
+              <StackPanel Orientation="Horizontal" Height="27" VerticalAlignment="Top"
+                  HorizontalAlignment="Right">
+                <Button Content="+" Width="27" FontSize="16" FontWeight="Bold"
+                    Style="{StaticResource ButtonStyle}"
                     Command="{Binding Source={StaticResource EditorDocument}, Path=AddObjectCommand}"
                     VerticalContentAlignment="Top" />
-              </Grid>
-              <Button Content="Delete" Margin="0 0 0 12" Width="100" Height="24"
-                  HorizontalAlignment="Left" Style="{StaticResource ButtonStyle}"
-                  Command="{Binding Source={StaticResource Objects}, Path=/DeleteObjectCommand}" />
-              <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
-              <Grid Margin="0 0 0 8">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="32" />
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="32" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="32" />
-                  <RowDefinition Height="32" />
-                  <RowDefinition Height="32" />
-                </Grid.RowDefinitions>
-                <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="-100" Maximum="100" Value="{b:ObjectBinding ObjectPositionX}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
-                <TextBlock Text="{b:ObjectBinding ObjectPositionX}" Grid.Column="2"
-                    Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+              </StackPanel>
+            </Grid>
+            <Expander Style="{StaticResource SidebarExpanderStyle}" Header="TRANSFORM"
+                IsExpanded="True">
+              <StackPanel Orientation="Vertical" Margin="12 4">
+                <TextBlock Text="Position" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="32" />
+                    <RowDefinition Height="32" />
+                    <RowDefinition Height="32" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="-100" Maximum="100"
+                      Value="{b:ObjectBinding ObjectPositionX}" SmallChange="0.1"
+                      LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Grid.Column="1" Grid.Row="0" />
+                  <TextBlock Text="{b:ObjectBinding ObjectPositionX}" Grid.Column="2"
+                      Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
-                <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="-100" Maximum="100" Value="{b:ObjectBinding ObjectPositionY}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
-                <TextBlock Text="{b:ObjectBinding ObjectPositionY}" Grid.Column="2"
-                    Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="-100" Maximum="100"
+                      Value="{b:ObjectBinding ObjectPositionY}" SmallChange="0.1"
+                      LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Grid.Column="1" Grid.Row="1" />
+                  <TextBlock Text="{b:ObjectBinding ObjectPositionY}" Grid.Column="2"
+                      Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
-                <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="-100" Maximum="100" Value="{b:ObjectBinding ObjectPositionZ}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
-                <TextBlock Text="{b:ObjectBinding ObjectPositionZ}" Grid.Column="2"
-                    Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
-              </Grid>
-              <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
-              <Grid Margin="0 0 0 8">
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="32" />
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="32" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="32" />
-                  <RowDefinition Height="32" />
-                  <RowDefinition Height="32" />
-                </Grid.RowDefinitions>
-                <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="-360" Maximum="360" Value="{b:ObjectBinding ObjectRotationX}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
-                <TextBlock Text="{b:ObjectBinding ObjectRotationX}" Grid.Column="2"
-                    Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="-100" Maximum="100"
+                      Value="{b:ObjectBinding ObjectPositionZ}" SmallChange="0.1"
+                      LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Grid.Column="1" Grid.Row="2" />
+                  <TextBlock Text="{b:ObjectBinding ObjectPositionZ}" Grid.Column="2"
+                      Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Rotation" Foreground="#888" Margin="0 0 0 8" />
+                <Grid Margin="0 0 0 8">
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="32" />
+                    <RowDefinition Height="32" />
+                    <RowDefinition Height="32" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="-360" Maximum="360"
+                      Value="{b:ObjectBinding ObjectRotationX}" SmallChange="0.1"
+                      LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Grid.Column="1" Grid.Row="0" />
+                  <TextBlock Text="{b:ObjectBinding ObjectRotationX}" Grid.Column="2"
+                      Grid.Row="0" Foreground="#888" Margin="4 0 0 0" />
 
-                <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="-360" Maximum="360" Value="{b:ObjectBinding ObjectRotationY}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
-                <TextBlock Text="{b:ObjectBinding ObjectRotationY}" Grid.Column="2"
-                    Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="-360" Maximum="360"
+                      Value="{b:ObjectBinding ObjectRotationY}" SmallChange="0.1"
+                      LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Grid.Column="1" Grid.Row="1" />
+                  <TextBlock Text="{b:ObjectBinding ObjectRotationY}" Grid.Column="2"
+                      Grid.Row="1" Foreground="#888" Margin="4 0 0 0" />
 
-                <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="-360" Maximum="360" Value="{b:ObjectBinding ObjectRotationZ}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
-                <TextBlock Text="{b:ObjectBinding ObjectRotationZ}" Grid.Column="2"
-                    Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
-              </Grid>
-              <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
-              <Grid>
-                <Grid.ColumnDefinitions>
-                  <ColumnDefinition Width="32" />
-                  <ColumnDefinition Width="*" />
-                  <ColumnDefinition Width="32" />
-                </Grid.ColumnDefinitions>
-                <Grid.RowDefinitions>
-                  <RowDefinition Height="32" />
-                  <RowDefinition Height="32" />
-                  <RowDefinition Height="32" />
-                </Grid.RowDefinitions>
-                <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleX}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
-                <TextBlock Text="{b:ObjectBinding ObjectScaleX}" Grid.Column="2" Grid.Row="0"
-                    Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="-360" Maximum="360"
+                      Value="{b:ObjectBinding ObjectRotationZ}" SmallChange="0.1"
+                      LargeChange="1" TickFrequency="1" IsSnapToTickEnabled="True"
+                      Grid.Column="1" Grid.Row="2" />
+                  <TextBlock Text="{b:ObjectBinding ObjectRotationZ}" Grid.Column="2"
+                      Grid.Row="2" Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+                <TextBlock Text="Scale" Foreground="#888" Margin="0 0 0 8" />
+                <Grid>
+                  <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="32" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="32" />
+                  </Grid.ColumnDefinitions>
+                  <Grid.RowDefinitions>
+                    <RowDefinition Height="32" />
+                    <RowDefinition Height="32" />
+                    <RowDefinition Height="32" />
+                  </Grid.RowDefinitions>
+                  <TextBlock Text="X" Foreground="#888" Grid.Row="0" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleX}"
+                      SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                      IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="0" />
+                  <TextBlock Text="{b:ObjectBinding ObjectScaleX}" Grid.Column="2" Grid.Row="0"
+                      Foreground="#888" Margin="4 0 0 0" />
 
-                <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleY}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
-                <TextBlock Text="{b:ObjectBinding ObjectScaleY}" Grid.Column="2" Grid.Row="1"
-                    Foreground="#888" Margin="4 0 0 0" />
+                  <TextBlock Text="Y" Foreground="#888" Grid.Row="1" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleY}"
+                      SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                      IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="1" />
+                  <TextBlock Text="{b:ObjectBinding ObjectScaleY}" Grid.Column="2" Grid.Row="1"
+                      Foreground="#888" Margin="4 0 0 0" />
 
-                <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
-                    HorizontalAlignment="Right" />
-                <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleZ}"
-                    SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
-                    IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
-                <TextBlock Text="{b:ObjectBinding ObjectScaleZ}" Grid.Column="2" Grid.Row="2"
-                    Foreground="#888" Margin="4 0 0 0" />
-              </Grid>
-            </StackPanel>
-          </Expander>
+                  <TextBlock Text="Z" Foreground="#888" Grid.Row="2" Margin="0 0 8 0"
+                      HorizontalAlignment="Right" />
+                  <Slider Minimum="0" Maximum="10" Value="{b:ObjectBinding ObjectScaleZ}"
+                      SmallChange="0.1" LargeChange="1" TickFrequency="0.1"
+                      IsSnapToTickEnabled="True" Grid.Column="1" Grid.Row="2" />
+                  <TextBlock Text="{b:ObjectBinding ObjectScaleZ}" Grid.Column="2" Grid.Row="2"
+                      Foreground="#888" Margin="4 0 0 0" />
+                </Grid>
+              </StackPanel>
+            </Expander>
+          </StackPanel>
         </TabItem>
         <TabItem Header="SCENE">
           <Expander Style="{StaticResource SidebarExpanderStyle}" Header="SCENE"
