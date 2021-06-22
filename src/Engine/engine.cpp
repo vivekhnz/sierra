@@ -36,6 +36,8 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     api.rendererCreateTextureArray = rendererCreateTextureArray;
     api.rendererBindTextureArray = rendererBindTextureArray;
     api.rendererUpdateTextureArray = rendererUpdateTextureArray;
+    api.rendererCreateDepthBuffer = rendererCreateDepthBuffer;
+    api.rendererResizeDepthBuffer = rendererResizeDepthBuffer;
     api.rendererCreateFramebuffer = rendererCreateFramebuffer;
     api.rendererBindFramebuffer = rendererBindFramebuffer;
     api.rendererUnbindFramebuffer = rendererUnbindFramebuffer;

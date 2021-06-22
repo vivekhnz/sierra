@@ -1,6 +1,7 @@
 #include "engine_renderer.h"
 
 #define RENDERER_MAX_TEXTURES 128
+#define RENDERER_MAX_DEPTH_BUFFERS 128
 #define RENDERER_MAX_FRAMEBUFFERS 128
 #define RENDERER_MAX_SHADERS 128
 #define RENDERER_MAX_SHADER_PROGRAMS 128
@@ -21,6 +22,9 @@ struct RendererState
 
     uint32 textureCount;
     uint32 textureIds[RENDERER_MAX_TEXTURES];
+
+    uint32 depthBufferCount;
+    uint32 depthBufferIds[RENDERER_MAX_DEPTH_BUFFERS];
 
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -261,6 +265,32 @@ RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
+RENDERER_CREATE_DEPTH_BUFFER(rendererCreateDepthBuffer)
+{
+    RendererState *state = getState(memory);
+    assert(state->depthBufferCount < RENDERER_MAX_DEPTH_BUFFERS);
+
+    uint32 *depthBufferId = state->depthBufferIds + state->depthBufferCount;
+    glGenRenderbuffers(1, depthBufferId);
+
+    glBindRenderbuffer(GL_RENDERBUFFER, *depthBufferId);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+
+    return state->depthBufferCount++;
+}
+
+RENDERER_RESIZE_DEPTH_BUFFER(rendererResizeDepthBuffer)
+{
+    RendererState *state = getState(memory);
+    assert(handle < state->depthBufferCount);
+    uint32 id = state->depthBufferIds[handle];
+
+    glBindRenderbuffer(GL_RENDERBUFFER, id);
+    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+}
+
 RENDERER_CREATE_FRAMEBUFFER(rendererCreateFramebuffer)
 {
     RendererState *state = getState(memory);
@@ -273,7 +303,15 @@ RENDERER_CREATE_FRAMEBUFFER(rendererCreateFramebuffer)
     glGenFramebuffers(1, framebufferId);
 
     glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
+
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+    if (depthBufferHandle > -1)
+    {
+        uint32 depthBufferId = state->depthBufferIds[depthBufferHandle];
+        glFramebufferRenderbuffer(
+            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferId);
+    }
+
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
     state->framebufferTextureIds[state->framebufferCount] = textureId;
 
@@ -520,6 +558,14 @@ RENDERER_SET_POLYGON_MODE(rendererSetPolygonMode)
 
 RENDERER_SET_BLEND_MODE(rendererSetBlendMode)
 {
+    if (enableDepthTest)
+    {
+        glEnable(GL_DEPTH_TEST);
+    }
+    else
+    {
+        glDisable(GL_DEPTH_TEST);
+    }
     glBlendEquation(equation);
     glBlendFunc(srcFactor, dstFactor);
 }
@@ -549,6 +595,7 @@ RENDERER_DESTROY_RESOURCES(rendererDestroyResources)
 {
     RendererState *state = getState(memory);
     glDeleteTextures(state->textureCount, state->textureIds);
+    glDeleteRenderbuffers(state->depthBufferCount, state->depthBufferIds);
     glDeleteFramebuffers(state->framebufferCount, state->framebufferIds);
     for (int i = 0; i < state->shaderCount; i++)
     {

@@ -7,5 +7,5 @@ out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(texture(imageTexture, uv).rrr, 1);
+    FragColor = vec4(texture(imageTexture, uv).rgb, 1);
 }

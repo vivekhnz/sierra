@@ -31,6 +31,8 @@ struct EngineApi
     RendererCreateTextureArray *rendererCreateTextureArray;
     RendererBindTextureArray *rendererBindTextureArray;
     RendererUpdateTextureArray *rendererUpdateTextureArray;
+    RendererCreateDepthBuffer *rendererCreateDepthBuffer;
+    RendererResizeDepthBuffer *rendererResizeDepthBuffer;
     RendererCreateFramebuffer *rendererCreateFramebuffer;
     RendererBindFramebuffer *rendererBindFramebuffer;
     RendererUnbindFramebuffer *rendererUnbindFramebuffer;

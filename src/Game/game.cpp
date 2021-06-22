@@ -622,7 +622,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
         engine->rendererUseShaderProgram(memory->engineMemory, terrainShaderProgram->handle);
         engine->rendererSetPolygonMode(terrainPolygonMode);
-        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
         engine->rendererBindShaderStorageBuffer(
             memory->engineMemory, state->materialPropsBufferHandle, 1);
         engine->rendererSetShaderProgramUniformVector2(memory->engineMemory,

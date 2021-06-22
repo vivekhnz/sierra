@@ -54,8 +54,15 @@ typedef RENDERER_BIND_TEXTURE_ARRAY(RendererBindTextureArray);
         uint32 width, uint32 height, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
+#define RENDERER_CREATE_DEPTH_BUFFER(name)                                                    \
+    uint32 name(EngineMemory *memory, uint32 width, uint32 height)
+typedef RENDERER_CREATE_DEPTH_BUFFER(RendererCreateDepthBuffer);
+#define RENDERER_RESIZE_DEPTH_BUFFER(name)                                                    \
+    void name(EngineMemory *memory, uint32 handle, uint32 width, uint32 height)
+typedef RENDERER_RESIZE_DEPTH_BUFFER(RendererResizeDepthBuffer);
+
 #define RENDERER_CREATE_FRAMEBUFFER(name)                                                     \
-    uint32 name(EngineMemory *memory, uint32 textureHandle)
+    uint32 name(EngineMemory *memory, uint32 textureHandle, int32 depthBufferHandle)
 typedef RENDERER_CREATE_FRAMEBUFFER(RendererCreateFramebuffer);
 #define RENDERER_BIND_FRAMEBUFFER(name) void name(EngineMemory *memory, uint32 handle)
 typedef RENDERER_BIND_FRAMEBUFFER(RendererBindFramebuffer);
@@ -122,7 +129,7 @@ typedef RENDERER_CLEAR_BACK_BUFFER(RendererClearBackBuffer);
 #define RENDERER_SET_POLYGON_MODE(name) void name(uint32 polygonMode)
 typedef RENDERER_SET_POLYGON_MODE(RendererSetPolygonMode);
 #define RENDERER_SET_BLEND_MODE(name)                                                         \
-    void name(uint32 equation, uint32 srcFactor, uint32 dstFactor)
+    void name(uint32 equation, uint32 srcFactor, uint32 dstFactor, bool enableDepthTest)
 typedef RENDERER_SET_BLEND_MODE(RendererSetBlendMode);
 #define RENDERER_DRAW_ELEMENTS(name) void name(uint32 primitiveType, uint32 elementCount)
 typedef RENDERER_DRAW_ELEMENTS(RendererDrawElements);
