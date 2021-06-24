@@ -1425,17 +1425,16 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->sceneRenderTarget = {};
         viewState->sceneRenderTarget.width = view->width;
         viewState->sceneRenderTarget.height = view->height;
-        viewState->sceneRenderTarget.textureHandle = memory->engineApi->rendererCreateTexture(
+        viewState->sceneRenderTarget.textureHandle = engine->rendererCreateTexture(
             memory->engineMemory, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB,
             viewState->sceneRenderTarget.width, viewState->sceneRenderTarget.height,
             GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
         viewState->sceneRenderTarget.depthBufferHandle =
-            memory->engineApi->rendererCreateDepthBuffer(memory->engineMemory,
+            engine->rendererCreateDepthBuffer(memory->engineMemory,
                 viewState->sceneRenderTarget.width, viewState->sceneRenderTarget.height);
-        viewState->sceneRenderTarget.framebufferHandle =
-            memory->engineApi->rendererCreateFramebuffer(memory->engineMemory,
-                viewState->sceneRenderTarget.textureHandle,
-                viewState->sceneRenderTarget.depthBufferHandle);
+        viewState->sceneRenderTarget.framebufferHandle = engine->rendererCreateFramebuffer(
+            memory->engineMemory, viewState->sceneRenderTarget.textureHandle,
+            viewState->sceneRenderTarget.depthBufferHandle);
 
         view->viewState = viewState;
     }
@@ -1445,10 +1444,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     {
         sceneRenderTarget->width = view->width;
         sceneRenderTarget->height = view->height;
-        memory->engineApi->rendererUpdateTexture(memory->engineMemory,
-            sceneRenderTarget->textureHandle, GL_UNSIGNED_BYTE, GL_RGB, GL_RGB,
-            sceneRenderTarget->width, sceneRenderTarget->height, 0);
-        memory->engineApi->rendererResizeDepthBuffer(memory->engineMemory,
+        engine->rendererUpdateTexture(memory->engineMemory, sceneRenderTarget->textureHandle,
+            GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, sceneRenderTarget->width,
+            sceneRenderTarget->height, 0);
+        engine->rendererResizeDepthBuffer(memory->engineMemory,
             sceneRenderTarget->depthBufferHandle, sceneRenderTarget->width,
             sceneRenderTarget->height);
     }
