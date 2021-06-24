@@ -661,6 +661,14 @@ void commitChanges(EditorMemory *memory)
 {
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->data.baseAddress;
+
+#if 0
+    RenderQueue *rq = engine->rendererCreateQueue();
+    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    engine->rendererPushTexturedQuad(rq, state->workingHeightmap.textureHandle);
+    engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
+#else
     EditorAssets *assets = &state->assets;
 
     LoadedAsset *quadShaderProgram =
@@ -686,6 +694,7 @@ void commitChanges(EditorMemory *memory)
 
     engine->rendererUnbindFramebuffer(
         memory->engineMemory, state->committedHeightmap.framebufferHandle);
+#endif
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
@@ -1043,6 +1052,13 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             importedHeightmapAsset->texture->width, importedHeightmapAsset->texture->height,
             importedHeightmapAsset->texture->data);
 
+#if 0
+        RenderQueue *rq = engine->rendererCreateQueue();
+        engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+        engine->rendererClear(rq, 0, 0, 0, 1);
+        engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
+        engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
+#else
         engine->rendererBindFramebuffer(
             memory->engineMemory, state->committedHeightmap.framebufferHandle);
         engine->rendererSetViewportSize(2048, 2048);
@@ -1059,6 +1075,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererDrawElements(GL_TRIANGLES, 6);
         engine->rendererUnbindFramebuffer(
             memory->engineMemory, state->committedHeightmap.framebufferHandle);
+#endif
 
         updateHeightfieldHeights(
             &state->sceneState.heightfield, (uint16 *)importedHeightmapAsset->texture->data);
@@ -1684,6 +1701,15 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->data.baseAddress;
+
+#if 0
+    // todo: flip quad y
+    RenderQueue *rq = engine->rendererCreateQueue();
+    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
+    engine->rendererDrawToScreen(rq, view->width, view->height);
+#else
     EditorAssets *assets = &state->assets;
 
     engine->rendererUpdateCameraState(
@@ -1706,6 +1732,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererBindVertexArray(
         memory->engineMemory, state->quadFlippedYVertexArrayHandle);
     engine->rendererDrawElements(GL_TRIANGLES, 6);
+#endif
 }
 
 API_EXPORT EDITOR_GET_UI_STATE(editorGetUiState)
