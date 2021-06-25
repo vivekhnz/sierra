@@ -236,11 +236,8 @@ void win32LoadEngineCode(Win32EngineCode *engineCode)
     {
         EngineGetApi *engineGetApi =
             (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
-        engineCode->api = engineGetApi();
+        engineCode->api = engineGetApi((GetGLProcAddress *)glfwGetProcAddress);
         platformMemory->gameMemory->engine = engineCode->api;
-
-        engineCode->api->rendererInitialize(
-            platformMemory->engineMemory, (GetGLProcAddress *)glfwGetProcAddress);
     }
 }
 void win32UnloadEngineCode(Win32EngineCode *engineCode)

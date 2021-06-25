@@ -18,8 +18,6 @@ enum RendererUniformBuffer
 
 struct RendererState
 {
-    bool isStateInitialized;
-
     uint32 textureCount;
     uint32 textureIds[RENDERER_MAX_TEXTURES];
 
@@ -91,22 +89,6 @@ RENDERER_INITIALIZE(rendererInitialize)
 {
     RendererState *state = getState(memory);
 
-    // GL needs to be re-initialized whenever the engine DLL is reloaded
-    bool glLoadSucceeded =
-        getGlProcAddress ? gladLoadGLLoader(getGlProcAddress) : gladLoadGL();
-    if (!glLoadSucceeded)
-    {
-        memory->platformLogMessage("Failed to initialize GLAD");
-        assert(!"Failed to initialize GLAD");
-        return 0;
-    }
-
-    // renderer state only needs to be initialized once
-    if (state->isStateInitialized)
-    {
-        return 1;
-    }
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
@@ -138,10 +120,6 @@ RENDERER_INITIALIZE(rendererInitialize)
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
         sizeof(lighting));
-
-    state->isStateInitialized = true;
-
-    return 1;
 }
 
 RENDERER_UPDATE_CAMERA_STATE(rendererUpdateCameraState)

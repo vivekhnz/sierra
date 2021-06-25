@@ -62,7 +62,6 @@ namespace Terrain.Editor.Engine
     delegate void AssetsSetAssetData(ref EngineMemory memory, uint assetId, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
 
-    delegate bool RendererInitialize(ref EngineMemory memory, IntPtr getGlProcAddress);
     delegate bool RendererDestroyResources(ref EngineMemory memory);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -82,7 +81,7 @@ namespace Terrain.Editor.Engine
         public IntPtr heightfieldGetHeight;
         public IntPtr heightfieldIsRayIntersecting;
 
-        public RendererInitialize rendererInitialize;
+        public IntPtr rendererInitialize;
         public IntPtr rendererUpdateCameraState;
         public IntPtr rendererUpdateLightingState;
         public IntPtr rendererCreateTexture;

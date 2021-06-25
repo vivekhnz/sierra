@@ -65,7 +65,9 @@ struct EngineApi
     RendererDrawTexturedQuad *rendererDrawTexturedQuad;
 };
 
-#define ENGINE_GET_API(name) EngineApi *name()
+typedef void *GetGLProcAddress(const char *procName);
+
+#define ENGINE_GET_API(name) EngineApi *name(GetGLProcAddress *getGlProcAddress)
 typedef ENGINE_GET_API(EngineGetApi);
 
 #endif

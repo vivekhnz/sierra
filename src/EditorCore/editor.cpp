@@ -114,6 +114,8 @@ bool initializeEditor(EditorMemory *memory)
     EngineApi *engine = memory->engineApi;
     EditorAssets *assets = &state->assets;
 
+    engine->rendererInitialize(memory->engineMemory);
+
     uint32 shaderTextureVertex = engine->assetsRegisterShader(
         memory->engineMemory, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
     uint32 shaderTextureFragment = engine->assetsRegisterShader(

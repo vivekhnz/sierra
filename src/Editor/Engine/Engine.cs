@@ -16,7 +16,7 @@ namespace Terrain.Editor.Engine
 
     internal static class TerrainEngine
     {
-        private delegate IntPtr EngineGetApi();
+        private delegate IntPtr EngineGetApi(IntPtr getGlProcAddress);
 
         private static EngineMemory memory;
         private static GCHandle memoryHandle;
@@ -101,9 +101,8 @@ namespace Terrain.Editor.Engine
                 EngineGetApi engineGetApi = Marshal
                     .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
 
-                EngineApiPtr = engineGetApi();
+                EngineApiPtr = engineGetApi(IntPtr.Zero);
                 api = Marshal.PtrToStructure<EngineApi>(EngineApiPtr);
-                api.rendererInitialize(ref memory, IntPtr.Zero);
             }
         }
 

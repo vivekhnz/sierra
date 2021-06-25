@@ -9,9 +9,24 @@
 #include "../../deps/fast_obj/fast_obj.c"
 
 global_variable EngineApi api;
+global_variable bool isGLLoaded;
 
 API_EXPORT ENGINE_GET_API(engineGetApi)
 {
+    if (!isGLLoaded)
+    {
+        bool glLoadSucceeded =
+            getGlProcAddress ? gladLoadGLLoader(getGlProcAddress) : gladLoadGL();
+        if (glLoadSucceeded)
+        {
+            isGLLoaded = true;
+        }
+        else
+        {
+            assert(!"Failed to initialize GLAD");
+        }
+    }
+
     api.assetsRegisterShader = assetsRegisterShader;
     api.assetsRegisterTexture = assetsRegisterTexture;
     api.assetsRegisterShaderProgram = assetsRegisterShaderProgram;
