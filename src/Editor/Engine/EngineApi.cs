@@ -122,5 +122,11 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererDispatchCompute;
         public IntPtr rendererShaderStorageMemoryBarrier;
         public RendererDestroyResources rendererDestroyResources;
+        public IntPtr rendererCreateQueue;
+        public IntPtr rendererSetCamera;
+        public IntPtr rendererClear;
+        public IntPtr rendererPushTexturedQuad;
+        public IntPtr rendererDrawToTarget;
+        public IntPtr rendererDrawToScreen;
     }
 }

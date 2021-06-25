@@ -35,6 +35,24 @@ void *pushEditorData(EditorMemory *memory, uint64 size)
 }
 #define pushEditorStruct(memory, struct) (struct *)pushEditorData(memory, sizeof(struct))
 
+struct TemporaryMemory
+{
+    EditorMemory *memory;
+    uint64 dataStorageUsed;
+};
+TemporaryMemory beginTemporaryMemory(EditorMemory *memory)
+{
+    TemporaryMemory temp = {};
+    temp.memory = memory;
+    temp.dataStorageUsed = memory->dataStorageUsed;
+
+    return temp;
+}
+void endTemporaryMemory(TemporaryMemory *temp)
+{
+    temp->memory->dataStorageUsed = temp->dataStorageUsed;
+}
+
 bool isButtonDown(EditorInput *input, EditorInputButtons button)
 {
     return input->pressedButtons & button;
@@ -678,19 +696,19 @@ void commitChanges(EditorMemory *memory)
     if (!quadShaderProgram->shaderProgram)
         return;
 
-    engine->rendererBindFramebuffer(
-        memory->engineMemory, state->committedHeightmap.framebufferHandle);
-    engine->rendererSetViewportSize(2048, 2048);
-    engine->rendererClearBackBuffer(0, 0, 0, 1);
-    engine->rendererUpdateCameraState(
-        memory->engineMemory, &state->orthographicCameraTransform);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
+    uint64 renderQueueMaxSize = 1 * 1024 * 1024;
+    void *renderQueueBaseAddress = pushEditorData(memory, renderQueueMaxSize);
 
-    engine->rendererDrawTexturedQuad(memory->engineMemory,
-        quadShaderProgram->shaderProgram->handle, state->quadVertexArrayHandle,
-        state->workingHeightmap.textureHandle);
+    RenderQueue *rq = engine->rendererCreateQueue(
+        memory->engineMemory, renderQueueBaseAddress, renderQueueMaxSize);
+    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
+        state->quadVertexArrayHandle, state->workingHeightmap.textureHandle);
+    engine->rendererDrawToTarget(rq, 2048, 2048, state->committedHeightmap.framebufferHandle);
 
-    engine->rendererUnbindFramebuffer(
-        memory->engineMemory, state->committedHeightmap.framebufferHandle);
+    endTemporaryMemory(&renderQueueMemory);
 #endif
 
     state->isEditingHeightmap = false;
@@ -1056,17 +1074,20 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
         engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
 #else
-        engine->rendererBindFramebuffer(
-            memory->engineMemory, state->committedHeightmap.framebufferHandle);
-        engine->rendererSetViewportSize(2048, 2048);
-        engine->rendererClearBackBuffer(0, 0, 0, 1);
-        engine->rendererUpdateCameraState(
-            memory->engineMemory, &state->orthographicCameraTransform);
-        engine->rendererDrawTexturedQuad(memory->engineMemory,
-            quadShaderProgram->shaderProgram->handle, state->quadVertexArrayHandle,
-            state->importedHeightmapTextureHandle);
-        engine->rendererUnbindFramebuffer(
-            memory->engineMemory, state->committedHeightmap.framebufferHandle);
+        TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
+        uint64 renderQueueMaxSize = 1 * 1024 * 1024;
+        void *renderQueueBaseAddress = pushEditorData(memory, renderQueueMaxSize);
+
+        RenderQueue *rq = engine->rendererCreateQueue(
+            memory->engineMemory, renderQueueBaseAddress, renderQueueMaxSize);
+        engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+        engine->rendererClear(rq, 0, 0, 0, 1);
+        engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
+            state->quadVertexArrayHandle, state->importedHeightmapTextureHandle);
+        engine->rendererDrawToTarget(
+            rq, 2048, 2048, state->committedHeightmap.framebufferHandle);
+
+        endTemporaryMemory(&renderQueueMemory);
 #endif
 
         updateHeightfieldHeights(
@@ -1704,18 +1725,26 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 #else
     EditorAssets *assets = &state->assets;
 
-    engine->rendererUpdateCameraState(
-        memory->engineMemory, &state->orthographicCameraTransform);
-    engine->rendererSetViewportSize(view->width, view->height);
-    engine->rendererClearBackBuffer(0, 0, 0, 1);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
+    uint64 renderQueueMaxSize = 1 * 1024 * 1024;
+    void *renderQueueBaseAddress = pushEditorData(memory, renderQueueMaxSize);
+
+    RenderQueue *rq = engine->rendererCreateQueue(
+        memory->engineMemory, renderQueueBaseAddress, renderQueueMaxSize);
+    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererClear(rq, 0, 0, 0, 1);
 
     LoadedAsset *shaderProgram =
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
-    if (!shaderProgram->shaderProgram)
-        return;
-    engine->rendererDrawTexturedQuad(memory->engineMemory,
-        shaderProgram->shaderProgram->handle, state->quadFlippedYVertexArrayHandle,
-        state->workingHeightmap.textureHandle);
+    if (shaderProgram->shaderProgram)
+    {
+        engine->rendererPushTexturedQuad(rq, shaderProgram->shaderProgram->handle,
+            state->quadFlippedYVertexArrayHandle, state->workingHeightmap.textureHandle);
+    }
+
+    engine->rendererDrawToScreen(rq, view->width, view->height);
+
+    endTemporaryMemory(&renderQueueMemory);
 #endif
 }
 

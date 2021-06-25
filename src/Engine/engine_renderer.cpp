@@ -43,6 +43,22 @@ struct RendererState
     uint32 bufferUsages[RENDERER_MAX_BUFFERS];
 };
 
+struct RenderQueue
+{
+    RendererState *state;
+
+    glm::mat4 cameraTransform;
+    glm::vec4 clearColor;
+
+    struct
+    {
+        bool render;
+        uint32 shaderProgramId;
+        uint32 textureId;
+        uint32 vertexArrayId;
+    } quad;
+};
+
 struct GpuCameraState
 {
     glm::mat4 transform;
@@ -587,23 +603,92 @@ RENDERER_DESTROY_RESOURCES(rendererDestroyResources)
     glDeleteBuffers(state->bufferCount, state->bufferIds);
 }
 
-RENDERER_DRAW_TEXTURED_QUAD(rendererDrawTexturedQuad)
+RENDERER_CREATE_QUEUE(rendererCreateQueue)
 {
-    RendererState *state = getState(memory);
+    assert(maxSize >= sizeof(RenderQueue));
+    RenderQueue *result = (RenderQueue *)baseAddress;
+    result->state = getState(memory);
 
-    assert(shaderProgramHandle < state->shaderProgramCount);
-    glUseProgram(state->shaderProgramIds[shaderProgramHandle]);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    glEnable(GL_DEPTH_TEST);
-    glBlendEquation(GL_FUNC_ADD);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    result->cameraTransform = glm::identity<glm::mat4>();
+    result->clearColor = glm::vec4(0, 0, 0, 1);
+    result->quad.render = false;
 
-    assert(textureHandle < state->textureCount);
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, state->textureIds[textureHandle]);
+    return result;
+}
 
-    assert(vertexArrayHandle < state->vertexArrayCount);
-    glBindVertexArray(state->vertexArrayIds[vertexArrayHandle]);
+RENDERER_SET_CAMERA(rendererSetCamera)
+{
+    rq->cameraTransform = *transform;
+}
 
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+RENDERER_CLEAR(rendererClear)
+{
+    rq->clearColor.r = r;
+    rq->clearColor.g = g;
+    rq->clearColor.b = b;
+    rq->clearColor.a = a;
+}
+
+RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
+{
+    rq->quad.render = true;
+
+    assert(shaderProgramHandle < rq->state->shaderProgramCount);
+    rq->quad.shaderProgramId = rq->state->shaderProgramIds[shaderProgramHandle];
+
+    assert(textureHandle < rq->state->textureCount);
+    rq->quad.textureId = rq->state->textureIds[textureHandle];
+
+    assert(vertexArrayHandle < rq->state->vertexArrayCount);
+    rq->quad.vertexArrayId = rq->state->vertexArrayIds[vertexArrayHandle];
+}
+
+void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebufferHandle)
+{
+    uint32 framebufferId = 0;
+    if (framebufferHandle)
+    {
+        assert(*framebufferHandle < rq->state->framebufferCount);
+        framebufferId = rq->state->framebufferIds[*framebufferHandle];
+        glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
+    }
+
+    glViewport(0, 0, width, height);
+    glClearColor(rq->clearColor.r, rq->clearColor.g, rq->clearColor.b, rq->clearColor.a);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    GpuCameraState camera = {};
+    camera.transform = rq->cameraTransform;
+    glBindBuffer(GL_UNIFORM_BUFFER, rq->state->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
+
+    if (rq->quad.render)
+    {
+        glUseProgram(rq->quad.shaderProgramId);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_DEPTH_TEST);
+        glBlendEquation(GL_FUNC_ADD);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, rq->quad.textureId);
+        glBindVertexArray(rq->quad.vertexArrayId);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+    }
+
+    if (framebufferHandle)
+    {
+        uint32 framebufferTextureId = rq->state->framebufferTextureIds[*framebufferHandle];
+        glBindTexture(GL_TEXTURE_2D, framebufferTextureId);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    }
+}
+
+RENDERER_DRAW_TO_TARGET(rendererDrawToTarget)
+{
+    drawToTarget(rq, width, height, &framebufferHandle);
+}
+RENDERER_DRAW_TO_SCREEN(rendererDrawToScreen)
+{
+    drawToTarget(rq, width, height, 0);
 }

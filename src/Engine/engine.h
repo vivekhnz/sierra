@@ -62,7 +62,12 @@ struct EngineApi
     RendererDispatchCompute *rendererDispatchCompute;
     RendererShaderStorageMemoryBarrier *rendererShaderStorageMemoryBarrier;
     RendererDestroyResources *rendererDestroyResources;
-    RendererDrawTexturedQuad *rendererDrawTexturedQuad;
+    RendererCreateQueue *rendererCreateQueue;
+    RendererSetCamera *rendererSetCamera;
+    RendererClear *rendererClear;
+    RendererPushTexturedQuad *rendererPushTexturedQuad;
+    RendererDrawToTarget *rendererDrawToTarget;
+    RendererDrawToScreen *rendererDrawToScreen;
 };
 
 typedef void *GetGLProcAddress(const char *procName);

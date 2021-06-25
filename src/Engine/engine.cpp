@@ -82,7 +82,12 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     api.rendererDispatchCompute = rendererDispatchCompute;
     api.rendererShaderStorageMemoryBarrier = rendererShaderStorageMemoryBarrier;
     api.rendererDestroyResources = rendererDestroyResources;
-    api.rendererDrawTexturedQuad = rendererDrawTexturedQuad;
+    api.rendererCreateQueue = rendererCreateQueue;
+    api.rendererSetCamera = rendererSetCamera;
+    api.rendererClear = rendererClear;
+    api.rendererPushTexturedQuad = rendererPushTexturedQuad;
+    api.rendererDrawToTarget = rendererDrawToTarget;
+    api.rendererDrawToScreen = rendererDrawToScreen;
 
     return &api;
 }

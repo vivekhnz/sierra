@@ -144,9 +144,27 @@ typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrie
 #define RENDERER_DESTROY_RESOURCES(name) void name(EngineMemory *memory)
 typedef RENDERER_DESTROY_RESOURCES(RendererDestroyResources);
 
-#define RENDERER_DRAW_TEXTURED_QUAD(name)                                                     \
-    void name(EngineMemory *memory, uint32 shaderProgramHandle, uint32 vertexArrayHandle,     \
+struct RenderQueue;
+#define RENDERER_CREATE_QUEUE(name)                                                           \
+    RenderQueue *name(EngineMemory *memory, void *baseAddress, uint64 maxSize)
+typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
+
+#define RENDERER_SET_CAMERA(name) void name(RenderQueue *rq, glm::mat4 *transform)
+typedef RENDERER_SET_CAMERA(RendererSetCamera);
+
+#define RENDERER_CLEAR(name) void name(RenderQueue *rq, float r, float g, float b, float a)
+typedef RENDERER_CLEAR(RendererClear);
+
+#define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
+    void name(RenderQueue *rq, uint32 shaderProgramHandle, uint32 vertexArrayHandle,          \
         uint32 textureHandle)
-typedef RENDERER_DRAW_TEXTURED_QUAD(RendererDrawTexturedQuad);
+typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
+
+#define RENDERER_DRAW_TO_TARGET(name)                                                         \
+    void name(RenderQueue *rq, uint32 width, uint32 height, uint32 framebufferHandle)
+typedef RENDERER_DRAW_TO_TARGET(RendererDrawToTarget);
+
+#define RENDERER_DRAW_TO_SCREEN(name) void name(RenderQueue *rq, uint32 width, uint32 height)
+typedef RENDERER_DRAW_TO_SCREEN(RendererDrawToScreen);
 
 #endif
