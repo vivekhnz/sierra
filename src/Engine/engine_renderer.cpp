@@ -608,3 +608,24 @@ RENDERER_DESTROY_RESOURCES(rendererDestroyResources)
     glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
     glDeleteBuffers(state->bufferCount, state->bufferIds);
 }
+
+RENDERER_DRAW_TEXTURED_QUAD(rendererDrawTexturedQuad)
+{
+    RendererState *state = getState(memory);
+
+    assert(shaderProgramHandle < state->shaderProgramCount);
+    glUseProgram(state->shaderProgramIds[shaderProgramHandle]);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    glEnable(GL_DEPTH_TEST);
+    glBlendEquation(GL_FUNC_ADD);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    assert(textureHandle < state->textureCount);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, state->textureIds[textureHandle]);
+
+    assert(vertexArrayHandle < state->vertexArrayCount);
+    glBindVertexArray(state->vertexArrayIds[vertexArrayHandle]);
+
+    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+}

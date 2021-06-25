@@ -146,4 +146,9 @@ typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrie
 #define RENDERER_DESTROY_RESOURCES(name) void name(EngineMemory *memory)
 typedef RENDERER_DESTROY_RESOURCES(RendererDestroyResources);
 
+#define RENDERER_DRAW_TEXTURED_QUAD(name)                                                     \
+    void name(EngineMemory *memory, uint32 shaderProgramHandle, uint32 vertexArrayHandle,     \
+        uint32 textureHandle)
+typedef RENDERER_DRAW_TEXTURED_QUAD(RendererDrawTexturedQuad);
+
 #endif

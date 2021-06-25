@@ -62,6 +62,7 @@ struct EngineApi
     RendererDispatchCompute *rendererDispatchCompute;
     RendererShaderStorageMemoryBarrier *rendererShaderStorageMemoryBarrier;
     RendererDestroyResources *rendererDestroyResources;
+    RendererDrawTexturedQuad *rendererDrawTexturedQuad;
 };
 
 #define ENGINE_GET_API(name) EngineApi *name()

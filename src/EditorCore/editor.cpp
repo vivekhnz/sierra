@@ -683,14 +683,9 @@ void commitChanges(EditorMemory *memory)
     engine->rendererUpdateCameraState(
         memory->engineMemory, &state->orthographicCameraTransform);
 
-    engine->rendererUseShaderProgram(
-        memory->engineMemory, quadShaderProgram->shaderProgram->handle);
-    engine->rendererSetPolygonMode(GL_FILL);
-    engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-    engine->rendererBindTexture(
-        memory->engineMemory, state->workingHeightmap.textureHandle, 0);
-    engine->rendererBindVertexArray(memory->engineMemory, state->quadVertexArrayHandle);
-    engine->rendererDrawElements(GL_TRIANGLES, 6);
+    engine->rendererDrawTexturedQuad(memory->engineMemory,
+        quadShaderProgram->shaderProgram->handle, state->quadVertexArrayHandle,
+        state->workingHeightmap.textureHandle);
 
     engine->rendererUnbindFramebuffer(
         memory->engineMemory, state->committedHeightmap.framebufferHandle);
@@ -1065,14 +1060,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererClearBackBuffer(0, 0, 0, 1);
         engine->rendererUpdateCameraState(
             memory->engineMemory, &state->orthographicCameraTransform);
-        engine->rendererUseShaderProgram(
-            memory->engineMemory, quadShaderProgram->shaderProgram->handle);
-        engine->rendererSetPolygonMode(GL_FILL);
-        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererBindTexture(
-            memory->engineMemory, state->importedHeightmapTextureHandle, 0);
-        engine->rendererBindVertexArray(memory->engineMemory, state->quadVertexArrayHandle);
-        engine->rendererDrawElements(GL_TRIANGLES, 6);
+        engine->rendererDrawTexturedQuad(memory->engineMemory,
+            quadShaderProgram->shaderProgram->handle, state->quadVertexArrayHandle,
+            state->importedHeightmapTextureHandle);
         engine->rendererUnbindFramebuffer(
             memory->engineMemory, state->committedHeightmap.framebufferHandle);
 #endif
@@ -1721,17 +1711,9 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
         engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
     if (!shaderProgram->shaderProgram)
         return;
-
-    // render quad
-    engine->rendererUseShaderProgram(
-        memory->engineMemory, shaderProgram->shaderProgram->handle);
-    engine->rendererSetPolygonMode(GL_FILL);
-    engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-    engine->rendererBindTexture(
-        memory->engineMemory, state->workingHeightmap.textureHandle, 0);
-    engine->rendererBindVertexArray(
-        memory->engineMemory, state->quadFlippedYVertexArrayHandle);
-    engine->rendererDrawElements(GL_TRIANGLES, 6);
+    engine->rendererDrawTexturedQuad(memory->engineMemory,
+        shaderProgram->shaderProgram->handle, state->quadFlippedYVertexArrayHandle,
+        state->workingHeightmap.textureHandle);
 #endif
 }
 
