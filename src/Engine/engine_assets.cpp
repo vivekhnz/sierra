@@ -150,11 +150,8 @@ ASSETS_REGISTER_MESH(assetsRegisterMesh)
     return reg->handle;
 }
 
-bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAsset **deps)
+bool buildCompositeAsset(AssetsState *state, AssetRegistration *reg, LoadedAsset **deps)
 {
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
     uint32 assetType = ASSET_GET_TYPE(reg->handle->id);
     if (assetType == ASSET_TYPE_SHADER_PROGRAM)
     {
@@ -170,8 +167,7 @@ bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAss
         {
             if (!reg->asset.shaderProgram)
             {
-                reg->asset.shaderProgram =
-                    pushAssetStruct(&memory->assets, ShaderProgramAsset);
+                reg->asset.shaderProgram = pushAssetStruct(state->data, ShaderProgramAsset);
             }
             reg->asset.shaderProgram->handle = handle;
 
@@ -181,11 +177,8 @@ bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAss
     return false;
 }
 
-LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
+LoadedAsset *getAsset(AssetsState *state, uint32 assetId)
 {
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
-
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < state->registeredAssetCount);
 
@@ -209,7 +202,7 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
         bool shouldRebuildAsset = false;
         for (uint32 i = 0; i < compState->dependencyCount; i++)
         {
-            LoadedAsset *dependency = getAsset(memory, compState->dependencyAssetIds[i]);
+            LoadedAsset *dependency = getAsset(state, compState->dependencyAssetIds[i]);
             if (!dependency->untyped)
             {
                 shouldRebuildAsset = false;
@@ -224,7 +217,7 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
 
         if (shouldRebuildAsset)
         {
-            if (buildCompositeAsset(memory, reg, dependencies))
+            if (buildCompositeAsset(state, reg, dependencies))
             {
                 reg->asset.version++;
             }
@@ -242,25 +235,25 @@ ASSETS_GET_SHADER(assetsGetShader)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER);
-    return getAsset(memory, handle->id);
+    return getAsset(handle->state, handle->id);
 }
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER_PROGRAM);
-    return getAsset(memory, handle->id);
+    return getAsset(handle->state, handle->id);
 }
 ASSETS_GET_TEXTURE(assetsGetTexture)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_TEXTURE);
-    return getAsset(memory, handle->id);
+    return getAsset(handle->state, handle->id);
 }
 ASSETS_GET_MESH(assetsGetMesh)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_MESH);
-    return getAsset(memory, handle->id);
+    return getAsset(handle->state, handle->id);
 }
 
 struct FastObjVirtualFile

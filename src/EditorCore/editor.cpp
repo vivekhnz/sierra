@@ -682,8 +682,7 @@ void commitChanges(EditorMemory *memory)
 #else
     EditorAssets *assets = &state->assets;
 
-    LoadedAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
+    LoadedAsset *quadShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
     if (!quadShaderProgram->shaderProgram)
         return;
 
@@ -911,7 +910,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         if (assetHandle)
         {
             binding = &sceneState->albedoTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
+            asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
@@ -927,7 +926,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         if (assetHandle)
         {
             binding = &sceneState->normalTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
+            asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
@@ -943,7 +942,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         if (assetHandle)
         {
             binding = &sceneState->displacementTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
+            asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
@@ -960,7 +959,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         if (assetHandle)
         {
             binding = &sceneState->aoTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
+            asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
@@ -1032,16 +1031,15 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     EditorAssets *assets = &state->assets;
     RenderContext *rctx = state->renderCtx;
 
-    LoadedAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
+    LoadedAsset *quadShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
     LoadedAsset *brushMaskShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramBrushMask);
-    LoadedAsset *brushBlendAddSubShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, assets->shaderProgramBrushBlendAddSub);
-    LoadedAsset *brushBlendFlattenShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, assets->shaderProgramBrushBlendFlatten);
-    LoadedAsset *brushBlendSmoothShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, assets->shaderProgramBrushBlendSmooth);
+        engine->assetsGetShaderProgram(assets->shaderProgramBrushMask);
+    LoadedAsset *brushBlendAddSubShaderProgram =
+        engine->assetsGetShaderProgram(assets->shaderProgramBrushBlendAddSub);
+    LoadedAsset *brushBlendFlattenShaderProgram =
+        engine->assetsGetShaderProgram(assets->shaderProgramBrushBlendFlatten);
+    LoadedAsset *brushBlendSmoothShaderProgram =
+        engine->assetsGetShaderProgram(assets->shaderProgramBrushBlendSmooth);
     if (!quadShaderProgram->shaderProgram || !brushMaskShaderProgram->shaderProgram
         || !brushBlendAddSubShaderProgram->shaderProgram
         || !brushBlendFlattenShaderProgram->shaderProgram
@@ -1050,8 +1048,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         return;
     }
 
-    LoadedAsset *importedHeightmapAsset = engine->assetsGetTexture(
-        memory->engineMemory, assets->textureVirtualImportedHeightmap);
+    LoadedAsset *importedHeightmapAsset =
+        engine->assetsGetTexture(assets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
@@ -1484,12 +1482,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
 
     // get shader programs
-    LoadedAsset *calcTessLevelShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, assets->shaderProgramTerrainCalcTessLevel);
-    LoadedAsset *terrainShaderProgram = engine->assetsGetShaderProgram(
-        memory->engineMemory, assets->shaderProgramTerrainTextured);
-    LoadedAsset *rockShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramRock);
+    LoadedAsset *calcTessLevelShaderProgram =
+        engine->assetsGetShaderProgram(assets->shaderProgramTerrainCalcTessLevel);
+    LoadedAsset *terrainShaderProgram =
+        engine->assetsGetShaderProgram(assets->shaderProgramTerrainTextured);
+    LoadedAsset *rockShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramRock);
     if (calcTessLevelShaderProgram->shaderProgram && terrainShaderProgram->shaderProgram
         && rockShaderProgram->shaderProgram)
     {
@@ -1580,8 +1577,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         // draw rocks
         if (!sceneState->rockMesh.isLoaded)
         {
-            LoadedAsset *rockMeshAsset =
-                engine->assetsGetMesh(memory->engineMemory, assets->meshRock);
+            LoadedAsset *rockMeshAsset = engine->assetsGetMesh(assets->meshRock);
             MeshAsset *rockMesh = rockMeshAsset->mesh;
             if (rockMesh)
             {
@@ -1643,8 +1639,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererSetViewportSize(view->width, view->height);
     engine->rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
 
-    LoadedAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
+    LoadedAsset *quadShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
     if (quadShaderProgram->shaderProgram)
     {
         engine->rendererUpdateCameraState(rctx, &state->orthographicCameraTransform);
@@ -1704,8 +1699,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
 
-    LoadedAsset *shaderProgram =
-        engine->assetsGetShaderProgram(memory->engineMemory, assets->shaderProgramQuad);
+    LoadedAsset *shaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
     if (shaderProgram->shaderProgram)
     {
         engine->rendererPushTexturedQuad(rq, shaderProgram->shaderProgram->handle,
