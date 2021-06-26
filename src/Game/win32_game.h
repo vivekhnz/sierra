@@ -64,7 +64,6 @@ struct Win32PlatformMemory
     bool shouldCaptureMouse;
     float mouseScrollOffset;
 
-    EngineMemory *engineMemory;
     RenderContext renderCtx;
     GameMemory *gameMemory;
 };

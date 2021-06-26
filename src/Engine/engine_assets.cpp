@@ -103,7 +103,7 @@ AssetRegistration *registerAsset(Assets *assets,
 
 ASSETS_INITIALIZE(assetsInitialize)
 {
-    assets->data = &memory->assets;
+    assets->data = memory;
     assets->renderCtx = rctx;
 }
 

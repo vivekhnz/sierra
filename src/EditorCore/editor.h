@@ -253,7 +253,6 @@ struct EditorMemory
     PlatformPublishTransaction *platformPublishTransaction;
 
     EngineApi *engineApi;
-    EngineMemory *engineMemory;
 };
 
 struct EditorInput

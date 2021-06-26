@@ -189,7 +189,7 @@ PLATFORM_CAPTURE_MOUSE(win32CaptureMouse)
     platformMemory->shouldCaptureMouse = true;
 }
 
-void win32LoadQueuedAssets(EngineMemory *memory)
+void win32LoadQueuedAssets()
 {
     // invalidate watched assets that have changed
     for (uint32 i = 0; i < platformMemory->watchedAssetCount; i++)
@@ -379,19 +379,17 @@ int32 main()
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
     uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
     uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
-    uint8 *engineMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
-    uint64 engineMemorySize =
-        APP_MEMORY_SIZE - (engineMemoryBaseAddress - platformMemoryBaseAddress);
+    uint8 *assetMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
+    uint64 assetMemorySize =
+        APP_MEMORY_SIZE - (assetMemoryBaseAddress - platformMemoryBaseAddress);
 
     platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
     GameMemory *gameMemory = (GameMemory *)gameMemoryBaseAddress;
-    EngineMemory *engineMemory = (EngineMemory *)engineMemoryBaseAddress;
 
     // initialize platform memory
     platformMemory->enginePlatformApi.logMessage = win32LogMessage;
     platformMemory->enginePlatformApi.queueAssetLoad = win32QueueAssetLoad;
     platformMemory->enginePlatformApi.watchAssetFile = win32WatchAssetFile;
-    platformMemory->engineMemory = engineMemory;
     platformMemory->gameMemory = gameMemory;
     for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
     {
@@ -405,20 +403,14 @@ int32 main()
     win32GetOutputAbsolutePath(
         "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
 
-    // initialize engine memory
-    uint64 engineMemoryOffset = sizeof(EngineMemory);
-    engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
-    engineMemory->assets.size = engineMemorySize - engineMemoryOffset;
-    engineMemoryOffset += engineMemory->assets.size;
-    assert(engineMemoryOffset == engineMemorySize);
-
     // load engine code
     win32LoadEngineCode(&platformMemory->engineCode);
     platformMemory->engineCode.dllLastWriteTime =
         win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
 
     // initialize game memory
-    gameMemory->engineMemory = platformMemory->engineMemory;
+    gameMemory->assetMemory.baseAddress = assetMemoryBaseAddress;
+    gameMemory->assetMemory.size = assetMemorySize;
     gameMemory->platformExitGame = win32ExitGame;
     gameMemory->platformCaptureMouse = win32CaptureMouse;
     gameMemory->platformQueueAssetLoad = win32QueueAssetLoad;
@@ -453,7 +445,7 @@ int32 main()
             }
         }
 
-        win32LoadQueuedAssets(platformMemory->engineMemory);
+        win32LoadQueuedAssets();
 
         // query input
         input.prevPressedButtons = input.pressedButtons;

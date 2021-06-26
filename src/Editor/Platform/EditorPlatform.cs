@@ -105,21 +105,16 @@ namespace Terrain.Editor.Platform
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll")
             };
 
-            int editorMemorySizeInBytes = 32 * 1024 * 1024;
-            int engineMemorySizeInBytes = 480 * 1024 * 1024;
-            int appMemorySizeInBytes = editorMemorySizeInBytes + engineMemorySizeInBytes;
+            int appMemorySizeInBytes = 500 * 1024 * 1024;
             IntPtr appMemoryPtr = Win32.VirtualAlloc(IntPtr.Zero, (uint)appMemorySizeInBytes,
                 Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
                 Win32.MemoryProtection.ReadWrite);
-            IntPtr editorMemoryDataPtr = appMemoryPtr;
-            IntPtr engineMemoryDataPtr = editorMemoryDataPtr + editorMemorySizeInBytes;
 
-            IntPtr engineMemoryPtr = TerrainEngine.Initialize(engineMemoryDataPtr, engineMemorySizeInBytes,
-                editorPlatformLogMessage, editorPlatformQueueAssetLoad,
+            TerrainEngine.Initialize(editorPlatformLogMessage, editorPlatformQueueAssetLoad,
                 editorPlatformWatchAssetFile, Win32.LoadLibrary, Win32.GetProcAddress,
                 Win32.FreeLibrary);
-            EditorCore.Initialize(editorMemoryDataPtr, editorMemorySizeInBytes,
-                editorPlatformCaptureMouse, engineMemoryPtr, Win32.LoadLibrary,
+            EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
+                editorPlatformCaptureMouse, Win32.LoadLibrary,
                 Win32.GetProcAddress, Win32.FreeLibrary);
 
             var dummyWindowClass = new Win32.WindowClass
@@ -525,8 +520,6 @@ namespace Terrain.Editor.Platform
 
         internal static void Shutdown()
         {
-            TerrainEngine.Shutdown();
-
             Win32.DestroyGLContext(glRenderingContext);
             Win32.DestroyWindow(dummyWindowHwnd);
         }

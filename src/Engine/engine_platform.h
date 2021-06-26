@@ -56,9 +56,4 @@ struct EnginePlatformApi
     PlatformNotifyAssetRegistered *notifyAssetRegistered;
 };
 
-struct EngineMemory
-{
-    MemoryBlock assets;
-};
-
 #endif

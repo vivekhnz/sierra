@@ -24,12 +24,6 @@ namespace Terrain.Editor.Engine
         public IntPtr NotifyAssetRegistered;
     }
 
-    [StructLayout(LayoutKind.Sequential)]
-    struct EngineMemory
-    {
-        public MemoryBlock Assets;
-    }
-
     public enum AssetRegistrationType
     {
         File,

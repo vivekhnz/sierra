@@ -18,7 +18,6 @@ namespace Terrain.Editor.Core
         public PlatformPublishTransaction PlatformPublishTransaction;
 
         public IntPtr EngineApiPtr;
-        public IntPtr EngineMemoryPtr;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -310,10 +309,9 @@ namespace Terrain.Editor.Core
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
 
-        internal static void Initialize(IntPtr editorMemoryDataPtr, int editorMemorySizeInBytes,
-            PlatformCaptureMouse captureMouse, IntPtr engineMemoryPtr,
-            Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
-            Func<IntPtr, bool> freeLibrary)
+        internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
+            PlatformCaptureMouse captureMouse, Func<string, IntPtr> loadLibrary,
+            Func<IntPtr, string, IntPtr> getProcAddress, Func<IntPtr, bool> freeLibrary)
         {
             EditorCore.loadLibrary = loadLibrary;
             EditorCore.getProcAddress = getProcAddress;
@@ -323,13 +321,12 @@ namespace Terrain.Editor.Core
             {
                 Data = new MemoryBlock
                 {
-                    BaseAddress = editorMemoryDataPtr,
-                    Size = (ulong)editorMemorySizeInBytes
+                    BaseAddress = appMemoryDataPtr,
+                    Size = (ulong)appMemorySizeInBytes
                 },
                 DataStorageUsed = 0,
                 PlatformCaptureMouse = captureMouse,
-                PlatformPublishTransaction = OnTransactionPublished,
-                EngineMemoryPtr = engineMemoryPtr
+                PlatformPublishTransaction = OnTransactionPublished
             };
         }
 

@@ -107,7 +107,7 @@ struct Assets
 };
 
 #define ASSETS_INITIALIZE(name)                                                               \
-    void name(EngineMemory *memory, Assets *assets, RenderContext *rctx)
+    void name(Assets *assets, MemoryBlock *memory, RenderContext *rctx)
 typedef ASSETS_INITIALIZE(AssetsInitialize);
 
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \

@@ -122,7 +122,7 @@ struct GameMemory
     GameState state;
 
     EngineApi *engine;
-    EngineMemory *engineMemory;
+    MemoryBlock assetMemory;
 };
 
 struct Viewport

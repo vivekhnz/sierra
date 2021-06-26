@@ -131,13 +131,17 @@ bool initializeEditor(EditorMemory *memory)
     state->renderCtx = pushEditorStruct(memory, RenderContext);
     state->engineAssets = pushEditorStruct(memory, Assets);
 
+    MemoryBlock *assetMemory = pushEditorStruct(memory, MemoryBlock);
+    assetMemory->size = 200 * 1024 * 1024;
+    assetMemory->baseAddress = pushEditorData(memory, assetMemory->size);
+
     EngineApi *engine = memory->engineApi;
     EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
     Assets *assets = state->engineAssets;
 
     engine->rendererInitialize(rctx);
-    engine->assetsInitialize(memory->engineMemory, assets, rctx);
+    engine->assetsInitialize(assets, assetMemory, rctx);
 
     AssetHandle shaderTextureVertex =
         engine->assetsRegisterShader(assets, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
