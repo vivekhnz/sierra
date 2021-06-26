@@ -129,59 +129,60 @@ bool initializeEditor(EditorMemory *memory)
 {
     EditorState *state = pushEditorStruct(memory, EditorState);
     state->renderCtx = pushEditorStruct(memory, RenderContext);
+    state->engineAssets = pushEditorStruct(memory, Assets);
 
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &state->assets;
+    EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
+    Assets *assets = state->engineAssets;
 
     engine->rendererInitialize(rctx);
-    engine->assetsInitialize(memory->engineMemory, rctx);
+    engine->assetsInitialize(memory->engineMemory, assets, rctx);
 
-    AssetHandle shaderTextureVertex = engine->assetsRegisterShader(
-        memory->engineMemory, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderTextureVertex =
+        engine->assetsRegisterShader(assets, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
-        memory->engineMemory, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
+        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    AssetHandle shaderTerrainVertex =
+        engine->assetsRegisterShader(assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(
-        memory->engineMemory, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
+        assets, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
     AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(
-        memory->engineMemory, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+        assets, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
     AssetHandle shaderTerrainFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
-        memory->engineMemory, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
-    AssetHandle shaderWireframeVertex = engine->assetsRegisterShader(
-        memory->engineMemory, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
+        assets, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
+    AssetHandle shaderWireframeVertex =
+        engine->assetsRegisterShader(assets, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderWireframeTessCtrl = engine->assetsRegisterShader(
-        memory->engineMemory, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
+        assets, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
     AssetHandle shaderWireframeTessEval = engine->assetsRegisterShader(
-        memory->engineMemory, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+        assets, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
     AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrushMaskVertex = engine->assetsRegisterShader(
-        memory->engineMemory, "brush_mask_vertex_shader.glsl", GL_VERTEX_SHADER);
+        assets, "brush_mask_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderBrushMaskFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderRockVertex = engine->assetsRegisterShader(
-        memory->engineMemory, "rock_vertex_shader.glsl", GL_VERTEX_SHADER);
-    AssetHandle shaderRockFragment = engine->assetsRegisterShader(
-        memory->engineMemory, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    AssetHandle shaderRockVertex =
+        engine->assetsRegisterShader(assets, "rock_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderRockFragment =
+        engine->assetsRegisterShader(assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
 
     AssetHandle quadShaderAssetHandles[] = {shaderTextureVertex, shaderTextureFragment};
-    assets->shaderProgramQuad = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
+    editorAssets->shaderProgramQuad = engine->assetsRegisterShaderProgram(
+        assets, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
 
     AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
-    assets->shaderProgramTerrainCalcTessLevel =
-        engine->assetsRegisterShaderProgram(memory->engineMemory,
-            calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
+    editorAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
+        assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
 
     AssetHandle texturedShaderAssetHandles[] = {
         shaderTerrainVertex,   //
@@ -189,65 +190,59 @@ bool initializeEditor(EditorMemory *memory)
         shaderTerrainTessEval, //
         shaderTerrainFragment  //
     };
-    assets->shaderProgramTerrainTextured =
-        engine->assetsRegisterShaderProgram(memory->engineMemory, texturedShaderAssetHandles,
-            arrayCount(texturedShaderAssetHandles));
+    editorAssets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
+        assets, texturedShaderAssetHandles, arrayCount(texturedShaderAssetHandles));
 
     AssetHandle brushMaskShaderAssetHandles[] = {
         shaderBrushMaskVertex, shaderBrushMaskFragment};
-    assets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(memory->engineMemory,
-        brushMaskShaderAssetHandles, arrayCount(brushMaskShaderAssetHandles));
+    editorAssets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(
+        assets, brushMaskShaderAssetHandles, arrayCount(brushMaskShaderAssetHandles));
 
     AssetHandle brushBlendAddSubShaderAssetHandles[] = {
         shaderTextureVertex, shaderBrush_blendAddSubFragment};
-    assets->shaderProgramBrushBlendAddSub = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, brushBlendAddSubShaderAssetHandles,
-        arrayCount(brushBlendAddSubShaderAssetHandles));
+    editorAssets->shaderProgramBrushBlendAddSub = engine->assetsRegisterShaderProgram(assets,
+        brushBlendAddSubShaderAssetHandles, arrayCount(brushBlendAddSubShaderAssetHandles));
 
     AssetHandle brushBlendFlattenShaderAssetHandles[] = {
         shaderTextureVertex, shaderBrush_blendFlattenFragment};
-    assets->shaderProgramBrushBlendFlatten = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, brushBlendFlattenShaderAssetHandles,
-        arrayCount(brushBlendFlattenShaderAssetHandles));
+    editorAssets->shaderProgramBrushBlendFlatten = engine->assetsRegisterShaderProgram(assets,
+        brushBlendFlattenShaderAssetHandles, arrayCount(brushBlendFlattenShaderAssetHandles));
 
     AssetHandle brushBlendSmoothShaderAssetHandles[] = {
         shaderTextureVertex, shaderBrush_blendSmoothFragment};
-    assets->shaderProgramBrushBlendSmooth = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, brushBlendSmoothShaderAssetHandles,
-        arrayCount(brushBlendSmoothShaderAssetHandles));
+    editorAssets->shaderProgramBrushBlendSmooth = engine->assetsRegisterShaderProgram(assets,
+        brushBlendSmoothShaderAssetHandles, arrayCount(brushBlendSmoothShaderAssetHandles));
 
     AssetHandle rockShaderAssetHandles[] = {shaderRockVertex, shaderRockFragment};
-    assets->shaderProgramRock = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
+    editorAssets->shaderProgramRock = engine->assetsRegisterShaderProgram(
+        assets, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
 
-    assets->textureGroundAlbedo =
-        engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
-    assets->textureGroundNormal =
-        engine->assetsRegisterTexture(memory->engineMemory, "ground_normal.bmp", false);
-    assets->textureGroundDisplacement =
-        engine->assetsRegisterTexture(memory->engineMemory, "ground_displacement.tga", true);
-    assets->textureGroundAo =
-        engine->assetsRegisterTexture(memory->engineMemory, "ground_ao.tga", false);
-    assets->textureRockAlbedo =
-        engine->assetsRegisterTexture(memory->engineMemory, "rock_albedo.jpg", false);
-    assets->textureRockNormal =
-        engine->assetsRegisterTexture(memory->engineMemory, "rock_normal.jpg", false);
-    assets->textureRockDisplacement =
-        engine->assetsRegisterTexture(memory->engineMemory, "rock_displacement.tga", true);
-    assets->textureRockAo =
-        engine->assetsRegisterTexture(memory->engineMemory, "rock_ao.tga", false);
-    assets->textureSnowAlbedo =
-        engine->assetsRegisterTexture(memory->engineMemory, "snow_albedo.jpg", false);
-    assets->textureSnowNormal =
-        engine->assetsRegisterTexture(memory->engineMemory, "snow_normal.jpg", false);
-    assets->textureSnowDisplacement =
-        engine->assetsRegisterTexture(memory->engineMemory, "snow_displacement.tga", true);
-    assets->textureSnowAo =
-        engine->assetsRegisterTexture(memory->engineMemory, "snow_ao.tga", false);
-    assets->textureVirtualImportedHeightmap =
-        engine->assetsRegisterTexture(memory->engineMemory, 0, true);
+    editorAssets->textureGroundAlbedo =
+        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
+    editorAssets->textureGroundNormal =
+        engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
+    editorAssets->textureGroundDisplacement =
+        engine->assetsRegisterTexture(assets, "ground_displacement.tga", true);
+    editorAssets->textureGroundAo =
+        engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
+    editorAssets->textureRockAlbedo =
+        engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
+    editorAssets->textureRockNormal =
+        engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
+    editorAssets->textureRockDisplacement =
+        engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
+    editorAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", false);
+    editorAssets->textureSnowAlbedo =
+        engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
+    editorAssets->textureSnowNormal =
+        engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
+    editorAssets->textureSnowDisplacement =
+        engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
+    editorAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
+    editorAssets->textureVirtualImportedHeightmap =
+        engine->assetsRegisterTexture(assets, 0, true);
 
-    assets->meshRock = engine->assetsRegisterMesh(memory->engineMemory, "rock.obj");
+    editorAssets->meshRock = engine->assetsRegisterMesh(assets, "rock.obj");
 
     state->orthographicCameraTransform = glm::identity<glm::mat4>();
     state->orthographicCameraTransform =
@@ -500,10 +495,10 @@ bool initializeEditor(EditorMemory *memory)
     {
         AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
         cmd->materialId = sceneState->nextMaterialId++;
-        cmd->albedoTextureAssetHandle = assets->textureGroundAlbedo;
-        cmd->normalTextureAssetHandle = assets->textureGroundNormal;
-        cmd->displacementTextureAssetHandle = assets->textureGroundDisplacement;
-        cmd->aoTextureAssetHandle = assets->textureGroundAo;
+        cmd->albedoTextureAssetHandle = editorAssets->textureGroundAlbedo;
+        cmd->normalTextureAssetHandle = editorAssets->textureGroundNormal;
+        cmd->displacementTextureAssetHandle = editorAssets->textureGroundDisplacement;
+        cmd->aoTextureAssetHandle = editorAssets->textureGroundAo;
         cmd->textureSizeInWorldUnits = 2.5f;
         cmd->slopeStart = 0;
         cmd->slopeEnd = 0;
@@ -512,10 +507,10 @@ bool initializeEditor(EditorMemory *memory)
 
         cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
         cmd->materialId = sceneState->nextMaterialId++;
-        cmd->albedoTextureAssetHandle = assets->textureRockAlbedo;
-        cmd->normalTextureAssetHandle = assets->textureRockNormal;
-        cmd->displacementTextureAssetHandle = assets->textureRockDisplacement;
-        cmd->aoTextureAssetHandle = assets->textureRockAo;
+        cmd->albedoTextureAssetHandle = editorAssets->textureRockAlbedo;
+        cmd->normalTextureAssetHandle = editorAssets->textureRockNormal;
+        cmd->displacementTextureAssetHandle = editorAssets->textureRockDisplacement;
+        cmd->aoTextureAssetHandle = editorAssets->textureRockAo;
         cmd->textureSizeInWorldUnits = 13;
         cmd->slopeStart = 0.2f;
         cmd->slopeEnd = 0.4f;
@@ -524,10 +519,10 @@ bool initializeEditor(EditorMemory *memory)
 
         cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
         cmd->materialId = sceneState->nextMaterialId++;
-        cmd->albedoTextureAssetHandle = assets->textureSnowAlbedo;
-        cmd->normalTextureAssetHandle = assets->textureSnowNormal;
-        cmd->displacementTextureAssetHandle = assets->textureSnowDisplacement;
-        cmd->aoTextureAssetHandle = assets->textureSnowAo;
+        cmd->albedoTextureAssetHandle = editorAssets->textureSnowAlbedo;
+        cmd->normalTextureAssetHandle = editorAssets->textureSnowNormal;
+        cmd->displacementTextureAssetHandle = editorAssets->textureSnowDisplacement;
+        cmd->aoTextureAssetHandle = editorAssets->textureSnowAo;
         cmd->textureSizeInWorldUnits = 2;
         cmd->slopeStart = 0.4f;
         cmd->slopeEnd = 0.2f;
@@ -680,9 +675,10 @@ void commitChanges(EditorMemory *memory)
     engine->rendererPushTexturedQuad(rq, state->workingHeightmap.textureHandle);
     engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
 #else
-    EditorAssets *assets = &state->assets;
+    EditorAssets *editorAssets = &state->editorAssets;
 
-    LoadedAsset *quadShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
+    LoadedAsset *quadShaderProgram =
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
     if (!quadShaderProgram->shaderProgram)
         return;
 
@@ -1028,18 +1024,19 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     updateFromDocumentState(memory, &state->previewDocState);
 
     EngineApi *engine = memory->engineApi;
-    EditorAssets *assets = &state->assets;
+    EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
 
-    LoadedAsset *quadShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
+    LoadedAsset *quadShaderProgram =
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
     LoadedAsset *brushMaskShaderProgram =
-        engine->assetsGetShaderProgram(assets->shaderProgramBrushMask);
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushMask);
     LoadedAsset *brushBlendAddSubShaderProgram =
-        engine->assetsGetShaderProgram(assets->shaderProgramBrushBlendAddSub);
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushBlendAddSub);
     LoadedAsset *brushBlendFlattenShaderProgram =
-        engine->assetsGetShaderProgram(assets->shaderProgramBrushBlendFlatten);
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushBlendFlatten);
     LoadedAsset *brushBlendSmoothShaderProgram =
-        engine->assetsGetShaderProgram(assets->shaderProgramBrushBlendSmooth);
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushBlendSmooth);
     if (!quadShaderProgram->shaderProgram || !brushMaskShaderProgram->shaderProgram
         || !brushBlendAddSubShaderProgram->shaderProgram
         || !brushBlendFlattenShaderProgram->shaderProgram
@@ -1049,7 +1046,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     LoadedAsset *importedHeightmapAsset =
-        engine->assetsGetTexture(assets->textureVirtualImportedHeightmap);
+        engine->assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
@@ -1422,7 +1419,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->data.baseAddress;
     RenderContext *rctx = state->renderCtx;
-    EditorAssets *assets = &state->assets;
+    EditorAssets *editorAssets = &state->editorAssets;
     SceneState *sceneState = &state->sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
@@ -1483,10 +1480,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     // get shader programs
     LoadedAsset *calcTessLevelShaderProgram =
-        engine->assetsGetShaderProgram(assets->shaderProgramTerrainCalcTessLevel);
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainCalcTessLevel);
     LoadedAsset *terrainShaderProgram =
-        engine->assetsGetShaderProgram(assets->shaderProgramTerrainTextured);
-    LoadedAsset *rockShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramRock);
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainTextured);
+    LoadedAsset *rockShaderProgram =
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramRock);
     if (calcTessLevelShaderProgram->shaderProgram && terrainShaderProgram->shaderProgram
         && rockShaderProgram->shaderProgram)
     {
@@ -1577,7 +1575,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         // draw rocks
         if (!sceneState->rockMesh.isLoaded)
         {
-            LoadedAsset *rockMeshAsset = engine->assetsGetMesh(assets->meshRock);
+            LoadedAsset *rockMeshAsset = engine->assetsGetMesh(editorAssets->meshRock);
             MeshAsset *rockMesh = rockMeshAsset->mesh;
             if (rockMesh)
             {
@@ -1639,7 +1637,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererSetViewportSize(view->width, view->height);
     engine->rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
 
-    LoadedAsset *quadShaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
+    LoadedAsset *quadShaderProgram =
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
     if (quadShaderProgram->shaderProgram)
     {
         engine->rendererUpdateCameraState(rctx, &state->orthographicCameraTransform);
@@ -1688,7 +1687,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 #else
-    EditorAssets *assets = &state->assets;
+    EditorAssets *editorAssets = &state->editorAssets;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
     uint64 renderQueueMaxSize = 1 * 1024 * 1024;
@@ -1699,7 +1698,8 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
 
-    LoadedAsset *shaderProgram = engine->assetsGetShaderProgram(assets->shaderProgramQuad);
+    LoadedAsset *shaderProgram =
+        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
     if (shaderProgram->shaderProgram)
     {
         engine->rendererPushTexturedQuad(rq, shaderProgram->shaderProgram->handle,
@@ -1721,7 +1721,7 @@ API_EXPORT EDITOR_GET_UI_STATE(editorGetUiState)
 API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(editorGetImportedHeightmapAssetHandle)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
-    return state->assets.textureVirtualImportedHeightmap;
+    return state->editorAssets.textureVirtualImportedHeightmap;
 }
 
 API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)

@@ -195,8 +195,9 @@ struct EditorState
 {
     bool isInitialized;
 
-    EditorAssets assets;
+    EditorAssets editorAssets;
     RenderContext *renderCtx;
+    Assets *engineAssets;
 
     glm::mat4 orthographicCameraTransform;
     uint32 quadVertexArrayHandle;
