@@ -66,8 +66,6 @@ namespace Terrain.Editor.Engine
     delegate void AssetsSetAssetData(ref EngineMemory memory, uint assetId, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
 
-    delegate bool RendererDestroyResources(ref EngineMemory memory);
-
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi
     {
@@ -125,7 +123,6 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererDrawElementsInstanced;
         public IntPtr rendererDispatchCompute;
         public IntPtr rendererShaderStorageMemoryBarrier;
-        public RendererDestroyResources rendererDestroyResources;
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCamera;
         public IntPtr rendererClear;

@@ -587,24 +587,6 @@ RENDERER_SHADER_STORAGE_MEMORY_BARRIER(rendererShaderStorageMemoryBarrier)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
-RENDERER_DESTROY_RESOURCES(rendererDestroyResources)
-{
-    RendererState *state = getState(memory);
-    glDeleteTextures(state->textureCount, state->textureIds);
-    glDeleteRenderbuffers(state->depthBufferCount, state->depthBufferIds);
-    glDeleteFramebuffers(state->framebufferCount, state->framebufferIds);
-    for (int i = 0; i < state->shaderCount; i++)
-    {
-        glDeleteShader(state->shaderIds[i]);
-    }
-    for (int i = 0; i < state->shaderProgramCount; i++)
-    {
-        glDeleteProgram(state->shaderProgramIds[i]);
-    }
-    glDeleteVertexArrays(state->vertexArrayCount, state->vertexArrayIds);
-    glDeleteBuffers(state->bufferCount, state->bufferIds);
-}
-
 RENDERER_CREATE_QUEUE(rendererCreateQueue)
 {
     assert(maxSize >= sizeof(RenderQueue));

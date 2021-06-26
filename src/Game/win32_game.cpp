@@ -520,7 +520,6 @@ int32 main()
         glfwPollEvents();
     }
 
-    platformMemory->engineCode.api->rendererDestroyResources(engineMemory);
     glfwDestroyWindow(window);
     glfwTerminate();
 

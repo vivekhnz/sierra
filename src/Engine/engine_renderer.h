@@ -141,9 +141,6 @@ typedef RENDERER_DISPATCH_COMPUTE(RendererDispatchCompute);
 #define RENDERER_SHADER_STORAGE_MEMORY_BARRIER(name) void name()
 typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrier);
 
-#define RENDERER_DESTROY_RESOURCES(name) void name(EngineMemory *memory)
-typedef RENDERER_DESTROY_RESOURCES(RendererDestroyResources);
-
 struct RenderQueue;
 #define RENDERER_CREATE_QUEUE(name)                                                           \
     RenderQueue *name(EngineMemory *memory, void *baseAddress, uint64 maxSize)

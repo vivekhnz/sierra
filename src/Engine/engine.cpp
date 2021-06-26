@@ -83,7 +83,6 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererDrawElementsInstanced = rendererDrawElementsInstanced;
     Api.rendererDispatchCompute = rendererDispatchCompute;
     Api.rendererShaderStorageMemoryBarrier = rendererShaderStorageMemoryBarrier;
-    Api.rendererDestroyResources = rendererDestroyResources;
     Api.rendererCreateQueue = rendererCreateQueue;
     Api.rendererSetCamera = rendererSetCamera;
     Api.rendererClear = rendererClear;

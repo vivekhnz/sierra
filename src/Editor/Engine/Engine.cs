@@ -111,10 +111,6 @@ namespace Terrain.Editor.Engine
 
         internal static void Shutdown()
         {
-            if (moduleHandle != IntPtr.Zero)
-            {
-                api.rendererDestroyResources(ref memory);
-            }
             memoryHandle.Free();
         }
 
