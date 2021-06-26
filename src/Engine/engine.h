@@ -7,6 +7,7 @@
 
 struct EngineApi
 {
+    AssetsInitialize *assetsInitialize;
     AssetsRegisterShader *assetsRegisterShader;
     AssetsRegisterTexture *assetsRegisterTexture;
     AssetsRegisterShaderProgram *assetsRegisterShaderProgram;

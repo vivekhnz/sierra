@@ -65,6 +65,7 @@ struct Win32PlatformMemory
     float mouseScrollOffset;
 
     EngineMemory *engineMemory;
+    RenderContext renderCtx;
     GameMemory *gameMemory;
 };
 

@@ -90,6 +90,11 @@ struct AssetRegistration
     LoadedAsset asset;
 };
 
+struct RenderContext;
+
+#define ASSETS_INITIALIZE(name) void name(EngineMemory *memory, RenderContext *rctx)
+typedef ASSETS_INITIALIZE(AssetsInitialize);
+
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \
     uint32 name(EngineMemory *memory, const char *relativePath, bool is16Bit)
 typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);

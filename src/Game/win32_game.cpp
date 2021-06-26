@@ -380,7 +380,7 @@ int32 main()
     uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
     uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
     uint8 *engineMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
-    uint8 engineMemorySize =
+    uint64 engineMemorySize =
         APP_MEMORY_SIZE - (engineMemoryBaseAddress - platformMemoryBaseAddress);
 
     platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
@@ -406,11 +406,7 @@ int32 main()
         "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
 
     // initialize engine memory
-#define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);
-    engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
-    engineMemory->renderer.size = ENGINE_RENDERER_MEMORY_SIZE;
-    engineMemoryOffset += engineMemory->renderer.size;
     engineMemory->assets.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
     engineMemory->assets.size = engineMemorySize - engineMemoryOffset;
     engineMemoryOffset += engineMemory->assets.size;

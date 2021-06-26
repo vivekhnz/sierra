@@ -58,10 +58,6 @@ namespace Terrain.Editor.Engine
             memory = new EngineMemory();
 
             ulong offset = 0;
-            memory.Renderer.BaseAddress = engineMemoryDataPtr + (int)offset;
-            memory.Renderer.Size = 1 * 1024 * 1024;
-            offset += memory.Renderer.Size;
-
             memory.Assets.BaseAddress = engineMemoryDataPtr + (int)offset;
             memory.Assets.Size = (ulong)engineMemorySizeInBytes - offset;
             offset += memory.Assets.Size;

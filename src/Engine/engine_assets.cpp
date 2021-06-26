@@ -17,6 +17,8 @@ RENDERER_CREATE_SHADER(rendererCreateShader);
 
 struct AssetsState
 {
+    RenderContext *renderCtx;
+
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
 
@@ -105,6 +107,13 @@ AssetRegistration *registerAsset(EngineMemory *memory,
     return reg;
 }
 
+ASSETS_INITIALIZE(assetsInitialize)
+{
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+    state->renderCtx = rctx;
+}
+
 ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
 {
     AssetRegistration *reg = registerAsset(memory, ASSET_TYPE_TEXTURE, relativePath, 0, 0);
@@ -133,6 +142,9 @@ ASSETS_REGISTER_MESH(assetsRegisterMesh)
 
 bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAsset **deps)
 {
+    assert(memory->assets.size >= sizeof(AssetsState));
+    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+
     uint32 assetType = ASSET_GET_TYPE(reg->id);
     if (assetType == ASSET_TYPE_SHADER_PROGRAM)
     {
@@ -143,8 +155,8 @@ bool buildCompositeAsset(EngineMemory *memory, AssetRegistration *reg, LoadedAss
         }
 
         uint32 handle;
-        if (rendererCreateShaderProgram(
-                memory, reg->compositeState->dependencyCount, shaderHandles, &handle))
+        if (rendererCreateShaderProgram(state->renderCtx, reg->compositeState->dependencyCount,
+                shaderHandles, &handle))
         {
             if (!reg->asset.shaderProgram)
             {
@@ -324,7 +336,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         char *src = static_cast<char *>(data);
         uint32 handle;
-        if (rendererCreateShader(memory, reg->metadata.shader->type, src, &handle))
+        if (rendererCreateShader(state->renderCtx, reg->metadata.shader->type, src, &handle))
         {
             if (!reg->asset.shader)
             {

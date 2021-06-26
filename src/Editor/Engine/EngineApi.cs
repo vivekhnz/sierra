@@ -27,7 +27,6 @@ namespace Terrain.Editor.Engine
     [StructLayout(LayoutKind.Sequential)]
     struct EngineMemory
     {
-        public MemoryBlock Renderer;
         public MemoryBlock Assets;
     }
 
@@ -63,12 +62,14 @@ namespace Terrain.Editor.Engine
         public bool IsLoadQueued;
     }
 
-    delegate void AssetsSetAssetData(ref EngineMemory memory, uint assetId, in byte data, ulong size);
+    delegate void AssetsSetAssetData(
+        ref EngineMemory memory, uint assetId, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi
     {
+        public IntPtr assetsInitialize;
         public IntPtr assetsRegisterShader;
         public IntPtr assetsRegisterTexture;
         public IntPtr assetsRegisterShaderProgram;

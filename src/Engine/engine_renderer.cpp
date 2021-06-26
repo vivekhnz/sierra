@@ -2,14 +2,6 @@
 
 extern EnginePlatformApi Platform;
 
-#define RENDERER_MAX_TEXTURES 128
-#define RENDERER_MAX_DEPTH_BUFFERS 128
-#define RENDERER_MAX_FRAMEBUFFERS 128
-#define RENDERER_MAX_SHADERS 128
-#define RENDERER_MAX_SHADER_PROGRAMS 128
-#define RENDERER_MAX_VERTEX_ARRAYS 128
-#define RENDERER_MAX_BUFFERS 128
-
 enum RendererUniformBuffer
 {
     RENDERER_UNIFORM_BUFFER_CAMERA,
@@ -18,36 +10,9 @@ enum RendererUniformBuffer
     RENDERER_UNIFORM_BUFFER_COUNT
 };
 
-struct RendererState
-{
-    uint32 textureCount;
-    uint32 textureIds[RENDERER_MAX_TEXTURES];
-
-    uint32 depthBufferCount;
-    uint32 depthBufferIds[RENDERER_MAX_DEPTH_BUFFERS];
-
-    uint32 framebufferCount;
-    uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
-    uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
-
-    uint32 shaderCount;
-    uint32 shaderIds[RENDERER_MAX_SHADERS];
-
-    uint32 shaderProgramCount;
-    uint32 shaderProgramIds[RENDERER_MAX_SHADER_PROGRAMS];
-
-    uint32 vertexArrayCount;
-    uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
-
-    uint32 bufferCount;
-    uint32 bufferIds[RENDERER_MAX_BUFFERS];
-    RendererBufferType bufferTypes[RENDERER_MAX_BUFFERS];
-    uint32 bufferUsages[RENDERER_MAX_BUFFERS];
-};
-
 struct RenderQueue
 {
-    RendererState *state;
+    RenderContext *ctx;
 
     glm::mat4 cameraTransform;
     glm::vec4 clearColor;
@@ -77,13 +42,6 @@ struct GpuLightingState
     uint32 isDisplacementMapEnabled;
 };
 
-RendererState *getState(EngineMemory *memory)
-{
-    assert(memory->renderer.size >= sizeof(RendererState));
-    RendererState *state = (RendererState *)memory->renderer.baseAddress;
-    return state;
-}
-
 uint32 getOpenGLBufferType(RendererBufferType type)
 {
     uint32 bufferType = 0;
@@ -105,20 +63,18 @@ uint32 getOpenGLBufferType(RendererBufferType type)
 
 RENDERER_INITIALIZE(rendererInitialize)
 {
-    RendererState *state = getState(memory);
-
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // note: we assume that this is called before any vertex or element buffers are created
-    assert(state->bufferCount == 0);
-    glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, state->bufferIds);
-    state->bufferCount = RENDERER_UNIFORM_BUFFER_COUNT;
+    assert(ctx->bufferCount == 0);
+    glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, ctx->bufferIds);
+    ctx->bufferCount = RENDERER_UNIFORM_BUFFER_COUNT;
 
     // initialize camera state
-    uint32 cameraUboId = state->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
+    uint32 cameraUboId = ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
     glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuCameraState), 0, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_CAMERA, cameraUboId, 0,
@@ -133,7 +89,7 @@ RENDERER_INITIALIZE(rendererInitialize)
     lighting.isAOMapEnabled = true;
     lighting.isDisplacementMapEnabled = true;
 
-    uint32 lightingUboId = state->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
+    uint32 lightingUboId = ctx->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
     glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
@@ -142,19 +98,15 @@ RENDERER_INITIALIZE(rendererInitialize)
 
 RENDERER_UPDATE_CAMERA_STATE(rendererUpdateCameraState)
 {
-    RendererState *state = getState(memory);
-
     GpuCameraState camera;
     camera.transform = *transform;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, state->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
 }
 
 RENDERER_UPDATE_LIGHTING_STATE(rendererUpdateLightingState)
 {
-    RendererState *state = getState(memory);
-
     GpuLightingState lighting;
     lighting.lightDir = *lightDir;
     lighting.isEnabled = isLightingEnabled;
@@ -163,16 +115,15 @@ RENDERER_UPDATE_LIGHTING_STATE(rendererUpdateLightingState)
     lighting.isAOMapEnabled = isAOMapEnabled;
     lighting.isDisplacementMapEnabled = isDisplacementMapEnabled;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, state->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING]);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING]);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 {
-    RendererState *state = getState(memory);
-    assert(state->textureCount < RENDERER_MAX_TEXTURES);
+    assert(ctx->textureCount < RENDERER_MAX_TEXTURES);
 
-    uint32 *id = state->textureIds + state->textureCount;
+    uint32 *id = ctx->textureIds + ctx->textureCount;
     glGenTextures(1, id);
 
     glBindTexture(GL_TEXTURE_2D, *id);
@@ -183,14 +134,13 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
     glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    return state->textureCount++;
+    return ctx->textureCount++;
 }
 
 RENDERER_BIND_TEXTURE(rendererBindTexture)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->textureCount);
-    uint32 id = state->textureIds[handle];
+    assert(handle < ctx->textureCount);
+    uint32 id = ctx->textureIds[handle];
 
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, id);
@@ -198,9 +148,8 @@ RENDERER_BIND_TEXTURE(rendererBindTexture)
 
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->textureCount);
-    uint32 id = state->textureIds[handle];
+    assert(handle < ctx->textureCount);
+    uint32 id = ctx->textureIds[handle];
 
     glBindTexture(GL_TEXTURE_2D, id);
     glTexImage2D(
@@ -210,9 +159,8 @@ RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 
 RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->textureCount);
-    uint32 id = state->textureIds[handle];
+    assert(handle < ctx->textureCount);
+    uint32 id = ctx->textureIds[handle];
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
@@ -221,10 +169,9 @@ RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
 {
-    RendererState *state = getState(memory);
-    assert(state->textureCount < RENDERER_MAX_TEXTURES);
+    assert(ctx->textureCount < RENDERER_MAX_TEXTURES);
 
-    uint32 *id = state->textureIds + state->textureCount;
+    uint32 *id = ctx->textureIds + ctx->textureCount;
     glGenTextures(1, id);
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, *id);
@@ -236,14 +183,13 @@ RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
         elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
-    return state->textureCount++;
+    return ctx->textureCount++;
 }
 
 RENDERER_BIND_TEXTURE_ARRAY(rendererBindTextureArray)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->textureCount);
-    uint32 id = state->textureIds[handle];
+    assert(handle < ctx->textureCount);
+    uint32 id = ctx->textureIds[handle];
 
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D_ARRAY, id);
@@ -251,9 +197,8 @@ RENDERER_BIND_TEXTURE_ARRAY(rendererBindTextureArray)
 
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->textureCount);
-    uint32 id = state->textureIds[handle];
+    assert(handle < ctx->textureCount);
+    uint32 id = ctx->textureIds[handle];
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, id);
     glTexSubImage3D(
@@ -263,24 +208,22 @@ RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 
 RENDERER_CREATE_DEPTH_BUFFER(rendererCreateDepthBuffer)
 {
-    RendererState *state = getState(memory);
-    assert(state->depthBufferCount < RENDERER_MAX_DEPTH_BUFFERS);
+    assert(ctx->depthBufferCount < RENDERER_MAX_DEPTH_BUFFERS);
 
-    uint32 *depthBufferId = state->depthBufferIds + state->depthBufferCount;
+    uint32 *depthBufferId = ctx->depthBufferIds + ctx->depthBufferCount;
     glGenRenderbuffers(1, depthBufferId);
 
     glBindRenderbuffer(GL_RENDERBUFFER, *depthBufferId);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
-    return state->depthBufferCount++;
+    return ctx->depthBufferCount++;
 }
 
 RENDERER_RESIZE_DEPTH_BUFFER(rendererResizeDepthBuffer)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->depthBufferCount);
-    uint32 id = state->depthBufferIds[handle];
+    assert(handle < ctx->depthBufferCount);
+    uint32 id = ctx->depthBufferIds[handle];
 
     glBindRenderbuffer(GL_RENDERBUFFER, id);
     glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
@@ -289,13 +232,12 @@ RENDERER_RESIZE_DEPTH_BUFFER(rendererResizeDepthBuffer)
 
 RENDERER_CREATE_FRAMEBUFFER(rendererCreateFramebuffer)
 {
-    RendererState *state = getState(memory);
-    assert(state->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
+    assert(ctx->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
 
-    assert(textureHandle < state->textureCount);
-    uint32 textureId = state->textureIds[textureHandle];
+    assert(textureHandle < ctx->textureCount);
+    uint32 textureId = ctx->textureIds[textureHandle];
 
-    uint32 *framebufferId = state->framebufferIds + state->framebufferCount;
+    uint32 *framebufferId = ctx->framebufferIds + ctx->framebufferCount;
     glGenFramebuffers(1, framebufferId);
 
     glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
@@ -303,32 +245,30 @@ RENDERER_CREATE_FRAMEBUFFER(rendererCreateFramebuffer)
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
     if (depthBufferHandle > -1)
     {
-        uint32 depthBufferId = state->depthBufferIds[depthBufferHandle];
+        uint32 depthBufferId = ctx->depthBufferIds[depthBufferHandle];
         glFramebufferRenderbuffer(
             GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthBufferId);
     }
 
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    state->framebufferTextureIds[state->framebufferCount] = textureId;
+    ctx->framebufferTextureIds[ctx->framebufferCount] = textureId;
 
-    return state->framebufferCount++;
+    return ctx->framebufferCount++;
 }
 
 RENDERER_BIND_FRAMEBUFFER(rendererBindFramebuffer)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->framebufferCount);
-    uint32 id = state->framebufferIds[handle];
+    assert(handle < ctx->framebufferCount);
+    uint32 id = ctx->framebufferIds[handle];
 
     glBindFramebuffer(GL_FRAMEBUFFER, id);
 }
 
 RENDERER_UNBIND_FRAMEBUFFER(rendererUnbindFramebuffer)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->framebufferCount);
+    assert(handle < ctx->framebufferCount);
 
-    uint32 textureId = state->framebufferTextureIds[handle];
+    uint32 textureId = ctx->framebufferTextureIds[handle];
     glBindTexture(GL_TEXTURE_2D, textureId);
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
@@ -336,8 +276,7 @@ RENDERER_UNBIND_FRAMEBUFFER(rendererUnbindFramebuffer)
 
 RENDERER_CREATE_SHADER(rendererCreateShader)
 {
-    RendererState *state = getState(memory);
-    assert(state->shaderCount < RENDERER_MAX_SHADERS);
+    assert(ctx->shaderCount < RENDERER_MAX_SHADERS);
 
     uint32 id = glCreateShader(type);
     glShaderSource(id, 1, &src, NULL);
@@ -347,8 +286,8 @@ RENDERER_CREATE_SHADER(rendererCreateShader)
     glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
     if (succeeded)
     {
-        state->shaderIds[state->shaderCount] = id;
-        *out_handle = state->shaderCount++;
+        ctx->shaderIds[ctx->shaderCount] = id;
+        *out_handle = ctx->shaderCount++;
 
         return 1;
     }
@@ -364,13 +303,12 @@ RENDERER_CREATE_SHADER(rendererCreateShader)
 
 RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
 {
-    RendererState *state = getState(memory);
-    assert(state->shaderProgramCount < RENDERER_MAX_SHADER_PROGRAMS);
+    assert(ctx->shaderProgramCount < RENDERER_MAX_SHADER_PROGRAMS);
 
     uint32 id = glCreateProgram();
     for (int i = 0; i < shaderCount; i++)
     {
-        glAttachShader(id, state->shaderIds[shaderHandles[i]]);
+        glAttachShader(id, ctx->shaderIds[shaderHandles[i]]);
     }
 
     glLinkProgram(id);
@@ -380,11 +318,11 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
     {
         for (int i = 0; i < shaderCount; i++)
         {
-            glDetachShader(id, state->shaderIds[shaderHandles[i]]);
+            glDetachShader(id, ctx->shaderIds[shaderHandles[i]]);
         }
 
-        state->shaderProgramIds[state->shaderProgramCount] = id;
-        *out_handle = state->shaderProgramCount++;
+        ctx->shaderProgramIds[ctx->shaderProgramCount] = id;
+        *out_handle = ctx->shaderProgramCount++;
         return 1;
     }
     else
@@ -399,18 +337,16 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
 
 RENDERER_USE_SHADER_PROGRAM(rendererUseShaderProgram)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     glUseProgram(id);
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(rendererSetShaderProgramUniformFloat)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform1f(id, loc, value);
@@ -418,9 +354,8 @@ RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(rendererSetShaderProgramUniformFloat)
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_INTEGER(rendererSetShaderProgramUniformInteger)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform1i(id, loc, value);
@@ -428,9 +363,8 @@ RENDERER_SET_SHADER_PROGRAM_UNIFORM_INTEGER(rendererSetShaderProgramUniformInteg
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR2(rendererSetShaderProgramUniformVector2)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
@@ -438,9 +372,8 @@ RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR2(rendererSetShaderProgramUniformVecto
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR3(rendererSetShaderProgramUniformVector3)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
@@ -448,9 +381,8 @@ RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR3(rendererSetShaderProgramUniformVecto
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR4(rendererSetShaderProgramUniformVector4)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform4fv(id, loc, 1, glm::value_ptr(value));
@@ -458,9 +390,8 @@ RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR4(rendererSetShaderProgramUniformVecto
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_MATRIX4X4(rendererSetShaderProgramUniformMatrix4x4)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->shaderProgramCount);
-    uint32 id = state->shaderProgramIds[handle];
+    assert(handle < ctx->shaderProgramCount);
+    uint32 id = ctx->shaderProgramIds[handle];
 
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(value));
@@ -468,17 +399,15 @@ RENDERER_SET_SHADER_PROGRAM_UNIFORM_MATRIX4X4(rendererSetShaderProgramUniformMat
 
 RENDERER_CREATE_VERTEX_ARRAY(rendererCreateVertexArray)
 {
-    RendererState *state = getState(memory);
-    assert(state->vertexArrayCount < RENDERER_MAX_VERTEX_ARRAYS);
-    glGenVertexArrays(1, state->vertexArrayIds + state->vertexArrayCount);
-    return state->vertexArrayCount++;
+    assert(ctx->vertexArrayCount < RENDERER_MAX_VERTEX_ARRAYS);
+    glGenVertexArrays(1, ctx->vertexArrayIds + ctx->vertexArrayCount);
+    return ctx->vertexArrayCount++;
 }
 
 RENDERER_BIND_VERTEX_ARRAY(rendererBindVertexArray)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->vertexArrayCount);
-    uint32 id = state->vertexArrayIds[handle];
+    assert(handle < ctx->vertexArrayCount);
+    uint32 id = ctx->vertexArrayIds[handle];
 
     glBindVertexArray(id);
 }
@@ -490,33 +419,30 @@ RENDERER_UNBIND_VERTEX_ARRAY(rendererUnbindVertexArray)
 
 RENDERER_CREATE_BUFFER(rendererCreateBuffer)
 {
-    RendererState *state = getState(memory);
-    assert(state->bufferCount < RENDERER_MAX_BUFFERS);
-    glGenBuffers(1, state->bufferIds + state->bufferCount);
-    state->bufferTypes[state->bufferCount] = type;
-    state->bufferUsages[state->bufferCount] = usage;
-    return state->bufferCount++;
+    assert(ctx->bufferCount < RENDERER_MAX_BUFFERS);
+    glGenBuffers(1, ctx->bufferIds + ctx->bufferCount);
+    ctx->bufferTypes[ctx->bufferCount] = type;
+    ctx->bufferUsages[ctx->bufferCount] = usage;
+    return ctx->bufferCount++;
 }
 
 RENDERER_BIND_BUFFER(rendererBindBuffer)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->bufferCount);
-    uint32 id = state->bufferIds[handle];
+    assert(handle < ctx->bufferCount);
+    uint32 id = ctx->bufferIds[handle];
 
-    uint32 openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
+    uint32 openGLType = getOpenGLBufferType(ctx->bufferTypes[handle]);
     glBindBuffer(openGLType, id);
 }
 
 RENDERER_UPDATE_BUFFER(rendererUpdateBuffer)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->bufferCount);
-    uint32 id = state->bufferIds[handle];
+    assert(handle < ctx->bufferCount);
+    uint32 id = ctx->bufferIds[handle];
 
-    uint32 openGLType = getOpenGLBufferType(state->bufferTypes[handle]);
+    uint32 openGLType = getOpenGLBufferType(ctx->bufferTypes[handle]);
     glBindBuffer(openGLType, id);
-    glBufferData(openGLType, size, data, state->bufferUsages[handle]);
+    glBufferData(openGLType, size, data, ctx->bufferUsages[handle]);
 }
 
 RENDERER_BIND_VERTEX_ATTRIBUTE(rendererBindVertexAttribute)
@@ -529,9 +455,8 @@ RENDERER_BIND_VERTEX_ATTRIBUTE(rendererBindVertexAttribute)
 
 RENDERER_BIND_SHADER_STORAGE_BUFFER(rendererBindShaderStorageBuffer)
 {
-    RendererState *state = getState(memory);
-    assert(handle < state->bufferCount);
-    uint32 id = state->bufferIds[handle];
+    assert(handle < ctx->bufferCount);
+    uint32 id = ctx->bufferIds[handle];
 
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, id);
 }
@@ -591,7 +516,7 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
 {
     assert(maxSize >= sizeof(RenderQueue));
     RenderQueue *result = (RenderQueue *)baseAddress;
-    result->state = getState(memory);
+    result->ctx = ctx;
 
     result->cameraTransform = glm::identity<glm::mat4>();
     result->clearColor = glm::vec4(0, 0, 0, 1);
@@ -617,14 +542,14 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
     rq->quad.render = true;
 
-    assert(shaderProgramHandle < rq->state->shaderProgramCount);
-    rq->quad.shaderProgramId = rq->state->shaderProgramIds[shaderProgramHandle];
+    assert(shaderProgramHandle < rq->ctx->shaderProgramCount);
+    rq->quad.shaderProgramId = rq->ctx->shaderProgramIds[shaderProgramHandle];
 
-    assert(textureHandle < rq->state->textureCount);
-    rq->quad.textureId = rq->state->textureIds[textureHandle];
+    assert(textureHandle < rq->ctx->textureCount);
+    rq->quad.textureId = rq->ctx->textureIds[textureHandle];
 
-    assert(vertexArrayHandle < rq->state->vertexArrayCount);
-    rq->quad.vertexArrayId = rq->state->vertexArrayIds[vertexArrayHandle];
+    assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
+    rq->quad.vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
 }
 
 void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebufferHandle)
@@ -632,8 +557,8 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebuf
     uint32 framebufferId = 0;
     if (framebufferHandle)
     {
-        assert(*framebufferHandle < rq->state->framebufferCount);
-        framebufferId = rq->state->framebufferIds[*framebufferHandle];
+        assert(*framebufferHandle < rq->ctx->framebufferCount);
+        framebufferId = rq->ctx->framebufferIds[*framebufferHandle];
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
     }
 
@@ -643,7 +568,7 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebuf
 
     GpuCameraState camera = {};
     camera.transform = rq->cameraTransform;
-    glBindBuffer(GL_UNIFORM_BUFFER, rq->state->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+    glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
 
     if (rq->quad.render)
@@ -661,7 +586,7 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebuf
 
     if (framebufferHandle)
     {
-        uint32 framebufferTextureId = rq->state->framebufferTextureIds[*framebufferHandle];
+        uint32 framebufferTextureId = rq->ctx->framebufferTextureIds[*framebufferHandle];
         glBindTexture(GL_TEXTURE_2D, framebufferTextureId);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);

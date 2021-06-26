@@ -34,6 +34,8 @@ struct GameAssets
 
 struct GameState
 {
+    RenderContext renderCtx;
+
     GameAssets assets;
     uint8 groundAlbedoTextureVersion;
     uint8 rockAlbedoTextureVersion;
