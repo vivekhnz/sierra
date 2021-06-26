@@ -354,7 +354,7 @@ RENDERER_CREATE_SHADER(rendererCreateShader)
     {
         char infoLog[512];
         glGetShaderInfoLog(id, 512, NULL, infoLog);
-        memory->platformLogMessage(infoLog);
+        memory->platform.logMessage(infoLog);
 
         return 0;
     }
@@ -389,7 +389,7 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
     {
         char infoLog[512];
         glGetProgramInfoLog(id, 512, NULL, infoLog);
-        memory->platformLogMessage(infoLog);
+        memory->platform.logMessage(infoLog);
 
         return 0;
     }

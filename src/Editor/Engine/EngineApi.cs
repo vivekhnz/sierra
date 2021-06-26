@@ -16,12 +16,18 @@ namespace Terrain.Editor.Engine
     internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
 
     [StructLayout(LayoutKind.Sequential)]
+    struct EnginePlatformApi
+    {
+        public IntPtr LogMessage;
+        public IntPtr QueueAssetLoad;
+        public IntPtr WatchAssetFile;
+        public IntPtr NotifyAssetRegistered;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
     struct EngineMemory
     {
-        public IntPtr PlatformLogMessage;
-        public IntPtr PlatformQueueAssetLoad;
-        public IntPtr PlatformWatchAssetFile;
-        public IntPtr PlatformNotifyAssetRegistered;
+        public EnginePlatformApi Platform;
 
         public MemoryBlock Renderer;
         public MemoryBlock Assets;

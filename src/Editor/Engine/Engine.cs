@@ -48,10 +48,13 @@ namespace Terrain.Editor.Engine
 
             memory = new EngineMemory
             {
-                PlatformLogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
-                PlatformQueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
-                PlatformWatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile),
-                PlatformNotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
+                Platform = new EnginePlatformApi
+                {
+                    LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
+                    QueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
+                    WatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile),
+                    NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
+                }
             };
 
             ulong offset = 0;

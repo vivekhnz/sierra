@@ -71,7 +71,7 @@ AssetRegistration *registerAsset(EngineMemory *memory,
         }
         *dstCursor = 0;
 
-        memory->platformWatchAssetFile(reg->id, relativePath);
+        memory->platform.watchAssetFile(reg->id, relativePath);
     }
     else if (dependencyCount > 0)
     {
@@ -95,9 +95,9 @@ AssetRegistration *registerAsset(EngineMemory *memory,
     }
 
     state->registeredAssetCount++;
-    if (memory->platformNotifyAssetRegistered)
+    if (memory->platform.notifyAssetRegistered)
     {
-        memory->platformNotifyAssetRegistered(reg);
+        memory->platform.notifyAssetRegistered(reg);
     }
 
     return reg;
@@ -170,7 +170,7 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
         AssetFileState *fileState = reg->fileState;
         if (fileState->relativePath && !fileState->isUpToDate && !fileState->isLoadQueued)
         {
-            if (memory->platformQueueAssetLoad(assetId, fileState->relativePath))
+            if (memory->platform.queueAssetLoad(assetId, fileState->relativePath))
             {
                 fileState->isLoadQueued = true;
             }

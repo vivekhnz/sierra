@@ -402,9 +402,10 @@ int32 main()
         "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
 
     // initialize engine memory
-    engineMemory->platformLogMessage = win32LogMessage;
-    engineMemory->platformQueueAssetLoad = win32QueueAssetLoad;
-    engineMemory->platformWatchAssetFile = win32WatchAssetFile;
+    engineMemory->platform = {};
+    engineMemory->platform.logMessage = win32LogMessage;
+    engineMemory->platform.queueAssetLoad = win32QueueAssetLoad;
+    engineMemory->platform.watchAssetFile = win32WatchAssetFile;
 
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);

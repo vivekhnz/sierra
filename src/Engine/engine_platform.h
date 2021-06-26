@@ -44,12 +44,17 @@ struct AssetRegistration;
 #define PLATFORM_NOTIFY_ASSET_REGISTERED(name) void name(AssetRegistration *assetReg)
 typedef PLATFORM_NOTIFY_ASSET_REGISTERED(PlatformNotifyAssetRegistered);
 
+struct EnginePlatformApi
+{
+    PlatformLogMessage *logMessage;
+    PlatformQueueAssetLoad *queueAssetLoad;
+    PlatformWatchAssetFile *watchAssetFile;
+    PlatformNotifyAssetRegistered *notifyAssetRegistered;
+};
+
 struct EngineMemory
 {
-    PlatformLogMessage *platformLogMessage;
-    PlatformQueueAssetLoad *platformQueueAssetLoad;
-    PlatformWatchAssetFile *platformWatchAssetFile;
-    PlatformNotifyAssetRegistered *platformNotifyAssetRegistered;
+    EnginePlatformApi platform;
 
     MemoryBlock renderer;
     MemoryBlock assets;
