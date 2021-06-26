@@ -72,7 +72,8 @@ struct EngineApi
 
 typedef void *GetGLProcAddress(const char *procName);
 
-#define ENGINE_GET_API(name) EngineApi *name(GetGLProcAddress *getGlProcAddress)
+#define ENGINE_GET_API(name)                                                                  \
+    EngineApi *name(GetGLProcAddress *getGlProcAddress, EnginePlatformApi platformApi)
 typedef ENGINE_GET_API(EngineGetApi);
 
 #endif

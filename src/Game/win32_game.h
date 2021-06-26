@@ -50,6 +50,8 @@ struct Win32EngineCode
 
 struct Win32PlatformMemory
 {
+    EnginePlatformApi enginePlatformApi;
+
     Win32AssetLoadQueue assetLoadQueue;
     Win32WatchedAsset watchedAssets[MAX_WATCHED_ASSETS];
     uint32 watchedAssetCount;

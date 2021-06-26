@@ -236,7 +236,8 @@ void win32LoadEngineCode(Win32EngineCode *engineCode)
     {
         EngineGetApi *engineGetApi =
             (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
-        engineCode->api = engineGetApi((GetGLProcAddress *)glfwGetProcAddress);
+        engineCode->api = engineGetApi(
+            (GetGLProcAddress *)glfwGetProcAddress, platformMemory->enginePlatformApi);
         platformMemory->gameMemory->engine = engineCode->api;
     }
 }
@@ -387,6 +388,9 @@ int32 main()
     EngineMemory *engineMemory = (EngineMemory *)engineMemoryBaseAddress;
 
     // initialize platform memory
+    platformMemory->enginePlatformApi.logMessage = win32LogMessage;
+    platformMemory->enginePlatformApi.queueAssetLoad = win32QueueAssetLoad;
+    platformMemory->enginePlatformApi.watchAssetFile = win32WatchAssetFile;
     platformMemory->engineMemory = engineMemory;
     platformMemory->gameMemory = gameMemory;
     for (uint32 i = 0; i < ASSET_LOAD_QUEUE_MAX_SIZE; i++)
@@ -402,11 +406,6 @@ int32 main()
         "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
 
     // initialize engine memory
-    engineMemory->platform = {};
-    engineMemory->platform.logMessage = win32LogMessage;
-    engineMemory->platform.queueAssetLoad = win32QueueAssetLoad;
-    engineMemory->platform.watchAssetFile = win32WatchAssetFile;
-
 #define ENGINE_RENDERER_MEMORY_SIZE (1 * 1024 * 1024)
     uint64 engineMemoryOffset = sizeof(EngineMemory);
     engineMemory->renderer.baseAddress = engineMemoryBaseAddress + engineMemoryOffset;
@@ -426,6 +425,7 @@ int32 main()
     gameMemory->engineMemory = platformMemory->engineMemory;
     gameMemory->platformExitGame = win32ExitGame;
     gameMemory->platformCaptureMouse = win32CaptureMouse;
+    gameMemory->platformQueueAssetLoad = win32QueueAssetLoad;
 
     float lastTickTime = (float)glfwGetTime();
     GameInput input = {};

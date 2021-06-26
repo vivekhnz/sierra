@@ -114,6 +114,7 @@ struct GameMemory
 
     PlatformExitGame *platformExitGame;
     PlatformCaptureMouse *platformCaptureMouse;
+    PlatformQueueAssetLoad *platformQueueAssetLoad;
 
     GameState state;
 

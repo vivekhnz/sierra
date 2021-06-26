@@ -16,7 +16,8 @@ namespace Terrain.Editor.Engine
 
     internal static class TerrainEngine
     {
-        private delegate IntPtr EngineGetApi(IntPtr getGlProcAddress);
+        private delegate IntPtr EngineGetApi(
+            IntPtr getGlProcAddress, EnginePlatformApi platformApi);
 
         private static EngineMemory memory;
         private static GCHandle memoryHandle;
@@ -28,6 +29,7 @@ namespace Terrain.Editor.Engine
         private static Func<IntPtr, bool> freeLibrary;
         private static PlatformNotifyAssetRegistered onAssetRegistered
             = new PlatformNotifyAssetRegistered(TerrainEngine.OnAssetRegistered);
+        private static EnginePlatformApi platformApi;
 
         private static EngineApi api;
 
@@ -46,16 +48,14 @@ namespace Terrain.Editor.Engine
             TerrainEngine.getProcAddress = getProcAddress;
             TerrainEngine.freeLibrary = freeLibrary;
 
-            memory = new EngineMemory
+            platformApi = new EnginePlatformApi
             {
-                Platform = new EnginePlatformApi
-                {
-                    LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
-                    QueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
-                    WatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile),
-                    NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
-                }
+                LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
+                QueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
+                WatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile),
+                NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
             };
+            memory = new EngineMemory();
 
             ulong offset = 0;
             memory.Renderer.BaseAddress = engineMemoryDataPtr + (int)offset;
@@ -104,7 +104,7 @@ namespace Terrain.Editor.Engine
                 EngineGetApi engineGetApi = Marshal
                     .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
 
-                EngineApiPtr = engineGetApi(IntPtr.Zero);
+                EngineApiPtr = engineGetApi(IntPtr.Zero, platformApi);
                 api = Marshal.PtrToStructure<EngineApi>(EngineApiPtr);
             }
         }

@@ -54,8 +54,6 @@ struct EnginePlatformApi
 
 struct EngineMemory
 {
-    EnginePlatformApi platform;
-
     MemoryBlock renderer;
     MemoryBlock assets;
 };

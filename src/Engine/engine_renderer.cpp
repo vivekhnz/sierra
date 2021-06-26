@@ -1,5 +1,7 @@
 #include "engine_renderer.h"
 
+extern EnginePlatformApi Platform;
+
 #define RENDERER_MAX_TEXTURES 128
 #define RENDERER_MAX_DEPTH_BUFFERS 128
 #define RENDERER_MAX_FRAMEBUFFERS 128
@@ -354,7 +356,7 @@ RENDERER_CREATE_SHADER(rendererCreateShader)
     {
         char infoLog[512];
         glGetShaderInfoLog(id, 512, NULL, infoLog);
-        memory->platform.logMessage(infoLog);
+        Platform.logMessage(infoLog);
 
         return 0;
     }
@@ -389,7 +391,7 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
     {
         char infoLog[512];
         glGetProgramInfoLog(id, 512, NULL, infoLog);
-        memory->platform.logMessage(infoLog);
+        Platform.logMessage(infoLog);
 
         return 0;
     }

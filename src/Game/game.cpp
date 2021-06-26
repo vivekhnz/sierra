@@ -184,8 +184,7 @@ bool initializeGame(GameMemory *memory)
     state->heightmapTextureHandle =
         engine->rendererCreateTexture(memory->engineMemory, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
             2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    memory->engineMemory->platform.queueAssetLoad(
-        assets->textureVirtualHeightmap, "heightmap.tga");
+    memory->platformQueueAssetLoad(assets->textureVirtualHeightmap, "heightmap.tga");
 
     state->albedoTextureArrayHandle =
         engine->rendererCreateTextureArray(memory->engineMemory, GL_UNSIGNED_BYTE, GL_RGBA,
@@ -353,8 +352,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     // load a different heightmap when H is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_H))
     {
-        memory->engineMemory->platform.queueAssetLoad(
-            assets->textureVirtualHeightmap, "heightmap2.tga");
+        memory->platformQueueAssetLoad(assets->textureVirtualHeightmap, "heightmap2.tga");
     }
 
     // toggle terrain wireframe mode when Z is pressed

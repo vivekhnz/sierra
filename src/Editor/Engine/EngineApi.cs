@@ -27,8 +27,6 @@ namespace Terrain.Editor.Engine
     [StructLayout(LayoutKind.Sequential)]
     struct EngineMemory
     {
-        public EnginePlatformApi Platform;
-
         public MemoryBlock Renderer;
         public MemoryBlock Assets;
     }

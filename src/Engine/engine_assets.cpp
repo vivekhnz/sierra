@@ -4,6 +4,8 @@
 #include <fast_obj/fast_obj.h>
 #include "engine_renderer.h"
 
+extern EnginePlatformApi Platform;
+
 #define ASSET_GET_INDEX(id) (id & 0x0FFFFFFF)
 #define ASSET_GET_TYPE(id) ((id & 0xF0000000) >> 28)
 
@@ -71,7 +73,7 @@ AssetRegistration *registerAsset(EngineMemory *memory,
         }
         *dstCursor = 0;
 
-        memory->platform.watchAssetFile(reg->id, relativePath);
+        Platform.watchAssetFile(reg->id, relativePath);
     }
     else if (dependencyCount > 0)
     {
@@ -95,9 +97,9 @@ AssetRegistration *registerAsset(EngineMemory *memory,
     }
 
     state->registeredAssetCount++;
-    if (memory->platform.notifyAssetRegistered)
+    if (Platform.notifyAssetRegistered)
     {
-        memory->platform.notifyAssetRegistered(reg);
+        Platform.notifyAssetRegistered(reg);
     }
 
     return reg;
@@ -170,7 +172,7 @@ LoadedAsset *getAsset(EngineMemory *memory, uint32 assetId)
         AssetFileState *fileState = reg->fileState;
         if (fileState->relativePath && !fileState->isUpToDate && !fileState->isLoadQueued)
         {
-            if (memory->platform.queueAssetLoad(assetId, fileState->relativePath))
+            if (Platform.queueAssetLoad(assetId, fileState->relativePath))
             {
                 fileState->isLoadQueued = true;
             }
