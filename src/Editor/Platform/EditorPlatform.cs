@@ -35,7 +35,7 @@ namespace Terrain.Editor.Platform
         }
         private class WatchedAsset
         {
-            public uint AssetId;
+            public IntPtr AssetHandle;
             public string Path;
             public DateTime LastUpdatedTimeUtc;
         }
@@ -241,11 +241,11 @@ namespace Terrain.Editor.Platform
             return QueueAssetLoad(assetHandle, Path.Combine(assetsDirectoryPath, relativePath));
         }
 
-        private static void WatchAssetFile(uint assetId, string relativePath)
+        private static void WatchAssetFile(IntPtr assetHandle, string relativePath)
         {
             var asset = new WatchedAsset
             {
-                AssetId = assetId,
+                AssetHandle = assetHandle,
                 Path = Path.Combine(assetsDirectoryPath, relativePath)
             };
             asset.LastUpdatedTimeUtc = File.GetLastWriteTimeUtc(asset.Path);
@@ -473,7 +473,7 @@ namespace Terrain.Editor.Platform
                 if (lastWriteTimeUtc > asset.LastUpdatedTimeUtc)
                 {
                     asset.LastUpdatedTimeUtc = lastWriteTimeUtc;
-                    TerrainEngine.InvalidateAsset(asset.AssetId);
+                    TerrainEngine.InvalidateAsset(asset.AssetHandle);
                 }
             }
 

@@ -40,7 +40,8 @@ typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
     bool name(AssetHandle assetHandle, const char *relativePath)
 typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
 
-#define PLATFORM_WATCH_ASSET_FILE(name) void name(uint32 assetId, const char *relativePath)
+#define PLATFORM_WATCH_ASSET_FILE(name)                                                       \
+    void name(AssetHandle assetHandle, const char *relativePath)
 typedef PLATFORM_WATCH_ASSET_FILE(PlatformWatchAssetFile);
 
 struct AssetRegistration;

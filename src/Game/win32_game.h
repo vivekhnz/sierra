@@ -23,7 +23,7 @@ struct Win32AssetLoadQueue
 
 struct Win32WatchedAsset
 {
-    uint32 assetId;
+    AssetHandle assetHandle;
     char path[MAX_PATH];
     uint64 lastUpdatedTime;
 };

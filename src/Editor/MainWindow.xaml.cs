@@ -44,10 +44,10 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                IntPtr heightmapAssetId = EditorCore.GetImportedHeightmapAssetHandle();
-                if (heightmapAssetId != IntPtr.Zero)
+                IntPtr heightmapAssetHandle = EditorCore.GetImportedHeightmapAssetHandle();
+                if (heightmapAssetHandle != IntPtr.Zero)
                 {
-                    EditorPlatform.QueueAssetLoad(heightmapAssetId, ofd.FileName);
+                    EditorPlatform.QueueAssetLoad(heightmapAssetHandle, ofd.FileName);
                 }
             }
         }

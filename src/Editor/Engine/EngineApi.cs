@@ -12,7 +12,7 @@ namespace Terrain.Editor.Engine
 
     internal delegate void PlatformLogMessage(string message);
     internal delegate bool PlatformQueueAssetLoad(IntPtr assetHandle, string relativePath);
-    internal delegate void PlatformWatchAssetFile(uint assetId, string relativePath);
+    internal delegate void PlatformWatchAssetFile(IntPtr assetHandle, string relativePath);
     internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -64,7 +64,7 @@ namespace Terrain.Editor.Engine
     }
 
     delegate void AssetsSetAssetData(IntPtr assetHandle, in byte data, ulong size);
-    delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
+    delegate void AssetsInvalidateAsset(IntPtr assetHandle);
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EngineApi

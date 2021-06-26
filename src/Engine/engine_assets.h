@@ -131,7 +131,7 @@ typedef ASSETS_GET_MESH(AssetsGetMesh);
 #define ASSETS_SET_ASSET_DATA(name) void name(AssetHandle assetHandle, void *data, uint64 size)
 typedef ASSETS_SET_ASSET_DATA(AssetsSetAssetData);
 
-#define ASSETS_INVALIDATE_ASSET(name) void name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_INVALIDATE_ASSET(name) void name(AssetHandle assetHandle)
 typedef ASSETS_INVALIDATE_ASSET(AssetsInvalidateAsset);
 
 #endif

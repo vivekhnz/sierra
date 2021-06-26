@@ -121,9 +121,9 @@ namespace Terrain.Editor.Engine
                 assetHandle, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
         }
 
-        internal static void InvalidateAsset(uint assetId)
+        internal static void InvalidateAsset(IntPtr assetHandle)
         {
-            api.assetsInvalidateAsset(ref memory, assetId);
+            api.assetsInvalidateAsset(assetHandle);
         }
     }
 

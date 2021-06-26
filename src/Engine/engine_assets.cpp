@@ -83,7 +83,7 @@ AssetRegistration *registerAsset(EngineMemory *memory,
         }
         *dstCursor = 0;
 
-        Platform.watchAssetFile(reg->handle->id, relativePath);
+        Platform.watchAssetFile(reg->handle, relativePath);
     }
     else if (dependencyCount > 0)
     {
@@ -416,8 +416,9 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
 
 ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
 {
-    assert(memory->assets.size >= sizeof(AssetsState));
-    AssetsState *state = (AssetsState *)memory->assets.baseAddress;
+    AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
+    AssetsState *state = handle->state;
+    uint32 assetId = handle->id;
 
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < state->registeredAssetCount);

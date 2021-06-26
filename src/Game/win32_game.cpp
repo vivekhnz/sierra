@@ -174,7 +174,7 @@ PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
     }
     Win32WatchedAsset *watchedAsset =
         &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
-    watchedAsset->assetId = assetId;
+    watchedAsset->assetHandle = assetHandle;
     win32GetAssetAbsolutePath(relativePath, watchedAsset->path);
     watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(watchedAsset->path);
 }
@@ -199,7 +199,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         if (lastWriteTime > asset->lastUpdatedTime)
         {
             asset->lastUpdatedTime = lastWriteTime;
-            platformMemory->engineCode.api->assetsInvalidateAsset(memory, asset->assetId);
+            platformMemory->engineCode.api->assetsInvalidateAsset(asset->assetHandle);
         }
     }
 
