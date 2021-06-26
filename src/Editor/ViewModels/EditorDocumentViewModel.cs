@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using System.Linq;
 using Terrain.Editor.Core;
@@ -21,19 +22,19 @@ namespace Terrain.Editor.ViewModels
             AddMaterialCommand = new DelegateCommand(
                 () =>
                 {
-                    uint GetTextureAssetId(string relativePath)
+                    IntPtr GetTextureAssetHandle(string relativePath)
                     {
                         var assetVm = App.Current.Assets.RegisteredAssets.FirstOrDefault(
                             asset => asset.FileRelativePath == relativePath);
-                        return assetVm?.AssetId ?? 0;
+                        return assetVm?.AssetHandle ?? IntPtr.Zero;
                     }
 
                     EditorCore.AddMaterial(new TerrainMaterialProperties
                     {
-                        AlbedoTextureAssetId = GetTextureAssetId("ground_albedo.bmp"),
-                        NormalTextureAssetId = GetTextureAssetId("ground_normal.bmp"),
-                        DisplacementTextureAssetId = GetTextureAssetId("ground_displacement.tga"),
-                        AoTextureAssetId = GetTextureAssetId("ground_ao.tga"),
+                        AlbedoTextureAssetHandle = GetTextureAssetHandle("ground_albedo.bmp"),
+                        NormalTextureAssetHandle = GetTextureAssetHandle("ground_normal.bmp"),
+                        DisplacementTextureAssetHandle = GetTextureAssetHandle("ground_displacement.tga"),
+                        AoTextureAssetHandle = GetTextureAssetHandle("ground_ao.tga"),
                         TextureSizeInWorldUnits = 2.5f,
                         SlopeStart = 0.0f,
                         SlopeEnd = 0.0f,
@@ -46,10 +47,10 @@ namespace Terrain.Editor.ViewModels
 
         internal void OnTransactionPublished(EditorCommandList commands)
         {
-            AssetViewModel FindAssetViewModel(uint assetId)
+            AssetViewModel FindAssetViewModel(IntPtr assetHandle)
             {
                 return App.Current.Assets.RegisteredAssets.FirstOrDefault(
-                    asset => asset.AssetId == assetId);
+                    asset => asset.AssetHandle == assetHandle);
             }
 
             foreach (var entry in commands)
@@ -61,10 +62,10 @@ namespace Terrain.Editor.ViewModels
                     var materialVm = new TerrainMaterialViewModel(cmd.MaterialId, TerrainMaterials)
                     {
                         Name = $"Material {cmd.MaterialId}",
-                        AlbedoTexture = FindAssetViewModel(cmd.AlbedoTextureAssetId),
-                        NormalTexture = FindAssetViewModel(cmd.NormalTextureAssetId),
-                        DisplacementTexture = FindAssetViewModel(cmd.DisplacementTextureAssetId),
-                        AoTexture = FindAssetViewModel(cmd.AoTextureAssetId),
+                        AlbedoTexture = FindAssetViewModel(cmd.AlbedoTextureAssetHandle),
+                        NormalTexture = FindAssetViewModel(cmd.NormalTextureAssetHandle),
+                        DisplacementTexture = FindAssetViewModel(cmd.DisplacementTextureAssetHandle),
+                        AoTexture = FindAssetViewModel(cmd.AoTextureAssetHandle),
                         TextureSizeInWorldUnits = cmd.TextureSizeInWorldUnits,
                         SlopeStart = cmd.SlopeStart,
                         SlopeEnd = cmd.SlopeEnd,

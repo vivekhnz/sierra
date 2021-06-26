@@ -137,86 +137,88 @@ bool initializeEditor(EditorMemory *memory)
     engine->rendererInitialize(rctx);
     engine->assetsInitialize(memory->engineMemory, rctx);
 
-    uint32 shaderTextureVertex = engine->assetsRegisterShader(
+    AssetHandle shaderTextureVertex = engine->assetsRegisterShader(
         memory->engineMemory, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
-    uint32 shaderTextureFragment = engine->assetsRegisterShader(
+    AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
         memory->engineMemory, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderTerrainVertex = engine->assetsRegisterShader(
+    AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
         memory->engineMemory, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
-    uint32 shaderTerrainTessCtrl = engine->assetsRegisterShader(
+    AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(
         memory->engineMemory, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
-    uint32 shaderTerrainTessEval = engine->assetsRegisterShader(
+    AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(
         memory->engineMemory, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
-    uint32 shaderTerrainFragment = engine->assetsRegisterShader(
+    AssetHandle shaderTerrainFragment = engine->assetsRegisterShader(
         memory->engineMemory, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
+    AssetHandle shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
         memory->engineMemory, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
-    uint32 shaderWireframeVertex = engine->assetsRegisterShader(
+    AssetHandle shaderWireframeVertex = engine->assetsRegisterShader(
         memory->engineMemory, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
-    uint32 shaderWireframeTessCtrl = engine->assetsRegisterShader(
+    AssetHandle shaderWireframeTessCtrl = engine->assetsRegisterShader(
         memory->engineMemory, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
-    uint32 shaderWireframeTessEval = engine->assetsRegisterShader(
+    AssetHandle shaderWireframeTessEval = engine->assetsRegisterShader(
         memory->engineMemory, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
-    uint32 shaderWireframeFragment = engine->assetsRegisterShader(
+    AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
         memory->engineMemory, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderBrushMaskVertex = engine->assetsRegisterShader(
+    AssetHandle shaderBrushMaskVertex = engine->assetsRegisterShader(
         memory->engineMemory, "brush_mask_vertex_shader.glsl", GL_VERTEX_SHADER);
-    uint32 shaderBrushMaskFragment = engine->assetsRegisterShader(
+    AssetHandle shaderBrushMaskFragment = engine->assetsRegisterShader(
         memory->engineMemory, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
+    AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
         memory->engineMemory, "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(
+    AssetHandle shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(
         memory->engineMemory, "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(
+    AssetHandle shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(
         memory->engineMemory, "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    uint32 shaderRockVertex = engine->assetsRegisterShader(
+    AssetHandle shaderRockVertex = engine->assetsRegisterShader(
         memory->engineMemory, "rock_vertex_shader.glsl", GL_VERTEX_SHADER);
-    uint32 shaderRockFragment = engine->assetsRegisterShader(
+    AssetHandle shaderRockFragment = engine->assetsRegisterShader(
         memory->engineMemory, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
 
-    uint32 quadShaderAssetIds[] = {shaderTextureVertex, shaderTextureFragment};
+    AssetHandle quadShaderAssetHandles[] = {shaderTextureVertex, shaderTextureFragment};
     assets->shaderProgramQuad = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, quadShaderAssetIds, arrayCount(quadShaderAssetIds));
+        memory->engineMemory, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
 
-    uint32 calcTessLevelShaderAssetIds[] = {shaderTerrainComputeTessLevel};
+    AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
     assets->shaderProgramTerrainCalcTessLevel =
-        engine->assetsRegisterShaderProgram(memory->engineMemory, calcTessLevelShaderAssetIds,
-            arrayCount(calcTessLevelShaderAssetIds));
+        engine->assetsRegisterShaderProgram(memory->engineMemory,
+            calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
 
-    uint32 texturedShaderAssetIds[] = {
+    AssetHandle texturedShaderAssetHandles[] = {
         shaderTerrainVertex,   //
         shaderTerrainTessCtrl, //
         shaderTerrainTessEval, //
         shaderTerrainFragment  //
     };
-    assets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, texturedShaderAssetIds, arrayCount(texturedShaderAssetIds));
+    assets->shaderProgramTerrainTextured =
+        engine->assetsRegisterShaderProgram(memory->engineMemory, texturedShaderAssetHandles,
+            arrayCount(texturedShaderAssetHandles));
 
-    uint32 brushMaskShaderAssetIds[] = {shaderBrushMaskVertex, shaderBrushMaskFragment};
-    assets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, brushMaskShaderAssetIds, arrayCount(brushMaskShaderAssetIds));
+    AssetHandle brushMaskShaderAssetHandles[] = {
+        shaderBrushMaskVertex, shaderBrushMaskFragment};
+    assets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(memory->engineMemory,
+        brushMaskShaderAssetHandles, arrayCount(brushMaskShaderAssetHandles));
 
-    uint32 brushBlendAddSubShaderAssetIds[] = {
+    AssetHandle brushBlendAddSubShaderAssetHandles[] = {
         shaderTextureVertex, shaderBrush_blendAddSubFragment};
-    assets->shaderProgramBrushBlendAddSub =
-        engine->assetsRegisterShaderProgram(memory->engineMemory,
-            brushBlendAddSubShaderAssetIds, arrayCount(brushBlendAddSubShaderAssetIds));
+    assets->shaderProgramBrushBlendAddSub = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, brushBlendAddSubShaderAssetHandles,
+        arrayCount(brushBlendAddSubShaderAssetHandles));
 
-    uint32 brushBlendFlattenShaderAssetIds[] = {
+    AssetHandle brushBlendFlattenShaderAssetHandles[] = {
         shaderTextureVertex, shaderBrush_blendFlattenFragment};
-    assets->shaderProgramBrushBlendFlatten =
-        engine->assetsRegisterShaderProgram(memory->engineMemory,
-            brushBlendFlattenShaderAssetIds, arrayCount(brushBlendFlattenShaderAssetIds));
+    assets->shaderProgramBrushBlendFlatten = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, brushBlendFlattenShaderAssetHandles,
+        arrayCount(brushBlendFlattenShaderAssetHandles));
 
-    uint32 brushBlendSmoothShaderAssetIds[] = {
+    AssetHandle brushBlendSmoothShaderAssetHandles[] = {
         shaderTextureVertex, shaderBrush_blendSmoothFragment};
-    assets->shaderProgramBrushBlendSmooth =
-        engine->assetsRegisterShaderProgram(memory->engineMemory,
-            brushBlendSmoothShaderAssetIds, arrayCount(brushBlendSmoothShaderAssetIds));
+    assets->shaderProgramBrushBlendSmooth = engine->assetsRegisterShaderProgram(
+        memory->engineMemory, brushBlendSmoothShaderAssetHandles,
+        arrayCount(brushBlendSmoothShaderAssetHandles));
 
-    uint32 rockShaderAssetIds[] = {shaderRockVertex, shaderRockFragment};
+    AssetHandle rockShaderAssetHandles[] = {shaderRockVertex, shaderRockFragment};
     assets->shaderProgramRock = engine->assetsRegisterShaderProgram(
-        memory->engineMemory, rockShaderAssetIds, arrayCount(rockShaderAssetIds));
+        memory->engineMemory, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
 
     assets->textureGroundAlbedo =
         engine->assetsRegisterTexture(memory->engineMemory, "ground_albedo.bmp", false);
@@ -466,10 +468,10 @@ bool initializeEditor(EditorMemory *memory)
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
         state->docState.materialProps[i] = {};
-        state->docState.albedoTextureAssetIds[i] = {};
-        state->docState.normalTextureAssetIds[i] = {};
-        state->docState.displacementTextureAssetIds[i] = {};
-        state->docState.aoTextureAssetIds[i] = {};
+        state->docState.albedoTextureAssetHandles[i] = 0;
+        state->docState.normalTextureAssetHandles[i] = 0;
+        state->docState.displacementTextureAssetHandles[i] = 0;
+        state->docState.aoTextureAssetHandles[i] = 0;
     }
     state->previewDocState = state->docState;
 
@@ -498,10 +500,10 @@ bool initializeEditor(EditorMemory *memory)
     {
         AddMaterialCommand *cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
         cmd->materialId = sceneState->nextMaterialId++;
-        cmd->albedoTextureAssetId = assets->textureGroundAlbedo;
-        cmd->normalTextureAssetId = assets->textureGroundNormal;
-        cmd->displacementTextureAssetId = assets->textureGroundDisplacement;
-        cmd->aoTextureAssetId = assets->textureGroundAo;
+        cmd->albedoTextureAssetHandle = assets->textureGroundAlbedo;
+        cmd->normalTextureAssetHandle = assets->textureGroundNormal;
+        cmd->displacementTextureAssetHandle = assets->textureGroundDisplacement;
+        cmd->aoTextureAssetHandle = assets->textureGroundAo;
         cmd->textureSizeInWorldUnits = 2.5f;
         cmd->slopeStart = 0;
         cmd->slopeEnd = 0;
@@ -510,10 +512,10 @@ bool initializeEditor(EditorMemory *memory)
 
         cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
         cmd->materialId = sceneState->nextMaterialId++;
-        cmd->albedoTextureAssetId = assets->textureRockAlbedo;
-        cmd->normalTextureAssetId = assets->textureRockNormal;
-        cmd->displacementTextureAssetId = assets->textureRockDisplacement;
-        cmd->aoTextureAssetId = assets->textureRockAo;
+        cmd->albedoTextureAssetHandle = assets->textureRockAlbedo;
+        cmd->normalTextureAssetHandle = assets->textureRockNormal;
+        cmd->displacementTextureAssetHandle = assets->textureRockDisplacement;
+        cmd->aoTextureAssetHandle = assets->textureRockAo;
         cmd->textureSizeInWorldUnits = 13;
         cmd->slopeStart = 0.2f;
         cmd->slopeEnd = 0.4f;
@@ -522,10 +524,10 @@ bool initializeEditor(EditorMemory *memory)
 
         cmd = pushCommand(addMaterialsTx, AddMaterialCommand);
         cmd->materialId = sceneState->nextMaterialId++;
-        cmd->albedoTextureAssetId = assets->textureSnowAlbedo;
-        cmd->normalTextureAssetId = assets->textureSnowNormal;
-        cmd->displacementTextureAssetId = assets->textureSnowDisplacement;
-        cmd->aoTextureAssetId = assets->textureSnowAo;
+        cmd->albedoTextureAssetHandle = assets->textureSnowAlbedo;
+        cmd->normalTextureAssetHandle = assets->textureSnowNormal;
+        cmd->displacementTextureAssetHandle = assets->textureSnowDisplacement;
+        cmd->aoTextureAssetHandle = assets->textureSnowAo;
         cmd->textureSizeInWorldUnits = 2;
         cmd->slopeStart = 0.4f;
         cmd->slopeEnd = 0.2f;
@@ -741,10 +743,11 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             material->rampParams.z = cmd->altitudeStart;
             material->rampParams.w = cmd->altitudeEnd;
 
-            docState->albedoTextureAssetIds[index] = cmd->albedoTextureAssetId;
-            docState->normalTextureAssetIds[index] = cmd->normalTextureAssetId;
-            docState->displacementTextureAssetIds[index] = cmd->displacementTextureAssetId;
-            docState->aoTextureAssetIds[index] = cmd->aoTextureAssetId;
+            docState->albedoTextureAssetHandles[index] = cmd->albedoTextureAssetHandle;
+            docState->normalTextureAssetHandles[index] = cmd->normalTextureAssetHandle;
+            docState->displacementTextureAssetHandles[index] =
+                cmd->displacementTextureAssetHandle;
+            docState->aoTextureAssetHandles[index] = cmd->aoTextureAssetHandle;
         }
         break;
         case EDITOR_COMMAND_DeleteMaterialCommand:
@@ -757,11 +760,13 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             {
                 docState->materialIds[i] = docState->materialIds[i + 1];
                 docState->materialProps[i] = docState->materialProps[i + 1];
-                docState->albedoTextureAssetIds[i] = docState->albedoTextureAssetIds[i + 1];
-                docState->normalTextureAssetIds[i] = docState->normalTextureAssetIds[i + 1];
-                docState->displacementTextureAssetIds[i] =
-                    docState->displacementTextureAssetIds[i + 1];
-                docState->aoTextureAssetIds[i] = docState->aoTextureAssetIds[i + 1];
+                docState->albedoTextureAssetHandles[i] =
+                    docState->albedoTextureAssetHandles[i + 1];
+                docState->normalTextureAssetHandles[i] =
+                    docState->normalTextureAssetHandles[i + 1];
+                docState->displacementTextureAssetHandles[i] =
+                    docState->displacementTextureAssetHandles[i + 1];
+                docState->aoTextureAssetHandles[i] = docState->aoTextureAssetHandles[i + 1];
             }
         }
         break;
@@ -779,10 +784,10 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
 
             swap(uint32, materialIds);
             swap(GpuMaterialProperties, materialProps);
-            swap(uint32, albedoTextureAssetIds);
-            swap(uint32, normalTextureAssetIds);
-            swap(uint32, displacementTextureAssetIds);
-            swap(uint32, aoTextureAssetIds);
+            swap(AssetHandle, albedoTextureAssetHandles);
+            swap(AssetHandle, normalTextureAssetHandles);
+            swap(AssetHandle, displacementTextureAssetHandles);
+            swap(AssetHandle, aoTextureAssetHandles);
         }
         break;
         case EDITOR_COMMAND_SetMaterialTextureCommand:
@@ -792,15 +797,15 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             {
                 if (docState->materialIds[i] == cmd->materialId)
                 {
-                    uint32 *materialTextureAssetIds[] = {
-                        docState->albedoTextureAssetIds,       //
-                        docState->normalTextureAssetIds,       //
-                        docState->displacementTextureAssetIds, //
-                        docState->aoTextureAssetIds            //
+                    AssetHandle *materialTextureAssetHandles[] = {
+                        docState->albedoTextureAssetHandles,       //
+                        docState->normalTextureAssetHandles,       //
+                        docState->displacementTextureAssetHandles, //
+                        docState->aoTextureAssetHandles            //
                     };
-                    uint32 *textureAssetIds =
-                        materialTextureAssetIds[(uint32)cmd->textureType];
-                    textureAssetIds[i] = cmd->assetId;
+                    AssetHandle *textureAssetHandles =
+                        materialTextureAssetHandles[(uint32)cmd->textureType];
+                    textureAssetHandles[i] = cmd->assetHandle;
 
                     break;
                 }
@@ -898,71 +903,71 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     sceneState->materialCount = docState->materialCount;
     for (uint32 layerIdx = 0; layerIdx < docState->materialCount; layerIdx++)
     {
-        uint32 assetId;
+        AssetHandle assetHandle;
         LoadedAsset *asset;
         TextureAssetBinding *binding;
 
-        assetId = docState->albedoTextureAssetIds[layerIdx];
-        if (assetId)
+        assetHandle = docState->albedoTextureAssetHandles[layerIdx];
+        if (assetHandle)
         {
             binding = &sceneState->albedoTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
             if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
+                && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(rctx, sceneState->albedoTextureArrayHandle,
                     GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
-                binding->assetId = assetId;
+                binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
         }
 
-        assetId = docState->normalTextureAssetIds[layerIdx];
-        if (assetId)
+        assetHandle = docState->normalTextureAssetHandles[layerIdx];
+        if (assetHandle)
         {
             binding = &sceneState->normalTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
             if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
+                && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(rctx, sceneState->normalTextureArrayHandle,
                     GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
-                binding->assetId = assetId;
+                binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
         }
 
-        assetId = docState->displacementTextureAssetIds[layerIdx];
-        if (assetId)
+        assetHandle = docState->displacementTextureAssetHandles[layerIdx];
+        if (assetHandle)
         {
             binding = &sceneState->displacementTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
             if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
+                && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(rctx,
                     sceneState->displacementTextureArrayHandle, GL_UNSIGNED_SHORT, GL_RED,
                     asset->texture->width, asset->texture->height, layerIdx,
                     asset->texture->data);
-                binding->assetId = assetId;
+                binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
         }
 
-        assetId = docState->aoTextureAssetIds[layerIdx];
-        if (assetId)
+        assetHandle = docState->aoTextureAssetHandles[layerIdx];
+        if (assetHandle)
         {
             binding = &sceneState->aoTextures[layerIdx];
-            asset = engine->assetsGetTexture(memory->engineMemory, assetId);
+            asset = engine->assetsGetTexture(memory->engineMemory, assetHandle);
             if (asset->texture
-                && (assetId != binding->assetId || asset->version > binding->version))
+                && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(rctx, sceneState->aoTextureArrayHandle,
                     GL_UNSIGNED_BYTE, GL_RED, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
-                binding->assetId = assetId;
+                binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
         }
@@ -1719,7 +1724,7 @@ API_EXPORT EDITOR_GET_UI_STATE(editorGetUiState)
     return &state->uiState;
 }
 
-API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(editorGetImportedHeightmapAssetId)
+API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(editorGetImportedHeightmapAssetHandle)
 {
     EditorState *state = (EditorState *)memory->data.baseAddress;
     return state->assets.textureVirtualImportedHeightmap;
@@ -1734,10 +1739,10 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
     {
         AddMaterialCommand *cmd = pushCommand(tx, AddMaterialCommand);
         cmd->materialId = state->sceneState.nextMaterialId++;
-        cmd->albedoTextureAssetId = props.albedoTextureAssetId;
-        cmd->normalTextureAssetId = props.normalTextureAssetId;
-        cmd->displacementTextureAssetId = props.displacementTextureAssetId;
-        cmd->aoTextureAssetId = props.aoTextureAssetId;
+        cmd->albedoTextureAssetHandle = props.albedoTextureAssetHandle;
+        cmd->normalTextureAssetHandle = props.normalTextureAssetHandle;
+        cmd->displacementTextureAssetHandle = props.displacementTextureAssetHandle;
+        cmd->aoTextureAssetHandle = props.aoTextureAssetHandle;
         cmd->textureSizeInWorldUnits = props.textureSizeInWorldUnits;
         cmd->slopeStart = props.slopeStart;
         cmd->slopeEnd = props.slopeEnd;
@@ -1784,7 +1789,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
         SetMaterialTextureCommand *cmd = pushCommand(tx, SetMaterialTextureCommand);
         cmd->materialId = materialId;
         cmd->textureType = textureType;
-        cmd->assetId = assetId;
+        cmd->assetHandle = assetHandle;
         commitTransaction(tx);
     }
 }

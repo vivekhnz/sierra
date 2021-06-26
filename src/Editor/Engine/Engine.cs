@@ -115,9 +115,10 @@ namespace Terrain.Editor.Engine
             AssetRegistered?.Invoke(in assetReg);
         }
 
-        internal static void SetAssetData(uint assetId, ReadOnlySpan<byte> data)
+        internal static void SetAssetData(IntPtr assetHandle, ReadOnlySpan<byte> data)
         {
-            api.assetsSetAssetData(ref memory, assetId, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
+            api.assetsSetAssetData(
+                assetHandle, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
         }
 
         internal static void InvalidateAsset(uint assetId)
@@ -128,11 +129,6 @@ namespace Terrain.Editor.Engine
 
     internal static class EngineExtensions
     {
-        internal static AssetType GetAssetType(this AssetRegistration assetReg)
-        {
-            return (AssetType)((assetReg.Id & 0xF0000000) >> 28);
-        }
-
         internal static AssetFileState GetFileState(this AssetRegistration assetReg)
         {
             return Marshal.PtrToStructure<AssetFileState>(assetReg.StatePtr);

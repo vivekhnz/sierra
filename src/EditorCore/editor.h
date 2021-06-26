@@ -31,10 +31,10 @@ enum TerrainBrushTool
 
 struct TerrainMaterialProperties
 {
-    uint32 albedoTextureAssetId;
-    uint32 normalTextureAssetId;
-    uint32 displacementTextureAssetId;
-    uint32 aoTextureAssetId;
+    AssetHandle albedoTextureAssetHandle;
+    AssetHandle normalTextureAssetHandle;
+    AssetHandle displacementTextureAssetHandle;
+    AssetHandle aoTextureAssetHandle;
     float textureSizeInWorldUnits;
 
     float slopeStart;
@@ -64,7 +64,7 @@ struct ObjectTransform
 
 struct TextureAssetBinding
 {
-    uint32 assetId;
+    AssetHandle assetHandle;
     uint8 version;
 };
 
@@ -150,30 +150,30 @@ struct SceneState
 
 struct EditorAssets
 {
-    uint32 shaderProgramQuad;
-    uint32 shaderProgramTerrainCalcTessLevel;
-    uint32 shaderProgramTerrainTextured;
-    uint32 shaderProgramBrushMask;
-    uint32 shaderProgramBrushBlendAddSub;
-    uint32 shaderProgramBrushBlendFlatten;
-    uint32 shaderProgramBrushBlendSmooth;
-    uint32 shaderProgramRock;
+    AssetHandle shaderProgramQuad;
+    AssetHandle shaderProgramTerrainCalcTessLevel;
+    AssetHandle shaderProgramTerrainTextured;
+    AssetHandle shaderProgramBrushMask;
+    AssetHandle shaderProgramBrushBlendAddSub;
+    AssetHandle shaderProgramBrushBlendFlatten;
+    AssetHandle shaderProgramBrushBlendSmooth;
+    AssetHandle shaderProgramRock;
 
-    uint32 textureGroundAlbedo;
-    uint32 textureGroundNormal;
-    uint32 textureGroundDisplacement;
-    uint32 textureGroundAo;
-    uint32 textureRockAlbedo;
-    uint32 textureRockNormal;
-    uint32 textureRockDisplacement;
-    uint32 textureRockAo;
-    uint32 textureSnowAlbedo;
-    uint32 textureSnowNormal;
-    uint32 textureSnowDisplacement;
-    uint32 textureSnowAo;
-    uint32 textureVirtualImportedHeightmap;
+    AssetHandle textureGroundAlbedo;
+    AssetHandle textureGroundNormal;
+    AssetHandle textureGroundDisplacement;
+    AssetHandle textureGroundAo;
+    AssetHandle textureRockAlbedo;
+    AssetHandle textureRockNormal;
+    AssetHandle textureRockDisplacement;
+    AssetHandle textureRockAo;
+    AssetHandle textureSnowAlbedo;
+    AssetHandle textureSnowNormal;
+    AssetHandle textureSnowDisplacement;
+    AssetHandle textureSnowAo;
+    AssetHandle textureVirtualImportedHeightmap;
 
-    uint32 meshRock;
+    AssetHandle meshRock;
 };
 
 struct EditorDocumentState
@@ -181,10 +181,10 @@ struct EditorDocumentState
     uint32 materialCount;
     uint32 materialIds[MAX_MATERIAL_COUNT];
     GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
-    uint32 albedoTextureAssetIds[MAX_MATERIAL_COUNT];
-    uint32 normalTextureAssetIds[MAX_MATERIAL_COUNT];
-    uint32 displacementTextureAssetIds[MAX_MATERIAL_COUNT];
-    uint32 aoTextureAssetIds[MAX_MATERIAL_COUNT];
+    AssetHandle albedoTextureAssetHandles[MAX_MATERIAL_COUNT];
+    AssetHandle normalTextureAssetHandles[MAX_MATERIAL_COUNT];
+    AssetHandle displacementTextureAssetHandles[MAX_MATERIAL_COUNT];
+    AssetHandle aoTextureAssetHandles[MAX_MATERIAL_COUNT];
 
     uint32 objectInstanceCount;
     uint32 objectIds[MAX_OBJECT_INSTANCES];
@@ -354,8 +354,8 @@ typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
     void name(EditorMemory *memory, EditorViewContext *view)
 typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 
-#define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(name) uint32 name(EditorMemory *memory)
-typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_ID(EditorGetImportedHeightmapAssetId);
+#define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(name) AssetHandle name(EditorMemory *memory)
+typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(EditorGetImportedHeightmapAssetHandle);
 
 #define EDITOR_GET_UI_STATE(name) EditorUiState *name(EditorMemory *memory)
 typedef EDITOR_GET_UI_STATE(EditorGetUiState);
@@ -373,7 +373,7 @@ typedef EDITOR_SWAP_MATERIAL(EditorSwapMaterial);
 
 #define EDITOR_SET_MATERIAL_TEXTURE(name)                                                     \
     void name(EditorMemory *memory, uint32 materialId,                                        \
-        TerrainMaterialTextureType textureType, uint32 assetId)
+        TerrainMaterialTextureType textureType, AssetHandle assetHandle)
 typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
 
 #define EDITOR_SET_MATERIAL_PROPERTIES(name)                                                  \

@@ -10,26 +10,26 @@
 
 struct GameAssets
 {
-    uint32 shaderProgramTerrainWireframe;
-    uint32 shaderProgramTerrainTextured;
-    uint32 shaderProgramTerrainCalcTessLevel;
+    AssetHandle shaderProgramTerrainWireframe;
+    AssetHandle shaderProgramTerrainTextured;
+    AssetHandle shaderProgramTerrainCalcTessLevel;
 
-    uint32 textureGroundAlbedo;
-    uint32 textureGroundNormal;
-    uint32 textureGroundDisplacement;
-    uint32 textureGroundAo;
+    AssetHandle textureGroundAlbedo;
+    AssetHandle textureGroundNormal;
+    AssetHandle textureGroundDisplacement;
+    AssetHandle textureGroundAo;
 
-    uint32 textureRockAlbedo;
-    uint32 textureRockNormal;
-    uint32 textureRockDisplacement;
-    uint32 textureRockAo;
+    AssetHandle textureRockAlbedo;
+    AssetHandle textureRockNormal;
+    AssetHandle textureRockDisplacement;
+    AssetHandle textureRockAo;
 
-    uint32 textureSnowAlbedo;
-    uint32 textureSnowNormal;
-    uint32 textureSnowDisplacement;
-    uint32 textureSnowAo;
+    AssetHandle textureSnowAlbedo;
+    AssetHandle textureSnowNormal;
+    AssetHandle textureSnowDisplacement;
+    AssetHandle textureSnowAo;
 
-    uint32 textureVirtualHeightmap;
+    AssetHandle textureVirtualHeightmap;
 };
 
 struct GameState

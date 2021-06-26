@@ -1,4 +1,5 @@
 ﻿using Microsoft.Win32;
+using System;
 using System.Linq;
 using System.Windows;
 using System.Windows.Data;
@@ -43,10 +44,10 @@ namespace Terrain.Editor
             };
             if (ofd.ShowDialog() == true)
             {
-                uint? heightmapAssetId = EditorCore.GetImportedHeightmapAssetId();
-                if (heightmapAssetId.HasValue)
+                IntPtr heightmapAssetId = EditorCore.GetImportedHeightmapAssetHandle();
+                if (heightmapAssetId != IntPtr.Zero)
                 {
-                    EditorPlatform.QueueAssetLoad(heightmapAssetId.Value, ofd.FileName);
+                    EditorPlatform.QueueAssetLoad(heightmapAssetId, ofd.FileName);
                 }
             }
         }

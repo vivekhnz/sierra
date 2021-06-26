@@ -11,7 +11,7 @@ namespace Terrain.Editor.Engine
     }
 
     internal delegate void PlatformLogMessage(string message);
-    internal delegate bool PlatformQueueAssetLoad(uint assetId, string relativePath);
+    internal delegate bool PlatformQueueAssetLoad(IntPtr assetHandle, string relativePath);
     internal delegate void PlatformWatchAssetFile(uint assetId, string relativePath);
     internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
 
@@ -47,9 +47,10 @@ namespace Terrain.Editor.Engine
     [StructLayout(LayoutKind.Sequential)]
     struct AssetRegistration
     {
-        public uint Id;
+        public IntPtr Handle;
         public AssetRegistrationType RegistrationType;
         public IntPtr StatePtr;
+        public AssetType AssetType;
         public IntPtr MetadataPtr;
         public LoadedAsset Asset;
     }
@@ -62,8 +63,7 @@ namespace Terrain.Editor.Engine
         public bool IsLoadQueued;
     }
 
-    delegate void AssetsSetAssetData(
-        ref EngineMemory memory, uint assetId, in byte data, ulong size);
+    delegate void AssetsSetAssetData(IntPtr assetHandle, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(ref EngineMemory memory, uint assetId);
 
     [StructLayout(LayoutKind.Sequential)]

@@ -19,7 +19,7 @@ namespace Terrain.Editor.ViewModels
             {
                 SetAndNotify(ref albedoTexture, value);
                 EditorCore.SetMaterialTexture(MaterialId,
-                    TerrainMaterialTextureType.Albedo, value.AssetId);
+                    TerrainMaterialTextureType.Albedo, value.AssetHandle);
             }
         }
 
@@ -31,7 +31,7 @@ namespace Terrain.Editor.ViewModels
             {
                 SetAndNotify(ref normalTexture, value);
                 EditorCore.SetMaterialTexture(MaterialId,
-                    TerrainMaterialTextureType.Normal, value.AssetId);
+                    TerrainMaterialTextureType.Normal, value.AssetHandle);
             }
         }
 
@@ -43,7 +43,7 @@ namespace Terrain.Editor.ViewModels
             {
                 SetAndNotify(ref displacementTexture, value);
                 EditorCore.SetMaterialTexture(MaterialId,
-                    TerrainMaterialTextureType.Displacement, value.AssetId);
+                    TerrainMaterialTextureType.Displacement, value.AssetHandle);
             }
         }
 
@@ -55,7 +55,7 @@ namespace Terrain.Editor.ViewModels
             {
                 SetAndNotify(ref aoTexture, value);
                 EditorCore.SetMaterialTexture(MaterialId,
-                    TerrainMaterialTextureType.AmbientOcclusion, value.AssetId);
+                    TerrainMaterialTextureType.AmbientOcclusion, value.AssetHandle);
             }
         }
 

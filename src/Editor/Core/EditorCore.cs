@@ -134,10 +134,10 @@ namespace Terrain.Editor.Core
     [StructLayout(LayoutKind.Sequential)]
     struct TerrainMaterialProperties
     {
-        public uint AlbedoTextureAssetId;
-        public uint NormalTextureAssetId;
-        public uint DisplacementTextureAssetId;
-        public uint AoTextureAssetId;
+        public IntPtr AlbedoTextureAssetHandle;
+        public IntPtr NormalTextureAssetHandle;
+        public IntPtr DisplacementTextureAssetHandle;
+        public IntPtr AoTextureAssetHandle;
         public float TextureSizeInWorldUnits;
 
         public float SlopeStart;
@@ -184,10 +184,10 @@ namespace Terrain.Editor.Core
     {
         public uint MaterialId;
 
-        public uint AlbedoTextureAssetId;
-        public uint NormalTextureAssetId;
-        public uint DisplacementTextureAssetId;
-        public uint AoTextureAssetId;
+        public IntPtr AlbedoTextureAssetHandle;
+        public IntPtr NormalTextureAssetHandle;
+        public IntPtr DisplacementTextureAssetHandle;
+        public IntPtr AoTextureAssetHandle;
         public float TextureSizeInWorldUnits;
 
         public float SlopeStart;
@@ -211,7 +211,7 @@ namespace Terrain.Editor.Core
     {
         public uint Index;
         public TerrainMaterialTextureType TextureType;
-        public uint AssetId;
+        public IntPtr AssetHandle;
     }
     [StructLayout(LayoutKind.Sequential)]
     struct SetMaterialPropertiesCommand
@@ -268,13 +268,13 @@ namespace Terrain.Editor.Core
         delegate void EditorUpdate(ref EditorMemory memory, float deltaTime, ref EditorInput input);
         delegate void EditorRenderSceneView(ref EditorMemory memory, ref EditorViewContext view);
         delegate void EditorRenderHeightmapPreview(ref EditorMemory memory, ref EditorViewContext view);
-        delegate uint EditorGetImportedHeightmapAssetId(ref EditorMemory memory);
+        delegate IntPtr EditorGetImportedHeightmapAssetHandle(ref EditorMemory memory);
         delegate ref EditorUiState EditorGetUiState(ref EditorMemory memory);
         delegate void EditorAddMaterial(ref EditorMemory memory, TerrainMaterialProperties props);
         delegate void EditorDeleteMaterial(ref EditorMemory memory, uint index);
         delegate void EditorSwapMaterial(ref EditorMemory memory, uint indexA, uint indexB);
         delegate void EditorSetMaterialTexture(ref EditorMemory memory, uint materialId,
-            TerrainMaterialTextureType textureType, uint assetId);
+            TerrainMaterialTextureType textureType, IntPtr assetHandle);
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
         delegate void EditorAddObject(ref EditorMemory memory);
@@ -291,7 +291,7 @@ namespace Terrain.Editor.Core
         private static EditorUpdate editorUpdate;
         private static EditorRenderSceneView editorRenderSceneView;
         private static EditorRenderHeightmapPreview editorRenderHeightmapPreview;
-        private static EditorGetImportedHeightmapAssetId editorGetImportedHeightmapAssetId;
+        private static EditorGetImportedHeightmapAssetHandle editorGetImportedHeightmapAssetHandle;
         private static EditorGetUiState editorGetUiState;
         private static EditorAddMaterial editorAddMaterial;
         private static EditorDeleteMaterial editorDeleteMaterial;
@@ -375,7 +375,7 @@ namespace Terrain.Editor.Core
             editorUpdate = GetApi<EditorUpdate>("editorUpdate");
             editorRenderSceneView = GetApi<EditorRenderSceneView>("editorRenderSceneView");
             editorRenderHeightmapPreview = GetApi<EditorRenderHeightmapPreview>("editorRenderHeightmapPreview");
-            editorGetImportedHeightmapAssetId = GetApi<EditorGetImportedHeightmapAssetId>("editorGetImportedHeightmapAssetId");
+            editorGetImportedHeightmapAssetHandle = GetApi<EditorGetImportedHeightmapAssetHandle>("editorGetImportedHeightmapAssetHandle");
             editorGetUiState = GetApi<EditorGetUiState>("editorGetUiState");
             editorAddMaterial = GetApi<EditorAddMaterial>("editorAddMaterial");
             editorDeleteMaterial = GetApi<EditorDeleteMaterial>("editorDeleteMaterial");
@@ -417,8 +417,8 @@ namespace Terrain.Editor.Core
         internal static void RenderHeightmapPreview(ref EditorViewContext vctx)
             => editorRenderHeightmapPreview?.Invoke(ref memory, ref vctx);
 
-        internal static uint? GetImportedHeightmapAssetId()
-            => editorGetImportedHeightmapAssetId?.Invoke(ref memory);
+        internal static IntPtr GetImportedHeightmapAssetHandle()
+            => editorGetImportedHeightmapAssetHandle?.Invoke(ref memory) ?? IntPtr.Zero;
 
         internal static ref EditorUiState GetUiState()
         {
@@ -442,8 +442,8 @@ namespace Terrain.Editor.Core
             => editorSwapMaterial?.Invoke(ref memory, (uint)indexA, (uint)indexB);
 
         internal static void SetMaterialTexture(uint materialId,
-            TerrainMaterialTextureType textureType, uint assetId)
-            => editorSetMaterialTexture?.Invoke(ref memory, materialId, textureType, assetId);
+            TerrainMaterialTextureType textureType, IntPtr assetHandle)
+            => editorSetMaterialTexture?.Invoke(ref memory, materialId, textureType, assetHandle);
 
         internal static void SetMaterialProperties(uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd)

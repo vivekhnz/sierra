@@ -62,10 +62,10 @@ struct AddMaterialCommand
 {
     uint32 materialId;
 
-    uint32 albedoTextureAssetId;
-    uint32 normalTextureAssetId;
-    uint32 displacementTextureAssetId;
-    uint32 aoTextureAssetId;
+    AssetHandle albedoTextureAssetHandle;
+    AssetHandle normalTextureAssetHandle;
+    AssetHandle displacementTextureAssetHandle;
+    AssetHandle aoTextureAssetHandle;
     float textureSizeInWorldUnits;
 
     float slopeStart;
@@ -96,7 +96,7 @@ struct SetMaterialTextureCommand
 {
     uint32 materialId;
     TerrainMaterialTextureType textureType;
-    uint32 assetId;
+    AssetHandle assetHandle;
 };
 
 struct SetMaterialPropertiesCommand

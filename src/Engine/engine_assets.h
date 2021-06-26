@@ -67,21 +67,25 @@ struct CompositeAssetState
     uint8 *dependencyVersions;
 };
 
+struct RenderContext;
+
 enum AssetRegistrationType
 {
     ASSET_REG_FILE,
     ASSET_REG_COMPOSITE,
     ASSET_REG_VIRTUAL
 };
+struct AssetHandleInternal;
 struct AssetRegistration
 {
-    uint32 id;
+    AssetHandleInternal *handle;
     AssetRegistrationType regType;
     union
     {
         AssetFileState *fileState;
         CompositeAssetState *compositeState;
     };
+    AssetType assetType;
     union
     {
         ShaderAssetMetadata *shader;
@@ -90,40 +94,41 @@ struct AssetRegistration
     LoadedAsset asset;
 };
 
-struct RenderContext;
-
 #define ASSETS_INITIALIZE(name) void name(EngineMemory *memory, RenderContext *rctx)
 typedef ASSETS_INITIALIZE(AssetsInitialize);
 
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \
-    uint32 name(EngineMemory *memory, const char *relativePath, bool is16Bit)
+    AssetHandle name(EngineMemory *memory, const char *relativePath, bool is16Bit)
 typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
 
 #define ASSETS_REGISTER_SHADER(name)                                                          \
-    uint32 name(EngineMemory *memory, const char *relativePath, uint32 type)
+    AssetHandle name(EngineMemory *memory, const char *relativePath, uint32 type)
 typedef ASSETS_REGISTER_SHADER(AssetsRegisterShader);
 
 #define ASSETS_REGISTER_SHADER_PROGRAM(name)                                                  \
-    uint32 name(EngineMemory *memory, uint32 *shaderAssetIds, uint32 shaderCount)
+    AssetHandle name(EngineMemory *memory, AssetHandle *shaderAssetHandles, uint32 shaderCount)
 typedef ASSETS_REGISTER_SHADER_PROGRAM(AssetsRegisterShaderProgram);
 
-#define ASSETS_REGISTER_MESH(name) uint32 name(EngineMemory *memory, const char *relativePath)
+#define ASSETS_REGISTER_MESH(name)                                                            \
+    AssetHandle name(EngineMemory *memory, const char *relativePath)
 typedef ASSETS_REGISTER_MESH(AssetsRegisterMesh);
 
-#define ASSETS_GET_SHADER(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_SHADER(name)                                                               \
+    LoadedAsset *name(EngineMemory *memory, AssetHandle assetHandle)
 typedef ASSETS_GET_SHADER(AssetsGetShader);
 
-#define ASSETS_GET_SHADER_PROGRAM(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_SHADER_PROGRAM(name)                                                       \
+    LoadedAsset *name(EngineMemory *memory, AssetHandle assetHandle)
 typedef ASSETS_GET_SHADER_PROGRAM(AssetsGetShaderProgram);
 
-#define ASSETS_GET_TEXTURE(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_TEXTURE(name)                                                              \
+    LoadedAsset *name(EngineMemory *memory, AssetHandle assetHandle)
 typedef ASSETS_GET_TEXTURE(AssetsGetTexture);
 
-#define ASSETS_GET_MESH(name) LoadedAsset *name(EngineMemory *memory, uint32 assetId)
+#define ASSETS_GET_MESH(name) LoadedAsset *name(EngineMemory *memory, AssetHandle assetHandle)
 typedef ASSETS_GET_MESH(AssetsGetMesh);
 
-#define ASSETS_SET_ASSET_DATA(name)                                                           \
-    void name(EngineMemory *memory, uint32 assetId, void *data, uint64 size)
+#define ASSETS_SET_ASSET_DATA(name) void name(AssetHandle assetHandle, void *data, uint64 size)
 typedef ASSETS_SET_ASSET_DATA(AssetsSetAssetData);
 
 #define ASSETS_INVALIDATE_ASSET(name) void name(EngineMemory *memory, uint32 assetId)

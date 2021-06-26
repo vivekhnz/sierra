@@ -1,17 +1,18 @@
+using System;
 using Terrain.Editor.Engine;
 
 namespace Terrain.Editor.ViewModels
 {
     public class AssetViewModel : ViewModelBase
     {
-        private uint assetId;
-        public uint AssetId
+        private IntPtr assetHandle;
+        public IntPtr AssetHandle
         {
-            get => assetId;
+            get => assetHandle;
             set
             {
-                assetId = value;
-                NotifyPropertyChanged(nameof(AssetId));
+                assetHandle = value;
+                NotifyPropertyChanged(nameof(AssetHandle));
             }
         }
 

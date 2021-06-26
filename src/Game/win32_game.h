@@ -10,7 +10,7 @@
 
 struct Win32AssetLoadRequest
 {
-    uint32 assetId;
+    AssetHandle assetHandle;
     char path[MAX_PATH];
 };
 

@@ -30,7 +30,7 @@ namespace Terrain.Editor.Platform
     {
         private class AssetLoadRequest
         {
-            public uint AssetId;
+            public IntPtr AssetHandle;
             public string Path;
         }
         private class WatchedAsset
@@ -225,20 +225,20 @@ namespace Terrain.Editor.Platform
             Debug.WriteLine(message);
         }
 
-        internal static bool QueueAssetLoad(uint assetId, string absolutePath)
+        internal static bool QueueAssetLoad(IntPtr assetHandle, string absolutePath)
         {
             assetLoadRequests.Add(new AssetLoadRequest
             {
-                AssetId = assetId,
+                AssetHandle = assetHandle,
                 Path = absolutePath
             });
 
             return true;
         }
 
-        private static bool QueueAssetLoadRelative(uint assetId, string relativePath)
+        private static bool QueueAssetLoadRelative(IntPtr assetHandle, string relativePath)
         {
-            return QueueAssetLoad(assetId, Path.Combine(assetsDirectoryPath, relativePath));
+            return QueueAssetLoad(assetHandle, Path.Combine(assetsDirectoryPath, relativePath));
         }
 
         private static void WatchAssetFile(uint assetId, string relativePath)
@@ -484,7 +484,7 @@ namespace Terrain.Editor.Platform
                 try
                 {
                     var data = File.ReadAllBytes(request.Path);
-                    TerrainEngine.SetAssetData(request.AssetId, data);
+                    TerrainEngine.SetAssetData(request.AssetHandle, data);
 
                     assetLoadRequests.RemoveAt(i);
                     i--;

@@ -31,10 +31,13 @@ struct MemoryBlock
     uint64 size;
 };
 
+typedef void *AssetHandle;
+
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
-#define PLATFORM_QUEUE_ASSET_LOAD(name) bool name(uint32 assetId, const char *relativePath)
+#define PLATFORM_QUEUE_ASSET_LOAD(name)                                                       \
+    bool name(AssetHandle assetHandle, const char *relativePath)
 typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
 
 #define PLATFORM_WATCH_ASSET_FILE(name) void name(uint32 assetId, const char *relativePath)

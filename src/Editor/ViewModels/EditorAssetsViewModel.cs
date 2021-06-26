@@ -16,9 +16,9 @@ namespace Terrain.Editor.ViewModels
         {
             var assetVm = new AssetViewModel
             {
-                AssetId = assetReg.Id,
+                AssetHandle = assetReg.Handle,
                 RegistrationType = assetReg.RegistrationType,
-                AssetType = assetReg.GetAssetType()
+                AssetType = assetReg.AssetType
             };
             if (assetVm.RegistrationType == AssetRegistrationType.File)
             {

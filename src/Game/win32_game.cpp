@@ -160,7 +160,7 @@ PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
         platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length++];
     Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
     *request = {};
-    request->assetId = assetId;
+    request->assetHandle = assetHandle;
     win32GetAssetAbsolutePath(relativePath, request->path);
 
     return true;
@@ -213,7 +213,7 @@ void win32LoadQueuedAssets(EngineMemory *memory)
         if (result.data)
         {
             platformMemory->engineCode.api->assetsSetAssetData(
-                platformMemory->engineMemory, request->assetId, result.data, result.size);
+                request->assetHandle, result.data, result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue->length--;
