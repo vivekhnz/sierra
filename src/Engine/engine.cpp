@@ -54,8 +54,6 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererCreateTextureArray = rendererCreateTextureArray;
     Api.rendererBindTextureArray = rendererBindTextureArray;
     Api.rendererUpdateTextureArray = rendererUpdateTextureArray;
-    Api.rendererCreateDepthBuffer = rendererCreateDepthBuffer;
-    Api.rendererResizeDepthBuffer = rendererResizeDepthBuffer;
     Api.rendererCreateFramebuffer = rendererCreateFramebuffer;
     Api.rendererBindFramebuffer = rendererBindFramebuffer;
     Api.rendererUnbindFramebuffer = rendererUnbindFramebuffer;
@@ -85,6 +83,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererDispatchCompute = rendererDispatchCompute;
     Api.rendererShaderStorageMemoryBarrier = rendererShaderStorageMemoryBarrier;
     Api.rendererCreateRenderTarget = rendererCreateRenderTarget;
+    Api.rendererResizeRenderTarget = rendererResizeRenderTarget;
     Api.rendererCreateQueue = rendererCreateQueue;
     Api.rendererSetCamera = rendererSetCamera;
     Api.rendererClear = rendererClear;

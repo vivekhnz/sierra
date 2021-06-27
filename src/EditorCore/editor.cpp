@@ -1387,12 +1387,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     RenderTarget *sceneRenderTarget = viewState->sceneRenderTarget;
     if (view->width != sceneRenderTarget->width || view->height != sceneRenderTarget->height)
     {
-        sceneRenderTarget->width = view->width;
-        sceneRenderTarget->height = view->height;
-        engine->rendererUpdateTexture(rctx, sceneRenderTarget->textureHandle, GL_UNSIGNED_BYTE,
-            GL_RGB, GL_RGB, sceneRenderTarget->width, sceneRenderTarget->height, 0);
-        engine->rendererResizeDepthBuffer(rctx, sceneRenderTarget->depthBufferHandle,
-            sceneRenderTarget->width, sceneRenderTarget->height);
+        engine->rendererResizeRenderTarget(rctx, sceneRenderTarget, view->width, view->height);
     }
 
     // calculate camera transform

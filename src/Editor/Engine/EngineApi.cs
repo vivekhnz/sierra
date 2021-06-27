@@ -89,8 +89,6 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererCreateTextureArray;
         public IntPtr rendererBindTextureArray;
         public IntPtr rendererUpdateTextureArray;
-        public IntPtr rendererCreateDepthBuffer;
-        public IntPtr rendererResizeDepthBuffer;
         public IntPtr rendererCreateFramebuffer;
         public IntPtr rendererBindFramebuffer;
         public IntPtr rendererUnbindFramebuffer;
@@ -120,6 +118,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererDispatchCompute;
         public IntPtr rendererShaderStorageMemoryBarrier;
         public IntPtr rendererCreateRenderTarget;
+        public IntPtr rendererResizeRenderTarget;
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCamera;
         public IntPtr rendererClear;

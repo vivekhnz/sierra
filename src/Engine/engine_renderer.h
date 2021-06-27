@@ -21,10 +21,11 @@ enum RenderTargetFormat
 
 struct RenderTarget
 {
+    RenderTargetFormat format;
     uint32 width;
     uint32 height;
     uint32 textureHandle;
-    uint32 depthBufferHandle;
+    uint32 depthBufferId;
     uint32 framebufferHandle;
 };
 
@@ -68,15 +69,7 @@ typedef RENDERER_BIND_TEXTURE_ARRAY(RendererBindTextureArray);
         uint32 width, uint32 height, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
-#define RENDERER_CREATE_DEPTH_BUFFER(name)                                                    \
-    uint32 name(RenderContext *ctx, uint32 width, uint32 height)
-typedef RENDERER_CREATE_DEPTH_BUFFER(RendererCreateDepthBuffer);
-#define RENDERER_RESIZE_DEPTH_BUFFER(name)                                                    \
-    void name(RenderContext *ctx, uint32 handle, uint32 width, uint32 height)
-typedef RENDERER_RESIZE_DEPTH_BUFFER(RendererResizeDepthBuffer);
-
-#define RENDERER_CREATE_FRAMEBUFFER(name)                                                     \
-    uint32 name(RenderContext *ctx, uint32 textureHandle, int32 depthBufferHandle)
+#define RENDERER_CREATE_FRAMEBUFFER(name) uint32 name(RenderContext *ctx, uint32 textureHandle)
 typedef RENDERER_CREATE_FRAMEBUFFER(RendererCreateFramebuffer);
 #define RENDERER_BIND_FRAMEBUFFER(name) void name(RenderContext *ctx, uint32 handle)
 typedef RENDERER_BIND_FRAMEBUFFER(RendererBindFramebuffer);
@@ -161,6 +154,10 @@ typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrie
     RenderTarget *name(MemoryArena *arena, RenderContext *ctx, uint32 width, uint32 height,   \
         RenderTargetFormat format)
 typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
+
+#define RENDERER_RESIZE_RENDER_TARGET(name)                                                   \
+    void name(RenderContext *ctx, RenderTarget *target, uint32 width, uint32 height)
+typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
 
 struct RenderQueue;
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
