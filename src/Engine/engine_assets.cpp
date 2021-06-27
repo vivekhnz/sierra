@@ -9,11 +9,20 @@ extern EnginePlatformApi Platform;
 #define ASSET_GET_INDEX(id) (id & 0x0FFFFFFF)
 #define ASSET_GET_TYPE(id) ((id & 0xF0000000) >> 28)
 
+#define MAX_ASSETS 4096
 #define MAX_DEPENDENCIES_PER_ASSET 32
 
 RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram);
 RENDERER_CREATE_SHADER(rendererCreateShader);
 
+struct Assets
+{
+    MemoryArena *arena;
+    RenderContext *renderCtx;
+
+    AssetRegistration registeredAssets[MAX_ASSETS];
+    uint32 registeredAssetCount;
+};
 struct AssetHandleInternal
 {
     uint32 id;
@@ -27,7 +36,7 @@ AssetRegistration *registerAsset(Assets *assets,
     uint32 dependencyCount)
 {
     AssetRegistration *reg = &assets->registeredAssets[assets->registeredAssetCount];
-    reg->handle = pushStruct(assets->data, AssetHandleInternal);
+    reg->handle = pushStruct(assets->arena, AssetHandleInternal);
     reg->handle->id = assets->registeredAssetCount | (type << 28);
     reg->handle->assets = assets;
     reg->assetType = type;
@@ -35,7 +44,7 @@ AssetRegistration *registerAsset(Assets *assets,
     if (relativePath)
     {
         reg->regType = ASSET_REG_FILE;
-        reg->fileState = pushStruct(assets->data, AssetFileState);
+        reg->fileState = pushStruct(assets->arena, AssetFileState);
 
         const char *srcCursor = relativePath;
         while (*srcCursor)
@@ -43,7 +52,7 @@ AssetRegistration *registerAsset(Assets *assets,
             srcCursor++;
         }
         uint32 length = srcCursor - relativePath;
-        reg->fileState->relativePath = (char *)pushSize(assets->data, length + 1);
+        reg->fileState->relativePath = (char *)pushSize(assets->arena, length + 1);
 
         srcCursor = relativePath;
         char *dstCursor = reg->fileState->relativePath;
@@ -59,10 +68,10 @@ AssetRegistration *registerAsset(Assets *assets,
     {
         assert(dependencyCount <= MAX_DEPENDENCIES_PER_ASSET);
         reg->regType = ASSET_REG_COMPOSITE;
-        reg->compositeState = pushStruct(assets->data, CompositeAssetState);
+        reg->compositeState = pushStruct(assets->arena, CompositeAssetState);
         reg->compositeState->dependencyCount = dependencyCount;
         reg->compositeState->dependencyAssetIds =
-            (uint32 *)pushSize(assets->data, sizeof(uint32) * dependencyCount);
+            (uint32 *)pushSize(assets->arena, sizeof(uint32) * dependencyCount);
         for (uint32 i = 0; i < dependencyCount; i++)
         {
             AssetHandleInternal *handle = (AssetHandleInternal *)dependencyAssetHandles[i];
@@ -70,7 +79,7 @@ AssetRegistration *registerAsset(Assets *assets,
         }
 
         reg->compositeState->dependencyVersions =
-            (uint8 *)pushSize(assets->data, sizeof(uint8) * dependencyCount);
+            (uint8 *)pushSize(assets->arena, sizeof(uint8) * dependencyCount);
     }
     else
     {
@@ -88,21 +97,24 @@ AssetRegistration *registerAsset(Assets *assets,
 
 ASSETS_INITIALIZE(assetsInitialize)
 {
-    assets->data = memory;
-    assets->renderCtx = rctx;
+    Assets *result = pushStruct(arena, Assets);
+    result->arena = arena;
+    result->renderCtx = rctx;
+
+    return result;
 }
 
 ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_TEXTURE, relativePath, 0, 0);
-    reg->metadata.texture = pushStruct(assets->data, TextureAssetMetadata);
+    reg->metadata.texture = pushStruct(assets->arena, TextureAssetMetadata);
     reg->metadata.texture->is16Bit = is16Bit;
     return reg->handle;
 }
 ASSETS_REGISTER_SHADER(assetsRegisterShader)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_SHADER, relativePath, 0, 0);
-    reg->metadata.shader = pushStruct(assets->data, ShaderAssetMetadata);
+    reg->metadata.shader = pushStruct(assets->arena, ShaderAssetMetadata);
     reg->metadata.shader->type = type;
     return reg->handle;
 }
@@ -135,7 +147,7 @@ bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **d
         {
             if (!reg->asset.shaderProgram)
             {
-                reg->asset.shaderProgram = pushStruct(assets->data, ShaderProgramAsset);
+                reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
             }
             reg->asset.shaderProgram->handle = handle;
 
@@ -317,7 +329,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         {
             if (!reg->asset.shader)
             {
-                reg->asset.shader = pushStruct(assets->data, ShaderAsset);
+                reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
             }
             reg->asset.shader->handle = handle;
         }
@@ -326,7 +338,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         if (!reg->asset.texture)
         {
-            reg->asset.texture = pushStruct(assets->data, TextureAsset);
+            reg->asset.texture = pushStruct(assets->arena, TextureAsset);
         }
 
         const stbi_uc *rawData = static_cast<stbi_uc *>(data);
@@ -354,7 +366,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
 
         uint64 requiredStorage =
             (uint64)width * (uint64)height * (uint64)channels * elementSize;
-        reg->asset.texture->data = (uint8 *)pushSize(assets->data, requiredStorage);
+        reg->asset.texture->data = (uint8 *)pushSize(assets->arena, requiredStorage);
         memcpy(reg->asset.texture->data, loadedData, requiredStorage);
 
         stbi_image_free(loadedData);
@@ -363,10 +375,10 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         if (!reg->asset.mesh)
         {
-            reg->asset.mesh = pushStruct(assets->data, MeshAsset);
+            reg->asset.mesh = pushStruct(assets->arena, MeshAsset);
         }
         fastObjLoadMesh(
-            assets->data, reg->fileState->relativePath, data, size, reg->asset.mesh);
+            assets->arena, reg->fileState->relativePath, data, size, reg->asset.mesh);
     }
     reg->asset.version++;
     if (reg->regType == ASSET_REG_FILE)

@@ -16,10 +16,10 @@ bool initializeGame(GameMemory *memory)
     GameAssets *gameAssets = &state->gameAssets;
     EngineApi *engine = memory->engine;
     RenderContext *rctx = &state->renderCtx;
-    Assets *assets = &state->engineAssets;
 
     engine->rendererInitialize(rctx);
-    engine->assetsInitialize(&state->engineAssets, &memory->assetMemory, rctx);
+    state->engineAssets = engine->assetsInitialize(&memory->assetMemory, rctx);
+    Assets *assets = state->engineAssets;
 
     AssetHandle shaderTerrainVertex =
         engine->assetsRegisterShader(assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
