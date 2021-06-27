@@ -628,26 +628,23 @@ void commitChanges(EditorMemory *memory)
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(rq, state->workingHeightmap.textureHandle);
     engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
-#else
+#endif
+
     EditorAssets *editorAssets = &state->editorAssets;
-
-    LoadedAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
-    if (!quadShaderProgram->shaderProgram)
-        return;
-
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
     RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->id,
+    engine->rendererPushTexturedQuad(rq, editorAssets->shaderProgramQuad,
         state->quadVertexArrayHandle, state->workingHeightmap->textureId);
-    engine->rendererDrawToTarget(rq, state->committedHeightmap);
-    endTemporaryMemory(&renderQueueMemory);
-#endif
+    if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
+    {
+        state->isEditingHeightmap = false;
+        state->activeBrushStrokeInstanceCount = 0;
+    }
 
-    state->isEditingHeightmap = false;
-    state->activeBrushStrokeInstanceCount = 0;
+    endTemporaryMemory(&renderQueueMemory);
 }
 
 void discardChanges(EditorMemory *memory)
@@ -1003,21 +1000,22 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
         engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
-#else
+#endif
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
         RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->id,
+        engine->rendererPushTexturedQuad(rq, editorAssets->shaderProgramQuad,
             state->quadVertexArrayHandle, state->importedHeightmapTextureId);
-        engine->rendererDrawToTarget(rq, state->committedHeightmap);
+        if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
+        {
+            updateHeightfieldHeights(&state->sceneState.heightfield,
+                (uint16 *)importedHeightmapAsset->texture->data);
+            state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
+        }
+
         endTemporaryMemory(&renderQueueMemory);
-#endif
-
-        updateHeightfieldHeights(
-            &state->sceneState.heightfield, (uint16 *)importedHeightmapAsset->texture->data);
-
-        state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
     }
 
     glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
@@ -1605,25 +1603,19 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
     engine->rendererDrawToScreen(rq, view->width, view->height);
-#else
-    EditorAssets *editorAssets = &state->editorAssets;
+#endif
 
+    EditorAssets *editorAssets = &state->editorAssets;
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
     RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
-
-    LoadedAsset *shaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
-    if (shaderProgram->shaderProgram)
-    {
-        engine->rendererPushTexturedQuad(rq, shaderProgram->shaderProgram->id,
-            state->quadFlippedYVertexArrayHandle, state->workingHeightmap->textureId);
-    }
-
+    engine->rendererPushTexturedQuad(rq, editorAssets->shaderProgramQuad,
+        state->quadFlippedYVertexArrayHandle, state->workingHeightmap->textureId);
     engine->rendererDrawToScreen(rq, view->width, view->height);
+
     endTemporaryMemory(&renderQueueMemory);
-#endif
 }
 
 API_EXPORT EDITOR_GET_UI_STATE(editorGetUiState)

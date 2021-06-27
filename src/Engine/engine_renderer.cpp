@@ -1,11 +1,15 @@
 #include "engine_renderer.h"
 
+#include "engine_assets.h"
+
 #define RENDERER_MAX_FRAMEBUFFERS 128
 #define RENDERER_MAX_SHADER_PROGRAMS 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
 #define RENDERER_MAX_BUFFERS 128
 
 extern EnginePlatformApi Platform;
+
+ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram);
 
 enum RendererUniformBuffer
 {
@@ -45,6 +49,8 @@ struct RenderQueue
         uint32 textureId;
         uint32 vertexArrayId;
     } quad;
+
+    bool isMissingResources;
 };
 
 struct GpuCameraState
@@ -560,6 +566,8 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     result->clearColor = glm::vec4(0, 0, 0, 1);
     result->quad.render = false;
 
+    result->isMissingResources = false;
+
     return result;
 }
 
@@ -578,15 +586,23 @@ RENDERER_CLEAR(rendererClear)
 
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
-    rq->quad.render = true;
-    rq->quad.shaderProgramId = shaderProgramId;
-    rq->quad.textureId = textureId;
+    LoadedAsset *shaderProgram = assetsGetShaderProgram(shaderProgramHandle);
+    if (shaderProgram->shaderProgram)
+    {
+        rq->quad.render = true;
+        rq->quad.shaderProgramId = shaderProgram->shaderProgram->id;
+        rq->quad.textureId = textureId;
 
-    assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
-    rq->quad.vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+        assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
+        rq->quad.vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+    }
+    else
+    {
+        rq->isMissingResources = true;
+    }
 }
 
-void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
+bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
 {
     if (target)
     {
@@ -622,13 +638,15 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
+
+    return !rq->isMissingResources;
 }
 
 RENDERER_DRAW_TO_TARGET(rendererDrawToTarget)
 {
-    drawToTarget(rq, target->width, target->height, target);
+    return drawToTarget(rq, target->width, target->height, target);
 }
 RENDERER_DRAW_TO_SCREEN(rendererDrawToScreen)
 {
-    drawToTarget(rq, width, height, 0);
+    return drawToTarget(rq, width, height, 0);
 }
