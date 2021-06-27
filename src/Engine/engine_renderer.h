@@ -24,7 +24,7 @@ struct RenderTarget
     RenderTargetFormat format;
     uint32 width;
     uint32 height;
-    uint32 textureHandle;
+    uint32 textureId;
     uint32 depthBufferId;
     uint32 framebufferHandle;
 };
@@ -46,14 +46,14 @@ typedef RENDERER_UPDATE_LIGHTING_STATE(RendererUpdateLightingState);
     uint32 name(RenderContext *ctx, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat,   \
         uint32 width, uint32 height, uint32 wrapMode, uint32 filterMode)
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
-#define RENDERER_BIND_TEXTURE(name) void name(RenderContext *ctx, uint32 handle, uint8 slot)
+#define RENDERER_BIND_TEXTURE(name) void name(RenderContext *ctx, uint32 id, uint8 slot)
 typedef RENDERER_BIND_TEXTURE(RendererBindTexture);
 #define RENDERER_UPDATE_TEXTURE(name)                                                         \
-    void name(RenderContext *ctx, uint32 handle, uint32 elementType, uint32 cpuFormat,        \
+    void name(RenderContext *ctx, uint32 id, uint32 elementType, uint32 cpuFormat,            \
         uint32 gpuFormat, uint32 width, uint32 height, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
 #define RENDERER_READ_TEXTURE_PIXELS(name)                                                    \
-    void name(RenderContext *ctx, uint32 handle, uint32 elementType, uint32 gpuFormat,        \
+    void name(RenderContext *ctx, uint32 id, uint32 elementType, uint32 gpuFormat,            \
         void *out_pixels)
 typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
 
@@ -61,15 +61,14 @@ typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
     uint32 name(RenderContext *ctx, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat,   \
         uint32 width, uint32 height, uint32 layers, uint32 wrapMode, uint32 filterMode)
 typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
-#define RENDERER_BIND_TEXTURE_ARRAY(name)                                                     \
-    void name(RenderContext *ctx, uint32 handle, uint8 slot)
+#define RENDERER_BIND_TEXTURE_ARRAY(name) void name(RenderContext *ctx, uint32 id, uint8 slot)
 typedef RENDERER_BIND_TEXTURE_ARRAY(RendererBindTextureArray);
 #define RENDERER_UPDATE_TEXTURE_ARRAY(name)                                                   \
-    void name(RenderContext *ctx, uint32 handle, uint32 elementType, uint32 gpuFormat,        \
+    void name(RenderContext *ctx, uint32 id, uint32 elementType, uint32 gpuFormat,            \
         uint32 width, uint32 height, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
-#define RENDERER_CREATE_FRAMEBUFFER(name) uint32 name(RenderContext *ctx, uint32 textureHandle)
+#define RENDERER_CREATE_FRAMEBUFFER(name) uint32 name(RenderContext *ctx, uint32 textureId)
 typedef RENDERER_CREATE_FRAMEBUFFER(RendererCreateFramebuffer);
 #define RENDERER_BIND_FRAMEBUFFER(name) void name(RenderContext *ctx, uint32 handle)
 typedef RENDERER_BIND_FRAMEBUFFER(RendererBindFramebuffer);
@@ -156,7 +155,7 @@ typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrie
 typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
 
 #define RENDERER_RESIZE_RENDER_TARGET(name)                                                   \
-    void name(RenderContext *ctx, RenderTarget *target, uint32 width, uint32 height)
+    void name(RenderTarget *target, uint32 width, uint32 height)
 typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
 
 struct RenderQueue;
@@ -171,7 +170,7 @@ typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
     void name(RenderQueue *rq, uint32 shaderProgramHandle, uint32 vertexArrayHandle,          \
-        uint32 textureHandle)
+        uint32 textureId)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) void name(RenderQueue *rq, RenderTarget *target)

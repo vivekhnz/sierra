@@ -1,6 +1,5 @@
 #include "engine_renderer.h"
 
-#define RENDERER_MAX_TEXTURES 128
 #define RENDERER_MAX_FRAMEBUFFERS 128
 #define RENDERER_MAX_SHADERS 128
 #define RENDERER_MAX_SHADER_PROGRAMS 128
@@ -19,9 +18,6 @@ enum RendererUniformBuffer
 
 struct RenderContext
 {
-    uint32 textureCount;
-    uint32 textureIds[RENDERER_MAX_TEXTURES];
-
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
     uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -163,12 +159,10 @@ RENDERER_UPDATE_LIGHTING_STATE(rendererUpdateLightingState)
 
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 {
-    assert(ctx->textureCount < RENDERER_MAX_TEXTURES);
+    uint32 id = 0;
+    glGenTextures(1, &id);
 
-    uint32 *id = ctx->textureIds + ctx->textureCount;
-    glGenTextures(1, id);
-
-    glBindTexture(GL_TEXTURE_2D, *id);
+    glBindTexture(GL_TEXTURE_2D, id);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
@@ -176,23 +170,17 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
     glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    return ctx->textureCount++;
+    return id;
 }
 
 RENDERER_BIND_TEXTURE(rendererBindTexture)
 {
-    assert(handle < ctx->textureCount);
-    uint32 id = ctx->textureIds[handle];
-
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D, id);
 }
 
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
-    assert(handle < ctx->textureCount);
-    uint32 id = ctx->textureIds[handle];
-
     glBindTexture(GL_TEXTURE_2D, id);
     glTexImage2D(
         GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, pixels);
@@ -201,9 +189,6 @@ RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 
 RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 {
-    assert(handle < ctx->textureCount);
-    uint32 id = ctx->textureIds[handle];
-
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
     glGetTexImage(GL_TEXTURE_2D, 0, gpuFormat, elementType, out_pixels);
@@ -211,12 +196,10 @@ RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
 {
-    assert(ctx->textureCount < RENDERER_MAX_TEXTURES);
+    uint32 id = 0;
+    glGenTextures(1, &id);
 
-    uint32 *id = ctx->textureIds + ctx->textureCount;
-    glGenTextures(1, id);
-
-    glBindTexture(GL_TEXTURE_2D_ARRAY, *id);
+    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, wrapMode);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, wrapMode);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, filterMode);
@@ -225,23 +208,17 @@ RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
         elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
-    return ctx->textureCount++;
+    return id;
 }
 
 RENDERER_BIND_TEXTURE_ARRAY(rendererBindTextureArray)
 {
-    assert(handle < ctx->textureCount);
-    uint32 id = ctx->textureIds[handle];
-
     glActiveTexture(GL_TEXTURE0 + slot);
     glBindTexture(GL_TEXTURE_2D_ARRAY, id);
 }
 
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
-    assert(handle < ctx->textureCount);
-    uint32 id = ctx->textureIds[handle];
-
     glBindTexture(GL_TEXTURE_2D_ARRAY, id);
     glTexSubImage3D(
         GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
@@ -251,10 +228,6 @@ RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 RENDERER_CREATE_FRAMEBUFFER(rendererCreateFramebuffer)
 {
     assert(ctx->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
-
-    assert(textureHandle < ctx->textureCount);
-    uint32 textureId = ctx->textureIds[textureHandle];
-
     uint32 *framebufferId = ctx->framebufferIds + ctx->framebufferCount;
     glGenFramebuffers(1, framebufferId);
 
@@ -558,11 +531,8 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     RenderTargetDescriptor descriptor = getRenderTargetDescriptor(result->format);
 
     // create target texture
-    assert(ctx->textureCount < RENDERER_MAX_TEXTURES);
-    uint32 *textureId = ctx->textureIds + ctx->textureCount;
-    result->textureHandle = ctx->textureCount++;
-    glGenTextures(1, textureId);
-    glBindTexture(GL_TEXTURE_2D, *textureId);
+    glGenTextures(1, &result->textureId);
+    glBindTexture(GL_TEXTURE_2D, result->textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -584,10 +554,11 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     assert(ctx->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
     uint32 *framebufferId = ctx->framebufferIds + ctx->framebufferCount;
     result->framebufferHandle = ctx->framebufferCount++;
-    ctx->framebufferTextureIds[result->framebufferHandle] = *textureId;
+    ctx->framebufferTextureIds[result->framebufferHandle] = result->textureId;
     glGenFramebuffers(1, framebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *textureId, 0);
+    glFramebufferTexture2D(
+        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result->textureId, 0);
     if (descriptor.hasDepthBuffer)
     {
         glFramebufferRenderbuffer(
@@ -605,8 +576,7 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
 
     RenderTargetDescriptor descriptor = getRenderTargetDescriptor(target->format);
 
-    uint32 textureId = ctx->textureIds[target->textureHandle];
-    glBindTexture(GL_TEXTURE_2D, textureId);
+    glBindTexture(GL_TEXTURE_2D, target->textureId);
     glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0,
         descriptor.gpuFormat, descriptor.elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -649,8 +619,7 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     assert(shaderProgramHandle < rq->ctx->shaderProgramCount);
     rq->quad.shaderProgramId = rq->ctx->shaderProgramIds[shaderProgramHandle];
 
-    assert(textureHandle < rq->ctx->textureCount);
-    rq->quad.textureId = rq->ctx->textureIds[textureHandle];
+    rq->quad.textureId = textureId;
 
     assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
     rq->quad.vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
@@ -688,8 +657,7 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 
     if (target)
     {
-        uint32 textureId = rq->ctx->textureIds[target->textureHandle];
-        glBindTexture(GL_TEXTURE_2D, textureId);
+        glBindTexture(GL_TEXTURE_2D, target->textureId);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }

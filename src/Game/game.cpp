@@ -181,8 +181,8 @@ bool initializeGame(GameMemory *memory)
     engine->rendererUpdateBuffer(rctx, state->terrainMeshTessLevelBufferHandle,
         state->heightfield.columns * state->heightfield.rows * sizeof(glm::vec4), 0);
 
-    state->heightmapTextureHandle = engine->rendererCreateTexture(rctx, GL_UNSIGNED_SHORT,
-        GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->heightmapTextureId = engine->rendererCreateTexture(rctx, GL_UNSIGNED_SHORT, GL_R16,
+        GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
     state->albedoTextureArrayHandle =
@@ -281,7 +281,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         engine->assetsGetTexture(gameAssets->textureVirtualHeightmap);
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
-        memory->engine->rendererUpdateTexture(rctx, state->heightmapTextureHandle,
+        memory->engine->rendererUpdateTexture(rctx, state->heightmapTextureId,
             GL_UNSIGNED_SHORT, GL_R16, GL_RED, heightmapAsset->texture->width,
             heightmapAsset->texture->height, heightmapAsset->texture->data);
 
@@ -604,8 +604,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
             calcTessLevelShaderProgram->handle, "columnCount", state->heightfield.columns);
         engine->rendererSetShaderProgramUniformFloat(rctx, calcTessLevelShaderProgram->handle,
             "terrainHeight", state->heightfield.maxHeight);
-        engine->rendererBindTexture(rctx, state->heightmapTextureHandle, 0);
-        engine->rendererBindTexture(rctx, state->heightmapTextureHandle, 5);
+        engine->rendererBindTexture(rctx, state->heightmapTextureId, 0);
+        engine->rendererBindTexture(rctx, state->heightmapTextureId, 5);
         engine->rendererBindShaderStorageBuffer(
             rctx, state->terrainMeshTessLevelBufferHandle, 0);
         engine->rendererBindShaderStorageBuffer(rctx, state->terrainMeshVertexBufferHandle, 1);
@@ -634,12 +634,12 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
                 state->heightfield.spacing * state->heightfield.rows));
         engine->rendererSetShaderProgramUniformInteger(
             rctx, terrainShaderProgram->handle, "materialCount", MATERIAL_COUNT);
-        engine->rendererBindTexture(rctx, state->heightmapTextureHandle, 0);
+        engine->rendererBindTexture(rctx, state->heightmapTextureId, 0);
         engine->rendererBindTextureArray(rctx, state->albedoTextureArrayHandle, 1);
         engine->rendererBindTextureArray(rctx, state->normalTextureArrayHandle, 2);
         engine->rendererBindTextureArray(rctx, state->displacementTextureArrayHandle, 3);
         engine->rendererBindTextureArray(rctx, state->aoTextureArrayHandle, 4);
-        engine->rendererBindTexture(rctx, state->heightmapTextureHandle, 5);
+        engine->rendererBindTexture(rctx, state->heightmapTextureId, 5);
         engine->rendererBindVertexArray(rctx, state->terrainMeshVertexArrayHandle);
         engine->rendererDrawElements(GL_PATCHES, state->terrainMeshElementCount);
     }

@@ -262,9 +262,8 @@ void initializeEditor(EditorMemory *memory)
         1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
     engine->rendererUnbindVertexArray();
 
-    state->importedHeightmapTextureHandle =
-        engine->rendererCreateTexture(rctx, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-            GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+    state->importedHeightmapTextureId = engine->rendererCreateTexture(rctx, GL_UNSIGNED_SHORT,
+        GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
     state->committedHeightmap = memory->engineApi->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
@@ -516,7 +515,7 @@ void initializeEditor(EditorMemory *memory)
 }
 
 void compositeHeightmap(EditorMemory *memory,
-    uint32 baseHeightmapTextureHandle,
+    uint32 baseHeightmapTextureId,
     RenderTarget *brushInfluenceMask,
     RenderTarget *output,
     uint32 brushMaskShaderProgramHandle,
@@ -577,9 +576,9 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererSetPolygonMode(GL_FILL);
     engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
     engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
-    engine->rendererBindTexture(rctx, brushInfluenceMask->textureHandle, 1);
+    engine->rendererBindTexture(rctx, brushInfluenceMask->textureId, 1);
 
-    uint32 inputTextureHandle = baseHeightmapTextureHandle;
+    uint32 inputTextureId = baseHeightmapTextureId;
     RenderTarget *iterationOutput = output;
     for (uint32 i = 0; i < blendProps->iterations; i++)
     {
@@ -587,14 +586,14 @@ void compositeHeightmap(EditorMemory *memory,
 
         engine->rendererSetViewportSize(2048, 2048);
         engine->rendererClearBackBuffer(0, 0, 0, 1);
-        engine->rendererBindTexture(rctx, inputTextureHandle, 0);
+        engine->rendererBindTexture(rctx, inputTextureId, 0);
         engine->rendererSetShaderProgramUniformInteger(
             rctx, blendProps->shaderProgramHandle, "iteration", i);
         engine->rendererDrawElements(GL_TRIANGLES, 6);
 
         engine->rendererUnbindFramebuffer(rctx, iterationOutput->framebufferHandle);
 
-        inputTextureHandle = iterationOutput->textureHandle;
+        inputTextureId = iterationOutput->textureId;
         iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
     }
 }
@@ -645,7 +644,7 @@ void commitChanges(EditorMemory *memory)
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
-        state->quadVertexArrayHandle, state->workingHeightmap->textureHandle);
+        state->quadVertexArrayHandle, state->workingHeightmap->textureId);
     engine->rendererDrawToTarget(rq, state->committedHeightmap);
     endTemporaryMemory(&renderQueueMemory);
 #endif
@@ -661,7 +660,7 @@ void discardChanges(EditorMemory *memory)
     state->activeBrushStrokeInstanceCount = 0;
 
     memory->engineApi->rendererReadTexturePixels(state->renderCtx,
-        state->committedHeightmap->textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+        state->committedHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
         state->sceneState.heightmapTextureDataTempBuffer);
     updateHeightfieldHeights(
         &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
@@ -999,7 +998,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
-        engine->rendererUpdateTexture(rctx, state->importedHeightmapTextureHandle,
+        engine->rendererUpdateTexture(rctx, state->importedHeightmapTextureId,
             GL_UNSIGNED_SHORT, GL_R16, GL_RED, importedHeightmapAsset->texture->width,
             importedHeightmapAsset->texture->height, importedHeightmapAsset->texture->data);
 
@@ -1015,7 +1014,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
-            state->quadVertexArrayHandle, state->importedHeightmapTextureHandle);
+            state->quadVertexArrayHandle, state->importedHeightmapTextureId);
         engine->rendererDrawToTarget(rq, state->committedHeightmap);
         endTemporaryMemory(&renderQueueMemory);
 #endif
@@ -1340,17 +1339,17 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         break;
     }
 
-    compositeHeightmap(memory, state->committedHeightmap->textureHandle,
+    compositeHeightmap(memory, state->committedHeightmap->textureId,
         state->workingBrushInfluenceMask, state->workingHeightmap,
         brushMaskShaderProgram->shaderProgram->handle, state->activeBrushStrokeInstanceCount,
         0, &blendProps);
-    compositeHeightmap(memory, state->workingHeightmap->textureHandle,
+    compositeHeightmap(memory, state->workingHeightmap->textureId,
         state->previewBrushInfluenceMask, state->previewHeightmap,
         brushMaskShaderProgram->shaderProgram->handle, 1, MAX_BRUSH_QUADS - 1, &blendProps);
 
     if (state->isEditingHeightmap)
     {
-        engine->rendererReadTexturePixels(rctx, state->workingHeightmap->textureHandle,
+        engine->rendererReadTexturePixels(rctx, state->workingHeightmap->textureId,
             GL_UNSIGNED_SHORT, GL_RED, sceneState->heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(
             &sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
@@ -1387,7 +1386,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     RenderTarget *sceneRenderTarget = viewState->sceneRenderTarget;
     if (view->width != sceneRenderTarget->width || view->height != sceneRenderTarget->height)
     {
-        engine->rendererResizeRenderTarget(rctx, sceneRenderTarget, view->width, view->height);
+        engine->rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
     }
 
     // calculate camera transform
@@ -1416,8 +1415,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         && rockShaderProgram->shaderProgram)
     {
         BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
-        uint32 activeHeightmapTextureHandle = state->workingHeightmap->textureHandle;
-        uint32 referenceHeightmapTextureHandle = state->workingHeightmap->textureHandle;
+        uint32 activeHeightmapTextureId = state->workingHeightmap->textureId;
+        uint32 referenceHeightmapTextureId = state->workingHeightmap->textureId;
 
         if (sceneState->worldState.brushCursorVisibleView == viewState)
         {
@@ -1426,11 +1425,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
                 if (state->isEditingHeightmap)
                 {
-                    referenceHeightmapTextureHandle = state->committedHeightmap->textureHandle;
+                    referenceHeightmapTextureId = state->committedHeightmap->textureId;
                 }
                 else
                 {
-                    activeHeightmapTextureHandle = state->previewHeightmap->textureHandle;
+                    activeHeightmapTextureId = state->previewHeightmap->textureId;
                 }
             }
             else if (state->isEditingHeightmap)
@@ -1458,7 +1457,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             "columnCount", sceneState->heightfield.columns);
         engine->rendererSetShaderProgramUniformFloat(rctx, calcTessLevelShaderProgramHandle,
             "terrainHeight", sceneState->heightfield.maxHeight);
-        engine->rendererBindTexture(rctx, activeHeightmapTextureHandle, 0);
+        engine->rendererBindTexture(rctx, activeHeightmapTextureId, 0);
         engine->rendererBindShaderStorageBuffer(
             rctx, sceneState->tessellationLevelBufferHandle, 0);
         engine->rendererBindShaderStorageBuffer(
@@ -1472,12 +1471,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererUseShaderProgram(rctx, terrainShaderProgramHandle);
         engine->rendererSetPolygonMode(GL_FILL);
         engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererBindTexture(rctx, activeHeightmapTextureHandle, 0);
+        engine->rendererBindTexture(rctx, activeHeightmapTextureId, 0);
         engine->rendererBindTextureArray(rctx, sceneState->albedoTextureArrayHandle, 1);
         engine->rendererBindTextureArray(rctx, sceneState->normalTextureArrayHandle, 2);
         engine->rendererBindTextureArray(rctx, sceneState->displacementTextureArrayHandle, 3);
         engine->rendererBindTextureArray(rctx, sceneState->aoTextureArrayHandle, 4);
-        engine->rendererBindTexture(rctx, referenceHeightmapTextureHandle, 5);
+        engine->rendererBindTexture(rctx, referenceHeightmapTextureId, 5);
         engine->rendererBindShaderStorageBuffer(
             rctx, sceneState->materialPropsBufferHandle, 1);
         engine->rendererBindVertexArray(rctx, sceneState->terrainMesh.vertexArrayHandle);
@@ -1572,7 +1571,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererUseShaderProgram(rctx, quadShaderProgram->shaderProgram->handle);
         engine->rendererSetPolygonMode(GL_FILL);
         engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererBindTexture(rctx, sceneRenderTarget->textureHandle, 0);
+        engine->rendererBindTexture(rctx, sceneRenderTarget->textureId, 0);
         engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
         engine->rendererDrawElements(GL_TRIANGLES, 6);
 
@@ -1626,7 +1625,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     if (shaderProgram->shaderProgram)
     {
         engine->rendererPushTexturedQuad(rq, shaderProgram->shaderProgram->handle,
-            state->quadFlippedYVertexArrayHandle, state->workingHeightmap->textureHandle);
+            state->quadFlippedYVertexArrayHandle, state->workingHeightmap->textureId);
     }
 
     engine->rendererDrawToScreen(rq, view->width, view->height);

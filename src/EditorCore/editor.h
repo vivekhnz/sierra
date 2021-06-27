@@ -196,7 +196,7 @@ struct EditorState
     uint32 quadVertexArrayHandle;
     uint32 quadFlippedYVertexArrayHandle;
 
-    uint32 importedHeightmapTextureHandle;
+    uint32 importedHeightmapTextureId;
     uint8 importedHeightmapTextureVersion;
 
     RenderTarget *committedHeightmap;
