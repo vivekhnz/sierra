@@ -658,17 +658,12 @@ void commitChanges(EditorMemory *memory)
         return;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
-    uint64 renderQueueMaxSize = 1 * 1024 * 1024;
-    void *renderQueueBaseAddress = pushSize(&memory->data, renderQueueMaxSize);
-
-    RenderQueue *rq =
-        engine->rendererCreateQueue(rctx, renderQueueBaseAddress, renderQueueMaxSize);
+    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->data);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
         state->quadVertexArrayHandle, state->workingHeightmap.textureHandle);
     engine->rendererDrawToTarget(rq, 2048, 2048, state->committedHeightmap.framebufferHandle);
-
     endTemporaryMemory(&renderQueueMemory);
 #endif
 
@@ -1037,18 +1032,13 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
 #else
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
-        uint64 renderQueueMaxSize = 1 * 1024 * 1024;
-        void *renderQueueBaseAddress = pushSize(&memory->data, renderQueueMaxSize);
-
-        RenderQueue *rq =
-            engine->rendererCreateQueue(rctx, renderQueueBaseAddress, renderQueueMaxSize);
+        RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->data);
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
             state->quadVertexArrayHandle, state->importedHeightmapTextureHandle);
         engine->rendererDrawToTarget(
             rq, 2048, 2048, state->committedHeightmap.framebufferHandle);
-
         endTemporaryMemory(&renderQueueMemory);
 #endif
 
@@ -1665,11 +1655,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     EditorAssets *editorAssets = &state->editorAssets;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
-    uint64 renderQueueMaxSize = 1 * 1024 * 1024;
-    void *renderQueueBaseAddress = pushSize(&memory->data, renderQueueMaxSize);
-
-    RenderQueue *rq =
-        engine->rendererCreateQueue(rctx, renderQueueBaseAddress, renderQueueMaxSize);
+    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->data);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
 
@@ -1682,7 +1668,6 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     }
 
     engine->rendererDrawToScreen(rq, view->width, view->height);
-
     endTemporaryMemory(&renderQueueMemory);
 #endif
 }

@@ -175,8 +175,7 @@ typedef RENDERER_DISPATCH_COMPUTE(RendererDispatchCompute);
 typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrier);
 
 struct RenderQueue;
-#define RENDERER_CREATE_QUEUE(name)                                                           \
-    RenderQueue *name(RenderContext *ctx, void *baseAddress, uint64 maxSize)
+#define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
 typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
 
 #define RENDERER_SET_CAMERA(name) void name(RenderQueue *rq, glm::mat4 *transform)

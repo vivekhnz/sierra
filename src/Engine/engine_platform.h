@@ -41,7 +41,7 @@ inline void *pushSize(MemoryArena *arena, uint64 size)
 
     return address;
 }
-#define pushStruct(memory, struct) (struct *)pushSize(memory, sizeof(struct))
+#define pushStruct(arena, struct) (struct *)pushSize(arena, sizeof(struct))
 
 struct TemporaryMemory
 {

@@ -12,6 +12,7 @@ enum RendererUniformBuffer
 
 struct RenderQueue
 {
+    MemoryArena *arena;
     RenderContext *ctx;
 
     glm::mat4 cameraTransform;
@@ -514,8 +515,8 @@ RENDERER_SHADER_STORAGE_MEMORY_BARRIER(rendererShaderStorageMemoryBarrier)
 
 RENDERER_CREATE_QUEUE(rendererCreateQueue)
 {
-    assert(maxSize >= sizeof(RenderQueue));
-    RenderQueue *result = (RenderQueue *)baseAddress;
+    RenderQueue *result = pushStruct(arena, RenderQueue);
+    result->arena = arena;
     result->ctx = ctx;
 
     result->cameraTransform = glm::identity<glm::mat4>();
