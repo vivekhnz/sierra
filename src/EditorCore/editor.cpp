@@ -79,22 +79,6 @@ float *getObjectProperty(
     return 0;
 }
 
-RenderTexture createHeightmapRenderTexture(EditorMemory *memory, RenderContext *rctx)
-{
-    RenderTexture result = {};
-
-    result.width = 2048;
-    result.height = 2048;
-    result.textureHandle =
-        memory->engineApi->rendererCreateTexture(rctx, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
-            result.width, result.height, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-    result.depthBufferHandle = -1;
-    result.framebufferHandle = memory->engineApi->rendererCreateFramebuffer(
-        rctx, result.textureHandle, result.depthBufferHandle);
-
-    return result;
-}
-
 void initializeEditor(EditorMemory *memory)
 {
     assert(memory->arena.used == 0);
@@ -282,12 +266,18 @@ void initializeEditor(EditorMemory *memory)
         engine->rendererCreateTexture(rctx, GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
             GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    state->committedHeightmap = createHeightmapRenderTexture(memory, rctx);
-    state->workingBrushInfluenceMask = createHeightmapRenderTexture(memory, rctx);
-    state->workingHeightmap = createHeightmapRenderTexture(memory, rctx);
-    state->previewBrushInfluenceMask = createHeightmapRenderTexture(memory, rctx);
-    state->previewHeightmap = createHeightmapRenderTexture(memory, rctx);
-    state->temporaryHeightmap = createHeightmapRenderTexture(memory, rctx);
+    state->committedHeightmap = memory->engineApi->rendererCreateRenderTarget(
+        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->workingBrushInfluenceMask = memory->engineApi->rendererCreateRenderTarget(
+        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->workingHeightmap = memory->engineApi->rendererCreateRenderTarget(
+        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->previewBrushInfluenceMask = memory->engineApi->rendererCreateRenderTarget(
+        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->previewHeightmap = memory->engineApi->rendererCreateRenderTarget(
+        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->temporaryHeightmap = memory->engineApi->rendererCreateRenderTarget(
+        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
 
@@ -527,8 +517,8 @@ void initializeEditor(EditorMemory *memory)
 
 void compositeHeightmap(EditorMemory *memory,
     uint32 baseHeightmapTextureHandle,
-    RenderTexture *brushInfluenceMask,
-    RenderTexture *output,
+    RenderTarget *brushInfluenceMask,
+    RenderTarget *output,
     uint32 brushMaskShaderProgramHandle,
     uint32 brushInstanceCount,
     uint32 brushInstanceOffset,
@@ -590,7 +580,7 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererBindTexture(rctx, brushInfluenceMask->textureHandle, 1);
 
     uint32 inputTextureHandle = baseHeightmapTextureHandle;
-    RenderTexture *iterationOutput = output;
+    RenderTarget *iterationOutput = output;
     for (uint32 i = 0; i < blendProps->iterations; i++)
     {
         engine->rendererBindFramebuffer(rctx, iterationOutput->framebufferHandle);
@@ -605,7 +595,7 @@ void compositeHeightmap(EditorMemory *memory,
         engine->rendererUnbindFramebuffer(rctx, iterationOutput->framebufferHandle);
 
         inputTextureHandle = iterationOutput->textureHandle;
-        iterationOutput = i % 2 == 0 ? &state->temporaryHeightmap : output;
+        iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
     }
 }
 
@@ -655,8 +645,8 @@ void commitChanges(EditorMemory *memory)
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
-        state->quadVertexArrayHandle, state->workingHeightmap.textureHandle);
-    engine->rendererDrawToTarget(rq, 2048, 2048, state->committedHeightmap.framebufferHandle);
+        state->quadVertexArrayHandle, state->workingHeightmap->textureHandle);
+    engine->rendererDrawToTarget(rq, state->committedHeightmap);
     endTemporaryMemory(&renderQueueMemory);
 #endif
 
@@ -671,7 +661,7 @@ void discardChanges(EditorMemory *memory)
     state->activeBrushStrokeInstanceCount = 0;
 
     memory->engineApi->rendererReadTexturePixels(state->renderCtx,
-        state->committedHeightmap.textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+        state->committedHeightmap->textureHandle, GL_UNSIGNED_SHORT, GL_RED,
         state->sceneState.heightmapTextureDataTempBuffer);
     updateHeightfieldHeights(
         &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
@@ -1026,8 +1016,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
             state->quadVertexArrayHandle, state->importedHeightmapTextureHandle);
-        engine->rendererDrawToTarget(
-            rq, 2048, 2048, state->committedHeightmap.framebufferHandle);
+        engine->rendererDrawToTarget(rq, state->committedHeightmap);
         endTemporaryMemory(&renderQueueMemory);
 #endif
 
@@ -1351,17 +1340,17 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         break;
     }
 
-    compositeHeightmap(memory, state->committedHeightmap.textureHandle,
-        &state->workingBrushInfluenceMask, &state->workingHeightmap,
+    compositeHeightmap(memory, state->committedHeightmap->textureHandle,
+        state->workingBrushInfluenceMask, state->workingHeightmap,
         brushMaskShaderProgram->shaderProgram->handle, state->activeBrushStrokeInstanceCount,
         0, &blendProps);
-    compositeHeightmap(memory, state->workingHeightmap.textureHandle,
-        &state->previewBrushInfluenceMask, &state->previewHeightmap,
+    compositeHeightmap(memory, state->workingHeightmap->textureHandle,
+        state->previewBrushInfluenceMask, state->previewHeightmap,
         brushMaskShaderProgram->shaderProgram->handle, 1, MAX_BRUSH_QUADS - 1, &blendProps);
 
     if (state->isEditingHeightmap)
     {
-        engine->rendererReadTexturePixels(rctx, state->workingHeightmap.textureHandle,
+        engine->rendererReadTexturePixels(rctx, state->workingHeightmap->textureHandle,
             GL_UNSIGNED_SHORT, GL_RED, sceneState->heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(
             &sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
@@ -1390,23 +1379,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
         viewState->cameraPos =
             viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
-
-        viewState->sceneRenderTarget = {};
-        viewState->sceneRenderTarget.width = view->width;
-        viewState->sceneRenderTarget.height = view->height;
-        viewState->sceneRenderTarget.textureHandle = engine->rendererCreateTexture(rctx,
-            GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, viewState->sceneRenderTarget.width,
-            viewState->sceneRenderTarget.height, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-        viewState->sceneRenderTarget.depthBufferHandle = engine->rendererCreateDepthBuffer(
-            rctx, viewState->sceneRenderTarget.width, viewState->sceneRenderTarget.height);
-        viewState->sceneRenderTarget.framebufferHandle =
-            engine->rendererCreateFramebuffer(rctx, viewState->sceneRenderTarget.textureHandle,
-                viewState->sceneRenderTarget.depthBufferHandle);
-
+        viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(&memory->arena, rctx,
+            view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         view->viewState = viewState;
     }
 
-    RenderTexture *sceneRenderTarget = &viewState->sceneRenderTarget;
+    RenderTarget *sceneRenderTarget = viewState->sceneRenderTarget;
     if (view->width != sceneRenderTarget->width || view->height != sceneRenderTarget->height)
     {
         sceneRenderTarget->width = view->width;
@@ -1443,8 +1421,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         && rockShaderProgram->shaderProgram)
     {
         BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
-        uint32 activeHeightmapTextureHandle = state->workingHeightmap.textureHandle;
-        uint32 referenceHeightmapTextureHandle = state->workingHeightmap.textureHandle;
+        uint32 activeHeightmapTextureHandle = state->workingHeightmap->textureHandle;
+        uint32 referenceHeightmapTextureHandle = state->workingHeightmap->textureHandle;
 
         if (sceneState->worldState.brushCursorVisibleView == viewState)
         {
@@ -1453,11 +1431,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
                 if (state->isEditingHeightmap)
                 {
-                    referenceHeightmapTextureHandle = state->committedHeightmap.textureHandle;
+                    referenceHeightmapTextureHandle = state->committedHeightmap->textureHandle;
                 }
                 else
                 {
-                    activeHeightmapTextureHandle = state->previewHeightmap.textureHandle;
+                    activeHeightmapTextureHandle = state->previewHeightmap->textureHandle;
                 }
             }
             else if (state->isEditingHeightmap)
@@ -1653,7 +1631,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     if (shaderProgram->shaderProgram)
     {
         engine->rendererPushTexturedQuad(rq, shaderProgram->shaderProgram->handle,
-            state->quadFlippedYVertexArrayHandle, state->workingHeightmap.textureHandle);
+            state->quadFlippedYVertexArrayHandle, state->workingHeightmap->textureHandle);
     }
 
     engine->rendererDrawToScreen(rq, view->width, view->height);

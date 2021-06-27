@@ -119,6 +119,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererDrawElementsInstanced;
         public IntPtr rendererDispatchCompute;
         public IntPtr rendererShaderStorageMemoryBarrier;
+        public IntPtr rendererCreateRenderTarget;
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCamera;
         public IntPtr rendererClear;

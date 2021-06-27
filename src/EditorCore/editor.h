@@ -68,15 +68,6 @@ struct TextureAssetBinding
     uint8 version;
 };
 
-struct RenderTexture
-{
-    uint32 width;
-    uint32 height;
-    uint32 textureHandle;
-    uint32 framebufferHandle;
-    int32 depthBufferHandle;
-};
-
 struct SceneViewState
 {
     float orbitCameraDistance;
@@ -86,7 +77,7 @@ struct SceneViewState
     glm::vec3 cameraLookAt;
     glm::mat4 cameraTransform;
 
-    RenderTexture sceneRenderTarget;
+    RenderTarget *sceneRenderTarget;
 };
 
 struct GpuMaterialProperties
@@ -208,12 +199,12 @@ struct EditorState
     uint32 importedHeightmapTextureHandle;
     uint8 importedHeightmapTextureVersion;
 
-    RenderTexture committedHeightmap;
-    RenderTexture workingBrushInfluenceMask;
-    RenderTexture workingHeightmap;
-    RenderTexture previewBrushInfluenceMask;
-    RenderTexture previewHeightmap;
-    RenderTexture temporaryHeightmap;
+    RenderTarget *committedHeightmap;
+    RenderTarget *workingBrushInfluenceMask;
+    RenderTarget *workingHeightmap;
+    RenderTarget *previewBrushInfluenceMask;
+    RenderTarget *previewHeightmap;
+    RenderTarget *temporaryHeightmap;
 
     bool isEditingHeightmap;
     bool isAdjustingBrushParameters;

@@ -13,6 +13,21 @@ enum RendererBufferType
     RENDERER_SHADER_STORAGE_BUFFER
 };
 
+enum RenderTargetFormat
+{
+    RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
+    RENDER_TARGET_FORMAT_R16
+};
+
+struct RenderTarget
+{
+    uint32 width;
+    uint32 height;
+    uint32 textureHandle;
+    uint32 depthBufferHandle;
+    uint32 framebufferHandle;
+};
+
 struct RenderContext;
 
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
@@ -142,6 +157,11 @@ typedef RENDERER_DISPATCH_COMPUTE(RendererDispatchCompute);
 #define RENDERER_SHADER_STORAGE_MEMORY_BARRIER(name) void name()
 typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrier);
 
+#define RENDERER_CREATE_RENDER_TARGET(name)                                                   \
+    RenderTarget *name(MemoryArena *arena, RenderContext *ctx, uint32 width, uint32 height,   \
+        RenderTargetFormat format)
+typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
+
 struct RenderQueue;
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
 typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
@@ -157,8 +177,7 @@ typedef RENDERER_CLEAR(RendererClear);
         uint32 textureHandle)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
-#define RENDERER_DRAW_TO_TARGET(name)                                                         \
-    void name(RenderQueue *rq, uint32 width, uint32 height, uint32 framebufferHandle)
+#define RENDERER_DRAW_TO_TARGET(name) void name(RenderQueue *rq, RenderTarget *target)
 typedef RENDERER_DRAW_TO_TARGET(RendererDrawToTarget);
 
 #define RENDERER_DRAW_TO_SCREEN(name) void name(RenderQueue *rq, uint32 width, uint32 height)

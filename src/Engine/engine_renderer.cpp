@@ -550,6 +550,81 @@ RENDERER_SHADER_STORAGE_MEMORY_BARRIER(rendererShaderStorageMemoryBarrier)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
+RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
+{
+    RenderTarget *result = pushStruct(arena, RenderTarget);
+    *result = {};
+    result->width = width;
+    result->height = height;
+
+    uint32 elementType = 0;
+    uint32 cpuFormat = 0;
+    uint32 gpuFormat = 0;
+    bool hasDepthBuffer = false;
+    if (format == RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH)
+    {
+        elementType = GL_UNSIGNED_BYTE;
+        cpuFormat = GL_RGB;
+        gpuFormat = GL_RGB;
+        hasDepthBuffer = true;
+    }
+    else if (format == RENDER_TARGET_FORMAT_R16)
+    {
+        elementType = GL_UNSIGNED_SHORT;
+        cpuFormat = GL_R16;
+        gpuFormat = GL_RED;
+        hasDepthBuffer = false;
+    }
+    else
+    {
+        assert(!"Unknown render target format");
+    }
+
+    // create target texture
+    assert(ctx->textureCount < RENDERER_MAX_TEXTURES);
+    uint32 *textureId = ctx->textureIds + ctx->textureCount;
+    result->textureHandle = ctx->textureCount++;
+    glGenTextures(1, textureId);
+    glBindTexture(GL_TEXTURE_2D, *textureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, 0);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    // create depth buffer
+    uint32 *depthBufferId = 0;
+    if (hasDepthBuffer)
+    {
+        assert(ctx->depthBufferCount < RENDERER_MAX_DEPTH_BUFFERS);
+        depthBufferId = ctx->depthBufferIds + ctx->depthBufferCount;
+        result->depthBufferHandle = ctx->depthBufferCount++;
+
+        glGenRenderbuffers(1, depthBufferId);
+        glBindRenderbuffer(GL_RENDERBUFFER, *depthBufferId);
+        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
+        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    }
+
+    // create framebuffer
+    assert(ctx->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
+    uint32 *framebufferId = ctx->framebufferIds + ctx->framebufferCount;
+    result->framebufferHandle = ctx->framebufferCount++;
+    ctx->framebufferTextureIds[result->framebufferHandle] = *textureId;
+    glGenFramebuffers(1, framebufferId);
+    glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, *textureId, 0);
+    if (hasDepthBuffer)
+    {
+        glFramebufferRenderbuffer(
+            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, *depthBufferId);
+    }
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return result;
+}
+
 RENDERER_CREATE_QUEUE(rendererCreateQueue)
 {
     RenderQueue *result = pushStruct(arena, RenderQueue);
@@ -590,13 +665,11 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     rq->quad.vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
 }
 
-void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebufferHandle)
+void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
 {
-    uint32 framebufferId = 0;
-    if (framebufferHandle)
+    if (target)
     {
-        assert(*framebufferHandle < rq->ctx->framebufferCount);
-        framebufferId = rq->ctx->framebufferIds[*framebufferHandle];
+        uint32 framebufferId = rq->ctx->framebufferIds[target->framebufferHandle];
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
     }
 
@@ -622,10 +695,10 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebuf
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
     }
 
-    if (framebufferHandle)
+    if (target)
     {
-        uint32 framebufferTextureId = rq->ctx->framebufferTextureIds[*framebufferHandle];
-        glBindTexture(GL_TEXTURE_2D, framebufferTextureId);
+        uint32 textureId = rq->ctx->textureIds[target->textureHandle];
+        glBindTexture(GL_TEXTURE_2D, textureId);
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
@@ -633,7 +706,7 @@ void drawToTarget(RenderQueue *rq, uint32 width, uint32 height, uint32 *framebuf
 
 RENDERER_DRAW_TO_TARGET(rendererDrawToTarget)
 {
-    drawToTarget(rq, width, height, &framebufferHandle);
+    drawToTarget(rq, target->width, target->height, target);
 }
 RENDERER_DRAW_TO_SCREEN(rendererDrawToScreen)
 {

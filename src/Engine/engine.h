@@ -62,6 +62,7 @@ struct EngineApi
     RendererDrawElementsInstanced *rendererDrawElementsInstanced;
     RendererDispatchCompute *rendererDispatchCompute;
     RendererShaderStorageMemoryBarrier *rendererShaderStorageMemoryBarrier;
+    RendererCreateRenderTarget *rendererCreateRenderTarget;
     RendererCreateQueue *rendererCreateQueue;
     RendererSetCamera *rendererSetCamera;
     RendererClear *rendererClear;
