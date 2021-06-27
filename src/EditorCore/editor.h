@@ -195,6 +195,8 @@ struct EditorState
 {
     bool isInitialized;
 
+    MemoryArena assetsArena;
+
     EditorAssets editorAssets;
     RenderContext *renderCtx;
     Assets *engineAssets;
@@ -246,7 +248,7 @@ struct EditorState
 
 struct EditorMemory
 {
-    MemoryArena data;
+    MemoryArena arena;
 
     PlatformCaptureMouse *platformCaptureMouse;
     PlatformPublishTransaction *platformPublishTransaction;

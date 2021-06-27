@@ -13,41 +13,9 @@ enum RendererBufferType
     RENDERER_SHADER_STORAGE_BUFFER
 };
 
-#define RENDERER_MAX_TEXTURES 128
-#define RENDERER_MAX_DEPTH_BUFFERS 128
-#define RENDERER_MAX_FRAMEBUFFERS 128
-#define RENDERER_MAX_SHADERS 128
-#define RENDERER_MAX_SHADER_PROGRAMS 128
-#define RENDERER_MAX_VERTEX_ARRAYS 128
-#define RENDERER_MAX_BUFFERS 128
-struct RenderContext
-{
-    uint32 textureCount;
-    uint32 textureIds[RENDERER_MAX_TEXTURES];
+struct RenderContext;
 
-    uint32 depthBufferCount;
-    uint32 depthBufferIds[RENDERER_MAX_DEPTH_BUFFERS];
-
-    uint32 framebufferCount;
-    uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
-    uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
-
-    uint32 shaderCount;
-    uint32 shaderIds[RENDERER_MAX_SHADERS];
-
-    uint32 shaderProgramCount;
-    uint32 shaderProgramIds[RENDERER_MAX_SHADER_PROGRAMS];
-
-    uint32 vertexArrayCount;
-    uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
-
-    uint32 bufferCount;
-    uint32 bufferIds[RENDERER_MAX_BUFFERS];
-    RendererBufferType bufferTypes[RENDERER_MAX_BUFFERS];
-    uint32 bufferUsages[RENDERER_MAX_BUFFERS];
-};
-
-#define RENDERER_INITIALIZE(name) void name(RenderContext *ctx)
+#define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
 #define RENDERER_UPDATE_CAMERA_STATE(name) void name(RenderContext *ctx, glm::mat4 *transform)

@@ -34,7 +34,9 @@ struct GameAssets
 
 struct GameState
 {
-    RenderContext renderCtx;
+    MemoryArena assetsArena;
+
+    RenderContext *renderCtx;
     Assets *engineAssets;
 
     GameAssets gameAssets;
@@ -122,7 +124,7 @@ struct GameMemory
     GameState state;
 
     EngineApi *engine;
-    MemoryArena assetMemory;
+    MemoryArena arena;
 };
 
 struct Viewport

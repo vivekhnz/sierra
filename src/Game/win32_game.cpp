@@ -379,9 +379,9 @@ int32 main()
 #define APP_MEMORY_SIZE (500 * 1024 * 1024)
     uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
     uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
-    uint8 *assetMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
-    uint64 assetMemorySize =
-        APP_MEMORY_SIZE - (assetMemoryBaseAddress - platformMemoryBaseAddress);
+    uint8 *gameDataMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
+    uint64 gameDataMemorySize =
+        (platformMemoryBaseAddress + APP_MEMORY_SIZE) - gameDataMemoryBaseAddress;
 
     platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
     GameMemory *gameMemory = (GameMemory *)gameMemoryBaseAddress;
@@ -409,9 +409,9 @@ int32 main()
         win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
 
     // initialize game memory
-    gameMemory->assetMemory.baseAddress = assetMemoryBaseAddress;
-    gameMemory->assetMemory.size = assetMemorySize;
-    gameMemory->assetMemory.used = 0;
+    gameMemory->arena.baseAddress = gameDataMemoryBaseAddress;
+    gameMemory->arena.size = gameDataMemorySize;
+    gameMemory->arena.used = 0;
     gameMemory->platformExitGame = win32ExitGame;
     gameMemory->platformCaptureMouse = win32CaptureMouse;
     gameMemory->platformQueueAssetLoad = win32QueueAssetLoad;

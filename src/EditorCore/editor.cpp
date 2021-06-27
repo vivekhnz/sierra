@@ -95,23 +95,19 @@ RenderTexture createHeightmapRenderTexture(EditorMemory *memory, RenderContext *
     return result;
 }
 
-bool initializeEditor(EditorMemory *memory)
+void initializeEditor(EditorMemory *memory)
 {
-    EditorState *state = pushStruct(&memory->data, EditorState);
-    state->renderCtx = pushStruct(&memory->data, RenderContext);
-
-    MemoryArena *assetMemory = pushStruct(&memory->data, MemoryArena);
-    assetMemory->size = 200 * 1024 * 1024;
-    assetMemory->baseAddress = pushSize(&memory->data, assetMemory->size);
-    assetMemory->used = 0;
-
+    assert(memory->arena.used == 0);
+    EditorState *state = pushStruct(&memory->arena, EditorState);
     EngineApi *engine = memory->engineApi;
-    EditorAssets *editorAssets = &state->editorAssets;
+
+    state->renderCtx = engine->rendererInitialize(&memory->arena);
     RenderContext *rctx = state->renderCtx;
 
-    engine->rendererInitialize(rctx);
-    state->engineAssets = engine->assetsInitialize(assetMemory, rctx);
+    state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
+    state->engineAssets = engine->assetsInitialize(&state->assetsArena, rctx);
     Assets *assets = state->engineAssets;
+    EditorAssets *editorAssets = &state->editorAssets;
 
     AssetHandle shaderTextureVertex =
         engine->assetsRegisterShader(assets, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
@@ -318,7 +314,7 @@ bool initializeEditor(EditorMemory *memory)
 
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer =
-        (uint16 *)pushSize(&memory->data, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
+        (uint16 *)pushSize(&memory->arena, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
 
     sceneState->heightfield = {};
     sceneState->heightfield.columns = HEIGHTFIELD_COLUMNS;
@@ -452,7 +448,7 @@ bool initializeEditor(EditorMemory *memory)
         block->transactions = &state->transactions;
         block->tx.commandBufferMaxSize = 1 * 1024 * 1024;
         block->tx.commandBufferBaseAddress =
-            pushSize(&memory->data, block->tx.commandBufferMaxSize);
+            pushSize(&memory->arena, block->tx.commandBufferMaxSize);
         clearTransaction(&block->tx);
 
         block->prev = prevBlock;
@@ -461,7 +457,7 @@ bool initializeEditor(EditorMemory *memory)
     state->transactions.nextFreeActive = prevBlock;
     state->transactions.committedSize = 1 * 1024 * 1024;
     state->transactions.committedBaseAddress =
-        pushSize(&memory->data, state->transactions.committedSize);
+        pushSize(&memory->arena, state->transactions.committedSize);
 
     // add default materials
     Transaction *addMaterialsTx = beginTransaction(&state->transactions);
@@ -527,8 +523,6 @@ bool initializeEditor(EditorMemory *memory)
         }
         commitTransaction(addObjectsTx);
     }
-
-    return 1;
 }
 
 void compositeHeightmap(EditorMemory *memory,
@@ -542,7 +536,7 @@ void compositeHeightmap(EditorMemory *memory,
 {
     assert(blendProps->iterations % 2 == 1);
     EngineApi *engine = memory->engineApi;
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     RenderContext *rctx = state->renderCtx;
 
     float brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
@@ -639,7 +633,7 @@ void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
 void commitChanges(EditorMemory *memory)
 {
     EngineApi *engine = memory->engineApi;
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     RenderContext *rctx = state->renderCtx;
 
 #if 0
@@ -656,8 +650,8 @@ void commitChanges(EditorMemory *memory)
     if (!quadShaderProgram->shaderProgram)
         return;
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
-    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->data);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
@@ -672,7 +666,7 @@ void commitChanges(EditorMemory *memory)
 
 void discardChanges(EditorMemory *memory)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
@@ -858,7 +852,7 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
 
 void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
     EngineApi *engine = memory->engineApi;
     RenderContext *rctx = state->renderCtx;
@@ -960,16 +954,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
 
     if (!state->isInitialized)
     {
-        if (!initializeEditor(memory))
-        {
-            assert(!"Failed to initialize editor");
-            return;
-        }
+        initializeEditor(memory);
         state->isInitialized = true;
     }
 
@@ -1030,8 +1020,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
         engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
 #else
-        TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
-        RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->data);
+        TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+        RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(rq, quadShaderProgram->shaderProgram->handle,
@@ -1381,14 +1371,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     EngineApi *engine = memory->engineApi;
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     RenderContext *rctx = state->renderCtx;
     EditorAssets *editorAssets = &state->editorAssets;
     SceneState *sceneState = &state->sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
     {
-        viewState = pushStruct(&memory->data, SceneViewState);
+        viewState = pushStruct(&memory->arena, SceneViewState);
         viewState->orbitCameraDistance = 112.5f;
         viewState->orbitCameraYaw = glm::radians(180.0f);
         viewState->orbitCameraPitch = glm::radians(15.0f);
@@ -1640,7 +1630,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     EngineApi *engine = memory->engineApi;
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     RenderContext *rctx = state->renderCtx;
 
 #if 0
@@ -1653,8 +1643,8 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 #else
     EditorAssets *editorAssets = &state->editorAssets;
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
-    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->data);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
 
@@ -1673,19 +1663,19 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 
 API_EXPORT EDITOR_GET_UI_STATE(editorGetUiState)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     return &state->uiState;
 }
 
 API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(editorGetImportedHeightmapAssetHandle)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     return state->editorAssets.textureVirtualImportedHeightmap;
 }
 
 API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1707,7 +1697,7 @@ API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 
 API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1720,7 +1710,7 @@ API_EXPORT EDITOR_DELETE_MATERIAL(editorDeleteMaterial)
 
 API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1734,7 +1724,7 @@ API_EXPORT EDITOR_SWAP_MATERIAL(editorSwapMaterial)
 
 API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1749,7 +1739,7 @@ API_EXPORT EDITOR_SET_MATERIAL_TEXTURE(editorSetMaterialTexture)
 
 API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1767,7 +1757,7 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
 
 API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1780,7 +1770,7 @@ API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
 
 API_EXPORT EDITOR_DELETE_OBJECT(editorDeleteObject)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     Transaction *tx = beginTransaction(&state->transactions);
     if (tx)
@@ -1793,7 +1783,7 @@ API_EXPORT EDITOR_DELETE_OBJECT(editorDeleteObject)
 
 API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     EditorDocumentState *docState = &state->previewDocState;
 
     for (uint32 i = 0; i < docState->objectInstanceCount; i++)
@@ -1808,7 +1798,7 @@ API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
 
 API_EXPORT EDITOR_BEGIN_TRANSACTION(editorBeginTransaction)
 {
-    EditorState *state = (EditorState *)memory->data.baseAddress;
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     Transaction *tx = beginTransaction(&state->transactions);
     return tx;
 }

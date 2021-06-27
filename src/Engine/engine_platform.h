@@ -43,6 +43,16 @@ inline void *pushSize(MemoryArena *arena, uint64 size)
 }
 #define pushStruct(arena, struct) (struct *)pushSize(arena, sizeof(struct))
 
+inline MemoryArena pushSubArena(MemoryArena *arena, uint64 size)
+{
+    MemoryArena result = {};
+    result.size = size;
+    result.baseAddress = pushSize(arena, result.size);
+    result.used = 0;
+
+    return result;
+}
+
 struct TemporaryMemory
 {
     MemoryArena *arena;

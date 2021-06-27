@@ -15,10 +15,12 @@ bool initializeGame(GameMemory *memory)
     GameState *state = &memory->state;
     GameAssets *gameAssets = &state->gameAssets;
     EngineApi *engine = memory->engine;
-    RenderContext *rctx = &state->renderCtx;
 
-    engine->rendererInitialize(rctx);
-    state->engineAssets = engine->assetsInitialize(&memory->assetMemory, rctx);
+    state->renderCtx = engine->rendererInitialize(&memory->arena);
+    RenderContext *rctx = state->renderCtx;
+
+    state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
+    state->engineAssets = engine->assetsInitialize(&state->assetsArena, rctx);
     Assets *assets = state->engineAssets;
 
     AssetHandle shaderTerrainVertex =
@@ -265,7 +267,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     EngineApi *engine = memory->engine;
     GameState *state = &memory->state;
     GameAssets *gameAssets = &state->gameAssets;
-    RenderContext *rctx = &state->renderCtx;
+    RenderContext *rctx = state->renderCtx;
 
     bool isLightingStateUpdated = false;
     glm::vec4 lightDir = glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f);

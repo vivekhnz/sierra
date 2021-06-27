@@ -1,5 +1,13 @@
 #include "engine_renderer.h"
 
+#define RENDERER_MAX_TEXTURES 128
+#define RENDERER_MAX_DEPTH_BUFFERS 128
+#define RENDERER_MAX_FRAMEBUFFERS 128
+#define RENDERER_MAX_SHADERS 128
+#define RENDERER_MAX_SHADER_PROGRAMS 128
+#define RENDERER_MAX_VERTEX_ARRAYS 128
+#define RENDERER_MAX_BUFFERS 128
+
 extern EnginePlatformApi Platform;
 
 enum RendererUniformBuffer
@@ -8,6 +16,33 @@ enum RendererUniformBuffer
     RENDERER_UNIFORM_BUFFER_LIGHTING,
 
     RENDERER_UNIFORM_BUFFER_COUNT
+};
+
+struct RenderContext
+{
+    uint32 textureCount;
+    uint32 textureIds[RENDERER_MAX_TEXTURES];
+
+    uint32 depthBufferCount;
+    uint32 depthBufferIds[RENDERER_MAX_DEPTH_BUFFERS];
+
+    uint32 framebufferCount;
+    uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
+    uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
+
+    uint32 shaderCount;
+    uint32 shaderIds[RENDERER_MAX_SHADERS];
+
+    uint32 shaderProgramCount;
+    uint32 shaderProgramIds[RENDERER_MAX_SHADER_PROGRAMS];
+
+    uint32 vertexArrayCount;
+    uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
+
+    uint32 bufferCount;
+    uint32 bufferIds[RENDERER_MAX_BUFFERS];
+    RendererBufferType bufferTypes[RENDERER_MAX_BUFFERS];
+    uint32 bufferUsages[RENDERER_MAX_BUFFERS];
 };
 
 struct RenderQueue
@@ -64,13 +99,13 @@ uint32 getOpenGLBufferType(RendererBufferType type)
 
 RENDERER_INITIALIZE(rendererInitialize)
 {
+    RenderContext *ctx = pushStruct(arena, RenderContext);
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-    // note: we assume that this is called before any vertex or element buffers are created
-    assert(ctx->bufferCount == 0);
     glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, ctx->bufferIds);
     ctx->bufferCount = RENDERER_UNIFORM_BUFFER_COUNT;
 
@@ -95,6 +130,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
         sizeof(lighting));
+
+    return ctx;
 }
 
 RENDERER_UPDATE_CAMERA_STATE(rendererUpdateCameraState)
