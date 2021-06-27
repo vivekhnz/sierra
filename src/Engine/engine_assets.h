@@ -13,7 +13,7 @@ enum AssetType
 
 struct ShaderAsset
 {
-    uint32 handle;
+    uint32 id;
 };
 struct ShaderProgramAsset
 {

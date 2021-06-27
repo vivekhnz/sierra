@@ -1,7 +1,6 @@
 #include "engine_renderer.h"
 
 #define RENDERER_MAX_FRAMEBUFFERS 128
-#define RENDERER_MAX_SHADERS 128
 #define RENDERER_MAX_SHADER_PROGRAMS 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
 #define RENDERER_MAX_BUFFERS 128
@@ -21,9 +20,6 @@ struct RenderContext
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
     uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
-
-    uint32 shaderCount;
-    uint32 shaderIds[RENDERER_MAX_SHADERS];
 
     uint32 shaderProgramCount;
     uint32 shaderProgramIds[RENDERER_MAX_SHADER_PROGRAMS];
@@ -259,8 +255,6 @@ RENDERER_UNBIND_FRAMEBUFFER(rendererUnbindFramebuffer)
 
 RENDERER_CREATE_SHADER(rendererCreateShader)
 {
-    assert(ctx->shaderCount < RENDERER_MAX_SHADERS);
-
     uint32 id = glCreateShader(type);
     glShaderSource(id, 1, &src, NULL);
 
@@ -269,9 +263,7 @@ RENDERER_CREATE_SHADER(rendererCreateShader)
     glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
     if (succeeded)
     {
-        ctx->shaderIds[ctx->shaderCount] = id;
-        *out_handle = ctx->shaderCount++;
-
+        *out_id = id;
         return 1;
     }
     else
@@ -291,7 +283,7 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
     uint32 id = glCreateProgram();
     for (int i = 0; i < shaderCount; i++)
     {
-        glAttachShader(id, ctx->shaderIds[shaderHandles[i]]);
+        glAttachShader(id, shaderIds[i]);
     }
 
     glLinkProgram(id);
@@ -301,7 +293,7 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
     {
         for (int i = 0; i < shaderCount; i++)
         {
-            glDetachShader(id, ctx->shaderIds[shaderHandles[i]]);
+            glDetachShader(id, shaderIds[i]);
         }
 
         ctx->shaderProgramIds[ctx->shaderProgramCount] = id;

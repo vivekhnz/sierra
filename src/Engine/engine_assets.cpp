@@ -135,15 +135,15 @@ bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **d
     uint32 assetType = ASSET_GET_TYPE(reg->handle->id);
     if (assetType == ASSET_TYPE_SHADER_PROGRAM)
     {
-        uint32 shaderHandles[MAX_DEPENDENCIES_PER_ASSET];
+        uint32 shaderIds[MAX_DEPENDENCIES_PER_ASSET];
         for (uint32 i = 0; i < reg->compositeState->dependencyCount; i++)
         {
-            shaderHandles[i] = deps[i]->shader->handle;
+            shaderIds[i] = deps[i]->shader->id;
         }
 
         uint32 handle;
-        if (rendererCreateShaderProgram(assets->renderCtx,
-                reg->compositeState->dependencyCount, shaderHandles, &handle))
+        if (rendererCreateShaderProgram(
+                assets->renderCtx, reg->compositeState->dependencyCount, shaderIds, &handle))
         {
             if (!reg->asset.shaderProgram)
             {
@@ -324,14 +324,14 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     if (assetType == ASSET_TYPE_SHADER)
     {
         char *src = static_cast<char *>(data);
-        uint32 handle;
-        if (rendererCreateShader(assets->renderCtx, reg->metadata.shader->type, src, &handle))
+        uint32 id;
+        if (rendererCreateShader(reg->metadata.shader->type, src, &id))
         {
             if (!reg->asset.shader)
             {
                 reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
             }
-            reg->asset.shader->handle = handle;
+            reg->asset.shader->id = id;
         }
     }
     else if (assetType == ASSET_TYPE_TEXTURE)

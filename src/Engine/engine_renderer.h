@@ -75,12 +75,11 @@ typedef RENDERER_BIND_FRAMEBUFFER(RendererBindFramebuffer);
 #define RENDERER_UNBIND_FRAMEBUFFER(name) void name(RenderContext *ctx, uint32 handle)
 typedef RENDERER_UNBIND_FRAMEBUFFER(RendererUnbindFramebuffer);
 
-#define RENDERER_CREATE_SHADER(name)                                                          \
-    bool name(RenderContext *ctx, uint32 type, char *src, uint32 *out_handle)
+#define RENDERER_CREATE_SHADER(name) bool name(uint32 type, char *src, uint32 *out_id)
 typedef RENDERER_CREATE_SHADER(RendererCreateShader);
 
 #define RENDERER_CREATE_SHADER_PROGRAM(name)                                                  \
-    bool name(RenderContext *ctx, int shaderCount, uint32 *shaderHandles, uint32 *out_handle)
+    bool name(RenderContext *ctx, int shaderCount, uint32 *shaderIds, uint32 *out_handle)
 typedef RENDERER_CREATE_SHADER_PROGRAM(RendererCreateShaderProgram);
 #define RENDERER_USE_SHADER_PROGRAM(name) void name(RenderContext *ctx, uint32 handle)
 typedef RENDERER_USE_SHADER_PROGRAM(RendererUseShaderProgram);
