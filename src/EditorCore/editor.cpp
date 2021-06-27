@@ -23,36 +23,6 @@ enum BrushVisualizationMode
     BRUSH_VIS_MODE_HIGHLIGHT_CURSOR = 3
 };
 
-void *pushEditorData(EditorMemory *memory, uint64 size)
-{
-    uint64 availableStorage = memory->data.size - memory->dataStorageUsed;
-    assert(availableStorage >= size);
-
-    void *address = (uint8 *)memory->data.baseAddress + memory->dataStorageUsed;
-    memory->dataStorageUsed += size;
-
-    return address;
-}
-#define pushEditorStruct(memory, struct) (struct *)pushEditorData(memory, sizeof(struct))
-
-struct TemporaryMemory
-{
-    EditorMemory *memory;
-    uint64 dataStorageUsed;
-};
-TemporaryMemory beginTemporaryMemory(EditorMemory *memory)
-{
-    TemporaryMemory temp = {};
-    temp.memory = memory;
-    temp.dataStorageUsed = memory->dataStorageUsed;
-
-    return temp;
-}
-void endTemporaryMemory(TemporaryMemory *temp)
-{
-    temp->memory->dataStorageUsed = temp->dataStorageUsed;
-}
-
 bool isButtonDown(EditorInput *input, EditorInputButtons button)
 {
     return input->pressedButtons & button;
@@ -127,13 +97,14 @@ RenderTexture createHeightmapRenderTexture(EditorMemory *memory, RenderContext *
 
 bool initializeEditor(EditorMemory *memory)
 {
-    EditorState *state = pushEditorStruct(memory, EditorState);
-    state->renderCtx = pushEditorStruct(memory, RenderContext);
-    state->engineAssets = pushEditorStruct(memory, Assets);
+    EditorState *state = pushStruct(&memory->data, EditorState);
+    state->renderCtx = pushStruct(&memory->data, RenderContext);
+    state->engineAssets = pushStruct(&memory->data, Assets);
 
-    MemoryBlock *assetMemory = pushEditorStruct(memory, MemoryBlock);
+    MemoryArena *assetMemory = pushStruct(&memory->data, MemoryArena);
     assetMemory->size = 200 * 1024 * 1024;
-    assetMemory->baseAddress = pushEditorData(memory, assetMemory->size);
+    assetMemory->baseAddress = pushSize(&memory->data, assetMemory->size);
+    assetMemory->used = 0;
 
     EngineApi *engine = memory->engineApi;
     EditorAssets *editorAssets = &state->editorAssets;
@@ -348,7 +319,7 @@ bool initializeEditor(EditorMemory *memory)
 
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer =
-        (uint16 *)pushEditorData(memory, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
+        (uint16 *)pushSize(&memory->data, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
 
     sceneState->heightfield = {};
     sceneState->heightfield.columns = HEIGHTFIELD_COLUMNS;
@@ -482,7 +453,7 @@ bool initializeEditor(EditorMemory *memory)
         block->transactions = &state->transactions;
         block->tx.commandBufferMaxSize = 1 * 1024 * 1024;
         block->tx.commandBufferBaseAddress =
-            pushEditorData(memory, block->tx.commandBufferMaxSize);
+            pushSize(&memory->data, block->tx.commandBufferMaxSize);
         clearTransaction(&block->tx);
 
         block->prev = prevBlock;
@@ -491,7 +462,7 @@ bool initializeEditor(EditorMemory *memory)
     state->transactions.nextFreeActive = prevBlock;
     state->transactions.committedSize = 1 * 1024 * 1024;
     state->transactions.committedBaseAddress =
-        pushEditorData(memory, state->transactions.committedSize);
+        pushSize(&memory->data, state->transactions.committedSize);
 
     // add default materials
     Transaction *addMaterialsTx = beginTransaction(&state->transactions);
@@ -686,9 +657,9 @@ void commitChanges(EditorMemory *memory)
     if (!quadShaderProgram->shaderProgram)
         return;
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
     uint64 renderQueueMaxSize = 1 * 1024 * 1024;
-    void *renderQueueBaseAddress = pushEditorData(memory, renderQueueMaxSize);
+    void *renderQueueBaseAddress = pushSize(&memory->data, renderQueueMaxSize);
 
     RenderQueue *rq =
         engine->rendererCreateQueue(rctx, renderQueueBaseAddress, renderQueueMaxSize);
@@ -1065,9 +1036,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
         engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
 #else
-        TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
+        TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
         uint64 renderQueueMaxSize = 1 * 1024 * 1024;
-        void *renderQueueBaseAddress = pushEditorData(memory, renderQueueMaxSize);
+        void *renderQueueBaseAddress = pushSize(&memory->data, renderQueueMaxSize);
 
         RenderQueue *rq =
             engine->rendererCreateQueue(rctx, renderQueueBaseAddress, renderQueueMaxSize);
@@ -1428,7 +1399,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
     {
-        viewState = pushEditorStruct(memory, SceneViewState);
+        viewState = pushStruct(&memory->data, SceneViewState);
         viewState->orbitCameraDistance = 112.5f;
         viewState->orbitCameraYaw = glm::radians(180.0f);
         viewState->orbitCameraPitch = glm::radians(15.0f);
@@ -1693,9 +1664,9 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 #else
     EditorAssets *editorAssets = &state->editorAssets;
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(memory);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->data);
     uint64 renderQueueMaxSize = 1 * 1024 * 1024;
-    void *renderQueueBaseAddress = pushEditorData(memory, renderQueueMaxSize);
+    void *renderQueueBaseAddress = pushSize(&memory->data, renderQueueMaxSize);
 
     RenderQueue *rq =
         engine->rendererCreateQueue(rctx, renderQueueBaseAddress, renderQueueMaxSize);

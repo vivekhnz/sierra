@@ -411,6 +411,7 @@ int32 main()
     // initialize game memory
     gameMemory->assetMemory.baseAddress = assetMemoryBaseAddress;
     gameMemory->assetMemory.size = assetMemorySize;
+    gameMemory->assetMemory.used = 0;
     gameMemory->platformExitGame = win32ExitGame;
     gameMemory->platformCaptureMouse = win32CaptureMouse;
     gameMemory->platformQueueAssetLoad = win32QueueAssetLoad;

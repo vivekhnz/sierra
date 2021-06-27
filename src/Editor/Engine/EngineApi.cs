@@ -4,10 +4,11 @@ using System.Runtime.InteropServices;
 namespace Terrain.Editor.Engine
 {
     [StructLayout(LayoutKind.Sequential)]
-    struct MemoryBlock
+    struct MemoryArena
     {
         public IntPtr BaseAddress;
         public ulong Size;
+        public ulong Used;
     }
 
     internal delegate void PlatformLogMessage(string message);

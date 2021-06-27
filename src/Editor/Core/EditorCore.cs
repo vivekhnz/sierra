@@ -11,8 +11,7 @@ namespace Terrain.Editor.Core
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorMemory
     {
-        public MemoryBlock Data;
-        public ulong DataStorageUsed;
+        public MemoryArena Data;
 
         public PlatformCaptureMouse PlatformCaptureMouse;
         public PlatformPublishTransaction PlatformPublishTransaction;
@@ -319,12 +318,12 @@ namespace Terrain.Editor.Core
 
             memory = new EditorMemory
             {
-                Data = new MemoryBlock
+                Data = new MemoryArena
                 {
                     BaseAddress = appMemoryDataPtr,
-                    Size = (ulong)appMemorySizeInBytes
+                    Size = (ulong)appMemorySizeInBytes,
+                    Used = 0
                 },
-                DataStorageUsed = 0,
                 PlatformCaptureMouse = captureMouse,
                 PlatformPublishTransaction = OnTransactionPublished
             };

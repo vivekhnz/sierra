@@ -246,8 +246,7 @@ struct EditorState
 
 struct EditorMemory
 {
-    MemoryBlock data;
-    uint64 dataStorageUsed;
+    MemoryArena data;
 
     PlatformCaptureMouse *platformCaptureMouse;
     PlatformPublishTransaction *platformPublishTransaction;

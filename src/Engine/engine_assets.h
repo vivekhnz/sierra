@@ -97,17 +97,15 @@ struct AssetRegistration
 #define MAX_ASSETS 4096
 struct Assets
 {
-    MemoryBlock *data;
+    MemoryArena *data;
     RenderContext *renderCtx;
 
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
-
-    uint64 dataStorageUsed;
 };
 
 #define ASSETS_INITIALIZE(name)                                                               \
-    void name(Assets *assets, MemoryBlock *memory, RenderContext *rctx)
+    void name(Assets *assets, MemoryArena *memory, RenderContext *rctx)
 typedef ASSETS_INITIALIZE(AssetsInitialize);
 
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \

@@ -25,11 +25,40 @@ typedef uint64_t uint64;
 #define assert(expr)
 #endif
 
-struct MemoryBlock
+struct MemoryArena
 {
     void *baseAddress;
     uint64 size;
+    uint64 used;
 };
+inline void *pushSize(MemoryArena *arena, uint64 size)
+{
+    uint64 availableStorage = arena->size - arena->used;
+    assert(availableStorage >= size);
+
+    void *address = (uint8 *)arena->baseAddress + arena->used;
+    arena->used += size;
+
+    return address;
+}
+#define pushStruct(memory, struct) (struct *)pushSize(memory, sizeof(struct))
+
+struct TemporaryMemory
+{
+    MemoryArena *arena;
+    uint64 used;
+};
+inline TemporaryMemory beginTemporaryMemory(MemoryArena *arena)
+{
+    TemporaryMemory temp = {};
+    temp.arena = arena;
+    temp.used = arena->used;
+    return temp;
+}
+inline void endTemporaryMemory(TemporaryMemory *temp)
+{
+    temp->arena->used = temp->used;
+}
 
 typedef void *AssetHandle;
 
