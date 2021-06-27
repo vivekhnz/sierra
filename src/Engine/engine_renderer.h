@@ -31,7 +31,8 @@ struct RenderTarget
 
 struct RenderContext;
 
-#define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
+#define RENDERER_INITIALIZE(name)                                                             \
+    RenderContext *name(MemoryArena *arena, AssetHandle quadShaderProgramHandle)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
 #define RENDERER_UPDATE_CAMERA_STATE(name) void name(RenderContext *ctx, glm::mat4 *transform)
@@ -167,8 +168,7 @@ typedef RENDERER_SET_CAMERA(RendererSetCamera);
 typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
-    void name(RenderQueue *rq, AssetHandle shaderProgramHandle, uint32 vertexArrayHandle,     \
-        uint32 textureId)
+    void name(RenderQueue *rq, uint32 vertexArrayHandle, uint32 textureId)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

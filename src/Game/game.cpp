@@ -16,13 +16,14 @@ bool initializeGame(GameMemory *memory)
     GameAssets *gameAssets = &state->gameAssets;
     EngineApi *engine = memory->engine;
 
-    state->renderCtx = engine->rendererInitialize(&memory->arena);
-    RenderContext *rctx = state->renderCtx;
-
     state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
     state->engineAssets = engine->assetsInitialize(&state->assetsArena);
     Assets *assets = state->engineAssets;
 
+    AssetHandle shaderTextureVertex =
+        engine->assetsRegisterShader(assets, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
+        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderTerrainVertex =
         engine->assetsRegisterShader(assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(
@@ -64,6 +65,10 @@ bool initializeGame(GameMemory *memory)
     gameAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
         assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
 
+    AssetHandle quadShaderAssetHandles[] = {shaderTextureVertex, shaderTextureFragment};
+    AssetHandle quadShaderProgramHandle = engine->assetsRegisterShaderProgram(
+        assets, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
+
     gameAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
     gameAssets->textureGroundNormal =
@@ -88,6 +93,9 @@ bool initializeGame(GameMemory *memory)
     gameAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
 
     gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, true);
+
+    state->renderCtx = engine->rendererInitialize(&memory->arena, quadShaderProgramHandle);
+    RenderContext *rctx = state->renderCtx;
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;

@@ -21,6 +21,8 @@ enum RendererUniformBuffer
 
 struct RenderContext
 {
+    AssetHandle quadShaderProgramHandle;
+
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
     uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -99,6 +101,7 @@ uint32 getOpenGLBufferType(RendererBufferType type)
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
+    ctx->quadShaderProgramHandle = quadShaderProgramHandle;
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
@@ -586,7 +589,7 @@ RENDERER_CLEAR(rendererClear)
 
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
-    LoadedAsset *shaderProgram = assetsGetShaderProgram(shaderProgramHandle);
+    LoadedAsset *shaderProgram = assetsGetShaderProgram(rq->ctx->quadShaderProgramHandle);
     if (shaderProgram->shaderProgram)
     {
         rq->quad.render = true;
