@@ -17,7 +17,7 @@ struct ShaderAsset
 };
 struct ShaderProgramAsset
 {
-    uint32 handle;
+    uint32 id;
 };
 struct TextureAsset
 {
@@ -67,8 +67,6 @@ struct CompositeAssetState
     uint8 *dependencyVersions;
 };
 
-struct RenderContext;
-
 enum AssetRegistrationType
 {
     ASSET_REG_FILE,
@@ -96,7 +94,7 @@ struct AssetRegistration
 
 struct Assets;
 
-#define ASSETS_INITIALIZE(name) Assets *name(MemoryArena *arena, RenderContext *rctx)
+#define ASSETS_INITIALIZE(name) Assets *name(MemoryArena *arena)
 typedef ASSETS_INITIALIZE(AssetsInitialize);
 
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \

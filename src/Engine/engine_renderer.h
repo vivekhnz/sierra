@@ -43,29 +43,28 @@ typedef RENDERER_UPDATE_CAMERA_STATE(RendererUpdateCameraState);
 typedef RENDERER_UPDATE_LIGHTING_STATE(RendererUpdateLightingState);
 
 #define RENDERER_CREATE_TEXTURE(name)                                                         \
-    uint32 name(RenderContext *ctx, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat,   \
-        uint32 width, uint32 height, uint32 wrapMode, uint32 filterMode)
+    uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width,         \
+        uint32 height, uint32 wrapMode, uint32 filterMode)
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
-#define RENDERER_BIND_TEXTURE(name) void name(RenderContext *ctx, uint32 id, uint8 slot)
+#define RENDERER_BIND_TEXTURE(name) void name(uint32 id, uint8 slot)
 typedef RENDERER_BIND_TEXTURE(RendererBindTexture);
 #define RENDERER_UPDATE_TEXTURE(name)                                                         \
-    void name(RenderContext *ctx, uint32 id, uint32 elementType, uint32 cpuFormat,            \
-        uint32 gpuFormat, uint32 width, uint32 height, void *pixels)
+    void name(uint32 id, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat,              \
+        uint32 width, uint32 height, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
 #define RENDERER_READ_TEXTURE_PIXELS(name)                                                    \
-    void name(RenderContext *ctx, uint32 id, uint32 elementType, uint32 gpuFormat,            \
-        void *out_pixels)
+    void name(uint32 id, uint32 elementType, uint32 gpuFormat, void *out_pixels)
 typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                   \
-    uint32 name(RenderContext *ctx, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat,   \
-        uint32 width, uint32 height, uint32 layers, uint32 wrapMode, uint32 filterMode)
+    uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width,         \
+        uint32 height, uint32 layers, uint32 wrapMode, uint32 filterMode)
 typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
-#define RENDERER_BIND_TEXTURE_ARRAY(name) void name(RenderContext *ctx, uint32 id, uint8 slot)
+#define RENDERER_BIND_TEXTURE_ARRAY(name) void name(uint32 id, uint8 slot)
 typedef RENDERER_BIND_TEXTURE_ARRAY(RendererBindTextureArray);
 #define RENDERER_UPDATE_TEXTURE_ARRAY(name)                                                   \
-    void name(RenderContext *ctx, uint32 id, uint32 elementType, uint32 gpuFormat,            \
-        uint32 width, uint32 height, uint32 layer, void *pixels)
+    void name(uint32 id, uint32 elementType, uint32 gpuFormat, uint32 width, uint32 height,   \
+        uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
 #define RENDERER_CREATE_FRAMEBUFFER(name) uint32 name(RenderContext *ctx, uint32 textureId)
@@ -79,27 +78,27 @@ typedef RENDERER_UNBIND_FRAMEBUFFER(RendererUnbindFramebuffer);
 typedef RENDERER_CREATE_SHADER(RendererCreateShader);
 
 #define RENDERER_CREATE_SHADER_PROGRAM(name)                                                  \
-    bool name(RenderContext *ctx, int shaderCount, uint32 *shaderIds, uint32 *out_handle)
+    bool name(int shaderCount, uint32 *shaderIds, uint32 *out_id)
 typedef RENDERER_CREATE_SHADER_PROGRAM(RendererCreateShaderProgram);
-#define RENDERER_USE_SHADER_PROGRAM(name) void name(RenderContext *ctx, uint32 handle)
+#define RENDERER_USE_SHADER_PROGRAM(name) void name(uint32 id)
 typedef RENDERER_USE_SHADER_PROGRAM(RendererUseShaderProgram);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(name)                                       \
-    void name(RenderContext *ctx, uint32 handle, const char *uniformName, float value)
+    void name(uint32 id, const char *uniformName, float value)
 typedef RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(RendererSetShaderProgramUniformFloat);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_INTEGER(name)                                     \
-    void name(RenderContext *ctx, uint32 handle, const char *uniformName, int32 value)
+    void name(uint32 id, const char *uniformName, int32 value)
 typedef RENDERER_SET_SHADER_PROGRAM_UNIFORM_INTEGER(RendererSetShaderProgramUniformInteger);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR2(name)                                     \
-    void name(RenderContext *ctx, uint32 handle, const char *uniformName, glm::vec2 value)
+    void name(uint32 id, const char *uniformName, glm::vec2 value)
 typedef RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR2(RendererSetShaderProgramUniformVector2);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR3(name)                                     \
-    void name(RenderContext *ctx, uint32 handle, const char *uniformName, glm::vec3 value)
+    void name(uint32 id, const char *uniformName, glm::vec3 value)
 typedef RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR3(RendererSetShaderProgramUniformVector3);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR4(name)                                     \
-    void name(RenderContext *ctx, uint32 handle, const char *uniformName, glm::vec4 value)
+    void name(uint32 id, const char *uniformName, glm::vec4 value)
 typedef RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR4(RendererSetShaderProgramUniformVector4);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_MATRIX4X4(name)                                   \
-    void name(RenderContext *ctx, uint32 handle, const char *uniformName, glm::mat4 value)
+    void name(uint32 id, const char *uniformName, glm::mat4 value)
 typedef RENDERER_SET_SHADER_PROGRAM_UNIFORM_MATRIX4X4(
     RendererSetShaderProgramUniformMatrix4x4);
 
@@ -168,8 +167,8 @@ typedef RENDERER_SET_CAMERA(RendererSetCamera);
 typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
-    void name(RenderQueue *rq, uint32 shaderProgramHandle, uint32 vertexArrayHandle,          \
-        uint32 textureId)
+    void name(                                                                                \
+        RenderQueue *rq, uint32 shaderProgramId, uint32 vertexArrayHandle, uint32 textureId)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) void name(RenderQueue *rq, RenderTarget *target)

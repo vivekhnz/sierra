@@ -21,9 +21,6 @@ struct RenderContext
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
     uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
 
-    uint32 shaderProgramCount;
-    uint32 shaderProgramIds[RENDERER_MAX_SHADER_PROGRAMS];
-
     uint32 vertexArrayCount;
     uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
 
@@ -278,8 +275,6 @@ RENDERER_CREATE_SHADER(rendererCreateShader)
 
 RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
 {
-    assert(ctx->shaderProgramCount < RENDERER_MAX_SHADER_PROGRAMS);
-
     uint32 id = glCreateProgram();
     for (int i = 0; i < shaderCount; i++)
     {
@@ -295,9 +290,7 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
         {
             glDetachShader(id, shaderIds[i]);
         }
-
-        ctx->shaderProgramIds[ctx->shaderProgramCount] = id;
-        *out_handle = ctx->shaderProgramCount++;
+        *out_id = id;
         return 1;
     }
     else
@@ -312,62 +305,41 @@ RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
 
 RENDERER_USE_SHADER_PROGRAM(rendererUseShaderProgram)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     glUseProgram(id);
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(rendererSetShaderProgramUniformFloat)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform1f(id, loc, value);
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_INTEGER(rendererSetShaderProgramUniformInteger)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform1i(id, loc, value);
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR2(rendererSetShaderProgramUniformVector2)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR3(rendererSetShaderProgramUniformVector3)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR4(rendererSetShaderProgramUniformVector4)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniform4fv(id, loc, 1, glm::value_ptr(value));
 }
 
 RENDERER_SET_SHADER_PROGRAM_UNIFORM_MATRIX4X4(rendererSetShaderProgramUniformMatrix4x4)
 {
-    assert(handle < ctx->shaderProgramCount);
-    uint32 id = ctx->shaderProgramIds[handle];
-
     uint32 loc = glGetUniformLocation(id, uniformName);
     glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(value));
 }
@@ -607,10 +579,7 @@ RENDERER_CLEAR(rendererClear)
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
     rq->quad.render = true;
-
-    assert(shaderProgramHandle < rq->ctx->shaderProgramCount);
-    rq->quad.shaderProgramId = rq->ctx->shaderProgramIds[shaderProgramHandle];
-
+    rq->quad.shaderProgramId = shaderProgramId;
     rq->quad.textureId = textureId;
 
     assert(vertexArrayHandle < rq->ctx->vertexArrayCount);

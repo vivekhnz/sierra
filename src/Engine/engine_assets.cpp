@@ -18,7 +18,6 @@ RENDERER_CREATE_SHADER(rendererCreateShader);
 struct Assets
 {
     MemoryArena *arena;
-    RenderContext *renderCtx;
 
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
@@ -99,7 +98,6 @@ ASSETS_INITIALIZE(assetsInitialize)
 {
     Assets *result = pushStruct(arena, Assets);
     result->arena = arena;
-    result->renderCtx = rctx;
 
     return result;
 }
@@ -141,15 +139,14 @@ bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **d
             shaderIds[i] = deps[i]->shader->id;
         }
 
-        uint32 handle;
-        if (rendererCreateShaderProgram(
-                assets->renderCtx, reg->compositeState->dependencyCount, shaderIds, &handle))
+        uint32 id;
+        if (rendererCreateShaderProgram(reg->compositeState->dependencyCount, shaderIds, &id))
         {
             if (!reg->asset.shaderProgram)
             {
                 reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
             }
-            reg->asset.shaderProgram->handle = handle;
+            reg->asset.shaderProgram->id = id;
 
             return true;
         }
