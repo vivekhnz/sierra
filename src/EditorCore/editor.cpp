@@ -219,12 +219,6 @@ void initializeEditor(EditorMemory *memory)
         1, 1, 1, 1, //
         0, 1, 0, 1  //
     };
-    float quadFlippedYVertices[16] = {
-        0, 0, 0, 1, //
-        1, 0, 1, 1, //
-        1, 1, 1, 0, //
-        0, 1, 0, 0  //
-    };
     uint32 quadVertexBufferStride = 4 * sizeof(float);
     uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
 
@@ -232,11 +226,6 @@ void initializeEditor(EditorMemory *memory)
         engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(
         rctx, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
-
-    uint32 quadFlippedYVertexBufferHandle =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(rctx, quadFlippedYVertexBufferHandle,
-        sizeof(quadFlippedYVertices), &quadFlippedYVertices);
 
     uint32 quadElementBufferHandle =
         engine->rendererCreateBuffer(rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
@@ -247,16 +236,6 @@ void initializeEditor(EditorMemory *memory)
     engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
     engine->rendererBindBuffer(rctx, quadElementBufferHandle);
     engine->rendererBindBuffer(rctx, quadVertexBufferHandle);
-    engine->rendererBindVertexAttribute(
-        0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
-    engine->rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
-    engine->rendererUnbindVertexArray();
-
-    state->quadFlippedYVertexArrayHandle = engine->rendererCreateVertexArray(rctx);
-    engine->rendererBindVertexArray(rctx, state->quadFlippedYVertexArrayHandle);
-    engine->rendererBindBuffer(rctx, quadElementBufferHandle);
-    engine->rendererBindBuffer(rctx, quadFlippedYVertexBufferHandle);
     engine->rendererBindVertexAttribute(
         0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
     engine->rendererBindVertexAttribute(
@@ -621,23 +600,13 @@ void commitChanges(EditorMemory *memory)
 {
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-    RenderContext *rctx = state->renderCtx;
-
-#if 0
-    RenderQueue *rq = engine->rendererCreateQueue();
-    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
-    engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(rq, state->workingHeightmap.textureHandle);
-    engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
-#endif
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
+    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(
-        rq, state->quadVertexArrayHandle, state->workingHeightmap->textureId);
+    engine->rendererPushTexturedQuad(rq, state->workingHeightmap->textureId, true);
     if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
     {
         state->isEditingHeightmap = false;
@@ -994,20 +963,12 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             GL_R16, GL_RED, importedHeightmapAsset->texture->width,
             importedHeightmapAsset->texture->height, importedHeightmapAsset->texture->data);
 
-#if 0
-        RenderQueue *rq = engine->rendererCreateQueue();
-        engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
-        engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
-        engine->rendererDrawToTarget(rq, committedHeightmapRenderTarget);
-#endif
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
         RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(
-            rq, state->quadVertexArrayHandle, state->importedHeightmapTextureId);
+        engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureId, true);
         if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
         {
             updateHeightfieldHeights(&state->sceneState.heightfield,
@@ -1594,24 +1555,13 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-    RenderContext *rctx = state->renderCtx;
-
-#if 0
-    // todo: flip quad y
-    RenderQueue *rq = engine->rendererCreateQueue();
-    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
-    engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(rq, state->importedHeightmapTextureHandle);
-    engine->rendererDrawToScreen(rq, view->width, view->height);
-#endif
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
+    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(
-        rq, state->quadFlippedYVertexArrayHandle, state->workingHeightmap->textureId);
+    engine->rendererPushTexturedQuad(rq, state->workingHeightmap->textureId, false);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

@@ -168,7 +168,7 @@ typedef RENDERER_SET_CAMERA(RendererSetCamera);
 typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
-    void name(RenderQueue *rq, uint32 vertexArrayHandle, uint32 textureId)
+    void name(RenderQueue *rq, uint32 textureId, bool isTopDown)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

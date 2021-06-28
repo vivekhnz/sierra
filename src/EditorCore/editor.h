@@ -194,7 +194,6 @@ struct EditorState
 
     glm::mat4 orthographicCameraTransform;
     uint32 quadVertexArrayHandle;
-    uint32 quadFlippedYVertexArrayHandle;
 
     uint32 importedHeightmapTextureId;
     uint8 importedHeightmapTextureVersion;

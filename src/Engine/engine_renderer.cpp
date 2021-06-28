@@ -22,6 +22,8 @@ enum RendererUniformBuffer
 struct RenderContext
 {
     AssetHandle quadShaderProgramHandle;
+    uint32 quadTopDownVertexArrayId;
+    uint32 quadBottomUpVertexArrayId;
 
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -132,6 +134,60 @@ RENDERER_INITIALIZE(rendererInitialize)
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
     glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
         sizeof(lighting));
+
+    // create quad meshes
+    float quadTopDownVerts[16] = {
+        0, 0, 0, 0, //
+        1, 0, 1, 0, //
+        1, 1, 1, 1, //
+        0, 1, 0, 1  //
+    };
+    float quadBottomUpVerts[16] = {
+        0, 0, 0, 1, //
+        1, 0, 1, 1, //
+        1, 1, 1, 0, //
+        0, 1, 0, 0  //
+    };
+    uint32 quadVertexBufferStride = 4 * sizeof(float);
+    uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
+
+    uint32 quadTopDownVertexBufferId;
+    glGenBuffers(1, &quadTopDownVertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, quadTopDownVertexBufferId);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadTopDownVerts), quadTopDownVerts, GL_STATIC_DRAW);
+
+    uint32 quadBottomUpVertexBufferId;
+    glGenBuffers(1, &quadBottomUpVertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, quadBottomUpVertexBufferId);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(quadBottomUpVerts), quadBottomUpVerts, GL_STATIC_DRAW);
+
+    uint32 quadElementBufferId;
+    glGenBuffers(1, &quadElementBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadElementBufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+
+    glGenVertexArrays(1, &ctx->quadTopDownVertexArrayId);
+    glBindVertexArray(ctx->quadTopDownVertexArrayId);
+    glBindBuffer(GL_ARRAY_BUFFER, quadTopDownVertexBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadElementBufferId);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, quadVertexBufferStride, (void *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1, 2, GL_FLOAT, false, quadVertexBufferStride, (void *)(2 * sizeof(float)));
+    glBindVertexArray(0);
+
+    glGenVertexArrays(1, &ctx->quadBottomUpVertexArrayId);
+    glBindVertexArray(ctx->quadBottomUpVertexArrayId);
+    glBindBuffer(GL_ARRAY_BUFFER, quadBottomUpVertexBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, quadElementBufferId);
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 2, GL_FLOAT, false, quadVertexBufferStride, (void *)0);
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(
+        1, 2, GL_FLOAT, false, quadVertexBufferStride, (void *)(2 * sizeof(float)));
+    glBindVertexArray(0);
 
     return ctx;
 }
@@ -595,9 +651,8 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
         rq->quad.render = true;
         rq->quad.shaderProgramId = shaderProgram->shaderProgram->id;
         rq->quad.textureId = textureId;
-
-        assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
-        rq->quad.vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+        rq->quad.vertexArrayId =
+            isTopDown ? rq->ctx->quadTopDownVertexArrayId : rq->ctx->quadBottomUpVertexArrayId;
     }
     else
     {
