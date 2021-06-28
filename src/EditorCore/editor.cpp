@@ -520,7 +520,34 @@ void compositeHeightmap(EditorMemory *memory,
         brushStrength /= pow(state->uiState.terrainBrushRadius, 0.5f);
     }
 
-    // render brush influence mask
+    struct BrushProperties
+    {
+        float brushRadius;
+        float brushFalloff;
+        float brushStrength;
+    } props;
+
+    props.brushRadius = 0;
+
+// render brush influence mask
+#if 0
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
+    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    RenderEffect *effect = engine->rendererPushEffect(rq, brushMaskShaderProgramId,
+        blendProps->isInfluenceCumulative ? EFFECT_BLEND_ADDITIVE : EFFECT_BLEND_MAX);
+    engine->rendererSetEffectParameter(effect, "brushScale", brushRadius);
+    engine->rendererSetEffectParameter(effect, "brushFalloff", brushFalloff);
+    engine->rendererSetEffectParameter(effect, "brushStrength", brushStrength);
+    engine->rendererPushEffectQuads(rq, activeBrushStrokeInstanceBufferId, brushInstanceOffset,
+        brushInstanceCount, effect);
+    engine->rendererDrawToTarget(rq, brushInfluenceMask);
+
+    endTemporaryMemory(&renderQueueMemory);
+#endif
+
     engine->rendererBindFramebuffer(rctx, brushInfluenceMask->framebufferHandle);
     engine->rendererSetViewportSize(2048, 2048);
     engine->rendererClearBackBuffer(0, 0, 0, 1);
