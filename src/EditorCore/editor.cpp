@@ -520,32 +520,23 @@ void compositeHeightmap(EditorMemory *memory,
         brushStrength /= pow(state->uiState.terrainBrushRadius, 0.5f);
     }
 
-    struct BrushProperties
-    {
-        float brushRadius;
-        float brushFalloff;
-        float brushStrength;
-    } props;
-
-    props.brushRadius = 0;
-
-// render brush influence mask
-#if 0
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
+    // render brush influence mask
+#if 0
+    RenderEffect *brushMaskEffect =
+        engine->rendererCreateEffect(&memory->arena, brushMaskShaderProgramId,
+            blendProps->isInfluenceCumulative ? EFFECT_BLEND_ADDITIVE : EFFECT_BLEND_MAX);
+    engine->rendererSetEffectParameter(brushMaskEffect, "brushScale", brushRadius);
+    engine->rendererSetEffectParameter(brushMaskEffect, "brushFalloff", brushFalloff);
+    engine->rendererSetEffectParameter(brushMaskEffect, "brushStrength", brushStrength);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    RenderEffect *effect = engine->rendererPushEffect(rq, brushMaskShaderProgramId,
-        blendProps->isInfluenceCumulative ? EFFECT_BLEND_ADDITIVE : EFFECT_BLEND_MAX);
-    engine->rendererSetEffectParameter(effect, "brushScale", brushRadius);
-    engine->rendererSetEffectParameter(effect, "brushFalloff", brushFalloff);
-    engine->rendererSetEffectParameter(effect, "brushStrength", brushStrength);
     engine->rendererPushEffectQuads(rq, activeBrushStrokeInstanceBufferId, brushInstanceOffset,
-        brushInstanceCount, effect);
+        brushInstanceCount, brushMaskEffect);
     engine->rendererDrawToTarget(rq, brushInfluenceMask);
-
-    endTemporaryMemory(&renderQueueMemory);
 #endif
 
     engine->rendererBindFramebuffer(rctx, brushInfluenceMask->framebufferHandle);
@@ -570,29 +561,46 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererUnbindFramebuffer(rctx, brushInfluenceMask->framebufferHandle);
 
     // render heightmap
-    engine->rendererUseShaderProgram(blendProps->shaderProgramId);
-    engine->rendererSetShaderProgramUniformFloat(
-        blendProps->shaderProgramId, "blendSign", blendProps->addSubSign);
-    engine->rendererSetShaderProgramUniformFloat(
-        blendProps->shaderProgramId, "flattenHeight", blendProps->flattenHeight);
-    engine->rendererSetShaderProgramUniformInteger(
-        blendProps->shaderProgramId, "iterationCount", blendProps->iterations);
-    engine->rendererSetPolygonMode(GL_FILL);
-    engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-    engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
-    engine->rendererBindTexture(brushInfluenceMask->textureId, 1);
-
     uint32 inputTextureId = baseHeightmapTextureId;
     RenderTarget *iterationOutput = output;
     for (uint32 i = 0; i < blendProps->iterations; i++)
     {
+#if 0
+        RenderEffect *effect = engine->rendererCreateEffect(
+            &memory->arena, blendProps->shaderProgramId, EFFECT_BLEND_ALPHA_BLEND);
+        engine->rendererSetEffectFloat(effect, "blendSign", blendProps->addSubSign);
+        engine->rendererSetEffectFloat(effect, "flattenHeight", blendProps->flattenHeight);
+        engine->rendererSetEffectInt(effect, "iterationCount", blendProps->iterations);
+        engine->rendererSetEffectInt(effect, "iteration", i);
+        engine->rendererSetEffectTexture(effect, 0, inputTextureId);
+        engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
+
+        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+        engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+        engine->rendererClear(rq, 0, 0, 0, 1);
+        engine->rendererPushEffectQuad(rq, effect);
+        engine->rendererDrawToTarget(rq, iterationOutput);
+#endif
         engine->rendererBindFramebuffer(rctx, iterationOutput->framebufferHandle);
 
         engine->rendererSetViewportSize(2048, 2048);
         engine->rendererClearBackBuffer(0, 0, 0, 1);
-        engine->rendererBindTexture(inputTextureId, 0);
+        engine->rendererUpdateCameraState(rctx, &state->orthographicCameraTransform);
+
+        engine->rendererUseShaderProgram(blendProps->shaderProgramId);
+        engine->rendererSetPolygonMode(GL_FILL);
+        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
+        engine->rendererSetShaderProgramUniformFloat(
+            blendProps->shaderProgramId, "blendSign", blendProps->addSubSign);
+        engine->rendererSetShaderProgramUniformFloat(
+            blendProps->shaderProgramId, "flattenHeight", blendProps->flattenHeight);
+        engine->rendererSetShaderProgramUniformInteger(
+            blendProps->shaderProgramId, "iterationCount", blendProps->iterations);
         engine->rendererSetShaderProgramUniformInteger(
             blendProps->shaderProgramId, "iteration", i);
+        engine->rendererBindTexture(inputTextureId, 0);
+        engine->rendererBindTexture(brushInfluenceMask->textureId, 1);
+        engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
         engine->rendererDrawElements(GL_TRIANGLES, 6);
 
         engine->rendererUnbindFramebuffer(rctx, iterationOutput->framebufferHandle);
@@ -600,6 +608,8 @@ void compositeHeightmap(EditorMemory *memory,
         inputTextureId = iterationOutput->textureId;
         iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
     }
+
+    endTemporaryMemory(&renderQueueMemory);
 }
 
 void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
