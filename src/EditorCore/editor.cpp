@@ -565,7 +565,6 @@ void compositeHeightmap(EditorMemory *memory,
     RenderTarget *iterationOutput = output;
     for (uint32 i = 0; i < blendProps->iterations; i++)
     {
-#if 0
         RenderEffect *effect = engine->rendererCreateEffect(
             &memory->arena, blendProps->shaderProgramId, EFFECT_BLEND_ALPHA_BLEND);
         engine->rendererSetEffectFloat(effect, "blendSign", blendProps->addSubSign);
@@ -580,30 +579,6 @@ void compositeHeightmap(EditorMemory *memory,
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushEffectQuad(rq, effect);
         engine->rendererDrawToTarget(rq, iterationOutput);
-#endif
-        engine->rendererBindFramebuffer(rctx, iterationOutput->framebufferHandle);
-
-        engine->rendererSetViewportSize(2048, 2048);
-        engine->rendererClearBackBuffer(0, 0, 0, 1);
-        engine->rendererUpdateCameraState(rctx, &state->orthographicCameraTransform);
-
-        engine->rendererUseShaderProgram(blendProps->shaderProgramId);
-        engine->rendererSetPolygonMode(GL_FILL);
-        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererSetShaderProgramUniformFloat(
-            blendProps->shaderProgramId, "blendSign", blendProps->addSubSign);
-        engine->rendererSetShaderProgramUniformFloat(
-            blendProps->shaderProgramId, "flattenHeight", blendProps->flattenHeight);
-        engine->rendererSetShaderProgramUniformInteger(
-            blendProps->shaderProgramId, "iterationCount", blendProps->iterations);
-        engine->rendererSetShaderProgramUniformInteger(
-            blendProps->shaderProgramId, "iteration", i);
-        engine->rendererBindTexture(inputTextureId, 0);
-        engine->rendererBindTexture(brushInfluenceMask->textureId, 1);
-        engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
-        engine->rendererDrawElements(GL_TRIANGLES, 6);
-
-        engine->rendererUnbindFramebuffer(rctx, iterationOutput->framebufferHandle);
 
         inputTextureId = iterationOutput->textureId;
         iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;

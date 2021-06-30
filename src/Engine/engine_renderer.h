@@ -29,7 +29,14 @@ struct RenderTarget
     uint32 framebufferHandle;
 };
 
+enum RenderEffectBlendMode
+{
+    EFFECT_BLEND_ALPHA_BLEND
+};
+
 struct RenderContext;
+struct RenderQueue;
+struct RenderEffect;
 
 #define RENDERER_INITIALIZE(name)                                                             \
     RenderContext *name(MemoryArena *arena, AssetHandle quadShaderProgramHandle)
@@ -148,6 +155,8 @@ typedef RENDERER_DISPATCH_COMPUTE(RendererDispatchCompute);
 #define RENDERER_SHADER_STORAGE_MEMORY_BARRIER(name) void name()
 typedef RENDERER_SHADER_STORAGE_MEMORY_BARRIER(RendererShaderStorageMemoryBarrier);
 
+// render targets
+
 #define RENDERER_CREATE_RENDER_TARGET(name)                                                   \
     RenderTarget *name(MemoryArena *arena, RenderContext *ctx, uint32 width, uint32 height,   \
         RenderTargetFormat format)
@@ -157,7 +166,27 @@ typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
     void name(RenderTarget *target, uint32 width, uint32 height)
 typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
 
-struct RenderQueue;
+// effects
+
+#define RENDERER_CREATE_EFFECT(name)                                                          \
+    RenderEffect *name(                                                                       \
+        MemoryArena *arena, uint32 shaderProgramId, RenderEffectBlendMode blendMode)
+typedef RENDERER_CREATE_EFFECT(RendererCreateEffect);
+
+#define RENDERER_SET_EFFECT_FLOAT(name)                                                       \
+    void name(RenderEffect *effect, char *paramName, float value)
+typedef RENDERER_SET_EFFECT_FLOAT(RendererSetEffectFloat);
+
+#define RENDERER_SET_EFFECT_INT(name)                                                         \
+    void name(RenderEffect *effect, char *paramName, int32 value)
+typedef RENDERER_SET_EFFECT_INT(RendererSetEffectInt);
+
+#define RENDERER_SET_EFFECT_TEXTURE(name)                                                     \
+    void name(RenderEffect *effect, uint32 slot, uint32 textureId)
+typedef RENDERER_SET_EFFECT_TEXTURE(RendererSetEffectTexture);
+
+// render queue
+
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
 typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
 
@@ -170,6 +199,9 @@ typedef RENDERER_CLEAR(RendererClear);
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
     void name(RenderQueue *rq, uint32 textureId, bool isTopDown)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
+
+#define RENDERER_PUSH_EFFECT_QUAD(name) void name(RenderQueue *rq, RenderEffect *effect)
+typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)
 typedef RENDERER_DRAW_TO_TARGET(RendererDrawToTarget);

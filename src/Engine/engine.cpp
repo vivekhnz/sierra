@@ -84,10 +84,15 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererShaderStorageMemoryBarrier = rendererShaderStorageMemoryBarrier;
     Api.rendererCreateRenderTarget = rendererCreateRenderTarget;
     Api.rendererResizeRenderTarget = rendererResizeRenderTarget;
+    Api.rendererCreateEffect = rendererCreateEffect;
+    Api.rendererSetEffectFloat = rendererSetEffectFloat;
+    Api.rendererSetEffectInt = rendererSetEffectInt;
+    Api.rendererSetEffectTexture = rendererSetEffectTexture;
     Api.rendererCreateQueue = rendererCreateQueue;
     Api.rendererSetCamera = rendererSetCamera;
     Api.rendererClear = rendererClear;
     Api.rendererPushTexturedQuad = rendererPushTexturedQuad;
+    Api.rendererPushEffectQuad = rendererPushEffectQuad;
     Api.rendererDrawToTarget = rendererDrawToTarget;
     Api.rendererDrawToScreen = rendererDrawToScreen;
 

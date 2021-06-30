@@ -119,10 +119,15 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererShaderStorageMemoryBarrier;
         public IntPtr rendererCreateRenderTarget;
         public IntPtr rendererResizeRenderTarget;
+        public IntPtr rendererCreateEffect;
+        public IntPtr rendererSetEffectFloat;
+        public IntPtr rendererSetEffectInt;
+        public IntPtr rendererSetEffectTexture;
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCamera;
         public IntPtr rendererClear;
         public IntPtr rendererPushTexturedQuad;
+        public IntPtr rendererPushEffectQuad;
         public IntPtr rendererDrawToTarget;
         public IntPtr rendererDrawToScreen;
     }

@@ -62,10 +62,15 @@ struct EngineApi
     RendererShaderStorageMemoryBarrier *rendererShaderStorageMemoryBarrier;
     RendererCreateRenderTarget *rendererCreateRenderTarget;
     RendererResizeRenderTarget *rendererResizeRenderTarget;
+    RendererCreateEffect *rendererCreateEffect;
+    RendererSetEffectFloat *rendererSetEffectFloat;
+    RendererSetEffectInt *rendererSetEffectInt;
+    RendererSetEffectTexture *rendererSetEffectTexture;
     RendererCreateQueue *rendererCreateQueue;
     RendererSetCamera *rendererSetCamera;
     RendererClear *rendererClear;
     RendererPushTexturedQuad *rendererPushTexturedQuad;
+    RendererPushEffectQuad *rendererPushEffectQuad;
     RendererDrawToTarget *rendererDrawToTarget;
     RendererDrawToScreen *rendererDrawToScreen;
 };

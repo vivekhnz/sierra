@@ -39,6 +39,39 @@ struct RenderContext
     uint32 bufferUsages[RENDERER_MAX_BUFFERS];
 };
 
+enum RenderEffectParameterType
+{
+    EFFECT_PARAM_TYPE_FLOAT,
+    EFFECT_PARAM_TYPE_INT
+};
+struct RenderEffectParameter
+{
+    char *name;
+    RenderEffectParameterType type;
+    union
+    {
+        float f;
+        int32 i;
+    } value;
+    RenderEffectParameter *next;
+};
+struct RenderEffectTexture
+{
+    uint32 slot;
+    uint32 textureId;
+    RenderEffectTexture *next;
+};
+struct RenderEffect
+{
+    MemoryArena *arena;
+    uint32 shaderProgramId;
+    RenderEffectBlendMode blendMode;
+    RenderEffectParameter *firstParameter;
+    RenderEffectParameter *lastParameter;
+    RenderEffectTexture *firstTexture;
+    RenderEffectTexture *lastTexture;
+};
+
 struct RenderQueue
 {
     MemoryArena *arena;
@@ -53,7 +86,13 @@ struct RenderQueue
         uint32 shaderProgramId;
         uint32 textureId;
         bool isTopDown;
-    } quad;
+    } texturedQuad;
+
+    struct
+    {
+        bool render;
+        RenderEffect *effect;
+    } effectQuad;
 
     bool isMissingResources;
 };
@@ -498,6 +537,8 @@ RENDERER_SHADER_STORAGE_MEMORY_BARRIER(rendererShaderStorageMemoryBarrier)
     glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 }
 
+// render targets
+
 RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
 {
     RenderTargetDescriptor result = {};
@@ -589,15 +630,101 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
     glBindRenderbuffer(GL_RENDERBUFFER, 0);
 }
 
+// effects
+
+RENDERER_CREATE_EFFECT(rendererCreateEffect)
+{
+    RenderEffect *result = pushStruct(arena, RenderEffect);
+    *result = {};
+
+    result->arena = arena;
+    result->shaderProgramId = shaderProgramId;
+    result->blendMode = blendMode;
+    result->firstParameter = 0;
+    result->lastParameter = 0;
+
+    return result;
+}
+
+inline RenderEffectParameter *pushEffectParameter(RenderEffect *effect, char *paramName)
+{
+    RenderEffectParameter *param = pushStruct(effect->arena, RenderEffectParameter);
+    *param = {};
+    param->next = 0;
+
+    char *srcCursor = paramName;
+    uint32 length = 0;
+    while (*srcCursor++)
+    {
+        length++;
+    }
+    param->name = (char *)pushSize(effect->arena, length + 1);
+    char *dstCursor = param->name;
+    srcCursor = paramName;
+    while (*srcCursor)
+    {
+        *dstCursor++ = *srcCursor++;
+    }
+    *dstCursor = 0;
+
+    if (effect->lastParameter)
+    {
+        effect->lastParameter->next = param;
+    }
+    effect->lastParameter = param;
+    if (!effect->firstParameter)
+    {
+        effect->firstParameter = param;
+    }
+
+    return param;
+}
+
+RENDERER_SET_EFFECT_FLOAT(rendererSetEffectFloat)
+{
+    RenderEffectParameter *param = pushEffectParameter(effect, paramName);
+    param->type = EFFECT_PARAM_TYPE_FLOAT;
+    param->value.f = value;
+}
+
+RENDERER_SET_EFFECT_INT(rendererSetEffectInt)
+{
+    RenderEffectParameter *param = pushEffectParameter(effect, paramName);
+    param->type = EFFECT_PARAM_TYPE_INT;
+    param->value.i = value;
+}
+
+RENDERER_SET_EFFECT_TEXTURE(rendererSetEffectTexture)
+{
+    RenderEffectTexture *texture = pushStruct(effect->arena, RenderEffectTexture);
+    *texture = {};
+    texture->slot = slot;
+    texture->textureId = textureId;
+    texture->next = 0;
+
+    if (effect->lastTexture)
+    {
+        effect->lastTexture->next = texture;
+    }
+    effect->lastTexture = texture;
+    if (!effect->firstTexture)
+    {
+        effect->firstTexture = texture;
+    }
+}
+
+// render queue
+
 RENDERER_CREATE_QUEUE(rendererCreateQueue)
 {
     RenderQueue *result = pushStruct(arena, RenderQueue);
+    *result = {};
     result->arena = arena;
     result->ctx = ctx;
 
     result->cameraTransform = glm::identity<glm::mat4>();
     result->clearColor = glm::vec4(0, 0, 0, 1);
-    result->quad.render = false;
+    result->texturedQuad.render = false;
 
     result->isMissingResources = false;
 
@@ -622,15 +749,21 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     LoadedAsset *shaderProgram = assetsGetShaderProgram(rq->ctx->quadShaderProgramHandle);
     if (shaderProgram->shaderProgram)
     {
-        rq->quad.render = true;
-        rq->quad.shaderProgramId = shaderProgram->shaderProgram->id;
-        rq->quad.textureId = textureId;
-        rq->quad.isTopDown = isTopDown;
+        rq->texturedQuad.render = true;
+        rq->texturedQuad.shaderProgramId = shaderProgram->shaderProgram->id;
+        rq->texturedQuad.textureId = textureId;
+        rq->texturedQuad.isTopDown = isTopDown;
     }
     else
     {
         rq->isMissingResources = true;
     }
+}
+
+RENDERER_PUSH_EFFECT_QUAD(rendererPushEffectQuad)
+{
+    rq->effectQuad.render = true;
+    rq->effectQuad.effect = effect;
 }
 
 bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
@@ -650,19 +783,88 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
 
-    if (rq->quad.render)
+    if (rq->texturedQuad.render)
     {
-        glUseProgram(rq->quad.shaderProgramId);
+        glUseProgram(rq->texturedQuad.shaderProgramId);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
         glBlendEquation(GL_FUNC_ADD);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, rq->quad.textureId);
+        glBindTexture(GL_TEXTURE_2D, rq->texturedQuad.textureId);
 
         glBindVertexArray(0);
-        uint32 vertexBufferId = rq->quad.isTopDown ? rq->ctx->quadTopDownVertexBufferId
-                                                   : rq->ctx->quadBottomUpVertexBufferId;
+        uint32 vertexBufferId = rq->texturedQuad.isTopDown
+            ? rq->ctx->quadTopDownVertexBufferId
+            : rq->ctx->quadBottomUpVertexBufferId;
+        uint32 vertexBufferStride = 4 * sizeof(float);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
+        glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glVertexAttribPointer(0, 2, GL_FLOAT, false, vertexBufferStride, (void *)0);
+        glVertexAttribPointer(
+            1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
+
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        glDisableVertexAttribArray(0);
+        glDisableVertexAttribArray(1);
+    }
+    if (rq->effectQuad.render)
+    {
+        uint32 shaderProgramId = rq->effectQuad.effect->shaderProgramId;
+        glUseProgram(shaderProgramId);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_DEPTH_TEST);
+
+        switch (rq->effectQuad.effect->blendMode)
+        {
+        case EFFECT_BLEND_ALPHA_BLEND:
+        {
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        break;
+        }
+
+        RenderEffectParameter *effectParam = rq->effectQuad.effect->firstParameter;
+        while (effectParam)
+        {
+            uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
+            switch (effectParam->type)
+            {
+            case EFFECT_PARAM_TYPE_FLOAT:
+            {
+                glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
+            }
+            break;
+            case EFFECT_PARAM_TYPE_INT:
+            {
+                glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
+            }
+            break;
+            default:
+            {
+                assert(!"Invalid effect parameter type");
+            }
+            break;
+            }
+
+            effectParam = effectParam->next;
+        }
+
+        RenderEffectTexture *effectTexture = rq->effectQuad.effect->firstTexture;
+        while (effectTexture)
+        {
+            glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
+            glBindTexture(GL_TEXTURE_2D, effectTexture->textureId);
+
+            effectTexture = effectTexture->next;
+        }
+
+        glBindVertexArray(0);
+        uint32 vertexBufferId = rq->ctx->quadTopDownVertexBufferId;
         uint32 vertexBufferStride = 4 * sizeof(float);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
         glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
