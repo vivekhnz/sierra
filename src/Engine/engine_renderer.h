@@ -170,7 +170,7 @@ typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
 
 #define RENDERER_CREATE_EFFECT(name)                                                          \
     RenderEffect *name(                                                                       \
-        MemoryArena *arena, uint32 shaderProgramId, RenderEffectBlendMode blendMode)
+        MemoryArena *arena, AssetHandle shaderProgram, RenderEffectBlendMode blendMode)
 typedef RENDERER_CREATE_EFFECT(RendererCreateEffect);
 
 #define RENDERER_SET_EFFECT_FLOAT(name)                                                       \

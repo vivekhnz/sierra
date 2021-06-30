@@ -8,7 +8,7 @@
 
 struct BrushBlendProperties
 {
-    uint32 shaderProgramId;
+    AssetHandle shaderProgram;
     bool isInfluenceCumulative;
     uint32 iterations;
     float addSubSign;
@@ -566,7 +566,7 @@ void compositeHeightmap(EditorMemory *memory,
     for (uint32 i = 0; i < blendProps->iterations; i++)
     {
         RenderEffect *effect = engine->rendererCreateEffect(
-            &memory->arena, blendProps->shaderProgramId, EFFECT_BLEND_ALPHA_BLEND);
+            &memory->arena, blendProps->shaderProgram, EFFECT_BLEND_ALPHA_BLEND);
         engine->rendererSetEffectFloat(effect, "blendSign", blendProps->addSubSign);
         engine->rendererSetEffectFloat(effect, "flattenHeight", blendProps->flattenHeight);
         engine->rendererSetEffectInt(effect, "iterationCount", blendProps->iterations);
@@ -952,16 +952,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
     LoadedAsset *brushMaskShaderProgram =
         engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushMask);
-    LoadedAsset *brushBlendAddSubShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushBlendAddSub);
-    LoadedAsset *brushBlendFlattenShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushBlendFlatten);
-    LoadedAsset *brushBlendSmoothShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushBlendSmooth);
-    if (!quadShaderProgram->shaderProgram || !brushMaskShaderProgram->shaderProgram
-        || !brushBlendAddSubShaderProgram->shaderProgram
-        || !brushBlendFlattenShaderProgram->shaderProgram
-        || !brushBlendSmoothShaderProgram->shaderProgram)
+    if (!quadShaderProgram->shaderProgram || !brushMaskShaderProgram->shaderProgram)
     {
         return;
     }
@@ -1281,25 +1272,25 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     switch (state->uiState.terrainBrushTool)
     {
     case TERRAIN_BRUSH_TOOL_RAISE:
-        blendProps.shaderProgramId = brushBlendAddSubShaderProgram->shaderProgram->id;
+        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendAddSub;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 1;
         blendProps.addSubSign = 1;
         break;
     case TERRAIN_BRUSH_TOOL_LOWER:
-        blendProps.shaderProgramId = brushBlendAddSubShaderProgram->shaderProgram->id;
+        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendAddSub;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 1;
         blendProps.addSubSign = -1;
         break;
     case TERRAIN_BRUSH_TOOL_FLATTEN:
-        blendProps.shaderProgramId = brushBlendFlattenShaderProgram->shaderProgram->id;
+        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendFlatten;
         blendProps.isInfluenceCumulative = false;
         blendProps.iterations = 1;
         blendProps.flattenHeight = state->activeBrushStrokeInitialHeight;
         break;
     case TERRAIN_BRUSH_TOOL_SMOOTH:
-        blendProps.shaderProgramId = brushBlendSmoothShaderProgram->shaderProgram->id;
+        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendSmooth;
         blendProps.isInfluenceCumulative = true;
         blendProps.iterations = 3;
         break;
