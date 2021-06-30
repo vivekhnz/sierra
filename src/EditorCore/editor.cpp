@@ -213,35 +213,6 @@ void initializeEditor(EditorMemory *memory)
 
     SceneState *sceneState = &state->sceneState;
 
-    float quadVertices[16] = {
-        0, 0, 0, 0, //
-        1, 0, 1, 0, //
-        1, 1, 1, 1, //
-        0, 1, 0, 1  //
-    };
-    uint32 quadVertexBufferStride = 4 * sizeof(float);
-    uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
-
-    uint32 quadVertexBufferHandle =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        rctx, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
-
-    uint32 quadElementBufferHandle =
-        engine->rendererCreateBuffer(rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        rctx, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
-
-    state->quadVertexArrayHandle = engine->rendererCreateVertexArray(rctx);
-    engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
-    engine->rendererBindBuffer(rctx, quadElementBufferHandle);
-    engine->rendererBindBuffer(rctx, quadVertexBufferHandle);
-    engine->rendererBindVertexAttribute(
-        0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
-    engine->rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
-    engine->rendererUnbindVertexArray();
-
     state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT,
         GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
@@ -266,6 +237,25 @@ void initializeEditor(EditorMemory *memory)
         sizeof(state->activeBrushStrokeInstanceBufferData),
         &state->activeBrushStrokeInstanceBufferData);
     uint32 instanceBufferStride = sizeof(glm::vec2);
+
+    float quadVertices[16] = {
+        0, 0, 0, 0, //
+        1, 0, 1, 0, //
+        1, 1, 1, 1, //
+        0, 1, 0, 1  //
+    };
+    uint32 quadVertexBufferStride = 4 * sizeof(float);
+    uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
+
+    uint32 quadVertexBufferHandle =
+        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(
+        rctx, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
+
+    uint32 quadElementBufferHandle =
+        engine->rendererCreateBuffer(rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(
+        rctx, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
 
     state->activeBrushStrokeVertexArrayHandle = engine->rendererCreateVertexArray(rctx);
     engine->rendererBindVertexArray(rctx, state->activeBrushStrokeVertexArrayHandle);
@@ -1516,39 +1506,32 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
     engine->rendererUnbindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
 
-    engine->rendererSetViewportSize(view->width, view->height);
-    engine->rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    LoadedAsset *quadShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramQuad);
-    if (quadShaderProgram->shaderProgram)
+    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
+    engine->rendererPushTexturedQuad(rq, sceneRenderTarget->textureId, true);
+    engine->rendererDrawToScreen(rq, view->width, view->height);
+
+    endTemporaryMemory(&renderQueueMemory);
+
+    engine->rendererUpdateCameraState(rctx, &viewState->cameraTransform);
+    if (rockShaderProgram->shaderProgram && sceneState->rockMesh.isLoaded
+        && state->uiState.selectedObjectId != 0)
     {
-        engine->rendererUpdateCameraState(rctx, &state->orthographicCameraTransform);
-        engine->rendererUseShaderProgram(quadShaderProgram->shaderProgram->id);
-        engine->rendererSetPolygonMode(GL_FILL);
-        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererBindTexture(sceneRenderTarget->textureId, 0);
-        engine->rendererBindVertexArray(rctx, state->quadVertexArrayHandle);
-        engine->rendererDrawElements(GL_TRIANGLES, 6);
-
-        engine->rendererUpdateCameraState(rctx, &viewState->cameraTransform);
-        if (rockShaderProgram->shaderProgram && sceneState->rockMesh.isLoaded
-            && state->uiState.selectedObjectId != 0)
+        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
         {
-            for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+            if (state->previewDocState.objectIds[i] == state->uiState.selectedObjectId)
             {
-                if (state->previewDocState.objectIds[i] == state->uiState.selectedObjectId)
-                {
-                    engine->rendererUseShaderProgram(rockShaderProgram->shaderProgram->id);
-                    engine->rendererSetPolygonMode(GL_FILL);
-                    engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE, false);
-                    engine->rendererBindVertexArray(
-                        rctx, sceneState->rockMesh.vertexArrayHandle);
-                    engine->rendererDrawElementsInstanced(
-                        GL_TRIANGLES, sceneState->rockMesh.elementCount, 1, i);
+                engine->rendererUseShaderProgram(rockShaderProgram->shaderProgram->id);
+                engine->rendererSetPolygonMode(GL_FILL);
+                engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE, false);
+                engine->rendererBindVertexArray(rctx, sceneState->rockMesh.vertexArrayHandle);
+                engine->rendererDrawElementsInstanced(
+                    GL_TRIANGLES, sceneState->rockMesh.elementCount, 1, i);
 
-                    break;
-                }
+                break;
             }
         }
     }

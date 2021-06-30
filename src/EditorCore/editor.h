@@ -193,7 +193,6 @@ struct EditorState
     Assets *engineAssets;
 
     glm::mat4 orthographicCameraTransform;
-    uint32 quadVertexArrayHandle;
 
     uint32 importedHeightmapTextureId;
     uint8 importedHeightmapTextureVersion;
