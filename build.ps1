@@ -183,7 +183,11 @@ $builds += Invoke-Msvc `
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
     )
-$builds += Invoke-Dotnet -SolutionFile 'Terrain.sln' -OutputName 'Editor'
+
+# don't try build the editor executable if it is currently running
+if (!(Get-Process "Terrain.Editor" -ErrorAction SilentlyContinue)) {
+    $builds += Invoke-Dotnet -SolutionFile 'Terrain.sln' -OutputName 'Editor'
+}
 
 $glfwDllSrcPath = "deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"
 $glfwDllDstPath = "$OutputPath\glfw3.dll"
