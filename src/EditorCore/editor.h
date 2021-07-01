@@ -141,7 +141,6 @@ struct SceneState
 
 struct EditorAssets
 {
-    AssetHandle shaderProgramQuad;
     AssetHandle shaderProgramTerrainCalcTessLevel;
     AssetHandle shaderProgramTerrainTextured;
     AssetHandle shaderProgramBrushMask;

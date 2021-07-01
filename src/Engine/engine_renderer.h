@@ -197,10 +197,11 @@ typedef RENDERER_SET_CAMERA(RendererSetCamera);
 typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
-    void name(RenderQueue *rq, uint32 textureId, bool isTopDown)
+    void name(RenderQueue *rq, glm::vec4 rect, uint32 textureId, bool isTopDown)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
-#define RENDERER_PUSH_EFFECT_QUAD(name) void name(RenderQueue *rq, RenderEffect *effect)
+#define RENDERER_PUSH_EFFECT_QUAD(name)                                                       \
+    void name(RenderQueue *rq, glm::vec4 rect, RenderEffect *effect)
 typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

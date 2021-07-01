@@ -21,10 +21,13 @@ enum RendererUniformBuffer
 
 struct RenderContext
 {
+    uint32 globalVertexArrayId;
+
     AssetHandle quadShaderProgramHandle;
     uint32 quadElementBufferId;
     uint32 quadTopDownVertexBufferId;
     uint32 quadBottomUpVertexBufferId;
+    uint32 quadInstanceBufferId;
 
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -76,6 +79,8 @@ struct RenderQueueEffectQuad
 {
     RenderEffect *effect;
     bool isTopDown;
+    void *instanceBufferData;
+    uint64 instanceBufferSize;
 
     RenderQueueEffectQuad *next;
 };
@@ -139,6 +144,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     RenderContext *ctx = pushStruct(arena, RenderContext);
     ctx->quadShaderProgramHandle = quadShaderProgramHandle;
 
+    glGenVertexArrays(1, &ctx->globalVertexArrayId);
+
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
@@ -195,6 +202,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     glGenBuffers(1, &ctx->quadElementBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->quadElementBufferId);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ctx->quadInstanceBufferId);
 
     return ctx;
 }
@@ -735,12 +744,19 @@ RENDERER_CLEAR(rendererClear)
     rq->clearColor.a = a;
 }
 
-void pushQuad(RenderQueue *rq, RenderEffect *effect, bool isTopDown)
+void pushQuad(RenderQueue *rq,
+    RenderEffect *effect,
+    bool isTopDown,
+    void *instanceBufferData,
+    uint64 instanceBufferSize)
 {
     RenderQueueEffectQuad *quad = pushStruct(rq->arena, RenderQueueEffectQuad);
     *quad = {};
     quad->effect = effect;
     quad->isTopDown = isTopDown;
+    quad->instanceBufferSize = instanceBufferSize;
+    quad->instanceBufferData = pushSize(rq->arena, quad->instanceBufferSize);
+    memcpy(quad->instanceBufferData, instanceBufferData, quad->instanceBufferSize);
 
     if (rq->lastQuad)
     {
@@ -758,12 +774,12 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     RenderEffect *effect = rendererCreateEffect(
         rq->arena, rq->ctx->quadShaderProgramHandle, EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectTexture(effect, 0, textureId);
-    pushQuad(rq, effect, isTopDown);
+    pushQuad(rq, effect, isTopDown, &rect, sizeof(rect));
 }
 
 RENDERER_PUSH_EFFECT_QUAD(rendererPushEffectQuad)
 {
-    pushQuad(rq, effect, true);
+    pushQuad(rq, effect, true, &rect, sizeof(rect));
 }
 
 bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
@@ -841,7 +857,11 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 effectTexture = effectTexture->next;
             }
 
-            glBindVertexArray(0);
+            glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
+            glBufferData(GL_ARRAY_BUFFER, quad->instanceBufferSize, quad->instanceBufferData,
+                GL_STREAM_DRAW);
+
+            glBindVertexArray(rq->ctx->globalVertexArrayId);
             uint32 vertexBufferId = quad->isTopDown ? rq->ctx->quadTopDownVertexBufferId
                                                     : rq->ctx->quadBottomUpVertexBufferId;
             uint32 vertexBufferStride = 4 * sizeof(float);
@@ -853,10 +873,18 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             glVertexAttribPointer(
                 1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
 
-            glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+            uint32 instanceBufferStride = 4 * sizeof(float);
+            glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
+            glEnableVertexAttribArray(2);
+            glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
+            glVertexAttribDivisor(2, 1);
+
+            uint32 instanceCount = quad->instanceBufferSize / instanceBufferStride;
+            glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, instanceCount);
 
             glDisableVertexAttribArray(0);
             glDisableVertexAttribArray(1);
+            glDisableVertexAttribArray(2);
         }
         else
         {

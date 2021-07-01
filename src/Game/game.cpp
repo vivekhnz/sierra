@@ -20,8 +20,8 @@ bool initializeGame(GameMemory *memory)
     state->engineAssets = engine->assetsInitialize(&state->assetsArena);
     Assets *assets = state->engineAssets;
 
-    AssetHandle shaderTextureVertex =
-        engine->assetsRegisterShader(assets, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderQuadVertex =
+        engine->assetsRegisterShader(assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
         assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderTerrainVertex =
@@ -65,7 +65,7 @@ bool initializeGame(GameMemory *memory)
     gameAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
         assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
 
-    AssetHandle quadShaderAssetHandles[] = {shaderTextureVertex, shaderTextureFragment};
+    AssetHandle quadShaderAssetHandles[] = {shaderQuadVertex, shaderTextureFragment};
     AssetHandle quadShaderProgramHandle = engine->assetsRegisterShaderProgram(
         assets, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
 
