@@ -45,6 +45,22 @@ struct RenderContext
     uint32 bufferUsages[RENDERER_MAX_BUFFERS];
 };
 
+struct GpuCameraState
+{
+    glm::mat4 transform;
+};
+struct GpuLightingState
+{
+    glm::vec4 lightDir;
+
+    // todo: pack these into a single uint8
+    uint32 isEnabled;
+    uint32 isTextureEnabled;
+    uint32 isNormalMapEnabled;
+    uint32 isAOMapEnabled;
+    uint32 isDisplacementMapEnabled;
+};
+
 enum RenderEffectParameterType
 {
     EFFECT_PARAM_TYPE_FLOAT,
@@ -80,6 +96,8 @@ struct RenderEffect
 
 enum RenderQueueCommandType
 {
+    RENDER_CMD_SetCameraCommand,
+    RENDER_CMD_ClearCommand,
     RENDER_CMD_DrawQuadsCommand
 };
 struct RenderQueueCommandHeader
@@ -88,6 +106,14 @@ struct RenderQueueCommandHeader
     RenderQueueCommandHeader *next;
 };
 
+struct SetCameraCommand
+{
+    GpuCameraState camera;
+};
+struct ClearCommand
+{
+    glm::vec4 color;
+};
 struct DrawQuadsCommand
 {
     RenderEffect *effect;
@@ -100,29 +126,10 @@ struct RenderQueue
     MemoryArena *arena;
     RenderContext *ctx;
 
-    glm::mat4 cameraTransform;
-    glm::vec4 clearColor;
-
     RenderQueueCommandHeader *firstCommand;
     RenderQueueCommandHeader *lastCommand;
 
     uint32 quadCount;
-};
-
-struct GpuCameraState
-{
-    glm::mat4 transform;
-};
-struct GpuLightingState
-{
-    glm::vec4 lightDir;
-
-    // todo: pack these into a single uint8
-    uint32 isEnabled;
-    uint32 isTextureEnabled;
-    uint32 isNormalMapEnabled;
-    uint32 isAOMapEnabled;
-    uint32 isDisplacementMapEnabled;
 };
 
 struct RenderTargetDescriptor
@@ -740,23 +747,7 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     result->arena = arena;
     result->ctx = ctx;
 
-    result->cameraTransform = glm::identity<glm::mat4>();
-    result->clearColor = glm::vec4(0, 0, 0, 1);
-
     return result;
-}
-
-RENDERER_SET_CAMERA(rendererSetCamera)
-{
-    rq->cameraTransform = *transform;
-}
-
-RENDERER_CLEAR(rendererClear)
-{
-    rq->clearColor.r = r;
-    rq->clearColor.g = g;
-    rq->clearColor.b = b;
-    rq->clearColor.a = a;
 }
 
 void *pushRenderCommandInternal(RenderQueue *rq, RenderQueueCommandType type, uint64 size)
@@ -781,6 +772,21 @@ void *pushRenderCommandInternal(RenderQueue *rq, RenderQueueCommandType type, ui
 }
 #define pushRenderCommand(rq, type)                                                           \
     (type *)pushRenderCommandInternal(rq, RENDER_CMD_##type, sizeof(type))
+
+RENDERER_SET_CAMERA(rendererSetCamera)
+{
+    SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
+    cmd->camera.transform = *transform;
+}
+
+RENDERER_CLEAR(rendererClear)
+{
+    ClearCommand *cmd = pushRenderCommand(rq, ClearCommand);
+    cmd->color.r = r;
+    cmd->color.g = g;
+    cmd->color.b = b;
+    cmd->color.a = a;
+}
 
 void pushQuads(
     RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
@@ -817,22 +823,13 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         uint32 framebufferId = rq->ctx->framebufferIds[target->framebufferHandle];
         glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
     }
-
     glViewport(0, 0, width, height);
-    glClearColor(rq->clearColor.r, rq->clearColor.g, rq->clearColor.b, rq->clearColor.a);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    GpuCameraState camera = {};
-    camera.transform = rq->cameraTransform;
-    glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
-
-    bool isMissingResources = false;
 
     glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
     glBufferData(
         GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
 
+    bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
     while (command)
     {
@@ -840,6 +837,21 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 
         switch (command->type)
         {
+        case RENDER_CMD_SetCameraCommand:
+        {
+            SetCameraCommand *cmd = (SetCameraCommand *)commandData;
+            glBindBuffer(
+                GL_UNIFORM_BUFFER, rq->ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(cmd->camera), &cmd->camera);
+        }
+        break;
+        case RENDER_CMD_ClearCommand:
+        {
+            ClearCommand *cmd = (ClearCommand *)commandData;
+            glClearColor(cmd->color.r, cmd->color.g, cmd->color.b, cmd->color.a);
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        }
+        break;
         case RENDER_CMD_DrawQuadsCommand:
         {
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
