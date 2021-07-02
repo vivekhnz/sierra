@@ -214,17 +214,17 @@ void initializeEditor(EditorMemory *memory)
     state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT,
         GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    state->committedHeightmap = memory->engineApi->rendererCreateRenderTarget(
+    state->committedHeightmap = engine->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->workingBrushInfluenceMask = memory->engineApi->rendererCreateRenderTarget(
+    state->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->workingHeightmap = memory->engineApi->rendererCreateRenderTarget(
+    state->workingHeightmap = engine->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->previewBrushInfluenceMask = memory->engineApi->rendererCreateRenderTarget(
+    state->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->previewHeightmap = memory->engineApi->rendererCreateRenderTarget(
+    state->previewHeightmap = engine->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->temporaryHeightmap = memory->engineApi->rendererCreateRenderTarget(
+    state->temporaryHeightmap = engine->rendererCreateRenderTarget(
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
