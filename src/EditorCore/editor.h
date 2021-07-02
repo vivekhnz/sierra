@@ -205,11 +205,11 @@ struct EditorState
 
     bool isEditingHeightmap;
     bool isAdjustingBrushParameters;
-    uint32 activeBrushStrokeVertexArrayHandle;
-    uint32 activeBrushStrokeInstanceBufferHandle;
-    glm::vec2 activeBrushStrokeInstanceBufferData[MAX_BRUSH_QUADS];
+    glm::vec2 activeBrushStrokePositions[MAX_BRUSH_QUADS];
+    RenderQuad activeBrushStrokeQuads[MAX_BRUSH_QUADS];
     uint32 activeBrushStrokeInstanceCount;
     float activeBrushStrokeInitialHeight;
+    RenderQuad previewBrushStrokeQuad;
 
     struct
     {

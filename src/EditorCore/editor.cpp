@@ -114,8 +114,6 @@ void initializeEditor(EditorMemory *memory)
         assets, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
     AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
         assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderBrushMaskVertex = engine->assetsRegisterShader(
-        assets, "brush_mask_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderBrushMaskFragment = engine->assetsRegisterShader(
         assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
@@ -146,8 +144,7 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
         assets, texturedShaderAssetHandles, arrayCount(texturedShaderAssetHandles));
 
-    AssetHandle brushMaskShaderAssetHandles[] = {
-        shaderBrushMaskVertex, shaderBrushMaskFragment};
+    AssetHandle brushMaskShaderAssetHandles[] = {shaderQuadVertex, shaderBrushMaskFragment};
     editorAssets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(
         assets, brushMaskShaderAssetHandles, arrayCount(brushMaskShaderAssetHandles));
 
@@ -231,45 +228,6 @@ void initializeEditor(EditorMemory *memory)
         &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
-
-    state->activeBrushStrokeInstanceBufferHandle =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(rctx, state->activeBrushStrokeInstanceBufferHandle,
-        sizeof(state->activeBrushStrokeInstanceBufferData),
-        &state->activeBrushStrokeInstanceBufferData);
-    uint32 instanceBufferStride = sizeof(glm::vec2);
-
-    float quadVertices[16] = {
-        0, 0, 0, 0, //
-        1, 0, 1, 0, //
-        1, 1, 1, 1, //
-        0, 1, 0, 1  //
-    };
-    uint32 quadVertexBufferStride = 4 * sizeof(float);
-    uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
-
-    uint32 quadVertexBufferHandle =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        rctx, quadVertexBufferHandle, sizeof(quadVertices), &quadVertices);
-
-    uint32 quadElementBufferHandle =
-        engine->rendererCreateBuffer(rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        rctx, quadElementBufferHandle, sizeof(quadIndices), &quadIndices);
-
-    state->activeBrushStrokeVertexArrayHandle = engine->rendererCreateVertexArray(rctx);
-    engine->rendererBindVertexArray(rctx, state->activeBrushStrokeVertexArrayHandle);
-    engine->rendererBindBuffer(rctx, quadElementBufferHandle);
-    engine->rendererBindBuffer(rctx, quadVertexBufferHandle);
-    engine->rendererBindVertexAttribute(
-        0, GL_FLOAT, false, 2, quadVertexBufferStride, 0, false);
-    engine->rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, quadVertexBufferStride, 2 * sizeof(float), false);
-    engine->rendererBindBuffer(rctx, state->activeBrushStrokeInstanceBufferHandle);
-    engine->rendererBindVertexAttribute(2, GL_FLOAT, false, 2, instanceBufferStride, 0, true);
-    engine->rendererUnbindVertexArray();
-
     state->activeBrushStrokeInstanceCount = 0;
 
     // initialize scene world
@@ -486,9 +444,8 @@ void compositeHeightmap(EditorMemory *memory,
     uint32 baseHeightmapTextureId,
     RenderTarget *brushInfluenceMask,
     RenderTarget *output,
-    uint32 brushMaskShaderProgramId,
+    RenderQuad *brushInstances,
     uint32 brushInstanceCount,
-    uint32 brushInstanceOffset,
     BrushBlendProperties *blendProps)
 {
     assert(blendProps->iterations % 2 == 1);
@@ -496,7 +453,6 @@ void compositeHeightmap(EditorMemory *memory,
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     RenderContext *rctx = state->renderCtx;
 
-    float brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
     float brushFalloff = state->uiState.terrainBrushFalloff;
     float brushStrength = 1;
     if (blendProps->isInfluenceCumulative)
@@ -514,42 +470,17 @@ void compositeHeightmap(EditorMemory *memory,
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     // render brush influence mask
-#if 0
-    RenderEffect *brushMaskEffect =
-        engine->rendererCreateEffect(&memory->arena, brushMaskShaderProgramId,
-            blendProps->isInfluenceCumulative ? EFFECT_BLEND_ADDITIVE : EFFECT_BLEND_MAX);
-    engine->rendererSetEffectParameter(brushMaskEffect, "brushScale", brushRadius);
-    engine->rendererSetEffectParameter(brushMaskEffect, "brushFalloff", brushFalloff);
-    engine->rendererSetEffectParameter(brushMaskEffect, "brushStrength", brushStrength);
+    RenderEffect *maskEffect = engine->rendererCreateEffect(&memory->arena,
+        state->editorAssets.shaderProgramBrushMask,
+        blendProps->isInfluenceCumulative ? EFFECT_BLEND_ADDITIVE : EFFECT_BLEND_MAX);
+    engine->rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
+    engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushEffectQuads(rq, activeBrushStrokeInstanceBufferId, brushInstanceOffset,
-        brushInstanceCount, brushMaskEffect);
+    engine->rendererPushEffectQuads(rq, brushInstances, brushInstanceCount, maskEffect);
     engine->rendererDrawToTarget(rq, brushInfluenceMask);
-#endif
-
-    engine->rendererBindFramebuffer(rctx, brushInfluenceMask->framebufferHandle);
-    engine->rendererSetViewportSize(2048, 2048);
-    engine->rendererClearBackBuffer(0, 0, 0, 1);
-    engine->rendererUpdateCameraState(rctx, &state->orthographicCameraTransform);
-
-    engine->rendererUseShaderProgram(brushMaskShaderProgramId);
-    engine->rendererSetPolygonMode(GL_FILL);
-    engine->rendererSetBlendMode(
-        blendProps->isInfluenceCumulative ? GL_FUNC_ADD : GL_MAX, GL_ONE, GL_ONE, true);
-    engine->rendererSetShaderProgramUniformFloat(
-        brushMaskShaderProgramId, "brushScale", brushRadius);
-    engine->rendererSetShaderProgramUniformFloat(
-        brushMaskShaderProgramId, "brushFalloff", brushFalloff);
-    engine->rendererSetShaderProgramUniformFloat(
-        brushMaskShaderProgramId, "brushStrength", brushStrength);
-    engine->rendererBindVertexArray(rctx, state->activeBrushStrokeVertexArrayHandle);
-    engine->rendererDrawElementsInstanced(
-        GL_TRIANGLES, 6, brushInstanceCount, brushInstanceOffset);
-
-    engine->rendererUnbindFramebuffer(rctx, brushInfluenceMask->framebufferHandle);
 
     // render heightmap
     uint32 inputTextureId = baseHeightmapTextureId;
@@ -940,13 +871,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
 
-    LoadedAsset *brushMaskShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramBrushMask);
-    if (!brushMaskShaderProgram->shaderProgram)
-    {
-        return;
-    }
-
     LoadedAsset *importedHeightmapAsset =
         engine->assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
@@ -975,9 +899,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
     state->isAdjustingBrushParameters = false;
-
-    // the last brush instance is reserved for previewing the result of the current operation
-#define MAX_ALLOWED_BRUSH_INSTANCES (MAX_BRUSH_QUADS - 1)
 
     bool isManipulatingCamera = false;
     SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
@@ -1107,10 +1028,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                             if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                             {
                                 glm::vec2 *nextBrushInstance =
-                                    &state->activeBrushStrokeInstanceBufferData
+                                    &state->activeBrushStrokePositions
                                          [state->activeBrushStrokeInstanceCount];
                                 if (state->activeBrushStrokeInstanceCount
-                                    < MAX_ALLOWED_BRUSH_INSTANCES - 1)
+                                    < MAX_BRUSH_QUADS - 1)
                                 {
                                     if (state->activeBrushStrokeInstanceCount == 0)
                                     {
@@ -1128,7 +1049,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                         const float BRUSH_INSTANCE_SPACING = 0.005f;
                                         while (distanceRemaining > BRUSH_INSTANCE_SPACING
                                             && state->activeBrushStrokeInstanceCount
-                                                < MAX_ALLOWED_BRUSH_INSTANCES - 1)
+                                                < MAX_BRUSH_QUADS - 1)
                                         {
                                             *nextBrushInstance++ = *prevBrushInstance++
                                                 + (direction * BRUSH_INSTANCE_SPACING);
@@ -1252,12 +1173,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     lightDir.z = 0.2f;
     engine->rendererUpdateLightingState(rctx, &lightDir, true, true, true, true, true);
 
-    // update preview brush quad instance
-    state->activeBrushStrokeInstanceBufferData[MAX_ALLOWED_BRUSH_INSTANCES] = newBrushPos;
-
-    // update brush quad instance buffer
-    engine->rendererUpdateBuffer(rctx, state->activeBrushStrokeInstanceBufferHandle,
-        BRUSH_QUAD_INSTANCE_BUFFER_SIZE, state->activeBrushStrokeInstanceBufferData);
+    // update brush quad instances
+    float brushStrokeQuadWidth = state->uiState.terrainBrushRadius / 2048.0f;
+    state->previewBrushStrokeQuad.x = newBrushPos.x - (brushStrokeQuadWidth * 0.5f);
+    state->previewBrushStrokeQuad.y = newBrushPos.y - (brushStrokeQuadWidth * 0.5f);
+    state->previewBrushStrokeQuad.width = brushStrokeQuadWidth;
+    state->previewBrushStrokeQuad.height = brushStrokeQuadWidth;
+    for (uint32 i = 0; i < state->activeBrushStrokeInstanceCount; i++)
+    {
+        glm::vec2 *pos = &state->activeBrushStrokePositions[i];
+        RenderQuad *quad = &state->activeBrushStrokeQuads[i];
+        quad->x = pos->x - (brushStrokeQuadWidth * 0.5f);
+        quad->y = pos->y - (brushStrokeQuadWidth * 0.5f);
+        quad->width = brushStrokeQuadWidth;
+        quad->height = brushStrokeQuadWidth;
+    }
 
     BrushBlendProperties blendProps = {};
     switch (state->uiState.terrainBrushTool)
@@ -1289,11 +1219,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     compositeHeightmap(memory, state->committedHeightmap->textureId,
         state->workingBrushInfluenceMask, state->workingHeightmap,
-        brushMaskShaderProgram->shaderProgram->id, state->activeBrushStrokeInstanceCount, 0,
-        &blendProps);
+        state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount, &blendProps);
     compositeHeightmap(memory, state->workingHeightmap->textureId,
         state->previewBrushInfluenceMask, state->previewHeightmap,
-        brushMaskShaderProgram->shaderProgram->id, 1, MAX_BRUSH_QUADS - 1, &blendProps);
+        &state->previewBrushStrokeQuad, 1, &blendProps);
 
     if (state->isEditingHeightmap)
     {

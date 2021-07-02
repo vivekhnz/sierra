@@ -71,6 +71,7 @@ struct EngineApi
     RendererClear *rendererClear;
     RendererPushTexturedQuad *rendererPushTexturedQuad;
     RendererPushEffectQuad *rendererPushEffectQuad;
+    RendererPushEffectQuads *rendererPushEffectQuads;
     RendererDrawToTarget *rendererDrawToTarget;
     RendererDrawToScreen *rendererDrawToScreen;
 };

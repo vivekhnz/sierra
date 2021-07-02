@@ -224,7 +224,7 @@ RENDERER_INITIALIZE(rendererInitialize)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &ctx->quadInstanceBufferId);
-    ctx->maxQuads = 1024;
+    ctx->maxQuads = 65536;
     ctx->quads = (RenderQuad *)pushSize(arena, sizeof(RenderQuad) * ctx->maxQuads);
 
     return ctx;
@@ -815,6 +815,10 @@ RENDERER_PUSH_EFFECT_QUAD(rendererPushEffectQuad)
 {
     pushQuads(rq, &quad, 1, effect, true);
 }
+RENDERER_PUSH_EFFECT_QUADS(rendererPushEffectQuads)
+{
+    pushQuads(rq, quads, quadCount, effect, true);
+}
 
 bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
 {
@@ -870,6 +874,18 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 {
                     glBlendEquation(GL_FUNC_ADD);
                     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                }
+                break;
+                case EFFECT_BLEND_ADDITIVE:
+                {
+                    glBlendEquation(GL_FUNC_ADD);
+                    glBlendFunc(GL_ONE, GL_ONE);
+                }
+                break;
+                case EFFECT_BLEND_MAX:
+                {
+                    glBlendEquation(GL_MAX);
+                    glBlendFunc(GL_ONE, GL_ONE);
                 }
                 break;
                 }

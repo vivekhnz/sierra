@@ -31,7 +31,9 @@ struct RenderTarget
 
 enum RenderEffectBlendMode
 {
-    EFFECT_BLEND_ALPHA_BLEND
+    EFFECT_BLEND_ALPHA_BLEND,
+    EFFECT_BLEND_ADDITIVE,
+    EFFECT_BLEND_MAX
 };
 
 struct RenderQuad
@@ -211,6 +213,10 @@ typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 #define RENDERER_PUSH_EFFECT_QUAD(name)                                                       \
     void name(RenderQueue *rq, RenderQuad quad, RenderEffect *effect)
 typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
+
+#define RENDERER_PUSH_EFFECT_QUADS(name)                                                      \
+    void name(RenderQueue *rq, RenderQuad *quads, int quadCount, RenderEffect *effect)
+typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)
 typedef RENDERER_DRAW_TO_TARGET(RendererDrawToTarget);

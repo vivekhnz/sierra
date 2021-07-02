@@ -128,6 +128,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererClear;
         public IntPtr rendererPushTexturedQuad;
         public IntPtr rendererPushEffectQuad;
+        public IntPtr rendererPushEffectQuads;
         public IntPtr rendererDrawToTarget;
         public IntPtr rendererDrawToScreen;
     }
