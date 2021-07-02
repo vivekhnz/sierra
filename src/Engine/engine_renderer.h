@@ -34,6 +34,14 @@ enum RenderEffectBlendMode
     EFFECT_BLEND_ALPHA_BLEND
 };
 
+struct RenderQuad
+{
+    float x;
+    float y;
+    float width;
+    float height;
+};
+
 struct RenderContext;
 struct RenderQueue;
 struct RenderEffect;
@@ -197,11 +205,11 @@ typedef RENDERER_SET_CAMERA(RendererSetCamera);
 typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                     \
-    void name(RenderQueue *rq, glm::vec4 rect, uint32 textureId, bool isTopDown)
+    void name(RenderQueue *rq, RenderQuad quad, uint32 textureId, bool isTopDown)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
 #define RENDERER_PUSH_EFFECT_QUAD(name)                                                       \
-    void name(RenderQueue *rq, glm::vec4 rect, RenderEffect *effect)
+    void name(RenderQueue *rq, RenderQuad quad, RenderEffect *effect)
 typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

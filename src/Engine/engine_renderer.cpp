@@ -27,7 +27,10 @@ struct RenderContext
     uint32 quadElementBufferId;
     uint32 quadTopDownVertexBufferId;
     uint32 quadBottomUpVertexBufferId;
+
     uint32 quadInstanceBufferId;
+    RenderQuad *quads;
+    uint32 maxQuads;
 
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -75,14 +78,14 @@ struct RenderEffect
     RenderEffectTexture *lastTexture;
 };
 
-struct RenderQueueEffectQuad
+struct RenderQueueDrawQuads
 {
     RenderEffect *effect;
     bool isTopDown;
-    void *instanceBufferData;
-    uint64 instanceBufferSize;
+    uint32 instanceOffset;
+    uint32 instanceCount;
 
-    RenderQueueEffectQuad *next;
+    RenderQueueDrawQuads *next;
 };
 struct RenderQueue
 {
@@ -92,8 +95,9 @@ struct RenderQueue
     glm::mat4 cameraTransform;
     glm::vec4 clearColor;
 
-    RenderQueueEffectQuad *firstQuad;
-    RenderQueueEffectQuad *lastQuad;
+    RenderQueueDrawQuads *firstDrawQuads;
+    RenderQueueDrawQuads *lastDrawQuads;
+    uint32 quadCount;
 };
 
 struct GpuCameraState
@@ -204,6 +208,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &ctx->quadInstanceBufferId);
+    ctx->maxQuads = 1024;
+    ctx->quads = (RenderQuad *)pushSize(arena, sizeof(RenderQuad) * ctx->maxQuads);
 
     return ctx;
 }
@@ -744,28 +750,29 @@ RENDERER_CLEAR(rendererClear)
     rq->clearColor.a = a;
 }
 
-void pushQuad(RenderQueue *rq,
-    RenderEffect *effect,
-    bool isTopDown,
-    void *instanceBufferData,
-    uint64 instanceBufferSize)
+void pushQuads(
+    RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
 {
-    RenderQueueEffectQuad *quad = pushStruct(rq->arena, RenderQueueEffectQuad);
-    *quad = {};
-    quad->effect = effect;
-    quad->isTopDown = isTopDown;
-    quad->instanceBufferSize = instanceBufferSize;
-    quad->instanceBufferData = pushSize(rq->arena, quad->instanceBufferSize);
-    memcpy(quad->instanceBufferData, instanceBufferData, quad->instanceBufferSize);
+    assert(rq->quadCount + quadCount < rq->ctx->maxQuads);
 
-    if (rq->lastQuad)
+    RenderQueueDrawQuads *drawQuads = pushStruct(rq->arena, RenderQueueDrawQuads);
+    *drawQuads = {};
+    drawQuads->effect = effect;
+    drawQuads->isTopDown = isTopDown;
+    drawQuads->instanceOffset = rq->quadCount;
+    drawQuads->instanceCount = quadCount;
+
+    memcpy(rq->ctx->quads + rq->quadCount, quads, sizeof(RenderQuad) * quadCount);
+    rq->quadCount += quadCount;
+
+    if (rq->lastDrawQuads)
     {
-        rq->lastQuad->next = quad;
+        rq->lastDrawQuads->next = drawQuads;
     }
-    rq->lastQuad = quad;
-    if (!rq->firstQuad)
+    rq->lastDrawQuads = drawQuads;
+    if (!rq->firstDrawQuads)
     {
-        rq->firstQuad = quad;
+        rq->firstDrawQuads = drawQuads;
     }
 }
 
@@ -774,12 +781,12 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     RenderEffect *effect = rendererCreateEffect(
         rq->arena, rq->ctx->quadShaderProgramHandle, EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectTexture(effect, 0, textureId);
-    pushQuad(rq, effect, isTopDown, &rect, sizeof(rect));
+    pushQuads(rq, &quad, 1, effect, isTopDown);
 }
 
 RENDERER_PUSH_EFFECT_QUAD(rendererPushEffectQuad)
 {
-    pushQuad(rq, effect, true, &rect, sizeof(rect));
+    pushQuads(rq, &quad, 1, effect, true);
 }
 
 bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
@@ -801,10 +808,15 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 
     bool isMissingResources = false;
 
-    RenderQueueEffectQuad *quad = rq->firstQuad;
-    while (quad)
+    glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
+
+    RenderQueueDrawQuads *drawQuads = rq->firstDrawQuads;
+    while (drawQuads)
     {
-        LoadedAsset *shaderProgram = assetsGetShaderProgram(quad->effect->shaderProgramHandle);
+        RenderEffect *effect = drawQuads->effect;
+        LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
         if (shaderProgram->shaderProgram)
         {
             uint32 shaderProgramId = shaderProgram->shaderProgram->id;
@@ -812,7 +824,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
             glEnable(GL_DEPTH_TEST);
 
-            switch (quad->effect->blendMode)
+            switch (effect->blendMode)
             {
             case EFFECT_BLEND_ALPHA_BLEND:
             {
@@ -822,7 +834,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             break;
             }
 
-            RenderEffectParameter *effectParam = quad->effect->firstParameter;
+            RenderEffectParameter *effectParam = effect->firstParameter;
             while (effectParam)
             {
                 uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
@@ -848,7 +860,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 effectParam = effectParam->next;
             }
 
-            RenderEffectTexture *effectTexture = quad->effect->firstTexture;
+            RenderEffectTexture *effectTexture = effect->firstTexture;
             while (effectTexture)
             {
                 glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
@@ -857,13 +869,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 effectTexture = effectTexture->next;
             }
 
-            glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
-            glBufferData(GL_ARRAY_BUFFER, quad->instanceBufferSize, quad->instanceBufferData,
-                GL_STREAM_DRAW);
-
             glBindVertexArray(rq->ctx->globalVertexArrayId);
-            uint32 vertexBufferId = quad->isTopDown ? rq->ctx->quadTopDownVertexBufferId
-                                                    : rq->ctx->quadBottomUpVertexBufferId;
+            uint32 vertexBufferId = drawQuads->isTopDown ? rq->ctx->quadTopDownVertexBufferId
+                                                         : rq->ctx->quadBottomUpVertexBufferId;
             uint32 vertexBufferStride = 4 * sizeof(float);
             glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
             glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
@@ -879,8 +887,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
             glVertexAttribDivisor(2, 1);
 
-            uint32 instanceCount = quad->instanceBufferSize / instanceBufferStride;
-            glDrawElementsInstanced(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, instanceCount);
+            glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0,
+                drawQuads->instanceCount, drawQuads->instanceOffset);
 
             glDisableVertexAttribArray(0);
             glDisableVertexAttribArray(1);
@@ -891,7 +899,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             isMissingResources = true;
         }
 
-        quad = quad->next;
+        drawQuads = drawQuads->next;
     }
 
     if (target)

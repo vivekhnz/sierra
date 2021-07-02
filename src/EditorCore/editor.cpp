@@ -568,7 +568,7 @@ void compositeHeightmap(EditorMemory *memory,
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushEffectQuad(rq, glm::vec4(0, 0, 1, 1), effect);
+        engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
         engine->rendererDrawToTarget(rq, iterationOutput);
 
         inputTextureId = iterationOutput->textureId;
@@ -610,7 +610,7 @@ void commitChanges(EditorMemory *memory)
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(
-        rq, glm::vec4(0, 0, 1, 1), state->workingHeightmap->textureId, true);
+        rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, true);
     if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
     {
         state->isEditingHeightmap = false;
@@ -962,7 +962,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(
-            rq, glm::vec4(0, 0, 1, 1), state->importedHeightmapTextureId, true);
+            rq, {0, 0, 1, 1}, state->importedHeightmapTextureId, true);
         if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
         {
             updateHeightfieldHeights(&state->sceneState.heightfield,
@@ -1512,8 +1512,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
-    engine->rendererPushTexturedQuad(
-        rq, glm::vec4(0, 0, 1, 1), sceneRenderTarget->textureId, true);
+    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, sceneRenderTarget->textureId, true);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
@@ -1550,7 +1549,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(
-        rq, glm::vec4(0, 0, 1, 1), state->workingHeightmap->textureId, false);
+        rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, false);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
