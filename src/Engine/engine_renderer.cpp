@@ -78,14 +78,22 @@ struct RenderEffect
     RenderEffectTexture *lastTexture;
 };
 
-struct RenderQueueDrawQuads
+enum RenderQueueCommandType
+{
+    RENDER_CMD_DrawQuadsCommand
+};
+struct RenderQueueCommandHeader
+{
+    RenderQueueCommandType type;
+    RenderQueueCommandHeader *next;
+};
+
+struct DrawQuadsCommand
 {
     RenderEffect *effect;
     bool isTopDown;
     uint32 instanceOffset;
     uint32 instanceCount;
-
-    RenderQueueDrawQuads *next;
 };
 struct RenderQueue
 {
@@ -95,8 +103,9 @@ struct RenderQueue
     glm::mat4 cameraTransform;
     glm::vec4 clearColor;
 
-    RenderQueueDrawQuads *firstDrawQuads;
-    RenderQueueDrawQuads *lastDrawQuads;
+    RenderQueueCommandHeader *firstCommand;
+    RenderQueueCommandHeader *lastCommand;
+
     uint32 quadCount;
 };
 
@@ -750,30 +759,42 @@ RENDERER_CLEAR(rendererClear)
     rq->clearColor.a = a;
 }
 
+void *pushRenderCommandInternal(RenderQueue *rq, RenderQueueCommandType type, uint64 size)
+{
+    RenderQueueCommandHeader *header = pushStruct(rq->arena, RenderQueueCommandHeader);
+    *header = {};
+    header->type = type;
+
+    if (rq->lastCommand)
+    {
+        rq->lastCommand->next = header;
+    }
+    rq->lastCommand = header;
+    if (!rq->firstCommand)
+    {
+        rq->firstCommand = header;
+    }
+
+    void *commandData = pushSize(rq->arena, size);
+    memset(commandData, 0, size);
+    return commandData;
+}
+#define pushRenderCommand(rq, type)                                                           \
+    (type *)pushRenderCommandInternal(rq, RENDER_CMD_##type, sizeof(type))
+
 void pushQuads(
     RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
 {
     assert(rq->quadCount + quadCount < rq->ctx->maxQuads);
 
-    RenderQueueDrawQuads *drawQuads = pushStruct(rq->arena, RenderQueueDrawQuads);
-    *drawQuads = {};
-    drawQuads->effect = effect;
-    drawQuads->isTopDown = isTopDown;
-    drawQuads->instanceOffset = rq->quadCount;
-    drawQuads->instanceCount = quadCount;
+    DrawQuadsCommand *cmd = pushRenderCommand(rq, DrawQuadsCommand);
+    cmd->effect = effect;
+    cmd->isTopDown = isTopDown;
+    cmd->instanceOffset = rq->quadCount;
+    cmd->instanceCount = quadCount;
 
     memcpy(rq->ctx->quads + rq->quadCount, quads, sizeof(RenderQuad) * quadCount);
     rq->quadCount += quadCount;
-
-    if (rq->lastDrawQuads)
-    {
-        rq->lastDrawQuads->next = drawQuads;
-    }
-    rq->lastDrawQuads = drawQuads;
-    if (!rq->firstDrawQuads)
-    {
-        rq->firstDrawQuads = drawQuads;
-    }
 }
 
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
@@ -812,94 +833,104 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     glBufferData(
         GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
 
-    RenderQueueDrawQuads *drawQuads = rq->firstDrawQuads;
-    while (drawQuads)
+    RenderQueueCommandHeader *command = rq->firstCommand;
+    while (command)
     {
-        RenderEffect *effect = drawQuads->effect;
-        LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
-        if (shaderProgram->shaderProgram)
+        void *commandData = command + 1;
+
+        switch (command->type)
         {
-            uint32 shaderProgramId = shaderProgram->shaderProgram->id;
-            glUseProgram(shaderProgramId);
-            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-            glEnable(GL_DEPTH_TEST);
-
-            switch (effect->blendMode)
-            {
-            case EFFECT_BLEND_ALPHA_BLEND:
-            {
-                glBlendEquation(GL_FUNC_ADD);
-                glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            }
-            break;
-            }
-
-            RenderEffectParameter *effectParam = effect->firstParameter;
-            while (effectParam)
-            {
-                uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
-                switch (effectParam->type)
-                {
-                case EFFECT_PARAM_TYPE_FLOAT:
-                {
-                    glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
-                }
-                break;
-                case EFFECT_PARAM_TYPE_INT:
-                {
-                    glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
-                }
-                break;
-                default:
-                {
-                    assert(!"Invalid effect parameter type");
-                }
-                break;
-                }
-
-                effectParam = effectParam->next;
-            }
-
-            RenderEffectTexture *effectTexture = effect->firstTexture;
-            while (effectTexture)
-            {
-                glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
-                glBindTexture(GL_TEXTURE_2D, effectTexture->textureId);
-
-                effectTexture = effectTexture->next;
-            }
-
-            glBindVertexArray(rq->ctx->globalVertexArrayId);
-            uint32 vertexBufferId = drawQuads->isTopDown ? rq->ctx->quadTopDownVertexBufferId
-                                                         : rq->ctx->quadBottomUpVertexBufferId;
-            uint32 vertexBufferStride = 4 * sizeof(float);
-            glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-            glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
-            glEnableVertexAttribArray(0);
-            glEnableVertexAttribArray(1);
-            glVertexAttribPointer(0, 2, GL_FLOAT, false, vertexBufferStride, (void *)0);
-            glVertexAttribPointer(
-                1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
-
-            uint32 instanceBufferStride = 4 * sizeof(float);
-            glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
-            glEnableVertexAttribArray(2);
-            glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
-            glVertexAttribDivisor(2, 1);
-
-            glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0,
-                drawQuads->instanceCount, drawQuads->instanceOffset);
-
-            glDisableVertexAttribArray(0);
-            glDisableVertexAttribArray(1);
-            glDisableVertexAttribArray(2);
-        }
-        else
+        case RENDER_CMD_DrawQuadsCommand:
         {
-            isMissingResources = true;
+            DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
+            RenderEffect *effect = cmd->effect;
+            LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
+            if (shaderProgram->shaderProgram)
+            {
+                uint32 shaderProgramId = shaderProgram->shaderProgram->id;
+                glUseProgram(shaderProgramId);
+                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+                glEnable(GL_DEPTH_TEST);
+
+                switch (effect->blendMode)
+                {
+                case EFFECT_BLEND_ALPHA_BLEND:
+                {
+                    glBlendEquation(GL_FUNC_ADD);
+                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                }
+                break;
+                }
+
+                RenderEffectParameter *effectParam = effect->firstParameter;
+                while (effectParam)
+                {
+                    uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
+                    switch (effectParam->type)
+                    {
+                    case EFFECT_PARAM_TYPE_FLOAT:
+                    {
+                        glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
+                    }
+                    break;
+                    case EFFECT_PARAM_TYPE_INT:
+                    {
+                        glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
+                    }
+                    break;
+                    default:
+                    {
+                        assert(!"Invalid effect parameter type");
+                    }
+                    break;
+                    }
+
+                    effectParam = effectParam->next;
+                }
+
+                RenderEffectTexture *effectTexture = effect->firstTexture;
+                while (effectTexture)
+                {
+                    glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
+                    glBindTexture(GL_TEXTURE_2D, effectTexture->textureId);
+
+                    effectTexture = effectTexture->next;
+                }
+
+                glBindVertexArray(rq->ctx->globalVertexArrayId);
+                uint32 vertexBufferId = cmd->isTopDown ? rq->ctx->quadTopDownVertexBufferId
+                                                       : rq->ctx->quadBottomUpVertexBufferId;
+                uint32 vertexBufferStride = 4 * sizeof(float);
+                glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
+                glEnableVertexAttribArray(0);
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(0, 2, GL_FLOAT, false, vertexBufferStride, (void *)0);
+                glVertexAttribPointer(
+                    1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
+
+                uint32 instanceBufferStride = 4 * sizeof(float);
+                glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
+                glEnableVertexAttribArray(2);
+                glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
+                glVertexAttribDivisor(2, 1);
+
+                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0,
+                    cmd->instanceCount, cmd->instanceOffset);
+
+                glDisableVertexAttribArray(0);
+                glDisableVertexAttribArray(1);
+                glDisableVertexAttribArray(2);
+            }
+            else
+            {
+                isMissingResources = true;
+            }
+        }
+        break;
         }
 
-        drawQuads = drawQuads->next;
+        command = command->next;
     }
 
     if (target)
