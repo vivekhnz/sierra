@@ -125,8 +125,10 @@ struct DrawQuadsCommand
 struct DrawMeshesCommand
 {
     RenderEffect *effect;
-    uint32 vertexArrayId;
+    uint32 meshVertexBufferId;
+    uint32 meshElementBufferId;
     uint32 meshElementCount;
+    uint32 instanceBufferId;
     uint32 instanceCount;
 };
 struct RenderQueue
@@ -836,9 +838,13 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
 
-    assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
-    cmd->vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+    assert(meshVertexBufferHandle < rq->ctx->bufferCount);
+    cmd->meshVertexBufferId = rq->ctx->bufferIds[meshVertexBufferHandle];
+    assert(meshElementBufferHandle < rq->ctx->bufferCount);
+    cmd->meshElementBufferId = rq->ctx->bufferIds[meshElementBufferHandle];
     cmd->meshElementCount = meshElementCount;
+    assert(instanceBufferHandle < rq->ctx->bufferCount);
+    cmd->instanceBufferId = rq->ctx->bufferIds[instanceBufferHandle];
     cmd->instanceCount = instanceCount;
 }
 
@@ -994,9 +1000,43 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             DrawMeshesCommand *cmd = (DrawMeshesCommand *)commandData;
             if (applyEffect(cmd->effect))
             {
-                glBindVertexArray(cmd->vertexArrayId);
+                glBindVertexArray(rq->ctx->globalVertexArrayId);
+                uint32 vertexBufferStride = 6 * sizeof(float);
+                glBindBuffer(GL_ARRAY_BUFFER, cmd->meshVertexBufferId);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmd->meshElementBufferId);
+                glEnableVertexAttribArray(0);
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
+                glVertexAttribPointer(
+                    1, 3, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
+
+                uint32 instanceBufferStride = sizeof(glm::mat4);
+                glBindBuffer(GL_ARRAY_BUFFER, cmd->instanceBufferId);
+                glEnableVertexAttribArray(2);
+                glEnableVertexAttribArray(3);
+                glEnableVertexAttribArray(4);
+                glEnableVertexAttribArray(5);
+                glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
+                glVertexAttribDivisor(2, 1);
+                glVertexAttribPointer(
+                    3, 4, GL_FLOAT, false, instanceBufferStride, (void *)(4 * sizeof(float)));
+                glVertexAttribDivisor(3, 1);
+                glVertexAttribPointer(
+                    4, 4, GL_FLOAT, false, instanceBufferStride, (void *)(8 * sizeof(float)));
+                glVertexAttribDivisor(4, 1);
+                glVertexAttribPointer(
+                    5, 4, GL_FLOAT, false, instanceBufferStride, (void *)(12 * sizeof(float)));
+                glVertexAttribDivisor(5, 1);
+
                 glDrawElementsInstancedBaseInstance(GL_TRIANGLES, cmd->meshElementCount,
                     GL_UNSIGNED_INT, 0, cmd->instanceCount, 0);
+
+                glDisableVertexAttribArray(0);
+                glDisableVertexAttribArray(1);
+                glDisableVertexAttribArray(2);
+                glDisableVertexAttribArray(3);
+                glDisableVertexAttribArray(4);
+                glDisableVertexAttribArray(5);
             }
             else
             {

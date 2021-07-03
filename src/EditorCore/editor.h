@@ -106,7 +106,7 @@ struct SceneState
         bool isLoaded;
         uint32 elementCount;
         uint32 vertexBufferHandle;
-        uint32 vertexArrayHandle;
+        uint32 elementBufferHandle;
     } rockMesh;
 
     uint32 nextObjectId;

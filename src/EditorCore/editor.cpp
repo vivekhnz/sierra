@@ -1387,7 +1387,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
                 uint32 rockVertexBufferStride = 6 * sizeof(float);
                 uint32 rockVertexBufferSize = rockMesh->vertexCount * rockVertexBufferStride;
-                uint32 rockInstanceBufferStride = sizeof(glm::mat4);
                 uint32 rockElementBufferSize =
                     sizeof(uint32) * sceneState->rockMesh.elementCount;
 
@@ -1396,30 +1395,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 engine->rendererUpdateBuffer(rctx, sceneState->rockMesh.vertexBufferHandle,
                     rockVertexBufferSize, rockMesh->vertices);
 
-                uint32 rockElementBufferHandle = engine->rendererCreateBuffer(
+                sceneState->rockMesh.elementBufferHandle = engine->rendererCreateBuffer(
                     rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-                engine->rendererUpdateBuffer(
-                    rctx, rockElementBufferHandle, rockElementBufferSize, rockMesh->indices);
-
-                sceneState->rockMesh.vertexArrayHandle =
-                    engine->rendererCreateVertexArray(rctx);
-                engine->rendererBindVertexArray(rctx, sceneState->rockMesh.vertexArrayHandle);
-                engine->rendererBindBuffer(rctx, rockElementBufferHandle);
-                engine->rendererBindBuffer(rctx, sceneState->rockMesh.vertexBufferHandle);
-                engine->rendererBindVertexAttribute(
-                    0, GL_FLOAT, false, 3, rockVertexBufferStride, 0, false);
-                engine->rendererBindVertexAttribute(
-                    1, GL_FLOAT, false, 3, rockVertexBufferStride, 3 * sizeof(float), false);
-                engine->rendererBindBuffer(rctx, sceneState->objectInstanceBufferHandle);
-                engine->rendererBindVertexAttribute(
-                    2, GL_FLOAT, false, 4, rockInstanceBufferStride, 0, true);
-                engine->rendererBindVertexAttribute(
-                    3, GL_FLOAT, false, 4, rockInstanceBufferStride, 4 * sizeof(float), true);
-                engine->rendererBindVertexAttribute(
-                    4, GL_FLOAT, false, 4, rockInstanceBufferStride, 8 * sizeof(float), true);
-                engine->rendererBindVertexAttribute(
-                    5, GL_FLOAT, false, 4, rockInstanceBufferStride, 12 * sizeof(float), true);
-                engine->rendererUnbindVertexArray();
+                engine->rendererUpdateBuffer(rctx, sceneState->rockMesh.elementBufferHandle,
+                    rockElementBufferSize, rockMesh->indices);
 
                 sceneState->rockMesh.isLoaded = true;
             }
@@ -1427,11 +1406,21 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
         if (sceneState->rockMesh.isLoaded)
         {
+#if 0
+            RenderEffect *effect = engine->rendererCreateEffect(
+                &memory->arena, editorAssets->shaderProgramRock, EFFECT_BLEND_ALPHA_BLEND);
             RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-            engine->rendererPushMeshes(rq, sceneState->rockMesh.vertexArrayHandle,
-                sceneState->rockMesh.elementCount, sceneState->objectInstanceCount,
+            engine->rendererPushMeshes(rq, editorAssets->meshRock,
+                sceneState->objectInstanceData, sceneState->objectInstanceCount, effect);
+            engine->rendererDrawToScreen(rq, view->width, view->height);
+#else
+            RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+            engine->rendererPushMeshes(rq, sceneState->rockMesh.vertexBufferHandle,
+                sceneState->rockMesh.elementBufferHandle, sceneState->rockMesh.elementCount,
+                sceneState->objectInstanceBufferHandle, sceneState->objectInstanceCount,
                 editorAssets->shaderProgramRock);
             engine->rendererDrawToScreen(rq, view->width, view->height);
+#endif
         }
     }
     engine->rendererUnbindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
@@ -1442,6 +1431,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, sceneRenderTarget->textureId, true);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
+#if 0
     engine->rendererUpdateCameraState(rctx, &viewState->cameraTransform);
     if (rockShaderProgram->shaderProgram && sceneState->rockMesh.isLoaded
         && state->uiState.selectedObjectId != 0)
@@ -1461,6 +1451,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
         }
     }
+#endif
 
     endTemporaryMemory(&renderQueueMemory);
 }

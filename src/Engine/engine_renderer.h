@@ -219,8 +219,9 @@ typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
 typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
 
 #define RENDERER_PUSH_MESHES(name)                                                            \
-    void name(RenderQueue *rq, uint32 vertexArrayHandle, uint32 meshElementCount,             \
-        uint32 instanceCount, AssetHandle shaderProgram)
+    void name(RenderQueue *rq, uint32 meshVertexBufferHandle, uint32 meshElementBufferHandle, \
+        uint32 meshElementCount, uint32 instanceBufferHandle, uint32 instanceCount,           \
+        AssetHandle shaderProgram)
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)
