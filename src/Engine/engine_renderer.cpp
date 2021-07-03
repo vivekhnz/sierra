@@ -118,9 +118,7 @@ struct DrawQuadsCommand
 struct DrawMeshesCommand
 {
     RenderEffect *effect;
-    uint32 meshVertexBufferId;
-    uint32 meshElementBufferId;
-    uint32 meshElementCount;
+    AssetHandle mesh;
     uint32 instanceBufferId;
     uint32 instanceCount;
 };
@@ -142,6 +140,77 @@ struct RenderTargetDescriptor
     uint32 gpuFormat;
     bool hasDepthBuffer;
 };
+
+bool createShader(uint32 type, char *src, uint32 *out_id)
+{
+    uint32 id = glCreateShader(type);
+    glShaderSource(id, 1, &src, NULL);
+
+    glCompileShader(id);
+    int32 succeeded;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
+    if (succeeded)
+    {
+        *out_id = id;
+        return 1;
+    }
+    else
+    {
+        char infoLog[512];
+        glGetShaderInfoLog(id, 512, NULL, infoLog);
+        Platform.logMessage(infoLog);
+
+        return 0;
+    }
+}
+
+bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
+{
+    uint32 id = glCreateProgram();
+    for (int i = 0; i < shaderCount; i++)
+    {
+        glAttachShader(id, shaderIds[i]);
+    }
+
+    glLinkProgram(id);
+    int32 succeeded;
+    glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
+    if (succeeded)
+    {
+        for (int i = 0; i < shaderCount; i++)
+        {
+            glDetachShader(id, shaderIds[i]);
+        }
+        *out_id = id;
+        return 1;
+    }
+    else
+    {
+        char infoLog[512];
+        glGetProgramInfoLog(id, 512, NULL, infoLog);
+        Platform.logMessage(infoLog);
+
+        return 0;
+    }
+}
+
+RenderMesh *createMesh(
+    MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
+{
+    RenderMesh *result = pushStruct(arena, RenderMesh);
+
+    uint32 vertexBufferStride = 6 * sizeof(float);
+    glGenBuffers(1, &result->vertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, result->vertexBufferId);
+    glBufferData(GL_ARRAY_BUFFER, vertexCount * vertexBufferStride, vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &result->elementBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result->elementBufferId);
+    glBufferData(
+        GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(uint32), indices, GL_STATIC_DRAW);
+
+    return result;
+}
 
 RENDERER_INITIALIZE(rendererInitialize)
 {
@@ -332,59 +401,6 @@ RENDERER_UNBIND_FRAMEBUFFER(rendererUnbindFramebuffer)
     glBindTexture(GL_TEXTURE_2D, textureId);
     glGenerateMipmap(GL_TEXTURE_2D);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-RENDERER_CREATE_SHADER(rendererCreateShader)
-{
-    uint32 id = glCreateShader(type);
-    glShaderSource(id, 1, &src, NULL);
-
-    glCompileShader(id);
-    int32 succeeded;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
-    if (succeeded)
-    {
-        *out_id = id;
-        return 1;
-    }
-    else
-    {
-        char infoLog[512];
-        glGetShaderInfoLog(id, 512, NULL, infoLog);
-        Platform.logMessage(infoLog);
-
-        return 0;
-    }
-}
-
-RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram)
-{
-    uint32 id = glCreateProgram();
-    for (int i = 0; i < shaderCount; i++)
-    {
-        glAttachShader(id, shaderIds[i]);
-    }
-
-    glLinkProgram(id);
-    int32 succeeded;
-    glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
-    if (succeeded)
-    {
-        for (int i = 0; i < shaderCount; i++)
-        {
-            glDetachShader(id, shaderIds[i]);
-        }
-        *out_id = id;
-        return 1;
-    }
-    else
-    {
-        char infoLog[512];
-        glGetProgramInfoLog(id, 512, NULL, infoLog);
-        Platform.logMessage(infoLog);
-
-        return 0;
-    }
 }
 
 RENDERER_USE_SHADER_PROGRAM(rendererUseShaderProgram)
@@ -812,9 +828,7 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
-    cmd->meshVertexBufferId = meshVertexBufferId;
-    cmd->meshElementBufferId = meshElementBufferId;
-    cmd->meshElementCount = meshElementCount;
+    cmd->mesh = mesh;
     cmd->instanceBufferId = instanceBufferId;
     cmd->instanceCount = instanceCount;
 }
@@ -968,12 +982,14 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         case RENDER_CMD_DrawMeshesCommand:
         {
             DrawMeshesCommand *cmd = (DrawMeshesCommand *)commandData;
-            if (applyEffect(cmd->effect))
+            LoadedAsset *meshAsset = assetsGetMesh(cmd->mesh);
+            MeshAsset *mesh = meshAsset->mesh;
+            if (applyEffect(cmd->effect) && mesh)
             {
                 glBindVertexArray(rq->ctx->globalVertexArrayId);
                 uint32 vertexBufferStride = 6 * sizeof(float);
-                glBindBuffer(GL_ARRAY_BUFFER, cmd->meshVertexBufferId);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmd->meshElementBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, mesh->renderMesh->vertexBufferId);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->renderMesh->elementBufferId);
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
@@ -998,7 +1014,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     5, 4, GL_FLOAT, false, instanceBufferStride, (void *)(12 * sizeof(float)));
                 glVertexAttribDivisor(5, 1);
 
-                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, cmd->meshElementCount,
+                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, mesh->elementCount,
                     GL_UNSIGNED_INT, 0, cmd->instanceCount, 0);
 
                 glDisableVertexAttribArray(0);

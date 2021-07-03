@@ -335,8 +335,6 @@ void initializeEditor(EditorMemory *memory)
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     sceneState->nextMaterialId = 1;
 
-    sceneState->rockMesh = {};
-
     sceneState->nextObjectId = 1;
     sceneState->objectInstanceBuffer =
         engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
@@ -1372,51 +1370,20 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererUnbindVertexArray();
 
         // draw rocks
-        if (!sceneState->rockMesh.isLoaded)
-        {
-            LoadedAsset *rockMeshAsset = engine->assetsGetMesh(editorAssets->meshRock);
-            MeshAsset *rockMesh = rockMeshAsset->mesh;
-            if (rockMesh)
-            {
-                sceneState->rockMesh.elementCount = rockMesh->elementCount;
-
-                uint32 rockVertexBufferStride = 6 * sizeof(float);
-                uint32 rockVertexBufferSize = rockMesh->vertexCount * rockVertexBufferStride;
-                uint32 rockElementBufferSize =
-                    sizeof(uint32) * sceneState->rockMesh.elementCount;
-
-                sceneState->rockMesh.vertexBuffer =
-                    engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-                engine->rendererUpdateBuffer(&sceneState->rockMesh.vertexBuffer,
-                    rockVertexBufferSize, rockMesh->vertices);
-
-                sceneState->rockMesh.elementBuffer =
-                    engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-                engine->rendererUpdateBuffer(&sceneState->rockMesh.elementBuffer,
-                    rockElementBufferSize, rockMesh->indices);
-
-                sceneState->rockMesh.isLoaded = true;
-            }
-        }
-
-        if (sceneState->rockMesh.isLoaded)
-        {
 #if 0
-            RenderEffect *effect = engine->rendererCreateEffect(
-                &memory->arena, editorAssets->shaderProgramRock, EFFECT_BLEND_ALPHA_BLEND);
-            RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-            engine->rendererPushMeshes(rq, editorAssets->meshRock,
-                sceneState->objectInstanceData, sceneState->objectInstanceCount, effect);
-            engine->rendererDrawToScreen(rq, view->width, view->height);
+        RenderEffect *effect = engine->rendererCreateEffect(
+            &memory->arena, editorAssets->shaderProgramRock, EFFECT_BLEND_ALPHA_BLEND);
+        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+        engine->rendererPushMeshes(rq, editorAssets->meshRock,
+            sceneState->objectInstanceData, sceneState->objectInstanceCount, effect);
+        engine->rendererDrawToScreen(rq, view->width, view->height);
 #else
-            RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-            engine->rendererPushMeshes(rq, sceneState->rockMesh.vertexBuffer.id,
-                sceneState->rockMesh.elementBuffer.id, sceneState->rockMesh.elementCount,
-                sceneState->objectInstanceBuffer.id, sceneState->objectInstanceCount,
-                editorAssets->shaderProgramRock);
-            engine->rendererDrawToScreen(rq, view->width, view->height);
+        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+        engine->rendererPushMeshes(rq, editorAssets->meshRock,
+            sceneState->objectInstanceBuffer.id, sceneState->objectInstanceCount,
+            editorAssets->shaderProgramRock);
+        engine->rendererDrawToScreen(rq, view->width, view->height);
 #endif
-        }
     }
     engine->rendererUnbindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
 

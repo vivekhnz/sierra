@@ -19,6 +19,12 @@ struct RenderBuffer
     uint32 usage;
 };
 
+struct RenderMesh
+{
+    uint32 vertexBufferId;
+    uint32 elementBufferId;
+};
+
 enum RenderTargetFormat
 {
     RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
@@ -53,6 +59,11 @@ struct RenderQuad
 struct RenderContext;
 struct RenderQueue;
 struct RenderEffect;
+
+bool createShader(uint32 type, char *src, uint32 *out_id);
+bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id);
+RenderMesh *createMesh(
+    MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
 
 #define RENDERER_INITIALIZE(name)                                                             \
     RenderContext *name(MemoryArena *arena, AssetHandle quadShaderProgramHandle)
@@ -98,12 +109,6 @@ typedef RENDERER_BIND_FRAMEBUFFER(RendererBindFramebuffer);
 #define RENDERER_UNBIND_FRAMEBUFFER(name) void name(RenderContext *ctx, uint32 handle)
 typedef RENDERER_UNBIND_FRAMEBUFFER(RendererUnbindFramebuffer);
 
-#define RENDERER_CREATE_SHADER(name) bool name(uint32 type, char *src, uint32 *out_id)
-typedef RENDERER_CREATE_SHADER(RendererCreateShader);
-
-#define RENDERER_CREATE_SHADER_PROGRAM(name)                                                  \
-    bool name(int shaderCount, uint32 *shaderIds, uint32 *out_id)
-typedef RENDERER_CREATE_SHADER_PROGRAM(RendererCreateShaderProgram);
 #define RENDERER_USE_SHADER_PROGRAM(name) void name(uint32 id)
 typedef RENDERER_USE_SHADER_PROGRAM(RendererUseShaderProgram);
 #define RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(name)                                       \
@@ -222,9 +227,8 @@ typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
 typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
 
 #define RENDERER_PUSH_MESHES(name)                                                            \
-    void name(RenderQueue *rq, uint32 meshVertexBufferId, uint32 meshElementBufferId,         \
-        uint32 meshElementCount, uint32 instanceBufferId, uint32 instanceCount,               \
-        AssetHandle shaderProgram)
+    void name(RenderQueue *rq, AssetHandle mesh, uint32 instanceBufferId,                     \
+        uint32 instanceCount, AssetHandle shaderProgram)
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

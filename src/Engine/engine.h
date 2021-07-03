@@ -35,8 +35,6 @@ struct EngineApi
     RendererCreateFramebuffer *rendererCreateFramebuffer;
     RendererBindFramebuffer *rendererBindFramebuffer;
     RendererUnbindFramebuffer *rendererUnbindFramebuffer;
-    RendererCreateShader *rendererCreateShader;
-    RendererCreateShaderProgram *rendererCreateShaderProgram;
     RendererUseShaderProgram *rendererUseShaderProgram;
     RendererSetShaderProgramUniformFloat *rendererSetShaderProgramUniformFloat;
     RendererSetShaderProgramUniformInteger *rendererSetShaderProgramUniformInteger;

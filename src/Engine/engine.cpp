@@ -57,8 +57,6 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererCreateFramebuffer = rendererCreateFramebuffer;
     Api.rendererBindFramebuffer = rendererBindFramebuffer;
     Api.rendererUnbindFramebuffer = rendererUnbindFramebuffer;
-    Api.rendererCreateShader = rendererCreateShader;
-    Api.rendererCreateShaderProgram = rendererCreateShaderProgram;
     Api.rendererUseShaderProgram = rendererUseShaderProgram;
     Api.rendererSetShaderProgramUniformFloat = rendererSetShaderProgramUniformFloat;
     Api.rendererSetShaderProgramUniformInteger = rendererSetShaderProgramUniformInteger;

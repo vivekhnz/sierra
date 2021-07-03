@@ -92,8 +92,6 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererCreateFramebuffer;
         public IntPtr rendererBindFramebuffer;
         public IntPtr rendererUnbindFramebuffer;
-        public IntPtr rendererCreateShader;
-        public IntPtr rendererCreateShaderProgram;
         public IntPtr rendererUseShaderProgram;
         public IntPtr rendererSetShaderProgramUniformFloat;
         public IntPtr rendererSetShaderProgramUniformInteger;

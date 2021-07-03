@@ -25,12 +25,14 @@ struct TextureAsset
     uint32 height;
     void *data;
 };
+struct RenderMesh;
 struct MeshAsset
 {
     uint32 vertexCount;
     uint32 elementCount;
     void *vertices;
     void *indices;
+    RenderMesh *renderMesh;
 };
 struct LoadedAsset
 {

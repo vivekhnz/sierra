@@ -101,14 +101,6 @@ struct SceneState
 
     RenderBuffer tessellationLevelBuffer;
 
-    struct RockMesh
-    {
-        bool isLoaded;
-        uint32 elementCount;
-        RenderBuffer vertexBuffer;
-        RenderBuffer elementBuffer;
-    } rockMesh;
-
     uint32 nextObjectId;
     glm::mat4 objectInstanceBufferData[MAX_OBJECT_INSTANCES];
     RenderBuffer objectInstanceBuffer;

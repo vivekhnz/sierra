@@ -12,9 +12,6 @@ extern EnginePlatformApi Platform;
 #define MAX_ASSETS 4096
 #define MAX_DEPENDENCIES_PER_ASSET 32
 
-RENDERER_CREATE_SHADER_PROGRAM(rendererCreateShaderProgram);
-RENDERER_CREATE_SHADER(rendererCreateShader);
-
 struct Assets
 {
     MemoryArena *arena;
@@ -140,7 +137,7 @@ bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **d
         }
 
         uint32 id;
-        if (rendererCreateShaderProgram(reg->compositeState->dependencyCount, shaderIds, &id))
+        if (createShaderProgram(reg->compositeState->dependencyCount, shaderIds, &id))
         {
             if (!reg->asset.shaderProgram)
             {
@@ -322,7 +319,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         char *src = static_cast<char *>(data);
         uint32 id;
-        if (rendererCreateShader(reg->metadata.shader->type, src, &id))
+        if (createShader(reg->metadata.shader->type, src, &id))
         {
             if (!reg->asset.shader)
             {
@@ -374,8 +371,11 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         {
             reg->asset.mesh = pushStruct(assets->arena, MeshAsset);
         }
-        fastObjLoadMesh(
-            assets->arena, reg->fileState->relativePath, data, size, reg->asset.mesh);
+        MeshAsset *mesh = reg->asset.mesh;
+        fastObjLoadMesh(assets->arena, reg->fileState->relativePath, data, size, mesh);
+
+        mesh->renderMesh = createMesh(assets->arena, mesh->vertices, mesh->vertexCount,
+            mesh->indices, mesh->elementCount);
     }
     reg->asset.version++;
     if (reg->regType == ASSET_REG_FILE)
