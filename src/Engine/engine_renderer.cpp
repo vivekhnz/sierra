@@ -2,11 +2,7 @@
 
 #include "engine_assets.h"
 
-#define RENDERER_MAX_FRAMEBUFFERS 128
-#define RENDERER_MAX_SHADER_PROGRAMS 128
 #define RENDERER_MAX_VERTEX_ARRAYS 128
-#define RENDERER_MAX_BUFFERS 128
-
 #define RENDERER_CAMERA_UBO_SLOT 0
 #define RENDERER_LIGHTING_UBO_SLOT 1
 
@@ -30,10 +26,6 @@ struct RenderContext
     uint32 meshInstanceBufferId;
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
-
-    uint32 framebufferCount;
-    uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
-    uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
 
     uint32 vertexArrayCount;
     uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
@@ -320,15 +312,6 @@ RENDERER_INITIALIZE(rendererInitialize)
     return ctx;
 }
 
-RENDERER_UPDATE_CAMERA_STATE(rendererUpdateCameraState)
-{
-    GpuCameraState camera;
-    camera.transform = *transform;
-
-    glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
-}
-
 RENDERER_UPDATE_LIGHTING_STATE(rendererUpdateLightingState)
 {
     GpuLightingState lighting;
@@ -357,12 +340,6 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
     glGenerateMipmap(GL_TEXTURE_2D);
 
     return id;
-}
-
-RENDERER_BIND_TEXTURE(rendererBindTexture)
-{
-    glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D, id);
 }
 
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
@@ -397,91 +374,12 @@ RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
     return id;
 }
 
-RENDERER_BIND_TEXTURE_ARRAY(rendererBindTextureArray)
-{
-    glActiveTexture(GL_TEXTURE0 + slot);
-    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
-}
-
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
     glBindTexture(GL_TEXTURE_2D_ARRAY, id);
     glTexSubImage3D(
         GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-}
-
-RENDERER_CREATE_FRAMEBUFFER(rendererCreateFramebuffer)
-{
-    assert(ctx->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
-    uint32 *framebufferId = ctx->framebufferIds + ctx->framebufferCount;
-    glGenFramebuffers(1, framebufferId);
-
-    glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    ctx->framebufferTextureIds[ctx->framebufferCount] = textureId;
-
-    return ctx->framebufferCount++;
-}
-
-RENDERER_BIND_FRAMEBUFFER(rendererBindFramebuffer)
-{
-    assert(handle < ctx->framebufferCount);
-    uint32 id = ctx->framebufferIds[handle];
-
-    glBindFramebuffer(GL_FRAMEBUFFER, id);
-}
-
-RENDERER_UNBIND_FRAMEBUFFER(rendererUnbindFramebuffer)
-{
-    assert(handle < ctx->framebufferCount);
-
-    uint32 textureId = ctx->framebufferTextureIds[handle];
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glGenerateMipmap(GL_TEXTURE_2D);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-}
-
-RENDERER_USE_SHADER_PROGRAM(rendererUseShaderProgram)
-{
-    glUseProgram(id);
-}
-
-RENDERER_SET_SHADER_PROGRAM_UNIFORM_FLOAT(rendererSetShaderProgramUniformFloat)
-{
-    uint32 loc = glGetUniformLocation(id, uniformName);
-    glProgramUniform1f(id, loc, value);
-}
-
-RENDERER_SET_SHADER_PROGRAM_UNIFORM_INTEGER(rendererSetShaderProgramUniformInteger)
-{
-    uint32 loc = glGetUniformLocation(id, uniformName);
-    glProgramUniform1i(id, loc, value);
-}
-
-RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR2(rendererSetShaderProgramUniformVector2)
-{
-    uint32 loc = glGetUniformLocation(id, uniformName);
-    glProgramUniform2fv(id, loc, 1, glm::value_ptr(value));
-}
-
-RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR3(rendererSetShaderProgramUniformVector3)
-{
-    uint32 loc = glGetUniformLocation(id, uniformName);
-    glProgramUniform3fv(id, loc, 1, glm::value_ptr(value));
-}
-
-RENDERER_SET_SHADER_PROGRAM_UNIFORM_VECTOR4(rendererSetShaderProgramUniformVector4)
-{
-    uint32 loc = glGetUniformLocation(id, uniformName);
-    glProgramUniform4fv(id, loc, 1, glm::value_ptr(value));
-}
-
-RENDERER_SET_SHADER_PROGRAM_UNIFORM_MATRIX4X4(rendererSetShaderProgramUniformMatrix4x4)
-{
-    uint32 loc = glGetUniformLocation(id, uniformName);
-    glProgramUniformMatrix4fv(id, loc, 1, false, glm::value_ptr(value));
 }
 
 RENDERER_CREATE_VERTEX_ARRAY(rendererCreateVertexArray)
@@ -547,62 +445,6 @@ RENDERER_BIND_VERTEX_ATTRIBUTE(rendererBindVertexAttribute)
     glVertexAttribDivisor(index, isPerInstance);
 }
 
-RENDERER_BIND_SHADER_STORAGE_BUFFER(rendererBindShaderStorageBuffer)
-{
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, buffer->id);
-}
-
-RENDERER_SET_VIEWPORT_SIZE(rendererSetViewportSize)
-{
-    glViewport(0, 0, width, height);
-}
-
-RENDERER_CLEAR_BACK_BUFFER(rendererClearBackBuffer)
-{
-    glClearColor(r, g, b, a);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-}
-
-RENDERER_SET_POLYGON_MODE(rendererSetPolygonMode)
-{
-    glPolygonMode(GL_FRONT_AND_BACK, polygonMode);
-}
-
-RENDERER_SET_BLEND_MODE(rendererSetBlendMode)
-{
-    if (enableDepthTest)
-    {
-        glEnable(GL_DEPTH_TEST);
-    }
-    else
-    {
-        glDisable(GL_DEPTH_TEST);
-    }
-    glBlendEquation(equation);
-    glBlendFunc(srcFactor, dstFactor);
-}
-
-RENDERER_DRAW_ELEMENTS(rendererDrawElements)
-{
-    glDrawElements(primitiveType, elementCount, GL_UNSIGNED_INT, 0);
-}
-
-RENDERER_DRAW_ELEMENTS_INSTANCED(rendererDrawElementsInstanced)
-{
-    glDrawElementsInstancedBaseInstance(
-        primitiveType, elementCount, GL_UNSIGNED_INT, 0, instanceCount, instanceOffset);
-}
-
-RENDERER_DISPATCH_COMPUTE(rendererDispatchCompute)
-{
-    glDispatchCompute(xCount, yCount, zCount);
-}
-
-RENDERER_SHADER_STORAGE_MEMORY_BARRIER(rendererShaderStorageMemoryBarrier)
-{
-    glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
-}
-
 // render targets
 
 RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
@@ -661,12 +503,8 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     }
 
     // create framebuffer
-    assert(ctx->framebufferCount < RENDERER_MAX_FRAMEBUFFERS);
-    uint32 *framebufferId = ctx->framebufferIds + ctx->framebufferCount;
-    result->framebufferHandle = ctx->framebufferCount++;
-    ctx->framebufferTextureIds[result->framebufferHandle] = result->textureId;
-    glGenFramebuffers(1, framebufferId);
-    glBindFramebuffer(GL_FRAMEBUFFER, *framebufferId);
+    glGenFramebuffers(1, &result->framebufferId);
+    glBindFramebuffer(GL_FRAMEBUFFER, result->framebufferId);
     glFramebufferTexture2D(
         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result->textureId, 0);
     if (descriptor.hasDepthBuffer)
@@ -991,8 +829,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 {
     if (target)
     {
-        uint32 framebufferId = rq->ctx->framebufferIds[target->framebufferHandle];
-        glBindFramebuffer(GL_FRAMEBUFFER, framebufferId);
+        glBindFramebuffer(GL_FRAMEBUFFER, target->framebufferId);
     }
     glViewport(0, 0, width, height);
 

@@ -206,17 +206,17 @@ void initializeEditor(EditorMemory *memory)
         GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
     state->committedHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
     state->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
-        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
     state->workingHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
     state->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
-        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
     state->previewHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
     state->temporaryHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, rctx, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
@@ -1226,7 +1226,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-    RenderContext *rctx = state->renderCtx;
     EditorAssets *editorAssets = &state->editorAssets;
     SceneState *sceneState = &state->sceneState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
@@ -1244,8 +1243,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
         viewState->cameraPos =
             viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
-        viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(&memory->arena, rctx,
-            view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
+        viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         view->viewState = viewState;
     }
 
