@@ -336,10 +336,6 @@ void initializeEditor(EditorMemory *memory)
     sceneState->nextMaterialId = 1;
 
     sceneState->nextObjectId = 1;
-    sceneState->objectInstanceBuffer =
-        engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&sceneState->objectInstanceBuffer,
-        sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 
     // initialize document state
     state->docState.materialCount = 0;
@@ -827,10 +823,9 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
         matrix *= rockRotMat;
 
-        sceneState->objectInstanceBufferData[i] = matrix;
+        RenderMeshInstance *instance = &sceneState->objectInstanceData[i];
+        instance->transform = matrix;
     }
-    engine->rendererUpdateBuffer(&sceneState->objectInstanceBuffer,
-        sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 }
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
@@ -1284,10 +1279,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainCalcTessLevel);
     LoadedAsset *terrainShaderProgram =
         engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainTextured);
-    LoadedAsset *rockShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramRock);
-    if (calcTessLevelShaderProgram->shaderProgram && terrainShaderProgram->shaderProgram
-        && rockShaderProgram->shaderProgram)
+    if (calcTessLevelShaderProgram->shaderProgram && terrainShaderProgram->shaderProgram)
     {
         BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
         uint32 activeHeightmapTextureId = state->workingHeightmap->textureId;
@@ -1370,20 +1362,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererUnbindVertexArray();
 
         // draw rocks
-#if 0
-        RenderEffect *effect = engine->rendererCreateEffect(
-            &memory->arena, editorAssets->shaderProgramRock, EFFECT_BLEND_ALPHA_BLEND);
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-        engine->rendererPushMeshes(rq, editorAssets->meshRock,
-            sceneState->objectInstanceData, sceneState->objectInstanceCount, effect);
+        engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
+            sceneState->objectInstanceCount, editorAssets->shaderProgramRock);
         engine->rendererDrawToScreen(rq, view->width, view->height);
-#else
-        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-        engine->rendererPushMeshes(rq, editorAssets->meshRock,
-            sceneState->objectInstanceBuffer.id, sceneState->objectInstanceCount,
-            editorAssets->shaderProgramRock);
-        engine->rendererDrawToScreen(rq, view->width, view->height);
-#endif
     }
     engine->rendererUnbindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
 

@@ -55,6 +55,10 @@ struct RenderQuad
     float width;
     float height;
 };
+struct RenderMeshInstance
+{
+    glm::mat4 transform;
+};
 
 struct RenderContext;
 struct RenderQueue;
@@ -227,7 +231,7 @@ typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
 typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
 
 #define RENDERER_PUSH_MESHES(name)                                                            \
-    void name(RenderQueue *rq, AssetHandle mesh, uint32 instanceBufferId,                     \
+    void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances,               \
         uint32 instanceCount, AssetHandle shaderProgram)
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 

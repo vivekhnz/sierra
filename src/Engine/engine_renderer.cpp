@@ -27,6 +27,10 @@ struct RenderContext
     RenderQuad *quads;
     uint32 maxQuads;
 
+    uint32 meshInstanceBufferId;
+    RenderMeshInstance *meshInstances;
+    uint32 maxMeshInstances;
+
     uint32 framebufferCount;
     uint32 framebufferIds[RENDERER_MAX_FRAMEBUFFERS];
     uint32 framebufferTextureIds[RENDERER_MAX_FRAMEBUFFERS];
@@ -119,7 +123,7 @@ struct DrawMeshesCommand
 {
     RenderEffect *effect;
     AssetHandle mesh;
-    uint32 instanceBufferId;
+    uint32 instanceOffset;
     uint32 instanceCount;
 };
 struct RenderQueue
@@ -131,6 +135,7 @@ struct RenderQueue
     RenderQueueCommandHeader *lastCommand;
 
     uint32 quadCount;
+    uint32 meshInstanceCount;
 };
 
 struct RenderTargetDescriptor
@@ -276,6 +281,11 @@ RENDERER_INITIALIZE(rendererInitialize)
     glGenBuffers(1, &ctx->quadInstanceBufferId);
     ctx->maxQuads = 65536;
     ctx->quads = (RenderQuad *)pushSize(arena, sizeof(RenderQuad) * ctx->maxQuads);
+
+    glGenBuffers(1, &ctx->meshInstanceBufferId);
+    ctx->maxMeshInstances = 4096;
+    ctx->meshInstances = (RenderMeshInstance *)pushSize(
+        arena, sizeof(RenderMeshInstance) * ctx->maxMeshInstances);
 
     return ctx;
 }
@@ -823,14 +833,20 @@ RENDERER_PUSH_EFFECT_QUADS(rendererPushEffectQuads)
 
 RENDERER_PUSH_MESHES(rendererPushMeshes)
 {
+    assert(rq->meshInstanceCount + instanceCount < rq->ctx->maxMeshInstances);
+
     RenderEffect *effect =
         rendererCreateEffect(rq->arena, shaderProgram, EFFECT_BLEND_ALPHA_BLEND);
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
     cmd->mesh = mesh;
-    cmd->instanceBufferId = instanceBufferId;
+    cmd->instanceOffset = rq->meshInstanceCount;
     cmd->instanceCount = instanceCount;
+
+    memcpy(rq->ctx->meshInstances + rq->meshInstanceCount, instances,
+        sizeof(RenderMeshInstance) * instanceCount);
+    rq->meshInstanceCount += instanceCount;
 }
 
 bool applyEffect(RenderEffect *effect)
@@ -921,6 +937,10 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     glBufferData(
         GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount,
+        rq->ctx->meshInstances, GL_STREAM_DRAW);
+
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
     while (command)
@@ -997,7 +1017,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     1, 3, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
 
                 uint32 instanceBufferStride = sizeof(glm::mat4);
-                glBindBuffer(GL_ARRAY_BUFFER, cmd->instanceBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
                 glEnableVertexAttribArray(2);
                 glEnableVertexAttribArray(3);
                 glEnableVertexAttribArray(4);
@@ -1015,7 +1035,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glVertexAttribDivisor(5, 1);
 
                 glDrawElementsInstancedBaseInstance(GL_TRIANGLES, mesh->elementCount,
-                    GL_UNSIGNED_INT, 0, cmd->instanceCount, 0);
+                    GL_UNSIGNED_INT, 0, cmd->instanceCount, cmd->instanceOffset);
 
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);

@@ -102,8 +102,7 @@ struct SceneState
     RenderBuffer tessellationLevelBuffer;
 
     uint32 nextObjectId;
-    glm::mat4 objectInstanceBufferData[MAX_OBJECT_INSTANCES];
-    RenderBuffer objectInstanceBuffer;
+    RenderMeshInstance objectInstanceData[MAX_OBJECT_INSTANCES];
     uint32 objectInstanceCount;
 
     uint32 albedoTextureArrayHandle;
