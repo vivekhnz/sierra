@@ -133,21 +133,18 @@ typedef RENDERER_BIND_VERTEX_ARRAY(RendererBindVertexArray);
 #define RENDERER_UNBIND_VERTEX_ARRAY(name) void name()
 typedef RENDERER_UNBIND_VERTEX_ARRAY(RendererUnbindVertexArray);
 
-#define RENDERER_CREATE_BUFFER(name)                                                          \
-    RenderBuffer name(RenderContext *ctx, RendererBufferType type, uint32 usage)
+#define RENDERER_CREATE_BUFFER(name) RenderBuffer name(RendererBufferType type, uint32 usage)
 typedef RENDERER_CREATE_BUFFER(RendererCreateBuffer);
-#define RENDERER_BIND_BUFFER(name) void name(RenderContext *ctx, RenderBuffer *buffer)
+#define RENDERER_BIND_BUFFER(name) void name(RenderBuffer *buffer)
 typedef RENDERER_BIND_BUFFER(RendererBindBuffer);
-#define RENDERER_UPDATE_BUFFER(name)                                                          \
-    void name(RenderContext *ctx, RenderBuffer *buffer, uint64 size, void *data)
+#define RENDERER_UPDATE_BUFFER(name) void name(RenderBuffer *buffer, uint64 size, void *data)
 typedef RENDERER_UPDATE_BUFFER(RendererUpdateBuffer);
 
 #define RENDERER_BIND_VERTEX_ATTRIBUTE(name)                                                  \
     void name(uint8 index, uint32 elementType, bool isNormalized, uint8 elementCount,         \
         uint32 stride, uint64 offset, bool isPerInstance)
 typedef RENDERER_BIND_VERTEX_ATTRIBUTE(RendererBindVertexAttribute);
-#define RENDERER_BIND_SHADER_STORAGE_BUFFER(name)                                             \
-    void name(RenderContext *ctx, RenderBuffer *buffer, uint8 slot)
+#define RENDERER_BIND_SHADER_STORAGE_BUFFER(name) void name(RenderBuffer *buffer, uint8 slot)
 typedef RENDERER_BIND_SHADER_STORAGE_BUFFER(RendererBindShaderStorageBuffer);
 
 #define RENDERER_SET_VIEWPORT_SIZE(name) void name(uint32 width, uint32 height)

@@ -287,21 +287,21 @@ void initializeEditor(EditorMemory *memory)
     }
 
     sceneState->terrainMesh.vertexBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+        engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(
-        rctx, &sceneState->terrainMesh.vertexBuffer, terrainVertexBufferSize, terrainVertices);
+        &sceneState->terrainMesh.vertexBuffer, terrainVertexBufferSize, terrainVertices);
     free(terrainVertices);
 
     RenderBuffer terrainElementBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+        engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(
-        rctx, &terrainElementBuffer, terrainElementBufferSize, terrainIndices);
+        &terrainElementBuffer, terrainElementBufferSize, terrainIndices);
     free(terrainIndices);
 
     sceneState->terrainMesh.vertexArrayHandle = engine->rendererCreateVertexArray(rctx);
     engine->rendererBindVertexArray(rctx, sceneState->terrainMesh.vertexArrayHandle);
-    engine->rendererBindBuffer(rctx, &terrainElementBuffer);
-    engine->rendererBindBuffer(rctx, &sceneState->terrainMesh.vertexBuffer);
+    engine->rendererBindBuffer(&terrainElementBuffer);
+    engine->rendererBindBuffer(&sceneState->terrainMesh.vertexBuffer);
     engine->rendererBindVertexAttribute(
         0, GL_FLOAT, false, 3, terrainVertexBufferStride, 0, false);
     engine->rendererBindVertexAttribute(
@@ -310,8 +310,8 @@ void initializeEditor(EditorMemory *memory)
 
     // create buffer to store vertex edge data
     sceneState->tessellationLevelBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    engine->rendererUpdateBuffer(rctx, &sceneState->tessellationLevelBuffer,
+        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
+    engine->rendererUpdateBuffer(&sceneState->tessellationLevelBuffer,
         sceneState->heightfield.columns * sceneState->heightfield.rows * sizeof(glm::vec4), 0);
 
     sceneState->albedoTextureArrayHandle = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
@@ -332,15 +332,15 @@ void initializeEditor(EditorMemory *memory)
         sceneState->aoTextures[i] = {};
     }
     sceneState->materialPropsBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     sceneState->nextMaterialId = 1;
 
     sceneState->rockMesh = {};
 
     sceneState->nextObjectId = 1;
     sceneState->objectInstanceBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(rctx, &sceneState->objectInstanceBuffer,
+        engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(&sceneState->objectInstanceBuffer,
         sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 
     // initialize document state
@@ -451,7 +451,6 @@ void compositeHeightmap(EditorMemory *memory,
     assert(blendProps->iterations % 2 == 1);
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-    RenderContext *rctx = state->renderCtx;
 
     float brushFalloff = state->uiState.terrainBrushFalloff;
     float brushStrength = 1;
@@ -741,7 +740,6 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
     EngineApi *engine = memory->engineApi;
-    RenderContext *rctx = state->renderCtx;
 
     // update material state
     sceneState->materialCount = docState->materialCount;
@@ -815,7 +813,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             }
         }
     }
-    engine->rendererUpdateBuffer(rctx, &sceneState->materialPropsBuffer,
+    engine->rendererUpdateBuffer(&sceneState->materialPropsBuffer,
         sizeof(docState->materialProps), docState->materialProps);
 
     // update object instance state
@@ -833,7 +831,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
 
         sceneState->objectInstanceBufferData[i] = matrix;
     }
-    engine->rendererUpdateBuffer(rctx, &sceneState->objectInstanceBuffer,
+    engine->rendererUpdateBuffer(&sceneState->objectInstanceBuffer,
         sizeof(sceneState->objectInstanceBufferData), &sceneState->objectInstanceBufferData);
 }
 
@@ -1336,9 +1334,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererSetShaderProgramUniformFloat(
             calcTessLevelShaderProgramId, "terrainHeight", sceneState->heightfield.maxHeight);
         engine->rendererBindTexture(activeHeightmapTextureId, 0);
-        engine->rendererBindShaderStorageBuffer(rctx, &sceneState->tessellationLevelBuffer, 0);
-        engine->rendererBindShaderStorageBuffer(
-            rctx, &sceneState->terrainMesh.vertexBuffer, 1);
+        engine->rendererBindShaderStorageBuffer(&sceneState->tessellationLevelBuffer, 0);
+        engine->rendererBindShaderStorageBuffer(&sceneState->terrainMesh.vertexBuffer, 1);
         engine->rendererUseShaderProgram(calcTessLevelShaderProgramId);
         engine->rendererDispatchCompute(meshEdgeCount, 1, 1);
         engine->rendererShaderStorageMemoryBarrier();
@@ -1354,7 +1351,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererBindTextureArray(sceneState->displacementTextureArrayHandle, 3);
         engine->rendererBindTextureArray(sceneState->aoTextureArrayHandle, 4);
         engine->rendererBindTexture(referenceHeightmapTextureId, 5);
-        engine->rendererBindShaderStorageBuffer(rctx, &sceneState->materialPropsBuffer, 1);
+        engine->rendererBindShaderStorageBuffer(&sceneState->materialPropsBuffer, 1);
         engine->rendererBindVertexArray(rctx, sceneState->terrainMesh.vertexArrayHandle);
         engine->rendererSetShaderProgramUniformInteger(
             terrainShaderProgramId, "materialCount", sceneState->materialCount);
@@ -1389,13 +1386,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                     sizeof(uint32) * sceneState->rockMesh.elementCount;
 
                 sceneState->rockMesh.vertexBuffer =
-                    engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-                engine->rendererUpdateBuffer(rctx, &sceneState->rockMesh.vertexBuffer,
+                    engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+                engine->rendererUpdateBuffer(&sceneState->rockMesh.vertexBuffer,
                     rockVertexBufferSize, rockMesh->vertices);
 
-                sceneState->rockMesh.elementBuffer = engine->rendererCreateBuffer(
-                    rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-                engine->rendererUpdateBuffer(rctx, &sceneState->rockMesh.elementBuffer,
+                sceneState->rockMesh.elementBuffer =
+                    engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+                engine->rendererUpdateBuffer(&sceneState->rockMesh.elementBuffer,
                     rockElementBufferSize, rockMesh->indices);
 
                 sceneState->rockMesh.isLoaded = true;

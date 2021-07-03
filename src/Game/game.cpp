@@ -164,28 +164,27 @@ bool initializeGame(GameMemory *memory)
     }
 
     state->terrainMeshVertexBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        rctx, &state->terrainMeshVertexBuffer, vertexBufferSize, vertices);
+        engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(&state->terrainMeshVertexBuffer, vertexBufferSize, vertices);
     free(vertices);
 
     RenderBuffer terrainMeshElementBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(rctx, &terrainMeshElementBuffer, elementBufferSize, indices);
+        engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(&terrainMeshElementBuffer, elementBufferSize, indices);
     free(indices);
 
     state->terrainMeshVertexArrayHandle = engine->rendererCreateVertexArray(rctx);
     engine->rendererBindVertexArray(rctx, state->terrainMeshVertexArrayHandle);
-    engine->rendererBindBuffer(rctx, &terrainMeshElementBuffer);
-    engine->rendererBindBuffer(rctx, &state->terrainMeshVertexBuffer);
+    engine->rendererBindBuffer(&terrainMeshElementBuffer);
+    engine->rendererBindBuffer(&state->terrainMeshVertexBuffer);
     engine->rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
     engine->rendererBindVertexAttribute(
         1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
     engine->rendererUnbindVertexArray();
 
     state->terrainMeshTessLevelBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    engine->rendererUpdateBuffer(rctx, &state->terrainMeshTessLevelBuffer,
+        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
+    engine->rendererUpdateBuffer(&state->terrainMeshTessLevelBuffer,
         state->heightfield.columns * state->heightfield.rows * sizeof(glm::vec4), 0);
 
     state->heightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16,
@@ -240,9 +239,9 @@ bool initializeGame(GameMemory *memory)
     materialProps[23] = 0.28f;
 
     state->materialPropsBuffer =
-        engine->rendererCreateBuffer(rctx, RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     engine->rendererUpdateBuffer(
-        rctx, &state->materialPropsBuffer, sizeof(materialProps), materialProps);
+        &state->materialPropsBuffer, sizeof(materialProps), materialProps);
 
     return 1;
 }
@@ -604,8 +603,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
             calcTessLevelShaderProgram->id, "terrainHeight", state->heightfield.maxHeight);
         engine->rendererBindTexture(state->heightmapTextureId, 0);
         engine->rendererBindTexture(state->heightmapTextureId, 5);
-        engine->rendererBindShaderStorageBuffer(rctx, &state->terrainMeshTessLevelBuffer, 0);
-        engine->rendererBindShaderStorageBuffer(rctx, &state->terrainMeshVertexBuffer, 1);
+        engine->rendererBindShaderStorageBuffer(&state->terrainMeshTessLevelBuffer, 0);
+        engine->rendererBindShaderStorageBuffer(&state->terrainMeshVertexBuffer, 1);
         engine->rendererUseShaderProgram(calcTessLevelShaderProgram->id);
         engine->rendererDispatchCompute(meshEdgeCount, 1, 1);
         engine->rendererShaderStorageMemoryBarrier();
@@ -613,7 +612,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         engine->rendererUseShaderProgram(terrainShaderProgram->id);
         engine->rendererSetPolygonMode(terrainPolygonMode);
         engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererBindShaderStorageBuffer(rctx, &state->materialPropsBuffer, 1);
+        engine->rendererBindShaderStorageBuffer(&state->materialPropsBuffer, 1);
         engine->rendererSetShaderProgramUniformVector2(
             terrainShaderProgram->id, "brushHighlightPos", glm::vec2(0.0f, 0.0f));
         engine->rendererSetShaderProgramUniformFloat(
