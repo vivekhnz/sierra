@@ -1266,6 +1266,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
     }
 
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
     // calculate camera transform
     constexpr float fov = glm::pi<float>() / 4.0f;
     const float nearPlane = 0.1f;
@@ -1425,26 +1427,20 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
         if (sceneState->rockMesh.isLoaded)
         {
-            engine->rendererUseShaderProgram(rockShaderProgram->shaderProgram->id);
-            engine->rendererSetPolygonMode(GL_FILL);
-            engine->rendererSetBlendMode(
-                GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-            engine->rendererBindVertexArray(rctx, sceneState->rockMesh.vertexArrayHandle);
-            engine->rendererDrawElementsInstanced(GL_TRIANGLES,
-                sceneState->rockMesh.elementCount, sceneState->objectInstanceCount, 0);
+            RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+            engine->rendererPushMeshes(rq, sceneState->rockMesh.vertexArrayHandle,
+                sceneState->rockMesh.elementCount, sceneState->objectInstanceCount,
+                editorAssets->shaderProgramRock);
+            engine->rendererDrawToScreen(rq, view->width, view->height);
         }
     }
     engine->rendererUnbindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
-
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, sceneRenderTarget->textureId, true);
     engine->rendererDrawToScreen(rq, view->width, view->height);
-
-    endTemporaryMemory(&renderQueueMemory);
 
     engine->rendererUpdateCameraState(rctx, &viewState->cameraTransform);
     if (rockShaderProgram->shaderProgram && sceneState->rockMesh.isLoaded
@@ -1465,6 +1461,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
         }
     }
+
+    endTemporaryMemory(&renderQueueMemory);
 }
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)

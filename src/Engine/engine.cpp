@@ -94,6 +94,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererPushTexturedQuad = rendererPushTexturedQuad;
     Api.rendererPushEffectQuad = rendererPushEffectQuad;
     Api.rendererPushEffectQuads = rendererPushEffectQuads;
+    Api.rendererPushMeshes = rendererPushMeshes;
     Api.rendererDrawToTarget = rendererDrawToTarget;
     Api.rendererDrawToScreen = rendererDrawToScreen;
 

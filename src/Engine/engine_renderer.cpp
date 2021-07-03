@@ -98,7 +98,8 @@ enum RenderQueueCommandType
 {
     RENDER_CMD_SetCameraCommand,
     RENDER_CMD_ClearCommand,
-    RENDER_CMD_DrawQuadsCommand
+    RENDER_CMD_DrawQuadsCommand,
+    RENDER_CMD_DrawMeshesCommand
 };
 struct RenderQueueCommandHeader
 {
@@ -119,6 +120,13 @@ struct DrawQuadsCommand
     RenderEffect *effect;
     bool isTopDown;
     uint32 instanceOffset;
+    uint32 instanceCount;
+};
+struct DrawMeshesCommand
+{
+    RenderEffect *effect;
+    uint32 vertexArrayId;
+    uint32 meshElementCount;
     uint32 instanceCount;
 };
 struct RenderQueue
@@ -820,6 +828,95 @@ RENDERER_PUSH_EFFECT_QUADS(rendererPushEffectQuads)
     pushQuads(rq, quads, quadCount, effect, true);
 }
 
+RENDERER_PUSH_MESHES(rendererPushMeshes)
+{
+    RenderEffect *effect =
+        rendererCreateEffect(rq->arena, shaderProgram, EFFECT_BLEND_ALPHA_BLEND);
+
+    DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
+    cmd->effect = effect;
+
+    assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
+    cmd->vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+    cmd->meshElementCount = meshElementCount;
+    cmd->instanceCount = instanceCount;
+}
+
+bool applyEffect(RenderEffect *effect)
+{
+    bool wasEffectApplied = false;
+
+    LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
+    if (shaderProgram->shaderProgram)
+    {
+        uint32 shaderProgramId = shaderProgram->shaderProgram->id;
+        glUseProgram(shaderProgramId);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glEnable(GL_DEPTH_TEST);
+
+        switch (effect->blendMode)
+        {
+        case EFFECT_BLEND_ALPHA_BLEND:
+        {
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        }
+        break;
+        case EFFECT_BLEND_ADDITIVE:
+        {
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_ONE, GL_ONE);
+        }
+        break;
+        case EFFECT_BLEND_MAX:
+        {
+            glBlendEquation(GL_MAX);
+            glBlendFunc(GL_ONE, GL_ONE);
+        }
+        break;
+        }
+
+        RenderEffectParameter *effectParam = effect->firstParameter;
+        while (effectParam)
+        {
+            uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
+            switch (effectParam->type)
+            {
+            case EFFECT_PARAM_TYPE_FLOAT:
+            {
+                glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
+            }
+            break;
+            case EFFECT_PARAM_TYPE_INT:
+            {
+                glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
+            }
+            break;
+            default:
+            {
+                assert(!"Invalid effect parameter type");
+            }
+            break;
+            }
+
+            effectParam = effectParam->next;
+        }
+
+        RenderEffectTexture *effectTexture = effect->firstTexture;
+        while (effectTexture)
+        {
+            glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
+            glBindTexture(GL_TEXTURE_2D, effectTexture->textureId);
+
+            effectTexture = effectTexture->next;
+        }
+
+        wasEffectApplied = true;
+    }
+
+    return wasEffectApplied;
+}
+
 bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
 {
     if (target)
@@ -859,72 +956,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         case RENDER_CMD_DrawQuadsCommand:
         {
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
-            RenderEffect *effect = cmd->effect;
-            LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
-            if (shaderProgram->shaderProgram)
+            if (applyEffect(cmd->effect))
             {
-                uint32 shaderProgramId = shaderProgram->shaderProgram->id;
-                glUseProgram(shaderProgramId);
-                glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-                glEnable(GL_DEPTH_TEST);
-
-                switch (effect->blendMode)
-                {
-                case EFFECT_BLEND_ALPHA_BLEND:
-                {
-                    glBlendEquation(GL_FUNC_ADD);
-                    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-                }
-                break;
-                case EFFECT_BLEND_ADDITIVE:
-                {
-                    glBlendEquation(GL_FUNC_ADD);
-                    glBlendFunc(GL_ONE, GL_ONE);
-                }
-                break;
-                case EFFECT_BLEND_MAX:
-                {
-                    glBlendEquation(GL_MAX);
-                    glBlendFunc(GL_ONE, GL_ONE);
-                }
-                break;
-                }
-
-                RenderEffectParameter *effectParam = effect->firstParameter;
-                while (effectParam)
-                {
-                    uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
-                    switch (effectParam->type)
-                    {
-                    case EFFECT_PARAM_TYPE_FLOAT:
-                    {
-                        glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
-                    }
-                    break;
-                    case EFFECT_PARAM_TYPE_INT:
-                    {
-                        glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
-                    }
-                    break;
-                    default:
-                    {
-                        assert(!"Invalid effect parameter type");
-                    }
-                    break;
-                    }
-
-                    effectParam = effectParam->next;
-                }
-
-                RenderEffectTexture *effectTexture = effect->firstTexture;
-                while (effectTexture)
-                {
-                    glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
-                    glBindTexture(GL_TEXTURE_2D, effectTexture->textureId);
-
-                    effectTexture = effectTexture->next;
-                }
-
                 glBindVertexArray(rq->ctx->globalVertexArrayId);
                 uint32 vertexBufferId = cmd->isTopDown ? rq->ctx->quadTopDownVertexBufferId
                                                        : rq->ctx->quadBottomUpVertexBufferId;
@@ -949,6 +982,21 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
                 glDisableVertexAttribArray(2);
+            }
+            else
+            {
+                isMissingResources = true;
+            }
+        }
+        break;
+        case RENDER_CMD_DrawMeshesCommand:
+        {
+            DrawMeshesCommand *cmd = (DrawMeshesCommand *)commandData;
+            if (applyEffect(cmd->effect))
+            {
+                glBindVertexArray(cmd->vertexArrayId);
+                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, cmd->meshElementCount,
+                    GL_UNSIGNED_INT, 0, cmd->instanceCount, 0);
             }
             else
             {
