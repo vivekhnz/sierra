@@ -6,15 +6,6 @@
 
 #define arrayCount(array) (sizeof(array) / sizeof(array[0]))
 
-struct BrushBlendProperties
-{
-    AssetHandle shaderProgram;
-    bool isInfluenceCumulative;
-    uint32 iterations;
-    float addSubSign;
-    float flattenHeight;
-};
-
 enum BrushVisualizationMode
 {
     BRUSH_VIS_MODE_NONE = 0,
@@ -439,16 +430,17 @@ void compositeHeightmap(EditorMemory *memory,
     RenderTarget *brushInfluenceMask,
     RenderTarget *output,
     RenderQuad *brushInstances,
-    uint32 brushInstanceCount,
-    BrushBlendProperties *blendProps)
+    uint32 brushInstanceCount)
 {
-    assert(blendProps->iterations % 2 == 1);
     EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     float brushFalloff = state->uiState.terrainBrushFalloff;
     float brushStrength = 1;
-    if (blendProps->isInfluenceCumulative)
+    TerrainBrushTool tool = state->uiState.terrainBrushTool;
+
+    RenderEffectBlendMode maskBlendMode = EFFECT_BLEND_MAX;
+    if (tool != TERRAIN_BRUSH_TOOL_FLATTEN)
     {
         /*
          * Because the spacing between brush instances is constant, higher radius brushes will
@@ -458,14 +450,14 @@ void compositeHeightmap(EditorMemory *memory,
          */
         brushStrength = 0.01f + (0.15f * state->uiState.terrainBrushStrength);
         brushStrength /= pow(state->uiState.terrainBrushRadius, 0.5f);
+        maskBlendMode = EFFECT_BLEND_ADDITIVE;
     }
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     // render brush influence mask
-    RenderEffect *maskEffect = engine->rendererCreateEffect(&memory->arena,
-        state->editorAssets.shaderProgramBrushMask,
-        blendProps->isInfluenceCumulative ? EFFECT_BLEND_ADDITIVE : EFFECT_BLEND_MAX);
+    RenderEffect *maskEffect = engine->rendererCreateEffect(
+        &memory->arena, state->editorAssets.shaderProgramBrushMask, maskBlendMode);
     engine->rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
     engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
@@ -476,27 +468,61 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererDrawToTarget(rq, brushInfluenceMask);
 
     // render heightmap
-    uint32 inputTextureId = baseHeightmapTextureId;
-    RenderTarget *iterationOutput = output;
-    for (uint32 i = 0; i < blendProps->iterations; i++)
+    if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
     {
-        RenderEffect *effect = engine->rendererCreateEffect(
-            &memory->arena, blendProps->shaderProgram, EFFECT_BLEND_ALPHA_BLEND);
-        engine->rendererSetEffectFloat(effect, "blendSign", blendProps->addSubSign);
-        engine->rendererSetEffectFloat(effect, "flattenHeight", blendProps->flattenHeight);
-        engine->rendererSetEffectInt(effect, "iterationCount", blendProps->iterations);
-        engine->rendererSetEffectInt(effect, "iteration", i);
-        engine->rendererSetEffectTexture(effect, 0, inputTextureId);
+        uint32 inputTextureId = baseHeightmapTextureId;
+        RenderTarget *iterationOutput = output;
+        uint32 iterations = 3;
+        for (uint32 i = 0; i < iterations; i++)
+        {
+            RenderEffect *effect = engine->rendererCreateEffect(&memory->arena,
+                state->editorAssets.shaderProgramBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
+            engine->rendererSetEffectInt(effect, "iterationCount", iterations);
+            engine->rendererSetEffectInt(effect, "iteration", i);
+            engine->rendererSetEffectTexture(effect, 0, inputTextureId);
+            engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
+
+            RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+            engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+            engine->rendererClear(rq, 0, 0, 0, 1);
+            engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
+            engine->rendererDrawToTarget(rq, iterationOutput);
+
+            inputTextureId = iterationOutput->textureId;
+            iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
+        }
+    }
+    else
+    {
+        RenderEffect *effect = 0;
+        if (tool == TERRAIN_BRUSH_TOOL_RAISE)
+        {
+            effect = engine->rendererCreateEffect(&memory->arena,
+                state->editorAssets.shaderProgramBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+            engine->rendererSetEffectFloat(effect, "blendSign", 1);
+        }
+        else if (tool == TERRAIN_BRUSH_TOOL_LOWER)
+        {
+            effect = engine->rendererCreateEffect(&memory->arena,
+                state->editorAssets.shaderProgramBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+            engine->rendererSetEffectFloat(effect, "blendSign", -1);
+        }
+        else if (tool == TERRAIN_BRUSH_TOOL_FLATTEN)
+        {
+            effect = engine->rendererCreateEffect(&memory->arena,
+                state->editorAssets.shaderProgramBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
+            engine->rendererSetEffectFloat(
+                effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
+        }
+        assert(effect);
+        engine->rendererSetEffectTexture(effect, 0, baseHeightmapTextureId);
         engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
 
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
         engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
-        engine->rendererDrawToTarget(rq, iterationOutput);
-
-        inputTextureId = iterationOutput->textureId;
-        iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
+        engine->rendererDrawToTarget(rq, output);
     }
 
     endTemporaryMemory(&renderQueueMemory);
@@ -1180,40 +1206,12 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         quad->height = brushStrokeQuadWidth;
     }
 
-    BrushBlendProperties blendProps = {};
-    switch (state->uiState.terrainBrushTool)
-    {
-    case TERRAIN_BRUSH_TOOL_RAISE:
-        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendAddSub;
-        blendProps.isInfluenceCumulative = true;
-        blendProps.iterations = 1;
-        blendProps.addSubSign = 1;
-        break;
-    case TERRAIN_BRUSH_TOOL_LOWER:
-        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendAddSub;
-        blendProps.isInfluenceCumulative = true;
-        blendProps.iterations = 1;
-        blendProps.addSubSign = -1;
-        break;
-    case TERRAIN_BRUSH_TOOL_FLATTEN:
-        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendFlatten;
-        blendProps.isInfluenceCumulative = false;
-        blendProps.iterations = 1;
-        blendProps.flattenHeight = state->activeBrushStrokeInitialHeight;
-        break;
-    case TERRAIN_BRUSH_TOOL_SMOOTH:
-        blendProps.shaderProgram = editorAssets->shaderProgramBrushBlendSmooth;
-        blendProps.isInfluenceCumulative = true;
-        blendProps.iterations = 3;
-        break;
-    }
-
     compositeHeightmap(memory, state->committedHeightmap->textureId,
         state->workingBrushInfluenceMask, state->workingHeightmap,
-        state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount, &blendProps);
+        state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount);
     compositeHeightmap(memory, state->workingHeightmap->textureId,
         state->previewBrushInfluenceMask, state->previewHeightmap,
-        &state->previewBrushStrokeQuad, 1, &blendProps);
+        &state->previewBrushStrokeQuad, 1);
 
     if (state->isEditingHeightmap)
     {
