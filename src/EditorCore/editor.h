@@ -95,23 +95,23 @@ struct SceneState
     struct TerrainMesh
     {
         uint32 elementCount;
-        uint32 vertexBufferHandle;
+        RenderBuffer vertexBuffer;
         uint32 vertexArrayHandle;
     } terrainMesh;
 
-    uint32 tessellationLevelBufferHandle;
+    RenderBuffer tessellationLevelBuffer;
 
     struct RockMesh
     {
         bool isLoaded;
         uint32 elementCount;
-        uint32 vertexBufferHandle;
-        uint32 elementBufferHandle;
+        RenderBuffer vertexBuffer;
+        RenderBuffer elementBuffer;
     } rockMesh;
 
     uint32 nextObjectId;
     glm::mat4 objectInstanceBufferData[MAX_OBJECT_INSTANCES];
-    uint32 objectInstanceBufferHandle;
+    RenderBuffer objectInstanceBuffer;
     uint32 objectInstanceCount;
 
     uint32 albedoTextureArrayHandle;
@@ -124,7 +124,7 @@ struct SceneState
     TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
     TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 
-    uint32 materialPropsBufferHandle;
+    RenderBuffer materialPropsBuffer;
     uint32 nextMaterialId;
     uint32 materialCount;
 

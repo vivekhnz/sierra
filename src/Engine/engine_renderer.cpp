@@ -7,17 +7,12 @@
 #define RENDERER_MAX_VERTEX_ARRAYS 128
 #define RENDERER_MAX_BUFFERS 128
 
+#define RENDERER_CAMERA_UBO_SLOT 0
+#define RENDERER_LIGHTING_UBO_SLOT 1
+
 extern EnginePlatformApi Platform;
 
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram);
-
-enum RendererUniformBuffer
-{
-    RENDERER_UNIFORM_BUFFER_CAMERA,
-    RENDERER_UNIFORM_BUFFER_LIGHTING,
-
-    RENDERER_UNIFORM_BUFFER_COUNT
-};
 
 struct RenderContext
 {
@@ -39,10 +34,8 @@ struct RenderContext
     uint32 vertexArrayCount;
     uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
 
-    uint32 bufferCount;
-    uint32 bufferIds[RENDERER_MAX_BUFFERS];
-    RendererBufferType bufferTypes[RENDERER_MAX_BUFFERS];
-    uint32 bufferUsages[RENDERER_MAX_BUFFERS];
+    uint32 cameraUniformBufferId;
+    uint32 lightingUniformBufferId;
 };
 
 struct GpuCameraState
@@ -150,25 +143,6 @@ struct RenderTargetDescriptor
     bool hasDepthBuffer;
 };
 
-uint32 getOpenGLBufferType(RendererBufferType type)
-{
-    uint32 bufferType = 0;
-    if (type == RENDERER_VERTEX_BUFFER)
-    {
-        bufferType = GL_ARRAY_BUFFER;
-    }
-    else if (type == RENDERER_ELEMENT_BUFFER)
-    {
-        bufferType = GL_ELEMENT_ARRAY_BUFFER;
-    }
-    else if (type == RENDERER_SHADER_STORAGE_BUFFER)
-    {
-        bufferType = GL_SHADER_STORAGE_BUFFER;
-    }
-    assert(bufferType);
-    return bufferType;
-}
-
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
@@ -181,15 +155,12 @@ RENDERER_INITIALIZE(rendererInitialize)
     glEnable(GL_CULL_FACE);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
 
-    glGenBuffers(RENDERER_UNIFORM_BUFFER_COUNT, ctx->bufferIds);
-    ctx->bufferCount = RENDERER_UNIFORM_BUFFER_COUNT;
-
     // initialize camera state
-    uint32 cameraUboId = ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA];
-    glBindBuffer(GL_UNIFORM_BUFFER, cameraUboId);
+    glGenBuffers(1, &ctx->cameraUniformBufferId);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuCameraState), 0, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_CAMERA, cameraUboId, 0,
-        sizeof(GpuCameraState));
+    glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_CAMERA_UBO_SLOT, ctx->cameraUniformBufferId,
+        0, sizeof(GpuCameraState));
 
     // initialize lighting state
     GpuLightingState lighting;
@@ -200,11 +171,11 @@ RENDERER_INITIALIZE(rendererInitialize)
     lighting.isAOMapEnabled = true;
     lighting.isDisplacementMapEnabled = true;
 
-    uint32 lightingUboId = ctx->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING];
-    glBindBuffer(GL_UNIFORM_BUFFER, lightingUboId);
+    glGenBuffers(1, &ctx->lightingUniformBufferId);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_UNIFORM_BUFFER_LIGHTING, lightingUboId, 0,
-        sizeof(lighting));
+    glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_LIGHTING_UBO_SLOT,
+        ctx->lightingUniformBufferId, 0, sizeof(lighting));
 
     // create quad buffers
     float quadTopDownVerts[16] = {
@@ -245,7 +216,7 @@ RENDERER_UPDATE_CAMERA_STATE(rendererUpdateCameraState)
     GpuCameraState camera;
     camera.transform = *transform;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
 }
 
@@ -259,7 +230,7 @@ RENDERER_UPDATE_LIGHTING_STATE(rendererUpdateLightingState)
     lighting.isAOMapEnabled = isAOMapEnabled;
     lighting.isDisplacementMapEnabled = isDisplacementMapEnabled;
 
-    glBindBuffer(GL_UNIFORM_BUFFER, ctx->bufferIds[RENDERER_UNIFORM_BUFFER_LIGHTING]);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
     glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
@@ -479,30 +450,37 @@ RENDERER_UNBIND_VERTEX_ARRAY(rendererUnbindVertexArray)
 
 RENDERER_CREATE_BUFFER(rendererCreateBuffer)
 {
-    assert(ctx->bufferCount < RENDERER_MAX_BUFFERS);
-    glGenBuffers(1, ctx->bufferIds + ctx->bufferCount);
-    ctx->bufferTypes[ctx->bufferCount] = type;
-    ctx->bufferUsages[ctx->bufferCount] = usage;
-    return ctx->bufferCount++;
+    RenderBuffer result = {};
+    result.usage = usage;
+
+    glGenBuffers(1, &result.id);
+
+    if (type == RENDERER_VERTEX_BUFFER)
+    {
+        result.type = GL_ARRAY_BUFFER;
+    }
+    else if (type == RENDERER_ELEMENT_BUFFER)
+    {
+        result.type = GL_ELEMENT_ARRAY_BUFFER;
+    }
+    else if (type == RENDERER_SHADER_STORAGE_BUFFER)
+    {
+        result.type = GL_SHADER_STORAGE_BUFFER;
+    }
+    assert(result.type);
+
+    return result;
 }
 
 RENDERER_BIND_BUFFER(rendererBindBuffer)
 {
-    assert(handle < ctx->bufferCount);
-    uint32 id = ctx->bufferIds[handle];
-
-    uint32 openGLType = getOpenGLBufferType(ctx->bufferTypes[handle]);
-    glBindBuffer(openGLType, id);
+    glBindBuffer(buffer->type, buffer->id);
 }
 
 RENDERER_UPDATE_BUFFER(rendererUpdateBuffer)
 {
-    assert(handle < ctx->bufferCount);
-    uint32 id = ctx->bufferIds[handle];
-
-    uint32 openGLType = getOpenGLBufferType(ctx->bufferTypes[handle]);
-    glBindBuffer(openGLType, id);
-    glBufferData(openGLType, size, data, ctx->bufferUsages[handle]);
+    glBindBuffer(buffer->type, buffer->id);
+    glBufferData(buffer->type, size, data, buffer->usage);
 }
 
 RENDERER_BIND_VERTEX_ATTRIBUTE(rendererBindVertexAttribute)
@@ -515,10 +493,7 @@ RENDERER_BIND_VERTEX_ATTRIBUTE(rendererBindVertexAttribute)
 
 RENDERER_BIND_SHADER_STORAGE_BUFFER(rendererBindShaderStorageBuffer)
 {
-    assert(handle < ctx->bufferCount);
-    uint32 id = ctx->bufferIds[handle];
-
-    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, id);
+    glBindBufferBase(GL_SHADER_STORAGE_BUFFER, slot, buffer->id);
 }
 
 RENDERER_SET_VIEWPORT_SIZE(rendererSetViewportSize)
@@ -837,14 +812,10 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
-
-    assert(meshVertexBufferHandle < rq->ctx->bufferCount);
-    cmd->meshVertexBufferId = rq->ctx->bufferIds[meshVertexBufferHandle];
-    assert(meshElementBufferHandle < rq->ctx->bufferCount);
-    cmd->meshElementBufferId = rq->ctx->bufferIds[meshElementBufferHandle];
+    cmd->meshVertexBufferId = meshVertexBufferId;
+    cmd->meshElementBufferId = meshElementBufferId;
     cmd->meshElementCount = meshElementCount;
-    assert(instanceBufferHandle < rq->ctx->bufferCount);
-    cmd->instanceBufferId = rq->ctx->bufferIds[instanceBufferHandle];
+    cmd->instanceBufferId = instanceBufferId;
     cmd->instanceCount = instanceCount;
 }
 
@@ -947,8 +918,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         case RENDER_CMD_SetCameraCommand:
         {
             SetCameraCommand *cmd = (SetCameraCommand *)commandData;
-            glBindBuffer(
-                GL_UNIFORM_BUFFER, rq->ctx->bufferIds[RENDERER_UNIFORM_BUFFER_CAMERA]);
+            glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->cameraUniformBufferId);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(cmd->camera), &cmd->camera);
         }
         break;
