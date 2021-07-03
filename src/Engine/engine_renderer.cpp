@@ -96,7 +96,8 @@ enum RenderQueueCommandType
     RENDER_CMD_SetCameraCommand,
     RENDER_CMD_ClearCommand,
     RENDER_CMD_DrawQuadsCommand,
-    RENDER_CMD_DrawMeshesCommand
+    RENDER_CMD_DrawMeshesCommand,
+    RENDER_CMD_DrawTerrainCommand
 };
 struct RenderQueueCommandHeader
 {
@@ -125,6 +126,35 @@ struct DrawMeshesCommand
     AssetHandle mesh;
     uint32 instanceOffset;
     uint32 instanceCount;
+};
+struct DrawTerrainCommand
+{
+    Heightfield *heightfield;
+
+    uint32 calcTessLevelShaderProgramId;
+    uint32 terrainShaderProgramId;
+
+    uint32 heightmapTextureId;
+    uint32 referenceHeightmapTextureId;
+
+    uint32 vertexArrayId;
+    uint32 tessellationLevelBufferId;
+    uint32 meshVertexBufferId;
+    uint32 meshElementCount;
+
+    uint32 materialCount;
+    uint32 albedoTextureArrayId;
+    uint32 normalTextureArrayId;
+    uint32 displacementTextureArrayId;
+    uint32 aoTextureArrayId;
+    uint32 materialPropsBufferId;
+
+    bool isWireframe;
+
+    uint32 visualizationMode;
+    glm::vec2 cursorPos;
+    float cursorRadius;
+    float cursorFalloff;
 };
 struct RenderQueue
 {
@@ -849,6 +879,39 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
     rq->meshInstanceCount += instanceCount;
 }
 
+RENDERER_PUSH_TERRAIN(rendererPushTerrain)
+{
+    DrawTerrainCommand *cmd = pushRenderCommand(rq, DrawTerrainCommand);
+
+    cmd->heightfield = heightfield;
+
+    cmd->calcTessLevelShaderProgramId = calcTessLevelShaderProgramId;
+    cmd->terrainShaderProgramId = terrainShaderProgramId;
+
+    cmd->heightmapTextureId = heightmapTextureId;
+    cmd->referenceHeightmapTextureId = referenceHeightmapTextureId;
+
+    assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
+    cmd->vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+    cmd->tessellationLevelBufferId = tessellationLevelBufferId;
+    cmd->meshVertexBufferId = meshVertexBufferId;
+    cmd->meshElementCount = meshElementCount;
+
+    cmd->materialCount = materialCount;
+    cmd->albedoTextureArrayId = albedoTextureArrayId;
+    cmd->normalTextureArrayId = normalTextureArrayId;
+    cmd->displacementTextureArrayId = displacementTextureArrayId;
+    cmd->aoTextureArrayId = aoTextureArrayId;
+    cmd->materialPropsBufferId = materialPropsBufferId;
+
+    cmd->isWireframe = isWireframe;
+
+    cmd->visualizationMode = visualizationMode;
+    cmd->cursorPos = cursorPos;
+    cmd->cursorRadius = cursorRadius;
+    cmd->cursorFalloff = cursorFalloff;
+}
+
 bool applyEffect(RenderEffect *effect)
 {
     bool wasEffectApplied = false;
@@ -1048,6 +1111,78 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             {
                 isMissingResources = true;
             }
+        }
+        break;
+        case RENDER_CMD_DrawTerrainCommand:
+        {
+            DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
+            Heightfield *heightfield = cmd->heightfield;
+            uint32 calcTessLevelShaderProgramId = cmd->calcTessLevelShaderProgramId;
+            uint32 terrainShaderProgramId = cmd->terrainShaderProgramId;
+            uint32 meshEdgeCount = (2 * (heightfield->rows * heightfield->columns))
+                - heightfield->rows - heightfield->columns;
+            glm::vec3 terrainDimensions =
+                glm::vec3(heightfield->spacing * heightfield->columns, heightfield->maxHeight,
+                    heightfield->spacing * heightfield->rows);
+
+            // calculate tessellation levels
+            glUseProgram(calcTessLevelShaderProgramId);
+            glProgramUniform1f(calcTessLevelShaderProgramId,
+                glGetUniformLocation(calcTessLevelShaderProgramId, "targetTriangleSize"),
+                0.015f);
+            glProgramUniform1i(calcTessLevelShaderProgramId,
+                glGetUniformLocation(calcTessLevelShaderProgramId, "horizontalEdgeCount"),
+                heightfield->rows * (heightfield->columns - 1));
+            glProgramUniform1i(calcTessLevelShaderProgramId,
+                glGetUniformLocation(calcTessLevelShaderProgramId, "columnCount"),
+                heightfield->columns);
+            glProgramUniform1f(calcTessLevelShaderProgramId,
+                glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"),
+                heightfield->maxHeight);
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, cmd->heightmapTextureId);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cmd->tessellationLevelBufferId);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->meshVertexBufferId);
+            glDispatchCompute(meshEdgeCount, 1, 1);
+            glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
+
+            // draw terrain mesh
+            glUseProgram(terrainShaderProgramId);
+            glPolygonMode(GL_FRONT_AND_BACK, cmd->isWireframe ? GL_LINE : GL_FILL);
+            glEnable(GL_DEPTH_TEST);
+            glBlendEquation(GL_FUNC_ADD);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->albedoTextureArrayId);
+            glActiveTexture(GL_TEXTURE2);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->normalTextureArrayId);
+            glActiveTexture(GL_TEXTURE3);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->displacementTextureArrayId);
+            glActiveTexture(GL_TEXTURE4);
+            glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->aoTextureArrayId);
+            glActiveTexture(GL_TEXTURE5);
+            glBindTexture(GL_TEXTURE_2D, cmd->referenceHeightmapTextureId);
+            glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->materialPropsBufferId);
+            glBindVertexArray(cmd->vertexArrayId);
+            glProgramUniform1i(terrainShaderProgramId,
+                glGetUniformLocation(terrainShaderProgramId, "materialCount"),
+                cmd->materialCount);
+            glProgramUniform3fv(terrainShaderProgramId,
+                glGetUniformLocation(terrainShaderProgramId, "terrainDimensions"), 1,
+                glm::value_ptr(terrainDimensions));
+            glProgramUniform1i(terrainShaderProgramId,
+                glGetUniformLocation(terrainShaderProgramId, "visualizationMode"),
+                cmd->visualizationMode);
+            glProgramUniform2fv(terrainShaderProgramId,
+                glGetUniformLocation(terrainShaderProgramId, "cursorPos"), 1,
+                glm::value_ptr(cmd->cursorPos));
+            glProgramUniform1f(terrainShaderProgramId,
+                glGetUniformLocation(terrainShaderProgramId, "cursorRadius"),
+                cmd->cursorRadius);
+            glProgramUniform1f(terrainShaderProgramId,
+                glGetUniformLocation(terrainShaderProgramId, "cursorFalloff"),
+                cmd->cursorFalloff);
+            glDrawElements(GL_PATCHES, cmd->meshElementCount, GL_UNSIGNED_INT, 0);
         }
         break;
         }

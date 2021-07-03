@@ -83,10 +83,10 @@ struct GameState
     uint32 heightmapTextureId;
     uint8 heightmapTextureVersion;
 
-    uint32 albedoTextureArrayHandle;
-    uint32 normalTextureArrayHandle;
-    uint32 displacementTextureArrayHandle;
-    uint32 aoTextureArrayHandle;
+    uint32 albedoTextureArrayId;
+    uint32 normalTextureArrayId;
+    uint32 displacementTextureArrayId;
+    uint32 aoTextureArrayId;
 
     RenderBuffer materialPropsBuffer;
 };

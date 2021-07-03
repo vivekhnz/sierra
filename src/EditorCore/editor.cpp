@@ -305,15 +305,15 @@ void initializeEditor(EditorMemory *memory)
     engine->rendererUpdateBuffer(&sceneState->tessellationLevelBuffer,
         sceneState->heightfield.columns * sceneState->heightfield.rows * sizeof(glm::vec4), 0);
 
-    sceneState->albedoTextureArrayHandle = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
+    sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
         GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->normalTextureArrayHandle = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
+    sceneState->normalTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
         GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->displacementTextureArrayHandle =
+    sceneState->displacementTextureArrayId =
         engine->rendererCreateTextureArray(GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
             MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->aoTextureArrayHandle = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
-        GL_R8, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->aoTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE, GL_R8,
+        GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
@@ -777,7 +777,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->albedoTextureArrayHandle,
+                engine->rendererUpdateTextureArray(sceneState->albedoTextureArrayId,
                     GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
@@ -793,7 +793,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->normalTextureArrayHandle,
+                engine->rendererUpdateTextureArray(sceneState->normalTextureArrayId,
                     GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
@@ -809,7 +809,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->displacementTextureArrayHandle,
+                engine->rendererUpdateTextureArray(sceneState->displacementTextureArrayId,
                     GL_UNSIGNED_SHORT, GL_RED, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
@@ -825,7 +825,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             if (asset->texture
                 && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->aoTextureArrayHandle,
+                engine->rendererUpdateTextureArray(sceneState->aoTextureArrayId,
                     GL_UNSIGNED_BYTE, GL_RED, asset->texture->width, asset->texture->height,
                     layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
@@ -1267,11 +1267,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     viewState->cameraTransform =
         projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
 
-    engine->rendererBindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
-    engine->rendererUpdateCameraState(rctx, &viewState->cameraTransform);
-    engine->rendererSetViewportSize(view->width, view->height);
-    engine->rendererClearBackBuffer(0.3f, 0.3f, 0.3f, 1);
-
     // get shader programs
     LoadedAsset *calcTessLevelShaderProgram =
         engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainCalcTessLevel);
@@ -1307,65 +1302,24 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
         }
 
-        // calculate tessellation levels
-        uint32 calcTessLevelShaderProgramId = calcTessLevelShaderProgram->shaderProgram->id;
-        uint32 meshEdgeCount =
-            (2 * (sceneState->heightfield.rows * sceneState->heightfield.columns))
-            - sceneState->heightfield.rows - sceneState->heightfield.columns;
-        engine->rendererSetShaderProgramUniformFloat(
-            calcTessLevelShaderProgramId, "targetTriangleSize", 0.015f);
-        engine->rendererSetShaderProgramUniformInteger(calcTessLevelShaderProgramId,
-            "horizontalEdgeCount",
-            sceneState->heightfield.rows * (sceneState->heightfield.columns - 1));
-        engine->rendererSetShaderProgramUniformInteger(
-            calcTessLevelShaderProgramId, "columnCount", sceneState->heightfield.columns);
-        engine->rendererSetShaderProgramUniformFloat(
-            calcTessLevelShaderProgramId, "terrainHeight", sceneState->heightfield.maxHeight);
-        engine->rendererBindTexture(activeHeightmapTextureId, 0);
-        engine->rendererBindShaderStorageBuffer(&sceneState->tessellationLevelBuffer, 0);
-        engine->rendererBindShaderStorageBuffer(&sceneState->terrainMesh.vertexBuffer, 1);
-        engine->rendererUseShaderProgram(calcTessLevelShaderProgramId);
-        engine->rendererDispatchCompute(meshEdgeCount, 1, 1);
-        engine->rendererShaderStorageMemoryBarrier();
-
-        // draw terrain mesh
-        uint32 terrainShaderProgramId = terrainShaderProgram->shaderProgram->id;
-        engine->rendererUseShaderProgram(terrainShaderProgramId);
-        engine->rendererSetPolygonMode(GL_FILL);
-        engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, true);
-        engine->rendererBindTexture(activeHeightmapTextureId, 0);
-        engine->rendererBindTextureArray(sceneState->albedoTextureArrayHandle, 1);
-        engine->rendererBindTextureArray(sceneState->normalTextureArrayHandle, 2);
-        engine->rendererBindTextureArray(sceneState->displacementTextureArrayHandle, 3);
-        engine->rendererBindTextureArray(sceneState->aoTextureArrayHandle, 4);
-        engine->rendererBindTexture(referenceHeightmapTextureId, 5);
-        engine->rendererBindShaderStorageBuffer(&sceneState->materialPropsBuffer, 1);
-        engine->rendererBindVertexArray(rctx, sceneState->terrainMesh.vertexArrayHandle);
-        engine->rendererSetShaderProgramUniformInteger(
-            terrainShaderProgramId, "materialCount", sceneState->materialCount);
-        engine->rendererSetShaderProgramUniformVector3(terrainShaderProgramId,
-            "terrainDimensions",
-            glm::vec3(sceneState->heightfield.spacing * sceneState->heightfield.columns,
-                sceneState->heightfield.maxHeight,
-                sceneState->heightfield.spacing * sceneState->heightfield.rows));
-        engine->rendererSetShaderProgramUniformInteger(
-            terrainShaderProgramId, "visualizationMode", visualizationMode);
-        engine->rendererSetShaderProgramUniformVector2(
-            terrainShaderProgramId, "cursorPos", sceneState->worldState.brushPos);
-        engine->rendererSetShaderProgramUniformFloat(
-            terrainShaderProgramId, "cursorRadius", sceneState->worldState.brushRadius);
-        engine->rendererSetShaderProgramUniformFloat(
-            terrainShaderProgramId, "cursorFalloff", sceneState->worldState.brushFalloff);
-        engine->rendererDrawElements(GL_PATCHES, sceneState->terrainMesh.elementCount);
-        engine->rendererUnbindVertexArray();
-
-        // draw rocks
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+        engine->rendererSetCamera(rq, &viewState->cameraTransform);
+        engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
+        engine->rendererPushTerrain(rq, &sceneState->heightfield,
+            calcTessLevelShaderProgram->shaderProgram->id,
+            terrainShaderProgram->shaderProgram->id, activeHeightmapTextureId,
+            referenceHeightmapTextureId, sceneState->terrainMesh.vertexArrayHandle,
+            sceneState->tessellationLevelBuffer.id, sceneState->terrainMesh.vertexBuffer.id,
+            sceneState->terrainMesh.elementCount, sceneState->materialCount,
+            sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
+            sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+            sceneState->materialPropsBuffer.id, false, visualizationMode,
+            sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
+            sceneState->worldState.brushFalloff);
         engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
             sceneState->objectInstanceCount, editorAssets->shaderProgramRock);
-        engine->rendererDrawToScreen(rq, view->width, view->height);
+        engine->rendererDrawToTarget(rq, sceneRenderTarget);
     }
-    engine->rendererUnbindFramebuffer(rctx, sceneRenderTarget->framebufferHandle);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);

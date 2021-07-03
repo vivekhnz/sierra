@@ -71,6 +71,7 @@ struct EngineApi
     RendererPushEffectQuad *rendererPushEffectQuad;
     RendererPushEffectQuads *rendererPushEffectQuads;
     RendererPushMeshes *rendererPushMeshes;
+    RendererPushTerrain *rendererPushTerrain;
     RendererDrawToTarget *rendererDrawToTarget;
     RendererDrawToScreen *rendererDrawToScreen;
 };
