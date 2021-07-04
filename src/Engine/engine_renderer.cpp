@@ -131,9 +131,9 @@ struct DrawTerrainCommand
     uint32 heightmapTextureId;
     uint32 referenceHeightmapTextureId;
 
-    uint32 vertexArrayId;
-    uint32 tessellationLevelBufferId;
     uint32 meshVertexBufferId;
+    uint32 meshElementBufferId;
+    uint32 tessellationLevelBufferId;
     uint32 meshElementCount;
 
     uint32 materialCount;
@@ -736,9 +736,9 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->heightmapTextureId = heightmapTextureId;
     cmd->referenceHeightmapTextureId = referenceHeightmapTextureId;
 
-    cmd->vertexArrayId = vertexArrayId;
-    cmd->tessellationLevelBufferId = tessellationLevelBufferId;
     cmd->meshVertexBufferId = meshVertexBufferId;
+    cmd->meshElementBufferId = meshElementBufferId;
+    cmd->tessellationLevelBufferId = tessellationLevelBufferId;
     cmd->meshElementCount = meshElementCount;
 
     cmd->materialCount = materialCount;
@@ -1035,7 +1035,6 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glActiveTexture(GL_TEXTURE5);
                 glBindTexture(GL_TEXTURE_2D, cmd->referenceHeightmapTextureId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->materialPropsBufferId);
-                glBindVertexArray(cmd->vertexArrayId);
                 glProgramUniform1i(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "materialCount"),
                     cmd->materialCount);
@@ -1054,7 +1053,20 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glProgramUniform1f(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "cursorFalloff"),
                     cmd->cursorFalloff);
+
+                uint32 vertexBufferStride = 5 * sizeof(float);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmd->meshElementBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, cmd->meshVertexBufferId);
+                glEnableVertexAttribArray(0);
+                glEnableVertexAttribArray(1);
+                glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, 0);
+                glVertexAttribPointer(
+                    1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
+
                 glDrawElements(GL_PATCHES, cmd->meshElementCount, GL_UNSIGNED_INT, 0);
+
+                glDisableVertexAttribArray(0);
+                glDisableVertexAttribArray(1);
             }
             else
             {

@@ -269,21 +269,11 @@ void initializeEditor(EditorMemory *memory)
         &sceneState->terrainMesh.vertexBuffer, terrainVertexBufferSize, terrainVertices);
     free(terrainVertices);
 
-    RenderBuffer terrainElementBuffer =
+    sceneState->terrainMesh.elementBuffer =
         engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(
-        &terrainElementBuffer, terrainElementBufferSize, terrainIndices);
+        &sceneState->terrainMesh.elementBuffer, terrainElementBufferSize, terrainIndices);
     free(terrainIndices);
-
-    sceneState->terrainMesh.vertexArrayId = engine->rendererCreateVertexArray();
-    engine->rendererBindVertexArray(sceneState->terrainMesh.vertexArrayId);
-    engine->rendererBindBuffer(&terrainElementBuffer);
-    engine->rendererBindBuffer(&sceneState->terrainMesh.vertexBuffer);
-    engine->rendererBindVertexAttribute(
-        0, GL_FLOAT, false, 3, terrainVertexBufferStride, 0, false);
-    engine->rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, terrainVertexBufferStride, 3 * sizeof(float), false);
-    engine->rendererUnbindVertexArray();
 
     // create buffer to store vertex edge data
     sceneState->tessellationLevelBuffer =
@@ -1284,8 +1274,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererPushTerrain(rq, &sceneState->heightfield,
         editorAssets->shaderProgramTerrainCalcTessLevel,
         editorAssets->shaderProgramTerrainTextured, activeHeightmapTextureId,
-        referenceHeightmapTextureId, sceneState->terrainMesh.vertexArrayId,
-        sceneState->tessellationLevelBuffer.id, sceneState->terrainMesh.vertexBuffer.id,
+        referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+        sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
         sceneState->terrainMesh.elementCount, sceneState->materialCount,
         sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
         sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,

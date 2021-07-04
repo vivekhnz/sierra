@@ -75,9 +75,9 @@ struct GameState
     Heightfield heightfield;
     float heightfieldHeights[HEIGHTFIELD_ROWS * HEIGHTFIELD_COLUMNS];
 
-    uint32 terrainMeshElementCount;
     RenderBuffer terrainMeshVertexBuffer;
-    uint32 terrainMeshVertexArrayId;
+    RenderBuffer terrainMeshElementBuffer;
+    uint32 terrainMeshElementCount;
     RenderBuffer terrainMeshTessLevelBuffer;
 
     uint32 heightmapTextureId;

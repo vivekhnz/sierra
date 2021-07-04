@@ -162,19 +162,10 @@ bool initializeGame(GameMemory *memory)
     engine->rendererUpdateBuffer(&state->terrainMeshVertexBuffer, vertexBufferSize, vertices);
     free(vertices);
 
-    RenderBuffer terrainMeshElementBuffer =
+    state->terrainMeshElementBuffer =
         engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&terrainMeshElementBuffer, elementBufferSize, indices);
+    engine->rendererUpdateBuffer(&state->terrainMeshElementBuffer, elementBufferSize, indices);
     free(indices);
-
-    state->terrainMeshVertexArrayId = engine->rendererCreateVertexArray();
-    engine->rendererBindVertexArray(state->terrainMeshVertexArrayId);
-    engine->rendererBindBuffer(&terrainMeshElementBuffer);
-    engine->rendererBindBuffer(&state->terrainMeshVertexBuffer);
-    engine->rendererBindVertexAttribute(0, GL_FLOAT, false, 3, vertexBufferStride, 0, false);
-    engine->rendererBindVertexAttribute(
-        1, GL_FLOAT, false, 2, vertexBufferStride, 3 * sizeof(float), false);
-    engine->rendererUnbindVertexArray();
 
     state->terrainMeshTessLevelBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
@@ -569,12 +560,12 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         : gameAssets->shaderProgramTerrainTextured;
     engine->rendererPushTerrain(rq, &state->heightfield,
         gameAssets->shaderProgramTerrainCalcTessLevel, terrainShaderProgram,
-        state->heightmapTextureId, state->heightmapTextureId, state->terrainMeshVertexArrayId,
-        state->terrainMeshTessLevelBuffer.id, state->terrainMeshVertexBuffer.id,
-        state->terrainMeshElementCount, MATERIAL_COUNT, state->albedoTextureArrayId,
-        state->normalTextureArrayId, state->displacementTextureArrayId,
-        state->aoTextureArrayId, state->materialPropsBuffer.id, state->isWireframeMode, 0,
-        glm::vec2(0), 0, 0);
+        state->heightmapTextureId, state->heightmapTextureId,
+        state->terrainMeshVertexBuffer.id, state->terrainMeshElementBuffer.id,
+        state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,
+        state->albedoTextureArrayId, state->normalTextureArrayId,
+        state->displacementTextureArrayId, state->aoTextureArrayId,
+        state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
 
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
