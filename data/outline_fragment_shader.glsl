@@ -9,22 +9,22 @@ out vec4 FragColor;
 void main()
 {
     vec3 sceneColor = texture(sceneTexture, uv).rgb;
-    vec3 selectionColor = vec3(1, 1, 0);
+    vec3 selectionColor = vec3(1, 0.509, 0.094);
     
-    vec4 gather0 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(-2, -2)));
-    vec4 gather1 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(0, -2)));
+    vec4 gather0 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(-2, 2)));
+    vec4 gather1 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(0, 2)));
     vec4 gather2 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(-2, 0)));
     vec4 gather3 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(0, 0)));
-    
-    gather2.xw = gather1.xy;
-    float centerSelVal = gather3.w;
-    gather3.w = gather0.y;
 
-    float avgSelVal = 0.125f * (
-        gather2.x + gather2.y + gather2.z + gather2.w +
-        gather3.x + gather3.y + gather3.z + gather3.w
+    gather2.xw = gather1.zw;
+    vec4 centerSelVal = vec4(gather3.x);
+    gather3.x = gather0.z;
+    
+    vec4 one = vec4(1);
+    float blend = 0.25f * (
+        dot(vec4(notEqual(gather2, centerSelVal)), one) +
+        dot(vec4(notEqual(gather3, centerSelVal)), one)
     );
-    float blend = dot(avgSelVal, 1 - centerSelVal);
     vec3 outColor = mix(sceneColor, selectionColor, blend);
     
     FragColor = vec4(outColor, 1);
