@@ -426,6 +426,13 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
         result.gpuFormat = GL_RGB;
         result.hasDepthBuffer = true;
     }
+    else if (format == RENDER_TARGET_FORMAT_R8)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.cpuFormat = GL_R8;
+        result.gpuFormat = GL_RED;
+        result.hasDepthBuffer = false;
+    }
     else if (format == RENDER_TARGET_FORMAT_R16)
     {
         result.elementType = GL_UNSIGNED_SHORT;

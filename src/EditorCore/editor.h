@@ -77,6 +77,7 @@ struct SceneViewState
     glm::vec3 cameraLookAt;
 
     RenderTarget *sceneRenderTarget;
+    RenderTarget *selectionRenderTarget;
 };
 
 struct GpuMaterialProperties
@@ -138,6 +139,7 @@ struct EditorAssets
     AssetHandle shaderProgramBrushBlendFlatten;
     AssetHandle shaderProgramBrushBlendSmooth;
     AssetHandle shaderProgramRock;
+    AssetHandle shaderProgramOutline;
 
     AssetHandle textureGroundAlbedo;
     AssetHandle textureGroundNormal;

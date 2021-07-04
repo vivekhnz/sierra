@@ -109,6 +109,8 @@ void initializeEditor(EditorMemory *memory)
         engine->assetsRegisterShader(assets, "rock_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderRockFragment =
         engine->assetsRegisterShader(assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+    AssetHandle shaderOutlineFragment = engine->assetsRegisterShader(
+        assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER);
 
     AssetHandle quadShaderAssetHandles[] = {shaderQuadVertex, shaderTextureFragment};
     AssetHandle quadShaderProgram = engine->assetsRegisterShaderProgram(
@@ -149,6 +151,10 @@ void initializeEditor(EditorMemory *memory)
     AssetHandle rockShaderAssetHandles[] = {shaderRockVertex, shaderRockFragment};
     editorAssets->shaderProgramRock = engine->assetsRegisterShaderProgram(
         assets, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
+
+    AssetHandle outlineShaderAssetHandles[] = {shaderTextureVertex, shaderOutlineFragment};
+    editorAssets->shaderProgramOutline = engine->assetsRegisterShaderProgram(
+        assets, outlineShaderAssetHandles, arrayCount(outlineShaderAssetHandles));
 
     editorAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
@@ -1229,13 +1235,17 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
         viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
+        viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R8);
         view->viewState = viewState;
     }
 
     RenderTarget *sceneRenderTarget = viewState->sceneRenderTarget;
+    RenderTarget *selectionRenderTarget = viewState->selectionRenderTarget;
     if (view->width != sceneRenderTarget->width || view->height != sceneRenderTarget->height)
     {
         engine->rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
+        engine->rendererResizeRenderTarget(selectionRenderTarget, view->width, view->height);
     }
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
@@ -1287,32 +1297,31 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererDrawToTarget(rq, sceneRenderTarget);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraOrtho(rq);
-    engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
-    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, sceneRenderTarget->textureId, true);
-    engine->rendererDrawToScreen(rq, view->width, view->height);
-
-#if 0
-    engine->rendererUpdateCameraState(rctx, &viewState->cameraTransform);
-    if (rockShaderProgram->shaderProgram && sceneState->rockMesh.isLoaded
-        && state->uiState.selectedObjectId != 0)
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    if (state->uiState.selectedObjectId != 0)
     {
         for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
         {
             if (state->previewDocState.objectIds[i] == state->uiState.selectedObjectId)
             {
-                engine->rendererUseShaderProgram(rockShaderProgram->shaderProgram->id);
-                engine->rendererSetPolygonMode(GL_FILL);
-                engine->rendererSetBlendMode(GL_FUNC_ADD, GL_SRC_ALPHA, GL_ONE, false);
-                engine->rendererBindVertexArray(rctx, sceneState->rockMesh.vertexArrayHandle);
-                engine->rendererDrawElementsInstanced(
-                    GL_TRIANGLES, sceneState->rockMesh.elementCount, 1, i);
-
+                engine->rendererPushMeshes(rq, editorAssets->meshRock,
+                    &sceneState->objectInstanceData[i], 1, editorAssets->shaderProgramRock);
                 break;
             }
         }
     }
-#endif
+    engine->rendererDrawToTarget(rq, selectionRenderTarget);
+
+    RenderEffect *outlineEffect = engine->rendererCreateEffect(
+        &memory->arena, editorAssets->shaderProgramOutline, EFFECT_BLEND_ALPHA_BLEND);
+    engine->rendererSetEffectTexture(outlineEffect, 0, sceneRenderTarget->textureId);
+    engine->rendererSetEffectTexture(outlineEffect, 1, selectionRenderTarget->textureId);
+
+    rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+    engine->rendererSetCameraOrtho(rq);
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, outlineEffect);
+    engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
 }

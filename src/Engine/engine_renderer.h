@@ -28,6 +28,7 @@ struct RenderMesh
 enum RenderTargetFormat
 {
     RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
+    RENDER_TARGET_FORMAT_R8,
     RENDER_TARGET_FORMAT_R16
 };
 
