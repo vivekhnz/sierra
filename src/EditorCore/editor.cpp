@@ -188,12 +188,6 @@ void initializeEditor(EditorMemory *memory)
     state->renderCtx = engine->rendererInitialize(&memory->arena, quadShaderProgram);
     RenderContext *rctx = state->renderCtx;
 
-    state->orthographicCameraTransform = glm::identity<glm::mat4>();
-    state->orthographicCameraTransform =
-        glm::scale(state->orthographicCameraTransform, glm::vec3(2.0f, 2.0f, 1.0f));
-    state->orthographicCameraTransform =
-        glm::translate(state->orthographicCameraTransform, glm::vec3(-0.5f, -0.5f, 0.0f));
-
     state->uiState.selectedObjectId = 0;
     state->uiState.terrainBrushRadius = 128.0f;
     state->uiState.terrainBrushFalloff = 0.75f;
@@ -462,7 +456,7 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushEffectQuads(rq, brushInstances, brushInstanceCount, maskEffect);
     engine->rendererDrawToTarget(rq, brushInfluenceMask);
@@ -483,7 +477,7 @@ void compositeHeightmap(EditorMemory *memory,
             engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
 
             RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-            engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+            engine->rendererSetCameraOrtho(rq);
             engine->rendererClear(rq, 0, 0, 0, 1);
             engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
             engine->rendererDrawToTarget(rq, iterationOutput);
@@ -519,7 +513,7 @@ void compositeHeightmap(EditorMemory *memory,
         engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
 
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-        engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+        engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
         engine->rendererDrawToTarget(rq, output);
@@ -557,7 +551,7 @@ void commitChanges(EditorMemory *memory)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(
         rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, true);
@@ -900,7 +894,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
         RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
-        engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+        engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(
             rq, {0, 0, 1, 1}, state->importedHeightmapTextureId, true);
@@ -978,9 +972,17 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             }
             else
             {
+                glm::vec3 up = glm::vec3(0, 1, 0);
+                float aspectRatio = (float)activeViewState->sceneRenderTarget->width
+                    / (float)activeViewState->sceneRenderTarget->height;
+                glm::mat4 projection =
+                    glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
+                glm::mat4 cameraTransform = projection
+                    * glm::lookAt(
+                        activeViewState->cameraPos, activeViewState->cameraLookAt, up);
+
                 glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
-                glm::mat4 inverseViewProjection =
-                    glm::inverse(activeViewState->cameraTransform);
+                glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
                 glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
                 glm::vec4 worldPos = inverseViewProjection * screenPos;
 
@@ -1254,23 +1256,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
     }
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
-
-    // calculate camera transform
-    constexpr float fov = glm::pi<float>() / 4.0f;
-    const float nearPlane = 0.1f;
-    const float farPlane = 10000.0f;
-    const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    const float aspectRatio = (float)view->width / (float)view->height;
-    glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
-    viewState->cameraTransform =
-        projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
-
-    // get shader programs
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
     uint32 activeHeightmapTextureId = state->workingHeightmap->textureId;
     uint32 referenceHeightmapTextureId = state->workingHeightmap->textureId;
-
     if (sceneState->worldState.brushCursorVisibleView == viewState)
     {
         if (state->isAdjustingBrushParameters)
@@ -1295,8 +1283,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
     }
 
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCamera(rq, &viewState->cameraTransform);
+    engine->rendererSetCameraPersp(
+        rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     engine->rendererPushTerrain(rq, &sceneState->heightfield,
         editorAssets->shaderProgramTerrainCalcTessLevel,
@@ -1314,7 +1305,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererDrawToTarget(rq, sceneRenderTarget);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, sceneRenderTarget->textureId, true);
     engine->rendererDrawToScreen(rq, view->width, view->height);
@@ -1352,7 +1343,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
+    engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(
         rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, false);

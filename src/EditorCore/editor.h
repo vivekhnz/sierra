@@ -75,7 +75,6 @@ struct SceneViewState
     float orbitCameraPitch;
     glm::vec3 cameraPos;
     glm::vec3 cameraLookAt;
-    glm::mat4 cameraTransform;
 
     RenderTarget *sceneRenderTarget;
 };
@@ -181,8 +180,6 @@ struct EditorState
     EditorAssets editorAssets;
     RenderContext *renderCtx;
     Assets *engineAssets;
-
-    glm::mat4 orthographicCameraTransform;
 
     uint32 importedHeightmapTextureId;
     uint8 importedHeightmapTextureVersion;

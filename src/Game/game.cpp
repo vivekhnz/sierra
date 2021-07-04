@@ -469,23 +469,16 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     }
 
     // render world
-    constexpr float fov = glm::pi<float>() / 4.0f;
-    const float nearPlane = 0.1f;
-    const float farPlane = 10000.0f;
-    const glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f);
-    const float aspectRatio = (float)viewport.width / (float)viewport.height;
-
+    float fov = glm::pi<float>() / 4.0f;
     glm::vec3 *cameraPos =
         state->isOrbitCameraMode ? &state->orbitCameraPos : &state->firstPersonCameraPos;
     glm::vec3 *cameraLookAt =
         state->isOrbitCameraMode ? &state->orbitCameraLookAt : &state->firstPersonCameraLookAt;
-    glm::mat4 cameraTransform = glm::perspective(fov, aspectRatio, nearPlane, farPlane)
-        * glm::lookAt(*cameraPos, *cameraLookAt, up);
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCamera(rq, &cameraTransform);
+    engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
 
     LoadedAsset *asset;

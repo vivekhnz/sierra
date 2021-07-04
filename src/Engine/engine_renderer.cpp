@@ -10,6 +10,7 @@
 extern EnginePlatformApi Platform;
 
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram);
+ASSETS_GET_MESH(assetsGetMesh);
 
 struct RenderContext
 {
@@ -100,7 +101,11 @@ struct RenderQueueCommandHeader
 
 struct SetCameraCommand
 {
-    GpuCameraState camera;
+    bool isOrthographic;
+
+    glm::vec3 cameraPos;
+    glm::vec3 lookAt;
+    float fov;
 };
 struct ClearCommand
 {
@@ -653,10 +658,18 @@ void *pushRenderCommandInternal(RenderQueue *rq, RenderQueueCommandType type, ui
 #define pushRenderCommand(rq, type)                                                           \
     (type *)pushRenderCommandInternal(rq, RENDER_CMD_##type, sizeof(type))
 
-RENDERER_SET_CAMERA(rendererSetCamera)
+RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
-    cmd->camera.transform = *transform;
+    cmd->isOrthographic = true;
+}
+RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
+{
+    SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
+    cmd->isOrthographic = false;
+    cmd->cameraPos = cameraPos;
+    cmd->lookAt = lookAt;
+    cmd->fov = fov;
 }
 
 RENDERER_CLEAR(rendererClear)
@@ -853,8 +866,28 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         case RENDER_CMD_SetCameraCommand:
         {
             SetCameraCommand *cmd = (SetCameraCommand *)commandData;
+
+            GpuCameraState camera = {};
+            if (cmd->isOrthographic)
+            {
+                camera.transform = glm::identity<glm::mat4>();
+                camera.transform = glm::scale(camera.transform, glm::vec3(2, 2, 1));
+                camera.transform =
+                    glm::translate(camera.transform, glm::vec3(-0.5f, -0.5f, 0));
+            }
+            else
+            {
+                float nearPlane = 0.1f;
+                float farPlane = 10000;
+                glm::vec3 up = glm::vec3(0, 1, 0);
+                float aspectRatio = (float)width / (float)height;
+                glm::mat4 projection =
+                    glm::perspective(cmd->fov, aspectRatio, nearPlane, farPlane);
+                camera.transform = projection * glm::lookAt(cmd->cameraPos, cmd->lookAt, up);
+            }
+
             glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->cameraUniformBufferId);
-            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(cmd->camera), &cmd->camera);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
         }
         break;
         case RENDER_CMD_ClearCommand:
