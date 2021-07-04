@@ -275,8 +275,8 @@ void initializeEditor(EditorMemory *memory)
         &terrainElementBuffer, terrainElementBufferSize, terrainIndices);
     free(terrainIndices);
 
-    sceneState->terrainMesh.vertexArrayHandle = engine->rendererCreateVertexArray(rctx);
-    engine->rendererBindVertexArray(rctx, sceneState->terrainMesh.vertexArrayHandle);
+    sceneState->terrainMesh.vertexArrayId = engine->rendererCreateVertexArray();
+    engine->rendererBindVertexArray(sceneState->terrainMesh.vertexArrayId);
     engine->rendererBindBuffer(&terrainElementBuffer);
     engine->rendererBindBuffer(&sceneState->terrainMesh.vertexBuffer);
     engine->rendererBindVertexAttribute(
@@ -1284,7 +1284,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererPushTerrain(rq, &sceneState->heightfield,
         editorAssets->shaderProgramTerrainCalcTessLevel,
         editorAssets->shaderProgramTerrainTextured, activeHeightmapTextureId,
-        referenceHeightmapTextureId, sceneState->terrainMesh.vertexArrayHandle,
+        referenceHeightmapTextureId, sceneState->terrainMesh.vertexArrayId,
         sceneState->tessellationLevelBuffer.id, sceneState->terrainMesh.vertexBuffer.id,
         sceneState->terrainMesh.elementCount, sceneState->materialCount,
         sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,

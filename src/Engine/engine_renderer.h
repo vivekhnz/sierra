@@ -100,9 +100,9 @@ typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
         uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
-#define RENDERER_CREATE_VERTEX_ARRAY(name) uint32 name(RenderContext *ctx)
+#define RENDERER_CREATE_VERTEX_ARRAY(name) uint32 name()
 typedef RENDERER_CREATE_VERTEX_ARRAY(RendererCreateVertexArray);
-#define RENDERER_BIND_VERTEX_ARRAY(name) void name(RenderContext *ctx, uint32 handle)
+#define RENDERER_BIND_VERTEX_ARRAY(name) void name(uint32 id)
 typedef RENDERER_BIND_VERTEX_ARRAY(RendererBindVertexArray);
 #define RENDERER_UNBIND_VERTEX_ARRAY(name) void name()
 typedef RENDERER_UNBIND_VERTEX_ARRAY(RendererUnbindVertexArray);
@@ -183,10 +183,9 @@ typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 #define RENDERER_PUSH_TERRAIN(name)                                                           \
     void name(RenderQueue *rq, Heightfield *heightfield,                                      \
         AssetHandle calcTessLevelShaderProgram, AssetHandle terrainShaderProgram,             \
-        uint32 heightmapTextureId, uint32 referenceHeightmapTextureId,                        \
-        uint32 vertexArrayHandle, uint32 tessellationLevelBufferId,                           \
-        uint32 meshVertexBufferId, uint32 meshElementCount, uint32 materialCount,             \
-        uint32 albedoTextureArrayId, uint32 normalTextureArrayId,                             \
+        uint32 heightmapTextureId, uint32 referenceHeightmapTextureId, uint32 vertexArrayId,  \
+        uint32 tessellationLevelBufferId, uint32 meshVertexBufferId, uint32 meshElementCount, \
+        uint32 materialCount, uint32 albedoTextureArrayId, uint32 normalTextureArrayId,       \
         uint32 displacementTextureArrayId, uint32 aoTextureArrayId,                           \
         uint32 materialPropsBufferId, bool isWireframe, uint32 visualizationMode,             \
         glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)

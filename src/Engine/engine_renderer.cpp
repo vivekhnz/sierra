@@ -3,7 +3,6 @@
 #include "engine_assets.h"
 #include "engine_heightfield.h"
 
-#define RENDERER_MAX_VERTEX_ARRAYS 128
 #define RENDERER_CAMERA_UBO_SLOT 0
 #define RENDERER_LIGHTING_UBO_SLOT 1
 
@@ -28,9 +27,6 @@ struct RenderContext
     uint32 meshInstanceBufferId;
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
-
-    uint32 vertexArrayCount;
-    uint32 vertexArrayIds[RENDERER_MAX_VERTEX_ARRAYS];
 
     uint32 cameraUniformBufferId;
     uint32 lightingUniformBufferId;
@@ -390,16 +386,13 @@ RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 
 RENDERER_CREATE_VERTEX_ARRAY(rendererCreateVertexArray)
 {
-    assert(ctx->vertexArrayCount < RENDERER_MAX_VERTEX_ARRAYS);
-    glGenVertexArrays(1, ctx->vertexArrayIds + ctx->vertexArrayCount);
-    return ctx->vertexArrayCount++;
+    uint32 id;
+    glGenVertexArrays(1, &id);
+    return id;
 }
 
 RENDERER_BIND_VERTEX_ARRAY(rendererBindVertexArray)
 {
-    assert(handle < ctx->vertexArrayCount);
-    uint32 id = ctx->vertexArrayIds[handle];
-
     glBindVertexArray(id);
 }
 
@@ -743,8 +736,7 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->heightmapTextureId = heightmapTextureId;
     cmd->referenceHeightmapTextureId = referenceHeightmapTextureId;
 
-    assert(vertexArrayHandle < rq->ctx->vertexArrayCount);
-    cmd->vertexArrayId = rq->ctx->vertexArrayIds[vertexArrayHandle];
+    cmd->vertexArrayId = vertexArrayId;
     cmd->tessellationLevelBufferId = tessellationLevelBufferId;
     cmd->meshVertexBufferId = meshVertexBufferId;
     cmd->meshElementCount = meshElementCount;

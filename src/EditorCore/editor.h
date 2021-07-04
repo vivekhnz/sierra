@@ -95,7 +95,7 @@ struct SceneState
     {
         uint32 elementCount;
         RenderBuffer vertexBuffer;
-        uint32 vertexArrayHandle;
+        uint32 vertexArrayId;
     } terrainMesh;
 
     RenderBuffer tessellationLevelBuffer;
