@@ -577,27 +577,17 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->snowAoTextureVersion = asset->version;
     }
 
-    AssetHandle terrainShaderProgramAssetHandle = state->isWireframeMode
+    AssetHandle terrainShaderProgram = state->isWireframeMode
         ? gameAssets->shaderProgramTerrainWireframe
         : gameAssets->shaderProgramTerrainTextured;
-
-    LoadedAsset *calcTessLevelShaderProgramAsset =
-        engine->assetsGetShaderProgram(gameAssets->shaderProgramTerrainCalcTessLevel);
-    LoadedAsset *terrainShaderProgramAsset =
-        engine->assetsGetShaderProgram(terrainShaderProgramAssetHandle);
-    ShaderProgramAsset *calcTessLevelShaderProgram =
-        calcTessLevelShaderProgramAsset->shaderProgram;
-    ShaderProgramAsset *terrainShaderProgram = terrainShaderProgramAsset->shaderProgram;
-    if (calcTessLevelShaderProgram && terrainShaderProgram)
-    {
-        engine->rendererPushTerrain(rq, &state->heightfield, calcTessLevelShaderProgram->id,
-            terrainShaderProgram->id, state->heightmapTextureId, state->heightmapTextureId,
-            state->terrainMeshVertexArrayHandle, state->terrainMeshTessLevelBuffer.id,
-            state->terrainMeshVertexBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,
-            state->albedoTextureArrayId, state->normalTextureArrayId,
-            state->displacementTextureArrayId, state->aoTextureArrayId,
-            state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
-    }
+    engine->rendererPushTerrain(rq, &state->heightfield,
+        gameAssets->shaderProgramTerrainCalcTessLevel, terrainShaderProgram,
+        state->heightmapTextureId, state->heightmapTextureId,
+        state->terrainMeshVertexArrayHandle, state->terrainMeshTessLevelBuffer.id,
+        state->terrainMeshVertexBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,
+        state->albedoTextureArrayId, state->normalTextureArrayId,
+        state->displacementTextureArrayId, state->aoTextureArrayId,
+        state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
 
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 

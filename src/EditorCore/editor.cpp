@@ -1267,60 +1267,53 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
 
     // get shader programs
-    LoadedAsset *calcTessLevelShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainCalcTessLevel);
-    LoadedAsset *terrainShaderProgram =
-        engine->assetsGetShaderProgram(editorAssets->shaderProgramTerrainTextured);
-    if (calcTessLevelShaderProgram->shaderProgram && terrainShaderProgram->shaderProgram)
-    {
-        BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
-        uint32 activeHeightmapTextureId = state->workingHeightmap->textureId;
-        uint32 referenceHeightmapTextureId = state->workingHeightmap->textureId;
+    BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
+    uint32 activeHeightmapTextureId = state->workingHeightmap->textureId;
+    uint32 referenceHeightmapTextureId = state->workingHeightmap->textureId;
 
-        if (sceneState->worldState.brushCursorVisibleView == viewState)
+    if (sceneState->worldState.brushCursorVisibleView == viewState)
+    {
+        if (state->isAdjustingBrushParameters)
         {
-            if (state->isAdjustingBrushParameters)
+            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
+            if (state->isEditingHeightmap)
             {
-                visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
-                if (state->isEditingHeightmap)
-                {
-                    referenceHeightmapTextureId = state->committedHeightmap->textureId;
-                }
-                else
-                {
-                    activeHeightmapTextureId = state->previewHeightmap->textureId;
-                }
-            }
-            else if (state->isEditingHeightmap)
-            {
-                visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
+                referenceHeightmapTextureId = state->committedHeightmap->textureId;
             }
             else
             {
-                visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_CURSOR_ONLY;
+                activeHeightmapTextureId = state->previewHeightmap->textureId;
             }
         }
-
-        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-        engine->rendererSetCamera(rq, &viewState->cameraTransform);
-        engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
-        engine->rendererPushTerrain(rq, &sceneState->heightfield,
-            calcTessLevelShaderProgram->shaderProgram->id,
-            terrainShaderProgram->shaderProgram->id, activeHeightmapTextureId,
-            referenceHeightmapTextureId, sceneState->terrainMesh.vertexArrayHandle,
-            sceneState->tessellationLevelBuffer.id, sceneState->terrainMesh.vertexBuffer.id,
-            sceneState->terrainMesh.elementCount, sceneState->materialCount,
-            sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
-            sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
-            sceneState->materialPropsBuffer.id, false, visualizationMode,
-            sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
-            sceneState->worldState.brushFalloff);
-        engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
-            sceneState->objectInstanceCount, editorAssets->shaderProgramRock);
-        engine->rendererDrawToTarget(rq, sceneRenderTarget);
+        else if (state->isEditingHeightmap)
+        {
+            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
+        }
+        else
+        {
+            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_CURSOR_ONLY;
+        }
     }
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+    engine->rendererSetCamera(rq, &viewState->cameraTransform);
+    engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
+    engine->rendererPushTerrain(rq, &sceneState->heightfield,
+        editorAssets->shaderProgramTerrainCalcTessLevel,
+        editorAssets->shaderProgramTerrainTextured, activeHeightmapTextureId,
+        referenceHeightmapTextureId, sceneState->terrainMesh.vertexArrayHandle,
+        sceneState->tessellationLevelBuffer.id, sceneState->terrainMesh.vertexBuffer.id,
+        sceneState->terrainMesh.elementCount, sceneState->materialCount,
+        sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
+        sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+        sceneState->materialPropsBuffer.id, false, visualizationMode,
+        sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
+        sceneState->worldState.brushFalloff);
+    engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
+        sceneState->objectInstanceCount, editorAssets->shaderProgramRock);
+    engine->rendererDrawToTarget(rq, sceneRenderTarget);
+
+    rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCamera(rq, &state->orthographicCameraTransform);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, sceneRenderTarget->textureId, true);
