@@ -34,20 +34,14 @@ bool initializeGame(GameMemory *memory)
         assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
         assets, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
-    AssetHandle shaderWireframeVertex =
-        engine->assetsRegisterShader(assets, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
-    AssetHandle shaderWireframeTessCtrl = engine->assetsRegisterShader(
-        assets, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
-    AssetHandle shaderWireframeTessEval = engine->assetsRegisterShader(
-        assets, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
     AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
         assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
 
     AssetHandle wireframeShaderAssetHandles[] = {
-        shaderWireframeVertex,   //
-        shaderWireframeTessCtrl, //
-        shaderWireframeTessEval, //
-        shaderWireframeFragment  //
+        shaderTerrainVertex,    //
+        shaderTerrainTessCtrl,  //
+        shaderTerrainTessEval,  //
+        shaderWireframeFragment //
     };
     gameAssets->shaderProgramTerrainWireframe = engine->assetsRegisterShaderProgram(
         assets, wireframeShaderAssetHandles, arrayCount(wireframeShaderAssetHandles));

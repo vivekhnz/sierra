@@ -97,14 +97,6 @@ void initializeEditor(EditorMemory *memory)
         assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
         assets, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
-    AssetHandle shaderWireframeVertex =
-        engine->assetsRegisterShader(assets, "wireframe_vertex_shader.glsl", GL_VERTEX_SHADER);
-    AssetHandle shaderWireframeTessCtrl = engine->assetsRegisterShader(
-        assets, "wireframe_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
-    AssetHandle shaderWireframeTessEval = engine->assetsRegisterShader(
-        assets, "wireframe_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
-    AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
-        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrushMaskFragment = engine->assetsRegisterShader(
         assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
