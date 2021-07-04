@@ -83,8 +83,6 @@ void initializeEditor(EditorMemory *memory)
 
     AssetHandle shaderQuadVertex =
         engine->assetsRegisterShader(assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER);
-    AssetHandle shaderTextureVertex =
-        engine->assetsRegisterShader(assets, "texture_vertex_shader.glsl", GL_VERTEX_SHADER);
     AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
         assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderTerrainVertex =
@@ -134,17 +132,17 @@ void initializeEditor(EditorMemory *memory)
         assets, brushMaskShaderAssetHandles, arrayCount(brushMaskShaderAssetHandles));
 
     AssetHandle brushBlendAddSubShaderAssetHandles[] = {
-        shaderTextureVertex, shaderBrush_blendAddSubFragment};
+        shaderQuadVertex, shaderBrush_blendAddSubFragment};
     editorAssets->shaderProgramBrushBlendAddSub = engine->assetsRegisterShaderProgram(assets,
         brushBlendAddSubShaderAssetHandles, arrayCount(brushBlendAddSubShaderAssetHandles));
 
     AssetHandle brushBlendFlattenShaderAssetHandles[] = {
-        shaderTextureVertex, shaderBrush_blendFlattenFragment};
+        shaderQuadVertex, shaderBrush_blendFlattenFragment};
     editorAssets->shaderProgramBrushBlendFlatten = engine->assetsRegisterShaderProgram(assets,
         brushBlendFlattenShaderAssetHandles, arrayCount(brushBlendFlattenShaderAssetHandles));
 
     AssetHandle brushBlendSmoothShaderAssetHandles[] = {
-        shaderTextureVertex, shaderBrush_blendSmoothFragment};
+        shaderQuadVertex, shaderBrush_blendSmoothFragment};
     editorAssets->shaderProgramBrushBlendSmooth = engine->assetsRegisterShaderProgram(assets,
         brushBlendSmoothShaderAssetHandles, arrayCount(brushBlendSmoothShaderAssetHandles));
 
@@ -152,7 +150,7 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->shaderProgramRock = engine->assetsRegisterShaderProgram(
         assets, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
 
-    AssetHandle outlineShaderAssetHandles[] = {shaderTextureVertex, shaderOutlineFragment};
+    AssetHandle outlineShaderAssetHandles[] = {shaderQuadVertex, shaderOutlineFragment};
     editorAssets->shaderProgramOutline = engine->assetsRegisterShaderProgram(
         assets, outlineShaderAssetHandles, arrayCount(outlineShaderAssetHandles));
 
