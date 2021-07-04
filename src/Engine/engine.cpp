@@ -51,13 +51,8 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererReadTexturePixels = rendererReadTexturePixels;
     Api.rendererCreateTextureArray = rendererCreateTextureArray;
     Api.rendererUpdateTextureArray = rendererUpdateTextureArray;
-    Api.rendererCreateVertexArray = rendererCreateVertexArray;
-    Api.rendererBindVertexArray = rendererBindVertexArray;
-    Api.rendererUnbindVertexArray = rendererUnbindVertexArray;
     Api.rendererCreateBuffer = rendererCreateBuffer;
-    Api.rendererBindBuffer = rendererBindBuffer;
     Api.rendererUpdateBuffer = rendererUpdateBuffer;
-    Api.rendererBindVertexAttribute = rendererBindVertexAttribute;
     Api.rendererCreateRenderTarget = rendererCreateRenderTarget;
     Api.rendererResizeRenderTarget = rendererResizeRenderTarget;
     Api.rendererCreateEffect = rendererCreateEffect;

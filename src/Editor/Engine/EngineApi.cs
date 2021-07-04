@@ -86,13 +86,8 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererReadTexturePixels;
         public IntPtr rendererCreateTextureArray;
         public IntPtr rendererUpdateTextureArray;
-        public IntPtr rendererCreateVertexArray;
-        public IntPtr rendererBindVertexArray;
-        public IntPtr rendererUnbindVertexArray;
         public IntPtr rendererCreateBuffer;
-        public IntPtr rendererBindBuffer;
         public IntPtr rendererUpdateBuffer;
-        public IntPtr rendererBindVertexAttribute;
         public IntPtr rendererCreateRenderTarget;
         public IntPtr rendererResizeRenderTarget;
         public IntPtr rendererCreateEffect;

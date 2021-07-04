@@ -29,13 +29,8 @@ struct EngineApi
     RendererReadTexturePixels *rendererReadTexturePixels;
     RendererCreateTextureArray *rendererCreateTextureArray;
     RendererUpdateTextureArray *rendererUpdateTextureArray;
-    RendererCreateVertexArray *rendererCreateVertexArray;
-    RendererBindVertexArray *rendererBindVertexArray;
-    RendererUnbindVertexArray *rendererUnbindVertexArray;
     RendererCreateBuffer *rendererCreateBuffer;
-    RendererBindBuffer *rendererBindBuffer;
     RendererUpdateBuffer *rendererUpdateBuffer;
-    RendererBindVertexAttribute *rendererBindVertexAttribute;
     RendererCreateRenderTarget *rendererCreateRenderTarget;
     RendererResizeRenderTarget *rendererResizeRenderTarget;
     RendererCreateEffect *rendererCreateEffect;

@@ -100,24 +100,10 @@ typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
         uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
-#define RENDERER_CREATE_VERTEX_ARRAY(name) uint32 name()
-typedef RENDERER_CREATE_VERTEX_ARRAY(RendererCreateVertexArray);
-#define RENDERER_BIND_VERTEX_ARRAY(name) void name(uint32 id)
-typedef RENDERER_BIND_VERTEX_ARRAY(RendererBindVertexArray);
-#define RENDERER_UNBIND_VERTEX_ARRAY(name) void name()
-typedef RENDERER_UNBIND_VERTEX_ARRAY(RendererUnbindVertexArray);
-
 #define RENDERER_CREATE_BUFFER(name) RenderBuffer name(RendererBufferType type, uint32 usage)
 typedef RENDERER_CREATE_BUFFER(RendererCreateBuffer);
-#define RENDERER_BIND_BUFFER(name) void name(RenderBuffer *buffer)
-typedef RENDERER_BIND_BUFFER(RendererBindBuffer);
 #define RENDERER_UPDATE_BUFFER(name) void name(RenderBuffer *buffer, uint64 size, void *data)
 typedef RENDERER_UPDATE_BUFFER(RendererUpdateBuffer);
-
-#define RENDERER_BIND_VERTEX_ATTRIBUTE(name)                                                  \
-    void name(uint8 index, uint32 elementType, bool isNormalized, uint8 elementCount,         \
-        uint32 stride, uint64 offset, bool isPerInstance)
-typedef RENDERER_BIND_VERTEX_ATTRIBUTE(RendererBindVertexAttribute);
 
 // render targets
 

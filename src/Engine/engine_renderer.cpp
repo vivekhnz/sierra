@@ -384,23 +384,6 @@ RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
-RENDERER_CREATE_VERTEX_ARRAY(rendererCreateVertexArray)
-{
-    uint32 id;
-    glGenVertexArrays(1, &id);
-    return id;
-}
-
-RENDERER_BIND_VERTEX_ARRAY(rendererBindVertexArray)
-{
-    glBindVertexArray(id);
-}
-
-RENDERER_UNBIND_VERTEX_ARRAY(rendererUnbindVertexArray)
-{
-    glBindVertexArray(0);
-}
-
 RENDERER_CREATE_BUFFER(rendererCreateBuffer)
 {
     RenderBuffer result = {};
@@ -425,23 +408,10 @@ RENDERER_CREATE_BUFFER(rendererCreateBuffer)
     return result;
 }
 
-RENDERER_BIND_BUFFER(rendererBindBuffer)
-{
-    glBindBuffer(buffer->type, buffer->id);
-}
-
 RENDERER_UPDATE_BUFFER(rendererUpdateBuffer)
 {
     glBindBuffer(buffer->type, buffer->id);
     glBufferData(buffer->type, size, data, buffer->usage);
-}
-
-RENDERER_BIND_VERTEX_ATTRIBUTE(rendererBindVertexAttribute)
-{
-    glVertexAttribPointer(
-        index, elementCount, elementType, isNormalized, stride, (void *)offset);
-    glEnableVertexAttribArray(index);
-    glVertexAttribDivisor(index, isPerInstance);
 }
 
 // render targets
@@ -847,6 +817,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     glBufferData(GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount,
         rq->ctx->meshInstances, GL_STREAM_DRAW);
 
+    glBindVertexArray(rq->ctx->globalVertexArrayId);
+
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
     while (command)
@@ -894,7 +866,6 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
             if (applyEffect(cmd->effect))
             {
-                glBindVertexArray(rq->ctx->globalVertexArrayId);
                 uint32 vertexBufferId = cmd->isTopDown ? rq->ctx->quadTopDownVertexBufferId
                                                        : rq->ctx->quadBottomUpVertexBufferId;
                 uint32 vertexBufferStride = 4 * sizeof(float);
@@ -932,7 +903,6 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             MeshAsset *mesh = meshAsset->mesh;
             if (applyEffect(cmd->effect) && mesh)
             {
-                glBindVertexArray(rq->ctx->globalVertexArrayId);
                 uint32 vertexBufferStride = 6 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, mesh->renderMesh->vertexBufferId);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->renderMesh->elementBufferId);
