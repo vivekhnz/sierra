@@ -29,6 +29,7 @@ enum RenderTargetFormat
 {
     RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
     RENDER_TARGET_FORMAT_R8,
+    RENDER_TARGET_FORMAT_R8_WITH_DEPTH,
     RENDER_TARGET_FORMAT_R16
 };
 
@@ -38,7 +39,7 @@ struct RenderTarget
     uint32 width;
     uint32 height;
     uint32 textureId;
-    uint32 depthBufferId;
+    uint32 depthTextureId;
     uint32 framebufferId;
 };
 

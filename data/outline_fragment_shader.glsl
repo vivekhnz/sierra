@@ -2,14 +2,19 @@
 layout(location = 0) in vec2 uv;
 
 layout(binding = 0) uniform sampler2D sceneTexture;
-layout(binding = 1) uniform sampler2D selectionTexture;
+layout(binding = 1) uniform sampler2D sceneDepthTexture;
+layout(binding = 2) uniform sampler2D selectionTexture;
+layout(binding = 3) uniform sampler2D selectionDepthTexture;
 
 out vec4 FragColor;
 
 void main()
 {
     vec3 sceneColor = texture(sceneTexture, uv).rgb;
-    vec3 selectionColor = vec3(1, 0.509, 0.094);
+    vec3 selectionColor = vec3(1, 1, 0);
+    
+    float sceneDepth = texture(sceneDepthTexture, uv).r;
+    float selectionDepth = texture(selectionDepthTexture, uv).r;
     
     vec4 gather0 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(-2, 2)));
     vec4 gather1 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(0, 2)));
@@ -25,6 +30,10 @@ void main()
         dot(vec4(notEqual(gather2, centerSelVal)), one) +
         dot(vec4(notEqual(gather3, centerSelVal)), one)
     );
+    if (sceneDepth < selectionDepth)
+    {
+        blend *= 0.4;
+    }
     vec3 outColor = mix(sceneColor, selectionColor, blend);
     
     FragColor = vec4(outColor, 1);

@@ -433,6 +433,13 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
         result.gpuFormat = GL_RED;
         result.hasDepthBuffer = false;
     }
+    else if (format == RENDER_TARGET_FORMAT_R8_WITH_DEPTH)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.cpuFormat = GL_R8;
+        result.gpuFormat = GL_RED;
+        result.hasDepthBuffer = true;
+    }
     else if (format == RENDER_TARGET_FORMAT_R16)
     {
         result.elementType = GL_UNSIGNED_SHORT;
@@ -472,10 +479,14 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     // create depth buffer
     if (descriptor.hasDepthBuffer)
     {
-        glGenRenderbuffers(1, &result->depthBufferId);
-        glBindRenderbuffer(GL_RENDERBUFFER, result->depthBufferId);
-        glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-        glBindRenderbuffer(GL_RENDERBUFFER, 0);
+        glGenTextures(1, &result->depthTextureId);
+        glBindTexture(GL_TEXTURE_2D, result->depthTextureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0,
+            GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
 
     // create framebuffer
@@ -485,8 +496,7 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
         GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result->textureId, 0);
     if (descriptor.hasDepthBuffer)
     {
-        glFramebufferRenderbuffer(
-            GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, result->depthBufferId);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, result->depthTextureId, 0);
     }
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
@@ -505,9 +515,12 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
         descriptor.gpuFormat, descriptor.elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glBindRenderbuffer(GL_RENDERBUFFER, target->depthBufferId);
-    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, width, height);
-    glBindRenderbuffer(GL_RENDERBUFFER, 0);
+    if (descriptor.hasDepthBuffer)
+    {
+        glBindTexture(GL_TEXTURE_2D, target->depthTextureId);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0,
+            GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    }
 }
 
 // effects

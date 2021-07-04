@@ -1236,7 +1236,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R8);
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R8_WITH_DEPTH);
         view->viewState = viewState;
     }
 
@@ -1315,7 +1315,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     RenderEffect *outlineEffect = engine->rendererCreateEffect(
         &memory->arena, editorAssets->shaderProgramOutline, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectTexture(outlineEffect, 0, sceneRenderTarget->textureId);
-    engine->rendererSetEffectTexture(outlineEffect, 1, selectionRenderTarget->textureId);
+    engine->rendererSetEffectTexture(outlineEffect, 1, sceneRenderTarget->depthTextureId);
+    engine->rendererSetEffectTexture(outlineEffect, 2, selectionRenderTarget->textureId);
+    engine->rendererSetEffectTexture(outlineEffect, 3, selectionRenderTarget->depthTextureId);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
