@@ -204,8 +204,8 @@ struct EditorState
     struct
     {
         Transaction *tx;
-        uint32 objectId;
-        ObjectTransform *transform;
+        uint32 objectIds[MAX_OBJECT_INSTANCES];
+        uint32 objectCount;
         glm::vec3 delta;
     } moveObjectTx;
 

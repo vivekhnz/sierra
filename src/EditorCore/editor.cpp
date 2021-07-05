@@ -1125,8 +1125,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 if (state->moveObjectTx.tx)
                 {
                     state->moveObjectTx.delta = glm::vec3(0);
-                    state->moveObjectTx.objectId = state->uiState.selectedObjectId;
-                    state->moveObjectTx.transform = &state->docState.objectTransforms[i];
+                    state->moveObjectTx.objectCount = 1;
+                    state->moveObjectTx.objectIds[0] = state->uiState.selectedObjectId;
                 }
                 break;
             }
@@ -1148,14 +1148,31 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
             state->moveObjectTx.delta += objectTranslation * 10.0f * deltaTime;
 
-            uint32 objectId = state->moveObjectTx.objectId;
-            ObjectTransform *transform = state->moveObjectTx.transform;
-            float x = transform->position.x + state->moveObjectTx.delta.x;
-            float z = transform->position.z + state->moveObjectTx.delta.z;
-
             clearTransaction(state->moveObjectTx.tx);
-            setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
-            setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
+
+            uint32 objectsFound = 0;
+            for (uint32 i = 0; i < state->docState.objectInstanceCount
+                 && objectsFound < state->moveObjectTx.objectCount;
+                 i++)
+            {
+                uint32 objectId = state->docState.objectIds[i];
+                for (uint32 j = 0; j < state->moveObjectTx.objectCount; j++)
+                {
+                    if (state->moveObjectTx.objectIds[j] == objectId)
+                    {
+                        ObjectTransform *transform = &state->docState.objectTransforms[i];
+
+                        float x = transform->position.x + state->moveObjectTx.delta.x;
+                        float z = transform->position.z + state->moveObjectTx.delta.z;
+                        setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
+                        setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
+
+                        objectsFound++;
+                        break;
+                    }
+                }
+            }
+            assert(objectsFound == state->moveObjectTx.objectCount);
         }
         else
         {
@@ -1296,17 +1313,31 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    if (state->uiState.selectedObjectId != 0)
+
+    uint32 selectedObjectCount = state->uiState.selectedObjectId == 0 ? 0 : 1;
+    if (selectedObjectCount > 0)
     {
-        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+        uint32 selectedObjectIds[1] = {state->uiState.selectedObjectId};
+        uint32 objectsFound = 0;
+        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount
+             && objectsFound < selectedObjectCount;
+             i++)
         {
-            if (state->previewDocState.objectIds[i] == state->uiState.selectedObjectId)
+            uint32 objectId = state->previewDocState.objectIds[i];
+            for (uint32 j = 0; j < selectedObjectCount; j++)
             {
-                engine->rendererPushMeshes(rq, editorAssets->meshRock,
-                    &sceneState->objectInstanceData[i], 1, editorAssets->shaderProgramRock);
-                break;
+                if (selectedObjectIds[j] == objectId)
+                {
+                    engine->rendererPushMeshes(rq, editorAssets->meshRock,
+                        &sceneState->objectInstanceData[i], 1,
+                        editorAssets->shaderProgramRock);
+
+                    objectsFound++;
+                    break;
+                }
             }
         }
+        assert(objectsFound == selectedObjectCount);
     }
     engine->rendererDrawToTarget(rq, selectionRenderTarget);
 
