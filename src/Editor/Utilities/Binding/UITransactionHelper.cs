@@ -6,7 +6,7 @@ using System.Windows.Input;
 
 namespace Terrain.Editor.Utilities.Binding
 {
-    internal static class UITransactionHelper
+    internal static class UiTransactionHelper
     {
         internal static void RegisterTransactionEventHandlers(
             DependencyObject targetObject, DependencyProperty targetProperty,

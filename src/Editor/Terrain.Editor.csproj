@@ -7,11 +7,14 @@
     <Platforms>AnyCPU;x64;x86</Platforms>
     <OutDir>$(SolutionDir)bin\$(Configuration)\$(Platform)\</OutDir>
     <!--
-      Intermediate output paths are specified in Directory.Build.props
-
-      see: https://github.com/dotnet/msbuild/issues/1603
+      Overriding intermediate output path breaks OmniSharp's IntelliSense for dependencies
+      pulled in by NuGet.
     -->
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Xaml.Behaviors.Wpf" Version="1.1.31" />
+  </ItemGroup>
 
 </Project>

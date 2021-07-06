@@ -1,5 +1,8 @@
 using System;
+using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Linq;
 using System.Windows;
 using Terrain.Editor.Core;
 
@@ -14,6 +17,8 @@ namespace Terrain.Editor.Utilities.Binding
         bool isTargetUpdatingFromBinding;
         bool isTargetUpdatingFromUi;
         object newValueFromUi;
+
+        ObservableCollection<object> backingObservableCollection;
 
         public UiBinding(
             DependencyObject targetObject, DependencyProperty targetProperty,
@@ -30,6 +35,18 @@ namespace Terrain.Editor.Utilities.Binding
                 var targetPropDescriptor = DependencyPropertyDescriptor.FromProperty(
                     targetProperty, targetProperty.OwnerType);
                 targetPropDescriptor.AddValueChanged(targetObject, OnTargetPropertyValueChanged);
+
+                if (typeof(INotifyCollectionChanged).IsAssignableFrom(targetProperty.PropertyType))
+                {
+                    backingObservableCollection = (ObservableCollection<object>)
+                        targetObject.GetValue(targetProperty);
+                    if (backingObservableCollection == null)
+                    {
+                        backingObservableCollection = new ObservableCollection<object>();
+                        SetTargetPropertyValue(backingObservableCollection);
+                    }
+                    backingObservableCollection.CollectionChanged += OnTargetPropertyCollectionChanged;
+                }
             }
         }
 
@@ -39,6 +56,13 @@ namespace Terrain.Editor.Utilities.Binding
 
             isTargetUpdatingFromUi = true;
             newValueFromUi = targetObject.GetValue(targetProperty);
+        }
+
+        private void OnTargetPropertyCollectionChanged(object sender, NotifyCollectionChangedEventArgs e)
+        {
+            if (isTargetUpdatingFromBinding) return;
+
+            isTargetUpdatingFromUi = true;
         }
 
         public void Update(ref EditorUiState state)
@@ -66,16 +90,12 @@ namespace Terrain.Editor.Utilities.Binding
                     case UiProperty.TerrainBrushStrength:
                         SetSourceProperty(ref state.TerrainBrushStrength);
                         break;
-                    case UiProperty.SelectedObjectId:
-                        if (newValueFromUi == null)
+                    case UiProperty.SelectedObjectIds:
+                        state.SelectedObjectCount = 0;
+                        foreach (uint objectId in backingObservableCollection.OfType<uint>())
                         {
-                            state.SelectedObjectCount = 0;
-                        }
-                        else
-                        {
-                            uint objectId = (uint)Convert.ChangeType(newValueFromUi, typeof(uint));
-                            state.SelectedObjectCount = 1;
-                            state.SelectedObjectIds[0] = objectId;
+                            state.SelectedObjectIds[(int)state.SelectedObjectCount] = objectId;
+                            state.SelectedObjectCount++;
                         }
                         break;
                     case UiProperty.SceneLightDirection:
@@ -89,15 +109,23 @@ namespace Terrain.Editor.Utilities.Binding
             else
             {
                 // update target
+                if (sourceProperty == UiProperty.SelectedObjectIds)
+                {
+                    isTargetUpdatingFromBinding = true;
+                    backingObservableCollection.Clear();
+                    for (int i = 0; i < state.SelectedObjectCount; i++)
+                    {
+                        backingObservableCollection.Add(state.SelectedObjectIds[i]);
+                    }
+                    isTargetUpdatingFromBinding = false;
+                }
+
                 object value = sourceProperty switch
                 {
                     UiProperty.TerrainBrushTool => state.TerrainBrushTool,
                     UiProperty.TerrainBrushRadius => state.TerrainBrushRadius,
                     UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
                     UiProperty.TerrainBrushStrength => state.TerrainBrushStrength,
-                    UiProperty.SelectedObjectId => state.SelectedObjectCount == 0
-                        ? 0U
-                        : state.SelectedObjectIds[0],
                     UiProperty.SceneLightDirection => state.SceneLightDirection,
                     _ => null
                 };
@@ -126,7 +154,7 @@ namespace Terrain.Editor.Utilities.Binding
         TerrainBrushRadius,
         TerrainBrushFalloff,
         TerrainBrushStrength,
-        SelectedObjectId,
+        SelectedObjectIds,
         SceneLightDirection,
     }
 }

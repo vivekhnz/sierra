@@ -7,7 +7,9 @@
     xmlns:editor="clr-namespace:Terrain.Editor"
     xmlns:controls="clr-namespace:Terrain.Editor.Controls"
     xmlns:core="clr-namespace:Terrain.Editor.Core"
-    xmlns:b="clr-namespace:Terrain.Editor.Utilities.Binding" mc:Ignorable="d"
+    xmlns:utils="clr-namespace:Terrain.Editor.Utilities"
+    xmlns:b="clr-namespace:Terrain.Editor.Utilities.Binding"
+    xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" mc:Ignorable="d"
     Title="Terrain Editor" Width="1280" Height="720">
   <Window.Resources>
     <CollectionViewSource x:Key="TextureFileAssets"
@@ -307,9 +309,13 @@
                   </Grid.RowDefinitions>
                   <ListBox
                       ItemsSource="{Binding Source={StaticResource EditorDocument}, Path=ObjectIds}"
-                      SelectedValue="{b:UiBinding SelectedObjectId}" Background="Transparent"
-                      Foreground="#CCC" FontSize="14" Grid.ColumnSpan="3" Margin="0 0 0 8"
+                      Background="Transparent" Foreground="#CCC" FontSize="14"
+                      SelectionMode="Extended" Grid.ColumnSpan="3" Margin="0 0 0 8"
                       Height="300">
+                    <behaviors:Interaction.Behaviors>
+                      <utils:ListBoxSelectedItemsBehavior
+                          SelectedItems="{b:UiBinding SelectedObjectIds}" />
+                    </behaviors:Interaction.Behaviors>
                     <ListBox.ItemContainerStyle>
                       <Style TargetType="ListBoxItem">
                         <Setter Property="Padding" Value="18 2" />

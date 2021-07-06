@@ -56,7 +56,7 @@ namespace Terrain.Editor.Utilities.Binding
                 var targetPropDescriptor = DependencyPropertyDescriptor.FromProperty(
                     targetProperty, targetProperty.OwnerType);
                 targetPropDescriptor.AddValueChanged(targetObject, OnTargetPropertyValueChanged);
-                UITransactionHelper.RegisterTransactionEventHandlers(
+                UiTransactionHelper.RegisterTransactionEventHandlers(
                     targetObject, targetProperty,
                     BeginTransaction, CommitTransaction, DiscardTransaction);
             }

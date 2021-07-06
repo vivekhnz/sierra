@@ -1,9 +1,0 @@
-<Project>
-
-  <PropertyGroup>
-    <IntermediateOutputPath>$(SolutionDir)obj\$(Configuration)\$(Platform)\Editor\</IntermediateOutputPath>
-    <BaseIntermediateOutputPath>$(IntermediateOutputPath)</BaseIntermediateOutputPath>
-    <MSBuildProjectExtensionsPath>$(IntermediateOutputPath)</MSBuildProjectExtensionsPath>
-  </PropertyGroup>
-
-</Project>

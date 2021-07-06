@@ -119,10 +119,12 @@ namespace Terrain.Editor.Core
     [StructLayout(LayoutKind.Sequential)]
     internal unsafe struct EditorUiState
     {
+        private const int MaxSelectedObjects = 32;
+
         private uint* _selectedObjectIds;
         public uint SelectedObjectCount;
         public Span<uint> SelectedObjectIds
-            => new Span<uint>(_selectedObjectIds, (int)SelectedObjectCount);
+            => new Span<uint>(_selectedObjectIds, MaxSelectedObjects);
 
         public TerrainBrushTool TerrainBrushTool;
         public float TerrainBrushRadius;
