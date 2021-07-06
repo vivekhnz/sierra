@@ -14,7 +14,9 @@ namespace Terrain.Editor.Utilities.Binding
             () =>
             {
                 ref EditorUiState state = ref EditorCore.GetUiState();
-                return state.SelectedObjectCount == 0 ? 0U : state.SelectedObjectIds[0];
+                return state.SelectedObjectIds
+                    .Slice(0, (int)state.SelectedObjectCount)
+                    .ToArray();
             });
 
         public ObjectBindingExtension(ObjectProperty sourceProperty)

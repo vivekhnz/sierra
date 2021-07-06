@@ -93,8 +93,8 @@ namespace Terrain.Editor.Utilities.Binding
         {
             if (isSettingTargetProperty) return;
 
-            uint objectId = Source.GetObjectId();
-            if (objectId == 0U) return;
+            var objectIds = Source.GetObjectIds();
+            if (objectIds.Count() == 0) return;
 
             object value = targetObject.GetValue(targetProperty);
             float convertedValue = (float)Convert.ChangeType(value, typeof(float));
@@ -102,13 +102,21 @@ namespace Terrain.Editor.Utilities.Binding
             if (activeTx.IsValid)
             {
                 EditorCore.ClearTransaction(activeTx);
-                EditorCore.SetObjectProperty(activeTx, objectId, sourceProperty, convertedValue);
+                foreach (uint objectId in objectIds)
+                {
+                    EditorCore.SetObjectProperty(
+                        activeTx, objectId, sourceProperty, convertedValue);
+                }
             }
             else
             {
                 if (EditorCore.BeginTransaction(out var tx))
                 {
-                    EditorCore.SetObjectProperty(tx, objectId, sourceProperty, convertedValue);
+                    foreach (uint objectId in objectIds)
+                    {
+                        EditorCore.SetObjectProperty(
+                            tx, objectId, sourceProperty, convertedValue);
+                    }
                     EditorCore.CommitTransaction(tx);
                 }
             }
@@ -116,15 +124,29 @@ namespace Terrain.Editor.Utilities.Binding
 
         public void UpdateFromSource()
         {
-            uint objectId = Source.GetObjectId();
-            if (objectId == 0U)
+            var objectIds = Source.GetObjectIds();
+            int objectCount = objectIds.Count();
+            if (objectCount == 0)
             {
                 SetTargetPropertyValue(targetProperty.DefaultMetadata.DefaultValue);
                 return;
             }
 
-            float value = EditorCore.GetObjectProperty(objectId, sourceProperty);
-            object convertedValue = Convert.ChangeType(value, targetProperty.PropertyType);
+            uint firstObjectId = objectIds.First();
+            float firstObjectValue = EditorCore.GetObjectProperty(firstObjectId, sourceProperty);
+
+            foreach (uint objectId in objectIds.Skip(1))
+            {
+                float value = EditorCore.GetObjectProperty(objectId, sourceProperty);
+                if (value != firstObjectValue)
+                {
+                    SetTargetPropertyValue(targetProperty.DefaultMetadata.DefaultValue);
+                    return;
+                }
+            }
+
+            object convertedValue = Convert.ChangeType(
+                firstObjectValue, targetProperty.PropertyType);
             SetTargetPropertyValue(convertedValue);
         }
 
