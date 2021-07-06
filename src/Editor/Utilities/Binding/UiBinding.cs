@@ -67,7 +67,16 @@ namespace Terrain.Editor.Utilities.Binding
                         SetSourceProperty(ref state.TerrainBrushStrength);
                         break;
                     case UiProperty.SelectedObjectId:
-                        SetSourceProperty(ref state.SelectedObjectId);
+                        if (newValueFromUi == null)
+                        {
+                            state.SelectedObjectCount = 0;
+                        }
+                        else
+                        {
+                            uint objectId = (uint)Convert.ChangeType(newValueFromUi, typeof(uint));
+                            state.SelectedObjectCount = 1;
+                            state.SelectedObjectIds[0] = objectId;
+                        }
                         break;
                     case UiProperty.SceneLightDirection:
                         SetSourceProperty(ref state.SceneLightDirection);
@@ -86,7 +95,9 @@ namespace Terrain.Editor.Utilities.Binding
                     UiProperty.TerrainBrushRadius => state.TerrainBrushRadius,
                     UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
                     UiProperty.TerrainBrushStrength => state.TerrainBrushStrength,
-                    UiProperty.SelectedObjectId => state.SelectedObjectId,
+                    UiProperty.SelectedObjectId => state.SelectedObjectCount == 0
+                        ? 0U
+                        : state.SelectedObjectIds[0],
                     UiProperty.SceneLightDirection => state.SceneLightDirection,
                     _ => null
                 };

@@ -45,7 +45,8 @@ struct TerrainMaterialProperties
 
 struct EditorUiState
 {
-    uint32 selectedObjectId;
+    uint32 *selectedObjectIds;
+    uint32 selectedObjectCount;
 
     TerrainBrushTool terrainBrushTool;
     float terrainBrushRadius;

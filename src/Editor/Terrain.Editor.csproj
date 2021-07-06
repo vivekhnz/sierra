@@ -11,6 +11,7 @@
 
       see: https://github.com/dotnet/msbuild/issues/1603
     -->
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
 
 </Project>

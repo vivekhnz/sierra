@@ -11,7 +11,11 @@ namespace Terrain.Editor.Utilities.Binding
         private ObjectProperty sourceProperty;
 
         private static ObjectReference selectedObjectRef = new ObjectReference(
-            () => EditorCore.GetUiState().SelectedObjectId);
+            () =>
+            {
+                ref EditorUiState state = ref EditorCore.GetUiState();
+                return state.SelectedObjectCount == 0 ? 0U : state.SelectedObjectIds[0];
+            });
 
         public ObjectBindingExtension(ObjectProperty sourceProperty)
         {

@@ -184,7 +184,8 @@ void initializeEditor(EditorMemory *memory)
     state->renderCtx = engine->rendererInitialize(&memory->arena, quadShaderProgram);
     RenderContext *rctx = state->renderCtx;
 
-    state->uiState.selectedObjectId = 0;
+    state->uiState.selectedObjectCount = 0;
+    state->uiState.selectedObjectIds = pushArray(&memory->arena, uint32, MAX_OBJECT_INSTANCES);
     state->uiState.terrainBrushRadius = 128.0f;
     state->uiState.terrainBrushFalloff = 0.75f;
     state->uiState.terrainBrushStrength = 0.12f;
@@ -1115,21 +1116,34 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     uint64 moveBtnsCurrentlyPressed = input->pressedButtons & moveBtnsMask;
     uint64 moveBtnsPreviouslyPressed = input->prevPressedButtons & moveBtnsMask;
     uint64 moveBtnsNewlyPressed = moveBtnsCurrentlyPressed & ~moveBtnsPreviouslyPressed;
-    if (!state->moveObjectTx.tx && moveBtnsNewlyPressed && state->uiState.selectedObjectId)
+    if (!state->moveObjectTx.tx && moveBtnsNewlyPressed
+        && state->uiState.selectedObjectCount > 0)
     {
-        for (uint32 i = 0; i < state->docState.objectInstanceCount; i++)
+        state->moveObjectTx.tx = beginTransaction(&state->transactions);
+        if (state->moveObjectTx.tx)
         {
-            if (state->docState.objectIds[i] == state->uiState.selectedObjectId)
+            state->moveObjectTx.delta = glm::vec3(0);
+            state->moveObjectTx.objectCount = 0;
+
+            uint32 objectsFound = 0;
+            for (uint32 i = 0; i < state->docState.objectInstanceCount
+                 && objectsFound < state->uiState.selectedObjectCount;
+                 i++)
             {
-                state->moveObjectTx.tx = beginTransaction(&state->transactions);
-                if (state->moveObjectTx.tx)
+                uint32 objectId = state->docState.objectIds[i];
+                for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
                 {
-                    state->moveObjectTx.delta = glm::vec3(0);
-                    state->moveObjectTx.objectCount = 1;
-                    state->moveObjectTx.objectIds[0] = state->uiState.selectedObjectId;
+                    if (state->uiState.selectedObjectIds[j] == objectId)
+                    {
+                        state->moveObjectTx.objectIds[state->moveObjectTx.objectCount++] =
+                            objectId;
+
+                        objectsFound++;
+                        break;
+                    }
                 }
-                break;
             }
+            assert(objectsFound == state->uiState.selectedObjectCount);
         }
     }
     if (state->moveObjectTx.tx)
@@ -1314,19 +1328,17 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
 
-    uint32 selectedObjectCount = state->uiState.selectedObjectId == 0 ? 0 : 1;
-    if (selectedObjectCount > 0)
+    if (state->uiState.selectedObjectCount > 0)
     {
-        uint32 selectedObjectIds[1] = {state->uiState.selectedObjectId};
         uint32 objectsFound = 0;
         for (uint32 i = 0; i < state->previewDocState.objectInstanceCount
-             && objectsFound < selectedObjectCount;
+             && objectsFound < state->uiState.selectedObjectCount;
              i++)
         {
             uint32 objectId = state->previewDocState.objectIds[i];
-            for (uint32 j = 0; j < selectedObjectCount; j++)
+            for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
             {
-                if (selectedObjectIds[j] == objectId)
+                if (state->uiState.selectedObjectIds[j] == objectId)
                 {
                     engine->rendererPushMeshes(rq, editorAssets->meshRock,
                         &sceneState->objectInstanceData[i], 1,
@@ -1337,7 +1349,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 }
             }
         }
-        assert(objectsFound == selectedObjectCount);
+        assert(objectsFound == state->uiState.selectedObjectCount);
     }
     engine->rendererDrawToTarget(rq, selectionRenderTarget);
 

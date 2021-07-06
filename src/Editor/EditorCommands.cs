@@ -15,13 +15,16 @@ namespace Terrain.Editor
         public readonly static ActionCommand DeleteSelectedObject = new ActionCommand(() =>
         {
             ref EditorUiState uiState = ref EditorCore.GetUiState();
-            EditorCore.DeleteObject(uiState.SelectedObjectId);
+            if (uiState.SelectedObjectCount > 0)
+            {
+                EditorCore.DeleteObject(uiState.SelectedObjectIds[0]);
+            }
         });
 
         internal static void Update(EditorDocumentViewModel doc, ref EditorUiState uiState)
         {
             AddObject.UpdateCanExecute(doc.ObjectIds.Count < maxObjectCount);
-            DeleteSelectedObject.UpdateCanExecute(uiState.SelectedObjectId != 0U);
+            DeleteSelectedObject.UpdateCanExecute(uiState.SelectedObjectCount > 0);
         }
     }
 }

@@ -72,7 +72,8 @@ namespace Terrain.Editor
                 {
                     ref readonly AddObjectCommand cmd = ref entry.As<AddObjectCommand>();
                     ref EditorUiState state = ref EditorCore.GetUiState();
-                    state.SelectedObjectId = cmd.ObjectId;
+                    state.SelectedObjectCount = 1;
+                    state.SelectedObjectIds[0] = cmd.ObjectId;
                 }
             }
         }
