@@ -10,14 +10,25 @@ namespace Terrain.Editor
 
         public readonly static ActionCommand AddObject = new ActionCommand(() =>
         {
-            EditorCore.AddObject();
+            if (EditorCore.BeginTransaction(out var tx))
+            {
+                EditorCore.AddObject(tx);
+                EditorCore.CommitTransaction(tx);
+            }
         });
         public readonly static ActionCommand DeleteSelectedObject = new ActionCommand(() =>
         {
             ref EditorUiState uiState = ref EditorCore.GetUiState();
             if (uiState.SelectedObjectCount > 0)
             {
-                EditorCore.DeleteObject(uiState.SelectedObjectIds[0]);
+                if (EditorCore.BeginTransaction(out var tx))
+                {
+                    for (int i = 0; i < uiState.SelectedObjectCount; i++)
+                    {
+                        EditorCore.DeleteObject(tx, uiState.SelectedObjectIds[i]);
+                    }
+                    EditorCore.CommitTransaction(tx);
+                }
             }
         });
 

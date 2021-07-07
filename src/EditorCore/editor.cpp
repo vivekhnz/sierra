@@ -833,6 +833,27 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         RenderMeshInstance *instance = &sceneState->objectInstanceData[i];
         instance->transform = matrix;
     }
+
+    // remove any objects that no longer exists from the selection state
+    for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
+    {
+        uint32 objectId = state->uiState.selectedObjectIds[i];
+        bool exists = false;
+        for (uint32 j = 0; j < docState->objectInstanceCount; j++)
+        {
+            if (docState->objectIds[j] == objectId)
+            {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists)
+        {
+            state->uiState.selectedObjectIds[i] =
+                state->uiState.selectedObjectIds[state->uiState.selectedObjectCount--];
+            i--;
+        }
+    }
 }
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
@@ -1480,32 +1501,6 @@ API_EXPORT EDITOR_SET_MATERIAL_PROPERTIES(editorSetMaterialProperties)
     }
 }
 
-API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
-{
-    EditorState *state = (EditorState *)memory->arena.baseAddress;
-
-    Transaction *tx = beginTransaction(&state->transactions);
-    if (tx)
-    {
-        AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
-        cmd->objectId = state->sceneState.nextObjectId++;
-        commitTransaction(tx);
-    }
-}
-
-API_EXPORT EDITOR_DELETE_OBJECT(editorDeleteObject)
-{
-    EditorState *state = (EditorState *)memory->arena.baseAddress;
-
-    Transaction *tx = beginTransaction(&state->transactions);
-    if (tx)
-    {
-        DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
-        cmd->objectId = objectId;
-        commitTransaction(tx);
-    }
-}
-
 API_EXPORT EDITOR_GET_OBJECT_PROPERTY(editorGetObjectProperty)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
@@ -1544,6 +1539,21 @@ API_EXPORT EDITOR_DISCARD_TRANSACTION(editorDiscardTransaction)
 {
     assert(tx);
     discardTransaction(tx);
+}
+
+API_EXPORT EDITOR_ADD_OBJECT(editorAddObject)
+{
+    assert(tx);
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    AddObjectCommand *cmd = pushCommand(tx, AddObjectCommand);
+    cmd->objectId = state->sceneState.nextObjectId++;
+}
+
+API_EXPORT EDITOR_DELETE_OBJECT(editorDeleteObject)
+{
+    assert(tx);
+    DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
+    cmd->objectId = objectId;
 }
 
 API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)

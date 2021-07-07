@@ -280,14 +280,14 @@ namespace Terrain.Editor.Core
             TerrainMaterialTextureType textureType, IntPtr assetHandle);
         delegate void EditorSetMaterialProperties(ref EditorMemory memory, uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd);
-        delegate void EditorAddObject(ref EditorMemory memory);
-        delegate void EditorDeleteObject(ref EditorMemory memory, uint objectId);
         delegate float EditorGetObjectProperty(ref EditorMemory memory, uint objectId,
             ObjectProperty property);
         delegate IntPtr EditorBeginTransaction(ref EditorMemory memory);
         delegate void EditorClearTransaction(IntPtr tx);
         delegate void EditorCommitTransaction(IntPtr tx);
         delegate void EditorDiscardTransaction(IntPtr tx);
+        delegate void EditorAddObject(ref EditorMemory memory, IntPtr tx);
+        delegate void EditorDeleteObject(IntPtr tx, uint objectId);
         delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
 
@@ -301,13 +301,13 @@ namespace Terrain.Editor.Core
         private static EditorSwapMaterial editorSwapMaterial;
         private static EditorSetMaterialTexture editorSetMaterialTexture;
         private static EditorSetMaterialProperties editorSetMaterialProperties;
-        private static EditorAddObject editorAddObject;
-        private static EditorDeleteObject editorDeleteObject;
         private static EditorGetObjectProperty editorGetObjectProperty;
         private static EditorBeginTransaction editorBeginTransaction;
         private static EditorClearTransaction editorClearTransaction;
         private static EditorCommitTransaction editorCommitTransaction;
         private static EditorDiscardTransaction editorDiscardTransaction;
+        private static EditorAddObject editorAddObject;
+        private static EditorDeleteObject editorDeleteObject;
         private static EditorSetObjectProperty editorSetObjectProperty;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -383,13 +383,13 @@ namespace Terrain.Editor.Core
             editorSwapMaterial = GetApi<EditorSwapMaterial>("editorSwapMaterial");
             editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
             editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
-            editorAddObject = GetApi<EditorAddObject>("editorAddObject");
-            editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
             editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
             editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
             editorClearTransaction = GetApi<EditorClearTransaction>("editorClearTransaction");
             editorCommitTransaction = GetApi<EditorCommitTransaction>("editorCommitTransaction");
             editorDiscardTransaction = GetApi<EditorDiscardTransaction>("editorDiscardTransaction");
+            editorAddObject = GetApi<EditorAddObject>("editorAddObject");
+            editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
 
             return moduleHandle != IntPtr.Zero;
@@ -453,12 +453,6 @@ namespace Terrain.Editor.Core
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
 
-        internal static void AddObject()
-            => editorAddObject?.Invoke(ref memory);
-
-        internal static void DeleteObject(uint objectId)
-            => editorDeleteObject?.Invoke(ref memory, objectId);
-
         internal static float GetObjectProperty(uint objectId, ObjectProperty property)
             => editorGetObjectProperty?.Invoke(ref memory, objectId, property) ?? 0;
 
@@ -476,6 +470,12 @@ namespace Terrain.Editor.Core
 
         internal static void DiscardTransaction(Transaction tx)
             => editorDiscardTransaction?.Invoke(tx.Pointer);
+
+        internal static void AddObject(Transaction tx)
+            => editorAddObject?.Invoke(ref memory, tx.Pointer);
+
+        internal static void DeleteObject(Transaction tx, uint objectId)
+            => editorDeleteObject?.Invoke(tx.Pointer, objectId);
 
         internal static void SetObjectProperty(
             Transaction tx, uint objectId, ObjectProperty property, float value)

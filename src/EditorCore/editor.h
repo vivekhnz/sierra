@@ -361,12 +361,6 @@ typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
         float slopeEnd, float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
-#define EDITOR_ADD_OBJECT(name) void name(EditorMemory *memory)
-typedef EDITOR_ADD_OBJECT(EditorAddObject);
-
-#define EDITOR_DELETE_OBJECT(name) void name(EditorMemory *memory, uint32 objectId)
-typedef EDITOR_DELETE_OBJECT(EditorDeleteObject);
-
 #define EDITOR_GET_OBJECT_PROPERTY(name)                                                      \
     float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
 typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);
@@ -382,6 +376,12 @@ typedef EDITOR_COMMIT_TRANSACTION(EditorCommitTransaction);
 
 #define EDITOR_DISCARD_TRANSACTION(name) void name(Transaction *tx)
 typedef EDITOR_DISCARD_TRANSACTION(EditorDiscardTransaction);
+
+#define EDITOR_ADD_OBJECT(name) void name(EditorMemory *memory, Transaction *tx)
+typedef EDITOR_ADD_OBJECT(EditorAddObject);
+
+#define EDITOR_DELETE_OBJECT(name) void name(Transaction *tx, uint32 objectId)
+typedef EDITOR_DELETE_OBJECT(EditorDeleteObject);
 
 #define EDITOR_SET_OBJECT_PROPERTY(name)                                                      \
     void name(Transaction *tx, uint32 objectId, ObjectProperty property, float value)
