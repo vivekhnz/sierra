@@ -206,9 +206,7 @@ enum GameInputButtons : uint64
     BUTTON(KEY_LEFT_SHIFT, 58),
     BUTTON(KEY_LEFT_CONTROL, 59),
     BUTTON(KEY_LEFT_ALT, 60),
-    BUTTON(KEY_RIGHT_SHIFT, 61),
-    BUTTON(KEY_RIGHT_CONTROL, 62),
-    BUTTON(KEY_RIGHT_ALT, 63)
+    BUTTON(KEY_DELETE, 61)
 };
 
 #define GAME_UPDATE_AND_RENDER(name)                                                          \

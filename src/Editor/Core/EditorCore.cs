@@ -93,9 +93,8 @@ namespace Terrain.Editor.Core
         KeyF12 = 1L << 57,
         KeyLeftShift = 1L << 58,
         KeyLeftControl = 1L << 59,
-        KeyRightShift = 1L << 60,
-        KeyRightControl = 1L << 61,
-        KeyAlt = 1L << 62
+        KeyAlt = 1L << 60,
+        KeyDelete = 1L << 61
     }
 
     [StructLayout(LayoutKind.Sequential)]

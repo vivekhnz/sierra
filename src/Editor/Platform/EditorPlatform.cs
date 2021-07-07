@@ -313,9 +313,8 @@ namespace Terrain.Editor.Platform
             pressedButtons |= Keyboard.IsKeyDown(Key.F12) ? EditorInputButtons.KeyF12 : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftShift) ? EditorInputButtons.KeyLeftShift : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftCtrl) ? EditorInputButtons.KeyLeftControl : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.RightShift) ? EditorInputButtons.KeyRightShift : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.RightCtrl) ? EditorInputButtons.KeyRightControl : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
+            pressedButtons |= Keyboard.IsKeyDown(Key.Delete) ? EditorInputButtons.KeyDelete : 0;
 
             // get mouse cursor position
             Win32.GetCursorPos(out var mousePosScreenSpaceWin32Point);

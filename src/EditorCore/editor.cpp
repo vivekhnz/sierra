@@ -1216,6 +1216,22 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         }
     }
 
+    // delete selected objects with DEL key
+    if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE)
+        && state->uiState.selectedObjectCount > 0)
+    {
+        Transaction *tx = beginTransaction(&state->transactions);
+        if (tx)
+        {
+            for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
+            {
+                DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
+                cmd->objectId = state->uiState.selectedObjectIds[i];
+            }
+            commitTransaction(tx);
+        }
+    }
+
     // update brush highlight
     sceneState->worldState.brushPos = newBrushPos;
     sceneState->worldState.brushCursorVisibleView =

@@ -309,9 +309,8 @@ enum EditorInputButtons : uint64
     BUTTON(KEY_F12, 57),
     BUTTON(KEY_LEFT_SHIFT, 58),
     BUTTON(KEY_LEFT_CONTROL, 59),
-    BUTTON(KEY_RIGHT_SHIFT, 60),
-    BUTTON(KEY_RIGHT_CONTROL, 61),
-    BUTTON(KEY_ALT, 62)
+    BUTTON(KEY_ALT, 60),
+    BUTTON(KEY_DELETE, 61)
 };
 
 struct EditorViewContext
