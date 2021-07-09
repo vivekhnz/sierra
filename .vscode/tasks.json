@@ -10,9 +10,9 @@
 			},
 			"presentation": {
 				"echo": true,
-				"reveal": "silent",
+				"reveal": "never",
 				"focus": false,
-				"panel": "shared",
+				"panel": "dedicated",
 				"showReuseMessage": false,
 				"clear": true
 			},
