@@ -1,9 +1,12 @@
+
+$ProgressPreference = 'SilentlyContinue'
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $Configuration = 'Debug'
 $Platform = 'x64'
 $BaseIntermediateOutputPath = "obj\$Configuration\$Platform"
 $OutputPath = "bin\$Configuration\$Platform"
+$Random = [System.Random]::new();
 
 $CommonCompilerFlags = @(
     '/nologo',
@@ -81,7 +84,7 @@ function Invoke-Msvc {
     $linkerFlags = @();
     if ($RandomizePdbFilename.IsPresent) {
         Remove-Item "$OutputPath\$OutputName.*.pdb" -ErrorAction SilentlyContinue
-        $linkerFlags += "/PDB:$OutputPath\$OutputName.$(Get-Random).pdb"
+        $linkerFlags += "/PDB:$OutputPath\$OutputName.$($Random.Next()).pdb"
     }
     else {
         $linkerFlags += "/PDB:$OutputPath\$OutputName.pdb"
@@ -90,11 +93,11 @@ function Invoke-Msvc {
         $linkerFlags += $ImportLibs
     }
     if ($BuildDll.IsPresent) {
-        $linkerFlags +=  "/out:$OutputPath\$OutputName.dll"
+        $linkerFlags += "/out:$OutputPath\$OutputName.dll"
         $linkerFlags += '/DLL'
     }
     else {
-        $linkerFlags +=  "/out:$OutputPath\$OutputName.exe"
+        $linkerFlags += "/out:$OutputPath\$OutputName.exe"
     }
     if ($NoImportLib.IsPresent) {
         $linkerFlags += '/NOIMPLIB'
@@ -102,15 +105,15 @@ function Invoke-Msvc {
 
     $args = $CommonCompilerFlags + $compilerFlags + '/link' + $CommonLinkerFlags + $linkerFlags
     $proc = Start-Process cl -ArgumentList $args -NoNewWindow -PassThru
+    $proc.Handle | Out-Null
 
     return @{
         OutputName = $OutputName;
-        Process = $proc;
+        Process    = $proc;
     }
 }
 
-function Invoke-Dotnet
-{
+function Invoke-Dotnet {
     param
     (
         [Parameter(Mandatory = $true)] [string] $SolutionFile,
@@ -126,6 +129,7 @@ function Invoke-Dotnet
         '-p:CopyRetryCount=0'
     )
     $proc = Start-Process dotnet -ArgumentList $args -NoNewWindow -PassThru
+    $proc.Handle | Out-Null
     
     return @{
         OutputName = $OutputName;
@@ -144,7 +148,7 @@ if (!(Test-Path 'deps\nuget\glfw*')) {
 }
 
 $LockFilePath = "$OutputPath\build.lock"
-"build" | Out-File $LockFilePath
+[System.IO.File]::WriteAllText($LockFilePath, 'build');
 
 $builds = @()
 $builds += Invoke-Msvc `
@@ -207,7 +211,6 @@ if (!(Test-Path $MirrorPath)) {
 Remove-Item $LockFilePath -Force
 
 $sw.Stop();
-
 if ($builds.Process.ExitCode | Where-Object { $_ -ne 0 }) {
     Write-Host "Build failed" -ForegroundColor Red
     $tick = [char]::ConvertFromUtf32([convert]::ToInt32('2705', 16))
