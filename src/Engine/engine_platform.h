@@ -18,6 +18,7 @@ typedef uint64_t uint64;
 #define API_EXPORT extern "C" __declspec(dllexport)
 
 #if _DEBUG
+#undef assert
 #define assert(expr)                                                                          \
     if (!(expr))                                                                              \
         *(int *)0 = 0;
