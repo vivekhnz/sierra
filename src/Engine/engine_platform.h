@@ -26,6 +26,9 @@ typedef uint64_t uint64;
 #define assert(expr)
 #endif
 
+#define arrayCount(array) (sizeof(array) / sizeof(array[0]))
+#define offsetOf(type, member) (uint8 *)&((type *)0)->member
+
 struct MemoryArena
 {
     void *baseAddress;

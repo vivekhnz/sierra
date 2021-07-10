@@ -139,6 +139,7 @@ struct EditorAssets
     AssetHandle shaderProgramBrushBlendAddSub;
     AssetHandle shaderProgramBrushBlendFlatten;
     AssetHandle shaderProgramBrushBlendSmooth;
+    AssetHandle shaderProgramMeshId;
     AssetHandle shaderProgramRock;
     AssetHandle shaderProgramOutline;
 

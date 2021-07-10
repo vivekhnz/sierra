@@ -167,6 +167,7 @@ struct RenderTargetDescriptor
     uint32 elementType;
     uint32 cpuFormat;
     uint32 gpuFormat;
+    bool isInteger;
     bool hasDepthBuffer;
 };
 
@@ -424,20 +425,7 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
         result.elementType = GL_UNSIGNED_BYTE;
         result.cpuFormat = GL_RGB;
         result.gpuFormat = GL_RGB;
-        result.hasDepthBuffer = true;
-    }
-    else if (format == RENDER_TARGET_FORMAT_R8)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.cpuFormat = GL_R8;
-        result.gpuFormat = GL_RED;
-        result.hasDepthBuffer = false;
-    }
-    else if (format == RENDER_TARGET_FORMAT_R8_WITH_DEPTH)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.cpuFormat = GL_R8;
-        result.gpuFormat = GL_RED;
+        result.isInteger = false;
         result.hasDepthBuffer = true;
     }
     else if (format == RENDER_TARGET_FORMAT_R16)
@@ -445,7 +433,16 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
         result.elementType = GL_UNSIGNED_SHORT;
         result.cpuFormat = GL_R16;
         result.gpuFormat = GL_RED;
+        result.isInteger = false;
         result.hasDepthBuffer = false;
+    }
+    else if (format == RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH)
+    {
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.cpuFormat = GL_R16UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+        result.hasDepthBuffer = true;
     }
     else
     {
@@ -470,11 +467,16 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     glBindTexture(GL_TEXTURE_2D, result->textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+        descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
+        descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
     glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0,
         descriptor.gpuFormat, descriptor.elementType, 0);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (!descriptor.isInteger)
+    {
+        glGenerateMipmap(GL_TEXTURE_2D);
+    }
 
     // create depth buffer
     if (descriptor.hasDepthBuffer)
@@ -498,6 +500,7 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     {
         glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, result->depthTextureId, 0);
     }
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
     return result;
@@ -932,23 +935,28 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glVertexAttribPointer(
                     1, 3, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
 
-                uint32 instanceBufferStride = sizeof(glm::mat4);
+                uint32 instanceBufferStride = sizeof(RenderMeshInstance);
                 glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
                 glEnableVertexAttribArray(2);
                 glEnableVertexAttribArray(3);
                 glEnableVertexAttribArray(4);
                 glEnableVertexAttribArray(5);
-                glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
+                glEnableVertexAttribArray(6);
+                glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, instanceBufferStride,
+                    offsetOf(RenderMeshInstance, id));
                 glVertexAttribDivisor(2, 1);
-                glVertexAttribPointer(
-                    3, 4, GL_FLOAT, false, instanceBufferStride, (void *)(4 * sizeof(float)));
+                glVertexAttribPointer(3, 4, GL_FLOAT, false, instanceBufferStride,
+                    offsetOf(RenderMeshInstance, transform));
                 glVertexAttribDivisor(3, 1);
-                glVertexAttribPointer(
-                    4, 4, GL_FLOAT, false, instanceBufferStride, (void *)(8 * sizeof(float)));
+                glVertexAttribPointer(4, 4, GL_FLOAT, false, instanceBufferStride,
+                    offsetOf(RenderMeshInstance, transform) + 16);
                 glVertexAttribDivisor(4, 1);
-                glVertexAttribPointer(
-                    5, 4, GL_FLOAT, false, instanceBufferStride, (void *)(12 * sizeof(float)));
+                glVertexAttribPointer(5, 4, GL_FLOAT, false, instanceBufferStride,
+                    offsetOf(RenderMeshInstance, transform) + 32);
                 glVertexAttribDivisor(5, 1);
+                glVertexAttribPointer(6, 4, GL_FLOAT, false, instanceBufferStride,
+                    offsetOf(RenderMeshInstance, transform) + 48);
+                glVertexAttribDivisor(6, 1);
 
                 glDrawElementsInstancedBaseInstance(GL_TRIANGLES, mesh->elementCount,
                     GL_UNSIGNED_INT, 0, cmd->instanceCount, cmd->instanceOffset);
@@ -959,6 +967,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glDisableVertexAttribArray(3);
                 glDisableVertexAttribArray(4);
                 glDisableVertexAttribArray(5);
+                glDisableVertexAttribArray(6);
             }
             else
             {

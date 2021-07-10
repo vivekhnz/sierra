@@ -3,7 +3,7 @@ layout(location = 0) in vec2 uv;
 
 layout(binding = 0) uniform sampler2D sceneTexture;
 layout(binding = 1) uniform sampler2D sceneDepthTexture;
-layout(binding = 2) uniform sampler2D selectionTexture;
+layout(binding = 2) uniform usampler2D selectionTexture;
 layout(binding = 3) uniform sampler2D selectionDepthTexture;
 
 out vec4 FragColor;
@@ -16,10 +16,10 @@ void main()
     float sceneDepth = texture(sceneDepthTexture, uv).r;
     float selectionDepth = texture(selectionDepthTexture, uv).r;
     
-    vec4 gather0 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(-2, 2)));
-    vec4 gather1 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(0, 2)));
-    vec4 gather2 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(-2, 0)));
-    vec4 gather3 = ceil(textureGatherOffset(selectionTexture, uv, ivec2(0, 0)));
+    vec4 gather0 = textureGatherOffset(selectionTexture, uv, ivec2(-2, 2));
+    vec4 gather1 = textureGatherOffset(selectionTexture, uv, ivec2(0, 2));
+    vec4 gather2 = textureGatherOffset(selectionTexture, uv, ivec2(-2, 0));
+    vec4 gather3 = textureGatherOffset(selectionTexture, uv, ivec2(0, 0));
 
     gather2.xw = gather1.zw;
     vec4 centerSelVal = vec4(gather3.x);

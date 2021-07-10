@@ -4,8 +4,6 @@
 
 #include <glm/gtx/quaternion.hpp>
 
-#define arrayCount(array) (sizeof(array) / sizeof(array[0]))
-
 enum BrushVisualizationMode
 {
     BRUSH_VIS_MODE_NONE = 0,
@@ -103,8 +101,10 @@ void initializeEditor(EditorMemory *memory)
         assets, "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(
         assets, "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderRockVertex =
-        engine->assetsRegisterShader(assets, "rock_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderMeshVertex =
+        engine->assetsRegisterShader(assets, "mesh_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderMeshIdFragment = engine->assetsRegisterShader(
+        assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderRockFragment =
         engine->assetsRegisterShader(assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
     AssetHandle shaderOutlineFragment = engine->assetsRegisterShader(
@@ -146,7 +146,11 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->shaderProgramBrushBlendSmooth = engine->assetsRegisterShaderProgram(assets,
         brushBlendSmoothShaderAssetHandles, arrayCount(brushBlendSmoothShaderAssetHandles));
 
-    AssetHandle rockShaderAssetHandles[] = {shaderRockVertex, shaderRockFragment};
+    AssetHandle meshIdShaderAssetHandles[] = {shaderMeshVertex, shaderMeshIdFragment};
+    editorAssets->shaderProgramMeshId = engine->assetsRegisterShaderProgram(
+        assets, meshIdShaderAssetHandles, arrayCount(meshIdShaderAssetHandles));
+
+    AssetHandle rockShaderAssetHandles[] = {shaderMeshVertex, shaderRockFragment};
     editorAssets->shaderProgramRock = engine->assetsRegisterShaderProgram(
         assets, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
 
@@ -829,8 +833,14 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         glm::quat rockRotQuat = glm::quat(rockRotEuler);
         glm::mat4 rockRotMat = glm::toMat4(rockRotQuat);
         matrix *= rockRotMat;
+        uint32 objectId = docState->objectIds[i];
 
         RenderMeshInstance *instance = &sceneState->objectInstanceData[i];
+
+        // render ID is a 16-bit ID used for distinguishing between nearby objects
+        // take the 15 least significant bits of the 32-bit object ID
+        // set the most significant bit to 1 to signify that this is a mesh instance
+        instance->id = (1 << 15) | (objectId & 0x00007FFF);
         instance->transform = matrix;
     }
 
@@ -1302,7 +1312,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R8_WITH_DEPTH);
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH);
         view->viewState = viewState;
     }
 
@@ -1379,7 +1389,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 {
                     engine->rendererPushMeshes(rq, editorAssets->meshRock,
                         &sceneState->objectInstanceData[i], 1,
-                        editorAssets->shaderProgramRock);
+                        editorAssets->shaderProgramMeshId);
 
                     objectsFound++;
                     break;

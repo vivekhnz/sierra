@@ -1,9 +1,11 @@
 #version 430 core
 layout(location = 0) in vec3 in_pos;
 layout(location = 1) in vec3 in_normal;
-layout(location = 2) in mat4 in_instance_transform;
+layout(location = 2) in uint in_instance_id;
+layout(location = 3) in mat4 in_instance_transform;
 
-layout(location = 0) out vec3 out_normal;
+layout(location = 0) out uint out_instance_id;
+layout(location = 1) out vec3 out_normal;
 
 layout (std140, binding = 0) uniform Camera
 {
@@ -13,6 +15,7 @@ layout (std140, binding = 0) uniform Camera
 void main()
 {
     gl_Position = camera_transform * in_instance_transform * vec4(in_pos, 1);
+    out_instance_id = in_instance_id;
     mat4 inverseTransposeTransform = transpose(inverse(in_instance_transform));
     out_normal = normalize((inverseTransposeTransform * vec4(in_normal, 0)).xyz);
 }

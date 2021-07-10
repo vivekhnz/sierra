@@ -28,9 +28,8 @@ struct RenderMesh
 enum RenderTargetFormat
 {
     RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
-    RENDER_TARGET_FORMAT_R8,
-    RENDER_TARGET_FORMAT_R8_WITH_DEPTH,
-    RENDER_TARGET_FORMAT_R16
+    RENDER_TARGET_FORMAT_R16,
+    RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH
 };
 
 struct RenderTarget
@@ -59,6 +58,7 @@ struct RenderQuad
 };
 struct RenderMeshInstance
 {
+    uint16 id;
     glm::mat4 transform;
 };
 

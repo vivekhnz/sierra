@@ -1,6 +1,6 @@
 #version 430 core
 
-layout(location = 0) in vec3 normal;
+layout(location = 1) in vec3 in_normal;
 
 layout (std140, binding = 1) uniform Lighting
 {
@@ -17,7 +17,7 @@ out vec4 FragColor;
 void main()
 {
     float ambientLight = 0.15f;
-    float nDotL = dot(normal, lighting_lightDir.xyz);
+    float nDotL = dot(in_normal, lighting_lightDir.xyz);
     float lightingAmplitude = lighting_isEnabled
         ? ambientLight + pow(0.5 + (nDotL * 0.5), 2)
         : 1.0f;
