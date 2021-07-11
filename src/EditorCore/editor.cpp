@@ -79,36 +79,37 @@ void initializeEditor(EditorMemory *memory)
     Assets *assets = state->engineAssets;
     EditorAssets *editorAssets = &state->editorAssets;
 
-    AssetHandle shaderQuadVertex =
-        engine->assetsRegisterShader(assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderQuadVertex = engine->assetsRegisterShader(
+        assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
-        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderTerrainVertex =
-        engine->assetsRegisterShader(assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
-    AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(
-        assets, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
-    AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(
-        assets, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
+        assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
+        "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(assets,
+        "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTerrainFragment = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
-        assets, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
+        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderTerrainComputeTessLevel =
+        engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
+            GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderBrushMaskFragment = engine->assetsRegisterShader(
-        assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(
-        assets, "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(
-        assets, "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(
-        assets, "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderMeshVertex =
-        engine->assetsRegisterShader(assets, "mesh_vertex_shader.glsl", GL_VERTEX_SHADER);
+        assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(assets,
+        "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    AssetHandle shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(assets,
+        "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    AssetHandle shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(assets,
+        "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    AssetHandle shaderMeshVertex = engine->assetsRegisterShader(
+        assets, "mesh_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderMeshIdFragment = engine->assetsRegisterShader(
-        assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderRockFragment =
-        engine->assetsRegisterShader(assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderRockFragment = engine->assetsRegisterShader(
+        assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderOutlineFragment = engine->assetsRegisterShader(
-        assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
 
     AssetHandle quadShaderAssetHandles[] = {shaderQuadVertex, shaderTextureFragment};
     AssetHandle quadShaderProgram = engine->assetsRegisterShaderProgram(

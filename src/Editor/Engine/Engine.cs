@@ -5,14 +5,6 @@ using System.Threading;
 
 namespace Terrain.Editor.Engine
 {
-    public enum AssetType
-    {
-        Shader = 1,
-        ShaderProgram,
-        Texture,
-        Mesh
-    }
-
     internal static class TerrainEngine
     {
         private delegate IntPtr EngineGetApi(

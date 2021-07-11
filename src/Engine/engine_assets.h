@@ -47,9 +47,16 @@ struct LoadedAsset
     };
 };
 
+enum ShaderType
+{
+    SHADER_TYPE_STANDALONE,
+    SHADER_TYPE_QUAD
+};
+
 struct ShaderAssetMetadata
 {
-    uint32 type;
+    uint32 glShaderType;
+    ShaderType type;
 };
 struct TextureAssetMetadata
 {
@@ -104,7 +111,8 @@ typedef ASSETS_INITIALIZE(AssetsInitialize);
 typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
 
 #define ASSETS_REGISTER_SHADER(name)                                                          \
-    AssetHandle name(Assets *assets, const char *relativePath, uint32 type)
+    AssetHandle name(                                                                         \
+        Assets *assets, const char *relativePath, uint32 glShaderType, ShaderType type)
 typedef ASSETS_REGISTER_SHADER(AssetsRegisterShader);
 
 #define ASSETS_REGISTER_SHADER_PROGRAM(name)                                                  \

@@ -25,6 +25,14 @@ namespace Terrain.Editor.Engine
         public IntPtr NotifyAssetRegistered;
     }
 
+    public enum AssetType
+    {
+        Shader = 1,
+        ShaderProgram,
+        Texture,
+        Mesh
+    }
+
     public enum AssetRegistrationType
     {
         File,

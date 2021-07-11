@@ -110,6 +110,7 @@ ASSETS_REGISTER_SHADER(assetsRegisterShader)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_SHADER, relativePath, 0, 0);
     reg->metadata.shader = pushStruct(assets->arena, ShaderAssetMetadata);
+    reg->metadata.shader->glShaderType = glShaderType;
     reg->metadata.shader->type = type;
     return reg->handle;
 }
@@ -319,7 +320,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         char *src = static_cast<char *>(data);
         uint32 id;
-        if (createShader(reg->metadata.shader->type, src, &id))
+        if (createShader(reg->metadata.shader->glShaderType, src, &id))
         {
             if (!reg->asset.shader)
             {

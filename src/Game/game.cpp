@@ -20,22 +20,23 @@ bool initializeGame(GameMemory *memory)
     state->engineAssets = engine->assetsInitialize(&state->assetsArena);
     Assets *assets = state->engineAssets;
 
-    AssetHandle shaderQuadVertex =
-        engine->assetsRegisterShader(assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER);
+    AssetHandle shaderQuadVertex = engine->assetsRegisterShader(
+        assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
-        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderTerrainVertex =
-        engine->assetsRegisterShader(assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER);
-    AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(
-        assets, "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER);
-    AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(
-        assets, "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER);
+        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
+        assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
+        "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(assets,
+        "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTerrainFragment = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER);
-    AssetHandle shaderTerrainComputeTessLevel = engine->assetsRegisterShader(
-        assets, "terrain_calc_tess_levels_comp_shader.glsl", GL_COMPUTE_SHADER);
+        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
+    AssetHandle shaderTerrainComputeTessLevel =
+        engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
+            GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
-        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER);
+        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
 
     AssetHandle wireframeShaderAssetHandles[] = {
         shaderTerrainVertex,    //
