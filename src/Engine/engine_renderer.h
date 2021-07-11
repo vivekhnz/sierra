@@ -65,11 +65,16 @@ struct RenderQueue;
 struct RenderEffect;
 
 bool createShader(uint32 type, char *src, uint32 *out_id);
+void destroyShader(uint32 id);
+
 bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id);
 bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId);
 bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId);
+void destroyShaderProgram(uint32 id);
+
 RenderMesh *createMesh(
     MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
+void destroyMesh(RenderMesh *mesh);
 
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);

@@ -4,21 +4,31 @@
 #define RENDERER_LIGHTING_UBO_SLOT 1
 
 extern EnginePlatformApi Platform;
+global_variable bool WasRendererReloaded = true;
 
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram);
 ASSETS_GET_MESH(assetsGetMesh);
 
-struct RenderContext
+struct RendererInternalShaders
 {
-    uint32 globalVertexArrayId;
+    bool initialized;
 
     uint32 quadVertexShaderId;
+    uint32 quadFragmentShaderId;
     uint32 texturedQuadShaderProgramId;
+
+    uint32 meshVertexShaderId;
+};
+
+struct RenderContext
+{
+    // access this via getInternalShaders which handles the engine DLL being reloaded
+    RendererInternalShaders shaders_;
+    uint32 globalVertexArrayId;
+
     uint32 quadElementBufferId;
     uint32 quadTopDownVertexBufferId;
     uint32 quadBottomUpVertexBufferId;
-
-    uint32 meshVertexShaderId;
 
     uint32 quadInstanceBufferId;
     RenderQuad *quads;
@@ -172,6 +182,96 @@ struct RenderTargetDescriptor
     bool hasDepthBuffer;
 };
 
+RendererInternalShaders *getInternalShaders(RenderContext *ctx)
+{
+    RendererInternalShaders *shaders = &ctx->shaders_;
+    if (WasRendererReloaded)
+    {
+        if (shaders->initialized)
+        {
+            glDeleteProgram(shaders->texturedQuadShaderProgramId);
+            glDeleteShader(shaders->quadVertexShaderId);
+            glDeleteShader(shaders->quadFragmentShaderId);
+
+            glDeleteShader(shaders->meshVertexShaderId);
+        }
+
+        // create quad shader program
+        char *quadVertexShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec2 in_mesh_pos;
+layout(location = 1) in vec2 in_mesh_uv;
+layout(location = 2) in vec4 in_instance_rect;
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
+layout(location = 0) out vec2 out_uv;
+
+void main()
+{
+    vec2 pos = in_instance_rect.xy + (in_instance_rect.zw * in_mesh_pos);
+    gl_Position = camera_transform * vec4(pos, 0, 1);
+    out_uv = in_mesh_uv;
+}
+    )";
+
+        char *quadFragmentShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec2 uv;
+
+layout(binding = 0) uniform sampler2D imageTexture;
+
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(texture(imageTexture, uv).rgb, 1);
+}
+    )";
+
+        assert(
+            createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
+        assert(createShader(
+            GL_FRAGMENT_SHADER, quadFragmentShaderSrc, &shaders->quadFragmentShaderId));
+        uint32 shaderIds[] = {shaders->quadVertexShaderId, shaders->quadFragmentShaderId};
+        assert(createShaderProgram(2, shaderIds, &shaders->texturedQuadShaderProgramId));
+
+        // create mesh vertex shader
+        char *meshVertexShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec3 in_pos;
+layout(location = 1) in vec3 in_normal;
+layout(location = 2) in uint in_instance_id;
+layout(location = 3) in mat4 in_instance_transform;
+
+layout(location = 0) out uint out_instance_id;
+layout(location = 1) out vec3 out_normal;
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
+void main()
+{
+    gl_Position = camera_transform * in_instance_transform * vec4(in_pos, 1);
+    out_instance_id = in_instance_id;
+    mat4 inverseTransposeTransform = transpose(inverse(in_instance_transform));
+    out_normal = normalize((inverseTransposeTransform * vec4(in_normal, 0)).xyz);
+}
+    )";
+        assert(
+            createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &shaders->meshVertexShaderId));
+
+        shaders->initialized = true;
+        WasRendererReloaded = false;
+    }
+    return shaders;
+}
+
 bool createShader(uint32 type, char *src, uint32 *out_id)
 {
     uint32 id = glCreateShader(type);
@@ -193,6 +293,10 @@ bool createShader(uint32 type, char *src, uint32 *out_id)
 
         return 0;
     }
+}
+void destroyShader(uint32 id)
+{
+    glDeleteShader(id);
 }
 
 bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
@@ -224,15 +328,15 @@ bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
         return 0;
     }
 }
-
 bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId)
 {
     bool result = false;
+    RendererInternalShaders *shaders = getInternalShaders(rctx);
 
     uint32 fragmentShaderId;
     if (createShader(GL_FRAGMENT_SHADER, src, &fragmentShaderId))
     {
-        uint32 shaderIds[] = {rctx->quadVertexShaderId, fragmentShaderId};
+        uint32 shaderIds[] = {shaders->quadVertexShaderId, fragmentShaderId};
         uint32 programId;
         if (createShaderProgram(2, shaderIds, &programId))
         {
@@ -243,15 +347,15 @@ bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_program
 
     return result;
 }
-
 bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId)
 {
     bool result = false;
+    RendererInternalShaders *shaders = getInternalShaders(rctx);
 
     uint32 fragmentShaderId;
     if (createShader(GL_FRAGMENT_SHADER, src, &fragmentShaderId))
     {
-        uint32 shaderIds[] = {rctx->meshVertexShaderId, fragmentShaderId};
+        uint32 shaderIds[] = {shaders->meshVertexShaderId, fragmentShaderId};
         uint32 programId;
         if (createShaderProgram(2, shaderIds, &programId))
         {
@@ -261,6 +365,10 @@ bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_program
     }
 
     return result;
+}
+void destroyShaderProgram(uint32 id)
+{
+    glDeleteProgram(id);
 }
 
 RenderMesh *createMesh(
@@ -280,80 +388,15 @@ RenderMesh *createMesh(
 
     return result;
 }
+void destroyMesh(RenderMesh *mesh)
+{
+    glDeleteBuffers(1, &mesh->vertexBufferId);
+    glDeleteBuffers(1, &mesh->elementBufferId);
+}
 
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
-
-    // create quad shader program
-    char *quadVertexShaderSrc = R"(
-#version 430 core
-layout(location = 0) in vec2 in_mesh_pos;
-layout(location = 1) in vec2 in_mesh_uv;
-layout(location = 2) in vec4 in_instance_rect;
-
-layout (std140, binding = 0) uniform Camera
-{
-    mat4 camera_transform;
-};
-
-layout(location = 0) out vec2 out_uv;
-
-void main()
-{
-    vec2 pos = in_instance_rect.xy + (in_instance_rect.zw * in_mesh_pos);
-    gl_Position = camera_transform * vec4(pos, 0, 1);
-    out_uv = in_mesh_uv;
-}
-    )";
-
-    char *quadFragmentShaderSrc = R"(
-#version 430 core
-layout(location = 0) in vec2 uv;
-
-layout(binding = 0) uniform sampler2D imageTexture;
-
-out vec4 FragColor;
-
-void main()
-{
-    FragColor = vec4(texture(imageTexture, uv).rgb, 1);
-}
-    )";
-
-    assert(createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &ctx->quadVertexShaderId));
-
-    uint32 fragmentShaderId;
-    assert(createShader(GL_FRAGMENT_SHADER, quadFragmentShaderSrc, &fragmentShaderId));
-
-    uint32 shaderIds[] = {ctx->quadVertexShaderId, fragmentShaderId};
-    assert(createShaderProgram(2, shaderIds, &ctx->texturedQuadShaderProgramId));
-
-    // create mesh vertex shader
-    char *meshVertexShaderSrc = R"(
-#version 430 core
-layout(location = 0) in vec3 in_pos;
-layout(location = 1) in vec3 in_normal;
-layout(location = 2) in uint in_instance_id;
-layout(location = 3) in mat4 in_instance_transform;
-
-layout(location = 0) out uint out_instance_id;
-layout(location = 1) out vec3 out_normal;
-
-layout (std140, binding = 0) uniform Camera
-{
-    mat4 camera_transform;
-};
-
-void main()
-{
-    gl_Position = camera_transform * in_instance_transform * vec4(in_pos, 1);
-    out_instance_id = in_instance_id;
-    mat4 inverseTransposeTransform = transpose(inverse(in_instance_transform));
-    out_normal = normalize((inverseTransposeTransform * vec4(in_normal, 0)).xyz);
-}
-    )";
-    assert(createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &ctx->meshVertexShaderId));
 
     // setup global state
     glGenVertexArrays(1, &ctx->globalVertexArrayId);
@@ -794,8 +837,10 @@ void pushQuads(
 
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
+    RendererInternalShaders *shaders = getInternalShaders(rq->ctx);
+
     RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
-    effect->shaderProgramId = rq->ctx->texturedQuadShaderProgramId;
+    effect->shaderProgramId = shaders->texturedQuadShaderProgramId;
 
     rendererSetEffectTexture(effect, 0, textureId);
     pushQuads(rq, &quad, 1, effect, isTopDown);

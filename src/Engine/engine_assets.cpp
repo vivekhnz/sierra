@@ -5,6 +5,7 @@
 #include "engine_renderer.h"
 
 extern EnginePlatformApi Platform;
+global_variable bool WasAssetSystemReloaded = true;
 
 #define ASSET_GET_INDEX(id) (id & 0x0FFFFFFF)
 #define ASSET_GET_TYPE(id) ((id & 0xF0000000) >> 28)
@@ -142,7 +143,11 @@ bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **d
         uint32 id;
         if (createShaderProgram(reg->compositeState->dependencyCount, shaderIds, &id))
         {
-            if (!reg->asset.shaderProgram)
+            if (reg->asset.shaderProgram)
+            {
+                destroyShaderProgram(reg->asset.shaderProgram->id);
+            }
+            else
             {
                 reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
             }
@@ -156,6 +161,22 @@ bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **d
 
 LoadedAsset *getAsset(Assets *assets, uint32 assetId)
 {
+    if (WasAssetSystemReloaded)
+    {
+        // invalidate all shaders
+        for (uint32 i = 0; i < assets->registeredAssetCount; i++)
+        {
+            AssetRegistration *reg = &assets->registeredAssets[i];
+            if (reg->assetType == ASSET_TYPE_SHADER && reg->regType == ASSET_REG_FILE)
+            {
+                reg->fileState->isUpToDate = false;
+                reg->fileState->isLoadQueued = false;
+            }
+        }
+
+        WasAssetSystemReloaded = false;
+    }
+
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     assert(assetIdx < assets->registeredAssetCount);
 
@@ -330,7 +351,11 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
             uint32 id;
             if (createQuadShaderProgram(assets->rctx, src, &id))
             {
-                if (!reg->asset.shaderProgram)
+                if (reg->asset.shaderProgram)
+                {
+                    destroyShaderProgram(reg->asset.shaderProgram->id);
+                }
+                else
                 {
                     reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
                 }
@@ -342,7 +367,11 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
             uint32 id;
             if (createMeshShaderProgram(assets->rctx, src, &id))
             {
-                if (!reg->asset.shaderProgram)
+                if (reg->asset.shaderProgram)
+                {
+                    destroyShaderProgram(reg->asset.shaderProgram->id);
+                }
+                else
                 {
                     reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
                 }
@@ -354,7 +383,11 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
             uint32 id;
             if (createShader(reg->metadata.shader->glShaderType, src, &id))
             {
-                if (!reg->asset.shader)
+                if (reg->asset.shader)
+                {
+                    destroyShader(reg->asset.shader->id);
+                }
+                else
                 {
                     reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
                 }
@@ -401,7 +434,11 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     }
     else if (assetType == ASSET_TYPE_MESH)
     {
-        if (!reg->asset.mesh)
+        if (reg->asset.mesh)
+        {
+            destroyMesh(reg->asset.mesh->renderMesh);
+        }
+        else
         {
             reg->asset.mesh = pushStruct(assets->arena, MeshAsset);
         }
