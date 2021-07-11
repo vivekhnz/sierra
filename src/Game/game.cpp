@@ -23,9 +23,9 @@ bool initializeGame(GameMemory *memory)
     Assets *assets = state->engineAssets;
 
     gameAssets->terrainShaderTextured = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
+        assets, "terrain_fragment_shader.glsl", SHADER_TYPE_TERRAIN);
     gameAssets->terrainShaderWireframe = engine->assetsRegisterShader(
-        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
+        assets, "wireframe_fragment_shader.glsl", SHADER_TYPE_TERRAIN);
 
     gameAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);

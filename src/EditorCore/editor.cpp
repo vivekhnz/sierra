@@ -82,21 +82,21 @@ void initializeEditor(EditorMemory *memory)
     EditorAssets *editorAssets = &state->editorAssets;
 
     editorAssets->quadShaderBrushMask = engine->assetsRegisterShader(
-        assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    editorAssets->quadShaderBrushBlendAddSub = engine->assetsRegisterShader(assets,
-        "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    editorAssets->quadShaderBrushBlendFlatten = engine->assetsRegisterShader(assets,
-        "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    editorAssets->quadShaderBrushBlendSmooth = engine->assetsRegisterShader(assets,
-        "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    editorAssets->quadShaderOutline = engine->assetsRegisterShader(
-        assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    editorAssets->meshShaderId = engine->assetsRegisterShader(
-        assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_MESH);
-    editorAssets->meshShaderRock = engine->assetsRegisterShader(
-        assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_MESH);
+        assets, "brush_mask_fragment_shader.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendAddSub = engine->assetsRegisterShader(
+        assets, "brush_blend_add_sub_fragment_shader.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendFlatten = engine->assetsRegisterShader(
+        assets, "brush_blend_flatten_fragment_shader.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendSmooth = engine->assetsRegisterShader(
+        assets, "brush_blend_smooth_fragment_shader.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderOutline =
+        engine->assetsRegisterShader(assets, "outline_fragment_shader.glsl", SHADER_TYPE_QUAD);
+    editorAssets->meshShaderId =
+        engine->assetsRegisterShader(assets, "mesh_id_fragment_shader.glsl", SHADER_TYPE_MESH);
+    editorAssets->meshShaderRock =
+        engine->assetsRegisterShader(assets, "rock_fragment_shader.glsl", SHADER_TYPE_MESH);
     editorAssets->terrainShaderTextured = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
+        assets, "terrain_fragment_shader.glsl", SHADER_TYPE_TERRAIN);
 
     editorAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);

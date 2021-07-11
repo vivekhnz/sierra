@@ -113,7 +113,6 @@ ASSETS_REGISTER_SHADER(assetsRegisterShader)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_SHADER, relativePath, 0, 0);
     reg->metadata.shader = pushStruct(assets->arena, ShaderAssetMetadata);
-    reg->metadata.shader->glShaderType = glShaderType;
     reg->metadata.shader->type = type;
     return reg->handle;
 }
@@ -345,38 +344,18 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     if (assetType == ASSET_TYPE_SHADER)
     {
         char *src = static_cast<char *>(data);
-
-        if (reg->metadata.shader->type == SHADER_TYPE_STANDALONE)
+        uint32 id;
+        if (createShaderProgram(assets->rctx, reg->metadata.shader->type, src, &id))
         {
-            uint32 id;
-            if (createShader(reg->metadata.shader->glShaderType, src, &id))
+            if (reg->asset.shaderProgram)
             {
-                if (reg->asset.shader)
-                {
-                    destroyShader(reg->asset.shader->id);
-                }
-                else
-                {
-                    reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
-                }
-                reg->asset.shader->id = id;
+                destroyShaderProgram(reg->asset.shaderProgram->id);
             }
-        }
-        else
-        {
-            uint32 id;
-            if (createShaderProgram(assets->rctx, reg->metadata.shader->type, src, &id))
+            else
             {
-                if (reg->asset.shaderProgram)
-                {
-                    destroyShaderProgram(reg->asset.shaderProgram->id);
-                }
-                else
-                {
-                    reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
-                }
-                reg->asset.shaderProgram->id = id;
+                reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
             }
+            reg->asset.shaderProgram->id = id;
         }
     }
     else if (assetType == ASSET_TYPE_TEXTURE)
