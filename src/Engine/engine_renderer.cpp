@@ -29,7 +29,7 @@ struct RendererInternalShaders
 struct RenderContext
 {
     // access this via getInternalShaders which handles the engine DLL being reloaded
-    RendererInternalShaders shaders_;
+    RendererInternalShaders _shaders;
     uint32 globalVertexArrayId;
 
     uint32 quadElementBufferId;
@@ -241,7 +241,7 @@ bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
 
 RendererInternalShaders *getInternalShaders(RenderContext *ctx)
 {
-    RendererInternalShaders *shaders = &ctx->shaders_;
+    RendererInternalShaders *shaders = &ctx->_shaders;
     if (WasRendererReloaded)
     {
         if (shaders->initialized)
