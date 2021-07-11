@@ -346,39 +346,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         char *src = static_cast<char *>(data);
 
-        if (reg->metadata.shader->type == SHADER_TYPE_QUAD)
-        {
-            uint32 id;
-            if (createQuadShaderProgram(assets->rctx, src, &id))
-            {
-                if (reg->asset.shaderProgram)
-                {
-                    destroyShaderProgram(reg->asset.shaderProgram->id);
-                }
-                else
-                {
-                    reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
-                }
-                reg->asset.shaderProgram->id = id;
-            }
-        }
-        else if (reg->metadata.shader->type == SHADER_TYPE_MESH)
-        {
-            uint32 id;
-            if (createMeshShaderProgram(assets->rctx, src, &id))
-            {
-                if (reg->asset.shaderProgram)
-                {
-                    destroyShaderProgram(reg->asset.shaderProgram->id);
-                }
-                else
-                {
-                    reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
-                }
-                reg->asset.shaderProgram->id = id;
-            }
-        }
-        else
+        if (reg->metadata.shader->type == SHADER_TYPE_STANDALONE)
         {
             uint32 id;
             if (createShader(reg->metadata.shader->glShaderType, src, &id))
@@ -392,6 +360,22 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
                     reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
                 }
                 reg->asset.shader->id = id;
+            }
+        }
+        else
+        {
+            uint32 id;
+            if (createShaderProgram(assets->rctx, reg->metadata.shader->type, src, &id))
+            {
+                if (reg->asset.shaderProgram)
+                {
+                    destroyShaderProgram(reg->asset.shaderProgram->id);
+                }
+                else
+                {
+                    reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
+                }
+                reg->asset.shaderProgram->id = id;
             }
         }
     }

@@ -10,25 +10,23 @@
 
 struct GameAssets
 {
-    AssetHandle shaderProgramTerrainWireframe;
-    AssetHandle shaderProgramTerrainTextured;
+    AssetHandle terrainShaderWireframe;
+    AssetHandle terrainShaderTextured;
+
     AssetHandle shaderProgramTerrainCalcTessLevel;
 
     AssetHandle textureGroundAlbedo;
     AssetHandle textureGroundNormal;
     AssetHandle textureGroundDisplacement;
     AssetHandle textureGroundAo;
-
     AssetHandle textureRockAlbedo;
     AssetHandle textureRockNormal;
     AssetHandle textureRockDisplacement;
     AssetHandle textureRockAo;
-
     AssetHandle textureSnowAlbedo;
     AssetHandle textureSnowNormal;
     AssetHandle textureSnowDisplacement;
     AssetHandle textureSnowAo;
-
     AssetHandle textureVirtualHeightmap;
 };
 

@@ -22,38 +22,14 @@ bool initializeGame(GameMemory *memory)
     state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
 
-    AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
-        assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
-        "terrain_tess_ctrl_shader.glsl", GL_TESS_CONTROL_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderTerrainTessEval = engine->assetsRegisterShader(assets,
-        "terrain_tess_eval_shader.glsl", GL_TESS_EVALUATION_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderTerrainFragment = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
+    gameAssets->terrainShaderTextured = engine->assetsRegisterShader(
+        assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
+    gameAssets->terrainShaderWireframe = engine->assetsRegisterShader(
+        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
+
     AssetHandle shaderTerrainComputeTessLevel =
         engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
             GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderWireframeFragment = engine->assetsRegisterShader(
-        assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
-
-    AssetHandle wireframeShaderAssetHandles[] = {
-        shaderTerrainVertex,    //
-        shaderTerrainTessCtrl,  //
-        shaderTerrainTessEval,  //
-        shaderWireframeFragment //
-    };
-    gameAssets->shaderProgramTerrainWireframe = engine->assetsRegisterShaderProgram(
-        assets, wireframeShaderAssetHandles, arrayCount(wireframeShaderAssetHandles));
-
-    AssetHandle texturedShaderAssetHandles[] = {
-        shaderTerrainVertex,   //
-        shaderTerrainTessCtrl, //
-        shaderTerrainTessEval, //
-        shaderTerrainFragment  //
-    };
-    gameAssets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
-        assets, texturedShaderAssetHandles, arrayCount(texturedShaderAssetHandles));
-
     AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
     gameAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
         assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
@@ -452,12 +428,6 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     glm::vec3 *cameraLookAt =
         state->isOrbitCameraMode ? &state->orbitCameraLookAt : &state->firstPersonCameraLookAt;
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
-
-    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
-    engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-
     LoadedAsset *asset;
     asset = engine->assetsGetTexture(gameAssets->textureGroundAlbedo);
     if (asset->texture && asset->version > state->groundAlbedoTextureVersion)
@@ -548,8 +518,14 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     }
 
     AssetHandle terrainShaderProgram = state->isWireframeMode
-        ? gameAssets->shaderProgramTerrainWireframe
-        : gameAssets->shaderProgramTerrainTextured;
+        ? gameAssets->terrainShaderWireframe
+        : gameAssets->terrainShaderTextured;
+
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+
+    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+    engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
+    engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield,
         gameAssets->shaderProgramTerrainCalcTessLevel, terrainShaderProgram,
         state->heightmapTextureId, state->heightmapTextureId,
@@ -558,7 +534,6 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->albedoTextureArrayId, state->normalTextureArrayId,
         state->displacementTextureArrayId, state->aoTextureArrayId,
         state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
-
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);

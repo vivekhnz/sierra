@@ -18,6 +18,10 @@ struct RendererInternalShaders
     uint32 texturedQuadShaderProgramId;
 
     uint32 meshVertexShaderId;
+
+    uint32 terrainVertexShaderId;
+    uint32 terrainTessCtrlShaderId;
+    uint32 terrainTessEvalShaderId;
 };
 
 struct RenderContext
@@ -266,6 +270,228 @@ void main()
         assert(
             createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &shaders->meshVertexShaderId));
 
+        // create terrain shaders
+        char *terrainVertexShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec3 pos;
+layout(location = 1) in vec2 uv;
+
+layout(location = 0) out int id;
+layout(location = 1) out vec3 worldPos;
+layout(location = 2) out vec2 heightmapUV;
+
+void main()
+{
+    id = gl_VertexID;
+    worldPos = pos;
+    heightmapUV = uv;
+}
+    )";
+        char *terrainTessCtrlShaderSrc = R"(
+#version 430 core
+layout(vertices = 4) out;
+
+layout(location = 0) in int in_id[];
+layout(location = 1) in vec3 in_worldPos[];
+layout(location = 2) in vec2 in_heightmapUV[];
+
+layout(std430, binding = 0) buffer tessellationLevelBuffer
+{
+    vec4 vertEdgeTessLevels[];
+};
+
+layout(location = 0) out vec3 out_worldPos[];
+layout(location = 1) out vec2 out_heightmapUV[];
+
+void main()
+{
+    out_worldPos[gl_InvocationID] = in_worldPos[gl_InvocationID];
+    out_heightmapUV[gl_InvocationID] = in_heightmapUV[gl_InvocationID];
+    
+    if (gl_InvocationID == 0)
+    {
+        vec4 A = vertEdgeTessLevels[in_id[0]];
+        vec4 C = vertEdgeTessLevels[in_id[2]];
+
+        if (A.x < 0 && A.y < 0 && C.z < 0 && C.w < 0)
+        {
+            // cull the patch
+            gl_TessLevelOuter[0] = 0;
+            gl_TessLevelOuter[1] = 0;
+            gl_TessLevelOuter[2] = 0;
+            gl_TessLevelOuter[3] = 0;
+            gl_TessLevelInner[0] = 0;
+            gl_TessLevelInner[1] = 0;
+        }
+        else
+        {
+            // at least one edge is not cullable
+            // need to use the absolute value of each tessellation level as they could be
+            // negative if the edge was marked cullable
+            gl_TessLevelOuter[0] = abs(A.y); // AB
+            gl_TessLevelOuter[1] = abs(A.x); // AD
+            gl_TessLevelOuter[2] = abs(C.w); // CD
+            gl_TessLevelOuter[3] = abs(C.z); // BC
+            gl_TessLevelInner[0] = max(gl_TessLevelOuter[1], gl_TessLevelOuter[3]);
+            gl_TessLevelInner[1] = max(gl_TessLevelOuter[0], gl_TessLevelOuter[2]);
+        }
+    }
+}
+    )";
+        char *terrainTessEvalShaderSrc = R"(
+#version 430 core
+layout(quads, fractional_even_spacing, cw) in;
+
+layout(location = 0) in vec3 in_worldPos[];
+layout(location = 1) in vec2 in_heightmapUV[];
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+layout (std140, binding = 1) uniform Lighting
+{
+    vec4 lighting_lightDir;
+    bool lighting_isEnabled;
+    bool lighting_isTextureEnabled;
+    bool lighting_isNormalMapEnabled;
+    bool lighting_isAOMapEnabled;
+    bool lighting_isDisplacementMapEnabled;
+};
+
+uniform int materialCount;
+uniform vec3 terrainDimensions;
+
+layout(binding = 0) uniform sampler2D activeHeightmapTexture;
+layout(binding = 3) uniform sampler2DArray displacementTextures;
+layout(binding = 5) uniform sampler2D referenceHeightmapTexture;
+
+struct MaterialProperties
+{
+    vec2 textureSizeInWorldUnits;
+    vec2 _padding;
+    vec4 rampParams;
+};
+layout(std430, binding = 1) buffer materialPropsBuffer
+{
+    MaterialProperties materialProps[];
+};
+
+layout(location = 0) out vec3 normal;
+layout(location = 1) out vec3 texcoord;
+layout(location = 2) out vec2 heights;
+
+vec3 lerp3D(vec3 a, vec3 b, vec3 c, vec3 d)
+{
+    return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
+}
+vec2 lerp2D(vec2 a, vec2 b, vec2 c, vec2 d)
+{
+    return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
+}
+float getDisplacement(vec2 uv, int layerIdx, float mip)
+{
+    vec3 uvLayered = vec3(uv, layerIdx);
+    return mix(
+        textureLod(displacementTextures, uvLayered, floor(mip)).x,
+        textureLod(displacementTextures, uvLayered, ceil(mip)).x,
+        fract(mip));
+}
+float height(vec2 uv)
+{
+    return textureLod(activeHeightmapTexture, uv, 2).x;
+}
+vec3 calcTriplanarBlend(vec3 normal)
+{
+    // bias towards Y-axis
+    vec3 blend = vec3(pow(abs(normal.x), 6), pow(abs(normal.y), 1), pow(abs(normal.z), 6));
+    blend = normalize(max(blend, 0.00001));
+    blend /= blend.x + blend.y + blend.z;
+    return blend;
+}
+vec3 triplanar3D(vec3 xVal, vec3 yVal, vec3 zVal, vec3 blend)
+{
+    return (xVal * blend.x) + (yVal * blend.y) + (zVal * blend.z);
+}
+
+void main()
+{
+    // calculate normal
+    vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
+    float altitude = height(hUV);
+    float normalSampleOffsetInTexels = 2;
+    vec2 normalSampleOffsetInUvCoords = normalSampleOffsetInTexels / vec2(2048, 2048);
+    float hL = height(vec2(hUV.x - normalSampleOffsetInUvCoords.x, hUV.y));
+    float hR = height(vec2(hUV.x + normalSampleOffsetInUvCoords.x, hUV.y));
+    float hD = height(vec2(hUV.x, hUV.y - normalSampleOffsetInUvCoords.y));
+    float hU = height(vec2(hUV.x, hUV.y + normalSampleOffsetInUvCoords.y));
+    
+    float nY = (2 * terrainDimensions.x * normalSampleOffsetInUvCoords.x) / terrainDimensions.y;
+    normal = normalize(vec3(hL - hR, nY, hU - hD));
+    float slope = 1 - normal.y;
+    
+    // calculate texture coordinates
+    vec3 triBlend = calcTriplanarBlend(normal);
+    vec3 triAxisSign = sign(normal);
+    texcoord = vec3(
+        hUV.x * terrainDimensions.x,
+        -altitude * terrainDimensions.y,
+        hUV.y * terrainDimensions.z);
+
+    vec2 baseTexcoordsX = vec2(texcoord.z * triAxisSign.x, texcoord.y);
+    vec2 baseTexcoordsY = vec2(texcoord.x * triAxisSign.y, texcoord.z);
+    vec2 baseTexcoordsZ = vec2(texcoord.x * triAxisSign.z, texcoord.y);
+    
+    vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
+    pos.y = altitude * terrainDimensions.y;
+
+    heights.x = textureLod(referenceHeightmapTexture, hUV, 2).x;
+    heights.y = altitude;
+
+    if (lighting_isDisplacementMapEnabled)
+    {
+        vec3 displacement = vec3(0);
+        for (int i = 0; i < materialCount; i++)
+        {
+            vec2 textureSizeInWorldUnits = materialProps[i].textureSizeInWorldUnits;
+
+            vec2 materialTexcoordsX = baseTexcoordsX / textureSizeInWorldUnits.yy;
+            vec2 materialTexcoordsY = baseTexcoordsY / textureSizeInWorldUnits.xy;
+            vec2 materialTexcoordsZ = baseTexcoordsZ / textureSizeInWorldUnits.xy;
+
+            float scaledMip = log2(terrainDimensions.x / textureSizeInWorldUnits.x);
+            vec3 currentLayerDisplacement = triplanar3D(
+                vec3(getDisplacement(materialTexcoordsX, i, scaledMip) * -triAxisSign.x, 0, 0),
+                vec3(0, getDisplacement(materialTexcoordsY, i, scaledMip) * triAxisSign.y, 0),
+                vec3(0, 0, getDisplacement(materialTexcoordsZ, i, scaledMip) * triAxisSign.z),
+                triBlend);
+            
+            if (i == 0)
+            {
+                displacement = currentLayerDisplacement;
+            }
+            else
+            {
+                vec4 ramp = materialProps[i].rampParams;
+                float blendAmount = clamp((slope - ramp.x) / (ramp.y - ramp.x), 0, 1);
+                blendAmount *= clamp((altitude - ramp.z) / (ramp.w - ramp.z), 0, 1);
+                displacement = mix(displacement, currentLayerDisplacement, blendAmount);
+            }
+        }
+
+        pos += displacement * 0.8;
+    }
+    
+    gl_Position = camera_transform * vec4(pos, 1.0f);
+}
+        )";
+        assert(createShader(
+            GL_VERTEX_SHADER, terrainVertexShaderSrc, &shaders->terrainVertexShaderId));
+        assert(createShader(GL_TESS_CONTROL_SHADER, terrainTessCtrlShaderSrc,
+            &shaders->terrainTessCtrlShaderId));
+        assert(createShader(GL_TESS_EVALUATION_SHADER, terrainTessEvalShaderSrc,
+            &shaders->terrainTessEvalShaderId));
+
         shaders->initialized = true;
         WasRendererReloaded = false;
     }
@@ -328,36 +554,38 @@ bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
         return 0;
     }
 }
-bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId)
+bool createShaderProgram(
+    RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId)
 {
     bool result = false;
     RendererInternalShaders *shaders = getInternalShaders(rctx);
 
-    uint32 fragmentShaderId;
-    if (createShader(GL_FRAGMENT_SHADER, src, &fragmentShaderId))
+    uint32 shaderIds[4];
+    uint32 shaderCount = 0;
+
+    switch (type)
     {
-        uint32 shaderIds[] = {shaders->quadVertexShaderId, fragmentShaderId};
-        uint32 programId;
-        if (createShaderProgram(2, shaderIds, &programId))
-        {
-            *out_programId = programId;
-            result = true;
-        }
+    case SHADER_TYPE_QUAD:
+        shaderIds[0] = shaders->quadVertexShaderId;
+        shaderCount = 2;
+        break;
+    case SHADER_TYPE_MESH:
+        shaderIds[0] = shaders->meshVertexShaderId;
+        shaderCount = 2;
+        break;
+    case SHADER_TYPE_TERRAIN:
+        shaderIds[0] = shaders->terrainVertexShaderId;
+        shaderIds[1] = shaders->terrainTessCtrlShaderId;
+        shaderIds[2] = shaders->terrainTessEvalShaderId;
+        shaderCount = 4;
+        break;
     }
+    assert(shaderCount);
 
-    return result;
-}
-bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId)
-{
-    bool result = false;
-    RendererInternalShaders *shaders = getInternalShaders(rctx);
-
-    uint32 fragmentShaderId;
-    if (createShader(GL_FRAGMENT_SHADER, src, &fragmentShaderId))
+    if (createShader(GL_FRAGMENT_SHADER, src, &shaderIds[shaderCount - 1]))
     {
-        uint32 shaderIds[] = {shaders->meshVertexShaderId, fragmentShaderId};
         uint32 programId;
-        if (createShaderProgram(2, shaderIds, &programId))
+        if (createShaderProgram(shaderCount, shaderIds, &programId))
         {
             *out_programId = programId;
             result = true;

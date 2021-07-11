@@ -4,6 +4,14 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 
+enum ShaderType
+{
+    SHADER_TYPE_STANDALONE,
+    SHADER_TYPE_QUAD,
+    SHADER_TYPE_MESH,
+    SHADER_TYPE_TERRAIN
+};
+
 enum RendererBufferType
 {
     RENDERER_VERTEX_BUFFER,
@@ -68,8 +76,8 @@ bool createShader(uint32 type, char *src, uint32 *out_id);
 void destroyShader(uint32 id);
 
 bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id);
-bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId);
-bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId);
+bool createShaderProgram(
+    RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId);
 void destroyShaderProgram(uint32 id);
 
 RenderMesh *createMesh(
