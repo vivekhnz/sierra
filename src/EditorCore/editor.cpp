@@ -92,6 +92,11 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->quadShaderOutline = engine->assetsRegisterShader(
         assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
 
+    editorAssets->meshShaderId = engine->assetsRegisterShader(
+        assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_MESH);
+    editorAssets->meshShaderRock = engine->assetsRegisterShader(
+        assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_MESH);
+
     AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
         assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
@@ -103,12 +108,6 @@ void initializeEditor(EditorMemory *memory)
     AssetHandle shaderTerrainComputeTessLevel =
         engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
             GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderMeshVertex = engine->assetsRegisterShader(
-        assets, "mesh_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderMeshIdFragment = engine->assetsRegisterShader(
-        assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderRockFragment = engine->assetsRegisterShader(
-        assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
 
     AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
     editorAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
@@ -122,14 +121,6 @@ void initializeEditor(EditorMemory *memory)
     };
     editorAssets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
         assets, texturedShaderAssetHandles, arrayCount(texturedShaderAssetHandles));
-
-    AssetHandle meshIdShaderAssetHandles[] = {shaderMeshVertex, shaderMeshIdFragment};
-    editorAssets->shaderProgramMeshId = engine->assetsRegisterShaderProgram(
-        assets, meshIdShaderAssetHandles, arrayCount(meshIdShaderAssetHandles));
-
-    AssetHandle rockShaderAssetHandles[] = {shaderMeshVertex, shaderRockFragment};
-    editorAssets->shaderProgramRock = engine->assetsRegisterShaderProgram(
-        assets, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
 
     editorAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
@@ -1339,7 +1330,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
         sceneState->worldState.brushFalloff);
     engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
-        sceneState->objectInstanceCount, editorAssets->shaderProgramRock);
+        sceneState->objectInstanceCount, editorAssets->meshShaderRock);
     engine->rendererDrawToTarget(rq, sceneRenderTarget);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
@@ -1358,8 +1349,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 if (state->uiState.selectedObjectIds[j] == objectId)
                 {
                     engine->rendererPushMeshes(rq, editorAssets->meshRock,
-                        &sceneState->objectInstanceData[i], 1,
-                        editorAssets->shaderProgramMeshId);
+                        &sceneState->objectInstanceData[i], 1, editorAssets->meshShaderId);
 
                     objectsFound++;
                     break;

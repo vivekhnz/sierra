@@ -139,10 +139,11 @@ struct EditorAssets
     AssetHandle quadShaderBrushBlendSmooth;
     AssetHandle quadShaderOutline;
 
+    AssetHandle meshShaderId;
+    AssetHandle meshShaderRock;
+
     AssetHandle shaderProgramTerrainCalcTessLevel;
     AssetHandle shaderProgramTerrainTextured;
-    AssetHandle shaderProgramMeshId;
-    AssetHandle shaderProgramRock;
 
     AssetHandle textureGroundAlbedo;
     AssetHandle textureGroundNormal;

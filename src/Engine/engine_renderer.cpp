@@ -18,6 +18,8 @@ struct RenderContext
     uint32 quadTopDownVertexBufferId;
     uint32 quadBottomUpVertexBufferId;
 
+    uint32 meshVertexShaderId;
+
     uint32 quadInstanceBufferId;
     RenderQuad *quads;
     uint32 maxQuads;
@@ -242,6 +244,25 @@ bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_program
     return result;
 }
 
+bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId)
+{
+    bool result = false;
+
+    uint32 fragmentShaderId;
+    if (createShader(GL_FRAGMENT_SHADER, src, &fragmentShaderId))
+    {
+        uint32 shaderIds[] = {rctx->meshVertexShaderId, fragmentShaderId};
+        uint32 programId;
+        if (createShaderProgram(2, shaderIds, &programId))
+        {
+            *out_programId = programId;
+            result = true;
+        }
+    }
+
+    return result;
+}
+
 RenderMesh *createMesh(
     MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
 {
@@ -265,7 +286,7 @@ RENDERER_INITIALIZE(rendererInitialize)
     RenderContext *ctx = pushStruct(arena, RenderContext);
 
     // create quad shader program
-    char *vertexShaderSrc = R"(
+    char *quadVertexShaderSrc = R"(
 #version 430 core
 layout(location = 0) in vec2 in_mesh_pos;
 layout(location = 1) in vec2 in_mesh_uv;
@@ -286,7 +307,7 @@ void main()
 }
     )";
 
-    char *fragmentShaderSrc = R"(
+    char *quadFragmentShaderSrc = R"(
 #version 430 core
 layout(location = 0) in vec2 uv;
 
@@ -300,14 +321,41 @@ void main()
 }
     )";
 
-    assert(createShader(GL_VERTEX_SHADER, vertexShaderSrc, &ctx->quadVertexShaderId));
+    assert(createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &ctx->quadVertexShaderId));
 
     uint32 fragmentShaderId;
-    assert(createShader(GL_FRAGMENT_SHADER, fragmentShaderSrc, &fragmentShaderId));
+    assert(createShader(GL_FRAGMENT_SHADER, quadFragmentShaderSrc, &fragmentShaderId));
 
     uint32 shaderIds[] = {ctx->quadVertexShaderId, fragmentShaderId};
     assert(createShaderProgram(2, shaderIds, &ctx->texturedQuadShaderProgramId));
 
+    // create mesh vertex shader
+    char *meshVertexShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec3 in_pos;
+layout(location = 1) in vec3 in_normal;
+layout(location = 2) in uint in_instance_id;
+layout(location = 3) in mat4 in_instance_transform;
+
+layout(location = 0) out uint out_instance_id;
+layout(location = 1) out vec3 out_normal;
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
+void main()
+{
+    gl_Position = camera_transform * in_instance_transform * vec4(in_pos, 1);
+    out_instance_id = in_instance_id;
+    mat4 inverseTransposeTransform = transpose(inverse(in_instance_transform));
+    out_normal = normalize((inverseTransposeTransform * vec4(in_normal, 0)).xyz);
+}
+    )";
+    assert(createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &ctx->meshVertexShaderId));
+
+    // setup global state
     glGenVertexArrays(1, &ctx->globalVertexArrayId);
 
     glEnable(GL_DEPTH_TEST);

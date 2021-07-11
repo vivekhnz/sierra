@@ -48,7 +48,8 @@ struct LoadedAsset
 enum ShaderType
 {
     SHADER_TYPE_STANDALONE,
-    SHADER_TYPE_QUAD
+    SHADER_TYPE_QUAD,
+    SHADER_TYPE_MESH
 };
 
 struct ShaderAssetMetadata

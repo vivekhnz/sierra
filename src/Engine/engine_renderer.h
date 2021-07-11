@@ -67,6 +67,7 @@ struct RenderEffect;
 bool createShader(uint32 type, char *src, uint32 *out_id);
 bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id);
 bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId);
+bool createMeshShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId);
 RenderMesh *createMesh(
     MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
 

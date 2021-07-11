@@ -337,6 +337,18 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
                 reg->asset.shaderProgram->id = id;
             }
         }
+        else if (reg->metadata.shader->type == SHADER_TYPE_MESH)
+        {
+            uint32 id;
+            if (createMeshShaderProgram(assets->rctx, src, &id))
+            {
+                if (!reg->asset.shaderProgram)
+                {
+                    reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
+                }
+                reg->asset.shaderProgram->id = id;
+            }
+        }
         else
         {
             uint32 id;
