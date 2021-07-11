@@ -6,7 +6,7 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
-ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram);
+ASSETS_GET_SHADER(assetsGetShader);
 ASSETS_GET_MESH(assetsGetMesh);
 
 struct RendererInternalShaders
@@ -89,7 +89,7 @@ struct RenderEffectTexture
 struct RenderEffect
 {
     MemoryArena *arena;
-    AssetHandle shaderProgramHandle;
+    AssetHandle shaderHandle;
     uint32 shaderProgramId;
     RenderEffectBlendMode blendMode;
     RenderEffectParameter *firstParameter;
@@ -142,7 +142,7 @@ struct DrawTerrainCommand
 {
     Heightfield *heightfield;
 
-    AssetHandle terrainShaderProgram;
+    AssetHandle terrainShader;
 
     uint32 heightmapTextureId;
     uint32 referenceHeightmapTextureId;
@@ -1045,7 +1045,7 @@ RENDERER_CREATE_EFFECT(rendererCreateEffect)
     *result = {};
 
     result->arena = arena;
-    result->shaderProgramHandle = shaderProgram;
+    result->shaderHandle = shader;
     result->shaderProgramId = 0;
     result->blendMode = blendMode;
     result->firstParameter = 0;
@@ -1218,8 +1218,7 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
 {
     assert(rq->meshInstanceCount + instanceCount < rq->ctx->maxMeshInstances);
 
-    RenderEffect *effect =
-        rendererCreateEffect(rq->arena, shaderProgram, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *effect = rendererCreateEffect(rq->arena, shader, EFFECT_BLEND_ALPHA_BLEND);
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
@@ -1238,7 +1237,7 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
     cmd->heightfield = heightfield;
 
-    cmd->terrainShaderProgram = terrainShaderProgram;
+    cmd->terrainShader = terrainShader;
 
     cmd->heightmapTextureId = heightmapTextureId;
     cmd->referenceHeightmapTextureId = referenceHeightmapTextureId;
@@ -1270,12 +1269,12 @@ bool applyEffect(RenderEffect *effect)
     // load shader from asset system via an asset handle if one was specified
     // otherwise, we assume that the shader program ID was explicitly set on the effect
     uint32 shaderProgramId;
-    if (effect->shaderProgramHandle)
+    if (effect->shaderHandle)
     {
-        LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
-        if (shaderProgram->shaderProgram)
+        LoadedAsset *shader = assetsGetShader(effect->shaderHandle);
+        if (shader->shader)
         {
-            shaderProgramId = shaderProgram->shaderProgram->id;
+            shaderProgramId = shader->shader->id;
         }
         else
         {
@@ -1511,14 +1510,13 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         {
             DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
 
-            LoadedAsset *terrainShaderProgram =
-                assetsGetShaderProgram(cmd->terrainShaderProgram);
-            if (terrainShaderProgram->shaderProgram)
+            LoadedAsset *terrainShader = assetsGetShader(cmd->terrainShader);
+            if (terrainShader->shader)
             {
                 Heightfield *heightfield = cmd->heightfield;
                 uint32 calcTessLevelShaderProgramId =
                     shaders->terrainCalcTessLevelShaderProgramId;
-                uint32 terrainShaderProgramId = terrainShaderProgram->shaderProgram->id;
+                uint32 terrainShaderProgramId = terrainShader->shader->id;
                 uint32 meshEdgeCount = (2 * (heightfield->rows * heightfield->columns))
                     - heightfield->rows - heightfield->columns;
                 glm::vec3 terrainDimensions =

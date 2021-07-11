@@ -13,7 +13,6 @@ struct EngineApi
     AssetsRegisterTexture *assetsRegisterTexture;
     AssetsRegisterMesh *assetsRegisterMesh;
     AssetsGetShader *assetsGetShader;
-    AssetsGetShaderProgram *assetsGetShaderProgram;
     AssetsGetTexture *assetsGetTexture;
     AssetsGetMesh *assetsGetMesh;
     AssetsSetAssetData *assetsSetAssetData;

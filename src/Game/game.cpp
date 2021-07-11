@@ -510,16 +510,15 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->snowAoTextureVersion = asset->version;
     }
 
-    AssetHandle terrainShaderProgram = state->isWireframeMode
-        ? gameAssets->terrainShaderWireframe
-        : gameAssets->terrainShaderTextured;
+    AssetHandle terrainShader = state->isWireframeMode ? gameAssets->terrainShaderWireframe
+                                                       : gameAssets->terrainShaderTextured;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-    engine->rendererPushTerrain(rq, &state->heightfield, terrainShaderProgram,
+    engine->rendererPushTerrain(rq, &state->heightfield, terrainShader,
         state->heightmapTextureId, state->heightmapTextureId,
         state->terrainMeshVertexBuffer.id, state->terrainMeshElementBuffer.id,
         state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,

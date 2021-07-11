@@ -28,7 +28,6 @@ namespace Terrain.Editor.Engine
     public enum AssetType
     {
         Shader = 1,
-        ShaderProgram,
         Texture,
         Mesh
     }
@@ -36,7 +35,6 @@ namespace Terrain.Editor.Engine
     public enum AssetRegistrationType
     {
         File,
-        Composite,
         Virtual
     }
 
@@ -77,7 +75,6 @@ namespace Terrain.Editor.Engine
         public IntPtr assetsRegisterTexture;
         public IntPtr assetsRegisterMesh;
         public IntPtr assetsGetShader;
-        public IntPtr assetsGetShaderProgram;
         public IntPtr assetsGetTexture;
         public IntPtr assetsGetMesh;
         public AssetsSetAssetData assetsSetAssetData;

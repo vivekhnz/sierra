@@ -11,7 +11,6 @@ global_variable bool WasAssetSystemReloaded = true;
 #define ASSET_GET_TYPE(id) ((id & 0xF0000000) >> 28)
 
 #define MAX_ASSETS 4096
-#define MAX_DEPENDENCIES_PER_ASSET 32
 
 struct Assets
 {
@@ -27,11 +26,7 @@ struct AssetHandleInternal
     Assets *assets;
 };
 
-AssetRegistration *registerAsset(Assets *assets,
-    AssetType type,
-    const char *relativePath,
-    AssetHandle *dependencyAssetHandles,
-    uint32 dependencyCount)
+AssetRegistration *registerAsset(Assets *assets, AssetType type, const char *relativePath)
 {
     AssetRegistration *reg = &assets->registeredAssets[assets->registeredAssetCount];
     reg->handle = pushStruct(assets->arena, AssetHandleInternal);
@@ -62,23 +57,6 @@ AssetRegistration *registerAsset(Assets *assets,
 
         Platform.watchAssetFile(reg->handle, relativePath);
     }
-    else if (dependencyCount > 0)
-    {
-        assert(dependencyCount <= MAX_DEPENDENCIES_PER_ASSET);
-        reg->regType = ASSET_REG_COMPOSITE;
-        reg->compositeState = pushStruct(assets->arena, CompositeAssetState);
-        reg->compositeState->dependencyCount = dependencyCount;
-        reg->compositeState->dependencyAssetIds =
-            (uint32 *)pushSize(assets->arena, sizeof(uint32) * dependencyCount);
-        for (uint32 i = 0; i < dependencyCount; i++)
-        {
-            AssetHandleInternal *handle = (AssetHandleInternal *)dependencyAssetHandles[i];
-            reg->compositeState->dependencyAssetIds[i] = handle->id;
-        }
-
-        reg->compositeState->dependencyVersions =
-            (uint8 *)pushSize(assets->arena, sizeof(uint8) * dependencyCount);
-    }
     else
     {
         reg->regType = ASSET_REG_VIRTUAL;
@@ -104,52 +82,22 @@ ASSETS_INITIALIZE(assetsInitialize)
 
 ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
 {
-    AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_TEXTURE, relativePath, 0, 0);
+    AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_TEXTURE, relativePath);
     reg->metadata.texture = pushStruct(assets->arena, TextureAssetMetadata);
     reg->metadata.texture->is16Bit = is16Bit;
     return reg->handle;
 }
 ASSETS_REGISTER_SHADER(assetsRegisterShader)
 {
-    AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_SHADER, relativePath, 0, 0);
+    AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_SHADER, relativePath);
     reg->metadata.shader = pushStruct(assets->arena, ShaderAssetMetadata);
     reg->metadata.shader->type = type;
     return reg->handle;
 }
 ASSETS_REGISTER_MESH(assetsRegisterMesh)
 {
-    AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_MESH, relativePath, 0, 0);
+    AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_MESH, relativePath);
     return reg->handle;
-}
-
-bool buildCompositeAsset(Assets *assets, AssetRegistration *reg, LoadedAsset **deps)
-{
-    uint32 assetType = ASSET_GET_TYPE(reg->handle->id);
-    if (assetType == ASSET_TYPE_SHADER_PROGRAM)
-    {
-        uint32 shaderIds[MAX_DEPENDENCIES_PER_ASSET];
-        for (uint32 i = 0; i < reg->compositeState->dependencyCount; i++)
-        {
-            shaderIds[i] = deps[i]->shader->id;
-        }
-
-        uint32 id;
-        if (createShaderProgram(reg->compositeState->dependencyCount, shaderIds, &id))
-        {
-            if (reg->asset.shaderProgram)
-            {
-                destroyShaderProgram(reg->asset.shaderProgram->id);
-            }
-            else
-            {
-                reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
-            }
-            reg->asset.shaderProgram->id = id;
-
-            return true;
-        }
-    }
-    return false;
 }
 
 LoadedAsset *getAsset(Assets *assets, uint32 assetId)
@@ -185,39 +133,6 @@ LoadedAsset *getAsset(Assets *assets, uint32 assetId)
             }
         }
     }
-    else if (reg->regType == ASSET_REG_COMPOSITE)
-    {
-        CompositeAssetState *compState = reg->compositeState;
-        LoadedAsset *dependencies[MAX_DEPENDENCIES_PER_ASSET];
-
-        bool shouldRebuildAsset = false;
-        for (uint32 i = 0; i < compState->dependencyCount; i++)
-        {
-            LoadedAsset *dependency = getAsset(assets, compState->dependencyAssetIds[i]);
-            if (!dependency->untyped)
-            {
-                shouldRebuildAsset = false;
-                break;
-            }
-            if (dependency->version != compState->dependencyVersions[i])
-            {
-                shouldRebuildAsset = true;
-            }
-            dependencies[i] = dependency;
-        }
-
-        if (shouldRebuildAsset)
-        {
-            if (buildCompositeAsset(assets, reg, dependencies))
-            {
-                reg->asset.version++;
-            }
-            for (uint32 i = 0; i < compState->dependencyCount; i++)
-            {
-                compState->dependencyVersions[i] = dependencies[i]->version;
-            }
-        }
-    }
 
     return &reg->asset;
 }
@@ -226,15 +141,6 @@ ASSETS_GET_SHADER(assetsGetShader)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER);
-    return getAsset(handle->assets, handle->id);
-}
-ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
-{
-    AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
-    // todo: tidy this up once boundary between shader and shader program assets is clearer
-    // assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER_PROGRAM);
-    assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER_PROGRAM
-        || ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER);
     return getAsset(handle->assets, handle->id);
 }
 ASSETS_GET_TEXTURE(assetsGetTexture)
@@ -341,15 +247,15 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         uint32 id;
         if (createShaderProgram(assets->rctx, reg->metadata.shader->type, src, &id))
         {
-            if (reg->asset.shaderProgram)
+            if (reg->asset.shader)
             {
-                destroyShaderProgram(reg->asset.shaderProgram->id);
+                destroyShaderProgram(reg->asset.shader->id);
             }
             else
             {
-                reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
+                reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
             }
-            reg->asset.shaderProgram->id = id;
+            reg->asset.shader->id = id;
         }
     }
     else if (assetType == ASSET_TYPE_TEXTURE)

@@ -4,16 +4,11 @@
 enum AssetType
 {
     ASSET_TYPE_SHADER = 1,
-    ASSET_TYPE_SHADER_PROGRAM,
     ASSET_TYPE_TEXTURE,
     ASSET_TYPE_MESH
 };
 
 struct ShaderAsset
-{
-    uint32 id;
-};
-struct ShaderProgramAsset
 {
     uint32 id;
 };
@@ -39,7 +34,6 @@ struct LoadedAsset
     {
         void *untyped;
         ShaderAsset *shader;
-        ShaderProgramAsset *shaderProgram;
         TextureAsset *texture;
         MeshAsset *mesh;
     };
@@ -61,17 +55,10 @@ struct AssetFileState
     bool isUpToDate;
     bool isLoadQueued;
 };
-struct CompositeAssetState
-{
-    uint32 dependencyCount;
-    uint32 *dependencyAssetIds;
-    uint8 *dependencyVersions;
-};
 
 enum AssetRegistrationType
 {
     ASSET_REG_FILE,
-    ASSET_REG_COMPOSITE,
     ASSET_REG_VIRTUAL
 };
 struct AssetHandleInternal;
@@ -79,11 +66,7 @@ struct AssetRegistration
 {
     AssetHandleInternal *handle;
     AssetRegistrationType regType;
-    union
-    {
-        AssetFileState *fileState;
-        CompositeAssetState *compositeState;
-    };
+    AssetFileState *fileState;
     AssetType assetType;
     union
     {
@@ -111,9 +94,6 @@ typedef ASSETS_REGISTER_MESH(AssetsRegisterMesh);
 
 #define ASSETS_GET_SHADER(name) LoadedAsset *name(AssetHandle assetHandle)
 typedef ASSETS_GET_SHADER(AssetsGetShader);
-
-#define ASSETS_GET_SHADER_PROGRAM(name) LoadedAsset *name(AssetHandle assetHandle)
-typedef ASSETS_GET_SHADER_PROGRAM(AssetsGetShaderProgram);
 
 #define ASSETS_GET_TEXTURE(name) LoadedAsset *name(AssetHandle assetHandle)
 typedef ASSETS_GET_TEXTURE(AssetsGetTexture);

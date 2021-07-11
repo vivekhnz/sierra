@@ -34,7 +34,6 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.assetsRegisterTexture = assetsRegisterTexture;
     Api.assetsRegisterMesh = assetsRegisterMesh;
     Api.assetsGetShader = assetsGetShader;
-    Api.assetsGetShaderProgram = assetsGetShaderProgram;
     Api.assetsGetTexture = assetsGetTexture;
     Api.assetsGetMesh = assetsGetMesh;
     Api.assetsSetAssetData = assetsSetAssetData;

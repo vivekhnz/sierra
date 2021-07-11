@@ -132,8 +132,7 @@ typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
 // effects
 
 #define RENDERER_CREATE_EFFECT(name)                                                          \
-    RenderEffect *name(                                                                       \
-        MemoryArena *arena, AssetHandle shaderProgram, RenderEffectBlendMode blendMode)
+    RenderEffect *name(MemoryArena *arena, AssetHandle shader, RenderEffectBlendMode blendMode)
 typedef RENDERER_CREATE_EFFECT(RendererCreateEffect);
 
 #define RENDERER_SET_EFFECT_FLOAT(name)                                                       \
@@ -176,11 +175,11 @@ typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
 
 #define RENDERER_PUSH_MESHES(name)                                                            \
     void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances,               \
-        uint32 instanceCount, AssetHandle shaderProgram)
+        uint32 instanceCount, AssetHandle shader)
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_PUSH_TERRAIN(name)                                                           \
-    void name(RenderQueue *rq, Heightfield *heightfield, AssetHandle terrainShaderProgram,    \
+    void name(RenderQueue *rq, Heightfield *heightfield, AssetHandle terrainShader,           \
         uint32 heightmapTextureId, uint32 referenceHeightmapTextureId,                        \
         uint32 meshVertexBufferId, uint32 meshElementBufferId,                                \
         uint32 tessellationLevelBufferId, uint32 meshElementCount, uint32 materialCount,      \
