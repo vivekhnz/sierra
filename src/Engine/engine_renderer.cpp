@@ -187,6 +187,58 @@ struct RenderTargetDescriptor
     bool hasDepthBuffer;
 };
 
+bool createShader(uint32 type, char *src, uint32 *out_id)
+{
+    uint32 id = glCreateShader(type);
+    glShaderSource(id, 1, &src, NULL);
+
+    glCompileShader(id);
+    int32 succeeded;
+    glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
+    if (succeeded)
+    {
+        *out_id = id;
+        return 1;
+    }
+    else
+    {
+        char infoLog[512];
+        glGetShaderInfoLog(id, 512, NULL, infoLog);
+        Platform.logMessage(infoLog);
+
+        return 0;
+    }
+}
+bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
+{
+    uint32 id = glCreateProgram();
+    for (int i = 0; i < shaderCount; i++)
+    {
+        glAttachShader(id, shaderIds[i]);
+    }
+
+    glLinkProgram(id);
+    int32 succeeded;
+    glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
+    if (succeeded)
+    {
+        for (int i = 0; i < shaderCount; i++)
+        {
+            glDetachShader(id, shaderIds[i]);
+        }
+        *out_id = id;
+        return 1;
+    }
+    else
+    {
+        char infoLog[512];
+        glGetProgramInfoLog(id, 512, NULL, infoLog);
+        Platform.logMessage(infoLog);
+
+        return 0;
+    }
+}
+
 RendererInternalShaders *getInternalShaders(RenderContext *ctx)
 {
     RendererInternalShaders *shaders = &ctx->shaders_;
@@ -629,62 +681,6 @@ void main()
     return shaders;
 }
 
-bool createShader(uint32 type, char *src, uint32 *out_id)
-{
-    uint32 id = glCreateShader(type);
-    glShaderSource(id, 1, &src, NULL);
-
-    glCompileShader(id);
-    int32 succeeded;
-    glGetShaderiv(id, GL_COMPILE_STATUS, &succeeded);
-    if (succeeded)
-    {
-        *out_id = id;
-        return 1;
-    }
-    else
-    {
-        char infoLog[512];
-        glGetShaderInfoLog(id, 512, NULL, infoLog);
-        Platform.logMessage(infoLog);
-
-        return 0;
-    }
-}
-void destroyShader(uint32 id)
-{
-    glDeleteShader(id);
-}
-
-bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
-{
-    uint32 id = glCreateProgram();
-    for (int i = 0; i < shaderCount; i++)
-    {
-        glAttachShader(id, shaderIds[i]);
-    }
-
-    glLinkProgram(id);
-    int32 succeeded;
-    glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
-    if (succeeded)
-    {
-        for (int i = 0; i < shaderCount; i++)
-        {
-            glDetachShader(id, shaderIds[i]);
-        }
-        *out_id = id;
-        return 1;
-    }
-    else
-    {
-        char infoLog[512];
-        glGetProgramInfoLog(id, 512, NULL, infoLog);
-        Platform.logMessage(infoLog);
-
-        return 0;
-    }
-}
 bool createShaderProgram(
     RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId)
 {

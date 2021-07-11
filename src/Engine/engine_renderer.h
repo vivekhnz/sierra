@@ -71,10 +71,6 @@ struct RenderContext;
 struct RenderQueue;
 struct RenderEffect;
 
-bool createShader(uint32 type, char *src, uint32 *out_id);
-void destroyShader(uint32 id);
-
-bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id);
 bool createShaderProgram(
     RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId);
 void destroyShaderProgram(uint32 id);
