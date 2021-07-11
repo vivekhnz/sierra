@@ -16,8 +16,10 @@ bool initializeGame(GameMemory *memory)
     GameAssets *gameAssets = &state->gameAssets;
     EngineApi *engine = memory->engine;
 
+    state->renderCtx = engine->rendererInitialize(&memory->arena);
+
     state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
-    state->engineAssets = engine->assetsInitialize(&state->assetsArena);
+    state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
 
     AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
@@ -80,9 +82,6 @@ bool initializeGame(GameMemory *memory)
     gameAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
 
     gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, true);
-
-    state->renderCtx = engine->rendererInitialize(&memory->arena);
-    RenderContext *rctx = state->renderCtx;
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;

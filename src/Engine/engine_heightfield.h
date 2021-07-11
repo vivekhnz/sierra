@@ -3,8 +3,6 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
-#include "engine_platform.h"
-
 struct Heightfield
 {
     uint32 columns;

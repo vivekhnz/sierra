@@ -15,6 +15,7 @@ extern EnginePlatformApi Platform;
 struct Assets
 {
     MemoryArena *arena;
+    RenderContext *rctx;
 
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
@@ -95,6 +96,7 @@ ASSETS_INITIALIZE(assetsInitialize)
 {
     Assets *result = pushStruct(arena, Assets);
     result->arena = arena;
+    result->rctx = rctx;
 
     return result;
 }
@@ -215,7 +217,10 @@ ASSETS_GET_SHADER(assetsGetShader)
 ASSETS_GET_SHADER_PROGRAM(assetsGetShaderProgram)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
-    assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER_PROGRAM);
+    // todo: tidy this up once boundary between shader and shader program assets is clearer
+    // assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER_PROGRAM);
+    assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER_PROGRAM
+        || ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER);
     return getAsset(handle->assets, handle->id);
 }
 ASSETS_GET_TEXTURE(assetsGetTexture)
@@ -319,14 +324,30 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     if (assetType == ASSET_TYPE_SHADER)
     {
         char *src = static_cast<char *>(data);
-        uint32 id;
-        if (createShader(reg->metadata.shader->glShaderType, src, &id))
+
+        if (reg->metadata.shader->type == SHADER_TYPE_QUAD)
         {
-            if (!reg->asset.shader)
+            uint32 id;
+            if (createQuadShaderProgram(assets->rctx, src, &id))
             {
-                reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
+                if (!reg->asset.shaderProgram)
+                {
+                    reg->asset.shaderProgram = pushStruct(assets->arena, ShaderProgramAsset);
+                }
+                reg->asset.shaderProgram->id = id;
             }
-            reg->asset.shader->id = id;
+        }
+        else
+        {
+            uint32 id;
+            if (createShader(reg->metadata.shader->glShaderType, src, &id))
+            {
+                if (!reg->asset.shader)
+                {
+                    reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
+                }
+                reg->asset.shader->id = id;
+            }
         }
     }
     else if (assetType == ASSET_TYPE_TEXTURE)

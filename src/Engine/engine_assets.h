@@ -1,8 +1,6 @@
 #ifndef ENGINE_ASSETS_H
 #define ENGINE_ASSETS_H
 
-#include "engine_platform.h"
-
 enum AssetType
 {
     ASSET_TYPE_SHADER = 1,
@@ -103,7 +101,7 @@ struct AssetRegistration
 
 struct Assets;
 
-#define ASSETS_INITIALIZE(name) Assets *name(MemoryArena *arena)
+#define ASSETS_INITIALIZE(name) Assets *name(MemoryArena *arena, RenderContext *rctx)
 typedef ASSETS_INITIALIZE(AssetsInitialize);
 
 #define ASSETS_REGISTER_TEXTURE(name)                                                         \

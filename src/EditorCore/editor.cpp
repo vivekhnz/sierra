@@ -77,12 +77,21 @@ void initializeEditor(EditorMemory *memory)
     state->renderCtx = engine->rendererInitialize(&memory->arena);
 
     state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
-    state->engineAssets = engine->assetsInitialize(&state->assetsArena);
+    state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
     EditorAssets *editorAssets = &state->editorAssets;
 
-    AssetHandle shaderQuadVertex = engine->assetsRegisterShader(
-        assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
+    editorAssets->quadShaderBrushMask = engine->assetsRegisterShader(
+        assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendAddSub = engine->assetsRegisterShader(assets,
+        "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendFlatten = engine->assetsRegisterShader(assets,
+        "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendSmooth = engine->assetsRegisterShader(assets,
+        "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+    editorAssets->quadShaderOutline = engine->assetsRegisterShader(
+        assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
+
     AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
         assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
@@ -94,22 +103,12 @@ void initializeEditor(EditorMemory *memory)
     AssetHandle shaderTerrainComputeTessLevel =
         engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
             GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderBrushMaskFragment = engine->assetsRegisterShader(
-        assets, "brush_mask_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    AssetHandle shaderBrush_blendAddSubFragment = engine->assetsRegisterShader(assets,
-        "brush_blend_add_sub_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    AssetHandle shaderBrush_blendFlattenFragment = engine->assetsRegisterShader(assets,
-        "brush_blend_flatten_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-    AssetHandle shaderBrush_blendSmoothFragment = engine->assetsRegisterShader(assets,
-        "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
     AssetHandle shaderMeshVertex = engine->assetsRegisterShader(
         assets, "mesh_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderMeshIdFragment = engine->assetsRegisterShader(
         assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderRockFragment = engine->assetsRegisterShader(
         assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderOutlineFragment = engine->assetsRegisterShader(
-        assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
 
     AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
     editorAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
@@ -124,25 +123,6 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->shaderProgramTerrainTextured = engine->assetsRegisterShaderProgram(
         assets, texturedShaderAssetHandles, arrayCount(texturedShaderAssetHandles));
 
-    AssetHandle brushMaskShaderAssetHandles[] = {shaderQuadVertex, shaderBrushMaskFragment};
-    editorAssets->shaderProgramBrushMask = engine->assetsRegisterShaderProgram(
-        assets, brushMaskShaderAssetHandles, arrayCount(brushMaskShaderAssetHandles));
-
-    AssetHandle brushBlendAddSubShaderAssetHandles[] = {
-        shaderQuadVertex, shaderBrush_blendAddSubFragment};
-    editorAssets->shaderProgramBrushBlendAddSub = engine->assetsRegisterShaderProgram(assets,
-        brushBlendAddSubShaderAssetHandles, arrayCount(brushBlendAddSubShaderAssetHandles));
-
-    AssetHandle brushBlendFlattenShaderAssetHandles[] = {
-        shaderQuadVertex, shaderBrush_blendFlattenFragment};
-    editorAssets->shaderProgramBrushBlendFlatten = engine->assetsRegisterShaderProgram(assets,
-        brushBlendFlattenShaderAssetHandles, arrayCount(brushBlendFlattenShaderAssetHandles));
-
-    AssetHandle brushBlendSmoothShaderAssetHandles[] = {
-        shaderQuadVertex, shaderBrush_blendSmoothFragment};
-    editorAssets->shaderProgramBrushBlendSmooth = engine->assetsRegisterShaderProgram(assets,
-        brushBlendSmoothShaderAssetHandles, arrayCount(brushBlendSmoothShaderAssetHandles));
-
     AssetHandle meshIdShaderAssetHandles[] = {shaderMeshVertex, shaderMeshIdFragment};
     editorAssets->shaderProgramMeshId = engine->assetsRegisterShaderProgram(
         assets, meshIdShaderAssetHandles, arrayCount(meshIdShaderAssetHandles));
@@ -150,10 +130,6 @@ void initializeEditor(EditorMemory *memory)
     AssetHandle rockShaderAssetHandles[] = {shaderMeshVertex, shaderRockFragment};
     editorAssets->shaderProgramRock = engine->assetsRegisterShaderProgram(
         assets, rockShaderAssetHandles, arrayCount(rockShaderAssetHandles));
-
-    AssetHandle outlineShaderAssetHandles[] = {shaderQuadVertex, shaderOutlineFragment};
-    editorAssets->shaderProgramOutline = engine->assetsRegisterShaderProgram(
-        assets, outlineShaderAssetHandles, arrayCount(outlineShaderAssetHandles));
 
     editorAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
@@ -436,7 +412,7 @@ void compositeHeightmap(EditorMemory *memory,
 
     // render brush influence mask
     RenderEffect *maskEffect = engine->rendererCreateEffect(
-        &memory->arena, state->editorAssets.shaderProgramBrushMask, maskBlendMode);
+        &memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
     engine->rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
     engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
@@ -455,7 +431,7 @@ void compositeHeightmap(EditorMemory *memory,
         for (uint32 i = 0; i < iterations; i++)
         {
             RenderEffect *effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.shaderProgramBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
+                state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectInt(effect, "iterationCount", iterations);
             engine->rendererSetEffectInt(effect, "iteration", i);
             engine->rendererSetEffectTexture(effect, 0, inputTextureId);
@@ -477,19 +453,19 @@ void compositeHeightmap(EditorMemory *memory,
         if (tool == TERRAIN_BRUSH_TOOL_RAISE)
         {
             effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.shaderProgramBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+                state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectFloat(effect, "blendSign", 1);
         }
         else if (tool == TERRAIN_BRUSH_TOOL_LOWER)
         {
             effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.shaderProgramBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+                state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectFloat(effect, "blendSign", -1);
         }
         else if (tool == TERRAIN_BRUSH_TOOL_FLATTEN)
         {
             effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.shaderProgramBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
+                state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectFloat(
                 effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
         }
@@ -1395,7 +1371,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     engine->rendererDrawToTarget(rq, selectionRenderTarget);
 
     RenderEffect *outlineEffect = engine->rendererCreateEffect(
-        &memory->arena, editorAssets->shaderProgramOutline, EFFECT_BLEND_ALPHA_BLEND);
+        &memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectTexture(outlineEffect, 0, sceneRenderTarget->textureId);
     engine->rendererSetEffectTexture(outlineEffect, 1, sceneRenderTarget->depthTextureId);
     engine->rendererSetEffectTexture(outlineEffect, 2, selectionRenderTarget->textureId);

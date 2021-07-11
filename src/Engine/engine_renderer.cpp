@@ -1,8 +1,5 @@
 #include "engine_renderer.h"
 
-#include "engine_assets.h"
-#include "engine_heightfield.h"
-
 #define RENDERER_CAMERA_UBO_SLOT 0
 #define RENDERER_LIGHTING_UBO_SLOT 1
 
@@ -15,7 +12,8 @@ struct RenderContext
 {
     uint32 globalVertexArrayId;
 
-    uint32 quadShaderProgramId;
+    uint32 quadVertexShaderId;
+    uint32 texturedQuadShaderProgramId;
     uint32 quadElementBufferId;
     uint32 quadTopDownVertexBufferId;
     uint32 quadBottomUpVertexBufferId;
@@ -225,6 +223,25 @@ bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
     }
 }
 
+bool createQuadShaderProgram(RenderContext *rctx, char *src, uint32 *out_programId)
+{
+    bool result = false;
+
+    uint32 fragmentShaderId;
+    if (createShader(GL_FRAGMENT_SHADER, src, &fragmentShaderId))
+    {
+        uint32 shaderIds[] = {rctx->quadVertexShaderId, fragmentShaderId};
+        uint32 programId;
+        if (createShaderProgram(2, shaderIds, &programId))
+        {
+            *out_programId = programId;
+            result = true;
+        }
+    }
+
+    return result;
+}
+
 RenderMesh *createMesh(
     MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
 {
@@ -243,8 +260,11 @@ RenderMesh *createMesh(
     return result;
 }
 
-uint32 createQuadShaderProgram()
+RENDERER_INITIALIZE(rendererInitialize)
 {
+    RenderContext *ctx = pushStruct(arena, RenderContext);
+
+    // create quad shader program
     char *vertexShaderSrc = R"(
 #version 430 core
 layout(location = 0) in vec2 in_mesh_pos;
@@ -280,23 +300,13 @@ void main()
 }
     )";
 
-    uint32 vertexShaderId;
-    assert(createShader(GL_VERTEX_SHADER, vertexShaderSrc, &vertexShaderId));
+    assert(createShader(GL_VERTEX_SHADER, vertexShaderSrc, &ctx->quadVertexShaderId));
 
     uint32 fragmentShaderId;
     assert(createShader(GL_FRAGMENT_SHADER, fragmentShaderSrc, &fragmentShaderId));
 
-    uint32 shaderIds[] = {vertexShaderId, fragmentShaderId};
-    uint32 shaderProgramId;
-    assert(createShaderProgram(2, shaderIds, &shaderProgramId));
-
-    return shaderProgramId;
-}
-
-RENDERER_INITIALIZE(rendererInitialize)
-{
-    RenderContext *ctx = pushStruct(arena, RenderContext);
-    ctx->quadShaderProgramId = createQuadShaderProgram();
+    uint32 shaderIds[] = {ctx->quadVertexShaderId, fragmentShaderId};
+    assert(createShaderProgram(2, shaderIds, &ctx->texturedQuadShaderProgramId));
 
     glGenVertexArrays(1, &ctx->globalVertexArrayId);
 
@@ -737,7 +747,7 @@ void pushQuads(
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
     RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
-    effect->shaderProgramId = rq->ctx->quadShaderProgramId;
+    effect->shaderProgramId = rq->ctx->texturedQuadShaderProgramId;
 
     rendererSetEffectTexture(effect, 0, textureId);
     pushQuads(rq, &quad, 1, effect, isTopDown);

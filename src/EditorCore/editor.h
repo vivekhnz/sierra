@@ -133,15 +133,16 @@ struct SceneState
 
 struct EditorAssets
 {
+    AssetHandle quadShaderBrushMask;
+    AssetHandle quadShaderBrushBlendAddSub;
+    AssetHandle quadShaderBrushBlendFlatten;
+    AssetHandle quadShaderBrushBlendSmooth;
+    AssetHandle quadShaderOutline;
+
     AssetHandle shaderProgramTerrainCalcTessLevel;
     AssetHandle shaderProgramTerrainTextured;
-    AssetHandle shaderProgramBrushMask;
-    AssetHandle shaderProgramBrushBlendAddSub;
-    AssetHandle shaderProgramBrushBlendFlatten;
-    AssetHandle shaderProgramBrushBlendSmooth;
     AssetHandle shaderProgramMeshId;
     AssetHandle shaderProgramRock;
-    AssetHandle shaderProgramOutline;
 
     AssetHandle textureGroundAlbedo;
     AssetHandle textureGroundNormal;

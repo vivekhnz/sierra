@@ -1,9 +1,10 @@
 #ifndef ENGINE_H
 #define ENGINE_H
 
-#include "engine_assets.h"
+#include "engine_platform.h"
 #include "engine_heightfield.h"
 #include "engine_renderer.h"
+#include "engine_assets.h"
 
 struct EngineApi
 {
