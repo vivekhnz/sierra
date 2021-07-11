@@ -74,6 +74,8 @@ void initializeEditor(EditorMemory *memory)
     EditorState *state = pushStruct(&memory->arena, EditorState);
     EngineApi *engine = memory->engineApi;
 
+    state->renderCtx = engine->rendererInitialize(&memory->arena);
+
     state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
     state->engineAssets = engine->assetsInitialize(&state->assetsArena);
     Assets *assets = state->engineAssets;
@@ -81,8 +83,6 @@ void initializeEditor(EditorMemory *memory)
 
     AssetHandle shaderQuadVertex = engine->assetsRegisterShader(
         assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
-        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
     AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
         assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
@@ -110,10 +110,6 @@ void initializeEditor(EditorMemory *memory)
         assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderOutlineFragment = engine->assetsRegisterShader(
         assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-
-    AssetHandle quadShaderAssetHandles[] = {shaderQuadVertex, shaderTextureFragment};
-    AssetHandle quadShaderProgram = engine->assetsRegisterShaderProgram(
-        assets, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
 
     AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
     editorAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
@@ -185,9 +181,6 @@ void initializeEditor(EditorMemory *memory)
         engine->assetsRegisterTexture(assets, 0, true);
 
     editorAssets->meshRock = engine->assetsRegisterMesh(assets, "rock.obj");
-
-    state->renderCtx = engine->rendererInitialize(&memory->arena, quadShaderProgram);
-    RenderContext *rctx = state->renderCtx;
 
     state->uiState.selectedObjectCount = 0;
     state->uiState.selectedObjectIds = pushArray(&memory->arena, uint32, MAX_OBJECT_INSTANCES);

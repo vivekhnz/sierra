@@ -15,7 +15,7 @@ struct RenderContext
 {
     uint32 globalVertexArrayId;
 
-    AssetHandle quadShaderProgramHandle;
+    uint32 quadShaderProgramId;
     uint32 quadElementBufferId;
     uint32 quadTopDownVertexBufferId;
     uint32 quadBottomUpVertexBufferId;
@@ -74,6 +74,7 @@ struct RenderEffect
 {
     MemoryArena *arena;
     AssetHandle shaderProgramHandle;
+    uint32 shaderProgramId;
     RenderEffectBlendMode blendMode;
     RenderEffectParameter *firstParameter;
     RenderEffectParameter *lastParameter;
@@ -242,10 +243,60 @@ RenderMesh *createMesh(
     return result;
 }
 
+uint32 createQuadShaderProgram()
+{
+    char *vertexShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec2 in_mesh_pos;
+layout(location = 1) in vec2 in_mesh_uv;
+layout(location = 2) in vec4 in_instance_rect;
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
+layout(location = 0) out vec2 out_uv;
+
+void main()
+{
+    vec2 pos = in_instance_rect.xy + (in_instance_rect.zw * in_mesh_pos);
+    gl_Position = camera_transform * vec4(pos, 0, 1);
+    out_uv = in_mesh_uv;
+}
+    )";
+
+    char *fragmentShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec2 uv;
+
+layout(binding = 0) uniform sampler2D imageTexture;
+
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(texture(imageTexture, uv).rgb, 1);
+}
+    )";
+
+    uint32 vertexShaderId;
+    assert(createShader(GL_VERTEX_SHADER, vertexShaderSrc, &vertexShaderId));
+
+    uint32 fragmentShaderId;
+    assert(createShader(GL_FRAGMENT_SHADER, fragmentShaderSrc, &fragmentShaderId));
+
+    uint32 shaderIds[] = {vertexShaderId, fragmentShaderId};
+    uint32 shaderProgramId;
+    assert(createShaderProgram(2, shaderIds, &shaderProgramId));
+
+    return shaderProgramId;
+}
+
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
-    ctx->quadShaderProgramHandle = quadShaderProgramHandle;
+    ctx->quadShaderProgramId = createQuadShaderProgram();
 
     glGenVertexArrays(1, &ctx->globalVertexArrayId);
 
@@ -535,6 +586,7 @@ RENDERER_CREATE_EFFECT(rendererCreateEffect)
 
     result->arena = arena;
     result->shaderProgramHandle = shaderProgram;
+    result->shaderProgramId = 0;
     result->blendMode = blendMode;
     result->firstParameter = 0;
     result->lastParameter = 0;
@@ -684,8 +736,9 @@ void pushQuads(
 
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
-    RenderEffect *effect = rendererCreateEffect(
-        rq->arena, rq->ctx->quadShaderProgramHandle, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
+    effect->shaderProgramId = rq->ctx->quadShaderProgramId;
+
     rendererSetEffectTexture(effect, 0, textureId);
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
@@ -751,12 +804,30 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
 bool applyEffect(RenderEffect *effect)
 {
-    bool wasEffectApplied = false;
+    bool isMissingResources = false;
 
-    LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
-    if (shaderProgram->shaderProgram)
+    // load shader from asset system via an asset handle if one was specified
+    // otherwise, we assume that the shader program ID was explicitly set on the effect
+    uint32 shaderProgramId;
+    if (effect->shaderProgramHandle)
     {
-        uint32 shaderProgramId = shaderProgram->shaderProgram->id;
+        LoadedAsset *shaderProgram = assetsGetShaderProgram(effect->shaderProgramHandle);
+        if (shaderProgram->shaderProgram)
+        {
+            shaderProgramId = shaderProgram->shaderProgram->id;
+        }
+        else
+        {
+            isMissingResources = true;
+        }
+    }
+    else
+    {
+        shaderProgramId = effect->shaderProgramId;
+    }
+
+    if (!isMissingResources)
+    {
         glUseProgram(shaderProgramId);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
         glEnable(GL_DEPTH_TEST);
@@ -817,11 +888,9 @@ bool applyEffect(RenderEffect *effect)
 
             effectTexture = effectTexture->next;
         }
-
-        wasEffectApplied = true;
     }
 
-    return wasEffectApplied;
+    return !isMissingResources;
 }
 
 bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)

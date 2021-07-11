@@ -20,10 +20,6 @@ bool initializeGame(GameMemory *memory)
     state->engineAssets = engine->assetsInitialize(&state->assetsArena);
     Assets *assets = state->engineAssets;
 
-    AssetHandle shaderQuadVertex = engine->assetsRegisterShader(
-        assets, "quad_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle shaderTextureFragment = engine->assetsRegisterShader(
-        assets, "texture_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
     AssetHandle shaderTerrainVertex = engine->assetsRegisterShader(
         assets, "terrain_vertex_shader.glsl", GL_VERTEX_SHADER, SHADER_TYPE_STANDALONE);
     AssetHandle shaderTerrainTessCtrl = engine->assetsRegisterShader(assets,
@@ -60,10 +56,6 @@ bool initializeGame(GameMemory *memory)
     gameAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
         assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
 
-    AssetHandle quadShaderAssetHandles[] = {shaderQuadVertex, shaderTextureFragment};
-    AssetHandle quadShaderProgramHandle = engine->assetsRegisterShaderProgram(
-        assets, quadShaderAssetHandles, arrayCount(quadShaderAssetHandles));
-
     gameAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
     gameAssets->textureGroundNormal =
@@ -89,7 +81,7 @@ bool initializeGame(GameMemory *memory)
 
     gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, true);
 
-    state->renderCtx = engine->rendererInitialize(&memory->arena, quadShaderProgramHandle);
+    state->renderCtx = engine->rendererInitialize(&memory->arena);
     RenderContext *rctx = state->renderCtx;
 
     state->isOrbitCameraMode = false;

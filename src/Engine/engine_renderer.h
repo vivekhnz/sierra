@@ -71,8 +71,7 @@ bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id);
 RenderMesh *createMesh(
     MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
 
-#define RENDERER_INITIALIZE(name)                                                             \
-    RenderContext *name(MemoryArena *arena, AssetHandle quadShaderProgramHandle)
+#define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
 #define RENDERER_UPDATE_LIGHTING_STATE(name)                                                  \
