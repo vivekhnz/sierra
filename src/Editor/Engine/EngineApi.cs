@@ -75,7 +75,6 @@ namespace Terrain.Editor.Engine
         public IntPtr assetsInitialize;
         public IntPtr assetsRegisterShader;
         public IntPtr assetsRegisterTexture;
-        public IntPtr assetsRegisterShaderProgram;
         public IntPtr assetsRegisterMesh;
         public IntPtr assetsGetShader;
         public IntPtr assetsGetShaderProgram;

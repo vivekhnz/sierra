@@ -106,10 +106,6 @@ typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
     AssetHandle name(Assets *assets, const char *relativePath, ShaderType type)
 typedef ASSETS_REGISTER_SHADER(AssetsRegisterShader);
 
-#define ASSETS_REGISTER_SHADER_PROGRAM(name)                                                  \
-    AssetHandle name(Assets *assets, AssetHandle *shaderAssetHandles, uint32 shaderCount)
-typedef ASSETS_REGISTER_SHADER_PROGRAM(AssetsRegisterShaderProgram);
-
 #define ASSETS_REGISTER_MESH(name) AssetHandle name(Assets *assets, const char *relativePath)
 typedef ASSETS_REGISTER_MESH(AssetsRegisterMesh);
 

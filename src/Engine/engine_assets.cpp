@@ -116,12 +116,6 @@ ASSETS_REGISTER_SHADER(assetsRegisterShader)
     reg->metadata.shader->type = type;
     return reg->handle;
 }
-ASSETS_REGISTER_SHADER_PROGRAM(assetsRegisterShaderProgram)
-{
-    AssetRegistration *reg =
-        registerAsset(assets, ASSET_TYPE_SHADER_PROGRAM, 0, shaderAssetHandles, shaderCount);
-    return reg->handle;
-}
 ASSETS_REGISTER_MESH(assetsRegisterMesh)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_MESH, relativePath, 0, 0);
