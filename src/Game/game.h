@@ -13,8 +13,6 @@ struct GameAssets
     AssetHandle terrainShaderWireframe;
     AssetHandle terrainShaderTextured;
 
-    AssetHandle shaderProgramTerrainCalcTessLevel;
-
     AssetHandle textureGroundAlbedo;
     AssetHandle textureGroundNormal;
     AssetHandle textureGroundDisplacement;

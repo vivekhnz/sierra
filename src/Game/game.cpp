@@ -27,13 +27,6 @@ bool initializeGame(GameMemory *memory)
     gameAssets->terrainShaderWireframe = engine->assetsRegisterShader(
         assets, "wireframe_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
 
-    AssetHandle shaderTerrainComputeTessLevel =
-        engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
-            GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
-    gameAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
-        assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
-
     gameAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
     gameAssets->textureGroundNormal =
@@ -526,8 +519,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-    engine->rendererPushTerrain(rq, &state->heightfield,
-        gameAssets->shaderProgramTerrainCalcTessLevel, terrainShaderProgram,
+    engine->rendererPushTerrain(rq, &state->heightfield, terrainShaderProgram,
         state->heightmapTextureId, state->heightmapTextureId,
         state->terrainMeshVertexBuffer.id, state->terrainMeshElementBuffer.id,
         state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,

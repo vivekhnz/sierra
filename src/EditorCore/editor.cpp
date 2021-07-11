@@ -91,21 +91,12 @@ void initializeEditor(EditorMemory *memory)
         "brush_blend_smooth_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
     editorAssets->quadShaderOutline = engine->assetsRegisterShader(
         assets, "outline_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_QUAD);
-
     editorAssets->meshShaderId = engine->assetsRegisterShader(
         assets, "mesh_id_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_MESH);
     editorAssets->meshShaderRock = engine->assetsRegisterShader(
         assets, "rock_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_MESH);
-
     editorAssets->terrainShaderTextured = engine->assetsRegisterShader(
         assets, "terrain_fragment_shader.glsl", GL_FRAGMENT_SHADER, SHADER_TYPE_TERRAIN);
-
-    AssetHandle shaderTerrainComputeTessLevel =
-        engine->assetsRegisterShader(assets, "terrain_calc_tess_levels_comp_shader.glsl",
-            GL_COMPUTE_SHADER, SHADER_TYPE_STANDALONE);
-    AssetHandle calcTessLevelShaderAssetHandles[] = {shaderTerrainComputeTessLevel};
-    editorAssets->shaderProgramTerrainCalcTessLevel = engine->assetsRegisterShaderProgram(
-        assets, calcTessLevelShaderAssetHandles, arrayCount(calcTessLevelShaderAssetHandles));
 
     editorAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
@@ -1304,14 +1295,14 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     engine->rendererPushTerrain(rq, &sceneState->heightfield,
-        editorAssets->shaderProgramTerrainCalcTessLevel, editorAssets->terrainShaderTextured,
-        activeHeightmapTextureId, referenceHeightmapTextureId,
-        sceneState->terrainMesh.vertexBuffer.id, sceneState->terrainMesh.elementBuffer.id,
-        sceneState->tessellationLevelBuffer.id, sceneState->terrainMesh.elementCount,
-        sceneState->materialCount, sceneState->albedoTextureArrayId,
-        sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId,
-        sceneState->aoTextureArrayId, sceneState->materialPropsBuffer.id, false,
-        visualizationMode, sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
+        editorAssets->terrainShaderTextured, activeHeightmapTextureId,
+        referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+        sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
+        sceneState->terrainMesh.elementCount, sceneState->materialCount,
+        sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
+        sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+        sceneState->materialPropsBuffer.id, false, visualizationMode,
+        sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
         sceneState->worldState.brushFalloff);
     engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
         sceneState->objectInstanceCount, editorAssets->meshShaderRock);

@@ -22,6 +22,8 @@ struct RendererInternalShaders
     uint32 terrainVertexShaderId;
     uint32 terrainTessCtrlShaderId;
     uint32 terrainTessEvalShaderId;
+    uint32 terrainCalcTessLevelShaderId;
+    uint32 terrainCalcTessLevelShaderProgramId;
 };
 
 struct RenderContext
@@ -140,7 +142,6 @@ struct DrawTerrainCommand
 {
     Heightfield *heightfield;
 
-    AssetHandle calcTessLevelShaderProgram;
     AssetHandle terrainShaderProgram;
 
     uint32 heightmapTextureId;
@@ -194,10 +195,14 @@ RendererInternalShaders *getInternalShaders(RenderContext *ctx)
         if (shaders->initialized)
         {
             glDeleteProgram(shaders->texturedQuadShaderProgramId);
+            glDeleteProgram(shaders->terrainCalcTessLevelShaderProgramId);
             glDeleteShader(shaders->quadVertexShaderId);
             glDeleteShader(shaders->quadFragmentShaderId);
-
             glDeleteShader(shaders->meshVertexShaderId);
+            glDeleteShader(shaders->terrainVertexShaderId);
+            glDeleteShader(shaders->terrainTessCtrlShaderId);
+            glDeleteShader(shaders->terrainTessEvalShaderId);
+            glDeleteShader(shaders->terrainCalcTessLevelShaderId);
         }
 
         // create quad shader program
@@ -485,12 +490,138 @@ void main()
     gl_Position = camera_transform * vec4(pos, 1.0f);
 }
         )";
+        char *terrainCalcTessLevelShaderSrc = R"(
+#version 430
+layout(local_size_x = 1) in;
+
+layout(std430, binding = 0) buffer tessellationLevelBuffer
+{
+    vec4 vertEdgeTessLevels[];
+};
+
+struct Vertex
+{
+    float pos_x;
+    float pos_y;
+    float pos_z;
+    float uv_x;
+    float uv_y;
+};
+layout(std430, binding = 1) buffer vertexBuffer
+{
+    Vertex vertices[];
+};
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
+uniform int horizontalEdgeCount;
+uniform int columnCount;
+uniform float targetTriangleSize;
+uniform float terrainHeight;
+layout(binding = 0) uniform sampler2D heightmapTexture;
+
+vec3 worldToScreen(vec3 p)
+{
+    vec4 clipPos = camera_transform * vec4(p, 1.0f);
+    return clipPos.xyz / clipPos.w;
+}
+
+float height(vec2 uv)
+{
+    return texture(heightmapTexture, uv).x * terrainHeight;
+}
+
+float calcTessLevel(Vertex a, Vertex b)
+{
+    bool cull = false;
+
+    vec3 pA = vec3(a.pos_x, height(vec2(a.uv_x, a.uv_y)), a.pos_z);
+    vec3 pB = vec3(b.pos_x, height(vec2(b.uv_x, b.uv_y)), b.pos_z);
+    
+    vec3 pAB1 = (pA + pB) * 0.5f;
+    vec3 pAB2 = pAB1 + vec3(0.0f, distance(pA, pB), 0.0f);
+
+    float clipW = (camera_transform * vec4(pAB1, 1.0f)).w;
+    if (clipW < 0.0f)
+    {
+        // cull anything behind the camera
+        cull = true;
+    }
+    else
+    {
+        // cull anything that is too far outside of the screen bounds
+        vec3 pAScreen = worldToScreen(pA);
+        vec3 pBScreen = worldToScreen(pB);
+        float xBounds = min(abs(pAScreen.x), abs(pBScreen.x));
+        float yBounds = min(abs(pAScreen.z), abs(pBScreen.z));
+
+        // increase tolerance for triangles directly in front of the camera to avoid them
+        // being culled when the camera gets very close
+        float tolerance = clipW > 10.0f ? 1.5f : 5.0f;
+        if (max(xBounds, yBounds) > tolerance)
+        {
+            cull = true;
+        }
+    }
+    
+    float screenEdgeLength = distance(worldToScreen(pAB1), worldToScreen(pAB2));
+    float T = screenEdgeLength / targetTriangleSize;
+
+    /*
+     * We could set the tessellation level to 0 to cull patches however we have only
+     * determined whether this edge should be culled, not the entire patch.
+     *
+     * Instead of returning zero, we will negate the tessellation level to indicate that
+     * it can be culled, but still provide the calculated tessellation level. This allows
+     * the tessellation control shader to only cull the patch if all edges are marked
+     * cullable (have a negative tessellation level).
+     */
+    return T * (cull ? -1.0f : 1.0f);
+}
+
+void main()
+{
+    if (gl_GlobalInvocationID.x < horizontalEdgeCount)
+    {
+        uint aIndex = gl_GlobalInvocationID.x
+            + uint(floor(float(gl_GlobalInvocationID.x) / (columnCount - 1)));
+        uint bIndex = aIndex + 1;
+
+        Vertex a = vertices[aIndex];
+        Vertex b = vertices[bIndex];
+
+        float T = calcTessLevel(a, b);
+        vertEdgeTessLevels[aIndex].x = T;
+        vertEdgeTessLevels[bIndex].z = T;
+    }
+    else
+    {
+        uint aIndex = gl_GlobalInvocationID.x - horizontalEdgeCount;
+        uint bIndex = aIndex + columnCount;
+
+        Vertex a = vertices[aIndex];
+        Vertex b = vertices[bIndex];
+
+        float T = calcTessLevel(a, b);
+        vertEdgeTessLevels[aIndex].y = T;
+        vertEdgeTessLevels[bIndex].w = T;
+    }
+}
+        )";
+
         assert(createShader(
             GL_VERTEX_SHADER, terrainVertexShaderSrc, &shaders->terrainVertexShaderId));
         assert(createShader(GL_TESS_CONTROL_SHADER, terrainTessCtrlShaderSrc,
             &shaders->terrainTessCtrlShaderId));
         assert(createShader(GL_TESS_EVALUATION_SHADER, terrainTessEvalShaderSrc,
             &shaders->terrainTessEvalShaderId));
+        assert(createShader(GL_COMPUTE_SHADER, terrainCalcTessLevelShaderSrc,
+            &shaders->terrainCalcTessLevelShaderId));
+        assert(createShaderProgram(1, &shaders->terrainCalcTessLevelShaderId,
+            &shaders->terrainCalcTessLevelShaderProgramId));
 
         shaders->initialized = true;
         WasRendererReloaded = false;
@@ -1107,7 +1238,6 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
     cmd->heightfield = heightfield;
 
-    cmd->calcTessLevelShaderProgram = calcTessLevelShaderProgram;
     cmd->terrainShaderProgram = terrainShaderProgram;
 
     cmd->heightmapTextureId = heightmapTextureId;
@@ -1241,6 +1371,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         rq->ctx->meshInstances, GL_STREAM_DRAW);
 
     glBindVertexArray(rq->ctx->globalVertexArrayId);
+
+    RendererInternalShaders *shaders = getInternalShaders(rq->ctx);
 
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
@@ -1379,16 +1511,13 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         {
             DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
 
-            LoadedAsset *calcTessLevelShaderProgram =
-                assetsGetShaderProgram(cmd->calcTessLevelShaderProgram);
             LoadedAsset *terrainShaderProgram =
                 assetsGetShaderProgram(cmd->terrainShaderProgram);
-            if (calcTessLevelShaderProgram->shaderProgram
-                && terrainShaderProgram->shaderProgram)
+            if (terrainShaderProgram->shaderProgram)
             {
                 Heightfield *heightfield = cmd->heightfield;
                 uint32 calcTessLevelShaderProgramId =
-                    calcTessLevelShaderProgram->shaderProgram->id;
+                    shaders->terrainCalcTessLevelShaderProgramId;
                 uint32 terrainShaderProgramId = terrainShaderProgram->shaderProgram->id;
                 uint32 meshEdgeCount = (2 * (heightfield->rows * heightfield->columns))
                     - heightfield->rows - heightfield->columns;

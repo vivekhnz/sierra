@@ -181,8 +181,7 @@ typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_PUSH_TERRAIN(name)                                                           \
-    void name(RenderQueue *rq, Heightfield *heightfield,                                      \
-        AssetHandle calcTessLevelShaderProgram, AssetHandle terrainShaderProgram,             \
+    void name(RenderQueue *rq, Heightfield *heightfield, AssetHandle terrainShaderProgram,    \
         uint32 heightmapTextureId, uint32 referenceHeightmapTextureId,                        \
         uint32 meshVertexBufferId, uint32 meshElementBufferId,                                \
         uint32 tessellationLevelBufferId, uint32 meshElementCount, uint32 materialCount,      \

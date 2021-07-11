@@ -142,8 +142,6 @@ struct EditorAssets
     AssetHandle meshShaderRock;
     AssetHandle terrainShaderTextured;
 
-    AssetHandle shaderProgramTerrainCalcTessLevel;
-
     AssetHandle textureGroundAlbedo;
     AssetHandle textureGroundNormal;
     AssetHandle textureGroundDisplacement;
