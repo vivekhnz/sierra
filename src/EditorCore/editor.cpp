@@ -81,22 +81,22 @@ void initializeEditor(EditorMemory *memory)
     Assets *assets = state->engineAssets;
     EditorAssets *editorAssets = &state->editorAssets;
 
-    editorAssets->quadShaderBrushMask = engine->assetsRegisterShader(
-        assets, "brush_mask_fragment_shader.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushMask =
+        engine->assetsRegisterShader(assets, "quad_brush_mask.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderBrushBlendAddSub = engine->assetsRegisterShader(
-        assets, "brush_blend_add_sub_fragment_shader.glsl", SHADER_TYPE_QUAD);
+        assets, "quad_brush_blend_add_sub.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderBrushBlendFlatten = engine->assetsRegisterShader(
-        assets, "brush_blend_flatten_fragment_shader.glsl", SHADER_TYPE_QUAD);
+        assets, "quad_brush_blend_flatten.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderBrushBlendSmooth = engine->assetsRegisterShader(
-        assets, "brush_blend_smooth_fragment_shader.glsl", SHADER_TYPE_QUAD);
+        assets, "quad_brush_blend_smooth.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderOutline =
-        engine->assetsRegisterShader(assets, "outline_fragment_shader.glsl", SHADER_TYPE_QUAD);
+        engine->assetsRegisterShader(assets, "quad_outline.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->meshShaderId =
-        engine->assetsRegisterShader(assets, "mesh_id_fragment_shader.glsl", SHADER_TYPE_MESH);
+        engine->assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->meshShaderRock =
-        engine->assetsRegisterShader(assets, "rock_fragment_shader.glsl", SHADER_TYPE_MESH);
-    editorAssets->terrainShaderTextured = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", SHADER_TYPE_TERRAIN);
+        engine->assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
+    editorAssets->terrainShaderTextured =
+        engine->assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
 
     editorAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);

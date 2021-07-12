@@ -22,10 +22,10 @@ bool initializeGame(GameMemory *memory)
     state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
 
-    gameAssets->terrainShaderTextured = engine->assetsRegisterShader(
-        assets, "terrain_fragment_shader.glsl", SHADER_TYPE_TERRAIN);
-    gameAssets->terrainShaderWireframe = engine->assetsRegisterShader(
-        assets, "wireframe_fragment_shader.glsl", SHADER_TYPE_TERRAIN);
+    gameAssets->terrainShaderTextured =
+        engine->assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
+    gameAssets->terrainShaderWireframe =
+        engine->assetsRegisterShader(assets, "terrain_wireframe.fs.glsl", SHADER_TYPE_TERRAIN);
 
     gameAssets->textureGroundAlbedo =
         engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
