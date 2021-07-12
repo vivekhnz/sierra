@@ -91,6 +91,8 @@ void initializeEditor(EditorMemory *memory)
         assets, "quad_brush_blend_smooth.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderOutline =
         engine->assetsRegisterShader(assets, "quad_outline.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderIdVisualiser =
+        engine->assetsRegisterShader(assets, "quad_id_visualiser.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->meshShaderId =
         engine->assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->meshShaderRock =
@@ -1335,17 +1337,23 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
     engine->rendererDrawToTarget(rq, selectionRenderTarget);
 
-    RenderEffect *outlineEffect = engine->rendererCreateEffect(
+#if 1
+    RenderEffect *effect = engine->rendererCreateEffect(
         &memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectTexture(outlineEffect, 0, sceneRenderTarget->textureId);
-    engine->rendererSetEffectTexture(outlineEffect, 1, sceneRenderTarget->depthTextureId);
-    engine->rendererSetEffectTexture(outlineEffect, 2, selectionRenderTarget->textureId);
-    engine->rendererSetEffectTexture(outlineEffect, 3, selectionRenderTarget->depthTextureId);
+    engine->rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureId);
+    engine->rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureId);
+    engine->rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureId);
+    engine->rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureId);
+#else
+    RenderEffect *effect = engine->rendererCreateEffect(
+        &memory->arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
+    engine->rendererSetEffectTexture(effect, 0, selectionRenderTarget->textureId);
+#endif
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, outlineEffect);
+    engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
