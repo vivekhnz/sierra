@@ -79,6 +79,7 @@ struct SceneViewState
 
     RenderTarget *sceneRenderTarget;
     RenderTarget *selectionRenderTarget;
+    RenderTarget *pickingRenderTarget;
 };
 
 struct GpuMaterialProperties

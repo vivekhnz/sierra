@@ -1252,15 +1252,19 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH);
+        viewState->pickingRenderTarget = engine->rendererCreateRenderTarget(
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH);
         view->viewState = viewState;
     }
 
     RenderTarget *sceneRenderTarget = viewState->sceneRenderTarget;
     RenderTarget *selectionRenderTarget = viewState->selectionRenderTarget;
+    RenderTarget *pickingRenderTarget = viewState->pickingRenderTarget;
     if (view->width != sceneRenderTarget->width || view->height != sceneRenderTarget->height)
     {
         engine->rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
         engine->rendererResizeRenderTarget(selectionRenderTarget, view->width, view->height);
+        engine->rendererResizeRenderTarget(pickingRenderTarget, view->width, view->height);
     }
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
@@ -1312,7 +1316,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
-
     if (state->uiState.selectedObjectCount > 0)
     {
         uint32 objectsFound = 0;
@@ -1337,6 +1340,15 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
     engine->rendererDrawToTarget(rq, selectionRenderTarget);
 
+    rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+    engine->rendererClear(rq, 0, 0, 0, 1);
+    for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+    {
+        engine->rendererPushMeshes(rq, editorAssets->meshRock,
+            &sceneState->objectInstanceData[i], 1, editorAssets->meshShaderId);
+    }
+    engine->rendererDrawToTarget(rq, pickingRenderTarget);
+
 #if 1
     RenderEffect *effect = engine->rendererCreateEffect(
         &memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
@@ -1347,7 +1359,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 #else
     RenderEffect *effect = engine->rendererCreateEffect(
         &memory->arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectTexture(effect, 0, selectionRenderTarget->textureId);
+    engine->rendererSetEffectTexture(effect, 0, pickingRenderTarget->textureId);
 #endif
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
