@@ -97,14 +97,15 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererCreateEffect;
         public IntPtr rendererSetEffectFloat;
         public IntPtr rendererSetEffectInt;
+        public IntPtr rendererSetEffectUint;
         public IntPtr rendererSetEffectTexture;
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCameraOrtho;
         public IntPtr rendererSetCameraPersp;
         public IntPtr rendererClear;
         public IntPtr rendererPushTexturedQuad;
-        public IntPtr rendererPushEffectQuad;
-        public IntPtr rendererPushEffectQuads;
+        public IntPtr rendererPushQuad;
+        public IntPtr rendererPushQuads;
         public IntPtr rendererPushMeshes;
         public IntPtr rendererPushTerrain;
         public IntPtr rendererDrawToTarget;

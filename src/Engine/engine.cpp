@@ -56,14 +56,15 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererCreateEffect = rendererCreateEffect;
     Api.rendererSetEffectFloat = rendererSetEffectFloat;
     Api.rendererSetEffectInt = rendererSetEffectInt;
+    Api.rendererSetEffectUint = rendererSetEffectUint;
     Api.rendererSetEffectTexture = rendererSetEffectTexture;
     Api.rendererCreateQueue = rendererCreateQueue;
     Api.rendererSetCameraOrtho = rendererSetCameraOrtho;
     Api.rendererSetCameraPersp = rendererSetCameraPersp;
     Api.rendererClear = rendererClear;
     Api.rendererPushTexturedQuad = rendererPushTexturedQuad;
-    Api.rendererPushEffectQuad = rendererPushEffectQuad;
-    Api.rendererPushEffectQuads = rendererPushEffectQuads;
+    Api.rendererPushQuad = rendererPushQuad;
+    Api.rendererPushQuads = rendererPushQuads;
     Api.rendererPushMeshes = rendererPushMeshes;
     Api.rendererPushTerrain = rendererPushTerrain;
     Api.rendererDrawToTarget = rendererDrawToTarget;

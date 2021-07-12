@@ -16,6 +16,12 @@ vec3 hueToRgb(float hue)
 void main()
 {
     uint id = texture(idTexture, uv).r;
+    
+    // mod operates on signed integers so will clamp any IDs above 2^31
+    // we need to mask out the most significant bit so that we can still distinguish between
+    // objects with IDs above 2^31
+    id &= ((1 << 31) - 1);
+
     vec3 outColor = vec3(0);
     if (id > 0)
     {

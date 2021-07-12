@@ -34,7 +34,9 @@ enum RenderTargetFormat
 {
     RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
     RENDER_TARGET_FORMAT_R16,
-    RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH
+    RENDER_TARGET_FORMAT_R8UI_WITH_DEPTH,
+    RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH,
+    RENDER_TARGET_FORMAT_R32UI_WITH_DEPTH
 };
 
 struct RenderTarget
@@ -63,7 +65,7 @@ struct RenderQuad
 };
 struct RenderMeshInstance
 {
-    uint16 id;
+    uint32 id;
     glm::mat4 transform;
 };
 
@@ -139,6 +141,10 @@ typedef RENDERER_SET_EFFECT_FLOAT(RendererSetEffectFloat);
     void name(RenderEffect *effect, char *paramName, int32 value)
 typedef RENDERER_SET_EFFECT_INT(RendererSetEffectInt);
 
+#define RENDERER_SET_EFFECT_UINT(name)                                                        \
+    void name(RenderEffect *effect, char *paramName, uint32 value)
+typedef RENDERER_SET_EFFECT_UINT(RendererSetEffectUint);
+
 #define RENDERER_SET_EFFECT_TEXTURE(name)                                                     \
     void name(RenderEffect *effect, uint32 slot, uint32 textureId)
 typedef RENDERER_SET_EFFECT_TEXTURE(RendererSetEffectTexture);
@@ -161,17 +167,17 @@ typedef RENDERER_CLEAR(RendererClear);
     void name(RenderQueue *rq, RenderQuad quad, uint32 textureId, bool isTopDown)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
-#define RENDERER_PUSH_EFFECT_QUAD(name)                                                       \
+#define RENDERER_PUSH_QUAD(name)                                                              \
     void name(RenderQueue *rq, RenderQuad quad, RenderEffect *effect)
-typedef RENDERER_PUSH_EFFECT_QUAD(RendererPushEffectQuad);
+typedef RENDERER_PUSH_QUAD(RendererPushQuad);
 
-#define RENDERER_PUSH_EFFECT_QUADS(name)                                                      \
+#define RENDERER_PUSH_QUADS(name)                                                             \
     void name(RenderQueue *rq, RenderQuad *quads, int quadCount, RenderEffect *effect)
-typedef RENDERER_PUSH_EFFECT_QUADS(RendererPushEffectQuads);
+typedef RENDERER_PUSH_QUADS(RendererPushQuads);
 
 #define RENDERER_PUSH_MESHES(name)                                                            \
     void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances,               \
-        uint32 instanceCount, AssetHandle shader)
+        uint32 instanceCount, RenderEffect *effect)
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_PUSH_TERRAIN(name)                                                           \

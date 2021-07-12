@@ -250,7 +250,8 @@ void initializeEditor(EditorMemory *memory)
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     sceneState->nextMaterialId = 1;
 
-    sceneState->nextObjectId = 1;
+    // the first bit of the ID is used to signify that this is a mesh instance
+    sceneState->nextObjectId = (1 << 31) | 1;
 
     // initialize document state
     state->docState.materialCount = 0;
@@ -388,7 +389,7 @@ void compositeHeightmap(EditorMemory *memory,
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushEffectQuads(rq, brushInstances, brushInstanceCount, maskEffect);
+    engine->rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
     engine->rendererDrawToTarget(rq, brushInfluenceMask);
 
     // render heightmap
@@ -409,7 +410,7 @@ void compositeHeightmap(EditorMemory *memory,
             RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
             engine->rendererSetCameraOrtho(rq);
             engine->rendererClear(rq, 0, 0, 0, 1);
-            engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
+            engine->rendererPushQuad(rq, {0, 0, 1, 1}, effect);
             engine->rendererDrawToTarget(rq, iterationOutput);
 
             inputTextureId = iterationOutput->textureId;
@@ -445,7 +446,7 @@ void compositeHeightmap(EditorMemory *memory,
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
         engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
+        engine->rendererPushQuad(rq, {0, 0, 1, 1}, effect);
         engine->rendererDrawToTarget(rq, output);
     }
 
@@ -775,11 +776,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         uint32 objectId = docState->objectIds[i];
 
         RenderMeshInstance *instance = &sceneState->objectInstanceData[i];
-
-        // render ID is a 16-bit ID used for distinguishing between nearby objects
-        // take the 15 least significant bits of the 32-bit object ID
-        // set the most significant bit to 1 to signify that this is a mesh instance
-        instance->id = (1 << 15) | (objectId & 0x00007FFF);
+        instance->id = objectId;
         instance->transform = matrix;
     }
 
@@ -929,129 +926,165 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             }
             else
             {
-                glm::vec3 up = glm::vec3(0, 1, 0);
-                float aspectRatio = (float)activeViewState->sceneRenderTarget->width
-                    / (float)activeViewState->sceneRenderTarget->height;
-                glm::mat4 projection =
-                    glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
-                glm::mat4 cameraTransform = projection
-                    * glm::lookAt(
-                        activeViewState->cameraPos, activeViewState->cameraLookAt, up);
-
-                glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
-                glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
-                glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
-                glm::vec4 worldPos = inverseViewProjection * screenPos;
-
-                glm::vec3 intersectionPoint;
-                Heightfield *heightfield = &state->sceneState.heightfield;
-                if (engine->heightfieldIsRayIntersecting(heightfield,
-                        activeViewState->cameraPos, glm::normalize(glm::vec3(worldPos)),
-                        &intersectionPoint))
+                if (isButtonDown(input, EDITOR_INPUT_KEY_ALT))
                 {
-                    glm::vec2 heightfieldSize =
-                        glm::vec2(heightfield->columns, heightfield->rows)
-                        * heightfield->spacing;
-                    glm::vec3 relativeIntersectionPoint = intersectionPoint
-                        - glm::vec3(heightfield->position.x, 0, heightfield->position.y);
-                    newBrushPos =
-                        glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z)
-                        / heightfieldSize;
-
-                    if (!state->isEditingHeightmap)
+                    if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                     {
-                        state->activeBrushStrokeInitialHeight =
-                            relativeIntersectionPoint.y / heightfield->maxHeight;
-                    }
+                        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
 
-                    if (isButtonDown(input, EDITOR_INPUT_KEY_R))
-                    {
-                        float brushRadiusIncrease =
-                            input->cursorOffset.x + input->cursorOffset.y;
+                        RenderTarget *pickingTarget = activeViewState->pickingRenderTarget;
+                        uint32 pixelCount = pickingTarget->width * pickingTarget->height;
+                        uint32 *pickingIds = pushArray(&memory->arena, uint32, pixelCount);
+                        engine->rendererReadTexturePixels(pickingTarget->textureId,
+                            GL_UNSIGNED_INT, GL_RED_INTEGER, pickingIds);
 
-                        memory->platformCaptureMouse();
-                        state->uiState.terrainBrushRadius =
-                            glm::clamp(state->uiState.terrainBrushRadius + brushRadiusIncrease,
-                                32.0f, 2048.0f);
-                        state->isAdjustingBrushParameters = true;
-                    }
-                    else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
-                    {
-                        float brushFalloffIncrease =
-                            (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                        uint32 cursorX =
+                            (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
+                        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y)
+                            * pickingTarget->height);
+                        uint32 pickedId =
+                            pickingIds[(cursorY * pickingTarget->width) + cursorX];
 
-                        memory->platformCaptureMouse();
-                        state->uiState.terrainBrushFalloff = glm::clamp(
-                            state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f,
-                            0.99f);
-                        state->isAdjustingBrushParameters = true;
-                    }
-                    else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
-                    {
-                        float brushStrengthIncrease =
-                            (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                        endTemporaryMemory(&pickingMemory);
 
-                        memory->platformCaptureMouse();
-                        state->uiState.terrainBrushStrength = glm::clamp(
-                            state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f,
-                            1.0f);
-                        state->isAdjustingBrushParameters = true;
-                    }
-                    else
-                    {
-                        if (state->isEditingHeightmap)
+                        if (pickedId == 0)
                         {
-                            if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
-                            {
-                                glm::vec2 *nextBrushInstance =
-                                    &state->activeBrushStrokePositions
-                                         [state->activeBrushStrokeInstanceCount];
-                                if (state->activeBrushStrokeInstanceCount
-                                    < MAX_BRUSH_QUADS - 1)
-                                {
-                                    if (state->activeBrushStrokeInstanceCount == 0)
-                                    {
-                                        *nextBrushInstance++ = newBrushPos;
-                                        state->activeBrushStrokeInstanceCount++;
-                                    }
-                                    else
-                                    {
-                                        glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
-
-                                        glm::vec2 diff = newBrushPos - *prevBrushInstance;
-                                        glm::vec2 direction = glm::normalize(diff);
-                                        float distanceRemaining = glm::length(diff);
-
-                                        const float BRUSH_INSTANCE_SPACING = 0.005f;
-                                        while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                            && state->activeBrushStrokeInstanceCount
-                                                < MAX_BRUSH_QUADS - 1)
-                                        {
-                                            *nextBrushInstance++ = *prevBrushInstance++
-                                                + (direction * BRUSH_INSTANCE_SPACING);
-                                            state->activeBrushStrokeInstanceCount++;
-
-                                            distanceRemaining -= BRUSH_INSTANCE_SPACING;
-                                        }
-                                    }
-                                }
-                            }
-                            else
-                            {
-                                commitChanges(memory);
-                            }
+                            state->uiState.selectedObjectCount = 0;
                         }
-                        else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                        else
                         {
-                            state->isEditingHeightmap = true;
-                            state->activeBrushStrokeInitialHeight =
-                                relativeIntersectionPoint.y / heightfield->maxHeight;
+                            state->uiState.selectedObjectCount = 1;
+                            state->uiState.selectedObjectIds[0] = pickedId;
                         }
                     }
                 }
-                else if (state->isEditingHeightmap)
+                else
                 {
-                    commitChanges(memory);
+                    glm::vec3 up = glm::vec3(0, 1, 0);
+                    float aspectRatio = (float)activeViewState->sceneRenderTarget->width
+                        / (float)activeViewState->sceneRenderTarget->height;
+                    glm::mat4 projection =
+                        glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
+                    glm::mat4 cameraTransform = projection
+                        * glm::lookAt(
+                            activeViewState->cameraPos, activeViewState->cameraLookAt, up);
+
+                    glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
+                    glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
+                    glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
+                    glm::vec4 worldPos = inverseViewProjection * screenPos;
+
+                    glm::vec3 intersectionPoint;
+                    Heightfield *heightfield = &state->sceneState.heightfield;
+                    if (engine->heightfieldIsRayIntersecting(heightfield,
+                            activeViewState->cameraPos, glm::normalize(glm::vec3(worldPos)),
+                            &intersectionPoint))
+                    {
+                        glm::vec2 heightfieldSize =
+                            glm::vec2(heightfield->columns, heightfield->rows)
+                            * heightfield->spacing;
+                        glm::vec3 relativeIntersectionPoint = intersectionPoint
+                            - glm::vec3(heightfield->position.x, 0, heightfield->position.y);
+                        newBrushPos =
+                            glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z)
+                            / heightfieldSize;
+
+                        if (!state->isEditingHeightmap)
+                        {
+                            state->activeBrushStrokeInitialHeight =
+                                relativeIntersectionPoint.y / heightfield->maxHeight;
+                        }
+
+                        if (isButtonDown(input, EDITOR_INPUT_KEY_R))
+                        {
+                            float brushRadiusIncrease =
+                                input->cursorOffset.x + input->cursorOffset.y;
+
+                            memory->platformCaptureMouse();
+                            state->uiState.terrainBrushRadius = glm::clamp(
+                                state->uiState.terrainBrushRadius + brushRadiusIncrease, 32.0f,
+                                2048.0f);
+                            state->isAdjustingBrushParameters = true;
+                        }
+                        else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
+                        {
+                            float brushFalloffIncrease =
+                                (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                            memory->platformCaptureMouse();
+                            state->uiState.terrainBrushFalloff = glm::clamp(
+                                state->uiState.terrainBrushFalloff + brushFalloffIncrease,
+                                0.0f, 0.99f);
+                            state->isAdjustingBrushParameters = true;
+                        }
+                        else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
+                        {
+                            float brushStrengthIncrease =
+                                (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                            memory->platformCaptureMouse();
+                            state->uiState.terrainBrushStrength = glm::clamp(
+                                state->uiState.terrainBrushStrength + brushStrengthIncrease,
+                                0.01f, 1.0f);
+                            state->isAdjustingBrushParameters = true;
+                        }
+                        else
+                        {
+                            if (state->isEditingHeightmap)
+                            {
+                                if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
+                                {
+                                    glm::vec2 *nextBrushInstance =
+                                        &state->activeBrushStrokePositions
+                                             [state->activeBrushStrokeInstanceCount];
+                                    if (state->activeBrushStrokeInstanceCount
+                                        < MAX_BRUSH_QUADS - 1)
+                                    {
+                                        if (state->activeBrushStrokeInstanceCount == 0)
+                                        {
+                                            *nextBrushInstance++ = newBrushPos;
+                                            state->activeBrushStrokeInstanceCount++;
+                                        }
+                                        else
+                                        {
+                                            glm::vec2 *prevBrushInstance =
+                                                nextBrushInstance - 1;
+
+                                            glm::vec2 diff = newBrushPos - *prevBrushInstance;
+                                            glm::vec2 direction = glm::normalize(diff);
+                                            float distanceRemaining = glm::length(diff);
+
+                                            const float BRUSH_INSTANCE_SPACING = 0.005f;
+                                            while (distanceRemaining > BRUSH_INSTANCE_SPACING
+                                                && state->activeBrushStrokeInstanceCount
+                                                    < MAX_BRUSH_QUADS - 1)
+                                            {
+                                                *nextBrushInstance++ = *prevBrushInstance++
+                                                    + (direction * BRUSH_INSTANCE_SPACING);
+                                                state->activeBrushStrokeInstanceCount++;
+
+                                                distanceRemaining -= BRUSH_INSTANCE_SPACING;
+                                            }
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    commitChanges(memory);
+                                }
+                            }
+                            else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                            {
+                                state->isEditingHeightmap = true;
+                                state->activeBrushStrokeInitialHeight =
+                                    relativeIntersectionPoint.y / heightfield->maxHeight;
+                            }
+                        }
+                    }
+                    else if (state->isEditingHeightmap)
+                    {
+                        commitChanges(memory);
+                    }
                 }
             }
         }
@@ -1251,9 +1284,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH);
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R8UI_WITH_DEPTH);
         viewState->pickingRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH);
+            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R32UI_WITH_DEPTH);
         view->viewState = viewState;
     }
 
@@ -1310,12 +1343,22 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         sceneState->materialPropsBuffer.id, false, visualizationMode,
         sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
         sceneState->worldState.brushFalloff);
+
+    RenderEffect *rockEffect = engine->rendererCreateEffect(
+        &memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
-        sceneState->objectInstanceCount, editorAssets->meshShaderRock);
+        sceneState->objectInstanceCount, rockEffect);
     engine->rendererDrawToTarget(rq, sceneRenderTarget);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
+
+    // selection render target is only 8 bits so mask out the 24 most significant bits
+    // otherwise IDs will get clamped
+    RenderEffect *mesh8BitIdEffect = engine->rendererCreateEffect(
+        &memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    engine->rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
+
     if (state->uiState.selectedObjectCount > 0)
     {
         uint32 objectsFound = 0;
@@ -1329,7 +1372,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 if (state->uiState.selectedObjectIds[j] == objectId)
                 {
                     engine->rendererPushMeshes(rq, editorAssets->meshRock,
-                        &sceneState->objectInstanceData[i], 1, editorAssets->meshShaderId);
+                        &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
 
                     objectsFound++;
                     break;
@@ -1342,10 +1385,15 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
+
+    RenderEffect *mesh32BitIdEffect = engine->rendererCreateEffect(
+        &memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    engine->rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
+
     for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
     {
         engine->rendererPushMeshes(rq, editorAssets->meshRock,
-            &sceneState->objectInstanceData[i], 1, editorAssets->meshShaderId);
+            &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
     }
     engine->rendererDrawToTarget(rq, pickingRenderTarget);
 
@@ -1365,7 +1413,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushEffectQuad(rq, {0, 0, 1, 1}, effect);
+    engine->rendererPushQuad(rq, {0, 0, 1, 1}, effect);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

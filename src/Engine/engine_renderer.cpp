@@ -67,7 +67,8 @@ struct GpuLightingState
 enum RenderEffectParameterType
 {
     EFFECT_PARAM_TYPE_FLOAT,
-    EFFECT_PARAM_TYPE_INT
+    EFFECT_PARAM_TYPE_INT,
+    EFFECT_PARAM_TYPE_UINT
 };
 struct RenderEffectParameter
 {
@@ -77,6 +78,7 @@ struct RenderEffectParameter
     {
         float f;
         int32 i;
+        uint32 u;
     } value;
     RenderEffectParameter *next;
 };
@@ -943,10 +945,26 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
         result.isInteger = false;
         result.hasDepthBuffer = false;
     }
+    else if (format == RENDER_TARGET_FORMAT_R8UI_WITH_DEPTH)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.cpuFormat = GL_R8UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+        result.hasDepthBuffer = true;
+    }
     else if (format == RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH)
     {
         result.elementType = GL_UNSIGNED_SHORT;
         result.cpuFormat = GL_R16UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+        result.hasDepthBuffer = true;
+    }
+    else if (format == RENDER_TARGET_FORMAT_R32UI_WITH_DEPTH)
+    {
+        result.elementType = GL_UNSIGNED_INT;
+        result.cpuFormat = GL_R32UI;
         result.gpuFormat = GL_RED_INTEGER;
         result.isInteger = true;
         result.hasDepthBuffer = true;
@@ -1098,6 +1116,13 @@ RENDERER_SET_EFFECT_INT(rendererSetEffectInt)
     param->value.i = value;
 }
 
+RENDERER_SET_EFFECT_UINT(rendererSetEffectUint)
+{
+    RenderEffectParameter *param = pushEffectParameter(effect, paramName);
+    param->type = EFFECT_PARAM_TYPE_UINT;
+    param->value.u = value;
+}
+
 RENDERER_SET_EFFECT_TEXTURE(rendererSetEffectTexture)
 {
     RenderEffectTexture *texture = pushStruct(effect->arena, RenderEffectTexture);
@@ -1201,11 +1226,11 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
 
-RENDERER_PUSH_EFFECT_QUAD(rendererPushEffectQuad)
+RENDERER_PUSH_QUAD(rendererPushQuad)
 {
     pushQuads(rq, &quad, 1, effect, true);
 }
-RENDERER_PUSH_EFFECT_QUADS(rendererPushEffectQuads)
+RENDERER_PUSH_QUADS(rendererPushQuads)
 {
     pushQuads(rq, quads, quadCount, effect, true);
 }
@@ -1213,8 +1238,6 @@ RENDERER_PUSH_EFFECT_QUADS(rendererPushEffectQuads)
 RENDERER_PUSH_MESHES(rendererPushMeshes)
 {
     assert(rq->meshInstanceCount + instanceCount < rq->ctx->maxMeshInstances);
-
-    RenderEffect *effect = rendererCreateEffect(rq->arena, shader, EFFECT_BLEND_ALPHA_BLEND);
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
@@ -1317,20 +1340,17 @@ bool applyEffect(RenderEffect *effect)
             switch (effectParam->type)
             {
             case EFFECT_PARAM_TYPE_FLOAT:
-            {
                 glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
-            }
-            break;
+                break;
             case EFFECT_PARAM_TYPE_INT:
-            {
                 glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
-            }
-            break;
+                break;
+            case EFFECT_PARAM_TYPE_UINT:
+                glProgramUniform1ui(shaderProgramId, loc, effectParam->value.u);
+                break;
             default:
-            {
                 assert(!"Invalid effect parameter type");
-            }
-            break;
+                break;
             }
 
             effectParam = effectParam->next;

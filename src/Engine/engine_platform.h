@@ -46,7 +46,7 @@ inline void *pushSize(MemoryArena *arena, uint64 size)
     return address;
 }
 #define pushStruct(arena, struct) (struct *)pushSize(arena, sizeof(struct))
-#define pushArray(arena, type, count) (type *)pushSize(arena, sizeof(type) * count)
+#define pushArray(arena, type, count) (type *)pushSize(arena, sizeof(type) * (count))
 
 inline MemoryArena pushSubArena(MemoryArena *arena, uint64 size)
 {
