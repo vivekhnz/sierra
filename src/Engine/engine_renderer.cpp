@@ -212,10 +212,10 @@ bool createShader(uint32 type, char *src, uint32 *out_id)
         return 0;
     }
 }
-bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
+bool createShaderProgram(uint32 shaderCount, uint32 *shaderIds, uint32 *out_id)
 {
     uint32 id = glCreateProgram();
-    for (int i = 0; i < shaderCount; i++)
+    for (uint32 i = 0; i < shaderCount; i++)
     {
         glAttachShader(id, shaderIds[i]);
     }
@@ -225,7 +225,7 @@ bool createShaderProgram(int shaderCount, uint32 *shaderIds, uint32 *out_id)
     glGetProgramiv(id, GL_LINK_STATUS, &succeeded);
     if (succeeded)
     {
-        for (int i = 0; i < shaderCount; i++)
+        for (uint32 i = 0; i < shaderCount; i++)
         {
             glDetachShader(id, shaderIds[i]);
         }

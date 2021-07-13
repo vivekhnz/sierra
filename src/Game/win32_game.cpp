@@ -11,9 +11,9 @@ void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
     GetModuleFileNameA(0, exePath, MAX_PATH);
 
     // traverse three directories up from the assembly
-    int slashPositions[4] = {};
-    int slashesFound = 0;
-    for (int i = 0; i < MAX_PATH; i++)
+    uint32 slashPositions[4] = {};
+    uint32 slashesFound = 0;
+    for (uint32 i = 0; i < MAX_PATH; i++)
     {
         char c = exePath[i];
         if (!c)
@@ -40,7 +40,7 @@ void win32GetAssetAbsolutePath(const char *relativePath, char *absolutePath)
 
     // concatenate root path with relative path
     char *dstCursor = absolutePath;
-    for (int i = 0; i < slashPositions[0] + 1; i++)
+    for (uint32 i = 0; i < slashPositions[0] + 1; i++)
     {
         *dstCursor++ = exePath[i];
     }
@@ -121,7 +121,7 @@ PLATFORM_READ_FILE(win32ReadFile)
     HANDLE handle = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
     if (handle == INVALID_HANDLE_VALUE)
     {
-        int err = GetLastError();
+        DWORD err = GetLastError();
         return result;
     }
 

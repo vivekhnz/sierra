@@ -177,7 +177,7 @@ typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 typedef RENDERER_PUSH_QUAD(RendererPushQuad);
 
 #define RENDERER_PUSH_QUADS(name)                                                             \
-    void name(RenderQueue *rq, RenderQuad *quads, int quadCount, RenderEffect *effect)
+    void name(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect)
 typedef RENDERER_PUSH_QUADS(RendererPushQuads);
 
 #define RENDERER_PUSH_MESHES(name)                                                            \
