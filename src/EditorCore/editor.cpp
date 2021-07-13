@@ -930,20 +930,19 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 {
                     if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                     {
-                        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
-
                         RenderTarget *pickingTarget = activeViewState->pickingRenderTarget;
-                        uint32 pixelCount = pickingTarget->width * pickingTarget->height;
-                        uint32 *pickingIds = pushArray(&memory->arena, uint32, pixelCount);
-                        engine->rendererReadTexturePixels(pickingTarget->textureId,
-                            GL_UNSIGNED_INT, GL_RED_INTEGER, pickingIds);
-
                         uint32 cursorX =
                             (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
                         uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y)
                             * pickingTarget->height);
-                        uint32 pickedId =
-                            pickingIds[(cursorY * pickingTarget->width) + cursorX];
+
+                        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
+
+                        uint32 pixelCount;
+                        void *pixels = engine->rendererGetPixels(&memory->arena, pickingTarget,
+                            cursorX, cursorY, 1, 1, &pixelCount);
+                        assert(pixelCount == 1);
+                        uint32 pickedId = ((uint32 *)pixels)[0];
 
                         endTemporaryMemory(&pickingMemory);
 

@@ -127,6 +127,11 @@ typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
     void name(RenderTarget *target, uint32 width, uint32 height)
 typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
 
+#define RENDERER_GET_PIXELS(name)                                                             \
+    void *name(MemoryArena *arena, RenderTarget *target, uint32 x, uint32 y, uint32 width,    \
+        uint32 height, uint32 *out_pixelCount)
+typedef RENDERER_GET_PIXELS(RendererGetPixels);
+
 // effects
 
 #define RENDERER_CREATE_EFFECT(name)                                                          \

@@ -32,6 +32,7 @@ struct EngineApi
     RendererUpdateBuffer *rendererUpdateBuffer;
     RendererCreateRenderTarget *rendererCreateRenderTarget;
     RendererResizeRenderTarget *rendererResizeRenderTarget;
+    RendererGetPixels *rendererGetPixels;
     RendererCreateEffect *rendererCreateEffect;
     RendererSetEffectFloat *rendererSetEffectFloat;
     RendererSetEffectInt *rendererSetEffectInt;

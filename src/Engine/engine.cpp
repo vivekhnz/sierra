@@ -53,6 +53,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererUpdateBuffer = rendererUpdateBuffer;
     Api.rendererCreateRenderTarget = rendererCreateRenderTarget;
     Api.rendererResizeRenderTarget = rendererResizeRenderTarget;
+    Api.rendererGetPixels = rendererGetPixels;
     Api.rendererCreateEffect = rendererCreateEffect;
     Api.rendererSetEffectFloat = rendererSetEffectFloat;
     Api.rendererSetEffectInt = rendererSetEffectInt;

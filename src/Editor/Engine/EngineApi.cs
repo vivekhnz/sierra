@@ -94,6 +94,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererUpdateBuffer;
         public IntPtr rendererCreateRenderTarget;
         public IntPtr rendererResizeRenderTarget;
+        public IntPtr rendererGetPixels;
         public IntPtr rendererCreateEffect;
         public IntPtr rendererSetEffectFloat;
         public IntPtr rendererSetEffectInt;

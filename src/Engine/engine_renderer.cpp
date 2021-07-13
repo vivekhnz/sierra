@@ -183,6 +183,7 @@ struct RenderQueue
 struct RenderTargetDescriptor
 {
     uint32 elementType;
+    uint32 elementSize;
     uint32 cpuFormat;
     uint32 gpuFormat;
     bool isInteger;
@@ -932,6 +933,7 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
     if (format == RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH)
     {
         result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
         result.cpuFormat = GL_RGB;
         result.gpuFormat = GL_RGB;
         result.isInteger = false;
@@ -940,6 +942,7 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
     else if (format == RENDER_TARGET_FORMAT_R16)
     {
         result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
         result.cpuFormat = GL_R16;
         result.gpuFormat = GL_RED;
         result.isInteger = false;
@@ -948,6 +951,7 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
     else if (format == RENDER_TARGET_FORMAT_R8UI_WITH_DEPTH)
     {
         result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
         result.cpuFormat = GL_R8UI;
         result.gpuFormat = GL_RED_INTEGER;
         result.isInteger = true;
@@ -956,6 +960,7 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
     else if (format == RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH)
     {
         result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
         result.cpuFormat = GL_R16UI;
         result.gpuFormat = GL_RED_INTEGER;
         result.isInteger = true;
@@ -964,6 +969,7 @@ RenderTargetDescriptor getRenderTargetDescriptor(RenderTargetFormat format)
     else if (format == RENDER_TARGET_FORMAT_R32UI_WITH_DEPTH)
     {
         result.elementType = GL_UNSIGNED_INT;
+        result.elementSize = sizeof(uint32);
         result.cpuFormat = GL_R32UI;
         result.gpuFormat = GL_RED_INTEGER;
         result.isInteger = true;
@@ -1049,6 +1055,21 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0,
             GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
+}
+
+RENDERER_GET_PIXELS(rendererGetPixels)
+{
+    RenderTargetDescriptor descriptor = getRenderTargetDescriptor(target->format);
+
+    uint32 pixelCount = width * height;
+    uint32 bufferSize = pixelCount * descriptor.elementSize;
+    void *buffer = pushSize(arena, bufferSize);
+
+    glGetTextureSubImage(target->textureId, 0, x, y, 0, width, height, 1, descriptor.gpuFormat,
+        descriptor.elementType, bufferSize, buffer);
+
+    *out_pixelCount = pixelCount;
+    return buffer;
 }
 
 // effects
