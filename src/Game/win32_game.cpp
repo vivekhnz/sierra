@@ -396,10 +396,10 @@ int32 main()
     win32GetOutputAbsolutePath("build.lock", platformMemory->buildLockFilePath);
     win32GetOutputAbsolutePath("terrain_engine.dll", platformMemory->engineCode.dllPath);
     win32GetOutputAbsolutePath(
-        "terrain_engine.copy.dll", platformMemory->engineCode.dllShadowCopyPath);
+        "terrain_engine.copy_game.dll", platformMemory->engineCode.dllShadowCopyPath);
     win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
     win32GetOutputAbsolutePath(
-        "terrain_game.copy.dll", platformMemory->gameCode.dllShadowCopyPath);
+        "terrain_game.copy_game.dll", platformMemory->gameCode.dllShadowCopyPath);
 
     // load engine code
     win32LoadEngineCode(&platformMemory->engineCode);

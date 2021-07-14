@@ -95,14 +95,14 @@ namespace Terrain.Editor.Platform
                 DllPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.dll"),
                 DllShadowCopyPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy.dll")
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy_editor.dll")
             };
             editorCode = new ReloadableCode
             {
                 DllPath = Path.Combine(
                     AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
                 DllShadowCopyPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy.dll")
+                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy_editor.dll")
             };
 
             int appMemorySizeInBytes = 500 * 1024 * 1024;
