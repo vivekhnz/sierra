@@ -946,14 +946,42 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                         endTemporaryMemory(&pickingMemory);
 
-                        if (pickedId == 0)
+                        if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
                         {
-                            state->uiState.selectedObjectCount = 0;
+                            if (pickedId != 0)
+                            {
+                                bool wasAlreadySelected = false;
+                                for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
+                                {
+                                    if (state->uiState.selectedObjectIds[i] == pickedId)
+                                    {
+                                        state->uiState.selectedObjectIds[i] =
+                                            state->uiState.selectedObjectIds
+                                                [state->uiState.selectedObjectCount - 1];
+                                        state->uiState.selectedObjectCount--;
+
+                                        wasAlreadySelected = true;
+                                        break;
+                                    }
+                                }
+                                if (!wasAlreadySelected)
+                                {
+                                    state->uiState.selectedObjectIds
+                                        [state->uiState.selectedObjectCount++] = pickedId;
+                                }
+                            }
                         }
                         else
                         {
-                            state->uiState.selectedObjectCount = 1;
-                            state->uiState.selectedObjectIds[0] = pickedId;
+                            if (pickedId == 0)
+                            {
+                                state->uiState.selectedObjectCount = 0;
+                            }
+                            else
+                            {
+                                state->uiState.selectedObjectCount = 1;
+                                state->uiState.selectedObjectIds[0] = pickedId;
+                            }
                         }
                     }
                 }
