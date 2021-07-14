@@ -72,12 +72,24 @@ namespace Terrain.Editor.Utilities.Binding
                 // update source
                 void SetSourceProperty<T>(ref T prop)
                 {
-                    prop = newValueFromUi == null
-                        ? default(T)
-                        : (T)Convert.ChangeType(newValueFromUi, typeof(T));
+                    if (newValueFromUi == null)
+                    {
+                        prop = default(T);
+                    }
+                    else if (typeof(T).IsEnum)
+                    {
+                        prop = (T)newValueFromUi;
+                    }
+                    else
+                    {
+                        prop = (T)Convert.ChangeType(newValueFromUi, typeof(T));
+                    }
                 }
                 switch (sourceProperty)
                 {
+                    case UiProperty.CurrentContext:
+                        SetSourceProperty(ref state.CurrentContext);
+                        break;
                     case UiProperty.TerrainBrushTool:
                         SetSourceProperty(ref state.TerrainBrushTool);
                         break;
@@ -122,6 +134,7 @@ namespace Terrain.Editor.Utilities.Binding
 
                 object value = sourceProperty switch
                 {
+                    UiProperty.CurrentContext => state.CurrentContext,
                     UiProperty.TerrainBrushTool => state.TerrainBrushTool,
                     UiProperty.TerrainBrushRadius => state.TerrainBrushRadius,
                     UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
@@ -150,6 +163,7 @@ namespace Terrain.Editor.Utilities.Binding
 
     internal enum UiProperty
     {
+        CurrentContext,
         TerrainBrushTool,
         TerrainBrushRadius,
         TerrainBrushFalloff,

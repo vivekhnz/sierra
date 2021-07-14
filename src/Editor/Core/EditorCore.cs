@@ -107,6 +107,13 @@ namespace Terrain.Editor.Core
         public uint Height;
     }
 
+    public enum EditorContext
+    {
+        Terrain = 0,
+        Objects = 1,
+        Scene = 2
+    };
+
     public enum TerrainBrushTool
     {
         Raise = 0,
@@ -119,6 +126,8 @@ namespace Terrain.Editor.Core
     internal unsafe struct EditorUiState
     {
         private const int MaxSelectedObjects = 32;
+
+        public EditorContext CurrentContext;
 
         private uint* _selectedObjectIds;
         public uint SelectedObjectCount;

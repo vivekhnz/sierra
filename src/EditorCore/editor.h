@@ -21,6 +21,13 @@ typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 #define PLATFORM_PUBLISH_TRANSACTION(name) void name(void *commandBufferBaseAddress)
 typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
 
+enum EditorContext
+{
+    EDITOR_CTX_TERRAIN = 0,
+    EDITOR_CTX_OBJECTS = 1,
+    EDITOR_CTX_SCENE = 2
+};
+
 enum TerrainBrushTool
 {
     TERRAIN_BRUSH_TOOL_RAISE = 0,
@@ -45,6 +52,8 @@ struct TerrainMaterialProperties
 
 struct EditorUiState
 {
+    EditorContext currentContext;
+
     uint32 *selectedObjectIds;
     uint32 selectedObjectCount;
 

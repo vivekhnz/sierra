@@ -52,7 +52,7 @@
     </Border>
     <controls:Viewport Grid.Row="1" View="Scene" />
     <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Width="360" Background="#282828">
-      <TabControl>
+      <TabControl SelectedIndex="{b:UiBinding CurrentContext}">
         <TabItem Header="TERRAIN">
           <StackPanel Orientation="Vertical">
             <Expander Style="{StaticResource SidebarExpanderStyle}" Header="HEIGHTMAP"

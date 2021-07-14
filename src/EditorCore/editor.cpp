@@ -926,7 +926,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             }
             else
             {
-                if (isButtonDown(input, EDITOR_INPUT_KEY_ALT))
+                if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
                 {
                     if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                     {
@@ -957,7 +957,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         }
                     }
                 }
-                else
+                else if (state->uiState.currentContext == EDITOR_CTX_TERRAIN)
                 {
                     glm::vec3 up = glm::vec3(0, 1, 0);
                     float aspectRatio = (float)activeViewState->sceneRenderTarget->width
@@ -1094,7 +1094,19 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
     if (!state->isEditingHeightmap)
     {
-        if (isButtonDown(input, EDITOR_INPUT_KEY_1))
+        if (isButtonDown(input, EDITOR_INPUT_KEY_F1))
+        {
+            state->uiState.currentContext = EDITOR_CTX_TERRAIN;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_F2))
+        {
+            state->uiState.currentContext = EDITOR_CTX_OBJECTS;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_F3))
+        {
+            state->uiState.currentContext = EDITOR_CTX_SCENE;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_1))
         {
             state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_RAISE;
         }
@@ -1119,6 +1131,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     uint64 moveBtnsPreviouslyPressed = input->prevPressedButtons & moveBtnsMask;
     uint64 moveBtnsNewlyPressed = moveBtnsCurrentlyPressed & ~moveBtnsPreviouslyPressed;
     if (!state->moveObjectTx.tx && moveBtnsNewlyPressed
+        && state->uiState.currentContext == EDITOR_CTX_OBJECTS
         && state->uiState.selectedObjectCount > 0)
     {
         state->moveObjectTx.tx = beginTransaction(&state->transactions);
@@ -1358,7 +1371,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         &memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
 
-    if (state->uiState.selectedObjectCount > 0)
+    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS
+        && state->uiState.selectedObjectCount > 0)
     {
         uint32 objectsFound = 0;
         for (uint32 i = 0; i < state->previewDocState.objectInstanceCount
@@ -1384,11 +1398,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
-
     RenderEffect *mesh32BitIdEffect = engine->rendererCreateEffect(
         &memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
-
     for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
     {
         engine->rendererPushMeshes(rq, editorAssets->meshRock,
@@ -1396,18 +1408,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
     engine->rendererDrawToTarget(rq, pickingRenderTarget);
 
-#if 1
     RenderEffect *effect = engine->rendererCreateEffect(
         &memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureId);
     engine->rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureId);
     engine->rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureId);
     engine->rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureId);
-#else
-    RenderEffect *effect = engine->rendererCreateEffect(
-        &memory->arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectTexture(effect, 0, pickingRenderTarget->textureId);
-#endif
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
