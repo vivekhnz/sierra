@@ -21,8 +21,8 @@ glm::vec2 getOrigin(Heightfield *heightfield)
 {
     glm::vec2 result;
     float halfDim = heightfield->spacing * 0.5f;
-    result.x = heightfield->center.x - (heightfield->columns * halfDim);
-    result.y = heightfield->center.y - (heightfield->rows * halfDim);
+    result.x = heightfield->center.x - ((heightfield->columns - 1) * halfDim);
+    result.y = heightfield->center.y - ((heightfield->rows - 1) * halfDim);
 
     return result;
 }

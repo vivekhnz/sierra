@@ -387,10 +387,10 @@ void main()
             // at least one edge is not cullable
             // need to use the absolute value of each tessellation level as they could be
             // negative if the edge was marked cullable
-            gl_TessLevelOuter[0] = abs(A.y); // AB
-            gl_TessLevelOuter[1] = abs(A.x); // AD
-            gl_TessLevelOuter[2] = abs(C.w); // CD
-            gl_TessLevelOuter[3] = abs(C.z); // BC
+            gl_TessLevelOuter[0] = max(abs(A.y), 1); // AB
+            gl_TessLevelOuter[1] = max(abs(A.x), 1); // AD
+            gl_TessLevelOuter[2] = max(abs(C.w), 1); // CD
+            gl_TessLevelOuter[3] = max(abs(C.z), 1); // BC
             gl_TessLevelInner[0] = max(gl_TessLevelOuter[1], gl_TessLevelOuter[3]);
             gl_TessLevelInner[1] = max(gl_TessLevelOuter[0], gl_TessLevelOuter[2]);
         }
@@ -1534,8 +1534,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 uint32 terrainShaderProgramId = terrainShader->shader->id;
                 uint32 meshEdgeCount =
                     (2 * (heightfield->rows * heightfield->columns)) - heightfield->rows - heightfield->columns;
-                glm::vec3 terrainDimensions = glm::vec3(heightfield->spacing * heightfield->columns,
-                    heightfield->maxHeight, heightfield->spacing * heightfield->rows);
+                glm::vec3 terrainDimensions = glm::vec3(heightfield->spacing * (heightfield->columns - 1),
+                    heightfield->maxHeight, heightfield->spacing * (heightfield->rows - 1));
 
                 // calculate tessellation levels
                 glUseProgram(calcTessLevelShaderProgramId);
