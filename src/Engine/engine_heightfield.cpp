@@ -17,10 +17,21 @@ float getTerrainPatchHeight(Heightfield *heightfield, int32 x, int32 z)
     return heightfield->heights[i];
 }
 
+glm::vec2 getOrigin(Heightfield *heightfield)
+{
+    glm::vec2 result;
+    float halfDim = heightfield->spacing * 0.5f;
+    result.x = heightfield->center.x - (heightfield->columns * halfDim);
+    result.y = heightfield->center.y - (heightfield->rows * halfDim);
+
+    return result;
+}
+
 HEIGHTFIELD_GET_HEIGHT(heightfieldGetHeight)
 {
-    float relativeX = worldX - heightfield->position.x;
-    float relativeZ = worldZ - heightfield->position.y;
+    glm::vec2 origin = getOrigin(heightfield);
+    float relativeX = worldX - origin.x;
+    float relativeZ = worldZ - origin.y;
     float normalizedX = relativeX / heightfield->spacing;
     float normalizedZ = relativeZ / heightfield->spacing;
     int32 patchX = (int32)floor(normalizedX);
@@ -126,10 +137,11 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     float *inout_hitDistance)
 {
     // raycast a bounding box first to avoid expensive triangle raycasting
-    glm::vec3 boundsTopLeft = glm::vec3(heightfield->position.x + (xStart * heightfield->spacing), 0.0f,
-        heightfield->position.y + (yStart * heightfield->spacing));
-    glm::vec3 boundsBottomRight = glm::vec3(heightfield->position.x + (xEnd * heightfield->spacing),
-        heightfield->maxHeight, heightfield->position.y + (yEnd * heightfield->spacing));
+    glm::vec2 origin = getOrigin(heightfield);
+    glm::vec3 boundsTopLeft =
+        glm::vec3(origin.x + (xStart * heightfield->spacing), 0.0f, origin.y + (yStart * heightfield->spacing));
+    glm::vec3 boundsBottomRight = glm::vec3(origin.x + (xEnd * heightfield->spacing), heightfield->maxHeight,
+        origin.y + (yEnd * heightfield->spacing));
     if (!isRayIntersectingBox(rayOrigin, rayDirection, boundsTopLeft, boundsBottomRight))
     {
         return false;
@@ -141,18 +153,16 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
         for (uint32 x = xStart; x < xEnd; x++)
         {
             // calculate world-space corners of patch
-            glm::vec3 topLeft = glm::vec3(heightfield->position.x + (x * heightfield->spacing),
-                heightfield->heights[(y * heightfield->columns) + x],
-                heightfield->position.y + (y * heightfield->spacing));
-            glm::vec3 topRight = glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
-                heightfield->heights[(y * heightfield->columns) + x + 1],
-                heightfield->position.y + (y * heightfield->spacing));
-            glm::vec3 bottomRight = glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
+            glm::vec3 topLeft = glm::vec3(origin.x + (x * heightfield->spacing),
+                heightfield->heights[(y * heightfield->columns) + x], origin.y + (y * heightfield->spacing));
+            glm::vec3 topRight = glm::vec3(origin.x + ((x + 1) * heightfield->spacing),
+                heightfield->heights[(y * heightfield->columns) + x + 1], origin.y + (y * heightfield->spacing));
+            glm::vec3 bottomRight = glm::vec3(origin.x + ((x + 1) * heightfield->spacing),
                 heightfield->heights[((y + 1) * heightfield->columns) + x + 1],
-                heightfield->position.y + ((y + 1) * heightfield->spacing));
-            glm::vec3 bottomLeft = glm::vec3(heightfield->position.x + (x * heightfield->spacing),
+                origin.y + ((y + 1) * heightfield->spacing));
+            glm::vec3 bottomLeft = glm::vec3(origin.x + (x * heightfield->spacing),
                 heightfield->heights[((y + 1) * heightfield->columns) + x],
-                heightfield->position.y + ((y + 1) * heightfield->spacing));
+                origin.y + ((y + 1) * heightfield->spacing));
 
             // raycast against 2 triangles of quad
             float intersectDist;

@@ -12,7 +12,7 @@
 				"echo": true,
 				"reveal": "never",
 				"focus": false,
-				"panel": "dedicated",
+				"panel": "shared",
 				"showReuseMessage": false,
 				"clear": true
 			},

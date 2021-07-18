@@ -67,7 +67,7 @@ bool initializeGame(GameMemory *memory)
     state->heightfield.spacing = 0.5f;
     state->heightfield.maxHeight = 25.0f;
     state->heightfield.heights = state->heightfieldHeights;
-    state->heightfield.position = glm::vec2(-63.75f, -63.75f);
+    state->heightfield.center = glm::vec2(0, 0);
     *state->heightfieldHeights = {0};
 
     state->terrainMeshElementCount = (state->heightfield.rows - 1) * (state->heightfield.columns - 1) * 4;

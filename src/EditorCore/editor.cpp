@@ -151,7 +151,7 @@ void initializeEditor(EditorMemory *memory)
     sceneState->heightfield.rows = HEIGHTFIELD_ROWS;
     sceneState->heightfield.spacing = 0.5f;
     sceneState->heightfield.maxHeight = 200;
-    sceneState->heightfield.position = glm::vec2(-63.75f, -63.75f);
+    sceneState->heightfield.center = glm::vec2(0, 0);
     sceneState->heightfield.heights = sceneState->heightfieldHeights;
 
     // create terrain mesh
@@ -959,8 +959,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                     {
                         glm::vec2 heightfieldSize =
                             glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
+                        glm::vec2 heightfieldOrigin = heightfield->center - (heightfieldSize * 0.5f);
                         glm::vec3 relativeIntersectionPoint =
-                            intersectionPoint - glm::vec3(heightfield->position.x, 0, heightfield->position.y);
+                            intersectionPoint - glm::vec3(heightfieldOrigin.x, 0, heightfieldOrigin.y);
                         newBrushPos =
                             glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z) / heightfieldSize;
 

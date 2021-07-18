@@ -10,7 +10,7 @@ struct Heightfield
     float maxHeight;
     float spacing;
     float *heights;
-    glm::vec2 position;
+    glm::vec2 center;
 };
 
 #define HEIGHTFIELD_GET_HEIGHT(name) float name(Heightfield *heightfield, float worldX, float worldZ)
