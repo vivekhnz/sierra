@@ -163,7 +163,7 @@ void initializeEditor(EditorMemory *memory)
     sceneState->heightfield.columns = HEIGHTFIELD_COLUMNS;
     sceneState->heightfield.rows = HEIGHTFIELD_ROWS;
     sceneState->heightfield.spacing = 0.5f;
-    sceneState->heightfield.maxHeight = 25.0f;
+    sceneState->heightfield.maxHeight = 200;
     sceneState->heightfield.position = glm::vec2(-63.75f, -63.75f);
     sceneState->heightfield.heights = sceneState->heightfieldHeights;
 
@@ -373,9 +373,13 @@ void compositeHeightmap(EditorMemory *memory,
          * more. As a result, we should decrease the brush strength as the brush radius
          * increases to ensure the perceived brush strength remains constant.
          */
-        brushStrength = 0.01f + (0.15f * state->uiState.terrainBrushStrength);
+        brushStrength = 0.01f + (0.01875f * state->uiState.terrainBrushStrength);
         brushStrength /= pow(state->uiState.terrainBrushRadius, 0.5f);
         maskBlendMode = EFFECT_BLEND_ADDITIVE;
+    }
+    if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
+    {
+        brushStrength *= 4;
     }
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);

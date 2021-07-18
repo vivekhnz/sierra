@@ -15,19 +15,40 @@ void main()
     float influence = texture(influenceTexture, uv).r;
 
     influence = clamp((influence * iterationCount) - iteration, 0, 1);
-    
-    float offsetLength = 64.0f / 2048.0f;
-    float blurredValue = baseValue;
-    int radialStepCount = 12;
-    for (int i = 0; i < radialStepCount; i++)
+
+    float newValue = baseValue;
+    if (influence > 0)
     {
-        float x = (6.283f * i) / radialStepCount;
-        vec2 offset = vec2(sin(x), cos(x)) * offsetLength;
-        blurredValue += texture(baseTexture, uv + offset).r;
+        float L = 4.0f / 2048.0f;
+        float accumulated = baseValue;
+        int samples = 1;
+
+        int radialStepCount = 24;
+        int outwardStepCount = 12;
+
+        for (int i = 0; i < radialStepCount; i++)
+        {
+            float theta = (6.283f * i) / radialStepCount;
+            vec2 D = vec2(sin(theta), cos(theta));
+            
+            for (int j = 1; j <= outwardStepCount; j++)
+            {
+                vec2 offset = D * (L * j);
+                float sampleInfluence = texture(influenceTexture, uv + offset).r;
+                if (sampleInfluence > 0)
+                {
+                    accumulated += texture(baseTexture, uv + offset).r;
+                    samples++;
+                }
+                else
+                {
+                    break;
+                }
+            }
+        }
+
+        newValue = mix(baseValue, accumulated / samples, influence);
     }
-    blurredValue /= radialStepCount + 1.0f;
-
-    float newValue = mix(baseValue, blurredValue, influence);
-
+    
     FragColor = vec4(newValue, newValue, newValue, 1);
 }
