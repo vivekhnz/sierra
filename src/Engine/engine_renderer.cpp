@@ -333,6 +333,8 @@ void main()
 layout(location = 0) in vec3 pos;
 layout(location = 1) in vec2 uv;
 
+uniform vec2 terrainOrigin;
+
 layout(location = 0) out int id;
 layout(location = 1) out vec3 worldPos;
 layout(location = 2) out vec2 heightmapUV;
@@ -340,7 +342,7 @@ layout(location = 2) out vec2 heightmapUV;
 void main()
 {
     id = gl_VertexID;
-    worldPos = pos;
+    worldPos = pos + vec3(terrainOrigin.x, 0, terrainOrigin.y);
     heightmapUV = uv;
 }
     )";
@@ -573,6 +575,7 @@ uniform int horizontalEdgeCount;
 uniform int columnCount;
 uniform float targetTriangleSize;
 uniform float terrainHeight;
+uniform vec2 terrainOrigin;
 layout(binding = 0) uniform sampler2D heightmapTexture;
 
 vec3 worldToScreen(vec3 p)
@@ -590,8 +593,8 @@ float calcTessLevel(Vertex a, Vertex b)
 {
     bool cull = false;
 
-    vec3 pA = vec3(a.pos_x, height(vec2(a.uv_x, a.uv_y)), a.pos_z);
-    vec3 pB = vec3(b.pos_x, height(vec2(b.uv_x, b.uv_y)), b.pos_z);
+    vec3 pA = vec3(a.pos_x + terrainOrigin.x, height(vec2(a.uv_x, a.uv_y)), a.pos_z + terrainOrigin.y);
+    vec3 pB = vec3(b.pos_x + terrainOrigin.x, height(vec2(b.uv_x, b.uv_y)), b.pos_z + terrainOrigin.y);
     
     vec3 pAB1 = (pA + pB) * 0.5f;
     vec3 pAB2 = pAB1 + vec3(0.0f, distance(pA, pB), 0.0f);
@@ -1545,6 +1548,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     glGetUniformLocation(calcTessLevelShaderProgramId, "columnCount"), heightfield->columns);
                 glProgramUniform1f(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"), heightfield->maxHeight);
+                glProgramUniform2fv(calcTessLevelShaderProgramId,
+                    glGetUniformLocation(calcTessLevelShaderProgramId, "terrainOrigin"), 1,
+                    glm::value_ptr(heightfield->center));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, cmd->heightmapTextureId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cmd->tessellationLevelBufferId);
@@ -1569,6 +1575,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glActiveTexture(GL_TEXTURE5);
                 glBindTexture(GL_TEXTURE_2D, cmd->referenceHeightmapTextureId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->materialPropsBufferId);
+                glProgramUniform2fv(terrainShaderProgramId,
+                    glGetUniformLocation(terrainShaderProgramId, "terrainOrigin"), 1,
+                    glm::value_ptr(heightfield->center));
                 glProgramUniform1i(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "materialCount"), cmd->materialCount);
                 glProgramUniform3fv(terrainShaderProgramId,
