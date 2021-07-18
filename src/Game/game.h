@@ -93,8 +93,7 @@ struct PlatformReadFileResult
     void *data;
 };
 
-#define PLATFORM_GET_ASSET_ABSOLUTE_PATH(name)                                                \
-    void name(const char *relativePath, char *absolutePath)
+#define PLATFORM_GET_ASSET_ABSOLUTE_PATH(name) void name(const char *relativePath, char *absolutePath)
 typedef PLATFORM_GET_ASSET_ABSOLUTE_PATH(PlatformGetAssetAbsolutePath);
 
 #define PLATFORM_READ_FILE(name) PlatformReadFileResult name(const char *path)
@@ -205,7 +204,7 @@ enum GameInputButtons : uint64
     BUTTON(KEY_DELETE, 61)
 };
 
-#define GAME_UPDATE_AND_RENDER(name)                                                          \
+#define GAME_UPDATE_AND_RENDER(name)                                                                              \
     void name(GameMemory *memory, GameInput *input, Viewport viewport, float deltaTime)
 typedef GAME_UPDATE_AND_RENDER(GameUpdateAndRender);
 

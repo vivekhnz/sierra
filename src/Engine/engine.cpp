@@ -17,8 +17,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Platform = platformApi;
     if (!IsGLLoaded)
     {
-        bool glLoadSucceeded =
-            getGlProcAddress ? gladLoadGLLoader(getGlProcAddress) : gladLoadGL();
+        bool glLoadSucceeded = getGlProcAddress ? gladLoadGLLoader(getGlProcAddress) : gladLoadGL();
         if (glLoadSucceeded)
         {
             IsGLLoaded = true;

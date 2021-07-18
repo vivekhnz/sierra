@@ -333,15 +333,13 @@ struct EditorViewContext
     uint32 height;
 };
 
-#define EDITOR_UPDATE(name)                                                                   \
-    void name(EditorMemory *memory, float deltaTime, EditorInput *input)
+#define EDITOR_UPDATE(name) void name(EditorMemory *memory, float deltaTime, EditorInput *input)
 typedef EDITOR_UPDATE(EditorUpdate);
 
 #define EDITOR_RENDER_SCENE_VIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
 typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
 
-#define EDITOR_RENDER_HEIGHTMAP_PREVIEW(name)                                                 \
-    void name(EditorMemory *memory, EditorViewContext *view)
+#define EDITOR_RENDER_HEIGHTMAP_PREVIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
 typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 
 #define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(name) AssetHandle name(EditorMemory *memory)
@@ -350,29 +348,26 @@ typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(EditorGetImportedHeightmapAss
 #define EDITOR_GET_UI_STATE(name) EditorUiState *name(EditorMemory *memory)
 typedef EDITOR_GET_UI_STATE(EditorGetUiState);
 
-#define EDITOR_ADD_MATERIAL(name)                                                             \
-    void name(EditorMemory *memory, TerrainMaterialProperties props)
+#define EDITOR_ADD_MATERIAL(name) void name(EditorMemory *memory, TerrainMaterialProperties props)
 typedef EDITOR_ADD_MATERIAL(EditorAddMaterial);
 
 #define EDITOR_DELETE_MATERIAL(name) void name(EditorMemory *memory, uint32 index)
 typedef EDITOR_DELETE_MATERIAL(EditorDeleteMaterial);
 
-#define EDITOR_SWAP_MATERIAL(name)                                                            \
-    void name(EditorMemory *memory, uint32 indexA, uint32 indexB)
+#define EDITOR_SWAP_MATERIAL(name) void name(EditorMemory *memory, uint32 indexA, uint32 indexB)
 typedef EDITOR_SWAP_MATERIAL(EditorSwapMaterial);
 
-#define EDITOR_SET_MATERIAL_TEXTURE(name)                                                     \
-    void name(EditorMemory *memory, uint32 materialId,                                        \
-        TerrainMaterialTextureType textureType, AssetHandle assetHandle)
+#define EDITOR_SET_MATERIAL_TEXTURE(name)                                                                         \
+    void name(                                                                                                    \
+        EditorMemory *memory, uint32 materialId, TerrainMaterialTextureType textureType, AssetHandle assetHandle)
 typedef EDITOR_SET_MATERIAL_TEXTURE(EditorSetMaterialTexture);
 
-#define EDITOR_SET_MATERIAL_PROPERTIES(name)                                                  \
-    void name(EditorMemory *memory, uint32 materialId, float textureSize, float slopeStart,   \
-        float slopeEnd, float altitudeStart, float altitudeEnd)
+#define EDITOR_SET_MATERIAL_PROPERTIES(name)                                                                      \
+    void name(EditorMemory *memory, uint32 materialId, float textureSize, float slopeStart, float slopeEnd,       \
+        float altitudeStart, float altitudeEnd)
 typedef EDITOR_SET_MATERIAL_PROPERTIES(EditorSetMaterialProperties);
 
-#define EDITOR_GET_OBJECT_PROPERTY(name)                                                      \
-    float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
+#define EDITOR_GET_OBJECT_PROPERTY(name) float name(EditorMemory *memory, uint32 objectId, ObjectProperty property)
 typedef EDITOR_GET_OBJECT_PROPERTY(EditorGetObjectProperty);
 
 #define EDITOR_BEGIN_TRANSACTION(name) Transaction *name(EditorMemory *memory)
@@ -393,7 +388,7 @@ typedef EDITOR_ADD_OBJECT(EditorAddObject);
 #define EDITOR_DELETE_OBJECT(name) void name(Transaction *tx, uint32 objectId)
 typedef EDITOR_DELETE_OBJECT(EditorDeleteObject);
 
-#define EDITOR_SET_OBJECT_PROPERTY(name)                                                      \
+#define EDITOR_SET_OBJECT_PROPERTY(name)                                                                          \
     void name(Transaction *tx, uint32 objectId, ObjectProperty property, float value)
 typedef EDITOR_SET_OBJECT_PROPERTY(EditorSetObjectProperty);
 

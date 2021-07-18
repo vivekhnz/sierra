@@ -296,10 +296,8 @@ void main()
 }
     )";
 
-        assert(
-            createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
-        assert(createShader(
-            GL_FRAGMENT_SHADER, quadFragmentShaderSrc, &shaders->quadFragmentShaderId));
+        assert(createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
+        assert(createShader(GL_FRAGMENT_SHADER, quadFragmentShaderSrc, &shaders->quadFragmentShaderId));
         uint32 shaderIds[] = {shaders->quadVertexShaderId, shaders->quadFragmentShaderId};
         assert(createShaderProgram(2, shaderIds, &shaders->texturedQuadShaderProgramId));
 
@@ -327,8 +325,7 @@ void main()
     out_normal = normalize((inverseTransposeTransform * vec4(in_normal, 0)).xyz);
 }
     )";
-        assert(
-            createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &shaders->meshVertexShaderId));
+        assert(createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &shaders->meshVertexShaderId));
 
         // create terrain shaders
         char *terrainVertexShaderSrc = R"(
@@ -667,16 +664,14 @@ void main()
 }
         )";
 
+        assert(createShader(GL_VERTEX_SHADER, terrainVertexShaderSrc, &shaders->terrainVertexShaderId));
+        assert(createShader(GL_TESS_CONTROL_SHADER, terrainTessCtrlShaderSrc, &shaders->terrainTessCtrlShaderId));
+        assert(
+            createShader(GL_TESS_EVALUATION_SHADER, terrainTessEvalShaderSrc, &shaders->terrainTessEvalShaderId));
         assert(createShader(
-            GL_VERTEX_SHADER, terrainVertexShaderSrc, &shaders->terrainVertexShaderId));
-        assert(createShader(GL_TESS_CONTROL_SHADER, terrainTessCtrlShaderSrc,
-            &shaders->terrainTessCtrlShaderId));
-        assert(createShader(GL_TESS_EVALUATION_SHADER, terrainTessEvalShaderSrc,
-            &shaders->terrainTessEvalShaderId));
-        assert(createShader(GL_COMPUTE_SHADER, terrainCalcTessLevelShaderSrc,
-            &shaders->terrainCalcTessLevelShaderId));
-        assert(createShaderProgram(1, &shaders->terrainCalcTessLevelShaderId,
-            &shaders->terrainCalcTessLevelShaderProgramId));
+            GL_COMPUTE_SHADER, terrainCalcTessLevelShaderSrc, &shaders->terrainCalcTessLevelShaderId));
+        assert(createShaderProgram(
+            1, &shaders->terrainCalcTessLevelShaderId, &shaders->terrainCalcTessLevelShaderProgramId));
 
         shaders->initialized = true;
         WasRendererReloaded = false;
@@ -684,8 +679,7 @@ void main()
     return shaders;
 }
 
-bool createShaderProgram(
-    RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId)
+bool createShaderProgram(RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId)
 {
     bool result = false;
     RendererInternalShaders *shaders = getInternalShaders(rctx);
@@ -729,8 +723,7 @@ void destroyShaderProgram(uint32 id)
     glDeleteProgram(id);
 }
 
-RenderMesh *createMesh(
-    MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
+RenderMesh *createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
 {
     RenderMesh *result = pushStruct(arena, RenderMesh);
 
@@ -741,8 +734,7 @@ RenderMesh *createMesh(
 
     glGenBuffers(1, &result->elementBufferId);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result->elementBufferId);
-    glBufferData(
-        GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(uint32), indices, GL_STATIC_DRAW);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(uint32), indices, GL_STATIC_DRAW);
 
     return result;
 }
@@ -768,8 +760,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     glGenBuffers(1, &ctx->cameraUniformBufferId);
     glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuCameraState), 0, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_CAMERA_UBO_SLOT, ctx->cameraUniformBufferId,
-        0, sizeof(GpuCameraState));
+    glBindBufferRange(
+        GL_UNIFORM_BUFFER, RENDERER_CAMERA_UBO_SLOT, ctx->cameraUniformBufferId, 0, sizeof(GpuCameraState));
 
     // initialize lighting state
     GpuLightingState lighting;
@@ -783,8 +775,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     glGenBuffers(1, &ctx->lightingUniformBufferId);
     glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
     glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
-    glBindBufferRange(GL_UNIFORM_BUFFER, RENDERER_LIGHTING_UBO_SLOT,
-        ctx->lightingUniformBufferId, 0, sizeof(lighting));
+    glBindBufferRange(
+        GL_UNIFORM_BUFFER, RENDERER_LIGHTING_UBO_SLOT, ctx->lightingUniformBufferId, 0, sizeof(lighting));
 
     // create quad buffers
     float quadTopDownVerts[16] = {
@@ -805,8 +797,7 @@ RENDERER_INITIALIZE(rendererInitialize)
     };
     glGenBuffers(1, &ctx->quadBottomUpVertexBufferId);
     glBindBuffer(GL_ARRAY_BUFFER, ctx->quadBottomUpVertexBufferId);
-    glBufferData(
-        GL_ARRAY_BUFFER, sizeof(quadBottomUpVerts), quadBottomUpVerts, GL_STATIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadBottomUpVerts), quadBottomUpVerts, GL_STATIC_DRAW);
 
     uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
     glGenBuffers(1, &ctx->quadElementBufferId);
@@ -819,8 +810,7 @@ RENDERER_INITIALIZE(rendererInitialize)
 
     glGenBuffers(1, &ctx->meshInstanceBufferId);
     ctx->maxMeshInstances = 4096;
-    ctx->meshInstances = (RenderMeshInstance *)pushSize(
-        arena, sizeof(RenderMeshInstance) * ctx->maxMeshInstances);
+    ctx->meshInstances = (RenderMeshInstance *)pushSize(arena, sizeof(RenderMeshInstance) * ctx->maxMeshInstances);
 
     return ctx;
 }
@@ -858,8 +848,7 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
@@ -880,8 +869,7 @@ RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, wrapMode);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, filterMode);
     glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, filterMode);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, cpuFormat, width, height, layers, 0, gpuFormat,
-        elementType, 0);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, cpuFormat, width, height, layers, 0, gpuFormat, elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
     return id;
@@ -890,8 +878,7 @@ RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
     glBindTexture(GL_TEXTURE_2D_ARRAY, id);
-    glTexSubImage3D(
-        GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
@@ -998,12 +985,12 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     glBindTexture(GL_TEXTURE_2D, result->textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-        descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,
-        descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
-    glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0,
-        descriptor.gpuFormat, descriptor.elementType, 0);
+    glTexParameteri(
+        GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(
+        GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
     if (!descriptor.isInteger)
     {
         glGenerateMipmap(GL_TEXTURE_2D);
@@ -1018,15 +1005,13 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0,
-            GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
 
     // create framebuffer
     glGenFramebuffers(1, &result->framebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, result->framebufferId);
-    glFramebufferTexture2D(
-        GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result->textureId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result->textureId, 0);
     if (descriptor.hasDepthBuffer)
     {
         glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, result->depthTextureId, 0);
@@ -1045,15 +1030,14 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
     RenderTargetDescriptor descriptor = getRenderTargetDescriptor(target->format);
 
     glBindTexture(GL_TEXTURE_2D, target->textureId);
-    glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0,
-        descriptor.gpuFormat, descriptor.elementType, 0);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     if (descriptor.hasDepthBuffer)
     {
         glBindTexture(GL_TEXTURE_2D, target->depthTextureId);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0,
-            GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
 }
 
@@ -1195,8 +1179,7 @@ void *pushRenderCommandInternal(RenderQueue *rq, RenderQueueCommandType type, ui
     memset(commandData, 0, size);
     return commandData;
 }
-#define pushRenderCommand(rq, type)                                                           \
-    (type *)pushRenderCommandInternal(rq, RENDER_CMD_##type, sizeof(type))
+#define pushRenderCommand(rq, type) (type *)pushRenderCommandInternal(rq, RENDER_CMD_##type, sizeof(type))
 
 RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
 {
@@ -1221,8 +1204,7 @@ RENDERER_CLEAR(rendererClear)
     cmd->color.a = a;
 }
 
-void pushQuads(
-    RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
+void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
 {
     assert(rq->quadCount + quadCount < rq->ctx->maxQuads);
 
@@ -1266,8 +1248,7 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
     cmd->instanceOffset = rq->meshInstanceCount;
     cmd->instanceCount = instanceCount;
 
-    memcpy(rq->ctx->meshInstances + rq->meshInstanceCount, instances,
-        sizeof(RenderMeshInstance) * instanceCount);
+    memcpy(rq->ctx->meshInstances + rq->meshInstanceCount, instances, sizeof(RenderMeshInstance) * instanceCount);
     rq->meshInstanceCount += instanceCount;
 }
 
@@ -1399,12 +1380,11 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     glViewport(0, 0, width, height);
 
     glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
-    glBufferData(
-        GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount,
-        rq->ctx->meshInstances, GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->ctx->meshInstances,
+        GL_STREAM_DRAW);
 
     glBindVertexArray(rq->ctx->globalVertexArrayId);
 
@@ -1427,8 +1407,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             {
                 camera.transform = glm::identity<glm::mat4>();
                 camera.transform = glm::scale(camera.transform, glm::vec3(2, 2, 1));
-                camera.transform =
-                    glm::translate(camera.transform, glm::vec3(-0.5f, -0.5f, 0));
+                camera.transform = glm::translate(camera.transform, glm::vec3(-0.5f, -0.5f, 0));
             }
             else
             {
@@ -1436,8 +1415,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 float farPlane = 10000;
                 glm::vec3 up = glm::vec3(0, 1, 0);
                 float aspectRatio = (float)width / (float)height;
-                glm::mat4 projection =
-                    glm::perspective(cmd->fov, aspectRatio, nearPlane, farPlane);
+                glm::mat4 projection = glm::perspective(cmd->fov, aspectRatio, nearPlane, farPlane);
                 camera.transform = projection * glm::lookAt(cmd->cameraPos, cmd->lookAt, up);
             }
 
@@ -1457,16 +1435,15 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
             if (applyEffect(cmd->effect))
             {
-                uint32 vertexBufferId = cmd->isTopDown ? rq->ctx->quadTopDownVertexBufferId
-                                                       : rq->ctx->quadBottomUpVertexBufferId;
+                uint32 vertexBufferId =
+                    cmd->isTopDown ? rq->ctx->quadTopDownVertexBufferId : rq->ctx->quadBottomUpVertexBufferId;
                 uint32 vertexBufferStride = 4 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 2, GL_FLOAT, false, vertexBufferStride, (void *)0);
-                glVertexAttribPointer(
-                    1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
+                glVertexAttribPointer(1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
 
                 uint32 instanceBufferStride = 4 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
@@ -1474,8 +1451,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
                 glVertexAttribDivisor(2, 1);
 
-                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0,
-                    cmd->instanceCount, cmd->instanceOffset);
+                glDrawElementsInstancedBaseInstance(
+                    GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0, cmd->instanceCount, cmd->instanceOffset);
 
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
@@ -1500,8 +1477,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
-                glVertexAttribPointer(
-                    1, 3, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
+                glVertexAttribPointer(1, 3, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
 
                 uint32 instanceBufferStride = sizeof(RenderMeshInstance);
                 glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
@@ -1510,24 +1486,24 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glEnableVertexAttribArray(4);
                 glEnableVertexAttribArray(5);
                 glEnableVertexAttribArray(6);
-                glVertexAttribIPointer(2, 1, GL_UNSIGNED_INT, instanceBufferStride,
-                    offsetOf(RenderMeshInstance, id));
+                glVertexAttribIPointer(
+                    2, 1, GL_UNSIGNED_INT, instanceBufferStride, offsetOf(RenderMeshInstance, id));
                 glVertexAttribDivisor(2, 1);
-                glVertexAttribPointer(3, 4, GL_FLOAT, false, instanceBufferStride,
-                    offsetOf(RenderMeshInstance, transform));
+                glVertexAttribPointer(
+                    3, 4, GL_FLOAT, false, instanceBufferStride, offsetOf(RenderMeshInstance, transform));
                 glVertexAttribDivisor(3, 1);
-                glVertexAttribPointer(4, 4, GL_FLOAT, false, instanceBufferStride,
-                    offsetOf(RenderMeshInstance, transform) + 16);
+                glVertexAttribPointer(
+                    4, 4, GL_FLOAT, false, instanceBufferStride, offsetOf(RenderMeshInstance, transform) + 16);
                 glVertexAttribDivisor(4, 1);
-                glVertexAttribPointer(5, 4, GL_FLOAT, false, instanceBufferStride,
-                    offsetOf(RenderMeshInstance, transform) + 32);
+                glVertexAttribPointer(
+                    5, 4, GL_FLOAT, false, instanceBufferStride, offsetOf(RenderMeshInstance, transform) + 32);
                 glVertexAttribDivisor(5, 1);
-                glVertexAttribPointer(6, 4, GL_FLOAT, false, instanceBufferStride,
-                    offsetOf(RenderMeshInstance, transform) + 48);
+                glVertexAttribPointer(
+                    6, 4, GL_FLOAT, false, instanceBufferStride, offsetOf(RenderMeshInstance, transform) + 48);
                 glVertexAttribDivisor(6, 1);
 
-                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, mesh->elementCount,
-                    GL_UNSIGNED_INT, 0, cmd->instanceCount, cmd->instanceOffset);
+                glDrawElementsInstancedBaseInstance(
+                    GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_INT, 0, cmd->instanceCount, cmd->instanceOffset);
 
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
@@ -1551,29 +1527,24 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             if (terrainShader->shader)
             {
                 Heightfield *heightfield = cmd->heightfield;
-                uint32 calcTessLevelShaderProgramId =
-                    shaders->terrainCalcTessLevelShaderProgramId;
+                uint32 calcTessLevelShaderProgramId = shaders->terrainCalcTessLevelShaderProgramId;
                 uint32 terrainShaderProgramId = terrainShader->shader->id;
-                uint32 meshEdgeCount = (2 * (heightfield->rows * heightfield->columns))
-                    - heightfield->rows - heightfield->columns;
-                glm::vec3 terrainDimensions =
-                    glm::vec3(heightfield->spacing * heightfield->columns,
-                        heightfield->maxHeight, heightfield->spacing * heightfield->rows);
+                uint32 meshEdgeCount =
+                    (2 * (heightfield->rows * heightfield->columns)) - heightfield->rows - heightfield->columns;
+                glm::vec3 terrainDimensions = glm::vec3(heightfield->spacing * heightfield->columns,
+                    heightfield->maxHeight, heightfield->spacing * heightfield->rows);
 
                 // calculate tessellation levels
                 glUseProgram(calcTessLevelShaderProgramId);
                 glProgramUniform1f(calcTessLevelShaderProgramId,
-                    glGetUniformLocation(calcTessLevelShaderProgramId, "targetTriangleSize"),
-                    0.015f);
+                    glGetUniformLocation(calcTessLevelShaderProgramId, "targetTriangleSize"), 0.015f);
                 glProgramUniform1i(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "horizontalEdgeCount"),
                     heightfield->rows * (heightfield->columns - 1));
                 glProgramUniform1i(calcTessLevelShaderProgramId,
-                    glGetUniformLocation(calcTessLevelShaderProgramId, "columnCount"),
-                    heightfield->columns);
+                    glGetUniformLocation(calcTessLevelShaderProgramId, "columnCount"), heightfield->columns);
                 glProgramUniform1f(calcTessLevelShaderProgramId,
-                    glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"),
-                    heightfield->maxHeight);
+                    glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"), heightfield->maxHeight);
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, cmd->heightmapTextureId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cmd->tessellationLevelBufferId);
@@ -1599,23 +1570,18 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glBindTexture(GL_TEXTURE_2D, cmd->referenceHeightmapTextureId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->materialPropsBufferId);
                 glProgramUniform1i(terrainShaderProgramId,
-                    glGetUniformLocation(terrainShaderProgramId, "materialCount"),
-                    cmd->materialCount);
+                    glGetUniformLocation(terrainShaderProgramId, "materialCount"), cmd->materialCount);
                 glProgramUniform3fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainDimensions"), 1,
                     glm::value_ptr(terrainDimensions));
                 glProgramUniform1i(terrainShaderProgramId,
-                    glGetUniformLocation(terrainShaderProgramId, "visualizationMode"),
-                    cmd->visualizationMode);
+                    glGetUniformLocation(terrainShaderProgramId, "visualizationMode"), cmd->visualizationMode);
                 glProgramUniform2fv(terrainShaderProgramId,
-                    glGetUniformLocation(terrainShaderProgramId, "cursorPos"), 1,
-                    glm::value_ptr(cmd->cursorPos));
+                    glGetUniformLocation(terrainShaderProgramId, "cursorPos"), 1, glm::value_ptr(cmd->cursorPos));
                 glProgramUniform1f(terrainShaderProgramId,
-                    glGetUniformLocation(terrainShaderProgramId, "cursorRadius"),
-                    cmd->cursorRadius);
+                    glGetUniformLocation(terrainShaderProgramId, "cursorRadius"), cmd->cursorRadius);
                 glProgramUniform1f(terrainShaderProgramId,
-                    glGetUniformLocation(terrainShaderProgramId, "cursorFalloff"),
-                    cmd->cursorFalloff);
+                    glGetUniformLocation(terrainShaderProgramId, "cursorFalloff"), cmd->cursorFalloff);
 
                 uint32 vertexBufferStride = 5 * sizeof(float);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, cmd->meshElementBufferId);
@@ -1623,8 +1589,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, 0);
-                glVertexAttribPointer(
-                    1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
+                glVertexAttribPointer(1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
 
                 glDrawElements(GL_PATCHES, cmd->meshElementCount, GL_UNSIGNED_INT, 0);
 

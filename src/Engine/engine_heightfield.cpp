@@ -29,20 +29,15 @@ HEIGHTFIELD_GET_HEIGHT(heightfieldGetHeight)
     float deltaZ = normalizedZ - patchZ;
 
     glm::vec3 topLeft = glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ), 0);
-    glm::vec3 topRight =
-        glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ), 0);
-    glm::vec3 bottomLeft =
-        glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ + 1), 1);
-    glm::vec3 bottomRight =
-        glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ + 1), 1);
+    glm::vec3 topRight = glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ), 0);
+    glm::vec3 bottomLeft = glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ + 1), 1);
+    glm::vec3 bottomRight = glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ + 1), 1);
 
-    return deltaX <= 1.0f - deltaZ
-        ? barycentric(topLeft, topRight, bottomLeft, deltaX, deltaZ)
-        : barycentric(topRight, bottomRight, bottomLeft, deltaX, deltaZ);
+    return deltaX <= 1.0f - deltaZ ? barycentric(topLeft, topRight, bottomLeft, deltaX, deltaZ)
+                                   : barycentric(topRight, bottomRight, bottomLeft, deltaX, deltaZ);
 }
 
-bool isRayIntersectingBox(
-    glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 boundsMin, glm::vec3 boundsMax)
+bool isRayIntersectingBox(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 boundsMin, glm::vec3 boundsMax)
 {
     // based on:
     // https://www.scratchapixel.com/lessons/3d-basic-rendering/minimal-ray-tracer-rendering-simple-shapes/ray-box-intersection
@@ -131,12 +126,10 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     float *inout_hitDistance)
 {
     // raycast a bounding box first to avoid expensive triangle raycasting
-    glm::vec3 boundsTopLeft =
-        glm::vec3(heightfield->position.x + (xStart * heightfield->spacing), 0.0f,
-            heightfield->position.y + (yStart * heightfield->spacing));
-    glm::vec3 boundsBottomRight =
-        glm::vec3(heightfield->position.x + (xEnd * heightfield->spacing),
-            heightfield->maxHeight, heightfield->position.y + (yEnd * heightfield->spacing));
+    glm::vec3 boundsTopLeft = glm::vec3(heightfield->position.x + (xStart * heightfield->spacing), 0.0f,
+        heightfield->position.y + (yStart * heightfield->spacing));
+    glm::vec3 boundsBottomRight = glm::vec3(heightfield->position.x + (xEnd * heightfield->spacing),
+        heightfield->maxHeight, heightfield->position.y + (yEnd * heightfield->spacing));
     if (!isRayIntersectingBox(rayOrigin, rayDirection, boundsTopLeft, boundsBottomRight))
     {
         return false;
@@ -151,30 +144,25 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
             glm::vec3 topLeft = glm::vec3(heightfield->position.x + (x * heightfield->spacing),
                 heightfield->heights[(y * heightfield->columns) + x],
                 heightfield->position.y + (y * heightfield->spacing));
-            glm::vec3 topRight =
-                glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
-                    heightfield->heights[(y * heightfield->columns) + x + 1],
-                    heightfield->position.y + (y * heightfield->spacing));
-            glm::vec3 bottomRight =
-                glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
-                    heightfield->heights[((y + 1) * heightfield->columns) + x + 1],
-                    heightfield->position.y + ((y + 1) * heightfield->spacing));
-            glm::vec3 bottomLeft =
-                glm::vec3(heightfield->position.x + (x * heightfield->spacing),
-                    heightfield->heights[((y + 1) * heightfield->columns) + x],
-                    heightfield->position.y + ((y + 1) * heightfield->spacing));
+            glm::vec3 topRight = glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
+                heightfield->heights[(y * heightfield->columns) + x + 1],
+                heightfield->position.y + (y * heightfield->spacing));
+            glm::vec3 bottomRight = glm::vec3(heightfield->position.x + ((x + 1) * heightfield->spacing),
+                heightfield->heights[((y + 1) * heightfield->columns) + x + 1],
+                heightfield->position.y + ((y + 1) * heightfield->spacing));
+            glm::vec3 bottomLeft = glm::vec3(heightfield->position.x + (x * heightfield->spacing),
+                heightfield->heights[((y + 1) * heightfield->columns) + x],
+                heightfield->position.y + ((y + 1) * heightfield->spacing));
 
             // raycast against 2 triangles of quad
             float intersectDist;
-            if (isRayIntersectingTriangle(
-                    rayOrigin, rayDirection, topLeft, topRight, bottomRight, intersectDist)
+            if (isRayIntersectingTriangle(rayOrigin, rayDirection, topLeft, topRight, bottomRight, intersectDist)
                 && intersectDist < *inout_hitDistance)
             {
                 hit = true;
                 *inout_hitDistance = intersectDist;
             }
-            if (isRayIntersectingTriangle(
-                    rayOrigin, rayDirection, bottomRight, bottomLeft, topLeft, intersectDist)
+            if (isRayIntersectingTriangle(rayOrigin, rayDirection, bottomRight, bottomLeft, topLeft, intersectDist)
                 && intersectDist < *inout_hitDistance)
             {
                 hit = true;
@@ -205,8 +193,8 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
         uint32 xEnd = colSlice - 1;
         while (xEnd < heightfield->columns)
         {
-            hit |= isRayIntersectingHeightfieldSlice(heightfield, rayOrigin, rayDirection,
-                xStart, xEnd, yStart, yEnd, &hitDistance);
+            hit |= isRayIntersectingHeightfieldSlice(
+                heightfield, rayOrigin, rayDirection, xStart, xEnd, yStart, yEnd, &hitDistance);
 
             xStart = xEnd;
             xEnd += colSlice;

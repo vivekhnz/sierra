@@ -22,16 +22,15 @@ bool isNewButtonPress(EditorInput *input, EditorInputButtons button)
     return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
 }
 
-#define setProperty(tx, id, prop, val)                                                        \
-    {                                                                                         \
-        SetObjectPropertyCommand *cmd = pushCommand(tx, SetObjectPropertyCommand);            \
-        cmd->objectId = (id);                                                                 \
-        cmd->property = (prop);                                                               \
-        cmd->value = (val);                                                                   \
+#define setProperty(tx, id, prop, val)                                                                            \
+    {                                                                                                             \
+        SetObjectPropertyCommand *cmd = pushCommand(tx, SetObjectPropertyCommand);                                \
+        cmd->objectId = (id);                                                                                     \
+        cmd->property = (prop);                                                                                   \
+        cmd->value = (val);                                                                                       \
     }
 
-float *getObjectProperty(
-    EditorDocumentState *docState, uint32 objIndex, ObjectProperty property)
+float *getObjectProperty(EditorDocumentState *docState, uint32 objIndex, ObjectProperty property)
 {
     assert(objIndex < docState->objectInstanceCount);
     ObjectTransform *transform = &docState->objectTransforms[objIndex];
@@ -83,47 +82,35 @@ void initializeEditor(EditorMemory *memory)
 
     editorAssets->quadShaderBrushMask =
         engine->assetsRegisterShader(assets, "quad_brush_mask.fs.glsl", SHADER_TYPE_QUAD);
-    editorAssets->quadShaderBrushBlendAddSub = engine->assetsRegisterShader(
-        assets, "quad_brush_blend_add_sub.fs.glsl", SHADER_TYPE_QUAD);
-    editorAssets->quadShaderBrushBlendFlatten = engine->assetsRegisterShader(
-        assets, "quad_brush_blend_flatten.fs.glsl", SHADER_TYPE_QUAD);
-    editorAssets->quadShaderBrushBlendSmooth = engine->assetsRegisterShader(
-        assets, "quad_brush_blend_smooth.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendAddSub =
+        engine->assetsRegisterShader(assets, "quad_brush_blend_add_sub.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendFlatten =
+        engine->assetsRegisterShader(assets, "quad_brush_blend_flatten.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushBlendSmooth =
+        engine->assetsRegisterShader(assets, "quad_brush_blend_smooth.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderOutline =
         engine->assetsRegisterShader(assets, "quad_outline.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderIdVisualiser =
         engine->assetsRegisterShader(assets, "quad_id_visualiser.fs.glsl", SHADER_TYPE_QUAD);
-    editorAssets->meshShaderId =
-        engine->assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
-    editorAssets->meshShaderRock =
-        engine->assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
+    editorAssets->meshShaderId = engine->assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
+    editorAssets->meshShaderRock = engine->assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->terrainShaderTextured =
         engine->assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
 
-    editorAssets->textureGroundAlbedo =
-        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
-    editorAssets->textureGroundNormal =
-        engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
+    editorAssets->textureGroundAlbedo = engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
+    editorAssets->textureGroundNormal = engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
     editorAssets->textureGroundDisplacement =
         engine->assetsRegisterTexture(assets, "ground_displacement.tga", true);
-    editorAssets->textureGroundAo =
-        engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
-    editorAssets->textureRockAlbedo =
-        engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
-    editorAssets->textureRockNormal =
-        engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
-    editorAssets->textureRockDisplacement =
-        engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
+    editorAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
+    editorAssets->textureRockAlbedo = engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
+    editorAssets->textureRockNormal = engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
+    editorAssets->textureRockDisplacement = engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
     editorAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", false);
-    editorAssets->textureSnowAlbedo =
-        engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
-    editorAssets->textureSnowNormal =
-        engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
-    editorAssets->textureSnowDisplacement =
-        engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
+    editorAssets->textureSnowAlbedo = engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
+    editorAssets->textureSnowNormal = engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
+    editorAssets->textureSnowDisplacement = engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
     editorAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
-    editorAssets->textureVirtualImportedHeightmap =
-        engine->assetsRegisterTexture(assets, 0, true);
+    editorAssets->textureVirtualImportedHeightmap = engine->assetsRegisterTexture(assets, 0, true);
 
     editorAssets->meshRock = engine->assetsRegisterMesh(assets, "rock.obj");
 
@@ -136,21 +123,21 @@ void initializeEditor(EditorMemory *memory)
 
     SceneState *sceneState = &state->sceneState;
 
-    state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT,
-        GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+    state->importedHeightmapTextureId = engine->rendererCreateTexture(
+        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    state->committedHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
-        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->workingHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
-        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->previewHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->temporaryHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->committedHeightmap =
+        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->workingBrushInfluenceMask =
+        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->workingHeightmap =
+        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->previewBrushInfluenceMask =
+        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->previewHeightmap =
+        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->temporaryHeightmap =
+        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
@@ -173,19 +160,17 @@ void initializeEditor(EditorMemory *memory)
         (sceneState->heightfield.rows - 1) * (sceneState->heightfield.columns - 1) * 4;
 
     uint32 terrainVertexBufferStride = 5 * sizeof(float);
-    uint32 terrainVertexBufferSize = sceneState->heightfield.columns
-        * sceneState->heightfield.rows * terrainVertexBufferStride;
+    uint32 terrainVertexBufferSize =
+        sceneState->heightfield.columns * sceneState->heightfield.rows * terrainVertexBufferStride;
     float *terrainVertices = (float *)malloc(terrainVertexBufferSize);
 
     uint32 terrainElementBufferSize = sizeof(uint32) * sceneState->terrainMesh.elementCount;
     uint32 *terrainIndices = (uint32 *)malloc(terrainElementBufferSize);
 
-    float offsetX =
-        (sceneState->heightfield.columns - 1) * sceneState->heightfield.spacing * -0.5f;
-    float offsetY =
-        (sceneState->heightfield.rows - 1) * sceneState->heightfield.spacing * -0.5f;
-    glm::vec2 uvSize = glm::vec2(1.0f / (sceneState->heightfield.columns - 1),
-        1.0f / (sceneState->heightfield.rows - 1));
+    float offsetX = (sceneState->heightfield.columns - 1) * sceneState->heightfield.spacing * -0.5f;
+    float offsetY = (sceneState->heightfield.rows - 1) * sceneState->heightfield.spacing * -0.5f;
+    glm::vec2 uvSize =
+        glm::vec2(1.0f / (sceneState->heightfield.columns - 1), 1.0f / (sceneState->heightfield.rows - 1));
 
     float *currentVertex = terrainVertices;
     uint32 *currentIndex = terrainIndices;
@@ -199,8 +184,7 @@ void initializeEditor(EditorMemory *memory)
             *currentVertex++ = uvSize.x * x;
             *currentVertex++ = uvSize.y * y;
 
-            if (y < sceneState->heightfield.rows - 1
-                && x < sceneState->heightfield.columns - 1)
+            if (y < sceneState->heightfield.rows - 1 && x < sceneState->heightfield.columns - 1)
             {
                 uint32 patchIndex = (y * sceneState->heightfield.columns) + x;
                 *currentIndex++ = patchIndex;
@@ -211,16 +195,12 @@ void initializeEditor(EditorMemory *memory)
         }
     }
 
-    sceneState->terrainMesh.vertexBuffer =
-        engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        &sceneState->terrainMesh.vertexBuffer, terrainVertexBufferSize, terrainVertices);
+    sceneState->terrainMesh.vertexBuffer = engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(&sceneState->terrainMesh.vertexBuffer, terrainVertexBufferSize, terrainVertices);
     free(terrainVertices);
 
-    sceneState->terrainMesh.elementBuffer =
-        engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        &sceneState->terrainMesh.elementBuffer, terrainElementBufferSize, terrainIndices);
+    sceneState->terrainMesh.elementBuffer = engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+    engine->rendererUpdateBuffer(&sceneState->terrainMesh.elementBuffer, terrainElementBufferSize, terrainIndices);
     free(terrainIndices);
 
     // create buffer to store vertex edge data
@@ -229,15 +209,14 @@ void initializeEditor(EditorMemory *memory)
     engine->rendererUpdateBuffer(&sceneState->tessellationLevelBuffer,
         sceneState->heightfield.columns * sceneState->heightfield.rows * sizeof(glm::vec4), 0);
 
-    sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
-        GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->normalTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE,
-        GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->displacementTextureArrayId =
-        engine->rendererCreateTextureArray(GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048,
-            MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->aoTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE, GL_R8,
-        GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->normalTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->displacementTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->aoTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
@@ -272,8 +251,7 @@ void initializeEditor(EditorMemory *memory)
         TransactionDataBlock *block = &state->transactions.txData[i];
         block->transactions = &state->transactions;
         block->tx.commandBufferMaxSize = 1 * 1024 * 1024;
-        block->tx.commandBufferBaseAddress =
-            pushSize(&memory->arena, block->tx.commandBufferMaxSize);
+        block->tx.commandBufferBaseAddress = pushSize(&memory->arena, block->tx.commandBufferMaxSize);
         clearTransaction(&block->tx);
 
         block->prev = prevBlock;
@@ -281,8 +259,7 @@ void initializeEditor(EditorMemory *memory)
     }
     state->transactions.nextFreeActive = prevBlock;
     state->transactions.committedSize = 1 * 1024 * 1024;
-    state->transactions.committedBaseAddress =
-        pushSize(&memory->arena, state->transactions.committedSize);
+    state->transactions.committedBaseAddress = pushSize(&memory->arena, state->transactions.committedSize);
 
     // add default materials
     Transaction *addMaterialsTx = beginTransaction(&state->transactions);
@@ -385,8 +362,8 @@ void compositeHeightmap(EditorMemory *memory,
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     // render brush influence mask
-    RenderEffect *maskEffect = engine->rendererCreateEffect(
-        &memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
+    RenderEffect *maskEffect =
+        engine->rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
     engine->rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
     engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
@@ -404,8 +381,8 @@ void compositeHeightmap(EditorMemory *memory,
         uint32 iterations = 3;
         for (uint32 i = 0; i < iterations; i++)
         {
-            RenderEffect *effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
+            RenderEffect *effect = engine->rendererCreateEffect(
+                &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectInt(effect, "iterationCount", iterations);
             engine->rendererSetEffectInt(effect, "iteration", i);
             engine->rendererSetEffectTexture(effect, 0, inputTextureId);
@@ -426,22 +403,21 @@ void compositeHeightmap(EditorMemory *memory,
         RenderEffect *effect = 0;
         if (tool == TERRAIN_BRUSH_TOOL_RAISE)
         {
-            effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+            effect = engine->rendererCreateEffect(
+                &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectFloat(effect, "blendSign", 1);
         }
         else if (tool == TERRAIN_BRUSH_TOOL_LOWER)
         {
-            effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+            effect = engine->rendererCreateEffect(
+                &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectFloat(effect, "blendSign", -1);
         }
         else if (tool == TERRAIN_BRUSH_TOOL_FLATTEN)
         {
-            effect = engine->rendererCreateEffect(&memory->arena,
-                state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-            engine->rendererSetEffectFloat(
-                effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
+            effect = engine->rendererCreateEffect(
+                &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
+            engine->rendererSetEffectFloat(effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
         }
         assert(effect);
         engine->rendererSetEffectTexture(effect, 0, baseHeightmapTextureId);
@@ -488,8 +464,7 @@ void commitChanges(EditorMemory *memory)
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(
-        rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, true);
+    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, true);
     if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
     {
         state->isEditingHeightmap = false;
@@ -505,10 +480,9 @@ void discardChanges(EditorMemory *memory)
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
-    memory->engineApi->rendererReadTexturePixels(state->committedHeightmap->textureId,
-        GL_UNSIGNED_SHORT, GL_RED, state->sceneState.heightmapTextureDataTempBuffer);
-    updateHeightfieldHeights(
-        &state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
+    memory->engineApi->rendererReadTexturePixels(state->committedHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
+        state->sceneState.heightmapTextureDataTempBuffer);
+    updateHeightfieldHeights(&state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
 }
 
 void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
@@ -537,8 +511,7 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
 
             docState->albedoTextureAssetHandles[index] = cmd->albedoTextureAssetHandle;
             docState->normalTextureAssetHandles[index] = cmd->normalTextureAssetHandle;
-            docState->displacementTextureAssetHandles[index] =
-                cmd->displacementTextureAssetHandle;
+            docState->displacementTextureAssetHandles[index] = cmd->displacementTextureAssetHandle;
             docState->aoTextureAssetHandles[index] = cmd->aoTextureAssetHandle;
         }
         break;
@@ -552,12 +525,9 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             {
                 docState->materialIds[i] = docState->materialIds[i + 1];
                 docState->materialProps[i] = docState->materialProps[i + 1];
-                docState->albedoTextureAssetHandles[i] =
-                    docState->albedoTextureAssetHandles[i + 1];
-                docState->normalTextureAssetHandles[i] =
-                    docState->normalTextureAssetHandles[i + 1];
-                docState->displacementTextureAssetHandles[i] =
-                    docState->displacementTextureAssetHandles[i + 1];
+                docState->albedoTextureAssetHandles[i] = docState->albedoTextureAssetHandles[i + 1];
+                docState->normalTextureAssetHandles[i] = docState->normalTextureAssetHandles[i + 1];
+                docState->displacementTextureAssetHandles[i] = docState->displacementTextureAssetHandles[i + 1];
                 docState->aoTextureAssetHandles[i] = docState->aoTextureAssetHandles[i + 1];
             }
         }
@@ -569,9 +539,9 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             assert(cmd->indexA < MAX_MATERIAL_COUNT);
             assert(cmd->indexB < MAX_MATERIAL_COUNT);
 
-#define swap(type, array)                                                                     \
-    type temp_##array = docState->array[cmd->indexA];                                         \
-    docState->array[cmd->indexA] = docState->array[cmd->indexB];                              \
+#define swap(type, array)                                                                                         \
+    type temp_##array = docState->array[cmd->indexA];                                                             \
+    docState->array[cmd->indexA] = docState->array[cmd->indexB];                                                  \
     docState->array[cmd->indexB] = temp_##array;
 
             swap(uint32, materialIds);
@@ -595,8 +565,7 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
                         docState->displacementTextureAssetHandles, //
                         docState->aoTextureAssetHandles            //
                     };
-                    AssetHandle *textureAssetHandles =
-                        materialTextureAssetHandles[(uint32)cmd->textureType];
+                    AssetHandle *textureAssetHandles = materialTextureAssetHandles[(uint32)cmd->textureType];
                     textureAssetHandles[i] = cmd->assetHandle;
 
                     break;
@@ -649,10 +618,8 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
                 if (docState->objectIds[i] == cmd->objectId)
                 {
                     foundObject = true;
-                    docState->objectIds[i] =
-                        docState->objectIds[docState->objectInstanceCount - 1];
-                    docState->objectTransforms[i] =
-                        docState->objectTransforms[docState->objectInstanceCount - 1];
+                    docState->objectIds[i] = docState->objectIds[docState->objectInstanceCount - 1];
+                    docState->objectTransforms[i] = docState->objectTransforms[docState->objectInstanceCount - 1];
                     break;
                 }
             }
@@ -703,12 +670,10 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         {
             binding = &sceneState->albedoTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
-            if (asset->texture
-                && (assetHandle != binding->assetHandle || asset->version > binding->version))
+            if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->albedoTextureArrayId,
-                    GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width, asset->texture->height,
-                    layerIdx, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+                    asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -719,12 +684,10 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         {
             binding = &sceneState->normalTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
-            if (asset->texture
-                && (assetHandle != binding->assetHandle || asset->version > binding->version))
+            if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->normalTextureArrayId,
-                    GL_UNSIGNED_BYTE, GL_RGB, asset->texture->width, asset->texture->height,
-                    layerIdx, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+                    asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -735,12 +698,10 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         {
             binding = &sceneState->displacementTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
-            if (asset->texture
-                && (assetHandle != binding->assetHandle || asset->version > binding->version))
+            if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->displacementTextureArrayId,
-                    GL_UNSIGNED_SHORT, GL_RED, asset->texture->width, asset->texture->height,
-                    layerIdx, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->displacementTextureArrayId, GL_UNSIGNED_SHORT,
+                    GL_RED, asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -751,19 +712,17 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         {
             binding = &sceneState->aoTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
-            if (asset->texture
-                && (assetHandle != binding->assetHandle || asset->version > binding->version))
+            if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->aoTextureArrayId,
-                    GL_UNSIGNED_BYTE, GL_RED, asset->texture->width, asset->texture->height,
-                    layerIdx, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->aoTextureArrayId, GL_UNSIGNED_BYTE, GL_RED,
+                    asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
         }
     }
-    engine->rendererUpdateBuffer(&sceneState->materialPropsBuffer,
-        sizeof(docState->materialProps), docState->materialProps);
+    engine->rendererUpdateBuffer(
+        &sceneState->materialPropsBuffer, sizeof(docState->materialProps), docState->materialProps);
 
     // update object instance state
     sceneState->objectInstanceCount = docState->objectInstanceCount;
@@ -818,8 +777,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // apply committed transactions
-    for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions);
-         isTransactionValid(&tx); tx = getNextCommittedTransaction(&tx))
+    for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions); isTransactionValid(&tx);
+         tx = getNextCommittedTransaction(&tx))
     {
         applyTransaction(&tx, &state->docState);
         memory->platformPublishTransaction(tx.commandBufferBaseAddress);
@@ -828,8 +787,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // apply active transactions
     state->previewDocState = state->docState;
-    for (TransactionEntry tx = getFirstActiveTransaction(&state->transactions);
-         isTransactionValid(&tx); tx = getNextActiveTransaction(&tx))
+    for (TransactionEntry tx = getFirstActiveTransaction(&state->transactions); isTransactionValid(&tx);
+         tx = getNextActiveTransaction(&tx))
     {
         applyTransaction(&tx, &state->previewDocState);
         memory->platformPublishTransaction(tx.commandBufferBaseAddress);
@@ -840,26 +799,24 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
 
-    LoadedAsset *importedHeightmapAsset =
-        engine->assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
+    LoadedAsset *importedHeightmapAsset = engine->assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
-        engine->rendererUpdateTexture(state->importedHeightmapTextureId, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, importedHeightmapAsset->texture->width,
-            importedHeightmapAsset->texture->height, importedHeightmapAsset->texture->data);
+        engine->rendererUpdateTexture(state->importedHeightmapTextureId, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+            importedHeightmapAsset->texture->width, importedHeightmapAsset->texture->height,
+            importedHeightmapAsset->texture->data);
 
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
         RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
         engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(
-            rq, {0, 0, 1, 1}, state->importedHeightmapTextureId, true);
+        engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->importedHeightmapTextureId, true);
         if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
         {
-            updateHeightfieldHeights(&state->sceneState.heightfield,
-                (uint16 *)importedHeightmapAsset->texture->data);
+            updateHeightfieldHeights(
+                &state->sceneState.heightfield, (uint16 *)importedHeightmapAsset->texture->data);
             state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
         }
 
@@ -874,19 +831,16 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     if (activeViewState)
     {
         // orbit distance is modified by scrolling the mouse wheel
-        activeViewState->orbitCameraDistance *=
-            1.0f - (glm::sign(input->scrollOffset) * 0.05f);
+        activeViewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
         if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
         {
             // update the look at position if the middle mouse button is pressed
-            glm::vec3 lookDir =
-                glm::normalize(activeViewState->cameraLookAt - activeViewState->cameraPos);
+            glm::vec3 lookDir = glm::normalize(activeViewState->cameraLookAt - activeViewState->cameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
-            float panMagnitude =
-                glm::clamp(activeViewState->orbitCameraDistance, 2.5f, 300.0f);
+            float panMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 2.5f, 300.0f);
             activeViewState->cameraLookAt += pan * panMagnitude * 0.000333f;
 
             isManipulatingCamera = true;
@@ -894,24 +848,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
         {
             // update yaw & pitch if the right mouse button is pressed
-            float rotateMagnitude =
-                glm::clamp(activeViewState->orbitCameraDistance, 14.0f, 70.0f);
+            float rotateMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 14.0f, 70.0f);
             float rotateSensitivity = rotateMagnitude * 0.000833f;
-            activeViewState->orbitCameraYaw +=
-                glm::radians(input->cursorOffset.x * rotateSensitivity);
-            activeViewState->orbitCameraPitch +=
-                glm::radians(input->cursorOffset.y * rotateSensitivity);
+            activeViewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
+            activeViewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
 
             isManipulatingCamera = true;
         }
 
         // calculate camera position
-        glm::vec3 newLookDir = glm::vec3(
-            cos(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch),
-            sin(activeViewState->orbitCameraPitch),
-            sin(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch));
-        activeViewState->cameraPos = activeViewState->cameraLookAt
-            + (newLookDir * activeViewState->orbitCameraDistance);
+        glm::vec3 newLookDir =
+            glm::vec3(cos(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch),
+                sin(activeViewState->orbitCameraPitch),
+                sin(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch));
+        activeViewState->cameraPos =
+            activeViewState->cameraLookAt + (newLookDir * activeViewState->orbitCameraDistance);
 
         if (isManipulatingCamera)
         {
@@ -935,16 +886,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                     if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                     {
                         RenderTarget *pickingTarget = activeViewState->pickingRenderTarget;
-                        uint32 cursorX =
-                            (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
-                        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y)
-                            * pickingTarget->height);
+                        uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
+                        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingTarget->height);
 
                         TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
 
                         uint32 pixelCount;
-                        void *pixels = engine->rendererGetPixels(&memory->arena, pickingTarget,
-                            cursorX, cursorY, 1, 1, &pixelCount);
+                        void *pixels = engine->rendererGetPixels(
+                            &memory->arena, pickingTarget, cursorX, cursorY, 1, 1, &pixelCount);
                         assert(pixelCount == 1);
                         uint32 pickedId = ((uint32 *)pixels)[0];
 
@@ -960,8 +909,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                     if (state->uiState.selectedObjectIds[i] == pickedId)
                                     {
                                         state->uiState.selectedObjectIds[i] =
-                                            state->uiState.selectedObjectIds
-                                                [state->uiState.selectedObjectCount - 1];
+                                            state->uiState
+                                                .selectedObjectIds[state->uiState.selectedObjectCount - 1];
                                         state->uiState.selectedObjectCount--;
 
                                         wasAlreadySelected = true;
@@ -970,8 +919,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                 }
                                 if (!wasAlreadySelected)
                                 {
-                                    state->uiState.selectedObjectIds
-                                        [state->uiState.selectedObjectCount++] = pickedId;
+                                    state->uiState.selectedObjectIds[state->uiState.selectedObjectCount++] =
+                                        pickedId;
                                 }
                             }
                         }
@@ -994,11 +943,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                     glm::vec3 up = glm::vec3(0, 1, 0);
                     float aspectRatio = (float)activeViewState->sceneRenderTarget->width
                         / (float)activeViewState->sceneRenderTarget->height;
-                    glm::mat4 projection =
-                        glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
-                    glm::mat4 cameraTransform = projection
-                        * glm::lookAt(
-                            activeViewState->cameraPos, activeViewState->cameraLookAt, up);
+                    glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
+                    glm::mat4 cameraTransform =
+                        projection * glm::lookAt(activeViewState->cameraPos, activeViewState->cameraLookAt, up);
 
                     glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
                     glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
@@ -1007,18 +954,15 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                     glm::vec3 intersectionPoint;
                     Heightfield *heightfield = &state->sceneState.heightfield;
-                    if (engine->heightfieldIsRayIntersecting(heightfield,
-                            activeViewState->cameraPos, glm::normalize(glm::vec3(worldPos)),
-                            &intersectionPoint))
+                    if (engine->heightfieldIsRayIntersecting(heightfield, activeViewState->cameraPos,
+                            glm::normalize(glm::vec3(worldPos)), &intersectionPoint))
                     {
                         glm::vec2 heightfieldSize =
-                            glm::vec2(heightfield->columns, heightfield->rows)
-                            * heightfield->spacing;
-                        glm::vec3 relativeIntersectionPoint = intersectionPoint
-                            - glm::vec3(heightfield->position.x, 0, heightfield->position.y);
+                            glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
+                        glm::vec3 relativeIntersectionPoint =
+                            intersectionPoint - glm::vec3(heightfield->position.x, 0, heightfield->position.y);
                         newBrushPos =
-                            glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z)
-                            / heightfieldSize;
+                            glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z) / heightfieldSize;
 
                         if (!state->isEditingHeightmap)
                         {
@@ -1028,35 +972,29 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                         if (isButtonDown(input, EDITOR_INPUT_KEY_R))
                         {
-                            float brushRadiusIncrease =
-                                input->cursorOffset.x + input->cursorOffset.y;
+                            float brushRadiusIncrease = input->cursorOffset.x + input->cursorOffset.y;
 
                             memory->platformCaptureMouse();
                             state->uiState.terrainBrushRadius = glm::clamp(
-                                state->uiState.terrainBrushRadius + brushRadiusIncrease, 32.0f,
-                                2048.0f);
+                                state->uiState.terrainBrushRadius + brushRadiusIncrease, 32.0f, 2048.0f);
                             state->isAdjustingBrushParameters = true;
                         }
                         else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
                         {
-                            float brushFalloffIncrease =
-                                (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                            float brushFalloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                             memory->platformCaptureMouse();
-                            state->uiState.terrainBrushFalloff = glm::clamp(
-                                state->uiState.terrainBrushFalloff + brushFalloffIncrease,
-                                0.0f, 0.99f);
+                            state->uiState.terrainBrushFalloff =
+                                glm::clamp(state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
                             state->isAdjustingBrushParameters = true;
                         }
                         else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
                         {
-                            float brushStrengthIncrease =
-                                (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                            float brushStrengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
                             memory->platformCaptureMouse();
                             state->uiState.terrainBrushStrength = glm::clamp(
-                                state->uiState.terrainBrushStrength + brushStrengthIncrease,
-                                0.01f, 1.0f);
+                                state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
                             state->isAdjustingBrushParameters = true;
                         }
                         else
@@ -1066,10 +1004,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                 if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                                 {
                                     glm::vec2 *nextBrushInstance =
-                                        &state->activeBrushStrokePositions
-                                             [state->activeBrushStrokeInstanceCount];
-                                    if (state->activeBrushStrokeInstanceCount
-                                        < MAX_BRUSH_QUADS - 1)
+                                        &state->activeBrushStrokePositions[state->activeBrushStrokeInstanceCount];
+                                    if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
                                     {
                                         if (state->activeBrushStrokeInstanceCount == 0)
                                         {
@@ -1078,8 +1014,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                         }
                                         else
                                         {
-                                            glm::vec2 *prevBrushInstance =
-                                                nextBrushInstance - 1;
+                                            glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
 
                                             glm::vec2 diff = newBrushPos - *prevBrushInstance;
                                             glm::vec2 direction = glm::normalize(diff);
@@ -1087,11 +1022,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                                             const float BRUSH_INSTANCE_SPACING = 0.005f;
                                             while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                                && state->activeBrushStrokeInstanceCount
-                                                    < MAX_BRUSH_QUADS - 1)
+                                                && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
                                             {
-                                                *nextBrushInstance++ = *prevBrushInstance++
-                                                    + (direction * BRUSH_INSTANCE_SPACING);
+                                                *nextBrushInstance++ =
+                                                    *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
                                                 state->activeBrushStrokeInstanceCount++;
 
                                                 distanceRemaining -= BRUSH_INSTANCE_SPACING;
@@ -1157,13 +1091,12 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // move object with arrow keys
-    uint64 moveBtnsMask = EDITOR_INPUT_KEY_LEFT | EDITOR_INPUT_KEY_RIGHT | EDITOR_INPUT_KEY_UP
-        | EDITOR_INPUT_KEY_DOWN;
+    uint64 moveBtnsMask =
+        EDITOR_INPUT_KEY_LEFT | EDITOR_INPUT_KEY_RIGHT | EDITOR_INPUT_KEY_UP | EDITOR_INPUT_KEY_DOWN;
     uint64 moveBtnsCurrentlyPressed = input->pressedButtons & moveBtnsMask;
     uint64 moveBtnsPreviouslyPressed = input->prevPressedButtons & moveBtnsMask;
     uint64 moveBtnsNewlyPressed = moveBtnsCurrentlyPressed & ~moveBtnsPreviouslyPressed;
-    if (!state->moveObjectTx.tx && moveBtnsNewlyPressed
-        && state->uiState.currentContext == EDITOR_CTX_OBJECTS
+    if (!state->moveObjectTx.tx && moveBtnsNewlyPressed && state->uiState.currentContext == EDITOR_CTX_OBJECTS
         && state->uiState.selectedObjectCount > 0)
     {
         state->moveObjectTx.tx = beginTransaction(&state->transactions);
@@ -1173,17 +1106,15 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             state->moveObjectTx.objectCount = 0;
 
             uint32 objectsFound = 0;
-            for (uint32 i = 0; i < state->docState.objectInstanceCount
-                 && objectsFound < state->uiState.selectedObjectCount;
-                 i++)
+            for (uint32 i = 0;
+                 i < state->docState.objectInstanceCount && objectsFound < state->uiState.selectedObjectCount; i++)
             {
                 uint32 objectId = state->docState.objectIds[i];
                 for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
                 {
                     if (state->uiState.selectedObjectIds[j] == objectId)
                     {
-                        state->moveObjectTx.objectIds[state->moveObjectTx.objectCount++] =
-                            objectId;
+                        state->moveObjectTx.objectIds[state->moveObjectTx.objectCount++] = objectId;
 
                         objectsFound++;
                         break;
@@ -1212,9 +1143,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             clearTransaction(state->moveObjectTx.tx);
 
             uint32 objectsFound = 0;
-            for (uint32 i = 0; i < state->docState.objectInstanceCount
-                 && objectsFound < state->moveObjectTx.objectCount;
-                 i++)
+            for (uint32 i = 0;
+                 i < state->docState.objectInstanceCount && objectsFound < state->moveObjectTx.objectCount; i++)
             {
                 uint32 objectId = state->docState.objectIds[i];
                 for (uint32 j = 0; j < state->moveObjectTx.objectCount; j++)
@@ -1243,8 +1173,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // delete selected objects with DEL key
-    if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE)
-        && state->uiState.selectedObjectCount > 0)
+    if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE) && state->uiState.selectedObjectCount > 0)
     {
         Transaction *tx = beginTransaction(&state->transactions);
         if (tx)
@@ -1260,8 +1189,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update brush highlight
     sceneState->worldState.brushPos = newBrushPos;
-    sceneState->worldState.brushCursorVisibleView =
-        isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
+    sceneState->worldState.brushCursorVisibleView = isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
     sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
     sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
@@ -1288,19 +1216,16 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         quad->height = brushStrokeQuadWidth;
     }
 
-    compositeHeightmap(memory, state->committedHeightmap->textureId,
-        state->workingBrushInfluenceMask, state->workingHeightmap,
-        state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount);
-    compositeHeightmap(memory, state->workingHeightmap->textureId,
-        state->previewBrushInfluenceMask, state->previewHeightmap,
-        &state->previewBrushStrokeQuad, 1);
+    compositeHeightmap(memory, state->committedHeightmap->textureId, state->workingBrushInfluenceMask,
+        state->workingHeightmap, state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount);
+    compositeHeightmap(memory, state->workingHeightmap->textureId, state->previewBrushInfluenceMask,
+        state->previewHeightmap, &state->previewBrushStrokeQuad, 1);
 
     if (state->isEditingHeightmap)
     {
-        engine->rendererReadTexturePixels(state->workingHeightmap->textureId,
-            GL_UNSIGNED_SHORT, GL_RED, sceneState->heightmapTextureDataTempBuffer);
-        updateHeightfieldHeights(
-            &sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
+        engine->rendererReadTexturePixels(state->workingHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
+            sceneState->heightmapTextureDataTempBuffer);
+        updateHeightfieldHeights(&sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
     }
 }
 
@@ -1319,12 +1244,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->orbitCameraPitch = glm::radians(15.0f);
         viewState->cameraLookAt = glm::vec3(0, 0, 0);
 
-        glm::vec3 lookDir =
-            glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
-                sin(viewState->orbitCameraPitch),
-                sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
-        viewState->cameraPos =
-            viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
+        glm::vec3 lookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
+            sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
+        viewState->cameraPos = viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
         viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
             &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
         viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
@@ -1374,24 +1296,20 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraPersp(
-        rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
+    engine->rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
-    engine->rendererPushTerrain(rq, &sceneState->heightfield,
-        editorAssets->terrainShaderTextured, activeHeightmapTextureId,
-        referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+    engine->rendererPushTerrain(rq, &sceneState->heightfield, editorAssets->terrainShaderTextured,
+        activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
         sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
-        sceneState->terrainMesh.elementCount, sceneState->materialCount,
-        sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
-        sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
-        sceneState->materialPropsBuffer.id, false, visualizationMode,
-        sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
-        sceneState->worldState.brushFalloff);
+        sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
+        sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+        sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
+        sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
 
-    RenderEffect *rockEffect = engine->rendererCreateEffect(
-        &memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererPushMeshes(rq, editorAssets->meshRock, sceneState->objectInstanceData,
-        sceneState->objectInstanceCount, rockEffect);
+    RenderEffect *rockEffect =
+        engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
+    engine->rendererPushMeshes(
+        rq, editorAssets->meshRock, sceneState->objectInstanceData, sceneState->objectInstanceCount, rockEffect);
     engine->rendererDrawToTarget(rq, sceneRenderTarget);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
@@ -1399,16 +1317,15 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     // selection render target is only 8 bits so mask out the 24 most significant bits
     // otherwise IDs will get clamped
-    RenderEffect *mesh8BitIdEffect = engine->rendererCreateEffect(
-        &memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *mesh8BitIdEffect =
+        engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
 
-    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS
-        && state->uiState.selectedObjectCount > 0)
+    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS && state->uiState.selectedObjectCount > 0)
     {
         uint32 objectsFound = 0;
-        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount
-             && objectsFound < state->uiState.selectedObjectCount;
+        for (uint32 i = 0;
+             i < state->previewDocState.objectInstanceCount && objectsFound < state->uiState.selectedObjectCount;
              i++)
         {
             uint32 objectId = state->previewDocState.objectIds[i];
@@ -1416,8 +1333,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             {
                 if (state->uiState.selectedObjectIds[j] == objectId)
                 {
-                    engine->rendererPushMeshes(rq, editorAssets->meshRock,
-                        &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
+                    engine->rendererPushMeshes(
+                        rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
 
                     objectsFound++;
                     break;
@@ -1430,18 +1347,18 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    RenderEffect *mesh32BitIdEffect = engine->rendererCreateEffect(
-        &memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *mesh32BitIdEffect =
+        engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
     for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
     {
-        engine->rendererPushMeshes(rq, editorAssets->meshRock,
-            &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
+        engine->rendererPushMeshes(
+            rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
     }
     engine->rendererDrawToTarget(rq, pickingRenderTarget);
 
-    RenderEffect *effect = engine->rendererCreateEffect(
-        &memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *effect =
+        engine->rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
     engine->rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureId);
     engine->rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureId);
     engine->rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureId);
@@ -1466,8 +1383,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(
-        rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, false);
+    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, false);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

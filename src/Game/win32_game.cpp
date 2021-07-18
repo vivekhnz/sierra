@@ -91,8 +91,8 @@ uint64 win32GetFileLastWriteTime(char *path)
         return 0;
     }
 
-    uint64 lastWriteTime = ((uint64)attributes.ftLastWriteTime.dwHighDateTime << 32)
-        | attributes.ftLastWriteTime.dwLowDateTime;
+    uint64 lastWriteTime =
+        ((uint64)attributes.ftLastWriteTime.dwHighDateTime << 32) | attributes.ftLastWriteTime.dwLowDateTime;
     return lastWriteTime;
 }
 
@@ -133,8 +133,7 @@ PLATFORM_READ_FILE(win32ReadFile)
         if (result.data)
         {
             DWORD bytesRead;
-            if (!ReadFile(handle, result.data, result.size, &bytesRead, 0)
-                || result.size != bytesRead)
+            if (!ReadFile(handle, result.data, result.size, &bytesRead, 0) || result.size != bytesRead)
             {
                 win32FreeMemory(result.data);
                 result.data = 0;
@@ -156,8 +155,7 @@ PLATFORM_QUEUE_ASSET_LOAD(win32QueueAssetLoad)
     }
 
     // add asset load request to queue
-    uint32 index =
-        platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length++];
+    uint32 index = platformMemory->assetLoadQueue.indices[platformMemory->assetLoadQueue.length++];
     Win32AssetLoadRequest *request = &platformMemory->assetLoadQueue.data[index];
     *request = {};
     request->assetHandle = assetHandle;
@@ -172,8 +170,7 @@ PLATFORM_WATCH_ASSET_FILE(win32WatchAssetFile)
     {
         return;
     }
-    Win32WatchedAsset *watchedAsset =
-        &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
+    Win32WatchedAsset *watchedAsset = &platformMemory->watchedAssets[platformMemory->watchedAssetCount++];
     watchedAsset->assetHandle = assetHandle;
     win32GetAssetAbsolutePath(relativePath, watchedAsset->path);
     watchedAsset->lastUpdatedTime = win32GetFileLastWriteTime(watchedAsset->path);
@@ -212,8 +209,7 @@ void win32LoadQueuedAssets()
         PlatformReadFileResult result = win32ReadFile(request->path);
         if (result.data)
         {
-            platformMemory->engineCode.api->assetsSetAssetData(
-                request->assetHandle, result.data, result.size);
+            platformMemory->engineCode.api->assetsSetAssetData(request->assetHandle, result.data, result.size);
             win32FreeMemory(result.data);
 
             assetLoadQueue->length--;
@@ -234,10 +230,8 @@ void win32LoadEngineCode(Win32EngineCode *engineCode)
     engineCode->dllModule = LoadLibraryA(engineCode->dllShadowCopyPath);
     if (engineCode->dllModule)
     {
-        EngineGetApi *engineGetApi =
-            (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
-        engineCode->api = engineGetApi(
-            (GetGLProcAddress *)glfwGetProcAddress, platformMemory->enginePlatformApi);
+        EngineGetApi *engineGetApi = (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
+        engineCode->api = engineGetApi((GetGLProcAddress *)glfwGetProcAddress, platformMemory->enginePlatformApi);
         platformMemory->gameMemory->engine = engineCode->api;
     }
 }
@@ -277,12 +271,11 @@ uint64 win32GetPressedButtons(GLFWwindow *window)
 {
     uint64 buttons = 0;
 
-#define UPDATE_MOUSE_BUTTON_STATE(name)                                                       \
-    buttons |= (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_##name##) == GLFW_PRESS)         \
+#define UPDATE_MOUSE_BUTTON_STATE(name)                                                                           \
+    buttons |= (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_##name##) == GLFW_PRESS)                             \
         * GameInputButtons::GAME_INPUT_MOUSE_##name
-#define UPDATE_KEY_STATE(name)                                                                \
-    buttons |= (glfwGetKey(window, GLFW_KEY_##name##) == GLFW_PRESS)                          \
-        * GameInputButtons::GAME_INPUT_KEY_##name
+#define UPDATE_KEY_STATE(name)                                                                                    \
+    buttons |= (glfwGetKey(window, GLFW_KEY_##name##) == GLFW_PRESS) * GameInputButtons::GAME_INPUT_KEY_##name
 
     UPDATE_MOUSE_BUTTON_STATE(LEFT);
     UPDATE_MOUSE_BUTTON_STATE(MIDDLE);
@@ -378,8 +371,7 @@ int32 main()
     uint8 *platformMemoryBaseAddress = (uint8 *)win32AllocateMemory(APP_MEMORY_SIZE);
     uint8 *gameMemoryBaseAddress = platformMemoryBaseAddress + sizeof(Win32PlatformMemory);
     uint8 *gameDataMemoryBaseAddress = gameMemoryBaseAddress + sizeof(GameMemory);
-    uint64 gameDataMemorySize =
-        (platformMemoryBaseAddress + APP_MEMORY_SIZE) - gameDataMemoryBaseAddress;
+    uint64 gameDataMemorySize = (platformMemoryBaseAddress + APP_MEMORY_SIZE) - gameDataMemoryBaseAddress;
 
     platformMemory = (Win32PlatformMemory *)platformMemoryBaseAddress;
     GameMemory *gameMemory = (GameMemory *)gameMemoryBaseAddress;
@@ -395,16 +387,13 @@ int32 main()
     }
     win32GetOutputAbsolutePath("build.lock", platformMemory->buildLockFilePath);
     win32GetOutputAbsolutePath("terrain_engine.dll", platformMemory->engineCode.dllPath);
-    win32GetOutputAbsolutePath(
-        "terrain_engine.copy_game.dll", platformMemory->engineCode.dllShadowCopyPath);
+    win32GetOutputAbsolutePath("terrain_engine.copy_game.dll", platformMemory->engineCode.dllShadowCopyPath);
     win32GetOutputAbsolutePath("terrain_game.dll", platformMemory->gameCode.dllPath);
-    win32GetOutputAbsolutePath(
-        "terrain_game.copy_game.dll", platformMemory->gameCode.dllShadowCopyPath);
+    win32GetOutputAbsolutePath("terrain_game.copy_game.dll", platformMemory->gameCode.dllShadowCopyPath);
 
     // load engine code
     win32LoadEngineCode(&platformMemory->engineCode);
-    platformMemory->engineCode.dllLastWriteTime =
-        win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
+    platformMemory->engineCode.dllLastWriteTime = win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
 
     // initialize game memory
     gameMemory->arena.baseAddress = gameDataMemoryBaseAddress;
@@ -423,8 +412,7 @@ int32 main()
     {
         if (!win32GetFileLastWriteTime(platformMemory->buildLockFilePath))
         {
-            uint64 engineCodeDllLastWriteTime =
-                win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
+            uint64 engineCodeDllLastWriteTime = win32GetFileLastWriteTime(platformMemory->engineCode.dllPath);
             if (engineCodeDllLastWriteTime
                 && engineCodeDllLastWriteTime > platformMemory->engineCode.dllLastWriteTime)
             {
@@ -433,10 +421,8 @@ int32 main()
                 platformMemory->engineCode.dllLastWriteTime = engineCodeDllLastWriteTime;
             }
 
-            uint64 gameCodeDllLastWriteTime =
-                win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
-            if (gameCodeDllLastWriteTime
-                && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime)
+            uint64 gameCodeDllLastWriteTime = win32GetFileLastWriteTime(platformMemory->gameCode.dllPath);
+            if (gameCodeDllLastWriteTime && gameCodeDllLastWriteTime > platformMemory->gameCode.dllLastWriteTime)
             {
                 win32UnloadGameCode(&platformMemory->gameCode);
                 win32LoadGameCode(&platformMemory->gameCode);
@@ -487,8 +473,7 @@ int32 main()
 
         if (platformMemory->gameCode.gameUpdateAndRender)
         {
-            platformMemory->gameCode.gameUpdateAndRender(
-                platformMemory->gameMemory, &input, viewport, deltaTime);
+            platformMemory->gameCode.gameUpdateAndRender(platformMemory->gameMemory, &input, viewport, deltaTime);
         }
 
         if (platformMemory->shouldExitGame)
@@ -498,8 +483,7 @@ int32 main()
         if (platformMemory->shouldCaptureMouse != wasMouseCaptured)
         {
             glfwSetInputMode(window, GLFW_CURSOR,
-                platformMemory->shouldCaptureMouse ? GLFW_CURSOR_DISABLED
-                                                   : GLFW_CURSOR_NORMAL);
+                platformMemory->shouldCaptureMouse ? GLFW_CURSOR_DISABLED : GLFW_CURSOR_NORMAL);
             wasMouseCursorTeleported = true;
         }
 

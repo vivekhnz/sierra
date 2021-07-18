@@ -13,13 +13,12 @@ struct Heightfield
     glm::vec2 position;
 };
 
-#define HEIGHTFIELD_GET_HEIGHT(name)                                                          \
-    float name(Heightfield *heightfield, float worldX, float worldZ)
+#define HEIGHTFIELD_GET_HEIGHT(name) float name(Heightfield *heightfield, float worldX, float worldZ)
 typedef HEIGHTFIELD_GET_HEIGHT(HeightfieldGetHeight);
 
-#define HEIGHTFIELD_IS_RAY_INTERSECTING(name)                                                 \
-    bool name(Heightfield *heightfield, glm::vec3 rayOrigin, glm::vec3 rayDirection,          \
-        glm::vec3 *out_intersectionPoint)
+#define HEIGHTFIELD_IS_RAY_INTERSECTING(name)                                                                     \
+    bool name(                                                                                                    \
+        Heightfield *heightfield, glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 *out_intersectionPoint)
 typedef HEIGHTFIELD_IS_RAY_INTERSECTING(HeightfieldIsRayIntersecting);
 
 #endif

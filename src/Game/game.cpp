@@ -27,27 +27,17 @@ bool initializeGame(GameMemory *memory)
     gameAssets->terrainShaderWireframe =
         engine->assetsRegisterShader(assets, "terrain_wireframe.fs.glsl", SHADER_TYPE_TERRAIN);
 
-    gameAssets->textureGroundAlbedo =
-        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
-    gameAssets->textureGroundNormal =
-        engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
-    gameAssets->textureGroundDisplacement =
-        engine->assetsRegisterTexture(assets, "ground_displacement.tga", true);
-    gameAssets->textureGroundAo =
-        engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
-    gameAssets->textureRockAlbedo =
-        engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
-    gameAssets->textureRockNormal =
-        engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
-    gameAssets->textureRockDisplacement =
-        engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
+    gameAssets->textureGroundAlbedo = engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
+    gameAssets->textureGroundNormal = engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
+    gameAssets->textureGroundDisplacement = engine->assetsRegisterTexture(assets, "ground_displacement.tga", true);
+    gameAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
+    gameAssets->textureRockAlbedo = engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
+    gameAssets->textureRockNormal = engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
+    gameAssets->textureRockDisplacement = engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
     gameAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", false);
-    gameAssets->textureSnowAlbedo =
-        engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
-    gameAssets->textureSnowNormal =
-        engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
-    gameAssets->textureSnowDisplacement =
-        engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
+    gameAssets->textureSnowAlbedo = engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
+    gameAssets->textureSnowNormal = engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
+    gameAssets->textureSnowDisplacement = engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
     gameAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
 
     gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, true);
@@ -80,11 +70,9 @@ bool initializeGame(GameMemory *memory)
     state->heightfield.position = glm::vec2(-63.75f, -63.75f);
     *state->heightfieldHeights = {0};
 
-    state->terrainMeshElementCount =
-        (state->heightfield.rows - 1) * (state->heightfield.columns - 1) * 4;
+    state->terrainMeshElementCount = (state->heightfield.rows - 1) * (state->heightfield.columns - 1) * 4;
     uint32 vertexBufferStride = 5 * sizeof(float);
-    uint32 vertexBufferSize =
-        state->heightfield.columns * state->heightfield.rows * vertexBufferStride;
+    uint32 vertexBufferSize = state->heightfield.columns * state->heightfield.rows * vertexBufferStride;
     float *vertices = (float *)malloc(vertexBufferSize);
 
     uint32 elementBufferSize = sizeof(uint32) * state->terrainMeshElementCount;
@@ -92,8 +80,7 @@ bool initializeGame(GameMemory *memory)
 
     float offsetX = (state->heightfield.columns - 1) * state->heightfield.spacing * -0.5f;
     float offsetY = (state->heightfield.rows - 1) * state->heightfield.spacing * -0.5f;
-    glm::vec2 uvSize = glm::vec2(
-        1.0f / (state->heightfield.columns - 1), 1.0f / (state->heightfield.rows - 1));
+    glm::vec2 uvSize = glm::vec2(1.0f / (state->heightfield.columns - 1), 1.0f / (state->heightfield.rows - 1));
 
     float *currentVertex = vertices;
     uint32 *currentIndex = indices;
@@ -118,13 +105,11 @@ bool initializeGame(GameMemory *memory)
         }
     }
 
-    state->terrainMeshVertexBuffer =
-        engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
+    state->terrainMeshVertexBuffer = engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(&state->terrainMeshVertexBuffer, vertexBufferSize, vertices);
     free(vertices);
 
-    state->terrainMeshElementBuffer =
-        engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
+    state->terrainMeshElementBuffer = engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
     engine->rendererUpdateBuffer(&state->terrainMeshElementBuffer, elementBufferSize, indices);
     free(indices);
 
@@ -133,18 +118,18 @@ bool initializeGame(GameMemory *memory)
     engine->rendererUpdateBuffer(&state->terrainMeshTessLevelBuffer,
         state->heightfield.columns * state->heightfield.rows * sizeof(glm::vec4), 0);
 
-    state->heightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16,
-        GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->heightmapTextureId = engine->rendererCreateTexture(
+        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
-    state->albedoTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE, GL_RGBA,
-        GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->normalTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE, GL_RGB,
-        GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->displacementTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_SHORT,
-        GL_R16, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->aoTextureArrayId = engine->rendererCreateTextureArray(GL_UNSIGNED_BYTE, GL_R8,
-        GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->albedoTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_RGBA, GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->normalTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->displacementTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->aoTextureArrayId = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     /*
         Material properties consist of:
@@ -183,10 +168,8 @@ bool initializeGame(GameMemory *memory)
     materialProps[22] = 0.25f;
     materialProps[23] = 0.28f;
 
-    state->materialPropsBuffer =
-        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
-    engine->rendererUpdateBuffer(
-        &state->materialPropsBuffer, sizeof(materialProps), materialProps);
+    state->materialPropsBuffer = engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
+    engine->rendererUpdateBuffer(&state->materialPropsBuffer, sizeof(materialProps), materialProps);
 
     return 1;
 }
@@ -226,13 +209,11 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         memory->platformExitGame();
     }
 
-    LoadedAsset *heightmapAsset =
-        engine->assetsGetTexture(gameAssets->textureVirtualHeightmap);
+    LoadedAsset *heightmapAsset = engine->assetsGetTexture(gameAssets->textureVirtualHeightmap);
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
-        memory->engine->rendererUpdateTexture(state->heightmapTextureId, GL_UNSIGNED_SHORT,
-            GL_R16, GL_RED, heightmapAsset->texture->width, heightmapAsset->texture->height,
-            heightmapAsset->texture->data);
+        memory->engine->rendererUpdateTexture(state->heightmapTextureId, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+            heightmapAsset->texture->width, heightmapAsset->texture->height, heightmapAsset->texture->data);
 
         uint16 heightmapWidth = 2048;
         uint16 heightmapHeight = 2048;
@@ -310,9 +291,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
     if (isLightingStateUpdated)
     {
-        engine->rendererUpdateLightingState(rctx, &lightDir, state->isLightingEnabled,
-            state->isAlbedoEnabled, state->isNormalMapEnabled, state->isAOMapEnabled,
-            state->isDisplacementMapEnabled);
+        engine->rendererUpdateLightingState(rctx, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled,
+            state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
         isLightingStateUpdated = false;
     }
 
@@ -326,14 +306,11 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         // only update the look at position if the middle mouse button is pressed
         if (isButtonDown(input, GAME_INPUT_MOUSE_MIDDLE))
         {
-            glm::vec3 lookDir =
-                glm::normalize(state->orbitCameraLookAt - state->orbitCameraPos);
+            glm::vec3 lookDir = glm::normalize(state->orbitCameraLookAt - state->orbitCameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
-            glm::vec3 pan =
-                (xDir * input->mouseCursorOffset.x) + (yDir * input->mouseCursorOffset.y);
-            state->orbitCameraLookAt +=
-                pan * clamp(state->orbitCameraDistance, 2.5f, 300.0f) * 0.02f * deltaTime;
+            glm::vec3 pan = (xDir * input->mouseCursorOffset.x) + (yDir * input->mouseCursorOffset.y);
+            state->orbitCameraLookAt += pan * clamp(state->orbitCameraDistance, 2.5f, 300.0f) * 0.02f * deltaTime;
 
             isManipulatingOrbitCamera = true;
         }
@@ -341,23 +318,17 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         // only update yaw & pitch if the right mouse button is pressed
         if (isButtonDown(input, GAME_INPUT_MOUSE_RIGHT))
         {
-            float rotateSensitivity =
-                0.05f * clamp(state->orbitCameraDistance, 14.0f, 70.0f) * deltaTime;
-            state->orbitCameraYaw +=
-                glm::radians(input->mouseCursorOffset.x * rotateSensitivity);
-            state->orbitCameraPitch +=
-                glm::radians(input->mouseCursorOffset.y * rotateSensitivity);
+            float rotateSensitivity = 0.05f * clamp(state->orbitCameraDistance, 14.0f, 70.0f) * deltaTime;
+            state->orbitCameraYaw += glm::radians(input->mouseCursorOffset.x * rotateSensitivity);
+            state->orbitCameraPitch += glm::radians(input->mouseCursorOffset.y * rotateSensitivity);
 
             isManipulatingOrbitCamera = true;
         }
 
         // calculate camera position
-        glm::vec3 newLookDir =
-            glm::vec3(cos(state->orbitCameraYaw) * cos(state->orbitCameraPitch),
-                sin(state->orbitCameraPitch),
-                sin(state->orbitCameraYaw) * cos(state->orbitCameraPitch));
-        state->orbitCameraPos =
-            state->orbitCameraLookAt + (newLookDir * state->orbitCameraDistance);
+        glm::vec3 newLookDir = glm::vec3(cos(state->orbitCameraYaw) * cos(state->orbitCameraPitch),
+            sin(state->orbitCameraPitch), sin(state->orbitCameraYaw) * cos(state->orbitCameraPitch));
+        state->orbitCameraPos = state->orbitCameraLookAt + (newLookDir * state->orbitCameraDistance);
 
         // capture mouse if orbit camera is being manipulated
         if (isManipulatingOrbitCamera)
@@ -373,17 +344,14 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
         // rotate camera by moving mouse cursor
         state->firstPersonCameraYaw += input->mouseCursorOffset.x * lookSensitivity;
-        state->firstPersonCameraPitch = clamp(state->firstPersonCameraPitch
-                - ((float)input->mouseCursorOffset.y * lookSensitivity),
-            -1.55f, 1.55f);
-        glm::vec3 lookDir =
-            glm::vec3(cos(state->firstPersonCameraYaw) * cos(state->firstPersonCameraPitch),
-                sin(state->firstPersonCameraPitch),
-                sin(state->firstPersonCameraYaw) * cos(state->firstPersonCameraPitch));
+        state->firstPersonCameraPitch = clamp(
+            state->firstPersonCameraPitch - ((float)input->mouseCursorOffset.y * lookSensitivity), -1.55f, 1.55f);
+        glm::vec3 lookDir = glm::vec3(cos(state->firstPersonCameraYaw) * cos(state->firstPersonCameraPitch),
+            sin(state->firstPersonCameraPitch),
+            sin(state->firstPersonCameraYaw) * cos(state->firstPersonCameraPitch));
 
         // move camera on XZ axis using WASD keys
-        glm::vec3 moveDir = glm::vec3(
-            cos(state->firstPersonCameraYaw), 0.0f, sin(state->firstPersonCameraYaw));
+        glm::vec3 moveDir = glm::vec3(cos(state->firstPersonCameraYaw), 0.0f, sin(state->firstPersonCameraYaw));
         if (isButtonDown(input, GAME_INPUT_KEY_A))
         {
             state->firstPersonCameraPos -= glm::normalize(glm::cross(moveDir, up)) * moveSpeed;
@@ -402,11 +370,10 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         }
 
         // smoothly lerp Y to terrain height
-        float targetHeight = engine->heightfieldGetHeight(&state->heightfield,
-                                 state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
+        float targetHeight = engine->heightfieldGetHeight(
+                                 &state->heightfield, state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
             + 1.75f;
-        state->firstPersonCameraPos.y =
-            (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
+        state->firstPersonCameraPos.y = (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
 
         state->firstPersonCameraLookAt = state->firstPersonCameraPos + lookDir;
 
@@ -416,8 +383,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
     // render world
     float fov = glm::pi<float>() / 4.0f;
-    glm::vec3 *cameraPos =
-        state->isOrbitCameraMode ? &state->orbitCameraPos : &state->firstPersonCameraPos;
+    glm::vec3 *cameraPos = state->isOrbitCameraMode ? &state->orbitCameraPos : &state->firstPersonCameraPos;
     glm::vec3 *cameraLookAt =
         state->isOrbitCameraMode ? &state->orbitCameraLookAt : &state->firstPersonCameraLookAt;
 
@@ -425,23 +391,22 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureGroundAlbedo);
     if (asset->texture && asset->version > state->groundAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE,
-            GL_RGB, asset->texture->width, asset->texture->height, 0, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundNormal);
     if (asset->texture && asset->version > state->groundNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE,
-            GL_RGB, asset->texture->width, asset->texture->height, 0, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundDisplacement);
     if (asset->texture && asset->version > state->groundDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->displacementTextureArrayId,
-            GL_UNSIGNED_SHORT, GL_RED, asset->texture->width, asset->texture->height, 0,
-            asset->texture->data);
+        engine->rendererUpdateTextureArray(state->displacementTextureArrayId, GL_UNSIGNED_SHORT, GL_RED,
+            asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundAo);
@@ -454,23 +419,22 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureRockAlbedo);
     if (asset->texture && asset->version > state->rockAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE,
-            GL_RGB, asset->texture->width, asset->texture->height, 1, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockNormal);
     if (asset->texture && asset->version > state->rockNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE,
-            GL_RGB, asset->texture->width, asset->texture->height, 1, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockDisplacement);
     if (asset->texture && asset->version > state->rockDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->displacementTextureArrayId,
-            GL_UNSIGNED_SHORT, GL_RED, asset->texture->width, asset->texture->height, 1,
-            asset->texture->data);
+        engine->rendererUpdateTextureArray(state->displacementTextureArrayId, GL_UNSIGNED_SHORT, GL_RED,
+            asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockAo);
@@ -483,23 +447,22 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureSnowAlbedo);
     if (asset->texture && asset->version > state->snowAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE,
-            GL_RGB, asset->texture->width, asset->texture->height, 2, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowNormal);
     if (asset->texture && asset->version > state->snowNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE,
-            GL_RGB, asset->texture->width, asset->texture->height, 2, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowDisplacement);
     if (asset->texture && asset->version > state->snowDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->displacementTextureArrayId,
-            GL_UNSIGNED_SHORT, GL_RED, asset->texture->width, asset->texture->height, 2,
-            asset->texture->data);
+        engine->rendererUpdateTextureArray(state->displacementTextureArrayId, GL_UNSIGNED_SHORT, GL_RED,
+            asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowAo);
@@ -510,21 +473,19 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->snowAoTextureVersion = asset->version;
     }
 
-    AssetHandle terrainShader = state->isWireframeMode ? gameAssets->terrainShaderWireframe
-                                                       : gameAssets->terrainShaderTextured;
+    AssetHandle terrainShader =
+        state->isWireframeMode ? gameAssets->terrainShaderWireframe : gameAssets->terrainShaderTextured;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-    engine->rendererPushTerrain(rq, &state->heightfield, terrainShader,
-        state->heightmapTextureId, state->heightmapTextureId,
-        state->terrainMeshVertexBuffer.id, state->terrainMeshElementBuffer.id,
+    engine->rendererPushTerrain(rq, &state->heightfield, terrainShader, state->heightmapTextureId,
+        state->heightmapTextureId, state->terrainMeshVertexBuffer.id, state->terrainMeshElementBuffer.id,
         state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,
-        state->albedoTextureArrayId, state->normalTextureArrayId,
-        state->displacementTextureArrayId, state->aoTextureArrayId,
-        state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
+        state->albedoTextureArrayId, state->normalTextureArrayId, state->displacementTextureArrayId,
+        state->aoTextureArrayId, state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);

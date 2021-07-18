@@ -56,8 +56,7 @@ void *pushCommandInternal(Transaction *tx, EditorCommandType type, uint64 size)
     *((uint64 *)pushTransactionData(tx, sizeof(uint64))) = size;
     return pushTransactionData(tx, size);
 }
-#define pushCommand(tx, type)                                                                 \
-    (type *)pushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
+#define pushCommand(tx, type) (type *)pushCommandInternal(tx, EDITOR_COMMAND_##type, sizeof(type))
 
 void discardTransaction(Transaction *tx)
 {
@@ -121,10 +120,8 @@ TransactionEntry getNextCommittedTransaction(TransactionEntry *tx)
     TransactionState *transactions = (TransactionState *)tx->owner;
 
     uint64 commandBufferSize = *((uint64 *)tx->commandBufferBaseAddress);
-    void *nextCommandBufferBaseAddress =
-        (uint8 *)tx->commandBufferBaseAddress + commandBufferSize;
-    void *endOfCommittedTransactions =
-        (uint8 *)transactions->committedBaseAddress + transactions->committedUsed;
+    void *nextCommandBufferBaseAddress = (uint8 *)tx->commandBufferBaseAddress + commandBufferSize;
+    void *endOfCommittedTransactions = (uint8 *)transactions->committedBaseAddress + transactions->committedUsed;
 
     if (nextCommandBufferBaseAddress < endOfCommittedTransactions)
     {
@@ -144,8 +141,7 @@ TransactionEntry getFirstActiveTransaction(TransactionState *transactions)
     if (transactions->firstActive)
     {
         result.owner = transactions->firstActive;
-        result.commandBufferBaseAddress =
-            transactions->firstActive->tx.commandBufferBaseAddress;
+        result.commandBufferBaseAddress = transactions->firstActive->tx.commandBufferBaseAddress;
     }
 
     return result;

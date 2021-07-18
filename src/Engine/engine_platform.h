@@ -19,8 +19,8 @@ typedef uint64_t uint64;
 
 #if _DEBUG
 #undef assert
-#define assert(expr)                                                                          \
-    if (!(expr))                                                                              \
+#define assert(expr)                                                                                              \
+    if (!(expr))                                                                                                  \
         *(int *)0 = 0;
 #else
 #define assert(expr)
@@ -80,12 +80,10 @@ typedef void *AssetHandle;
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
-#define PLATFORM_QUEUE_ASSET_LOAD(name)                                                       \
-    bool name(AssetHandle assetHandle, const char *relativePath)
+#define PLATFORM_QUEUE_ASSET_LOAD(name) bool name(AssetHandle assetHandle, const char *relativePath)
 typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
 
-#define PLATFORM_WATCH_ASSET_FILE(name)                                                       \
-    void name(AssetHandle assetHandle, const char *relativePath)
+#define PLATFORM_WATCH_ASSET_FILE(name) void name(AssetHandle assetHandle, const char *relativePath)
 typedef PLATFORM_WATCH_ASSET_FILE(PlatformWatchAssetFile);
 
 struct AssetRegistration;

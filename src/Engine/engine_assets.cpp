@@ -189,8 +189,7 @@ unsigned long fastObjFileSize(void *file, void *user_data)
     FastObjVirtualFile *virtualFile = (FastObjVirtualFile *)file;
     return virtualFile->size;
 }
-void fastObjLoadMesh(
-    MemoryArena *memory, const char *path, void *data, uint64 size, MeshAsset *out_asset)
+void fastObjLoadMesh(MemoryArena *memory, const char *path, void *data, uint64 size, MeshAsset *out_asset)
 {
     fastObjCallbacks callbacks = {};
     callbacks.file_open = fastObjFileOpen;
@@ -273,8 +272,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         uint64 elementSize = 0;
         if (reg->metadata.texture->is16Bit)
         {
-            loadedData =
-                stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
+            loadedData = stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
             elementSize = 2;
         }
         else
@@ -288,8 +286,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         reg->asset.texture->width = (uint32)width;
         reg->asset.texture->height = (uint32)height;
 
-        uint64 requiredStorage =
-            (uint64)width * (uint64)height * (uint64)channels * elementSize;
+        uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
         reg->asset.texture->data = (uint8 *)pushSize(assets->arena, requiredStorage);
         memcpy(reg->asset.texture->data, loadedData, requiredStorage);
 
@@ -308,8 +305,8 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         MeshAsset *mesh = reg->asset.mesh;
         fastObjLoadMesh(assets->arena, reg->fileState->relativePath, data, size, mesh);
 
-        mesh->renderMesh = createMesh(assets->arena, mesh->vertices, mesh->vertexCount,
-            mesh->indices, mesh->elementCount);
+        mesh->renderMesh =
+            createMesh(assets->arena, mesh->vertices, mesh->vertexCount, mesh->indices, mesh->elementCount);
     }
     reg->asset.version++;
     if (reg->regType == ASSET_REG_FILE)
