@@ -176,12 +176,12 @@ typedef RENDERER_PUSH_QUADS(RendererPushQuads);
 typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_PUSH_TERRAIN(name)                                                                               \
-    void name(RenderQueue *rq, Heightfield *heightfield, AssetHandle terrainShader, uint32 heightmapTextureId,    \
-        uint32 referenceHeightmapTextureId, uint32 meshVertexBufferId, uint32 meshElementBufferId,                \
-        uint32 tessellationLevelBufferId, uint32 meshElementCount, uint32 materialCount,                          \
-        uint32 albedoTextureArrayId, uint32 normalTextureArrayId, uint32 displacementTextureArrayId,              \
-        uint32 aoTextureArrayId, uint32 materialPropsBufferId, bool isWireframe, uint32 visualizationMode,        \
-        glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
+    void name(RenderQueue *rq, Heightfield *heightfield, glm::vec2 heightmapSize, AssetHandle terrainShader,      \
+        uint32 heightmapTextureId, uint32 referenceHeightmapTextureId, uint32 meshVertexBufferId,                 \
+        uint32 meshElementBufferId, uint32 tessellationLevelBufferId, uint32 meshElementCount,                    \
+        uint32 materialCount, uint32 albedoTextureArrayId, uint32 normalTextureArrayId,                           \
+        uint32 displacementTextureArrayId, uint32 aoTextureArrayId, uint32 materialPropsBufferId,                 \
+        bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
 typedef RENDERER_PUSH_TERRAIN(RendererPushTerrain);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

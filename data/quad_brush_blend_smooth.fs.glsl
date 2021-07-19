@@ -6,6 +6,7 @@ layout(binding = 1) uniform sampler2D influenceTexture;
 
 uniform int iterationCount;
 uniform int iteration;
+uniform int heightmapWidth;
 
 out vec4 FragColor;
 
@@ -19,7 +20,7 @@ void main()
     float newValue = baseValue;
     if (influence > 0)
     {
-        float L = 4.0f / 2048.0f;
+        float L = 4.0f / heightmapWidth;
         float accumulated = baseValue;
         int samples = 1;
 

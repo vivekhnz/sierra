@@ -123,21 +123,21 @@ void initializeEditor(EditorMemory *memory)
 
     SceneState *sceneState = &state->sceneState;
 
-    state->importedHeightmapTextureId = engine->rendererCreateTexture(
-        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+    state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+        HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    state->committedHeightmap =
-        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->workingBrushInfluenceMask =
-        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->workingHeightmap =
-        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->previewBrushInfluenceMask =
-        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->previewHeightmap =
-        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
-    state->temporaryHeightmap =
-        engine->rendererCreateRenderTarget(&memory->arena, 2048, 2048, RENDER_TARGET_FORMAT_R16);
+    state->committedHeightmap = engine->rendererCreateRenderTarget(
+        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
+        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->workingHeightmap = engine->rendererCreateRenderTarget(
+        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
+        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->previewHeightmap = engine->rendererCreateRenderTarget(
+        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->temporaryHeightmap = engine->rendererCreateRenderTarget(
+        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
@@ -385,6 +385,7 @@ void compositeHeightmap(EditorMemory *memory,
                 &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
             engine->rendererSetEffectInt(effect, "iterationCount", iterations);
             engine->rendererSetEffectInt(effect, "iteration", i);
+            engine->rendererSetEffectInt(effect, "heightmapWidth", iterationOutput->width);
             engine->rendererSetEffectTexture(effect, 0, inputTextureId);
             engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
 
@@ -435,8 +436,8 @@ void compositeHeightmap(EditorMemory *memory,
 
 void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
 {
-    uint16 heightmapWidth = 2048;
-    uint16 heightmapHeight = 2048;
+    uint16 heightmapWidth = HEIGHTMAP_WIDTH;
+    uint16 heightmapHeight = HEIGHTMAP_HEIGHT;
     uint16 patchTexelWidth = heightmapWidth / heightfield->columns;
     uint16 patchTexelHeight = heightmapHeight / heightfield->rows;
 
@@ -1297,11 +1298,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+    glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
-    engine->rendererPushTerrain(rq, &sceneState->heightfield, editorAssets->terrainShaderTextured,
+    engine->rendererPushTerrain(rq, &sceneState->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
         activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
         sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
         sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
@@ -1312,7 +1314,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 #if 1
     Heightfield heightfieldCopy = sceneState->heightfield;
     heightfieldCopy.center = glm::vec2((heightfieldCopy.columns - 1) * heightfieldCopy.spacing, 0);
-    engine->rendererPushTerrain(rq, &heightfieldCopy, editorAssets->terrainShaderTextured,
+    engine->rendererPushTerrain(rq, &heightfieldCopy, heightmapSize, editorAssets->terrainShaderTextured,
         activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
         sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
         sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,

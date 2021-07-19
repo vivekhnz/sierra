@@ -143,6 +143,7 @@ struct DrawMeshesCommand
 struct DrawTerrainCommand
 {
     Heightfield *heightfield;
+    glm::vec2 heightmapSize;
 
     AssetHandle terrainShader;
 
@@ -420,6 +421,7 @@ layout (std140, binding = 1) uniform Lighting
 
 uniform int materialCount;
 uniform vec3 terrainDimensions;
+uniform vec2 heightmapSize;
 
 layout(binding = 0) uniform sampler2D activeHeightmapTexture;
 layout(binding = 3) uniform sampler2DArray displacementTextures;
@@ -479,7 +481,7 @@ void main()
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
     float altitude = height(hUV);
     float normalSampleOffsetInTexels = 2;
-    vec2 normalSampleOffsetInUvCoords = normalSampleOffsetInTexels / vec2(2048, 2048);
+    vec2 normalSampleOffsetInUvCoords = normalSampleOffsetInTexels / heightmapSize;
     float hL = height(vec2(hUV.x - normalSampleOffsetInUvCoords.x, hUV.y));
     float hR = height(vec2(hUV.x + normalSampleOffsetInUvCoords.x, hUV.y));
     float hD = height(vec2(hUV.x, hUV.y - normalSampleOffsetInUvCoords.y));
@@ -1260,6 +1262,7 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     DrawTerrainCommand *cmd = pushRenderCommand(rq, DrawTerrainCommand);
 
     cmd->heightfield = heightfield;
+    cmd->heightmapSize = heightmapSize;
 
     cmd->terrainShader = terrainShader;
 
@@ -1578,6 +1581,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glProgramUniform2fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainOrigin"), 1,
                     glm::value_ptr(heightfield->center));
+                glProgramUniform2fv(terrainShaderProgramId,
+                    glGetUniformLocation(terrainShaderProgramId, "heightmapSize"), 1,
+                    glm::value_ptr(cmd->heightmapSize));
                 glProgramUniform1i(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "materialCount"), cmd->materialCount);
                 glProgramUniform3fv(terrainShaderProgramId,
