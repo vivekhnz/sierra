@@ -15,6 +15,7 @@ layout (std140, binding = 1) uniform Lighting
 
 uniform int materialCount;
 uniform vec3 terrainDimensions;
+uniform vec2 terrainOrigin;
 
 layout(binding = 1) uniform sampler2DArray albedoTextures;
 layout(binding = 2) uniform sampler2DArray normalTextures;
@@ -165,8 +166,7 @@ void main()
     {
         float outerRadius = cursorRadius * 0.5f;
         float innerRadius = outerRadius * cursorFalloff;
-        vec2 normalizedUV = texcoord.xz / terrainDimensions.xz;
-        float distFromCenter = distance(normalizedUV, cursorPos);
+        float distFromCenter = distance(terrainOrigin + texcoord.xz, cursorPos);
 
         float baseHighlightIntensity = 0;
         vec3 highlightColor = vec3(0.3);
@@ -195,8 +195,7 @@ void main()
         highlight = highlightColor * baseHighlightIntensity;
 
         // outline thickness is based on depth
-        float outlineWidth = max(min(0.003 - (0.07 * gl_FragCoord.w), 0.002), 0.0005);
-        
+        float outlineWidth = max(min(0.3825 - (8.925 * gl_FragCoord.w), 0.255), 0.06375);
         float outlineIntensity = 0;
         outlineIntensity += calcRingOpacity(outerRadius, outlineWidth, distFromCenter);
         outlineIntensity += calcRingOpacity(innerRadius, outlineWidth, distFromCenter);

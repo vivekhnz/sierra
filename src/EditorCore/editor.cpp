@@ -1189,9 +1189,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // update brush highlight
-    sceneState->worldState.brushPos = newBrushPos;
+    Heightfield *heightfield = &state->sceneState.heightfield;
+    glm::vec2 heightfieldSize = glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
+    sceneState->worldState.brushPos = newBrushPos * heightfieldSize;
     sceneState->worldState.brushCursorVisibleView = isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
-    sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius / 2048.0f;
+    sceneState->worldState.brushRadius = (state->uiState.terrainBrushRadius / 2048.0f) * heightfieldSize.x;
     sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
     // update scene lighting
@@ -1306,6 +1308,18 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
         sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
         sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
+
+#if 1
+    Heightfield heightfieldCopy = sceneState->heightfield;
+    heightfieldCopy.center = glm::vec2((heightfieldCopy.columns - 1) * heightfieldCopy.spacing, 0);
+    engine->rendererPushTerrain(rq, &heightfieldCopy, editorAssets->terrainShaderTextured,
+        activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+        sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
+        sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
+        sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+        sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
+        sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
+#endif
 
     RenderEffect *rockEffect =
         engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
