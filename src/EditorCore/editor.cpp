@@ -116,8 +116,8 @@ void initializeEditor(EditorMemory *memory)
 
     state->uiState.selectedObjectCount = 0;
     state->uiState.selectedObjectIds = pushArray(&memory->arena, uint32, MAX_OBJECT_INSTANCES);
-    state->uiState.terrainBrushRadius = 128.0f;
-    state->uiState.terrainBrushFalloff = 0.75f;
+    state->uiState.terrainBrushRadius = 24.0f;
+    state->uiState.terrainBrushFalloff = 0.55f;
     state->uiState.terrainBrushStrength = 0.12f;
     state->uiState.sceneLightDirection = 0.5f;
 
@@ -351,7 +351,7 @@ void compositeHeightmap(EditorMemory *memory,
          * increases to ensure the perceived brush strength remains constant.
          */
         brushStrength = 0.01f + (0.01875f * state->uiState.terrainBrushStrength);
-        brushStrength /= pow(state->uiState.terrainBrushRadius, 0.5f);
+        brushStrength /= 4.0f * pow(state->uiState.terrainBrushRadius, 0.5f);
         maskBlendMode = EFFECT_BLEND_ADDITIVE;
     }
     if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
@@ -973,11 +973,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                         if (isButtonDown(input, EDITOR_INPUT_KEY_R))
                         {
-                            float brushRadiusIncrease = input->cursorOffset.x + input->cursorOffset.y;
+                            float brushRadiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
 
                             memory->platformCaptureMouse();
-                            state->uiState.terrainBrushRadius = glm::clamp(
-                                state->uiState.terrainBrushRadius + brushRadiusIncrease, 32.0f, 2048.0f);
+                            state->uiState.terrainBrushRadius =
+                                glm::clamp(state->uiState.terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
                             state->isAdjustingBrushParameters = true;
                         }
                         else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
@@ -1193,7 +1193,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     glm::vec2 heightfieldSize = glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
     sceneState->worldState.brushPos = newBrushPos * heightfieldSize;
     sceneState->worldState.brushCursorVisibleView = isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
-    sceneState->worldState.brushRadius = (state->uiState.terrainBrushRadius / 2048.0f) * heightfieldSize.x;
+    sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius;
     sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
     // update scene lighting
@@ -1204,7 +1204,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     engine->rendererUpdateLightingState(rctx, &lightDir, true, true, true, true, true);
 
     // update brush quad instances
-    float brushStrokeQuadWidth = state->uiState.terrainBrushRadius / 2048.0f;
+    float brushStrokeQuadWidth = state->uiState.terrainBrushRadius / 128.0f;
     state->previewBrushStrokeQuad.x = newBrushPos.x - (brushStrokeQuadWidth * 0.5f);
     state->previewBrushStrokeQuad.y = newBrushPos.y - (brushStrokeQuadWidth * 0.5f);
     state->previewBrushStrokeQuad.width = brushStrokeQuadWidth;

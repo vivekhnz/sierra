@@ -83,8 +83,8 @@
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="32" />
                   </Grid.ColumnDefinitions>
-                  <Slider Minimum="32" Maximum="2048" Value="{b:UiBinding TerrainBrushRadius}"
-                      SmallChange="1" LargeChange="16" TickFrequency="1"
+                  <Slider Minimum="2" Maximum="128" Value="{b:UiBinding TerrainBrushRadius}"
+                      SmallChange="0.1" LargeChange="1" TickFrequency="1"
                       IsSnapToTickEnabled="True" />
                   <TextBlock Text="{b:UiBinding TerrainBrushRadius}" Grid.Column="1"
                       Foreground="#888" Margin="4 0 0 0" />
