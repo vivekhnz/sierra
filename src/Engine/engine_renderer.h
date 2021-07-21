@@ -155,10 +155,19 @@ typedef RENDERER_SET_EFFECT_TEXTURE(RendererSetEffectTexture);
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
 typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
 
-#define RENDERER_SET_CAMERA_ORTHO(name) void name(RenderQueue *rq)
+struct SetCameraCommand
+{
+    bool isOrthographic;
+
+    glm::vec3 cameraPos;
+    glm::vec3 lookAt;
+    float fov;
+};
+
+#define RENDERER_SET_CAMERA_ORTHO(name) SetCameraCommand *name(RenderQueue *rq)
 typedef RENDERER_SET_CAMERA_ORTHO(RendererSetCameraOrtho);
 #define RENDERER_SET_CAMERA_PERSP(name)                                                                           \
-    void name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
+    SetCameraCommand *name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
 typedef RENDERER_SET_CAMERA_PERSP(RendererSetCameraPersp);
 
 #define RENDERER_CLEAR(name) void name(RenderQueue *rq, float r, float g, float b, float a)

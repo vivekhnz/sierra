@@ -114,14 +114,6 @@ struct RenderQueueCommandHeader
     RenderQueueCommandHeader *next;
 };
 
-struct SetCameraCommand
-{
-    bool isOrthographic;
-
-    glm::vec3 cameraPos;
-    glm::vec3 lookAt;
-    float fov;
-};
 struct ClearCommand
 {
     glm::vec4 color;
@@ -1190,6 +1182,9 @@ RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     cmd->isOrthographic = true;
+    cmd->cameraPos = glm::vec3(0, 0, 0);
+
+    return cmd;
 }
 RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
 {
@@ -1198,6 +1193,8 @@ RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
     cmd->cameraPos = cameraPos;
     cmd->lookAt = lookAt;
     cmd->fov = fov;
+
+    return cmd;
 }
 
 RENDERER_CLEAR(rendererClear)
@@ -1413,8 +1410,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             {
                 // map from ([0 - width], [0 - height]) -> ([-1 - 1], [-1 - 1])
                 camera.transform = glm::identity<glm::mat4>();
-                camera.transform = glm::translate(camera.transform, glm::vec3(-1, -1, 0));
                 camera.transform = glm::scale(camera.transform, glm::vec3(2.0f / width, 2.0f / height, 1));
+                camera.transform = glm::translate(camera.transform,
+                    glm::vec3(-((width * 0.5f) + cmd->cameraPos.x), -((height * 0.5f) + cmd->cameraPos.y), 0));
             }
             else
             {
