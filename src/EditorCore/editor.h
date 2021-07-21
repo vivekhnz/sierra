@@ -98,17 +98,22 @@ struct GpuMaterialProperties
     glm::vec4 rampParams;
 };
 
+struct TerrainTile
+{
+    Heightfield *heightfield;
+};
+
 struct SceneState
 {
-    Heightfield heightfield;
-    float heightfieldHeights[HEIGHTFIELD_COLUMNS * HEIGHTFIELD_ROWS] = {0};
-
     struct TerrainMesh
     {
         RenderBuffer vertexBuffer;
         RenderBuffer elementBuffer;
         uint32 elementCount;
     } terrainMesh;
+
+    TerrainTile *terrainTiles;
+    uint32 terrainTileCount;
 
     RenderBuffer tessellationLevelBuffer;
 

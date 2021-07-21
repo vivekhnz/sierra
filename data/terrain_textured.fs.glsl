@@ -166,7 +166,8 @@ void main()
     {
         float outerRadius = cursorRadius * 0.5f;
         float innerRadius = outerRadius * cursorFalloff;
-        float distFromCenter = distance(terrainOrigin + texcoord.xz, cursorPos);
+        vec2 cursorPosOffset = cursorPos + (terrainDimensions.xz * 0.5);
+        float distFromCenter = distance(terrainOrigin + texcoord.xz, cursorPosOffset);
 
         float baseHighlightIntensity = 0;
         vec3 highlightColor = vec3(0.3);

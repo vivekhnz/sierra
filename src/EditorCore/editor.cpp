@@ -69,13 +69,15 @@ float *getObjectProperty(EditorDocumentState *docState, uint32 objIndex, ObjectP
 
 void initializeEditor(EditorMemory *memory)
 {
-    assert(memory->arena.used == 0);
-    EditorState *state = pushStruct(&memory->arena, EditorState);
+    MemoryArena *arena = &memory->arena;
+    assert(arena->used == 0);
+
+    EditorState *state = pushStruct(arena, EditorState);
     EngineApi *engine = memory->engineApi;
 
-    state->renderCtx = engine->rendererInitialize(&memory->arena);
+    state->renderCtx = engine->rendererInitialize(arena);
 
-    state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
+    state->assetsArena = pushSubArena(arena, 200 * 1024 * 1024);
     state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
     EditorAssets *editorAssets = &state->editorAssets;
@@ -115,7 +117,7 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->meshRock = engine->assetsRegisterMesh(assets, "rock.obj");
 
     state->uiState.selectedObjectCount = 0;
-    state->uiState.selectedObjectIds = pushArray(&memory->arena, uint32, MAX_OBJECT_INSTANCES);
+    state->uiState.selectedObjectIds = pushArray(arena, uint32, MAX_OBJECT_INSTANCES);
     state->uiState.terrainBrushRadius = 24.0f;
     state->uiState.terrainBrushFalloff = 0.55f;
     state->uiState.terrainBrushStrength = 0.12f;
@@ -126,70 +128,80 @@ void initializeEditor(EditorMemory *memory)
     state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
         HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
 
-    state->committedHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
-        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->workingHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
-        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->previewHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->temporaryHeightmap = engine->rendererCreateRenderTarget(
-        &memory->arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->committedHeightmap =
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->workingBrushInfluenceMask =
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->workingHeightmap =
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->previewBrushInfluenceMask =
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->previewHeightmap =
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+    state->temporaryHeightmap =
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
     // initialize scene world
-    sceneState->heightmapTextureDataTempBuffer =
-        (uint16 *)pushSize(&memory->arena, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
+    sceneState->heightmapTextureDataTempBuffer = (uint16 *)pushSize(arena, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
 
-    sceneState->heightfield = {};
-    sceneState->heightfield.columns = HEIGHTFIELD_COLUMNS;
-    sceneState->heightfield.rows = HEIGHTFIELD_ROWS;
-    sceneState->heightfield.spacing = 0.5f;
-    sceneState->heightfield.maxHeight = 200;
-    sceneState->heightfield.center = glm::vec2(0, 0);
-    sceneState->heightfield.heights = sceneState->heightfieldHeights;
+    sceneState->terrainTileCount = 2;
+    sceneState->terrainTiles = pushArray(arena, TerrainTile, sceneState->terrainTileCount);
+
+    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+    {
+        TerrainTile *tile = &sceneState->terrainTiles[i];
+        tile->heightfield = pushStruct(arena, Heightfield);
+        tile->heightfield->columns = HEIGHTFIELD_COLUMNS;
+        tile->heightfield->rows = HEIGHTFIELD_ROWS;
+        tile->heightfield->spacing = 0.5f;
+        tile->heightfield->maxHeight = 200;
+        tile->heightfield->center = glm::vec2(0, 0);
+        tile->heightfield->heights = pushArray(arena, float, tile->heightfield->columns * tile->heightfield->rows);
+        memset(tile->heightfield->heights, 0, tile->heightfield->columns * tile->heightfield->rows);
+    }
+    TerrainTile *firstTile = &sceneState->terrainTiles[0];
+    sceneState->terrainTiles[1].heightfield->center =
+        glm::vec2((firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing, 0);
 
     // create terrain mesh
     sceneState->terrainMesh = {};
     sceneState->terrainMesh.elementCount =
-        (sceneState->heightfield.rows - 1) * (sceneState->heightfield.columns - 1) * 4;
+        (firstTile->heightfield->rows - 1) * (firstTile->heightfield->columns - 1) * 4;
 
     uint32 terrainVertexBufferStride = 5 * sizeof(float);
     uint32 terrainVertexBufferSize =
-        sceneState->heightfield.columns * sceneState->heightfield.rows * terrainVertexBufferStride;
+        firstTile->heightfield->columns * firstTile->heightfield->rows * terrainVertexBufferStride;
     float *terrainVertices = (float *)malloc(terrainVertexBufferSize);
 
     uint32 terrainElementBufferSize = sizeof(uint32) * sceneState->terrainMesh.elementCount;
     uint32 *terrainIndices = (uint32 *)malloc(terrainElementBufferSize);
 
-    float offsetX = (sceneState->heightfield.columns - 1) * sceneState->heightfield.spacing * -0.5f;
-    float offsetY = (sceneState->heightfield.rows - 1) * sceneState->heightfield.spacing * -0.5f;
+    float offsetX = (firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing * -0.5f;
+    float offsetY = (firstTile->heightfield->rows - 1) * firstTile->heightfield->spacing * -0.5f;
     glm::vec2 uvSize =
-        glm::vec2(1.0f / (sceneState->heightfield.columns - 1), 1.0f / (sceneState->heightfield.rows - 1));
+        glm::vec2(1.0f / (firstTile->heightfield->columns - 1), 1.0f / (firstTile->heightfield->rows - 1));
 
     float *currentVertex = terrainVertices;
     uint32 *currentIndex = terrainIndices;
-    for (uint32 y = 0; y < sceneState->heightfield.rows; y++)
+    for (uint32 y = 0; y < firstTile->heightfield->rows; y++)
     {
-        for (uint32 x = 0; x < sceneState->heightfield.columns; x++)
+        for (uint32 x = 0; x < firstTile->heightfield->columns; x++)
         {
-            *currentVertex++ = (x * sceneState->heightfield.spacing) + offsetX;
+            *currentVertex++ = (x * firstTile->heightfield->spacing) + offsetX;
             *currentVertex++ = 0;
-            *currentVertex++ = (y * sceneState->heightfield.spacing) + offsetY;
+            *currentVertex++ = (y * firstTile->heightfield->spacing) + offsetY;
             *currentVertex++ = uvSize.x * x;
             *currentVertex++ = uvSize.y * y;
 
-            if (y < sceneState->heightfield.rows - 1 && x < sceneState->heightfield.columns - 1)
+            if (y < firstTile->heightfield->rows - 1 && x < firstTile->heightfield->columns - 1)
             {
-                uint32 patchIndex = (y * sceneState->heightfield.columns) + x;
+                uint32 patchIndex = (y * firstTile->heightfield->columns) + x;
                 *currentIndex++ = patchIndex;
-                *currentIndex++ = patchIndex + sceneState->heightfield.columns;
-                *currentIndex++ = patchIndex + sceneState->heightfield.columns + 1;
+                *currentIndex++ = patchIndex + firstTile->heightfield->columns;
+                *currentIndex++ = patchIndex + firstTile->heightfield->columns + 1;
                 *currentIndex++ = patchIndex + 1;
             }
         }
@@ -207,7 +219,7 @@ void initializeEditor(EditorMemory *memory)
     sceneState->tessellationLevelBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
     engine->rendererUpdateBuffer(&sceneState->tessellationLevelBuffer,
-        sceneState->heightfield.columns * sceneState->heightfield.rows * sizeof(glm::vec4), 0);
+        firstTile->heightfield->columns * firstTile->heightfield->rows * sizeof(glm::vec4), 0);
 
     sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
@@ -483,7 +495,11 @@ void discardChanges(EditorMemory *memory)
 
     memory->engineApi->rendererReadTexturePixels(state->committedHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
         state->sceneState.heightmapTextureDataTempBuffer);
-    updateHeightfieldHeights(&state->sceneState.heightfield, state->sceneState.heightmapTextureDataTempBuffer);
+    for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
+    {
+        TerrainTile *tile = &state->sceneState.terrainTiles[i];
+        updateHeightfieldHeights(tile->heightfield, state->sceneState.heightmapTextureDataTempBuffer);
+    }
 }
 
 void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
@@ -800,6 +816,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
 
+    // todo: reimplement functionality to import a heightmap
+#if 0
     LoadedAsset *importedHeightmapAsset = engine->assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
@@ -823,8 +841,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
         endTemporaryMemory(&renderQueueMemory);
     }
+#endif
 
-    glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
+    glm::vec2 newBrushPosWorldSpace = glm::vec2(-10000, -10000);
+    glm::vec2 newBrushPosUVSpace = glm::vec2(-10000, -10000);
     state->isAdjustingBrushParameters = false;
 
     bool isManipulatingCamera = false;
@@ -954,101 +974,112 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                     glm::vec4 worldPos = inverseViewProjection * screenPos;
 
                     glm::vec3 intersectionPoint;
-                    Heightfield *heightfield = &state->sceneState.heightfield;
-                    if (engine->heightfieldIsRayIntersecting(heightfield, activeViewState->cameraPos,
-                            glm::normalize(glm::vec3(worldPos)), &intersectionPoint))
+                    bool isMouseOverTile = false;
+                    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
                     {
-                        glm::vec2 heightfieldSize =
-                            glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
-                        glm::vec2 heightfieldOrigin = heightfield->center - (heightfieldSize * 0.5f);
-                        glm::vec3 relativeIntersectionPoint =
-                            intersectionPoint - glm::vec3(heightfieldOrigin.x, 0, heightfieldOrigin.y);
-                        newBrushPos =
-                            glm::vec2(relativeIntersectionPoint.x, relativeIntersectionPoint.z) / heightfieldSize;
+                        TerrainTile *tile = &sceneState->terrainTiles[i];
+                        Heightfield *heightfield = tile->heightfield;
 
-                        if (!state->isEditingHeightmap)
+                        if (engine->heightfieldIsRayIntersecting(heightfield, activeViewState->cameraPos,
+                                glm::normalize(glm::vec3(worldPos)), &intersectionPoint))
                         {
-                            state->activeBrushStrokeInitialHeight =
-                                relativeIntersectionPoint.y / heightfield->maxHeight;
-                        }
+                            glm::vec2 heightfieldSize =
+                                glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
+                            glm::vec2 heightfieldOrigin = heightfield->center - (heightfieldSize * 0.5f);
+                            newBrushPosWorldSpace = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+                            newBrushPosUVSpace = (newBrushPosWorldSpace - heightfieldOrigin) / heightfieldSize;
 
-                        if (isButtonDown(input, EDITOR_INPUT_KEY_R))
-                        {
-                            float brushRadiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
-
-                            memory->platformCaptureMouse();
-                            state->uiState.terrainBrushRadius =
-                                glm::clamp(state->uiState.terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
-                            state->isAdjustingBrushParameters = true;
-                        }
-                        else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
-                        {
-                            float brushFalloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
-
-                            memory->platformCaptureMouse();
-                            state->uiState.terrainBrushFalloff =
-                                glm::clamp(state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
-                            state->isAdjustingBrushParameters = true;
-                        }
-                        else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
-                        {
-                            float brushStrengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
-
-                            memory->platformCaptureMouse();
-                            state->uiState.terrainBrushStrength = glm::clamp(
-                                state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
-                            state->isAdjustingBrushParameters = true;
-                        }
-                        else
-                        {
-                            if (state->isEditingHeightmap)
+                            if (!state->isEditingHeightmap)
                             {
-                                if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
+                                state->activeBrushStrokeInitialHeight =
+                                    intersectionPoint.y / heightfield->maxHeight;
+                            }
+
+                            if (isButtonDown(input, EDITOR_INPUT_KEY_R))
+                            {
+                                float brushRadiusIncrease =
+                                    0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
+
+                                memory->platformCaptureMouse();
+                                state->uiState.terrainBrushRadius = glm::clamp(
+                                    state->uiState.terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
+                                state->isAdjustingBrushParameters = true;
+                            }
+                            else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
+                            {
+                                float brushFalloffIncrease =
+                                    (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                                memory->platformCaptureMouse();
+                                state->uiState.terrainBrushFalloff = glm::clamp(
+                                    state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
+                                state->isAdjustingBrushParameters = true;
+                            }
+                            else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
+                            {
+                                float brushStrengthIncrease =
+                                    (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                                memory->platformCaptureMouse();
+                                state->uiState.terrainBrushStrength = glm::clamp(
+                                    state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
+                                state->isAdjustingBrushParameters = true;
+                            }
+                            else
+                            {
+                                if (state->isEditingHeightmap)
                                 {
-                                    glm::vec2 *nextBrushInstance =
-                                        &state->activeBrushStrokePositions[state->activeBrushStrokeInstanceCount];
-                                    if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
+                                    if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                                     {
-                                        if (state->activeBrushStrokeInstanceCount == 0)
+                                        glm::vec2 *nextBrushInstance =
+                                            &state->activeBrushStrokePositions
+                                                 [state->activeBrushStrokeInstanceCount];
+                                        if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
                                         {
-                                            *nextBrushInstance++ = newBrushPos;
-                                            state->activeBrushStrokeInstanceCount++;
-                                        }
-                                        else
-                                        {
-                                            glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
-
-                                            glm::vec2 diff = newBrushPos - *prevBrushInstance;
-                                            glm::vec2 direction = glm::normalize(diff);
-                                            float distanceRemaining = glm::length(diff);
-
-                                            const float BRUSH_INSTANCE_SPACING = 0.005f;
-                                            while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                                && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
+                                            if (state->activeBrushStrokeInstanceCount == 0)
                                             {
-                                                *nextBrushInstance++ =
-                                                    *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
+                                                *nextBrushInstance++ = newBrushPosUVSpace;
                                                 state->activeBrushStrokeInstanceCount++;
+                                            }
+                                            else
+                                            {
+                                                glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
 
-                                                distanceRemaining -= BRUSH_INSTANCE_SPACING;
+                                                glm::vec2 diff = newBrushPosUVSpace - *prevBrushInstance;
+                                                glm::vec2 direction = glm::normalize(diff);
+                                                float distanceRemaining = glm::length(diff);
+
+                                                const float BRUSH_INSTANCE_SPACING = 0.005f;
+                                                while (distanceRemaining > BRUSH_INSTANCE_SPACING
+                                                    && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
+                                                {
+                                                    *nextBrushInstance++ = *prevBrushInstance++
+                                                        + (direction * BRUSH_INSTANCE_SPACING);
+                                                    state->activeBrushStrokeInstanceCount++;
+
+                                                    distanceRemaining -= BRUSH_INSTANCE_SPACING;
+                                                }
                                             }
                                         }
                                     }
+                                    else
+                                    {
+                                        commitChanges(memory);
+                                    }
                                 }
-                                else
+                                else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                                 {
-                                    commitChanges(memory);
+                                    state->isEditingHeightmap = true;
+                                    state->activeBrushStrokeInitialHeight =
+                                        intersectionPoint.y / heightfield->maxHeight;
                                 }
                             }
-                            else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
-                            {
-                                state->isEditingHeightmap = true;
-                                state->activeBrushStrokeInitialHeight =
-                                    relativeIntersectionPoint.y / heightfield->maxHeight;
-                            }
+
+                            isMouseOverTile = true;
+                            break;
                         }
                     }
-                    else if (state->isEditingHeightmap)
+                    if (!isMouseOverTile && state->isEditingHeightmap)
                     {
                         commitChanges(memory);
                     }
@@ -1190,9 +1221,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 
     // update brush highlight
-    Heightfield *heightfield = &state->sceneState.heightfield;
-    glm::vec2 heightfieldSize = glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
-    sceneState->worldState.brushPos = newBrushPos * heightfieldSize;
+    sceneState->worldState.brushPos = newBrushPosWorldSpace;
     sceneState->worldState.brushCursorVisibleView = isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
     sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius;
     sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
@@ -1206,8 +1235,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update brush quad instances
     float brushStrokeQuadWidth = state->uiState.terrainBrushRadius / 128.0f;
-    state->previewBrushStrokeQuad.x = newBrushPos.x - (brushStrokeQuadWidth * 0.5f);
-    state->previewBrushStrokeQuad.y = newBrushPos.y - (brushStrokeQuadWidth * 0.5f);
+    state->previewBrushStrokeQuad.x = newBrushPosUVSpace.x - (brushStrokeQuadWidth * 0.5f);
+    state->previewBrushStrokeQuad.y = newBrushPosUVSpace.y - (brushStrokeQuadWidth * 0.5f);
     state->previewBrushStrokeQuad.width = brushStrokeQuadWidth;
     state->previewBrushStrokeQuad.height = brushStrokeQuadWidth;
     for (uint32 i = 0; i < state->activeBrushStrokeInstanceCount; i++)
@@ -1229,7 +1258,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     {
         engine->rendererReadTexturePixels(state->workingHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
             sceneState->heightmapTextureDataTempBuffer);
-        updateHeightfieldHeights(&sceneState->heightfield, sceneState->heightmapTextureDataTempBuffer);
+        for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+        {
+            TerrainTile *tile = &sceneState->terrainTiles[i];
+            updateHeightfieldHeights(tile->heightfield, sceneState->heightmapTextureDataTempBuffer);
+        }
     }
 }
 
@@ -1303,25 +1336,17 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
-    engine->rendererPushTerrain(rq, &sceneState->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
-        activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
-        sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
-        sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
-        sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
-        sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
-        sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
-
-#if 1
-    Heightfield heightfieldCopy = sceneState->heightfield;
-    heightfieldCopy.center = glm::vec2((heightfieldCopy.columns - 1) * heightfieldCopy.spacing, 0);
-    engine->rendererPushTerrain(rq, &heightfieldCopy, heightmapSize, editorAssets->terrainShaderTextured,
-        activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
-        sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
-        sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
-        sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
-        sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
-        sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
-#endif
+    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+    {
+        TerrainTile *tile = &sceneState->terrainTiles[i];
+        engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
+            activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+            sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
+            sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
+            sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+            sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
+            sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
+    }
 
     RenderEffect *rockEffect =
         engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
