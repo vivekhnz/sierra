@@ -1411,9 +1411,10 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             GpuCameraState camera = {};
             if (cmd->isOrthographic)
             {
+                // map from ([0 - width], [0 - height]) -> ([-1 - 1], [-1 - 1])
                 camera.transform = glm::identity<glm::mat4>();
-                camera.transform = glm::scale(camera.transform, glm::vec3(2, 2, 1));
-                camera.transform = glm::translate(camera.transform, glm::vec3(-0.5f, -0.5f, 0));
+                camera.transform = glm::translate(camera.transform, glm::vec3(-1, -1, 0));
+                camera.transform = glm::scale(camera.transform, glm::vec3(2.0f / width, 2.0f / height, 1));
             }
             else
             {

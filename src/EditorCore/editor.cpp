@@ -404,7 +404,7 @@ void compositeHeightmap(EditorMemory *memory,
             RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
             engine->rendererSetCameraOrtho(rq);
             engine->rendererClear(rq, 0, 0, 0, 1);
-            engine->rendererPushQuad(rq, {0, 0, 1, 1}, effect);
+            engine->rendererPushQuad(rq, getBounds(iterationOutput), effect);
             engine->rendererDrawToTarget(rq, iterationOutput);
 
             inputTextureId = iterationOutput->textureId;
@@ -439,7 +439,7 @@ void compositeHeightmap(EditorMemory *memory,
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
         engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushQuad(rq, {0, 0, 1, 1}, effect);
+        engine->rendererPushQuad(rq, getBounds(output), effect);
         engine->rendererDrawToTarget(rq, output);
     }
 
@@ -482,7 +482,8 @@ void commitChanges(EditorMemory *memory)
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
         engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, tile->workingHeightmap->textureId, true);
+        engine->rendererPushTexturedQuad(
+            rq, getBounds(tile->committedHeightmap), tile->workingHeightmap->textureId, true);
         if (engine->rendererDrawToTarget(rq, tile->committedHeightmap))
         {
             rendered = true;
@@ -854,7 +855,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 #endif
 
     glm::vec2 newBrushPosWorldSpace = glm::vec2(-10000, -10000);
-    glm::vec2 newBrushPosUVSpace = glm::vec2(-10000, -10000);
+    glm::vec2 newBrushPosHeightmapSpace = glm::vec2(-10000, -10000);
     state->isAdjustingBrushParameters = false;
 
     bool isManipulatingCamera = false;
@@ -997,7 +998,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                 glm::vec2(heightfield->columns, heightfield->rows) * heightfield->spacing;
                             glm::vec2 heightfieldOrigin = heightfield->center - (heightfieldSize * 0.5f);
                             newBrushPosWorldSpace = glm::vec2(intersectionPoint.x, intersectionPoint.z);
-                            newBrushPosUVSpace = (newBrushPosWorldSpace - heightfieldOrigin) / heightfieldSize;
+                            glm::vec2 newBrushPosUVSpace =
+                                (newBrushPosWorldSpace - heightfieldOrigin) / heightfieldSize;
+                            newBrushPosHeightmapSpace =
+                                newBrushPosUVSpace * glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
 
                             if (!state->isEditingHeightmap)
                             {
@@ -1048,18 +1052,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                                         {
                                             if (state->activeBrushStrokeInstanceCount == 0)
                                             {
-                                                *nextBrushInstance++ = newBrushPosUVSpace;
+                                                *nextBrushInstance++ = newBrushPosHeightmapSpace;
                                                 state->activeBrushStrokeInstanceCount++;
                                             }
                                             else
                                             {
                                                 glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
 
-                                                glm::vec2 diff = newBrushPosUVSpace - *prevBrushInstance;
+                                                glm::vec2 diff = newBrushPosHeightmapSpace - *prevBrushInstance;
                                                 glm::vec2 direction = glm::normalize(diff);
                                                 float distanceRemaining = glm::length(diff);
 
-                                                const float BRUSH_INSTANCE_SPACING = 0.005f;
+                                                const float BRUSH_INSTANCE_SPACING = 0.005f * HEIGHTMAP_WIDTH;
                                                 while (distanceRemaining > BRUSH_INSTANCE_SPACING
                                                     && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
                                                 {
@@ -1244,9 +1248,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     engine->rendererUpdateLightingState(rctx, &lightDir, true, true, true, true, true);
 
     // update brush quad instances
-    float brushStrokeQuadWidth = state->uiState.terrainBrushRadius / 128.0f;
-    state->previewBrushStrokeQuad.x = newBrushPosUVSpace.x - (brushStrokeQuadWidth * 0.5f);
-    state->previewBrushStrokeQuad.y = newBrushPosUVSpace.y - (brushStrokeQuadWidth * 0.5f);
+    float brushStrokeQuadWidth = (state->uiState.terrainBrushRadius / 128.0f) * HEIGHTMAP_WIDTH;
+    state->previewBrushStrokeQuad.x = newBrushPosHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
+    state->previewBrushStrokeQuad.y = newBrushPosHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
     state->previewBrushStrokeQuad.width = brushStrokeQuadWidth;
     state->previewBrushStrokeQuad.height = brushStrokeQuadWidth;
     for (uint32 i = 0; i < state->activeBrushStrokeInstanceCount; i++)
@@ -1424,7 +1428,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushQuad(rq, {0, 0, 1, 1}, effect);
+    engine->rendererPushQuad(rq, getBounds(sceneRenderTarget), effect);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

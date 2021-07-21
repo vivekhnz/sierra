@@ -127,6 +127,11 @@ typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
         uint32 *out_pixelCount)
 typedef RENDERER_GET_PIXELS(RendererGetPixels);
 
+#define getBounds(renderTarget)                                                                                   \
+    {                                                                                                             \
+        0, 0, (float)(renderTarget)->width, (float)(renderTarget)->height                                         \
+    }
+
 // effects
 
 #define RENDERER_CREATE_EFFECT(name)                                                                              \
