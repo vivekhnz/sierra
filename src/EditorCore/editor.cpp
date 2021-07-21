@@ -127,17 +127,6 @@ void initializeEditor(EditorMemory *memory)
 
     state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
         HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
-
-    state->committedHeightmap =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->workingBrushInfluenceMask =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->workingHeightmap =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->previewBrushInfluenceMask =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-    state->previewHeightmap =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
     state->temporaryHeightmap =
         engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
 
@@ -161,6 +150,17 @@ void initializeEditor(EditorMemory *memory)
         tile->heightfield->center = glm::vec2(0, 0);
         tile->heightfield->heights = pushArray(arena, float, tile->heightfield->columns * tile->heightfield->rows);
         memset(tile->heightfield->heights, 0, tile->heightfield->columns * tile->heightfield->rows);
+
+        tile->committedHeightmap =
+            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+        tile->workingBrushInfluenceMask =
+            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+        tile->workingHeightmap =
+            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+        tile->previewBrushInfluenceMask =
+            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+        tile->previewHeightmap =
+            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
     }
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
     sceneState->terrainTiles[1].heightfield->center =
@@ -474,11 +474,21 @@ void commitChanges(EditorMemory *memory)
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraOrtho(rq);
-    engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, true);
-    if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
+    bool rendered = false;
+    for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
+    {
+        TerrainTile *tile = &state->sceneState.terrainTiles[i];
+
+        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
+        engine->rendererSetCameraOrtho(rq);
+        engine->rendererClear(rq, 0, 0, 0, 1);
+        engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, tile->workingHeightmap->textureId, true);
+        if (engine->rendererDrawToTarget(rq, tile->committedHeightmap))
+        {
+            rendered = true;
+        }
+    }
+    if (rendered)
     {
         state->isEditingHeightmap = false;
         state->activeBrushStrokeInstanceCount = 0;
@@ -493,11 +503,11 @@ void discardChanges(EditorMemory *memory)
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
-    memory->engineApi->rendererReadTexturePixels(state->committedHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
-        state->sceneState.heightmapTextureDataTempBuffer);
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
+        memory->engineApi->rendererReadTexturePixels(tile->committedHeightmap->textureId, GL_UNSIGNED_SHORT,
+            GL_RED, state->sceneState.heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(tile->heightfield, state->sceneState.heightmapTextureDataTempBuffer);
     }
 }
@@ -1249,18 +1259,18 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         quad->height = brushStrokeQuadWidth;
     }
 
-    compositeHeightmap(memory, state->committedHeightmap->textureId, state->workingBrushInfluenceMask,
-        state->workingHeightmap, state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount);
-    compositeHeightmap(memory, state->workingHeightmap->textureId, state->previewBrushInfluenceMask,
-        state->previewHeightmap, &state->previewBrushStrokeQuad, 1);
-
-    if (state->isEditingHeightmap)
+    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
-        engine->rendererReadTexturePixels(state->workingHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
-            sceneState->heightmapTextureDataTempBuffer);
-        for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+        TerrainTile *tile = &sceneState->terrainTiles[i];
+        compositeHeightmap(memory, tile->committedHeightmap->textureId, tile->workingBrushInfluenceMask,
+            tile->workingHeightmap, state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount);
+        compositeHeightmap(memory, tile->workingHeightmap->textureId, tile->previewBrushInfluenceMask,
+            tile->previewHeightmap, &state->previewBrushStrokeQuad, 1);
+
+        if (state->isEditingHeightmap)
         {
-            TerrainTile *tile = &sceneState->terrainTiles[i];
+            engine->rendererReadTexturePixels(tile->workingHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
+                sceneState->heightmapTextureDataTempBuffer);
             updateHeightfieldHeights(tile->heightfield, sceneState->heightmapTextureDataTempBuffer);
         }
     }
@@ -1304,8 +1314,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
-    uint32 activeHeightmapTextureId = state->workingHeightmap->textureId;
-    uint32 referenceHeightmapTextureId = state->workingHeightmap->textureId;
+    bool renderPreviewHeightmap = false;
+    bool compareToCommittedHeightmap = false;
     if (sceneState->worldState.brushCursorVisibleView == viewState)
     {
         if (state->isAdjustingBrushParameters)
@@ -1313,11 +1323,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
             if (state->isEditingHeightmap)
             {
-                referenceHeightmapTextureId = state->committedHeightmap->textureId;
+                compareToCommittedHeightmap = true;
             }
             else
             {
-                activeHeightmapTextureId = state->previewHeightmap->textureId;
+                renderPreviewHeightmap = true;
             }
         }
         else if (state->isEditingHeightmap)
@@ -1339,8 +1349,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
+
+        RenderTarget *activeHeightmap = renderPreviewHeightmap ? tile->previewHeightmap : tile->workingHeightmap;
+        RenderTarget *refHeightmap =
+            compareToCommittedHeightmap ? tile->committedHeightmap : tile->workingHeightmap;
+
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
-            activeHeightmapTextureId, referenceHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+            activeHeightmap->textureId, refHeightmap->textureId, sceneState->terrainMesh.vertexBuffer.id,
             sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
             sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
             sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
@@ -1422,10 +1437,12 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
+    // todo: stitch together each tile
+    TerrainTile *tile = &state->sceneState.terrainTiles[0];
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->workingHeightmap->textureId, false);
+    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, tile->workingHeightmap->textureId, false);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

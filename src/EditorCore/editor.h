@@ -101,6 +101,11 @@ struct GpuMaterialProperties
 struct TerrainTile
 {
     Heightfield *heightfield;
+    RenderTarget *committedHeightmap;
+    RenderTarget *workingBrushInfluenceMask;
+    RenderTarget *workingHeightmap;
+    RenderTarget *previewBrushInfluenceMask;
+    RenderTarget *previewHeightmap;
 };
 
 struct SceneState
@@ -203,11 +208,6 @@ struct EditorState
     uint32 importedHeightmapTextureId;
     uint8 importedHeightmapTextureVersion;
 
-    RenderTarget *committedHeightmap;
-    RenderTarget *workingBrushInfluenceMask;
-    RenderTarget *workingHeightmap;
-    RenderTarget *previewBrushInfluenceMask;
-    RenderTarget *previewHeightmap;
     RenderTarget *temporaryHeightmap;
 
     bool isEditingHeightmap;
