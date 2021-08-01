@@ -10,10 +10,20 @@
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
 #define MAX_OBJECT_INSTANCES 32
+
+#define HEIGHTFIELD_USE_SPLIT_TILES 1
+
+#if HEIGHTFIELD_USE_SPLIT_TILES
 #define HEIGHTFIELD_COLUMNS 128
 #define HEIGHTFIELD_ROWS 128
 #define HEIGHTMAP_WIDTH 1024
 #define HEIGHTMAP_HEIGHT 1024
+#else
+#define HEIGHTMAP_WIDTH 2048
+#define HEIGHTMAP_HEIGHT 2048
+#define HEIGHTFIELD_COLUMNS 256
+#define HEIGHTFIELD_ROWS 256
+#endif
 
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
 typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
@@ -106,6 +116,9 @@ struct TerrainTile
     RenderTarget *workingHeightmap;
     RenderTarget *previewBrushInfluenceMask;
     RenderTarget *previewHeightmap;
+
+    TerrainTile *xAdjTile;
+    TerrainTile *yAdjTile;
 };
 
 struct SceneState

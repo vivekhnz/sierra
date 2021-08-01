@@ -15,7 +15,6 @@ layout (std140, binding = 1) uniform Lighting
 
 uniform int materialCount;
 uniform vec3 terrainDimensions;
-uniform vec2 terrainOrigin;
 
 layout(binding = 1) uniform sampler2DArray albedoTextures;
 layout(binding = 2) uniform sampler2DArray normalTextures;
@@ -167,7 +166,7 @@ void main()
         float outerRadius = cursorRadius * 0.5f;
         float innerRadius = outerRadius * cursorFalloff;
         vec2 cursorPosOffset = cursorPos + (terrainDimensions.xz * 0.5);
-        float distFromCenter = distance(terrainOrigin + texcoord.xz, cursorPosOffset);
+        float distFromCenter = distance(texcoord.xz, cursorPosOffset);
 
         float baseHighlightIntensity = 0;
         vec3 highlightColor = vec3(0.3);

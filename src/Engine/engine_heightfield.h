@@ -17,8 +17,8 @@ struct Heightfield
 typedef HEIGHTFIELD_GET_HEIGHT(HeightfieldGetHeight);
 
 #define HEIGHTFIELD_IS_RAY_INTERSECTING(name)                                                                     \
-    bool name(                                                                                                    \
-        Heightfield *heightfield, glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 *out_intersectionPoint)
+    bool name(Heightfield *heightfield, glm::vec3 rayOrigin, glm::vec3 rayDirection,                              \
+        glm::vec3 *out_intersectionPoint, float *out_intersectionDistance)
 typedef HEIGHTFIELD_IS_RAY_INTERSECTING(HeightfieldIsRayIntersecting);
 
 #endif

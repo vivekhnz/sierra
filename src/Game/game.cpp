@@ -483,10 +483,11 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTextureId,
-        state->heightmapTextureId, state->terrainMeshVertexBuffer.id, state->terrainMeshElementBuffer.id,
-        state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount, MATERIAL_COUNT,
-        state->albedoTextureArrayId, state->normalTextureArrayId, state->displacementTextureArrayId,
-        state->aoTextureArrayId, state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
+        state->heightmapTextureId, 0, 0, 0, 0, 0, 0, state->terrainMeshVertexBuffer.id,
+        state->terrainMeshElementBuffer.id, state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount,
+        MATERIAL_COUNT, state->albedoTextureArrayId, state->normalTextureArrayId,
+        state->displacementTextureArrayId, state->aoTextureArrayId, state->materialPropsBuffer.id,
+        state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);

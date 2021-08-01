@@ -136,16 +136,22 @@ void initializeEditor(EditorMemory *memory)
     // initialize scene world
     sceneState->heightmapTextureDataTempBuffer = (uint16 *)pushSize(arena, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
 
+#if HEIGHTFIELD_USE_SPLIT_TILES
     sceneState->terrainTileCount = 4;
-    sceneState->terrainTiles = pushArray(arena, TerrainTile, sceneState->terrainTileCount);
+    float tileLengthInWorldUnits = 64.0f;
+#else
+    sceneState->terrainTileCount = 1;
+    float tileLengthInWorldUnits = 128.0f;
+#endif
 
+    sceneState->terrainTiles = pushArray(arena, TerrainTile, sceneState->terrainTileCount);
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
         tile->heightfield = pushStruct(arena, Heightfield);
         tile->heightfield->columns = HEIGHTFIELD_COLUMNS;
         tile->heightfield->rows = HEIGHTFIELD_ROWS;
-        tile->heightfield->spacing = 0.5f;
+        tile->heightfield->spacing = tileLengthInWorldUnits / HEIGHTFIELD_COLUMNS;
         tile->heightfield->maxHeight = 200;
         tile->heightfield->center = glm::vec2(0, 0);
         tile->heightfield->heights = pushArray(arena, float, tile->heightfield->columns * tile->heightfield->rows);
@@ -161,14 +167,28 @@ void initializeEditor(EditorMemory *memory)
             engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
         tile->previewHeightmap =
             engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+
+        tile->xAdjTile = 0;
+        tile->yAdjTile = 0;
     }
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
+
+#if HEIGHTFIELD_USE_SPLIT_TILES
     float halfTileWidth = (firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing * 0.5f;
     float halfTileHeight = (firstTile->heightfield->rows - 1) * firstTile->heightfield->spacing * 0.5f;
+
     sceneState->terrainTiles[0].heightfield->center = glm::vec2(-halfTileWidth, -halfTileHeight);
+    sceneState->terrainTiles[0].xAdjTile = &sceneState->terrainTiles[1];
+    sceneState->terrainTiles[0].yAdjTile = &sceneState->terrainTiles[2];
+
     sceneState->terrainTiles[1].heightfield->center = glm::vec2(halfTileWidth, -halfTileHeight);
+    sceneState->terrainTiles[1].yAdjTile = &sceneState->terrainTiles[3];
+
     sceneState->terrainTiles[2].heightfield->center = glm::vec2(-halfTileWidth, halfTileHeight);
+    sceneState->terrainTiles[2].xAdjTile = &sceneState->terrainTiles[3];
+
     sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
+#endif
 
     // create terrain mesh
     sceneState->terrainMesh = {};
@@ -185,8 +205,6 @@ void initializeEditor(EditorMemory *memory)
 
     float offsetX = (firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing * -0.5f;
     float offsetY = (firstTile->heightfield->rows - 1) * firstTile->heightfield->spacing * -0.5f;
-    glm::vec2 uvSize =
-        glm::vec2(1.0f / (firstTile->heightfield->columns - 1), 1.0f / (firstTile->heightfield->rows - 1));
 
     float *currentVertex = terrainVertices;
     uint32 *currentIndex = terrainIndices;
@@ -197,8 +215,8 @@ void initializeEditor(EditorMemory *memory)
             *currentVertex++ = (x * firstTile->heightfield->spacing) + offsetX;
             *currentVertex++ = 0;
             *currentVertex++ = (y * firstTile->heightfield->spacing) + offsetY;
-            *currentVertex++ = uvSize.x * x;
-            *currentVertex++ = uvSize.y * y;
+            *currentVertex++ = x / (float)(firstTile->heightfield->columns - 1);
+            *currentVertex++ = y / (float)(firstTile->heightfield->rows - 1);
 
             if (y < firstTile->heightfield->rows - 1 && x < firstTile->heightfield->columns - 1)
             {
@@ -977,121 +995,129 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                 }
                 else if (state->uiState.currentContext == EDITOR_CTX_TERRAIN)
                 {
+                    glm::vec3 cameraPos = activeViewState->cameraPos;
                     glm::vec3 up = glm::vec3(0, 1, 0);
                     float aspectRatio = (float)activeViewState->sceneRenderTarget->width
                         / (float)activeViewState->sceneRenderTarget->height;
                     glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
                     glm::mat4 cameraTransform =
-                        projection * glm::lookAt(activeViewState->cameraPos, activeViewState->cameraLookAt, up);
+                        projection * glm::lookAt(cameraPos, activeViewState->cameraLookAt, up);
 
                     glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
                     glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
                     glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
                     glm::vec4 worldPos = inverseViewProjection * screenPos;
+                    glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
 
-                    glm::vec3 intersectionPoint;
-                    bool isMouseOverTile = false;
+                    // glm::vec3 intersectionPoint;
+                    TerrainTile *hoveredTile = 0;
+                    float minHitDist = FLT_MAX;
+                    glm::vec3 cursorWorldPos;
+
                     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
                     {
                         TerrainTile *tile = &sceneState->terrainTiles[i];
                         Heightfield *heightfield = tile->heightfield;
 
-                        if (engine->heightfieldIsRayIntersecting(heightfield, activeViewState->cameraPos,
-                                glm::normalize(glm::vec3(worldPos)), &intersectionPoint))
+                        glm::vec3 hitPt;
+                        float hitDist = 0;
+                        if (engine->heightfieldIsRayIntersecting(
+                                heightfield, cameraPos, mouseRayDir, &hitPt, &hitDist)
+                            && hitDist < minHitDist)
                         {
-                            newBrushPos = glm::vec2(intersectionPoint.x, intersectionPoint.z);
+                            minHitDist = hitDist;
+                            hoveredTile = tile;
+                            cursorWorldPos = hitPt;
+                        }
+                    }
 
-                            if (!state->isEditingHeightmap)
-                            {
-                                state->activeBrushStrokeInitialHeight =
-                                    intersectionPoint.y / heightfield->maxHeight;
-                            }
+                    if (hoveredTile)
+                    {
+                        Heightfield *heightfield = hoveredTile->heightfield;
+                        newBrushPos.x = cursorWorldPos.x;
+                        newBrushPos.y = cursorWorldPos.z;
 
-                            if (isButtonDown(input, EDITOR_INPUT_KEY_R))
-                            {
-                                float brushRadiusIncrease =
-                                    0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
+                        if (!state->isEditingHeightmap)
+                        {
+                            state->activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
+                        }
 
-                                memory->platformCaptureMouse();
-                                state->uiState.terrainBrushRadius = glm::clamp(
-                                    state->uiState.terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
-                                state->isAdjustingBrushParameters = true;
-                            }
-                            else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
-                            {
-                                float brushFalloffIncrease =
-                                    (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                        if (isButtonDown(input, EDITOR_INPUT_KEY_R))
+                        {
+                            float brushRadiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
 
-                                memory->platformCaptureMouse();
-                                state->uiState.terrainBrushFalloff = glm::clamp(
-                                    state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
-                                state->isAdjustingBrushParameters = true;
-                            }
-                            else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
-                            {
-                                float brushStrengthIncrease =
-                                    (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                            memory->platformCaptureMouse();
+                            state->uiState.terrainBrushRadius =
+                                glm::clamp(state->uiState.terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
+                            state->isAdjustingBrushParameters = true;
+                        }
+                        else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
+                        {
+                            float brushFalloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
 
-                                memory->platformCaptureMouse();
-                                state->uiState.terrainBrushStrength = glm::clamp(
-                                    state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
-                                state->isAdjustingBrushParameters = true;
-                            }
-                            else
+                            memory->platformCaptureMouse();
+                            state->uiState.terrainBrushFalloff =
+                                glm::clamp(state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
+                            state->isAdjustingBrushParameters = true;
+                        }
+                        else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
+                        {
+                            float brushStrengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                            memory->platformCaptureMouse();
+                            state->uiState.terrainBrushStrength = glm::clamp(
+                                state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
+                            state->isAdjustingBrushParameters = true;
+                        }
+                        else
+                        {
+                            if (state->isEditingHeightmap)
                             {
-                                if (state->isEditingHeightmap)
+                                if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                                 {
-                                    if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
+                                    glm::vec2 *nextBrushInstance =
+                                        &state->activeBrushStrokePositions[state->activeBrushStrokeInstanceCount];
+                                    if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
                                     {
-                                        glm::vec2 *nextBrushInstance =
-                                            &state->activeBrushStrokePositions
-                                                 [state->activeBrushStrokeInstanceCount];
-                                        if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
+                                        if (state->activeBrushStrokeInstanceCount == 0)
                                         {
-                                            if (state->activeBrushStrokeInstanceCount == 0)
+                                            *nextBrushInstance++ = newBrushPos;
+                                            state->activeBrushStrokeInstanceCount++;
+                                        }
+                                        else
+                                        {
+                                            glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
+
+                                            glm::vec2 diff = newBrushPos - *prevBrushInstance;
+                                            glm::vec2 direction = glm::normalize(diff);
+                                            float distanceRemaining = glm::length(diff);
+
+                                            const float BRUSH_INSTANCE_SPACING = 0.64f;
+                                            while (distanceRemaining > BRUSH_INSTANCE_SPACING
+                                                && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
                                             {
-                                                *nextBrushInstance++ = newBrushPos;
+                                                *nextBrushInstance++ =
+                                                    *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
                                                 state->activeBrushStrokeInstanceCount++;
-                                            }
-                                            else
-                                            {
-                                                glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
 
-                                                glm::vec2 diff = newBrushPos - *prevBrushInstance;
-                                                glm::vec2 direction = glm::normalize(diff);
-                                                float distanceRemaining = glm::length(diff);
-
-                                                const float BRUSH_INSTANCE_SPACING = 0.64f;
-                                                while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                                    && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
-                                                {
-                                                    *nextBrushInstance++ = *prevBrushInstance++
-                                                        + (direction * BRUSH_INSTANCE_SPACING);
-                                                    state->activeBrushStrokeInstanceCount++;
-
-                                                    distanceRemaining -= BRUSH_INSTANCE_SPACING;
-                                                }
+                                                distanceRemaining -= BRUSH_INSTANCE_SPACING;
                                             }
                                         }
                                     }
-                                    else
-                                    {
-                                        commitChanges(memory);
-                                    }
                                 }
-                                else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                                else
                                 {
-                                    state->isEditingHeightmap = true;
-                                    state->activeBrushStrokeInitialHeight =
-                                        intersectionPoint.y / heightfield->maxHeight;
+                                    commitChanges(memory);
                                 }
                             }
-
-                            isMouseOverTile = true;
-                            break;
+                            else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                            {
+                                state->isEditingHeightmap = true;
+                                state->activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
+                            }
                         }
                     }
-                    if (!isMouseOverTile && state->isEditingHeightmap)
+                    else if (state->isEditingHeightmap)
                     {
                         commitChanges(memory);
                     }
@@ -1247,8 +1273,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update brush quad instances
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
-    glm::vec2 heightfieldSize =
-        glm::vec2(firstTile->heightfield->columns, firstTile->heightfield->rows) * firstTile->heightfield->spacing;
+    glm::vec2 heightfieldSize = glm::vec2(firstTile->heightfield->columns - 1, firstTile->heightfield->rows - 1)
+        * firstTile->heightfield->spacing;
     glm::vec2 halfHeightfieldSize = heightfieldSize * 0.5f;
     glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
     glm::vec2 worldToHeightmapSpace = heightmapSize / heightfieldSize;
@@ -1366,8 +1392,45 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         RenderTarget *refHeightmap =
             compareToCommittedHeightmap ? tile->committedHeightmap : tile->workingHeightmap;
 
+        TerrainTile *xAdjTile = tile->xAdjTile;
+        TerrainTile *yAdjTile = tile->yAdjTile;
+        TerrainTile *oppTile = xAdjTile ? xAdjTile->yAdjTile : 0;
+
+        uint32 xAdjActiveHeightmapTextureId = 0;
+        uint32 xAdjRefHeightmapTextureId = 0;
+        uint32 yAdjActiveHeightmapTextureId = 0;
+        uint32 yAdjRefHeightmapTextureId = 0;
+        uint32 oppActiveHeightmapTextureId = 0;
+        uint32 oppRefHeightmapTextureId = 0;
+
+        if (xAdjTile)
+        {
+            xAdjActiveHeightmapTextureId =
+                (renderPreviewHeightmap ? xAdjTile->previewHeightmap : xAdjTile->workingHeightmap)->textureId;
+            xAdjRefHeightmapTextureId =
+                (compareToCommittedHeightmap ? xAdjTile->committedHeightmap : xAdjTile->workingHeightmap)
+                    ->textureId;
+        }
+        if (yAdjTile)
+        {
+            yAdjActiveHeightmapTextureId =
+                (renderPreviewHeightmap ? yAdjTile->previewHeightmap : yAdjTile->workingHeightmap)->textureId;
+            yAdjRefHeightmapTextureId =
+                (compareToCommittedHeightmap ? yAdjTile->committedHeightmap : yAdjTile->workingHeightmap)
+                    ->textureId;
+        }
+        if (oppTile)
+        {
+            oppActiveHeightmapTextureId =
+                (renderPreviewHeightmap ? oppTile->previewHeightmap : oppTile->workingHeightmap)->textureId;
+            oppRefHeightmapTextureId =
+                (compareToCommittedHeightmap ? oppTile->committedHeightmap : oppTile->workingHeightmap)->textureId;
+        }
+
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
-            activeHeightmap->textureId, refHeightmap->textureId, sceneState->terrainMesh.vertexBuffer.id,
+            activeHeightmap->textureId, refHeightmap->textureId, xAdjActiveHeightmapTextureId,
+            xAdjRefHeightmapTextureId, yAdjActiveHeightmapTextureId, yAdjRefHeightmapTextureId,
+            oppActiveHeightmapTextureId, oppRefHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
             sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
             sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
             sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
@@ -1449,12 +1512,13 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    // todo: stitch together each tile
+    // todo: stitch each tile's heightmap together
     TerrainTile *tile = &state->sceneState.terrainTiles[0];
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, tile->workingHeightmap->textureId, false);
+    engine->rendererPushTexturedQuad(
+        rq, {0, 0, (float)view->width, (float)view->height}, tile->workingHeightmap->textureId, false);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

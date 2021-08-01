@@ -35,6 +35,7 @@ struct EngineApi
     RendererGetPixels *rendererGetPixels;
     RendererCreateEffect *rendererCreateEffect;
     RendererSetEffectFloat *rendererSetEffectFloat;
+    RendererSetEffectVec3 *rendererSetEffectVec3;
     RendererSetEffectInt *rendererSetEffectInt;
     RendererSetEffectUint *rendererSetEffectUint;
     RendererSetEffectTexture *rendererSetEffectTexture;
@@ -43,6 +44,7 @@ struct EngineApi
     RendererSetCameraPersp *rendererSetCameraPersp;
     RendererClear *rendererClear;
     RendererPushTexturedQuad *rendererPushTexturedQuad;
+    RendererPushColoredQuad *rendererPushColoredQuad;
     RendererPushQuad *rendererPushQuad;
     RendererPushQuads *rendererPushQuads;
     RendererPushMeshes *rendererPushMeshes;

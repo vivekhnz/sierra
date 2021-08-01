@@ -97,6 +97,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererGetPixels;
         public IntPtr rendererCreateEffect;
         public IntPtr rendererSetEffectFloat;
+        public IntPtr rendererSetEffectVec3;
         public IntPtr rendererSetEffectInt;
         public IntPtr rendererSetEffectUint;
         public IntPtr rendererSetEffectTexture;
@@ -105,6 +106,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererSetCameraPersp;
         public IntPtr rendererClear;
         public IntPtr rendererPushTexturedQuad;
+        public IntPtr rendererPushColoredQuad;
         public IntPtr rendererPushQuad;
         public IntPtr rendererPushQuads;
         public IntPtr rendererPushMeshes;

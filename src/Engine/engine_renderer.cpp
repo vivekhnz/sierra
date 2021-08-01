@@ -14,8 +14,11 @@ struct RendererInternalShaders
     bool initialized;
 
     uint32 quadVertexShaderId;
-    uint32 quadFragmentShaderId;
+    uint32 texturedQuadFragmentShaderId;
+    uint32 coloredQuadFragmentShaderId;
+
     uint32 texturedQuadShaderProgramId;
+    uint32 coloredQuadShaderProgramId;
 
     uint32 meshVertexShaderId;
 
@@ -67,6 +70,7 @@ struct GpuLightingState
 enum RenderEffectParameterType
 {
     EFFECT_PARAM_TYPE_FLOAT,
+    EFFECT_PARAM_TYPE_VEC3,
     EFFECT_PARAM_TYPE_INT,
     EFFECT_PARAM_TYPE_UINT
 };
@@ -79,6 +83,7 @@ struct RenderEffectParameter
         float f;
         int32 i;
         uint32 u;
+        glm::vec3 v3;
     } value;
     RenderEffectParameter *next;
 };
@@ -141,6 +146,12 @@ struct DrawTerrainCommand
 
     uint32 heightmapTextureId;
     uint32 referenceHeightmapTextureId;
+    uint32 xAdjacentHeightmapTextureId;
+    uint32 xAdjacentReferenceHeightmapTextureId;
+    uint32 yAdjacentHeightmapTextureId;
+    uint32 yAdjacentReferenceHeightmapTextureId;
+    uint32 oppositeHeightmapTextureId;
+    uint32 oppositeReferenceHeightmapTextureId;
 
     uint32 meshVertexBufferId;
     uint32 meshElementBufferId;
@@ -243,9 +254,11 @@ RendererInternalShaders *getInternalShaders(RenderContext *ctx)
         if (shaders->initialized)
         {
             glDeleteProgram(shaders->texturedQuadShaderProgramId);
+            glDeleteProgram(shaders->coloredQuadShaderProgramId);
             glDeleteProgram(shaders->terrainCalcTessLevelShaderProgramId);
             glDeleteShader(shaders->quadVertexShaderId);
-            glDeleteShader(shaders->quadFragmentShaderId);
+            glDeleteShader(shaders->texturedQuadFragmentShaderId);
+            glDeleteShader(shaders->coloredQuadFragmentShaderId);
             glDeleteShader(shaders->meshVertexShaderId);
             glDeleteShader(shaders->terrainVertexShaderId);
             glDeleteShader(shaders->terrainTessCtrlShaderId);
@@ -253,7 +266,7 @@ RendererInternalShaders *getInternalShaders(RenderContext *ctx)
             glDeleteShader(shaders->terrainCalcTessLevelShaderId);
         }
 
-        // create quad shader program
+        // create quad shader programs
         char *quadVertexShaderSrc = R"(
 #version 430 core
 layout(location = 0) in vec2 in_mesh_pos;
@@ -274,8 +287,9 @@ void main()
     out_uv = in_mesh_uv;
 }
     )";
+        assert(createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
 
-        char *quadFragmentShaderSrc = R"(
+        char *texturedQuadFragmentShaderSrc = R"(
 #version 430 core
 layout(location = 0) in vec2 uv;
 
@@ -288,11 +302,28 @@ void main()
     FragColor = vec4(texture(imageTexture, uv).rgb, 1);
 }
     )";
+        assert(createShader(
+            GL_FRAGMENT_SHADER, texturedQuadFragmentShaderSrc, &shaders->texturedQuadFragmentShaderId));
+        uint32 texturedQuadShaderIds[] = {shaders->quadVertexShaderId, shaders->texturedQuadFragmentShaderId};
+        assert(createShaderProgram(2, texturedQuadShaderIds, &shaders->texturedQuadShaderProgramId));
 
-        assert(createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
-        assert(createShader(GL_FRAGMENT_SHADER, quadFragmentShaderSrc, &shaders->quadFragmentShaderId));
-        uint32 shaderIds[] = {shaders->quadVertexShaderId, shaders->quadFragmentShaderId};
-        assert(createShaderProgram(2, shaderIds, &shaders->texturedQuadShaderProgramId));
+        char *coloredQuadFragmentShaderSrc = R"(
+#version 430 core
+layout(location = 0) in vec2 uv;
+
+uniform vec3 color;
+
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(color, 1);
+}
+    )";
+        assert(
+            createShader(GL_FRAGMENT_SHADER, coloredQuadFragmentShaderSrc, &shaders->coloredQuadFragmentShaderId));
+        uint32 coloredQuadShaderIds[] = {shaders->quadVertexShaderId, shaders->coloredQuadFragmentShaderId};
+        assert(createShaderProgram(2, coloredQuadShaderIds, &shaders->coloredQuadShaderProgramId));
 
         // create mesh vertex shader
         char *meshVertexShaderSrc = R"(
@@ -414,10 +445,17 @@ layout (std140, binding = 1) uniform Lighting
 uniform int materialCount;
 uniform vec3 terrainDimensions;
 uniform vec2 heightmapSize;
+uniform vec2 terrainOrigin;
 
 layout(binding = 0) uniform sampler2D activeHeightmapTexture;
 layout(binding = 3) uniform sampler2DArray displacementTextures;
 layout(binding = 5) uniform sampler2D referenceHeightmapTexture;
+layout(binding = 6) uniform sampler2D xAdjacentActiveHeightmapTexture;
+layout(binding = 7) uniform sampler2D xAdjacentReferenceHeightmapTexture;
+layout(binding = 8) uniform sampler2D yAdjacentActiveHeightmapTexture;
+layout(binding = 9) uniform sampler2D yAdjacentReferenceHeightmapTexture;
+layout(binding = 10) uniform sampler2D oppositeActiveHeightmapTexture;
+layout(binding = 11) uniform sampler2D oppositeReferenceHeightmapTexture;
 
 struct MaterialProperties
 {
@@ -450,9 +488,38 @@ float getDisplacement(vec2 uv, int layerIdx, float mip)
         textureLod(displacementTextures, uvLayered, ceil(mip)).x,
         fract(mip));
 }
+float calcHeight(vec2 uv, sampler2D thisTileTex,
+    sampler2D xAdjacentTex, sampler2D yAdjacentTex, sampler2D oppositeTex)
+{
+    vec2 minUV = 1 / (2 * heightmapSize);
+    vec2 maxUV = 1 - minUV;
+    vec2 uvClamped = min(uv + minUV, maxUV);
+    float result = texture(thisTileTex, uvClamped).x;
+
+    vec2 adjBlend = clamp((uv + (2 * minUV) - 1) / (2 * minUV), 0, 1);
+    if (adjBlend.x > 0 && adjBlend.y > 0)
+    {
+        result = texture(oppositeTex, clamp(uv + minUV - 1, minUV, maxUV)).x;
+    }
+    else
+    {
+        vec2 adjUV = clamp(uv + minUV - 1, minUV, maxUV);
+        float adjXHeight = texture(xAdjacentTex, vec2(adjUV.x, uvClamped.y)).x;
+        float adjYHeight = texture(yAdjacentTex, vec2(uvClamped.x, adjUV.y)).x;
+        result = mix(mix(result, adjXHeight, adjBlend.x), adjYHeight, adjBlend.y);
+    }
+    return result;
+}
 float height(vec2 uv)
 {
-    return textureLod(activeHeightmapTexture, uv, 2).x;
+    return calcHeight(uv, activeHeightmapTexture,
+        xAdjacentActiveHeightmapTexture, yAdjacentActiveHeightmapTexture, oppositeActiveHeightmapTexture);
+}
+float refHeight(vec2 uv)
+{
+    return calcHeight(uv, referenceHeightmapTexture,
+        xAdjacentReferenceHeightmapTexture, yAdjacentReferenceHeightmapTexture,
+        oppositeReferenceHeightmapTexture);
 }
 vec3 calcTriplanarBlend(vec3 normal)
 {
@@ -472,11 +539,11 @@ void main()
     // calculate normal
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
     float altitude = height(hUV);
-    float normalSampleOffsetInTexels = 2;
+    float normalSampleOffsetInTexels = 8;
     vec2 normalSampleOffsetInUvCoords = normalSampleOffsetInTexels / heightmapSize;
-    float hL = height(vec2(hUV.x - normalSampleOffsetInUvCoords.x, hUV.y));
+    float hL = height(vec2(hUV.x, hUV.y));
     float hR = height(vec2(hUV.x + normalSampleOffsetInUvCoords.x, hUV.y));
-    float hD = height(vec2(hUV.x, hUV.y - normalSampleOffsetInUvCoords.y));
+    float hD = height(vec2(hUV.x, hUV.y));
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffsetInUvCoords.y));
     
     float nY = (2 * terrainDimensions.x * normalSampleOffsetInUvCoords.x) / terrainDimensions.y;
@@ -487,9 +554,9 @@ void main()
     vec3 triBlend = calcTriplanarBlend(normal);
     vec3 triAxisSign = sign(normal);
     texcoord = vec3(
-        hUV.x * terrainDimensions.x,
+        terrainOrigin.x + (hUV.x * terrainDimensions.x),
         -altitude * terrainDimensions.y,
-        hUV.y * terrainDimensions.z);
+        terrainOrigin.y + (hUV.y * terrainDimensions.z));
 
     vec2 baseTexcoordsX = vec2(texcoord.z * triAxisSign.x, texcoord.y);
     vec2 baseTexcoordsY = vec2(texcoord.x * triAxisSign.y, texcoord.z);
@@ -498,7 +565,7 @@ void main()
     vec3 pos = lerp3D(in_worldPos[0], in_worldPos[1], in_worldPos[2], in_worldPos[3]);
     pos.y = altitude * terrainDimensions.y;
 
-    heights.x = textureLod(referenceHeightmapTexture, hUV, 2).x;
+    heights.x = refHeight(hUV);
     heights.y = altitude;
 
     if (lighting_isDisplacementMapEnabled)
@@ -570,17 +637,43 @@ uniform int columnCount;
 uniform float targetTriangleSize;
 uniform float terrainHeight;
 uniform vec2 terrainOrigin;
+uniform vec2 heightmapSize;
 layout(binding = 0) uniform sampler2D heightmapTexture;
+layout(binding = 6) uniform sampler2D xAdjacentHeightmapTexture;
+layout(binding = 8) uniform sampler2D yAdjacentHeightmapTexture;
+layout(binding = 10) uniform sampler2D oppositeHeightmapTexture;
 
 vec3 worldToScreen(vec3 p)
 {
     vec4 clipPos = camera_transform * vec4(p, 1.0f);
     return clipPos.xyz / clipPos.w;
 }
+float calcHeight(vec2 uv, sampler2D thisTileTex,
+    sampler2D xAdjacentTex, sampler2D yAdjacentTex, sampler2D oppositeTex)
+{
+    vec2 minUV = 1 / (2 * heightmapSize);
+    vec2 maxUV = 1 - minUV;
+    vec2 uvClamped = min(uv + minUV, maxUV);
+    float result = texture(thisTileTex, uvClamped).x;
 
+    vec2 adjBlend = clamp((uv + (2 * minUV) - 1) / (2 * minUV), 0, 1);
+    if (adjBlend.x > 0 && adjBlend.y > 0)
+    {
+        result = texture(oppositeTex, clamp(uv + minUV - 1, minUV, maxUV)).x;
+    }
+    else
+    {
+        vec2 adjUV = clamp(uv + minUV - 1, minUV, maxUV);
+        float adjXHeight = texture(xAdjacentTex, vec2(adjUV.x, uvClamped.y)).x;
+        float adjYHeight = texture(yAdjacentTex, vec2(uvClamped.x, adjUV.y)).x;
+        result = mix(mix(result, adjXHeight, adjBlend.x), adjYHeight, adjBlend.y);
+    }
+    return result;
+}
 float height(vec2 uv)
 {
-    return texture(heightmapTexture, uv).x * terrainHeight;
+    return calcHeight(uv, heightmapTexture, xAdjacentHeightmapTexture, yAdjacentHeightmapTexture,
+        oppositeHeightmapTexture).x * terrainHeight;
 }
 
 float calcTessLevel(Vertex a, Vertex b)
@@ -748,7 +841,6 @@ RENDERER_INITIALIZE(rendererInitialize)
     // setup global state
     glGenVertexArrays(1, &ctx->globalVertexArrayId);
 
-    glEnable(GL_DEPTH_TEST);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
     glPatchParameteri(GL_PATCH_VERTICES, 4);
@@ -980,26 +1072,23 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     // create target texture
     glGenTextures(1, &result->textureId);
     glBindTexture(GL_TEXTURE_2D, result->textureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(
-        GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(
-        GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float black[] = {0, 0, 0, 0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
     glTexImage2D(
         GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
-    if (!descriptor.isInteger)
-    {
-        glGenerateMipmap(GL_TEXTURE_2D);
-    }
 
     // create depth buffer
     if (descriptor.hasDepthBuffer)
     {
         glGenTextures(1, &result->depthTextureId);
         glBindTexture(GL_TEXTURE_2D, result->depthTextureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
@@ -1109,6 +1198,13 @@ RENDERER_SET_EFFECT_FLOAT(rendererSetEffectFloat)
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_FLOAT;
     param->value.f = value;
+}
+
+RENDERER_SET_EFFECT_VEC3(rendererSetEffectVec3)
+{
+    RenderEffectParameter *param = pushEffectParameter(effect, paramName);
+    param->type = EFFECT_PARAM_TYPE_VEC3;
+    param->value.v3 = value;
 }
 
 RENDERER_SET_EFFECT_INT(rendererSetEffectInt)
@@ -1230,6 +1326,16 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     rendererSetEffectTexture(effect, 0, textureId);
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
+RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
+{
+    RendererInternalShaders *shaders = getInternalShaders(rq->ctx);
+
+    RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
+    effect->shaderProgramId = shaders->coloredQuadShaderProgramId;
+
+    rendererSetEffectVec3(effect, "color", color);
+    pushQuads(rq, &quad, 1, effect, true);
+}
 
 RENDERER_PUSH_QUAD(rendererPushQuad)
 {
@@ -1265,6 +1371,12 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
     cmd->heightmapTextureId = heightmapTextureId;
     cmd->referenceHeightmapTextureId = referenceHeightmapTextureId;
+    cmd->xAdjacentHeightmapTextureId = xAdjacentHeightmapTextureId;
+    cmd->xAdjacentReferenceHeightmapTextureId = xAdjacentReferenceHeightmapTextureId;
+    cmd->yAdjacentHeightmapTextureId = yAdjacentHeightmapTextureId;
+    cmd->yAdjacentReferenceHeightmapTextureId = yAdjacentReferenceHeightmapTextureId;
+    cmd->oppositeHeightmapTextureId = oppositeHeightmapTextureId;
+    cmd->oppositeReferenceHeightmapTextureId = oppositeReferenceHeightmapTextureId;
 
     cmd->meshVertexBufferId = meshVertexBufferId;
     cmd->meshElementBufferId = meshElementBufferId;
@@ -1314,7 +1426,6 @@ bool applyEffect(RenderEffect *effect)
     {
         glUseProgram(shaderProgramId);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glEnable(GL_DEPTH_TEST);
 
         switch (effect->blendMode)
         {
@@ -1346,6 +1457,9 @@ bool applyEffect(RenderEffect *effect)
             {
             case EFFECT_PARAM_TYPE_FLOAT:
                 glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
+                break;
+            case EFFECT_PARAM_TYPE_VEC3:
+                glProgramUniform3fv(shaderProgramId, loc, 1, glm::value_ptr(effectParam->value.v3));
                 break;
             case EFFECT_PARAM_TYPE_INT:
                 glProgramUniform1i(shaderProgramId, loc, effectParam->value.i);
@@ -1413,6 +1527,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 camera.transform = glm::scale(camera.transform, glm::vec3(2.0f / width, 2.0f / height, 1));
                 camera.transform = glm::translate(camera.transform,
                     glm::vec3(-((width * 0.5f) + cmd->cameraPos.x), -((height * 0.5f) + cmd->cameraPos.y), 0));
+
+                glDisable(GL_DEPTH_TEST);
+                glDepthFunc(GL_ALWAYS);
             }
             else
             {
@@ -1422,6 +1539,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 float aspectRatio = (float)width / (float)height;
                 glm::mat4 projection = glm::perspective(cmd->fov, aspectRatio, nearPlane, farPlane);
                 camera.transform = projection * glm::lookAt(cmd->cameraPos, cmd->lookAt, up);
+
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_LESS);
             }
 
             glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->cameraUniformBufferId);
@@ -1555,6 +1675,18 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     glm::value_ptr(heightfield->center));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, cmd->heightmapTextureId);
+                glActiveTexture(GL_TEXTURE6);
+                glBindTexture(GL_TEXTURE_2D, cmd->xAdjacentHeightmapTextureId);
+                glActiveTexture(GL_TEXTURE7);
+                glBindTexture(GL_TEXTURE_2D, cmd->xAdjacentReferenceHeightmapTextureId);
+                glActiveTexture(GL_TEXTURE8);
+                glBindTexture(GL_TEXTURE_2D, cmd->yAdjacentHeightmapTextureId);
+                glActiveTexture(GL_TEXTURE9);
+                glBindTexture(GL_TEXTURE_2D, cmd->yAdjacentReferenceHeightmapTextureId);
+                glActiveTexture(GL_TEXTURE10);
+                glBindTexture(GL_TEXTURE_2D, cmd->oppositeHeightmapTextureId);
+                glActiveTexture(GL_TEXTURE11);
+                glBindTexture(GL_TEXTURE_2D, cmd->oppositeReferenceHeightmapTextureId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cmd->tessellationLevelBufferId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->meshVertexBufferId);
                 glDispatchCompute(meshEdgeCount, 1, 1);
@@ -1563,7 +1695,6 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 // draw terrain mesh
                 glUseProgram(terrainShaderProgramId);
                 glPolygonMode(GL_FRONT_AND_BACK, cmd->isWireframe ? GL_LINE : GL_FILL);
-                glEnable(GL_DEPTH_TEST);
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glActiveTexture(GL_TEXTURE1);

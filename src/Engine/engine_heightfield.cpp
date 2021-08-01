@@ -186,7 +186,7 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
 
 HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
 {
-    float hitDistance = 999999.0f;
+    *out_intersectionDistance = 999999.0f;
     bool hit = false;
 
     // divide heightfield into 64 slices (8x8) and raycast against each slice's bounding box
@@ -204,7 +204,7 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
         while (xEnd < heightfield->columns)
         {
             hit |= isRayIntersectingHeightfieldSlice(
-                heightfield, rayOrigin, rayDirection, xStart, xEnd, yStart, yEnd, &hitDistance);
+                heightfield, rayOrigin, rayDirection, xStart, xEnd, yStart, yEnd, out_intersectionDistance);
 
             xStart = xEnd;
             xEnd += colSlice;
@@ -216,7 +216,7 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
 
     if (hit)
     {
-        *out_intersectionPoint = rayOrigin + (rayDirection * hitDistance);
+        *out_intersectionPoint = rayOrigin + (rayDirection * *out_intersectionDistance);
         return true;
     }
     return false;
