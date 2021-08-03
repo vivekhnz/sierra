@@ -73,9 +73,6 @@ struct RenderContext;
 struct RenderQueue;
 struct RenderEffect;
 
-bool createShaderProgram(RenderContext *rctx, ShaderType type, char *src, uint32 *out_programId);
-void destroyShaderProgram(uint32 id);
-
 RenderMesh *createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
 void destroyMesh(RenderMesh *mesh);
 

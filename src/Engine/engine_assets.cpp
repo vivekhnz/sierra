@@ -2,7 +2,6 @@
 
 #include <stb/stb_image.h>
 #include <fast_obj/fast_obj.h>
-#include "engine_renderer.h"
 
 extern EnginePlatformApi Platform;
 global_variable bool WasAssetSystemReloaded = true;
@@ -244,7 +243,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         char *src = static_cast<char *>(data);
         uint32 id;
-        if (createShaderProgram(assets->rctx, reg->metadata.shader->type, src, &id))
+        if (createShaderProgram(assets->rctx->internalCtx, reg->metadata.shader->type, src, &id))
         {
             if (reg->asset.shader)
             {
