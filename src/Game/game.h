@@ -76,7 +76,7 @@ struct GameState
     uint32 terrainMeshElementCount;
     RenderBuffer terrainMeshTessLevelBuffer;
 
-    uint32 heightmapTextureId;
+    TextureHandle heightmapTexture;
     uint8 heightmapTextureVersion;
 
     uint32 albedoTextureArrayId;

@@ -25,6 +25,10 @@ enum TextureFormat
     TEXTURE_FORMAT_R16UI,
     TEXTURE_FORMAT_R32UI
 };
+struct TextureHandle
+{
+    void *ptr;
+};
 
 struct RenderTarget
 {
@@ -33,8 +37,8 @@ struct RenderTarget
 
     uint32 width;
     uint32 height;
-    uint32 textureId;
-    uint32 depthTextureId;
+    TextureHandle textureHandle;
+    TextureHandle depthTextureHandle;
     uint32 framebufferId;
 };
 
@@ -66,15 +70,15 @@ struct RenderEffect;
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
 #define RENDERER_CREATE_TEXTURE(name)                                                                             \
-    uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,              \
+    TextureHandle name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,       \
         uint32 wrapMode, uint32 filterMode)
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
 #define RENDERER_UPDATE_TEXTURE(name)                                                                             \
-    void name(uint32 id, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,     \
-        void *pixels)
+    void name(TextureHandle handle, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width,         \
+        uint32 height, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
 #define RENDERER_READ_TEXTURE_PIXELS(name)                                                                        \
-    void name(uint32 id, uint32 elementType, uint32 gpuFormat, void *out_pixels)
+    void name(TextureHandle handle, uint32 elementType, uint32 gpuFormat, void *out_pixels)
 typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \
@@ -129,7 +133,7 @@ typedef RENDERER_SET_EFFECT_INT(RendererSetEffectInt);
 #define RENDERER_SET_EFFECT_UINT(name) void name(RenderEffect *effect, char *paramName, uint32 value)
 typedef RENDERER_SET_EFFECT_UINT(RendererSetEffectUint);
 
-#define RENDERER_SET_EFFECT_TEXTURE(name) void name(RenderEffect *effect, uint32 slot, uint32 textureId)
+#define RENDERER_SET_EFFECT_TEXTURE(name) void name(RenderEffect *effect, uint32 slot, TextureHandle handle)
 typedef RENDERER_SET_EFFECT_TEXTURE(RendererSetEffectTexture);
 
 // render queue
@@ -161,7 +165,7 @@ typedef RENDERER_SET_LIGHTING(RendererSetLighting);
 typedef RENDERER_CLEAR(RendererClear);
 
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                                         \
-    void name(RenderQueue *rq, RenderQuad quad, uint32 textureId, bool isTopDown)
+    void name(RenderQueue *rq, RenderQuad quad, TextureHandle textureHandle, bool isTopDown)
 typedef RENDERER_PUSH_TEXTURED_QUAD(RendererPushTexturedQuad);
 
 #define RENDERER_PUSH_COLORED_QUAD(name) void name(RenderQueue *rq, RenderQuad quad, glm::vec3 color)
@@ -181,14 +185,14 @@ typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
 
 #define RENDERER_PUSH_TERRAIN(name)                                                                               \
     void name(RenderQueue *rq, Heightfield *heightfield, glm::vec2 heightmapSize, AssetHandle terrainShader,      \
-        uint32 heightmapTextureId, uint32 referenceHeightmapTextureId, uint32 xAdjacentHeightmapTextureId,        \
-        uint32 xAdjacentReferenceHeightmapTextureId, uint32 yAdjacentHeightmapTextureId,                          \
-        uint32 yAdjacentReferenceHeightmapTextureId, uint32 oppositeHeightmapTextureId,                           \
-        uint32 oppositeReferenceHeightmapTextureId, uint32 meshVertexBufferId, uint32 meshElementBufferId,        \
-        uint32 tessellationLevelBufferId, uint32 meshElementCount, uint32 materialCount,                          \
-        uint32 albedoTextureArrayId, uint32 normalTextureArrayId, uint32 displacementTextureArrayId,              \
-        uint32 aoTextureArrayId, uint32 materialPropsBufferId, bool isWireframe, uint32 visualizationMode,        \
-        glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
+        TextureHandle heightmapTexture, TextureHandle referenceHeightmapTexture,                                  \
+        TextureHandle xAdjacentHeightmapTexture, TextureHandle xAdjacentReferenceHeightmapTexture,                \
+        TextureHandle yAdjacentHeightmapTexture, TextureHandle yAdjacentReferenceHeightmapTexture,                \
+        TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
+        uint32 meshVertexBufferId, uint32 meshElementBufferId, uint32 tessellationLevelBufferId,                  \
+        uint32 meshElementCount, uint32 materialCount, uint32 albedoTextureArrayId, uint32 normalTextureArrayId,  \
+        uint32 displacementTextureArrayId, uint32 aoTextureArrayId, uint32 materialPropsBufferId,                 \
+        bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
 typedef RENDERER_PUSH_TERRAIN(RendererPushTerrain);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

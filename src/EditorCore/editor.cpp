@@ -125,7 +125,7 @@ void initializeEditor(EditorMemory *memory)
 
     SceneState *sceneState = &state->sceneState;
 
-    state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+    state->importedHeightmapTexture = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
         HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
     state->temporaryHeightmap =
         engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
@@ -362,7 +362,7 @@ void initializeEditor(EditorMemory *memory)
 }
 
 void compositeHeightmap(EditorMemory *memory,
-    uint32 baseHeightmapTextureId,
+    TextureHandle baseHeightmapTexture,
     RenderTarget *brushInfluenceMask,
     RenderTarget *output,
     RenderQuad *brushInstances,
@@ -412,7 +412,7 @@ void compositeHeightmap(EditorMemory *memory,
     // render heightmap
     if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
     {
-        uint32 inputTextureId = baseHeightmapTextureId;
+        TextureHandle inputTexture = baseHeightmapTexture;
         RenderTarget *iterationOutput = output;
         uint32 iterations = 3;
         for (uint32 i = 0; i < iterations; i++)
@@ -422,8 +422,8 @@ void compositeHeightmap(EditorMemory *memory,
             engine->rendererSetEffectInt(effect, "iterationCount", iterations);
             engine->rendererSetEffectInt(effect, "iteration", i);
             engine->rendererSetEffectInt(effect, "heightmapWidth", iterationOutput->width);
-            engine->rendererSetEffectTexture(effect, 0, inputTextureId);
-            engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
+            engine->rendererSetEffectTexture(effect, 0, inputTexture);
+            engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureHandle);
 
             RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
             engine->rendererSetCameraOrtho(rq);
@@ -431,7 +431,7 @@ void compositeHeightmap(EditorMemory *memory,
             engine->rendererPushQuad(rq, getBounds(iterationOutput), effect);
             engine->rendererDrawToTarget(rq, iterationOutput);
 
-            inputTextureId = iterationOutput->textureId;
+            inputTexture = iterationOutput->textureHandle;
             iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
         }
     }
@@ -457,8 +457,8 @@ void compositeHeightmap(EditorMemory *memory,
             engine->rendererSetEffectFloat(effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
         }
         assert(effect);
-        engine->rendererSetEffectTexture(effect, 0, baseHeightmapTextureId);
-        engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureId);
+        engine->rendererSetEffectTexture(effect, 0, baseHeightmapTexture);
+        engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureHandle);
 
         RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
         engine->rendererSetCameraOrtho(rq);
@@ -507,7 +507,7 @@ void commitChanges(EditorMemory *memory)
         engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
         engine->rendererPushTexturedQuad(
-            rq, getBounds(tile->committedHeightmap), tile->workingHeightmap->textureId, true);
+            rq, getBounds(tile->committedHeightmap), tile->workingHeightmap->textureHandle, true);
         if (engine->rendererDrawToTarget(rq, tile->committedHeightmap))
         {
             rendered = true;
@@ -531,7 +531,7 @@ void discardChanges(EditorMemory *memory)
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        memory->engineApi->rendererReadTexturePixels(tile->committedHeightmap->textureId, GL_UNSIGNED_SHORT,
+        memory->engineApi->rendererReadTexturePixels(tile->committedHeightmap->textureHandle, GL_UNSIGNED_SHORT,
             GL_RED, state->sceneState.heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(tile->heightfield, state->sceneState.heightmapTextureDataTempBuffer);
     }
@@ -1293,14 +1293,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         TerrainTile *tile = &sceneState->terrainTiles[i];
         glm::vec2 offset = tile->heightfield->center * worldToHeightmapSpace;
 
-        compositeHeightmap(memory, tile->committedHeightmap->textureId, tile->workingBrushInfluenceMask,
+        compositeHeightmap(memory, tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask,
             tile->workingHeightmap, state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount, offset);
-        compositeHeightmap(memory, tile->workingHeightmap->textureId, tile->previewBrushInfluenceMask,
+        compositeHeightmap(memory, tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask,
             tile->previewHeightmap, &state->previewBrushStrokeQuad, 1, offset);
 
         if (state->isEditingHeightmap)
         {
-            engine->rendererReadTexturePixels(tile->workingHeightmap->textureId, GL_UNSIGNED_SHORT, GL_RED,
+            engine->rendererReadTexturePixels(tile->workingHeightmap->textureHandle, GL_UNSIGNED_SHORT, GL_RED,
                 sceneState->heightmapTextureDataTempBuffer);
             updateHeightfieldHeights(tile->heightfield, sceneState->heightmapTextureDataTempBuffer);
         }
@@ -1396,41 +1396,42 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         TerrainTile *yAdjTile = tile->yAdjTile;
         TerrainTile *oppTile = xAdjTile ? xAdjTile->yAdjTile : 0;
 
-        uint32 xAdjActiveHeightmapTextureId = 0;
-        uint32 xAdjRefHeightmapTextureId = 0;
-        uint32 yAdjActiveHeightmapTextureId = 0;
-        uint32 yAdjRefHeightmapTextureId = 0;
-        uint32 oppActiveHeightmapTextureId = 0;
-        uint32 oppRefHeightmapTextureId = 0;
+        TextureHandle xAdjActiveHeightmapTexture = {0};
+        TextureHandle xAdjRefHeightmapTexture = {0};
+        TextureHandle yAdjActiveHeightmapTexture = {0};
+        TextureHandle yAdjRefHeightmapTexture = {0};
+        TextureHandle oppActiveHeightmapTexture = {0};
+        TextureHandle oppRefHeightmapTexture = {0};
 
         if (xAdjTile)
         {
-            xAdjActiveHeightmapTextureId =
-                (renderPreviewHeightmap ? xAdjTile->previewHeightmap : xAdjTile->workingHeightmap)->textureId;
-            xAdjRefHeightmapTextureId =
+            xAdjActiveHeightmapTexture =
+                (renderPreviewHeightmap ? xAdjTile->previewHeightmap : xAdjTile->workingHeightmap)->textureHandle;
+            xAdjRefHeightmapTexture =
                 (compareToCommittedHeightmap ? xAdjTile->committedHeightmap : xAdjTile->workingHeightmap)
-                    ->textureId;
+                    ->textureHandle;
         }
         if (yAdjTile)
         {
-            yAdjActiveHeightmapTextureId =
-                (renderPreviewHeightmap ? yAdjTile->previewHeightmap : yAdjTile->workingHeightmap)->textureId;
-            yAdjRefHeightmapTextureId =
+            yAdjActiveHeightmapTexture =
+                (renderPreviewHeightmap ? yAdjTile->previewHeightmap : yAdjTile->workingHeightmap)->textureHandle;
+            yAdjRefHeightmapTexture =
                 (compareToCommittedHeightmap ? yAdjTile->committedHeightmap : yAdjTile->workingHeightmap)
-                    ->textureId;
+                    ->textureHandle;
         }
         if (oppTile)
         {
-            oppActiveHeightmapTextureId =
-                (renderPreviewHeightmap ? oppTile->previewHeightmap : oppTile->workingHeightmap)->textureId;
-            oppRefHeightmapTextureId =
-                (compareToCommittedHeightmap ? oppTile->committedHeightmap : oppTile->workingHeightmap)->textureId;
+            oppActiveHeightmapTexture =
+                (renderPreviewHeightmap ? oppTile->previewHeightmap : oppTile->workingHeightmap)->textureHandle;
+            oppRefHeightmapTexture =
+                (compareToCommittedHeightmap ? oppTile->committedHeightmap : oppTile->workingHeightmap)
+                    ->textureHandle;
         }
 
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
-            activeHeightmap->textureId, refHeightmap->textureId, xAdjActiveHeightmapTextureId,
-            xAdjRefHeightmapTextureId, yAdjActiveHeightmapTextureId, yAdjRefHeightmapTextureId,
-            oppActiveHeightmapTextureId, oppRefHeightmapTextureId, sceneState->terrainMesh.vertexBuffer.id,
+            activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
+            xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
+            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->terrainMesh.vertexBuffer.id,
             sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
             sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
             sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
@@ -1491,10 +1492,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     RenderEffect *effect =
         engine->rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureId);
-    engine->rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureId);
-    engine->rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureId);
-    engine->rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureId);
+    engine->rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureHandle);
+    engine->rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureHandle);
+    engine->rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureHandle);
+    engine->rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureHandle);
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraOrtho(rq);
@@ -1518,7 +1519,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     engine->rendererSetCameraOrtho(rq);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushTexturedQuad(
-        rq, {0, 0, (float)view->width, (float)view->height}, tile->workingHeightmap->textureId, false);
+        rq, {0, 0, (float)view->width, (float)view->height}, tile->workingHeightmap->textureHandle, false);
     engine->rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);

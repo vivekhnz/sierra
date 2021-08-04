@@ -218,7 +218,7 @@ struct EditorState
     RenderContext *renderCtx;
     Assets *engineAssets;
 
-    uint32 importedHeightmapTextureId;
+    TextureHandle importedHeightmapTexture;
     uint8 importedHeightmapTextureVersion;
 
     RenderTarget *temporaryHeightmap;

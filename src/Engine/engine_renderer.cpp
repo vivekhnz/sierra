@@ -56,7 +56,7 @@ struct RenderEffectParameter
 struct RenderEffectTexture
 {
     uint32 slot;
-    uint32 textureId;
+    TextureHandle handle;
     RenderEffectTexture *next;
 };
 struct RenderEffect
@@ -132,14 +132,14 @@ struct DrawTerrainCommand
 
     AssetHandle terrainShader;
 
-    uint32 heightmapTextureId;
-    uint32 referenceHeightmapTextureId;
-    uint32 xAdjacentHeightmapTextureId;
-    uint32 xAdjacentReferenceHeightmapTextureId;
-    uint32 yAdjacentHeightmapTextureId;
-    uint32 yAdjacentReferenceHeightmapTextureId;
-    uint32 oppositeHeightmapTextureId;
-    uint32 oppositeReferenceHeightmapTextureId;
+    TextureHandle heightmapTexture;
+    TextureHandle referenceHeightmapTexture;
+    TextureHandle xAdjacentHeightmapTexture;
+    TextureHandle xAdjacentReferenceHeightmapTexture;
+    TextureHandle yAdjacentHeightmapTexture;
+    TextureHandle yAdjacentReferenceHeightmapTexture;
+    TextureHandle oppositeHeightmapTexture;
+    TextureHandle oppositeReferenceHeightmapTexture;
 
     uint32 meshVertexBufferId;
     uint32 meshElementBufferId;
@@ -244,6 +244,19 @@ RENDERER_INITIALIZE(rendererInitialize)
     return ctx;
 }
 
+uint32 getTextureId(TextureHandle handle)
+{
+    uint64 id = (uint64)handle.ptr;
+    assert(id < UINT32_MAX);
+    return (uint32)id;
+}
+TextureHandle getTextureHandle(uint32 id)
+{
+    TextureHandle result;
+    result.ptr = (void *)((uint64)id);
+    return result;
+}
+
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 {
     uint32 id = 0;
@@ -257,11 +270,12 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
     glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    return id;
+    return getTextureHandle(id);
 }
 
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
+    uint32 id = getTextureId(handle);
     glBindTexture(GL_TEXTURE_2D, id);
     glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
@@ -269,6 +283,7 @@ RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 
 RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 {
+    uint32 id = getTextureId(handle);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
     glGetTexImage(GL_TEXTURE_2D, 0, gpuFormat, elementType, out_pixels);
@@ -392,8 +407,11 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     TextureDescriptor descriptor = getTextureDescriptor(result->format);
 
     // create target texture
-    glGenTextures(1, &result->textureId);
-    glBindTexture(GL_TEXTURE_2D, result->textureId);
+    uint32 textureId;
+    glGenTextures(1, &textureId);
+    result->textureHandle = getTextureHandle(textureId);
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float black[] = {0, 0, 0, 0};
@@ -404,10 +422,13 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
         GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
 
     // create depth buffer
+    uint32 depthTextureId;
     if (result->hasDepthBuffer)
     {
-        glGenTextures(1, &result->depthTextureId);
-        glBindTexture(GL_TEXTURE_2D, result->depthTextureId);
+        glGenTextures(1, &depthTextureId);
+        result->depthTextureHandle = getTextureHandle(depthTextureId);
+
+        glBindTexture(GL_TEXTURE_2D, depthTextureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
         glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
@@ -419,13 +440,15 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     // create framebuffer
     glGenFramebuffers(1, &result->framebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, result->framebufferId);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, result->textureId, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
     if (result->hasDepthBuffer)
     {
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, result->depthTextureId, 0);
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTextureId, 0);
     }
     assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    result->textureHandle = getTextureHandle(textureId);
 
     return result;
 }
@@ -437,14 +460,14 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
 
     TextureDescriptor descriptor = getTextureDescriptor(target->format);
 
-    glBindTexture(GL_TEXTURE_2D, target->textureId);
+    glBindTexture(GL_TEXTURE_2D, getTextureId(target->textureHandle));
     glTexImage2D(
         GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     if (target->hasDepthBuffer)
     {
-        glBindTexture(GL_TEXTURE_2D, target->depthTextureId);
+        glBindTexture(GL_TEXTURE_2D, getTextureId(target->depthTextureHandle));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
 }
@@ -457,7 +480,7 @@ RENDERER_GET_PIXELS(rendererGetPixels)
     uint32 bufferSize = pixelCount * descriptor.elementSize;
     void *buffer = pushSize(arena, bufferSize);
 
-    glGetTextureSubImage(target->textureId, 0, x, y, 0, width, height, 1, descriptor.gpuFormat,
+    glGetTextureSubImage(getTextureId(target->textureHandle), 0, x, y, 0, width, height, 1, descriptor.gpuFormat,
         descriptor.elementType, bufferSize, buffer);
 
     *out_pixelCount = pixelCount;
@@ -548,7 +571,7 @@ RENDERER_SET_EFFECT_TEXTURE(rendererSetEffectTexture)
     RenderEffectTexture *texture = pushStruct(effect->arena, RenderEffectTexture);
     *texture = {};
     texture->slot = slot;
-    texture->textureId = textureId;
+    texture->handle = handle;
     texture->next = 0;
 
     if (effect->lastTexture)
@@ -659,7 +682,7 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
     effect->shaderHandle = getTexturedQuadShader(rq->ctx->internalCtx);
 
-    rendererSetEffectTexture(effect, 0, textureId);
+    rendererSetEffectTexture(effect, 0, textureHandle);
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
 RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
@@ -703,14 +726,14 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
     cmd->terrainShader = terrainShader;
 
-    cmd->heightmapTextureId = heightmapTextureId;
-    cmd->referenceHeightmapTextureId = referenceHeightmapTextureId;
-    cmd->xAdjacentHeightmapTextureId = xAdjacentHeightmapTextureId;
-    cmd->xAdjacentReferenceHeightmapTextureId = xAdjacentReferenceHeightmapTextureId;
-    cmd->yAdjacentHeightmapTextureId = yAdjacentHeightmapTextureId;
-    cmd->yAdjacentReferenceHeightmapTextureId = yAdjacentReferenceHeightmapTextureId;
-    cmd->oppositeHeightmapTextureId = oppositeHeightmapTextureId;
-    cmd->oppositeReferenceHeightmapTextureId = oppositeReferenceHeightmapTextureId;
+    cmd->heightmapTexture = heightmapTexture;
+    cmd->referenceHeightmapTexture = referenceHeightmapTexture;
+    cmd->xAdjacentHeightmapTexture = xAdjacentHeightmapTexture;
+    cmd->xAdjacentReferenceHeightmapTexture = xAdjacentReferenceHeightmapTexture;
+    cmd->yAdjacentHeightmapTexture = yAdjacentHeightmapTexture;
+    cmd->yAdjacentReferenceHeightmapTexture = yAdjacentReferenceHeightmapTexture;
+    cmd->oppositeHeightmapTexture = oppositeHeightmapTexture;
+    cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->meshVertexBufferId = meshVertexBufferId;
     cmd->meshElementBufferId = meshElementBufferId;
@@ -813,7 +836,7 @@ bool applyEffect(RenderEffect *effect)
         while (effectTexture)
         {
             glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
-            glBindTexture(GL_TEXTURE_2D, effectTexture->textureId);
+            glBindTexture(GL_TEXTURE_2D, getTextureId(effectTexture->handle));
 
             effectTexture = effectTexture->next;
         }
@@ -1023,19 +1046,19 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     glGetUniformLocation(calcTessLevelShaderProgramId, "terrainOrigin"), 1,
                     glm::value_ptr(heightfield->center));
                 glActiveTexture(GL_TEXTURE0);
-                glBindTexture(GL_TEXTURE_2D, cmd->heightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->heightmapTexture));
                 glActiveTexture(GL_TEXTURE6);
-                glBindTexture(GL_TEXTURE_2D, cmd->xAdjacentHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentHeightmapTexture));
                 glActiveTexture(GL_TEXTURE7);
-                glBindTexture(GL_TEXTURE_2D, cmd->xAdjacentReferenceHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentReferenceHeightmapTexture));
                 glActiveTexture(GL_TEXTURE8);
-                glBindTexture(GL_TEXTURE_2D, cmd->yAdjacentHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentHeightmapTexture));
                 glActiveTexture(GL_TEXTURE9);
-                glBindTexture(GL_TEXTURE_2D, cmd->yAdjacentReferenceHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentReferenceHeightmapTexture));
                 glActiveTexture(GL_TEXTURE10);
-                glBindTexture(GL_TEXTURE_2D, cmd->oppositeHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeHeightmapTexture));
                 glActiveTexture(GL_TEXTURE11);
-                glBindTexture(GL_TEXTURE_2D, cmd->oppositeReferenceHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeReferenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, cmd->tessellationLevelBufferId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->meshVertexBufferId);
                 glDispatchCompute(meshEdgeCount, 1, 1);
@@ -1055,7 +1078,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glActiveTexture(GL_TEXTURE4);
                 glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->aoTextureArrayId);
                 glActiveTexture(GL_TEXTURE5);
-                glBindTexture(GL_TEXTURE_2D, cmd->referenceHeightmapTextureId);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->referenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->materialPropsBufferId);
                 glProgramUniform2fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainOrigin"), 1,
@@ -1103,7 +1126,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 
     if (target)
     {
-        glBindTexture(GL_TEXTURE_2D, target->textureId);
+        glBindTexture(GL_TEXTURE_2D, getTextureId(target->textureHandle));
         glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }

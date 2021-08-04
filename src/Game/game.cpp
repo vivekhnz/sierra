@@ -118,7 +118,7 @@ bool initializeGame(GameMemory *memory)
     engine->rendererUpdateBuffer(&state->terrainMeshTessLevelBuffer,
         state->heightfield.columns * state->heightfield.rows * sizeof(glm::vec4), 0);
 
-    state->heightmapTextureId = engine->rendererCreateTexture(
+    state->heightmapTexture = engine->rendererCreateTexture(
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
@@ -211,7 +211,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     LoadedAsset *heightmapAsset = engine->assetsGetTexture(gameAssets->textureVirtualHeightmap);
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
-        memory->engine->rendererUpdateTexture(state->heightmapTextureId, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
+        memory->engine->rendererUpdateTexture(state->heightmapTexture, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
             heightmapAsset->texture->width, heightmapAsset->texture->height, heightmapAsset->texture->data);
 
         uint16 heightmapWidth = 2048;
@@ -471,8 +471,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     engine->rendererSetLighting(rq, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled,
         state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-    engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTextureId,
-        state->heightmapTextureId, 0, 0, 0, 0, 0, 0, state->terrainMeshVertexBuffer.id,
+    engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
+        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, state->terrainMeshVertexBuffer.id,
         state->terrainMeshElementBuffer.id, state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount,
         MATERIAL_COUNT, state->albedoTextureArrayId, state->normalTextureArrayId,
         state->displacementTextureArrayId, state->aoTextureArrayId, state->materialPropsBuffer.id,
