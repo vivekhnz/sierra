@@ -17,18 +17,20 @@ struct RenderBuffer
     uint32 usage;
 };
 
-enum RenderTargetFormat
+enum TextureFormat
 {
-    RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
-    RENDER_TARGET_FORMAT_R16,
-    RENDER_TARGET_FORMAT_R8UI_WITH_DEPTH,
-    RENDER_TARGET_FORMAT_R16UI_WITH_DEPTH,
-    RENDER_TARGET_FORMAT_R32UI_WITH_DEPTH
+    TEXTURE_FORMAT_RGB8,
+    TEXTURE_FORMAT_R16,
+    TEXTURE_FORMAT_R8UI,
+    TEXTURE_FORMAT_R16UI,
+    TEXTURE_FORMAT_R32UI
 };
 
 struct RenderTarget
 {
-    RenderTargetFormat format;
+    TextureFormat format;
+    bool hasDepthBuffer;
+
     uint32 width;
     uint32 height;
     uint32 textureId;
@@ -92,7 +94,8 @@ typedef RENDERER_UPDATE_BUFFER(RendererUpdateBuffer);
 // render targets
 
 #define RENDERER_CREATE_RENDER_TARGET(name)                                                                       \
-    RenderTarget *name(MemoryArena *arena, uint32 width, uint32 height, RenderTargetFormat format)
+    RenderTarget *name(                                                                                           \
+        MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer)
 typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
 
 #define RENDERER_RESIZE_RENDER_TARGET(name) void name(RenderTarget *target, uint32 width, uint32 height)

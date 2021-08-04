@@ -128,7 +128,7 @@ void initializeEditor(EditorMemory *memory)
     state->importedHeightmapTextureId = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
         HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
     state->temporaryHeightmap =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
@@ -157,16 +157,16 @@ void initializeEditor(EditorMemory *memory)
         tile->heightfield->heights = pushArray(arena, float, tile->heightfield->columns * tile->heightfield->rows);
         memset(tile->heightfield->heights, 0, tile->heightfield->columns * tile->heightfield->rows);
 
-        tile->committedHeightmap =
-            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-        tile->workingBrushInfluenceMask =
-            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-        tile->workingHeightmap =
-            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-        tile->previewBrushInfluenceMask =
-            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
-        tile->previewHeightmap =
-            engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, RENDER_TARGET_FORMAT_R16);
+        tile->committedHeightmap = engine->rendererCreateRenderTarget(
+            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
+            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->workingHeightmap = engine->rendererCreateRenderTarget(
+            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
+            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->previewHeightmap = engine->rendererCreateRenderTarget(
+            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
 
         tile->xAdjTile = 0;
         tile->yAdjTile = 0;
@@ -1326,11 +1326,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
         viewState->cameraPos = viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
         viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH);
+            &memory->arena, view->width, view->height, TEXTURE_FORMAT_RGB8, true);
         viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R8UI_WITH_DEPTH);
+            &memory->arena, view->width, view->height, TEXTURE_FORMAT_R8UI, true);
         viewState->pickingRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, RENDER_TARGET_FORMAT_R32UI_WITH_DEPTH);
+            &memory->arena, view->width, view->height, TEXTURE_FORMAT_R32UI, true);
         view->viewState = viewState;
     }
 
