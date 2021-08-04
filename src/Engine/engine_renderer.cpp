@@ -257,17 +257,72 @@ TextureHandle getTextureHandle(uint32 id)
     return result;
 }
 
+TextureDescriptor getTextureDescriptor(TextureFormat format)
+{
+    TextureDescriptor result = {};
+    if (format == TEXTURE_FORMAT_RGB8)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
+        result.cpuFormat = GL_RGB;
+        result.gpuFormat = GL_RGB;
+        result.isInteger = false;
+    }
+    else if (format == TEXTURE_FORMAT_R16)
+    {
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
+        result.cpuFormat = GL_R16;
+        result.gpuFormat = GL_RED;
+        result.isInteger = false;
+    }
+    else if (format == TEXTURE_FORMAT_R8UI)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
+        result.cpuFormat = GL_R8UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+    }
+    else if (format == TEXTURE_FORMAT_R16UI)
+    {
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
+        result.cpuFormat = GL_R16UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+    }
+    else if (format == TEXTURE_FORMAT_R32UI)
+    {
+        result.elementType = GL_UNSIGNED_INT;
+        result.elementSize = sizeof(uint32);
+        result.cpuFormat = GL_R32UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+    }
+    else
+    {
+        assert(!"Unknown texture format");
+    }
+
+    return result;
+}
+
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 {
     uint32 id = 0;
     glGenTextures(1, &id);
+    TextureDescriptor descriptor = getTextureDescriptor(format);
 
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
-    glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, 0);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float black[] = {0, 0, 0, 0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
     return getTextureHandle(id);
@@ -276,17 +331,22 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
     uint32 id = getTextureId(handle);
+    TextureDescriptor descriptor = getTextureDescriptor(format);
+
     glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, cpuFormat, width, height, 0, gpuFormat, elementType, pixels);
+    glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat,
+        descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
 
 RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 {
     uint32 id = getTextureId(handle);
+    TextureDescriptor descriptor = getTextureDescriptor(format);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
-    glGetTexImage(GL_TEXTURE_2D, 0, gpuFormat, elementType, out_pixels);
+    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, out_pixels);
 }
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
@@ -343,57 +403,6 @@ RENDERER_UPDATE_BUFFER(rendererUpdateBuffer)
 }
 
 // render targets
-
-TextureDescriptor getTextureDescriptor(TextureFormat format)
-{
-    TextureDescriptor result = {};
-    if (format == TEXTURE_FORMAT_RGB8)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.elementSize = sizeof(uint8);
-        result.cpuFormat = GL_RGB;
-        result.gpuFormat = GL_RGB;
-        result.isInteger = false;
-    }
-    else if (format == TEXTURE_FORMAT_R16)
-    {
-        result.elementType = GL_UNSIGNED_SHORT;
-        result.elementSize = sizeof(uint16);
-        result.cpuFormat = GL_R16;
-        result.gpuFormat = GL_RED;
-        result.isInteger = false;
-    }
-    else if (format == TEXTURE_FORMAT_R8UI)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.elementSize = sizeof(uint8);
-        result.cpuFormat = GL_R8UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else if (format == TEXTURE_FORMAT_R16UI)
-    {
-        result.elementType = GL_UNSIGNED_SHORT;
-        result.elementSize = sizeof(uint16);
-        result.cpuFormat = GL_R16UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else if (format == TEXTURE_FORMAT_R32UI)
-    {
-        result.elementType = GL_UNSIGNED_INT;
-        result.elementSize = sizeof(uint32);
-        result.cpuFormat = GL_R32UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else
-    {
-        assert(!"Unknown texture format");
-    }
-
-    return result;
-}
 
 RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
 {

@@ -125,8 +125,8 @@ void initializeEditor(EditorMemory *memory)
 
     SceneState *sceneState = &state->sceneState;
 
-    state->importedHeightmapTexture = engine->rendererCreateTexture(GL_UNSIGNED_SHORT, GL_R16, GL_RED,
-        HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, GL_CLAMP_TO_EDGE, GL_LINEAR_MIPMAP_LINEAR);
+    state->importedHeightmapTexture =
+        engine->rendererCreateTexture(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16);
     state->temporaryHeightmap =
         engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
 
@@ -531,8 +531,8 @@ void discardChanges(EditorMemory *memory)
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        memory->engineApi->rendererReadTexturePixels(tile->committedHeightmap->textureHandle, GL_UNSIGNED_SHORT,
-            GL_RED, state->sceneState.heightmapTextureDataTempBuffer);
+        memory->engineApi->rendererReadTexturePixels(tile->committedHeightmap->textureHandle, TEXTURE_FORMAT_R16,
+            state->sceneState.heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(tile->heightfield, state->sceneState.heightmapTextureDataTempBuffer);
     }
 }
@@ -1300,7 +1300,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
         if (state->isEditingHeightmap)
         {
-            engine->rendererReadTexturePixels(tile->workingHeightmap->textureHandle, GL_UNSIGNED_SHORT, GL_RED,
+            engine->rendererReadTexturePixels(tile->workingHeightmap->textureHandle, TEXTURE_FORMAT_R16,
                 sceneState->heightmapTextureDataTempBuffer);
             updateHeightfieldHeights(tile->heightfield, sceneState->heightmapTextureDataTempBuffer);
         }

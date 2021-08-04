@@ -118,8 +118,7 @@ bool initializeGame(GameMemory *memory)
     engine->rendererUpdateBuffer(&state->terrainMeshTessLevelBuffer,
         state->heightfield.columns * state->heightfield.rows * sizeof(glm::vec4), 0);
 
-    state->heightmapTexture = engine->rendererCreateTexture(
-        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, GL_MIRRORED_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
     state->albedoTextureArrayId = engine->rendererCreateTextureArray(
@@ -211,8 +210,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     LoadedAsset *heightmapAsset = engine->assetsGetTexture(gameAssets->textureVirtualHeightmap);
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
-        memory->engine->rendererUpdateTexture(state->heightmapTexture, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
-            heightmapAsset->texture->width, heightmapAsset->texture->height, heightmapAsset->texture->data);
+        memory->engine->rendererUpdateTexture(state->heightmapTexture, heightmapAsset->texture->width,
+            heightmapAsset->texture->height, TEXTURE_FORMAT_R16, heightmapAsset->texture->data);
 
         uint16 heightmapWidth = 2048;
         uint16 heightmapHeight = 2048;

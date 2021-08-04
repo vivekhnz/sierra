@@ -69,16 +69,12 @@ struct RenderEffect;
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
-#define RENDERER_CREATE_TEXTURE(name)                                                                             \
-    TextureHandle name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,       \
-        uint32 wrapMode, uint32 filterMode)
+#define RENDERER_CREATE_TEXTURE(name) TextureHandle name(uint32 width, uint32 height, TextureFormat format)
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
 #define RENDERER_UPDATE_TEXTURE(name)                                                                             \
-    void name(TextureHandle handle, uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width,         \
-        uint32 height, void *pixels)
+    void name(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
-#define RENDERER_READ_TEXTURE_PIXELS(name)                                                                        \
-    void name(TextureHandle handle, uint32 elementType, uint32 gpuFormat, void *out_pixels)
+#define RENDERER_READ_TEXTURE_PIXELS(name) void name(TextureHandle handle, TextureFormat format, void *out_pixels)
 typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \
