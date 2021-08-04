@@ -243,11 +243,11 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         char *src = static_cast<char *>(data);
         ShaderHandle handle;
-        if (createShaderProgram(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
+        if (createShader(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
         {
             if (reg->asset.shader)
             {
-                destroyShaderProgram(reg->asset.shader->handle);
+                destroyShader(reg->asset.shader->handle);
             }
             else
             {
@@ -295,7 +295,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     {
         if (reg->asset.mesh)
         {
-            destroyMesh(reg->asset.mesh->renderMesh);
+            destroyMesh(reg->asset.mesh->handle);
         }
         else
         {
@@ -304,7 +304,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         MeshAsset *mesh = reg->asset.mesh;
         fastObjLoadMesh(assets->arena, reg->fileState->relativePath, data, size, mesh);
 
-        mesh->renderMesh =
+        mesh->handle =
             createMesh(assets->arena, mesh->vertices, mesh->vertexCount, mesh->indices, mesh->elementCount);
     }
     reg->asset.version++;

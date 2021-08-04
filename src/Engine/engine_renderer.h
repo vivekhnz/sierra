@@ -17,12 +17,6 @@ struct RenderBuffer
     uint32 usage;
 };
 
-struct RenderMesh
-{
-    uint32 vertexBufferId;
-    uint32 elementBufferId;
-};
-
 enum RenderTargetFormat
 {
     RENDER_TARGET_FORMAT_RGB8_WITH_DEPTH,
@@ -65,9 +59,6 @@ struct RenderMeshInstance
 struct RenderContext;
 struct RenderQueue;
 struct RenderEffect;
-
-RenderMesh *createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
-void destroyMesh(RenderMesh *mesh);
 
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);

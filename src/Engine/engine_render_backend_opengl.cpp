@@ -29,6 +29,12 @@ struct OpenGlRenderContext
     OpenGlInternalShaders _shaders;
 };
 
+struct OpenGlMesh
+{
+    uint32 vertexBufferId;
+    uint32 elementBufferId;
+};
+
 RenderBackendContext initializeRenderBackend(MemoryArena *arena)
 {
     OpenGlRenderContext *ctx = pushStruct(arena, OpenGlRenderContext);
@@ -627,26 +633,7 @@ void main()
     return shaders;
 }
 
-ShaderHandle getTexturedQuadShader(RenderBackendContext rctx)
-{
-    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
-    OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return getShaderHandle(shaders->texturedQuadShaderProgramId);
-}
-ShaderHandle getColoredQuadShader(RenderBackendContext rctx)
-{
-    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
-    OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return getShaderHandle(shaders->coloredQuadShaderProgramId);
-}
-ShaderHandle getTerrainCalcTessLevelShader(RenderBackendContext rctx)
-{
-    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
-    OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return getShaderHandle(shaders->terrainCalcTessLevelShaderProgramId);
-}
-
-bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle)
+bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     bool result = false;
@@ -686,8 +673,59 @@ bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, 
 
     return result;
 }
-void destroyShaderProgram(ShaderHandle handle)
+void destroyShader(ShaderHandle handle)
 {
     uint32 id = getShaderProgramId(handle);
     glDeleteProgram(id);
+}
+
+ShaderHandle getTexturedQuadShader(RenderBackendContext rctx)
+{
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+    OpenGlInternalShaders *shaders = getInternalShaders(ctx);
+    return getShaderHandle(shaders->texturedQuadShaderProgramId);
+}
+ShaderHandle getColoredQuadShader(RenderBackendContext rctx)
+{
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+    OpenGlInternalShaders *shaders = getInternalShaders(ctx);
+    return getShaderHandle(shaders->coloredQuadShaderProgramId);
+}
+ShaderHandle getTerrainCalcTessLevelShader(RenderBackendContext rctx)
+{
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+    OpenGlInternalShaders *shaders = getInternalShaders(ctx);
+    return getShaderHandle(shaders->terrainCalcTessLevelShaderProgramId);
+}
+
+MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
+{
+    OpenGlMesh *result = pushStruct(arena, OpenGlMesh);
+
+    uint32 vertexBufferStride = 6 * sizeof(float);
+    glGenBuffers(1, &result->vertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, result->vertexBufferId);
+    glBufferData(GL_ARRAY_BUFFER, vertexCount * vertexBufferStride, vertices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &result->elementBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result->elementBufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(uint32), indices, GL_STATIC_DRAW);
+
+    return {result};
+}
+void destroyMesh(MeshHandle handle)
+{
+    OpenGlMesh *mesh = (OpenGlMesh *)handle.ptr;
+    glDeleteBuffers(1, &mesh->vertexBufferId);
+    glDeleteBuffers(1, &mesh->elementBufferId);
+}
+uint32 getVertexBufferId(MeshHandle handle)
+{
+    OpenGlMesh *mesh = (OpenGlMesh *)handle.ptr;
+    return mesh->vertexBufferId;
+}
+uint32 getElementBufferId(MeshHandle handle)
+{
+    OpenGlMesh *mesh = (OpenGlMesh *)handle.ptr;
+    return mesh->elementBufferId;
 }

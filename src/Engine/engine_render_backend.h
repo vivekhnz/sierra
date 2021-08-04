@@ -16,15 +16,24 @@ struct ShaderHandle
 {
     void *ptr;
 };
+struct MeshHandle
+{
+    void *ptr;
+};
 
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
 
 uint32 getShaderProgramId(ShaderHandle handle);
-bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);
-void destroyShaderProgram(ShaderHandle handle);
+bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);
+void destroyShader(ShaderHandle handle);
 
-ShaderHandle getTexturedQuadShaderShaderHandle(RenderBackendContext rctx);
-ShaderHandle getColoredQuadShaderShaderHandle(RenderBackendContext rctx);
-ShaderHandle getTerrainCalcTessLevelShaderShaderHandle(RenderBackendContext rctx);
+ShaderHandle getTexturedQuadShader(RenderBackendContext rctx);
+ShaderHandle getColoredQuadShader(RenderBackendContext rctx);
+ShaderHandle getTerrainCalcTessLevelShader(RenderBackendContext rctx);
+
+MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
+void destroyMesh(MeshHandle handle);
+uint32 getVertexBufferId(MeshHandle handle);
+uint32 getElementBufferId(MeshHandle handle);
 
 #endif

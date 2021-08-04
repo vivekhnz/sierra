@@ -171,27 +171,6 @@ struct RenderTargetDescriptor
     bool hasDepthBuffer;
 };
 
-RenderMesh *createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
-{
-    RenderMesh *result = pushStruct(arena, RenderMesh);
-
-    uint32 vertexBufferStride = 6 * sizeof(float);
-    glGenBuffers(1, &result->vertexBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, result->vertexBufferId);
-    glBufferData(GL_ARRAY_BUFFER, vertexCount * vertexBufferStride, vertices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &result->elementBufferId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, result->elementBufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indexCount * sizeof(uint32), indices, GL_STATIC_DRAW);
-
-    return result;
-}
-void destroyMesh(RenderMesh *mesh)
-{
-    glDeleteBuffers(1, &mesh->vertexBufferId);
-    glDeleteBuffers(1, &mesh->elementBufferId);
-}
-
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
@@ -953,8 +932,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             if (applyEffect(cmd->effect) && mesh)
             {
                 uint32 vertexBufferStride = 6 * sizeof(float);
-                glBindBuffer(GL_ARRAY_BUFFER, mesh->renderMesh->vertexBufferId);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh->renderMesh->elementBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, getVertexBufferId(mesh->handle));
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, getElementBufferId(mesh->handle));
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
