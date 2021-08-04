@@ -6,13 +6,25 @@ struct RenderBackendContext
     void *ptr;
 };
 
+enum ShaderType
+{
+    SHADER_TYPE_QUAD,
+    SHADER_TYPE_MESH,
+    SHADER_TYPE_TERRAIN
+};
+struct ShaderHandle
+{
+    void *ptr;
+};
+
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
 
-bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, uint32 *out_programId);
-void destroyShaderProgram(uint32 id);
+uint32 getShaderProgramId(ShaderHandle handle);
+bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);
+void destroyShaderProgram(ShaderHandle handle);
 
-uint32 getTexturedQuadShaderProgramId(RenderBackendContext rctx);
-uint32 getColoredQuadShaderProgramId(RenderBackendContext rctx);
-uint32 getTerrainCalcTessLevelShaderProgramId(RenderBackendContext rctx);
+ShaderHandle getTexturedQuadShaderShaderHandle(RenderBackendContext rctx);
+ShaderHandle getColoredQuadShaderShaderHandle(RenderBackendContext rctx);
+ShaderHandle getTerrainCalcTessLevelShaderShaderHandle(RenderBackendContext rctx);
 
 #endif

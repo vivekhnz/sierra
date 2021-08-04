@@ -73,8 +73,8 @@ struct RenderEffectTexture
 struct RenderEffect
 {
     MemoryArena *arena;
-    AssetHandle shaderHandle;
-    uint32 shaderProgramId;
+    AssetHandle shaderAssetHandle;
+    ShaderHandle shaderHandle;
     RenderEffectBlendMode blendMode;
     RenderEffectParameter *firstParameter;
     RenderEffectParameter *lastParameter;
@@ -509,8 +509,8 @@ RENDERER_CREATE_EFFECT(rendererCreateEffect)
     *result = {};
 
     result->arena = arena;
-    result->shaderHandle = shader;
-    result->shaderProgramId = 0;
+    result->shaderAssetHandle = shaderAsset;
+    result->shaderHandle = {0};
     result->blendMode = blendMode;
     result->firstParameter = 0;
     result->lastParameter = 0;
@@ -681,7 +681,7 @@ void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffec
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
     RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
-    effect->shaderProgramId = getTexturedQuadShaderProgramId(rq->ctx->internalCtx);
+    effect->shaderHandle = getTexturedQuadShader(rq->ctx->internalCtx);
 
     rendererSetEffectTexture(effect, 0, textureId);
     pushQuads(rq, &quad, 1, effect, isTopDown);
@@ -689,7 +689,7 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
 {
     RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
-    effect->shaderProgramId = getColoredQuadShaderProgramId(rq->ctx->internalCtx);
+    effect->shaderHandle = getColoredQuadShader(rq->ctx->internalCtx);
 
     rendererSetEffectVec3(effect, "color", color);
     pushQuads(rq, &quad, 1, effect, true);
@@ -763,12 +763,12 @@ bool applyEffect(RenderEffect *effect)
     // load shader from asset system via an asset handle if one was specified
     // otherwise, we assume that the shader program ID was explicitly set on the effect
     uint32 shaderProgramId;
-    if (effect->shaderHandle)
+    if (effect->shaderAssetHandle)
     {
-        LoadedAsset *shader = assetsGetShader(effect->shaderHandle);
+        LoadedAsset *shader = assetsGetShader(effect->shaderAssetHandle);
         if (shader->shader)
         {
-            shaderProgramId = shader->shader->id;
+            shaderProgramId = getShaderProgramId(shader->shader->handle);
         }
         else
         {
@@ -777,7 +777,7 @@ bool applyEffect(RenderEffect *effect)
     }
     else
     {
-        shaderProgramId = effect->shaderProgramId;
+        shaderProgramId = getShaderProgramId(effect->shaderHandle);
     }
 
     if (!isMissingResources)
@@ -1008,8 +1008,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             if (terrainShader->shader)
             {
                 Heightfield *heightfield = cmd->heightfield;
-                uint32 calcTessLevelShaderProgramId = getTerrainCalcTessLevelShaderProgramId(rq->ctx->internalCtx);
-                uint32 terrainShaderProgramId = terrainShader->shader->id;
+                ShaderHandle calcTessLevelShader = getTerrainCalcTessLevelShader(rq->ctx->internalCtx);
+                uint32 calcTessLevelShaderProgramId = getShaderProgramId(calcTessLevelShader);
+                uint32 terrainShaderProgramId = getShaderProgramId(terrainShader->shader->handle);
                 uint32 meshEdgeCount =
                     (2 * (heightfield->rows * heightfield->columns)) - heightfield->rows - heightfield->columns;
                 glm::vec3 terrainDimensions = glm::vec3(heightfield->spacing * (heightfield->columns - 1),

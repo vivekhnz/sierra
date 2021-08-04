@@ -4,13 +4,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <glad/glad.h>
 
-enum ShaderType
-{
-    SHADER_TYPE_QUAD,
-    SHADER_TYPE_MESH,
-    SHADER_TYPE_TERRAIN
-};
-
 enum RendererBufferType
 {
     RENDERER_VERTEX_BUFFER,
@@ -132,7 +125,7 @@ typedef RENDERER_GET_PIXELS(RendererGetPixels);
 // effects
 
 #define RENDERER_CREATE_EFFECT(name)                                                                              \
-    RenderEffect *name(MemoryArena *arena, AssetHandle shader, RenderEffectBlendMode blendMode)
+    RenderEffect *name(MemoryArena *arena, AssetHandle shaderAsset, RenderEffectBlendMode blendMode)
 typedef RENDERER_CREATE_EFFECT(RendererCreateEffect);
 
 #define RENDERER_SET_EFFECT_FLOAT(name) void name(RenderEffect *effect, char *paramName, float value)

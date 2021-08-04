@@ -10,7 +10,7 @@ enum AssetType
 
 struct ShaderAsset
 {
-    uint32 id;
+    ShaderHandle handle;
 };
 struct TextureAsset
 {

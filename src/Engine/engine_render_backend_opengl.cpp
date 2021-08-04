@@ -37,7 +37,7 @@ RenderBackendContext initializeRenderBackend(MemoryArena *arena)
     return {ctx};
 }
 
-bool createShader(uint32 type, char *src, uint32 *out_id)
+bool createOpenGlShader(uint32 type, char *src, uint32 *out_id)
 {
     uint32 id = glCreateShader(type);
     glShaderSource(id, 1, &src, NULL);
@@ -60,7 +60,7 @@ bool createShader(uint32 type, char *src, uint32 *out_id)
     }
 }
 
-bool createShaderProgram(uint32 shaderCount, uint32 *shaderIds, uint32 *out_id)
+bool createOpenGlShaderProgram(uint32 shaderCount, uint32 *shaderIds, uint32 *out_id)
 {
     uint32 id = glCreateProgram();
     for (uint32 i = 0; i < shaderCount; i++)
@@ -89,9 +89,18 @@ bool createShaderProgram(uint32 shaderCount, uint32 *shaderIds, uint32 *out_id)
         return 0;
     }
 }
-void destroyShaderProgram(uint32 id)
+
+uint32 getShaderProgramId(ShaderHandle handle)
 {
-    glDeleteProgram(id);
+    uint64 id = (uint64)handle.ptr;
+    assert(id < UINT32_MAX);
+    return (uint32)id;
+}
+ShaderHandle getShaderHandle(uint32 programId)
+{
+    ShaderHandle result;
+    result.ptr = (void *)((uint64)programId);
+    return result;
 }
 
 OpenGlInternalShaders *getInternalShaders(OpenGlRenderContext *ctx)
@@ -135,7 +144,7 @@ void main()
     out_uv = in_mesh_uv;
 }
     )";
-        assert(createShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
+        assert(createOpenGlShader(GL_VERTEX_SHADER, quadVertexShaderSrc, &shaders->quadVertexShaderId));
 
         char *texturedQuadFragmentShaderSrc = R"(
 #version 430 core
@@ -150,10 +159,10 @@ void main()
     FragColor = vec4(texture(imageTexture, uv).rgb, 1);
 }
     )";
-        assert(createShader(
+        assert(createOpenGlShader(
             GL_FRAGMENT_SHADER, texturedQuadFragmentShaderSrc, &shaders->texturedQuadFragmentShaderId));
         uint32 texturedQuadShaderIds[] = {shaders->quadVertexShaderId, shaders->texturedQuadFragmentShaderId};
-        assert(createShaderProgram(2, texturedQuadShaderIds, &shaders->texturedQuadShaderProgramId));
+        assert(createOpenGlShaderProgram(2, texturedQuadShaderIds, &shaders->texturedQuadShaderProgramId));
 
         char *coloredQuadFragmentShaderSrc = R"(
 #version 430 core
@@ -168,10 +177,10 @@ void main()
     FragColor = vec4(color, 1);
 }
     )";
-        assert(
-            createShader(GL_FRAGMENT_SHADER, coloredQuadFragmentShaderSrc, &shaders->coloredQuadFragmentShaderId));
+        assert(createOpenGlShader(
+            GL_FRAGMENT_SHADER, coloredQuadFragmentShaderSrc, &shaders->coloredQuadFragmentShaderId));
         uint32 coloredQuadShaderIds[] = {shaders->quadVertexShaderId, shaders->coloredQuadFragmentShaderId};
-        assert(createShaderProgram(2, coloredQuadShaderIds, &shaders->coloredQuadShaderProgramId));
+        assert(createOpenGlShaderProgram(2, coloredQuadShaderIds, &shaders->coloredQuadShaderProgramId));
 
         // create mesh vertex shader
         char *meshVertexShaderSrc = R"(
@@ -197,7 +206,7 @@ void main()
     out_normal = normalize((inverseTransposeTransform * vec4(in_normal, 0)).xyz);
 }
     )";
-        assert(createShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &shaders->meshVertexShaderId));
+        assert(createOpenGlShader(GL_VERTEX_SHADER, meshVertexShaderSrc, &shaders->meshVertexShaderId));
 
         // create terrain shaders
         char *terrainVertexShaderSrc = R"(
@@ -602,13 +611,14 @@ void main()
 }
         )";
 
-        assert(createShader(GL_VERTEX_SHADER, terrainVertexShaderSrc, &shaders->terrainVertexShaderId));
-        assert(createShader(GL_TESS_CONTROL_SHADER, terrainTessCtrlShaderSrc, &shaders->terrainTessCtrlShaderId));
-        assert(
-            createShader(GL_TESS_EVALUATION_SHADER, terrainTessEvalShaderSrc, &shaders->terrainTessEvalShaderId));
-        assert(createShader(
+        assert(createOpenGlShader(GL_VERTEX_SHADER, terrainVertexShaderSrc, &shaders->terrainVertexShaderId));
+        assert(createOpenGlShader(
+            GL_TESS_CONTROL_SHADER, terrainTessCtrlShaderSrc, &shaders->terrainTessCtrlShaderId));
+        assert(createOpenGlShader(
+            GL_TESS_EVALUATION_SHADER, terrainTessEvalShaderSrc, &shaders->terrainTessEvalShaderId));
+        assert(createOpenGlShader(
             GL_COMPUTE_SHADER, terrainCalcTessLevelShaderSrc, &shaders->terrainCalcTessLevelShaderId));
-        assert(createShaderProgram(
+        assert(createOpenGlShaderProgram(
             1, &shaders->terrainCalcTessLevelShaderId, &shaders->terrainCalcTessLevelShaderProgramId));
 
         shaders->initialized = true;
@@ -617,26 +627,26 @@ void main()
     return shaders;
 }
 
-uint32 getTexturedQuadShaderProgramId(RenderBackendContext rctx)
+ShaderHandle getTexturedQuadShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return shaders->texturedQuadShaderProgramId;
+    return getShaderHandle(shaders->texturedQuadShaderProgramId);
 }
-uint32 getColoredQuadShaderProgramId(RenderBackendContext rctx)
+ShaderHandle getColoredQuadShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return shaders->coloredQuadShaderProgramId;
+    return getShaderHandle(shaders->coloredQuadShaderProgramId);
 }
-uint32 getTerrainCalcTessLevelShaderProgramId(RenderBackendContext rctx)
+ShaderHandle getTerrainCalcTessLevelShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return shaders->terrainCalcTessLevelShaderProgramId;
+    return getShaderHandle(shaders->terrainCalcTessLevelShaderProgramId);
 }
 
-bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, uint32 *out_programId)
+bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     bool result = false;
@@ -664,15 +674,20 @@ bool createShaderProgram(RenderBackendContext rctx, ShaderType type, char *src, 
     }
     assert(shaderCount);
 
-    if (createShader(GL_FRAGMENT_SHADER, src, &shaderIds[shaderCount - 1]))
+    if (createOpenGlShader(GL_FRAGMENT_SHADER, src, &shaderIds[shaderCount - 1]))
     {
         uint32 programId;
-        if (createShaderProgram(shaderCount, shaderIds, &programId))
+        if (createOpenGlShaderProgram(shaderCount, shaderIds, &programId))
         {
-            *out_programId = programId;
+            *out_handle = getShaderHandle(programId);
             result = true;
         }
     }
 
     return result;
+}
+void destroyShaderProgram(ShaderHandle handle)
+{
+    uint32 id = getShaderProgramId(handle);
+    glDeleteProgram(id);
 }

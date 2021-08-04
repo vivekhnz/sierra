@@ -242,18 +242,18 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     if (assetType == ASSET_TYPE_SHADER)
     {
         char *src = static_cast<char *>(data);
-        uint32 id;
-        if (createShaderProgram(assets->rctx->internalCtx, reg->metadata.shader->type, src, &id))
+        ShaderHandle handle;
+        if (createShaderProgram(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
         {
             if (reg->asset.shader)
             {
-                destroyShaderProgram(reg->asset.shader->id);
+                destroyShaderProgram(reg->asset.shader->handle);
             }
             else
             {
                 reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
             }
-            reg->asset.shader->id = id;
+            reg->asset.shader->handle = handle;
         }
     }
     else if (assetType == ASSET_TYPE_TEXTURE)
