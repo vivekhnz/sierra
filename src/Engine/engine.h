@@ -23,7 +23,6 @@ struct EngineApi
     HeightfieldIsRayIntersecting *heightfieldIsRayIntersecting;
 
     RendererInitialize *rendererInitialize;
-    RendererUpdateLightingState *rendererUpdateLightingState;
     RendererCreateTexture *rendererCreateTexture;
     RendererUpdateTexture *rendererUpdateTexture;
     RendererReadTexturePixels *rendererReadTexturePixels;
@@ -43,6 +42,7 @@ struct EngineApi
     RendererCreateQueue *rendererCreateQueue;
     RendererSetCameraOrtho *rendererSetCameraOrtho;
     RendererSetCameraPersp *rendererSetCameraPersp;
+    RendererSetLighting *rendererSetLighting;
     RendererClear *rendererClear;
     RendererPushTexturedQuad *rendererPushTexturedQuad;
     RendererPushColoredQuad *rendererPushColoredQuad;

@@ -1264,13 +1264,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius;
     sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
-    // update scene lighting
-    glm::vec4 lightDir = glm::vec4(0);
-    lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
-    lightDir.y = cos(state->uiState.sceneLightDirection * glm::pi<float>() * 0.5);
-    lightDir.z = 0.2f;
-    engine->rendererUpdateLightingState(rctx, &lightDir, true, true, true, true, true);
-
     // update brush quad instances
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
     glm::vec2 heightfieldSize = glm::vec2(firstTile->heightfield->columns - 1, firstTile->heightfield->rows - 1)
@@ -1383,6 +1376,13 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
+
+    glm::vec4 lightDir = glm::vec4(0);
+    lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
+    lightDir.y = cos(state->uiState.sceneLightDirection * glm::pi<float>() * 0.5);
+    lightDir.z = 0.2f;
+    engine->rendererSetLighting(rq, &lightDir, true, true, true, true, true);
+
     engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {

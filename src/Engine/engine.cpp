@@ -43,7 +43,6 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.heightfieldIsRayIntersecting = heightfieldIsRayIntersecting;
 
     Api.rendererInitialize = rendererInitialize;
-    Api.rendererUpdateLightingState = rendererUpdateLightingState;
     Api.rendererCreateTexture = rendererCreateTexture;
     Api.rendererUpdateTexture = rendererUpdateTexture;
     Api.rendererReadTexturePixels = rendererReadTexturePixels;
@@ -63,6 +62,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererCreateQueue = rendererCreateQueue;
     Api.rendererSetCameraOrtho = rendererSetCameraOrtho;
     Api.rendererSetCameraPersp = rendererSetCameraPersp;
+    Api.rendererSetLighting = rendererSetLighting;
     Api.rendererClear = rendererClear;
     Api.rendererPushTexturedQuad = rendererPushTexturedQuad;
     Api.rendererPushColoredQuad = rendererPushColoredQuad;

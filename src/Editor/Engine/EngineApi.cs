@@ -84,7 +84,6 @@ namespace Terrain.Editor.Engine
         public IntPtr heightfieldIsRayIntersecting;
 
         public IntPtr rendererInitialize;
-        public IntPtr rendererUpdateLightingState;
         public IntPtr rendererCreateTexture;
         public IntPtr rendererUpdateTexture;
         public IntPtr rendererReadTexturePixels;
@@ -104,6 +103,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCameraOrtho;
         public IntPtr rendererSetCameraPersp;
+        public IntPtr rendererSetLighting;
         public IntPtr rendererClear;
         public IntPtr rendererPushTexturedQuad;
         public IntPtr rendererPushColoredQuad;

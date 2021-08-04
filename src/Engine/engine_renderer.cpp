@@ -32,17 +32,6 @@ struct GpuCameraState
 {
     glm::mat4 transform;
 };
-struct GpuLightingState
-{
-    glm::vec4 lightDir;
-
-    // todo: pack these into a single uint8
-    uint32 isEnabled;
-    uint32 isTextureEnabled;
-    uint32 isNormalMapEnabled;
-    uint32 isAOMapEnabled;
-    uint32 isDisplacementMapEnabled;
-};
 
 enum RenderEffectParameterType
 {
@@ -85,6 +74,7 @@ struct RenderEffect
 enum RenderQueueCommandType
 {
     RENDER_CMD_SetCameraCommand,
+    RENDER_CMD_SetLightingCommand,
     RENDER_CMD_ClearCommand,
     RENDER_CMD_DrawQuadsCommand,
     RENDER_CMD_DrawMeshesCommand,
@@ -96,6 +86,27 @@ struct RenderQueueCommandHeader
     RenderQueueCommandHeader *next;
 };
 
+struct GpuLightingState
+{
+    glm::vec4 lightDir;
+
+    // todo: pack these into a single uint8
+    uint32 isEnabled;
+    uint32 isTextureEnabled;
+    uint32 isNormalMapEnabled;
+    uint32 isAOMapEnabled;
+    uint32 isDisplacementMapEnabled;
+};
+struct SetLightingCommand
+{
+    glm::vec4 lightDir;
+
+    uint32 isEnabled;
+    uint32 isTextureEnabled;
+    uint32 isNormalMapEnabled;
+    uint32 isAOMapEnabled;
+    uint32 isDisplacementMapEnabled;
+};
 struct ClearCommand
 {
     glm::vec4 color;
@@ -191,19 +202,11 @@ RENDERER_INITIALIZE(rendererInitialize)
         GL_UNIFORM_BUFFER, RENDERER_CAMERA_UBO_SLOT, ctx->cameraUniformBufferId, 0, sizeof(GpuCameraState));
 
     // initialize lighting state
-    GpuLightingState lighting;
-    lighting.lightDir = glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f);
-    lighting.isEnabled = true;
-    lighting.isTextureEnabled = true;
-    lighting.isNormalMapEnabled = true;
-    lighting.isAOMapEnabled = true;
-    lighting.isDisplacementMapEnabled = true;
-
     glGenBuffers(1, &ctx->lightingUniformBufferId);
     glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(lighting), &lighting, GL_DYNAMIC_DRAW);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuLightingState), 0, GL_DYNAMIC_DRAW);
     glBindBufferRange(
-        GL_UNIFORM_BUFFER, RENDERER_LIGHTING_UBO_SLOT, ctx->lightingUniformBufferId, 0, sizeof(lighting));
+        GL_UNIFORM_BUFFER, RENDERER_LIGHTING_UBO_SLOT, ctx->lightingUniformBufferId, 0, sizeof(GpuLightingState));
 
     // create quad buffers
     float quadTopDownVerts[16] = {
@@ -240,20 +243,6 @@ RENDERER_INITIALIZE(rendererInitialize)
     ctx->meshInstances = (RenderMeshInstance *)pushSize(arena, sizeof(RenderMeshInstance) * ctx->maxMeshInstances);
 
     return ctx;
-}
-
-RENDERER_UPDATE_LIGHTING_STATE(rendererUpdateLightingState)
-{
-    GpuLightingState lighting;
-    lighting.lightDir = *lightDir;
-    lighting.isEnabled = isLightingEnabled;
-    lighting.isTextureEnabled = isTextureEnabled;
-    lighting.isNormalMapEnabled = isNormalMapEnabled;
-    lighting.isAOMapEnabled = isAOMapEnabled;
-    lighting.isDisplacementMapEnabled = isDisplacementMapEnabled;
-
-    glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
-    glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
 }
 
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
@@ -631,6 +620,19 @@ RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
     return cmd;
 }
 
+RENDERER_SET_LIGHTING(rendererSetLighting)
+{
+    SetLightingCommand *cmd = pushRenderCommand(rq, SetLightingCommand);
+    cmd->lightDir = *lightDir;
+    cmd->isEnabled = isLightingEnabled;
+    cmd->isTextureEnabled = isTextureEnabled;
+    cmd->isNormalMapEnabled = isNormalMapEnabled;
+    cmd->isAOMapEnabled = isAOMapEnabled;
+    cmd->isDisplacementMapEnabled = isDisplacementMapEnabled;
+
+    return cmd;
+}
+
 RENDERER_CLEAR(rendererClear)
 {
     ClearCommand *cmd = pushRenderCommand(rq, ClearCommand);
@@ -881,6 +883,22 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 
             glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->cameraUniformBufferId);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
+        }
+        break;
+        case RENDER_CMD_SetLightingCommand:
+        {
+            SetLightingCommand *cmd = (SetLightingCommand *)commandData;
+
+            GpuLightingState lighting;
+            lighting.lightDir = cmd->lightDir;
+            lighting.isEnabled = cmd->isEnabled;
+            lighting.isTextureEnabled = cmd->isTextureEnabled;
+            lighting.isNormalMapEnabled = cmd->isNormalMapEnabled;
+            lighting.isAOMapEnabled = cmd->isAOMapEnabled;
+            lighting.isDisplacementMapEnabled = cmd->isDisplacementMapEnabled;
+
+            glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->lightingUniformBufferId);
+            glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
         }
         break;
         case RENDER_CMD_ClearCommand:

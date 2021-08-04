@@ -63,11 +63,6 @@ struct RenderEffect;
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
-#define RENDERER_UPDATE_LIGHTING_STATE(name)                                                                      \
-    void name(RenderContext *ctx, glm::vec4 *lightDir, bool isLightingEnabled, bool isTextureEnabled,             \
-        bool isNormalMapEnabled, bool isAOMapEnabled, bool isDisplacementMapEnabled)
-typedef RENDERER_UPDATE_LIGHTING_STATE(RendererUpdateLightingState);
-
 #define RENDERER_CREATE_TEXTURE(name)                                                                             \
     uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,              \
         uint32 wrapMode, uint32 filterMode)
@@ -153,6 +148,11 @@ typedef RENDERER_SET_CAMERA_ORTHO(RendererSetCameraOrtho);
 #define RENDERER_SET_CAMERA_PERSP(name)                                                                           \
     SetCameraCommand *name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
 typedef RENDERER_SET_CAMERA_PERSP(RendererSetCameraPersp);
+
+#define RENDERER_SET_LIGHTING(name)                                                                               \
+    void *name(RenderQueue *rq, glm::vec4 *lightDir, bool isLightingEnabled, bool isTextureEnabled,               \
+        bool isNormalMapEnabled, bool isAOMapEnabled, bool isDisplacementMapEnabled)
+typedef RENDERER_SET_LIGHTING(RendererSetLighting);
 
 #define RENDERER_CLEAR(name) void name(RenderQueue *rq, float r, float g, float b, float a)
 typedef RENDERER_CLEAR(RendererClear);

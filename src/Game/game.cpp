@@ -201,7 +201,6 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     GameAssets *gameAssets = &state->gameAssets;
     RenderContext *rctx = state->renderCtx;
 
-    bool isLightingStateUpdated = false;
     glm::vec4 lightDir = glm::vec4(-0.588f, 0.809f, 0.294f, 0.0f);
 
     if (isButtonDown(input, GAME_INPUT_KEY_ESCAPE))
@@ -246,35 +245,30 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     if (isNewButtonPress(input, GAME_INPUT_KEY_L))
     {
         state->isLightingEnabled = !state->isLightingEnabled;
-        isLightingStateUpdated = true;
     }
 
     // toggle albedo texture when T key is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_T))
     {
         state->isAlbedoEnabled = !state->isAlbedoEnabled;
-        isLightingStateUpdated = true;
     }
 
     // toggle normal map texture when N key is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_N))
     {
         state->isNormalMapEnabled = !state->isNormalMapEnabled;
-        isLightingStateUpdated = true;
     }
 
     // toggle displacement map texture when B key is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_B))
     {
         state->isDisplacementMapEnabled = !state->isDisplacementMapEnabled;
-        isLightingStateUpdated = true;
     }
 
     // toggle ambient occlusion texture when O key is pressed
     if (isNewButtonPress(input, GAME_INPUT_KEY_O))
     {
         state->isAOMapEnabled = !state->isAOMapEnabled;
-        isLightingStateUpdated = true;
     }
 
     // load a different heightmap when H is pressed
@@ -287,13 +281,6 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     if (isNewButtonPress(input, GAME_INPUT_KEY_Z))
     {
         state->isWireframeMode = !state->isWireframeMode;
-    }
-
-    if (isLightingStateUpdated)
-    {
-        engine->rendererUpdateLightingState(rctx, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled,
-            state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
-        isLightingStateUpdated = false;
     }
 
     if (state->isOrbitCameraMode)
@@ -481,6 +468,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
+    engine->rendererSetLighting(rq, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled,
+        state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTextureId,
         state->heightmapTextureId, 0, 0, 0, 0, 0, 0, state->terrainMeshVertexBuffer.id,
