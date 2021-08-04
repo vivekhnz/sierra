@@ -172,15 +172,6 @@ struct RenderQueue
     uint32 meshInstanceCount;
 };
 
-struct TextureDescriptor
-{
-    uint32 elementType;
-    uint32 elementSize;
-    uint32 cpuFormat;
-    uint32 gpuFormat;
-    bool isInteger;
-};
-
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
@@ -244,109 +235,17 @@ RENDERER_INITIALIZE(rendererInitialize)
     return ctx;
 }
 
-uint32 getTextureId(TextureHandle handle)
-{
-    uint64 id = (uint64)handle.ptr;
-    assert(id < UINT32_MAX);
-    return (uint32)id;
-}
-TextureHandle getTextureHandle(uint32 id)
-{
-    TextureHandle result;
-    result.ptr = (void *)((uint64)id);
-    return result;
-}
-
-TextureDescriptor getTextureDescriptor(TextureFormat format)
-{
-    TextureDescriptor result = {};
-    if (format == TEXTURE_FORMAT_RGB8)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.elementSize = sizeof(uint8);
-        result.cpuFormat = GL_RGB;
-        result.gpuFormat = GL_RGB;
-        result.isInteger = false;
-    }
-    else if (format == TEXTURE_FORMAT_R16)
-    {
-        result.elementType = GL_UNSIGNED_SHORT;
-        result.elementSize = sizeof(uint16);
-        result.cpuFormat = GL_R16;
-        result.gpuFormat = GL_RED;
-        result.isInteger = false;
-    }
-    else if (format == TEXTURE_FORMAT_R8UI)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.elementSize = sizeof(uint8);
-        result.cpuFormat = GL_R8UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else if (format == TEXTURE_FORMAT_R16UI)
-    {
-        result.elementType = GL_UNSIGNED_SHORT;
-        result.elementSize = sizeof(uint16);
-        result.cpuFormat = GL_R16UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else if (format == TEXTURE_FORMAT_R32UI)
-    {
-        result.elementType = GL_UNSIGNED_INT;
-        result.elementSize = sizeof(uint32);
-        result.cpuFormat = GL_R32UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else
-    {
-        assert(!"Unknown texture format");
-    }
-
-    return result;
-}
-
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 {
-    uint32 id = 0;
-    glGenTextures(1, &id);
-    TextureDescriptor descriptor = getTextureDescriptor(format);
-
-    glBindTexture(GL_TEXTURE_2D, id);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float black[] = {0, 0, 0, 0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    return getTextureHandle(id);
+    return createTexture(width, height, format);
 }
-
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
-    uint32 id = getTextureId(handle);
-    TextureDescriptor descriptor = getTextureDescriptor(format);
-
-    glBindTexture(GL_TEXTURE_2D, id);
-    glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat,
-        descriptor.elementType, pixels);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    updateTexture(handle, width, height, format, pixels);
 }
-
 RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 {
-    uint32 id = getTextureId(handle);
-    TextureDescriptor descriptor = getTextureDescriptor(format);
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, id);
-    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, out_pixels);
+    return readTexturePixels(handle, format, out_pixels);
 }
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
@@ -413,7 +312,7 @@ RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
     result->height = height;
     result->hasDepthBuffer = createDepthBuffer;
 
-    TextureDescriptor descriptor = getTextureDescriptor(result->format);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(result->format);
 
     // create target texture
     uint32 textureId;
@@ -467,7 +366,7 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
     target->width = width;
     target->height = height;
 
-    TextureDescriptor descriptor = getTextureDescriptor(target->format);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(target->format);
 
     glBindTexture(GL_TEXTURE_2D, getTextureId(target->textureHandle));
     glTexImage2D(
@@ -483,7 +382,7 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
 
 RENDERER_GET_PIXELS(rendererGetPixels)
 {
-    TextureDescriptor descriptor = getTextureDescriptor(target->format);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(target->format);
 
     uint32 pixelCount = width * height;
     uint32 bufferSize = pixelCount * descriptor.elementSize;

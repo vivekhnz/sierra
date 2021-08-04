@@ -729,3 +729,105 @@ uint32 getElementBufferId(MeshHandle handle)
     OpenGlMesh *mesh = (OpenGlMesh *)handle.ptr;
     return mesh->elementBufferId;
 }
+
+uint32 getTextureId(TextureHandle handle)
+{
+    uint64 id = (uint64)handle.ptr;
+    assert(id < UINT32_MAX);
+    return (uint32)id;
+}
+TextureHandle getTextureHandle(uint32 id)
+{
+    TextureHandle result;
+    result.ptr = (void *)((uint64)id);
+    return result;
+}
+OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format)
+{
+    OpenGlTextureDescriptor result = {};
+    if (format == TEXTURE_FORMAT_RGB8)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
+        result.cpuFormat = GL_RGB;
+        result.gpuFormat = GL_RGB;
+        result.isInteger = false;
+    }
+    else if (format == TEXTURE_FORMAT_R16)
+    {
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
+        result.cpuFormat = GL_R16;
+        result.gpuFormat = GL_RED;
+        result.isInteger = false;
+    }
+    else if (format == TEXTURE_FORMAT_R8UI)
+    {
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
+        result.cpuFormat = GL_R8UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+    }
+    else if (format == TEXTURE_FORMAT_R16UI)
+    {
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
+        result.cpuFormat = GL_R16UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+    }
+    else if (format == TEXTURE_FORMAT_R32UI)
+    {
+        result.elementType = GL_UNSIGNED_INT;
+        result.elementSize = sizeof(uint32);
+        result.cpuFormat = GL_R32UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
+    }
+    else
+    {
+        assert(!"Unknown texture format");
+    }
+
+    return result;
+}
+
+TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format)
+{
+    uint32 id = 0;
+    glGenTextures(1, &id);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float black[] = {0, 0, 0, 0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
+    glTexImage2D(
+        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    return getTextureHandle(id);
+}
+void updateTexture(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels)
+{
+    uint32 id = getTextureId(handle);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    glBindTexture(GL_TEXTURE_2D, id);
+    glTexImage2D(GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat,
+        descriptor.elementType, pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
+}
+void readTexturePixels(TextureHandle handle, TextureFormat format, void *out_pixels)
+{
+    uint32 id = getTextureId(handle);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, out_pixels);
+}

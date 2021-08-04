@@ -17,19 +17,6 @@ struct RenderBuffer
     uint32 usage;
 };
 
-enum TextureFormat
-{
-    TEXTURE_FORMAT_RGB8,
-    TEXTURE_FORMAT_R16,
-    TEXTURE_FORMAT_R8UI,
-    TEXTURE_FORMAT_R16UI,
-    TEXTURE_FORMAT_R32UI
-};
-struct TextureHandle
-{
-    void *ptr;
-};
-
 struct RenderTarget
 {
     TextureFormat format;

@@ -1,8 +1,8 @@
 #include "engine.h"
 
 #include "engine_heightfield.cpp"
-#include "engine_render_backend_opengl.cpp"
 #include "engine_renderer.cpp"
+#include "engine_render_backend_opengl.cpp"
 #include "engine_assets.cpp"
 
 #include "../../deps/glad/glad.c"

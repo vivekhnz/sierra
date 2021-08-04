@@ -20,6 +20,28 @@ struct MeshHandle
 {
     void *ptr;
 };
+enum TextureFormat
+{
+    TEXTURE_FORMAT_RGB8,
+    TEXTURE_FORMAT_R16,
+    TEXTURE_FORMAT_R8UI,
+    TEXTURE_FORMAT_R16UI,
+    TEXTURE_FORMAT_R32UI
+};
+struct TextureHandle
+{
+    void *ptr;
+};
+
+// todo: move this into OpenGL backend
+struct OpenGlTextureDescriptor
+{
+    uint32 elementType;
+    uint32 elementSize;
+    uint32 cpuFormat;
+    uint32 gpuFormat;
+    bool isInteger;
+};
 
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
 
@@ -35,5 +57,13 @@ MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, vo
 void destroyMesh(MeshHandle handle);
 uint32 getVertexBufferId(MeshHandle handle);
 uint32 getElementBufferId(MeshHandle handle);
+
+OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format);
+uint32 getTextureId(TextureHandle handle);
+TextureHandle getTextureHandle(uint32 id);
+
+TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
+void updateTexture(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels);
+void readTexturePixels(TextureHandle handle, TextureFormat format, void *out_pixels);
 
 #endif
