@@ -45,10 +45,9 @@ typedef RENDERER_INITIALIZE(RendererInitialize);
 
 #define RENDERER_CREATE_TEXTURE(name) TextureHandle name(uint32 width, uint32 height, TextureFormat format)
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
-#define RENDERER_UPDATE_TEXTURE(name)                                                                             \
-    void name(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels)
+#define RENDERER_UPDATE_TEXTURE(name) void name(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
-#define RENDERER_READ_TEXTURE_PIXELS(name) void name(TextureHandle handle, TextureFormat format, void *out_pixels)
+#define RENDERER_READ_TEXTURE_PIXELS(name) void name(TextureHandle handle, void *out_pixels)
 typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \

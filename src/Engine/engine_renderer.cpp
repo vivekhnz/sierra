@@ -241,11 +241,11 @@ RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 }
 RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
-    updateTexture(handle, width, height, format, pixels);
+    updateTexture(handle, width, height, pixels);
 }
 RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
 {
-    return readTexturePixels(handle, format, out_pixels);
+    return readTexturePixels(handle, out_pixels);
 }
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)

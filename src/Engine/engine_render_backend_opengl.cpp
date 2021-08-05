@@ -47,6 +47,7 @@ struct OpenGlRenderTarget
     RenderTarget extTarget;
 
     OpenGlTextureDescriptor descriptor;
+    bool hasDepthBuffer;
     uint32 framebufferId;
 };
 
@@ -747,14 +748,23 @@ uint32 getElementBufferId(MeshHandle handle)
 
 uint32 getTextureId(TextureHandle handle)
 {
-    uint64 id = (uint64)handle.ptr;
-    assert(id < UINT32_MAX);
-    return (uint32)id;
+    uint64 packed = (uint64)handle.ptr;
+    uint32 id = (uint32)packed;
+    return id;
 }
-TextureHandle getTextureHandle(uint32 id)
+TextureFormat getTextureFormat(TextureHandle handle)
 {
+    uint64 packed = (uint64)handle.ptr;
+    TextureFormat format = (TextureFormat)(packed >> 32);
+    return format;
+}
+TextureHandle getTextureHandle(uint32 id, TextureFormat format)
+{
+    assert(format < UINT32_MAX);
+
     TextureHandle result;
-    result.ptr = (void *)((uint64)id);
+    uint64 packed = ((uint64)format << 32) | id;
+    result.ptr = (void *)packed;
     return result;
 }
 OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format)
@@ -825,11 +835,12 @@ TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format)
         GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    return getTextureHandle(id);
+    return getTextureHandle(id, format);
 }
-void updateTexture(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels)
+void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 {
     uint32 id = getTextureId(handle);
+    TextureFormat format = getTextureFormat(handle);
     OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
 
     glBindTexture(GL_TEXTURE_2D, id);
@@ -837,9 +848,10 @@ void updateTexture(TextureHandle handle, uint32 width, uint32 height, TextureFor
         descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
-void readTexturePixels(TextureHandle handle, TextureFormat format, void *out_pixels)
+void readTexturePixels(TextureHandle handle, void *out_pixels)
 {
     uint32 id = getTextureId(handle);
+    TextureFormat format = getTextureFormat(handle);
     OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
 
     glActiveTexture(GL_TEXTURE0);
@@ -854,15 +866,14 @@ RenderTarget *createRenderTarget(
     RenderTarget *target = &internalTarget->extTarget;
     target->width = width;
     target->height = height;
-    target->format = format;
-    target->hasDepthBuffer = createDepthBuffer;
 
-    internalTarget->descriptor = getTextureDescriptor(target->format);
+    internalTarget->descriptor = getTextureDescriptor(format);
+    internalTarget->hasDepthBuffer = createDepthBuffer;
 
     // create target texture
     uint32 textureId;
     glGenTextures(1, &textureId);
-    target->textureHandle = getTextureHandle(textureId);
+    target->textureHandle = getTextureHandle(textureId, format);
 
     glBindTexture(GL_TEXTURE_2D, textureId);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -878,10 +889,10 @@ RenderTarget *createRenderTarget(
 
     // create depth buffer
     uint32 depthTextureId;
-    if (target->hasDepthBuffer)
+    if (createDepthBuffer)
     {
         glGenTextures(1, &depthTextureId);
-        target->depthTextureHandle = getTextureHandle(depthTextureId);
+        target->depthTextureHandle = getTextureHandle(depthTextureId, (TextureFormat)0);
 
         glBindTexture(GL_TEXTURE_2D, depthTextureId);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
@@ -896,7 +907,7 @@ RenderTarget *createRenderTarget(
     glGenFramebuffers(1, &internalTarget->framebufferId);
     glBindFramebuffer(GL_FRAMEBUFFER, internalTarget->framebufferId);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-    if (target->hasDepthBuffer)
+    if (createDepthBuffer)
     {
         glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTextureId, 0);
     }
@@ -915,7 +926,7 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
         descriptor->elementType, 0);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    if (target->hasDepthBuffer)
+    if (internalTarget->hasDepthBuffer)
     {
         glBindTexture(GL_TEXTURE_2D, getTextureId(target->depthTextureHandle));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);

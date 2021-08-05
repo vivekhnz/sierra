@@ -37,8 +37,6 @@ struct RenderTarget
 {
     uint32 width;
     uint32 height;
-    TextureFormat format;
-    bool hasDepthBuffer;
 
     TextureHandle textureHandle;
     TextureHandle depthTextureHandle;
@@ -62,8 +60,8 @@ uint32 getElementBufferId(MeshHandle handle);
 uint32 getTextureId(TextureHandle handle);
 
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
-void updateTexture(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels);
-void readTexturePixels(TextureHandle handle, TextureFormat format, void *out_pixels);
+void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
+void readTexturePixels(TextureHandle handle, void *out_pixels);
 
 RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);

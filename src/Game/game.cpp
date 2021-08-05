@@ -211,7 +211,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
         memory->engine->rendererUpdateTexture(state->heightmapTexture, heightmapAsset->texture->width,
-            heightmapAsset->texture->height, TEXTURE_FORMAT_R16, heightmapAsset->texture->data);
+            heightmapAsset->texture->height, heightmapAsset->texture->data);
 
         uint16 heightmapWidth = 2048;
         uint16 heightmapHeight = 2048;

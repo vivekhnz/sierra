@@ -531,8 +531,8 @@ void discardChanges(EditorMemory *memory)
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        memory->engineApi->rendererReadTexturePixels(tile->committedHeightmap->textureHandle, TEXTURE_FORMAT_R16,
-            state->sceneState.heightmapTextureDataTempBuffer);
+        memory->engineApi->rendererReadTexturePixels(
+            tile->committedHeightmap->textureHandle, state->sceneState.heightmapTextureDataTempBuffer);
         updateHeightfieldHeights(tile->heightfield, state->sceneState.heightmapTextureDataTempBuffer);
     }
 }
@@ -1300,8 +1300,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
         if (state->isEditingHeightmap)
         {
-            engine->rendererReadTexturePixels(tile->workingHeightmap->textureHandle, TEXTURE_FORMAT_R16,
-                sceneState->heightmapTextureDataTempBuffer);
+            engine->rendererReadTexturePixels(
+                tile->workingHeightmap->textureHandle, sceneState->heightmapTextureDataTempBuffer);
             updateHeightfieldHeights(tile->heightfield, sceneState->heightmapTextureDataTempBuffer);
         }
     }
