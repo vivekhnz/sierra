@@ -33,14 +33,15 @@ struct TextureHandle
     void *ptr;
 };
 
-// todo: move this into OpenGL backend
-struct OpenGlTextureDescriptor
+struct RenderTarget
 {
-    uint32 elementType;
-    uint32 elementSize;
-    uint32 cpuFormat;
-    uint32 gpuFormat;
-    bool isInteger;
+    uint32 width;
+    uint32 height;
+    TextureFormat format;
+    bool hasDepthBuffer;
+
+    TextureHandle textureHandle;
+    TextureHandle depthTextureHandle;
 };
 
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
@@ -58,12 +59,22 @@ void destroyMesh(MeshHandle handle);
 uint32 getVertexBufferId(MeshHandle handle);
 uint32 getElementBufferId(MeshHandle handle);
 
-OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format);
 uint32 getTextureId(TextureHandle handle);
-TextureHandle getTextureHandle(uint32 id);
 
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
 void updateTexture(TextureHandle handle, uint32 width, uint32 height, TextureFormat format, void *pixels);
 void readTexturePixels(TextureHandle handle, TextureFormat format, void *out_pixels);
+
+RenderTarget *createRenderTarget(
+    MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
+void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
+void *getPixels(MemoryArena *arena,
+    RenderTarget *target,
+    uint32 x,
+    uint32 y,
+    uint32 width,
+    uint32 height,
+    uint32 *out_pixelCount);
+uint32 getFramebufferId(RenderTarget *target);
 
 #endif

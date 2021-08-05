@@ -16,19 +16,6 @@ struct RenderBuffer
     uint32 type;
     uint32 usage;
 };
-
-struct RenderTarget
-{
-    TextureFormat format;
-    bool hasDepthBuffer;
-
-    uint32 width;
-    uint32 height;
-    TextureHandle textureHandle;
-    TextureHandle depthTextureHandle;
-    uint32 framebufferId;
-};
-
 enum RenderEffectBlendMode
 {
     EFFECT_BLEND_ALPHA_BLEND,
@@ -95,7 +82,7 @@ typedef RENDERER_GET_PIXELS(RendererGetPixels);
 
 #define getBounds(renderTarget)                                                                                   \
     {                                                                                                             \
-        0, 0, (float)(renderTarget)->width, (float)(renderTarget)->height                                         \
+        0, 0, (float)(renderTarget->width), (float)(renderTarget->height)                                         \
     }
 
 // effects

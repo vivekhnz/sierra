@@ -34,6 +34,21 @@ struct OpenGlMesh
     uint32 vertexBufferId;
     uint32 elementBufferId;
 };
+struct OpenGlTextureDescriptor
+{
+    uint32 elementType;
+    uint32 elementSize;
+    uint32 cpuFormat;
+    uint32 gpuFormat;
+    bool isInteger;
+};
+struct OpenGlRenderTarget
+{
+    RenderTarget extTarget;
+
+    OpenGlTextureDescriptor descriptor;
+    uint32 framebufferId;
+};
 
 RenderBackendContext initializeRenderBackend(MemoryArena *arena)
 {
@@ -830,4 +845,106 @@ void readTexturePixels(TextureHandle handle, TextureFormat format, void *out_pix
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
     glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, out_pixels);
+}
+
+RenderTarget *createRenderTarget(
+    MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer)
+{
+    OpenGlRenderTarget *internalTarget = pushStruct(arena, OpenGlRenderTarget);
+    RenderTarget *target = &internalTarget->extTarget;
+    target->width = width;
+    target->height = height;
+    target->format = format;
+    target->hasDepthBuffer = createDepthBuffer;
+
+    internalTarget->descriptor = getTextureDescriptor(target->format);
+
+    // create target texture
+    uint32 textureId;
+    glGenTextures(1, &textureId);
+    target->textureHandle = getTextureHandle(textureId);
+
+    glBindTexture(GL_TEXTURE_2D, textureId);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float black[] = {0, 0, 0, 0};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
+
+    uint32 filterMode = internalTarget->descriptor.isInteger ? GL_NEAREST : GL_LINEAR;
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filterMode);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filterMode);
+    glTexImage2D(GL_TEXTURE_2D, 0, internalTarget->descriptor.cpuFormat, width, height, 0,
+        internalTarget->descriptor.gpuFormat, internalTarget->descriptor.elementType, 0);
+
+    // create depth buffer
+    uint32 depthTextureId;
+    if (target->hasDepthBuffer)
+    {
+        glGenTextures(1, &depthTextureId);
+        target->depthTextureHandle = getTextureHandle(depthTextureId);
+
+        glBindTexture(GL_TEXTURE_2D, depthTextureId);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    }
+
+    // create framebuffer
+    glGenFramebuffers(1, &internalTarget->framebufferId);
+    glBindFramebuffer(GL_FRAMEBUFFER, internalTarget->framebufferId);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
+    if (target->hasDepthBuffer)
+    {
+        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTextureId, 0);
+    }
+    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    return target;
+}
+void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
+{
+    OpenGlRenderTarget *internalTarget = (OpenGlRenderTarget *)target;
+    OpenGlTextureDescriptor *descriptor = &internalTarget->descriptor;
+
+    glBindTexture(GL_TEXTURE_2D, getTextureId(target->textureHandle));
+    glTexImage2D(GL_TEXTURE_2D, 0, descriptor->cpuFormat, width, height, 0, descriptor->gpuFormat,
+        descriptor->elementType, 0);
+    glGenerateMipmap(GL_TEXTURE_2D);
+
+    if (target->hasDepthBuffer)
+    {
+        glBindTexture(GL_TEXTURE_2D, getTextureId(target->depthTextureHandle));
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
+    }
+}
+void *getPixels(MemoryArena *arena,
+    RenderTarget *target,
+    uint32 x,
+    uint32 y,
+    uint32 width,
+    uint32 height,
+    uint32 *out_pixelCount)
+{
+    OpenGlRenderTarget *internalTarget = (OpenGlRenderTarget *)target;
+    OpenGlTextureDescriptor *descriptor = &internalTarget->descriptor;
+
+    uint32 pixelCount = width * height;
+    uint32 bufferSize = pixelCount * descriptor->elementSize;
+    void *buffer = pushSize(arena, bufferSize);
+
+    uint32 textureId = getTextureId(target->textureHandle);
+    glGetTextureSubImage(textureId, 0, x, y, 0, width, height, 1, descriptor->gpuFormat, descriptor->elementType,
+        bufferSize, buffer);
+
+    *out_pixelCount = pixelCount;
+    return buffer;
+}
+uint32 getFramebufferId(RenderTarget *target)
+{
+    OpenGlRenderTarget *internalTarget = (OpenGlRenderTarget *)target;
+    return internalTarget->framebufferId;
 }

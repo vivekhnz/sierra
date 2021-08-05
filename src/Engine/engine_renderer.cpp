@@ -305,94 +305,18 @@ RENDERER_UPDATE_BUFFER(rendererUpdateBuffer)
 
 RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
 {
-    RenderTarget *result = pushStruct(arena, RenderTarget);
-    *result = {};
-    result->format = format;
-    result->width = width;
-    result->height = height;
-    result->hasDepthBuffer = createDepthBuffer;
-
-    OpenGlTextureDescriptor descriptor = getTextureDescriptor(result->format);
-
-    // create target texture
-    uint32 textureId;
-    glGenTextures(1, &textureId);
-    result->textureHandle = getTextureHandle(textureId);
-
-    glBindTexture(GL_TEXTURE_2D, textureId);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float black[] = {0, 0, 0, 0};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, descriptor.isInteger ? GL_NEAREST : GL_LINEAR);
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
-
-    // create depth buffer
-    uint32 depthTextureId;
-    if (result->hasDepthBuffer)
-    {
-        glGenTextures(1, &depthTextureId);
-        result->depthTextureHandle = getTextureHandle(depthTextureId);
-
-        glBindTexture(GL_TEXTURE_2D, depthTextureId);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, black);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    }
-
-    // create framebuffer
-    glGenFramebuffers(1, &result->framebufferId);
-    glBindFramebuffer(GL_FRAMEBUFFER, result->framebufferId);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, textureId, 0);
-    if (result->hasDepthBuffer)
-    {
-        glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, depthTextureId, 0);
-    }
-    assert(glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-    result->textureHandle = getTextureHandle(textureId);
-
-    return result;
+    return createRenderTarget(arena, width, height, format, createDepthBuffer);
 }
-
 RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
 {
     target->width = width;
     target->height = height;
 
-    OpenGlTextureDescriptor descriptor = getTextureDescriptor(target->format);
-
-    glBindTexture(GL_TEXTURE_2D, getTextureId(target->textureHandle));
-    glTexImage2D(
-        GL_TEXTURE_2D, 0, descriptor.cpuFormat, width, height, 0, descriptor.gpuFormat, descriptor.elementType, 0);
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-    if (target->hasDepthBuffer)
-    {
-        glBindTexture(GL_TEXTURE_2D, getTextureId(target->depthTextureHandle));
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
-    }
+    resizeRenderTarget(target, width, height);
 }
-
 RENDERER_GET_PIXELS(rendererGetPixels)
 {
-    OpenGlTextureDescriptor descriptor = getTextureDescriptor(target->format);
-
-    uint32 pixelCount = width * height;
-    uint32 bufferSize = pixelCount * descriptor.elementSize;
-    void *buffer = pushSize(arena, bufferSize);
-
-    glGetTextureSubImage(getTextureId(target->textureHandle), 0, x, y, 0, width, height, 1, descriptor.gpuFormat,
-        descriptor.elementType, bufferSize, buffer);
-
-    *out_pixelCount = pixelCount;
-    return buffer;
+    return getPixels(arena, target, x, y, width, height, out_pixelCount);
 }
 
 // effects
@@ -757,7 +681,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
 {
     if (target)
     {
-        glBindFramebuffer(GL_FRAMEBUFFER, target->framebufferId);
+        glBindFramebuffer(GL_FRAMEBUFFER, getFramebufferId(target));
     }
     glViewport(0, 0, width, height);
 
