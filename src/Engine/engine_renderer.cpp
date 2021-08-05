@@ -129,7 +129,7 @@ struct DrawTerrainCommand
     Heightfield *heightfield;
     glm::vec2 heightmapSize;
 
-    AssetHandle terrainShader;
+    ShaderHandle terrainShader;
 
     TextureHandle heightmapTexture;
     TextureHandle referenceHeightmapTexture;
@@ -577,7 +577,15 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->heightfield = heightfield;
     cmd->heightmapSize = heightmapSize;
 
-    cmd->terrainShader = terrainShader;
+    cmd->terrainShader = {0};
+    if (terrainShader)
+    {
+        LoadedAsset *shader = assetsGetShader(terrainShader);
+        if (shader->shader)
+        {
+            cmd->terrainShader = shader->shader->handle;
+        }
+    }
 
     cmd->heightmapTexture = heightmapTexture;
     cmd->referenceHeightmapTexture = referenceHeightmapTexture;

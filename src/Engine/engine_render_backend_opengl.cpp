@@ -1195,13 +1195,11 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         case RENDER_CMD_DrawTerrainCommand:
         {
             DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
-
-            LoadedAsset *terrainShader = assetsGetShader(cmd->terrainShader);
-            if (terrainShader->shader)
+            if (cmd->terrainShader.ptr != 0)
             {
                 Heightfield *heightfield = cmd->heightfield;
                 uint32 calcTessLevelShaderProgramId = shaders->terrainCalcTessLevelShaderProgramId;
-                uint32 terrainShaderProgramId = getShaderProgramId(terrainShader->shader->handle);
+                uint32 terrainShaderProgramId = getShaderProgramId(cmd->terrainShader);
                 uint32 meshEdgeCount =
                     (2 * (heightfield->rows * heightfield->columns)) - heightfield->rows - heightfield->columns;
                 glm::vec3 terrainDimensions = glm::vec3(heightfield->spacing * (heightfield->columns - 1),
