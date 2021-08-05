@@ -4,6 +4,7 @@
 #define RENDERER_LIGHTING_UBO_SLOT 1
 
 ASSETS_GET_SHADER(assetsGetShader);
+ASSETS_GET_MESH(assetsGetMesh);
 
 struct RenderContext
 {
@@ -119,7 +120,7 @@ struct DrawQuadsCommand
 struct DrawMeshesCommand
 {
     RenderEffect *effect;
-    AssetHandle mesh;
+    MeshHandle mesh;
     uint32 instanceOffset;
     uint32 instanceCount;
 };
@@ -552,9 +553,18 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
-    cmd->mesh = mesh;
     cmd->instanceOffset = rq->meshInstanceCount;
     cmd->instanceCount = instanceCount;
+
+    cmd->mesh = {0};
+    if (mesh)
+    {
+        LoadedAsset *meshAsset = assetsGetMesh(mesh);
+        if (meshAsset->mesh)
+        {
+            cmd->mesh = meshAsset->mesh->handle;
+        }
+    }
 
     memcpy(rq->ctx->meshInstances + rq->meshInstanceCount, instances, sizeof(RenderMeshInstance) * instanceCount);
     rq->meshInstanceCount += instanceCount;

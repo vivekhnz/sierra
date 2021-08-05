@@ -3,8 +3,6 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
-ASSETS_GET_MESH(assetsGetMesh);
-
 struct OpenGlInternalShaders
 {
     bool initialized;
@@ -35,6 +33,7 @@ struct OpenGlMesh
 {
     uint32 vertexBufferId;
     uint32 elementBufferId;
+    uint32 elementCount;
 };
 struct OpenGlTextureDescriptor
 {
@@ -713,6 +712,7 @@ ShaderHandle getColoredQuadShader(RenderBackendContext rctx)
 MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
 {
     OpenGlMesh *result = pushStruct(arena, OpenGlMesh);
+    result->elementCount = indexCount;
 
     uint32 vertexBufferStride = 6 * sizeof(float);
     glGenBuffers(1, &result->vertexBufferId);
@@ -1141,11 +1141,9 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         case RENDER_CMD_DrawMeshesCommand:
         {
             DrawMeshesCommand *cmd = (DrawMeshesCommand *)commandData;
-            LoadedAsset *meshAsset = assetsGetMesh(cmd->mesh);
-            MeshAsset *mesh = meshAsset->mesh;
-            if (applyEffect(cmd->effect) && mesh)
+            if (applyEffect(cmd->effect) && cmd->mesh.ptr != 0)
             {
-                OpenGlMesh *glMesh = (OpenGlMesh *)mesh->handle.ptr;
+                OpenGlMesh *glMesh = (OpenGlMesh *)cmd->mesh.ptr;
                 uint32 vertexBufferStride = 6 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, glMesh->vertexBufferId);
                 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, glMesh->elementBufferId);
@@ -1177,8 +1175,8 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     6, 4, GL_FLOAT, false, instanceBufferStride, offsetOf(RenderMeshInstance, transform) + 48);
                 glVertexAttribDivisor(6, 1);
 
-                glDrawElementsInstancedBaseInstance(
-                    GL_TRIANGLES, mesh->elementCount, GL_UNSIGNED_INT, 0, cmd->instanceCount, cmd->instanceOffset);
+                glDrawElementsInstancedBaseInstance(GL_TRIANGLES, glMesh->elementCount, GL_UNSIGNED_INT, 0,
+                    cmd->instanceCount, cmd->instanceOffset);
 
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
