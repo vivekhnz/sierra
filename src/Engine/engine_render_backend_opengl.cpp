@@ -3,7 +3,6 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
-ASSETS_GET_SHADER(assetsGetShader);
 ASSETS_GET_MESH(assetsGetMesh);
 
 struct OpenGlInternalShaders
@@ -951,30 +950,12 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
 
 bool applyEffect(RenderEffect *effect)
 {
-    bool isMissingResources = false;
+    bool isMissingResources = true;
+    if (effect->shaderHandle.ptr != 0)
+    {
+        isMissingResources = false;
 
-    // load shader from asset system via an asset handle if one was specified
-    // otherwise, we assume that the shader program ID was explicitly set on the effect
-    uint32 shaderProgramId;
-    if (effect->shaderAssetHandle)
-    {
-        LoadedAsset *shader = assetsGetShader(effect->shaderAssetHandle);
-        if (shader->shader)
-        {
-            shaderProgramId = getShaderProgramId(shader->shader->handle);
-        }
-        else
-        {
-            isMissingResources = true;
-        }
-    }
-    else
-    {
-        shaderProgramId = getShaderProgramId(effect->shaderHandle);
-    }
-
-    if (!isMissingResources)
-    {
+        uint32 shaderProgramId = getShaderProgramId(effect->shaderHandle);
         glUseProgram(shaderProgramId);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 

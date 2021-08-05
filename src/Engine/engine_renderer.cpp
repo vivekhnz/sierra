@@ -3,6 +3,8 @@
 #define RENDERER_CAMERA_UBO_SLOT 0
 #define RENDERER_LIGHTING_UBO_SLOT 1
 
+ASSETS_GET_SHADER(assetsGetShader);
+
 struct RenderContext
 {
     RenderBackendContext internalCtx;
@@ -59,7 +61,6 @@ struct RenderEffectTexture
 struct RenderEffect
 {
     MemoryArena *arena;
-    AssetHandle shaderAssetHandle;
     ShaderHandle shaderHandle;
     RenderEffectBlendMode blendMode;
     RenderEffectParameter *firstParameter;
@@ -318,18 +319,33 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
 
 // effects
 
-RENDERER_CREATE_EFFECT(rendererCreateEffect)
+RenderEffect *createEffect(MemoryArena *arena, ShaderHandle shaderHandle, RenderEffectBlendMode blendMode)
 {
     RenderEffect *result = pushStruct(arena, RenderEffect);
     *result = {};
 
     result->arena = arena;
-    result->shaderAssetHandle = shaderAsset;
-    result->shaderHandle = {0};
+    result->shaderHandle = shaderHandle;
     result->blendMode = blendMode;
     result->firstParameter = 0;
     result->lastParameter = 0;
 
+    return result;
+}
+
+RENDERER_CREATE_EFFECT(rendererCreateEffect)
+{
+    ShaderHandle shaderHandle = {0};
+    if (shaderAsset)
+    {
+        LoadedAsset *shader = assetsGetShader(shaderAsset);
+        if (shader->shader)
+        {
+            shaderHandle = shader->shader->handle;
+        }
+    }
+
+    RenderEffect *result = createEffect(arena, shaderHandle, blendMode);
     return result;
 }
 
@@ -508,17 +524,15 @@ void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffec
 
 RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
 {
-    RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
-    effect->shaderHandle = getTexturedQuadShader(rq->ctx->internalCtx);
-
+    RenderEffect *effect =
+        createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectTexture(effect, 0, textureHandle);
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
 RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
 {
-    RenderEffect *effect = rendererCreateEffect(rq->arena, 0, EFFECT_BLEND_ALPHA_BLEND);
-    effect->shaderHandle = getColoredQuadShader(rq->ctx->internalCtx);
-
+    RenderEffect *effect =
+        createEffect(rq->arena, getColoredQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectVec3(effect, "color", color);
     pushQuads(rq, &quad, 1, effect, true);
 }
