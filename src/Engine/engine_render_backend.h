@@ -41,27 +41,21 @@ struct RenderTarget
     TextureHandle textureHandle;
     TextureHandle depthTextureHandle;
 };
+struct RenderQueue;
 
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
 
-uint32 getShaderProgramId(ShaderHandle handle);
 bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);
 void destroyShader(ShaderHandle handle);
 
 ShaderHandle getTexturedQuadShader(RenderBackendContext rctx);
 ShaderHandle getColoredQuadShader(RenderBackendContext rctx);
-ShaderHandle getTerrainCalcTessLevelShader(RenderBackendContext rctx);
 
 MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
 void destroyMesh(MeshHandle handle);
-uint32 getVertexBufferId(MeshHandle handle);
-uint32 getElementBufferId(MeshHandle handle);
-
-uint32 getTextureId(TextureHandle handle);
 
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
 void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
-void readTexturePixels(TextureHandle handle, void *out_pixels);
 void *getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height, uint32 *out_pixelCount);
 void *getPixelsInRegion(MemoryArena *arena,
     TextureHandle handle,
@@ -74,6 +68,7 @@ void *getPixelsInRegion(MemoryArena *arena,
 RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
 void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
-uint32 getFramebufferId(RenderTarget *target);
+
+bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
 
 #endif
