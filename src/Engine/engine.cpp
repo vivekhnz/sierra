@@ -45,14 +45,14 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererInitialize = rendererInitialize;
     Api.rendererCreateTexture = rendererCreateTexture;
     Api.rendererUpdateTexture = rendererUpdateTexture;
-    Api.rendererReadTexturePixels = rendererReadTexturePixels;
+    Api.rendererGetPixels = rendererGetPixels;
+    Api.rendererGetPixelsInRegion = rendererGetPixelsInRegion;
     Api.rendererCreateTextureArray = rendererCreateTextureArray;
     Api.rendererUpdateTextureArray = rendererUpdateTextureArray;
     Api.rendererCreateBuffer = rendererCreateBuffer;
     Api.rendererUpdateBuffer = rendererUpdateBuffer;
     Api.rendererCreateRenderTarget = rendererCreateRenderTarget;
     Api.rendererResizeRenderTarget = rendererResizeRenderTarget;
-    Api.rendererGetPixels = rendererGetPixels;
     Api.rendererCreateEffect = rendererCreateEffect;
     Api.rendererSetEffectFloat = rendererSetEffectFloat;
     Api.rendererSetEffectVec3 = rendererSetEffectVec3;

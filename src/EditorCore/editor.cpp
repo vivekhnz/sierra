@@ -134,8 +134,6 @@ void initializeEditor(EditorMemory *memory)
     state->activeBrushStrokeInstanceCount = 0;
 
     // initialize scene world
-    sceneState->heightmapTextureDataTempBuffer = (uint16 *)pushSize(arena, HEIGHTMAP_WIDTH * HEIGHTMAP_HEIGHT * 2);
-
 #if HEIGHTFIELD_USE_SPLIT_TILES
     sceneState->terrainTileCount = 4;
     float tileLengthInWorldUnits = 64.0f;
@@ -524,16 +522,22 @@ void commitChanges(EditorMemory *memory)
 
 void discardChanges(EditorMemory *memory)
 {
-    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    MemoryArena *arena = &memory->arena;
+    EditorState *state = (EditorState *)arena->baseAddress;
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
+        TemporaryMemory heightMemory = beginTemporaryMemory(arena);
+
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        memory->engineApi->rendererReadTexturePixels(
-            tile->committedHeightmap->textureHandle, state->sceneState.heightmapTextureDataTempBuffer);
-        updateHeightfieldHeights(tile->heightfield, state->sceneState.heightmapTextureDataTempBuffer);
+        uint32 pixelCount;
+        void *pixels = memory->engineApi->rendererGetPixels(arena, tile->committedHeightmap->textureHandle,
+            tile->committedHeightmap->width, tile->committedHeightmap->height, &pixelCount);
+        updateHeightfieldHeights(tile->heightfield, (uint16 *)pixels);
+
+        endTemporaryMemory(&heightMemory);
     }
 }
 
@@ -947,8 +951,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                         TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
 
                         uint32 pixelCount;
-                        void *pixels = engine->rendererGetPixels(
-                            &memory->arena, pickingTarget, cursorX, cursorY, 1, 1, &pixelCount);
+                        void *pixels = engine->rendererGetPixelsInRegion(
+                            &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1, &pixelCount);
                         assert(pixelCount == 1);
                         uint32 pickedId = ((uint32 *)pixels)[0];
 
@@ -1300,9 +1304,15 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
         if (state->isEditingHeightmap)
         {
-            engine->rendererReadTexturePixels(
-                tile->workingHeightmap->textureHandle, sceneState->heightmapTextureDataTempBuffer);
-            updateHeightfieldHeights(tile->heightfield, sceneState->heightmapTextureDataTempBuffer);
+            TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
+
+            uint32 pixelCount;
+            void *pixels =
+                memory->engineApi->rendererGetPixels(&memory->arena, tile->workingHeightmap->textureHandle,
+                    tile->workingHeightmap->width, tile->workingHeightmap->height, &pixelCount);
+            updateHeightfieldHeights(tile->heightfield, (uint16 *)pixels);
+
+            endTemporaryMemory(&heightMemory);
         }
     }
 }

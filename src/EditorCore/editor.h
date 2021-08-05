@@ -153,8 +153,6 @@ struct SceneState
     uint32 nextMaterialId;
     uint32 materialCount;
 
-    uint16 *heightmapTextureDataTempBuffer;
-
     struct WorldState
     {
         glm::vec2 brushPos;

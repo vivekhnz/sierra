@@ -243,9 +243,13 @@ RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 {
     updateTexture(handle, width, height, pixels);
 }
-RENDERER_READ_TEXTURE_PIXELS(rendererReadTexturePixels)
+RENDERER_GET_PIXELS(rendererGetPixels)
 {
-    return readTexturePixels(handle, out_pixels);
+    return getPixels(arena, handle, width, height, out_pixelCount);
+}
+RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
+{
+    return getPixelsInRegion(arena, handle, x, y, width, height, out_pixelCount);
 }
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
@@ -313,10 +317,6 @@ RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
     target->height = height;
 
     resizeRenderTarget(target, width, height);
-}
-RENDERER_GET_PIXELS(rendererGetPixels)
-{
-    return getPixels(arena, target, x, y, width, height, out_pixelCount);
 }
 
 // effects

@@ -25,14 +25,14 @@ struct EngineApi
     RendererInitialize *rendererInitialize;
     RendererCreateTexture *rendererCreateTexture;
     RendererUpdateTexture *rendererUpdateTexture;
-    RendererReadTexturePixels *rendererReadTexturePixels;
+    RendererGetPixels *rendererGetPixels;
+    RendererGetPixelsInRegion *rendererGetPixelsInRegion;
     RendererCreateTextureArray *rendererCreateTextureArray;
     RendererUpdateTextureArray *rendererUpdateTextureArray;
     RendererCreateBuffer *rendererCreateBuffer;
     RendererUpdateBuffer *rendererUpdateBuffer;
     RendererCreateRenderTarget *rendererCreateRenderTarget;
     RendererResizeRenderTarget *rendererResizeRenderTarget;
-    RendererGetPixels *rendererGetPixels;
     RendererCreateEffect *rendererCreateEffect;
     RendererSetEffectFloat *rendererSetEffectFloat;
     RendererSetEffectVec3 *rendererSetEffectVec3;

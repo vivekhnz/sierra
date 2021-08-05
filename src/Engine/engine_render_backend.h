@@ -62,17 +62,18 @@ uint32 getTextureId(TextureHandle handle);
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
 void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
 void readTexturePixels(TextureHandle handle, void *out_pixels);
-
-RenderTarget *createRenderTarget(
-    MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
-void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
-void *getPixels(MemoryArena *arena,
-    RenderTarget *target,
+void *getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height, uint32 *out_pixelCount);
+void *getPixelsInRegion(MemoryArena *arena,
+    TextureHandle handle,
     uint32 x,
     uint32 y,
     uint32 width,
     uint32 height,
     uint32 *out_pixelCount);
+
+RenderTarget *createRenderTarget(
+    MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
+void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 uint32 getFramebufferId(RenderTarget *target);
 
 #endif

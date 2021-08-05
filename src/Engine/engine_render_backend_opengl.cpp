@@ -848,15 +848,44 @@ void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixe
         descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
-void readTexturePixels(TextureHandle handle, void *out_pixels)
+void *getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height, uint32 *out_pixelCount)
 {
     uint32 id = getTextureId(handle);
     TextureFormat format = getTextureFormat(handle);
     OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
 
+    uint32 pixelCount = width * height;
+    uint32 bufferSize = pixelCount * descriptor.elementSize;
+    void *buffer = pushSize(arena, bufferSize);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
-    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, out_pixels);
+    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, buffer);
+
+    *out_pixelCount = pixelCount;
+    return buffer;
+}
+void *getPixelsInRegion(MemoryArena *arena,
+    TextureHandle handle,
+    uint32 x,
+    uint32 y,
+    uint32 width,
+    uint32 height,
+    uint32 *out_pixelCount)
+{
+    uint32 id = getTextureId(handle);
+    TextureFormat format = getTextureFormat(handle);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    uint32 pixelCount = width * height;
+    uint32 bufferSize = pixelCount * descriptor.elementSize;
+    void *buffer = pushSize(arena, bufferSize);
+
+    glGetTextureSubImage(
+        id, 0, x, y, 0, width, height, 1, descriptor.gpuFormat, descriptor.elementType, bufferSize, buffer);
+
+    *out_pixelCount = pixelCount;
+    return buffer;
 }
 
 RenderTarget *createRenderTarget(
@@ -931,28 +960,6 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
         glBindTexture(GL_TEXTURE_2D, getTextureId(target->depthTextureHandle));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
-}
-void *getPixels(MemoryArena *arena,
-    RenderTarget *target,
-    uint32 x,
-    uint32 y,
-    uint32 width,
-    uint32 height,
-    uint32 *out_pixelCount)
-{
-    OpenGlRenderTarget *internalTarget = (OpenGlRenderTarget *)target;
-    OpenGlTextureDescriptor *descriptor = &internalTarget->descriptor;
-
-    uint32 pixelCount = width * height;
-    uint32 bufferSize = pixelCount * descriptor->elementSize;
-    void *buffer = pushSize(arena, bufferSize);
-
-    uint32 textureId = getTextureId(target->textureHandle);
-    glGetTextureSubImage(textureId, 0, x, y, 0, width, height, 1, descriptor->gpuFormat, descriptor->elementType,
-        bufferSize, buffer);
-
-    *out_pixelCount = pixelCount;
-    return buffer;
 }
 uint32 getFramebufferId(RenderTarget *target)
 {

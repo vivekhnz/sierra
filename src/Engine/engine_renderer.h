@@ -47,8 +47,13 @@ typedef RENDERER_INITIALIZE(RendererInitialize);
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
 #define RENDERER_UPDATE_TEXTURE(name) void name(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
-#define RENDERER_READ_TEXTURE_PIXELS(name) void name(TextureHandle handle, void *out_pixels)
-typedef RENDERER_READ_TEXTURE_PIXELS(RendererReadTexturePixels);
+#define RENDERER_GET_PIXELS(name)                                                                                 \
+    void *name(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height, uint32 *out_pixelCount)
+typedef RENDERER_GET_PIXELS(RendererGetPixels);
+#define RENDERER_GET_PIXELS_IN_REGION(name)                                                                       \
+    void *name(MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height,         \
+        uint32 *out_pixelCount)
+typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \
     uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,              \
@@ -73,11 +78,6 @@ typedef RENDERER_CREATE_RENDER_TARGET(RendererCreateRenderTarget);
 
 #define RENDERER_RESIZE_RENDER_TARGET(name) void name(RenderTarget *target, uint32 width, uint32 height)
 typedef RENDERER_RESIZE_RENDER_TARGET(RendererResizeRenderTarget);
-
-#define RENDERER_GET_PIXELS(name)                                                                                 \
-    void *name(MemoryArena *arena, RenderTarget *target, uint32 x, uint32 y, uint32 width, uint32 height,         \
-        uint32 *out_pixelCount)
-typedef RENDERER_GET_PIXELS(RendererGetPixels);
 
 #define getBounds(renderTarget)                                                                                   \
     {                                                                                                             \
