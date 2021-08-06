@@ -10,7 +10,7 @@
 			},
 			"presentation": {
 				"echo": true,
-				"reveal": "never",
+				"reveal": "silent",
 				"focus": false,
 				"panel": "shared",
 				"showReuseMessage": false,
