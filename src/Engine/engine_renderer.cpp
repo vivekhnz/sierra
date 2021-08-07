@@ -1,4 +1,8 @@
 #include "engine_renderer.h"
+#include "engine_render_backend.h"
+
+// todo: remove this once all OpenGL-specific code has been moved into OpenGL render backend
+#include <glad/glad.h>
 
 ASSETS_GET_SHADER(assetsGetShader);
 ASSETS_GET_MESH(assetsGetMesh);
@@ -13,122 +17,6 @@ struct RenderContext
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
 };
-
-enum RenderEffectParameterType
-{
-    EFFECT_PARAM_TYPE_FLOAT,
-    EFFECT_PARAM_TYPE_VEC3,
-    EFFECT_PARAM_TYPE_INT,
-    EFFECT_PARAM_TYPE_UINT
-};
-struct RenderEffectParameter
-{
-    char *name;
-    RenderEffectParameterType type;
-    union
-    {
-        float f;
-        int32 i;
-        uint32 u;
-        glm::vec3 v3;
-    } value;
-    RenderEffectParameter *next;
-};
-struct RenderEffectTexture
-{
-    uint32 slot;
-    TextureHandle handle;
-    RenderEffectTexture *next;
-};
-struct RenderEffect
-{
-    MemoryArena *arena;
-    ShaderHandle shaderHandle;
-    RenderEffectBlendMode blendMode;
-    RenderEffectParameter *firstParameter;
-    RenderEffectParameter *lastParameter;
-    RenderEffectTexture *firstTexture;
-    RenderEffectTexture *lastTexture;
-};
-
-enum RenderQueueCommandType
-{
-    RENDER_CMD_SetCameraCommand,
-    RENDER_CMD_SetLightingCommand,
-    RENDER_CMD_ClearCommand,
-    RENDER_CMD_DrawQuadsCommand,
-    RENDER_CMD_DrawMeshesCommand,
-    RENDER_CMD_DrawTerrainCommand
-};
-struct RenderQueueCommandHeader
-{
-    RenderQueueCommandType type;
-    RenderQueueCommandHeader *next;
-};
-
-struct SetLightingCommand
-{
-    glm::vec4 lightDir;
-
-    uint32 isEnabled;
-    uint32 isTextureEnabled;
-    uint32 isNormalMapEnabled;
-    uint32 isAOMapEnabled;
-    uint32 isDisplacementMapEnabled;
-};
-struct ClearCommand
-{
-    glm::vec4 color;
-};
-struct DrawQuadsCommand
-{
-    RenderEffect *effect;
-    bool isTopDown;
-    uint32 instanceOffset;
-    uint32 instanceCount;
-};
-struct DrawMeshesCommand
-{
-    RenderEffect *effect;
-    MeshHandle mesh;
-    uint32 instanceOffset;
-    uint32 instanceCount;
-};
-struct DrawTerrainCommand
-{
-    Heightfield *heightfield;
-    glm::vec2 heightmapSize;
-
-    ShaderHandle terrainShader;
-
-    TextureHandle heightmapTexture;
-    TextureHandle referenceHeightmapTexture;
-    TextureHandle xAdjacentHeightmapTexture;
-    TextureHandle xAdjacentReferenceHeightmapTexture;
-    TextureHandle yAdjacentHeightmapTexture;
-    TextureHandle yAdjacentReferenceHeightmapTexture;
-    TextureHandle oppositeHeightmapTexture;
-    TextureHandle oppositeReferenceHeightmapTexture;
-
-    uint32 meshVertexBufferId;
-    uint32 meshElementBufferId;
-    uint32 tessellationLevelBufferId;
-    uint32 meshElementCount;
-
-    uint32 materialCount;
-    uint32 albedoTextureArrayId;
-    uint32 normalTextureArrayId;
-    uint32 displacementTextureArrayId;
-    uint32 aoTextureArrayId;
-    uint32 materialPropsBufferId;
-
-    bool isWireframe;
-
-    uint32 visualizationMode;
-    glm::vec2 cursorPos;
-    float cursorRadius;
-    float cursorFalloff;
-};
 struct RenderQueue
 {
     MemoryArena *arena;
@@ -139,18 +27,6 @@ struct RenderQueue
 
     uint32 quadCount;
     uint32 meshInstanceCount;
-};
-struct DispatchedRenderQueue
-{
-    RenderBackendContext ctx;
-
-    RenderQuad *quads;
-    uint32 quadCount;
-
-    RenderMeshInstance *meshInstances;
-    uint32 meshInstanceCount;
-
-    RenderQueueCommandHeader *firstCommand;
 };
 
 RENDERER_INITIALIZE(rendererInitialize)
@@ -426,8 +302,6 @@ RENDERER_SET_LIGHTING(rendererSetLighting)
     cmd->isNormalMapEnabled = isNormalMapEnabled;
     cmd->isAOMapEnabled = isAOMapEnabled;
     cmd->isDisplacementMapEnabled = isDisplacementMapEnabled;
-
-    return cmd;
 }
 
 RENDERER_CLEAR(rendererClear)

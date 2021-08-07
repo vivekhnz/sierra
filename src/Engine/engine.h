@@ -3,7 +3,7 @@
 
 #include "engine_platform.h"
 #include "engine_heightfield.h"
-#include "engine_render_backend.h"
+#include "engine_renderer_common.h"
 #include "engine_renderer.h"
 #include "engine_assets.h"
 

@@ -1,7 +1,7 @@
 #ifndef ENGINE_RENDERER_H
 #define ENGINE_RENDERER_H
 
-#include <glm/gtc/type_ptr.hpp>
+// todo: remove this once renderer APIs are decoupled from OpenGL
 #include <glad/glad.h>
 
 enum RendererBufferType
@@ -15,25 +15,6 @@ struct RenderBuffer
     uint32 id;
     uint32 type;
     uint32 usage;
-};
-enum RenderEffectBlendMode
-{
-    EFFECT_BLEND_ALPHA_BLEND,
-    EFFECT_BLEND_ADDITIVE,
-    EFFECT_BLEND_MAX
-};
-
-struct RenderQuad
-{
-    float x;
-    float y;
-    float width;
-    float height;
-};
-struct RenderMeshInstance
-{
-    uint32 id;
-    glm::mat4 transform;
 };
 
 struct RenderContext;
@@ -110,15 +91,6 @@ typedef RENDERER_SET_EFFECT_TEXTURE(RendererSetEffectTexture);
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
 typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
 
-struct SetCameraCommand
-{
-    bool isOrthographic;
-
-    glm::vec3 cameraPos;
-    glm::vec3 lookAt;
-    float fov;
-};
-
 #define RENDERER_SET_CAMERA_ORTHO(name) SetCameraCommand *name(RenderQueue *rq)
 typedef RENDERER_SET_CAMERA_ORTHO(RendererSetCameraOrtho);
 #define RENDERER_SET_CAMERA_PERSP(name)                                                                           \
@@ -126,7 +98,7 @@ typedef RENDERER_SET_CAMERA_ORTHO(RendererSetCameraOrtho);
 typedef RENDERER_SET_CAMERA_PERSP(RendererSetCameraPersp);
 
 #define RENDERER_SET_LIGHTING(name)                                                                               \
-    void *name(RenderQueue *rq, glm::vec4 *lightDir, bool isLightingEnabled, bool isTextureEnabled,               \
+    void name(RenderQueue *rq, glm::vec4 *lightDir, bool isLightingEnabled, bool isTextureEnabled,                \
         bool isNormalMapEnabled, bool isAOMapEnabled, bool isDisplacementMapEnabled)
 typedef RENDERER_SET_LIGHTING(RendererSetLighting);
 

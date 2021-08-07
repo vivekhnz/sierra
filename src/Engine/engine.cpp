@@ -5,7 +5,6 @@
 #include "engine_render_backend_opengl.cpp"
 #include "engine_assets.cpp"
 
-#include "../../deps/glad/glad.c"
 #include "../../deps/stb/stb_image.c"
 #include "../../deps/fast_obj/fast_obj.c"
 

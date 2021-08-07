@@ -1,5 +1,7 @@
 #include "engine_render_backend.h"
 
+#include "../../deps/glad/glad.c"
+
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
