@@ -160,14 +160,9 @@ void destroyMesh(MeshHandle handle);
 
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
 void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
-void *getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height, uint32 *out_pixelCount);
-void *getPixelsInRegion(MemoryArena *arena,
-    TextureHandle handle,
-    uint32 x,
-    uint32 y,
-    uint32 width,
-    uint32 height,
-    uint32 *out_pixelCount);
+GetPixelsResult getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height);
+GetPixelsResult getPixelsInRegion(
+    MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height);
 
 RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);

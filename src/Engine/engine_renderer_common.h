@@ -59,4 +59,10 @@ enum RenderEffectBlendMode
     EFFECT_BLEND_MAX
 };
 
+struct GetPixelsResult
+{
+    void *pixels;
+    uint32 count;
+};
+
 #endif

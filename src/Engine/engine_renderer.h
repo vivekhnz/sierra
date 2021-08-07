@@ -24,17 +24,20 @@ struct RenderQueue;
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);
 
+// textures
+
 #define RENDERER_CREATE_TEXTURE(name) TextureHandle name(uint32 width, uint32 height, TextureFormat format)
 typedef RENDERER_CREATE_TEXTURE(RendererCreateTexture);
 #define RENDERER_UPDATE_TEXTURE(name) void name(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE(RendererUpdateTexture);
 #define RENDERER_GET_PIXELS(name)                                                                                 \
-    void *name(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height, uint32 *out_pixelCount)
+    GetPixelsResult name(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height)
 typedef RENDERER_GET_PIXELS(RendererGetPixels);
 #define RENDERER_GET_PIXELS_IN_REGION(name)                                                                       \
-    void *name(MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height,         \
-        uint32 *out_pixelCount)
+    GetPixelsResult name(MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height)
 typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
+
+// texture arrays
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \
     uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,              \
@@ -44,6 +47,8 @@ typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
     void name(                                                                                                    \
         uint32 id, uint32 elementType, uint32 gpuFormat, uint32 width, uint32 height, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
+
+// buffers
 
 #define RENDERER_CREATE_BUFFER(name) RenderBuffer name(RendererBufferType type, uint32 usage)
 typedef RENDERER_CREATE_BUFFER(RendererCreateBuffer);

@@ -531,10 +531,10 @@ void discardChanges(EditorMemory *memory)
         TemporaryMemory heightMemory = beginTemporaryMemory(arena);
 
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        uint32 pixelCount;
-        void *pixels = memory->engineApi->rendererGetPixels(arena, tile->committedHeightmap->textureHandle,
-            tile->committedHeightmap->width, tile->committedHeightmap->height, &pixelCount);
-        updateHeightfieldHeights(tile->heightfield, (uint16 *)pixels);
+        GetPixelsResult heightPixels =
+            memory->engineApi->rendererGetPixels(arena, tile->committedHeightmap->textureHandle,
+                tile->committedHeightmap->width, tile->committedHeightmap->height);
+        updateHeightfieldHeights(tile->heightfield, (uint16 *)heightPixels.pixels);
 
         endTemporaryMemory(&heightMemory);
     }
@@ -949,11 +949,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                         TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
 
-                        uint32 pixelCount;
-                        void *pixels = engine->rendererGetPixelsInRegion(
-                            &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1, &pixelCount);
-                        assert(pixelCount == 1);
-                        uint32 pickedId = ((uint32 *)pixels)[0];
+                        GetPixelsResult pickedPixels = engine->rendererGetPixelsInRegion(
+                            &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1);
+                        assert(pickedPixels.count == 1);
+                        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
 
                         endTemporaryMemory(&pickingMemory);
 
@@ -1306,10 +1305,10 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
 
             uint32 pixelCount;
-            void *pixels =
+            GetPixelsResult heightPixels =
                 memory->engineApi->rendererGetPixels(&memory->arena, tile->workingHeightmap->textureHandle,
-                    tile->workingHeightmap->width, tile->workingHeightmap->height, &pixelCount);
-            updateHeightfieldHeights(tile->heightfield, (uint16 *)pixels);
+                    tile->workingHeightmap->width, tile->workingHeightmap->height);
+            updateHeightfieldHeights(tile->heightfield, (uint16 *)heightPixels.pixels);
 
             endTemporaryMemory(&heightMemory);
         }

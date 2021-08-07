@@ -43,6 +43,8 @@ RENDERER_INITIALIZE(rendererInitialize)
     return ctx;
 }
 
+// textures
+
 RENDERER_CREATE_TEXTURE(rendererCreateTexture)
 {
     return createTexture(width, height, format);
@@ -53,12 +55,14 @@ RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
 }
 RENDERER_GET_PIXELS(rendererGetPixels)
 {
-    return getPixels(arena, handle, width, height, out_pixelCount);
+    return getPixels(arena, handle, width, height);
 }
 RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
 {
-    return getPixelsInRegion(arena, handle, x, y, width, height, out_pixelCount);
+    return getPixelsInRegion(arena, handle, x, y, width, height);
 }
+
+// texture arrays
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
 {
@@ -82,6 +86,8 @@ RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
     glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
+
+// buffers
 
 RENDERER_CREATE_BUFFER(rendererCreateBuffer)
 {
