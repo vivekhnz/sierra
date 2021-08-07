@@ -1,8 +1,5 @@
 #include "engine_renderer.h"
 
-#define RENDERER_CAMERA_UBO_SLOT 0
-#define RENDERER_LIGHTING_UBO_SLOT 1
-
 ASSETS_GET_SHADER(assetsGetShader);
 ASSETS_GET_MESH(assetsGetMesh);
 
@@ -10,27 +7,11 @@ struct RenderContext
 {
     RenderBackendContext internalCtx;
 
-    uint32 globalVertexArrayId;
-
-    uint32 quadElementBufferId;
-    uint32 quadTopDownVertexBufferId;
-    uint32 quadBottomUpVertexBufferId;
-
-    uint32 quadInstanceBufferId;
     RenderQuad *quads;
     uint32 maxQuads;
 
-    uint32 meshInstanceBufferId;
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
-
-    uint32 cameraUniformBufferId;
-    uint32 lightingUniformBufferId;
-};
-
-struct GpuCameraState
-{
-    glm::mat4 transform;
 };
 
 enum RenderEffectParameterType
@@ -85,17 +66,6 @@ struct RenderQueueCommandHeader
     RenderQueueCommandHeader *next;
 };
 
-struct GpuLightingState
-{
-    glm::vec4 lightDir;
-
-    // todo: pack these into a single uint8
-    uint32 isEnabled;
-    uint32 isTextureEnabled;
-    uint32 isNormalMapEnabled;
-    uint32 isAOMapEnabled;
-    uint32 isDisplacementMapEnabled;
-};
 struct SetLightingCommand
 {
     glm::vec4 lightDir;
@@ -176,60 +146,11 @@ RENDERER_INITIALIZE(rendererInitialize)
     RenderContext *ctx = pushStruct(arena, RenderContext);
     ctx->internalCtx = initializeRenderBackend(arena);
 
-    // setup global state
-    glGenVertexArrays(1, &ctx->globalVertexArrayId);
-
-    glEnable(GL_BLEND);
-    glEnable(GL_CULL_FACE);
-    glPatchParameteri(GL_PATCH_VERTICES, 4);
-
-    // initialize camera state
-    glGenBuffers(1, &ctx->cameraUniformBufferId);
-    glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuCameraState), 0, GL_DYNAMIC_DRAW);
-    glBindBufferRange(
-        GL_UNIFORM_BUFFER, RENDERER_CAMERA_UBO_SLOT, ctx->cameraUniformBufferId, 0, sizeof(GpuCameraState));
-
-    // initialize lighting state
-    glGenBuffers(1, &ctx->lightingUniformBufferId);
-    glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
-    glBufferData(GL_UNIFORM_BUFFER, sizeof(GpuLightingState), 0, GL_DYNAMIC_DRAW);
-    glBindBufferRange(
-        GL_UNIFORM_BUFFER, RENDERER_LIGHTING_UBO_SLOT, ctx->lightingUniformBufferId, 0, sizeof(GpuLightingState));
-
-    // create quad buffers
-    float quadTopDownVerts[16] = {
-        0, 0, 0, 0, //
-        1, 0, 1, 0, //
-        1, 1, 1, 1, //
-        0, 1, 0, 1  //
-    };
-    glGenBuffers(1, &ctx->quadTopDownVertexBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, ctx->quadTopDownVertexBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadTopDownVerts), quadTopDownVerts, GL_STATIC_DRAW);
-
-    float quadBottomUpVerts[16] = {
-        0, 0, 0, 1, //
-        1, 0, 1, 1, //
-        1, 1, 1, 0, //
-        0, 1, 0, 0  //
-    };
-    glGenBuffers(1, &ctx->quadBottomUpVertexBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, ctx->quadBottomUpVertexBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(quadBottomUpVerts), quadBottomUpVerts, GL_STATIC_DRAW);
-
-    uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
-    glGenBuffers(1, &ctx->quadElementBufferId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->quadElementBufferId);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
-
-    glGenBuffers(1, &ctx->quadInstanceBufferId);
     ctx->maxQuads = 65536;
-    ctx->quads = (RenderQuad *)pushSize(arena, sizeof(RenderQuad) * ctx->maxQuads);
+    ctx->quads = pushArray(arena, RenderQuad, ctx->maxQuads);
 
-    glGenBuffers(1, &ctx->meshInstanceBufferId);
     ctx->maxMeshInstances = 4096;
-    ctx->meshInstances = (RenderMeshInstance *)pushSize(arena, sizeof(RenderMeshInstance) * ctx->maxMeshInstances);
+    ctx->meshInstances = pushArray(arena, RenderMeshInstance, ctx->maxMeshInstances);
 
     return ctx;
 }

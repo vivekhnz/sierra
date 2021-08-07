@@ -3,6 +3,9 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
+#define OPENGL_UBO_SLOT_CAMERA 0
+#define OPENGL_UBO_SLOT_LIGHTING 1
+
 struct OpenGlInternalShaders
 {
     bool initialized;
@@ -27,6 +30,33 @@ struct OpenGlRenderContext
 {
     // access this via getInternalShaders which handles the engine DLL being reloaded
     OpenGlInternalShaders _shaders;
+
+    uint32 globalVertexArrayId;
+
+    uint32 cameraUniformBufferId;
+    uint32 lightingUniformBufferId;
+
+    uint32 quadElementBufferId;
+    uint32 quadTopDownVertexBufferId;
+    uint32 quadBottomUpVertexBufferId;
+
+    uint32 quadInstanceBufferId;
+    uint32 meshInstanceBufferId;
+};
+struct OpenGlCameraState
+{
+    glm::mat4 transform;
+};
+struct OpenGlLightingState
+{
+    glm::vec4 lightDir;
+
+    // todo: pack these into a single uint8
+    uint32 isEnabled;
+    uint32 isTextureEnabled;
+    uint32 isNormalMapEnabled;
+    uint32 isAOMapEnabled;
+    uint32 isDisplacementMapEnabled;
 };
 
 struct OpenGlMesh
@@ -56,6 +86,51 @@ RenderBackendContext initializeRenderBackend(MemoryArena *arena)
 {
     OpenGlRenderContext *ctx = pushStruct(arena, OpenGlRenderContext);
     *ctx = {};
+
+    glGenVertexArrays(1, &ctx->globalVertexArrayId);
+
+    // initialize camera state
+    glGenBuffers(1, &ctx->cameraUniformBufferId);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(OpenGlCameraState), 0, GL_DYNAMIC_DRAW);
+    glBindBufferRange(
+        GL_UNIFORM_BUFFER, OPENGL_UBO_SLOT_CAMERA, ctx->cameraUniformBufferId, 0, sizeof(OpenGlCameraState));
+
+    // initialize lighting state
+    glGenBuffers(1, &ctx->lightingUniformBufferId);
+    glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
+    glBufferData(GL_UNIFORM_BUFFER, sizeof(OpenGlLightingState), 0, GL_DYNAMIC_DRAW);
+    glBindBufferRange(
+        GL_UNIFORM_BUFFER, OPENGL_UBO_SLOT_LIGHTING, ctx->lightingUniformBufferId, 0, sizeof(OpenGlLightingState));
+
+    // create quad buffers
+    float quadTopDownVerts[16] = {
+        0, 0, 0, 0, //
+        1, 0, 1, 0, //
+        1, 1, 1, 1, //
+        0, 1, 0, 1  //
+    };
+    glGenBuffers(1, &ctx->quadTopDownVertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->quadTopDownVertexBufferId);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadTopDownVerts), quadTopDownVerts, GL_STATIC_DRAW);
+
+    float quadBottomUpVerts[16] = {
+        0, 0, 0, 1, //
+        1, 0, 1, 1, //
+        1, 1, 1, 0, //
+        0, 1, 0, 0  //
+    };
+    glGenBuffers(1, &ctx->quadBottomUpVertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->quadBottomUpVertexBufferId);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(quadBottomUpVerts), quadBottomUpVerts, GL_STATIC_DRAW);
+
+    uint32 quadIndices[6] = {0, 1, 2, 0, 2, 3};
+    glGenBuffers(1, &ctx->quadElementBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->quadElementBufferId);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
+
+    glGenBuffers(1, &ctx->quadInstanceBufferId);
+    glGenBuffers(1, &ctx->meshInstanceBufferId);
 
     return {ctx};
 }
@@ -1031,14 +1106,16 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     }
     glViewport(0, 0, width, height);
 
-    glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->quadInstanceBufferId);
     glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->meshInstanceBufferId);
     glBufferData(GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->ctx->meshInstances,
         GL_STREAM_DRAW);
 
-    glBindVertexArray(rq->ctx->globalVertexArrayId);
+    glBindVertexArray(ctx->globalVertexArrayId);
+    glEnable(GL_BLEND);
+    glEnable(GL_CULL_FACE);
 
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
@@ -1052,7 +1129,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         {
             SetCameraCommand *cmd = (SetCameraCommand *)commandData;
 
-            GpuCameraState camera = {};
+            OpenGlCameraState camera = {};
             if (cmd->isOrthographic)
             {
                 // map from ([0 - width], [0 - height]) -> ([-1 - 1], [-1 - 1])
@@ -1077,7 +1154,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glDepthFunc(GL_LESS);
             }
 
-            glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->cameraUniformBufferId);
+            glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
         }
         break;
@@ -1085,7 +1162,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
         {
             SetLightingCommand *cmd = (SetLightingCommand *)commandData;
 
-            GpuLightingState lighting;
+            OpenGlLightingState lighting;
             lighting.lightDir = cmd->lightDir;
             lighting.isEnabled = cmd->isEnabled;
             lighting.isTextureEnabled = cmd->isTextureEnabled;
@@ -1093,7 +1170,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             lighting.isAOMapEnabled = cmd->isAOMapEnabled;
             lighting.isDisplacementMapEnabled = cmd->isDisplacementMapEnabled;
 
-            glBindBuffer(GL_UNIFORM_BUFFER, rq->ctx->lightingUniformBufferId);
+            glBindBuffer(GL_UNIFORM_BUFFER, ctx->lightingUniformBufferId);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(lighting), &lighting);
         }
         break;
@@ -1110,17 +1187,17 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
             if (applyEffect(cmd->effect))
             {
                 uint32 vertexBufferId =
-                    cmd->isTopDown ? rq->ctx->quadTopDownVertexBufferId : rq->ctx->quadBottomUpVertexBufferId;
+                    cmd->isTopDown ? ctx->quadTopDownVertexBufferId : ctx->quadBottomUpVertexBufferId;
                 uint32 vertexBufferStride = 4 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, vertexBufferId);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, rq->ctx->quadElementBufferId);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->quadElementBufferId);
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 2, GL_FLOAT, false, vertexBufferStride, (void *)0);
                 glVertexAttribPointer(1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(2 * sizeof(float)));
 
                 uint32 instanceBufferStride = 4 * sizeof(float);
-                glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->quadInstanceBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, ctx->quadInstanceBufferId);
                 glEnableVertexAttribArray(2);
                 glVertexAttribPointer(2, 4, GL_FLOAT, false, instanceBufferStride, (void *)0);
                 glVertexAttribDivisor(2, 1);
@@ -1153,7 +1230,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                 glVertexAttribPointer(1, 3, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
 
                 uint32 instanceBufferStride = sizeof(RenderMeshInstance);
-                glBindBuffer(GL_ARRAY_BUFFER, rq->ctx->meshInstanceBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, ctx->meshInstanceBufferId);
                 glEnableVertexAttribArray(2);
                 glEnableVertexAttribArray(3);
                 glEnableVertexAttribArray(4);
@@ -1206,6 +1283,7 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
                     heightfield->maxHeight, heightfield->spacing * (heightfield->rows - 1));
 
                 // calculate tessellation levels
+                glPatchParameteri(GL_PATCH_VERTICES, 4);
                 glUseProgram(calcTessLevelShaderProgramId);
                 glProgramUniform1f(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "targetTriangleSize"), 0.015f);
