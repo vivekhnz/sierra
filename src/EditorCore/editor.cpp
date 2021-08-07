@@ -1011,11 +1011,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
                     glm::vec4 worldPos = inverseViewProjection * screenPos;
                     glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
 
-                    // glm::vec3 intersectionPoint;
                     TerrainTile *hoveredTile = 0;
                     float minHitDist = FLT_MAX;
                     glm::vec3 cursorWorldPos;
-
                     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
                     {
                         TerrainTile *tile = &sceneState->terrainTiles[i];

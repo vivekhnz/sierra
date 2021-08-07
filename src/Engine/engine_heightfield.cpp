@@ -192,8 +192,11 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
     // divide heightfield into 64 slices (8x8) and raycast against each slice's bounding box
     // this lets us skip expensive triangle raycasting if we don't hit the bounding box
     constexpr uint32 sliceCount = 8;
-    uint32 colSlice = heightfield->columns / sliceCount;
-    uint32 rowSlice = heightfield->rows / sliceCount;
+    assert(heightfield->columns < sliceCount || heightfield->columns % sliceCount == 0);
+    assert(heightfield->rows < sliceCount || heightfield->rows % sliceCount == 0);
+
+    uint32 colSlice = heightfield->columns < sliceCount ? heightfield->columns : heightfield->columns / sliceCount;
+    uint32 rowSlice = heightfield->rows < sliceCount ? heightfield->rows : heightfield->rows / sliceCount;
 
     uint32 yStart = 0;
     uint32 yEnd = rowSlice - 1;
