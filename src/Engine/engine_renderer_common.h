@@ -59,14 +59,4 @@ enum RenderEffectBlendMode
     EFFECT_BLEND_MAX
 };
 
-// todo: move to engine_render_backend.h
-struct SetCameraCommand
-{
-    bool isOrthographic;
-
-    glm::vec3 cameraPos;
-    glm::vec3 lookAt;
-    float fov;
-};
-
 #endif

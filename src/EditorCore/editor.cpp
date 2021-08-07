@@ -401,8 +401,7 @@ void compositeHeightmap(EditorMemory *memory,
     engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    SetCameraCommand *camera = engine->rendererSetCameraOrtho(rq);
-    camera->cameraPos = glm::vec3(heightmapOffset.x, heightmapOffset.y, 0);
+    engine->rendererSetCameraOrthoOffset(rq, heightmapOffset);
     engine->rendererClear(rq, 0, 0, 0, 1);
     engine->rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
     engine->rendererDrawToTarget(rq, brushInfluenceMask);

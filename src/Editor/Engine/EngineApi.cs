@@ -102,6 +102,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererSetEffectTexture;
         public IntPtr rendererCreateQueue;
         public IntPtr rendererSetCameraOrtho;
+        public IntPtr rendererSetCameraOrthoOffset;
         public IntPtr rendererSetCameraPersp;
         public IntPtr rendererSetLighting;
         public IntPtr rendererClear;

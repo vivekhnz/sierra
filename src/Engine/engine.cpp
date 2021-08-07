@@ -60,6 +60,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererSetEffectTexture = rendererSetEffectTexture;
     Api.rendererCreateQueue = rendererCreateQueue;
     Api.rendererSetCameraOrtho = rendererSetCameraOrtho;
+    Api.rendererSetCameraOrthoOffset = rendererSetCameraOrthoOffset;
     Api.rendererSetCameraPersp = rendererSetCameraPersp;
     Api.rendererSetLighting = rendererSetLighting;
     Api.rendererClear = rendererClear;

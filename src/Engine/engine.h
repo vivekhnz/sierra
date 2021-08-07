@@ -41,6 +41,7 @@ struct EngineApi
     RendererSetEffectTexture *rendererSetEffectTexture;
     RendererCreateQueue *rendererCreateQueue;
     RendererSetCameraOrtho *rendererSetCameraOrtho;
+    RendererSetCameraOrthoOffset *rendererSetCameraOrthoOffset;
     RendererSetCameraPersp *rendererSetCameraPersp;
     RendererSetLighting *rendererSetLighting;
     RendererClear *rendererClear;

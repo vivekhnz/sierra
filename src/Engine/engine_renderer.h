@@ -91,10 +91,12 @@ typedef RENDERER_SET_EFFECT_TEXTURE(RendererSetEffectTexture);
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
 typedef RENDERER_CREATE_QUEUE(RendererCreateQueue);
 
-#define RENDERER_SET_CAMERA_ORTHO(name) SetCameraCommand *name(RenderQueue *rq)
+#define RENDERER_SET_CAMERA_ORTHO(name) void name(RenderQueue *rq)
 typedef RENDERER_SET_CAMERA_ORTHO(RendererSetCameraOrtho);
+#define RENDERER_SET_CAMERA_ORTHO_OFFSET(name) void name(RenderQueue *rq, glm::vec2 cameraPos)
+typedef RENDERER_SET_CAMERA_ORTHO_OFFSET(RendererSetCameraOrthoOffset);
 #define RENDERER_SET_CAMERA_PERSP(name)                                                                           \
-    SetCameraCommand *name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
+    void name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
 typedef RENDERER_SET_CAMERA_PERSP(RendererSetCameraPersp);
 
 #define RENDERER_SET_LIGHTING(name)                                                                               \

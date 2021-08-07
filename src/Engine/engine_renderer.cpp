@@ -279,8 +279,12 @@ RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     cmd->isOrthographic = true;
     cmd->cameraPos = glm::vec3(0, 0, 0);
-
-    return cmd;
+}
+RENDERER_SET_CAMERA_ORTHO_OFFSET(rendererSetCameraOrthoOffset)
+{
+    SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
+    cmd->isOrthographic = true;
+    cmd->cameraPos = glm::vec3(cameraPos.x, cameraPos.y, 0);
 }
 RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
 {
@@ -289,8 +293,6 @@ RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
     cmd->cameraPos = cameraPos;
     cmd->lookAt = lookAt;
     cmd->fov = fov;
-
-    return cmd;
 }
 
 RENDERER_SET_LIGHTING(rendererSetLighting)

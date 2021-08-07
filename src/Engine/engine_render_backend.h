@@ -62,6 +62,14 @@ struct RenderQueueCommandHeader
     RenderQueueCommandHeader *next;
 };
 
+struct SetCameraCommand
+{
+    bool isOrthographic;
+
+    glm::vec3 cameraPos;
+    glm::vec3 lookAt;
+    float fov;
+};
 struct SetLightingCommand
 {
     glm::vec4 lightDir;
