@@ -38,6 +38,7 @@ struct RenderMeshInstance
 
 struct RenderContext;
 struct RenderEffect;
+struct RenderQueue;
 
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 typedef RENDERER_INITIALIZE(RendererInitialize);

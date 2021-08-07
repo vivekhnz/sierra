@@ -140,6 +140,18 @@ struct RenderQueue
     uint32 quadCount;
     uint32 meshInstanceCount;
 };
+struct DispatchedRenderQueue
+{
+    RenderBackendContext ctx;
+
+    RenderQuad *quads;
+    uint32 quadCount;
+
+    RenderMeshInstance *meshInstances;
+    uint32 meshInstanceCount;
+
+    RenderQueueCommandHeader *firstCommand;
+};
 
 RENDERER_INITIALIZE(rendererInitialize)
 {
@@ -537,11 +549,26 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->cursorFalloff = cursorFalloff;
 }
 
+DispatchedRenderQueue dispatch(RenderQueue *rq)
+{
+    DispatchedRenderQueue result;
+    result.ctx = rq->ctx->internalCtx;
+    result.quads = rq->ctx->quads;
+    result.quadCount = rq->quadCount;
+    result.meshInstances = rq->ctx->meshInstances;
+    result.meshInstanceCount = rq->meshInstanceCount;
+    result.firstCommand = rq->firstCommand;
+
+    return result;
+}
+
 RENDERER_DRAW_TO_TARGET(rendererDrawToTarget)
 {
-    return drawToTarget(rq, target->width, target->height, target);
+    DispatchedRenderQueue dispatched = dispatch(rq);
+    return drawToTarget(&dispatched, target->width, target->height, target);
 }
 RENDERER_DRAW_TO_SCREEN(rendererDrawToScreen)
 {
-    return drawToTarget(rq, width, height, 0);
+    DispatchedRenderQueue dispatched = dispatch(rq);
+    return drawToTarget(&dispatched, width, height, 0);
 }

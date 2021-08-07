@@ -1094,9 +1094,9 @@ bool applyEffect(RenderEffect *effect)
 
     return !isMissingResources;
 }
-bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
+bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
 {
-    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rq->ctx->internalCtx.ptr;
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rq->ctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
 
     if (target)
@@ -1107,11 +1107,11 @@ bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *ta
     glViewport(0, 0, width, height);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctx->quadInstanceBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->ctx->quads, GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->quads, GL_STREAM_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctx->meshInstanceBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->ctx->meshInstances,
-        GL_STREAM_DRAW);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->meshInstances, GL_STREAM_DRAW);
 
     glBindVertexArray(ctx->globalVertexArrayId);
     glEnable(GL_BLEND);

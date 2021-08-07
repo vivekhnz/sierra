@@ -41,7 +41,7 @@ struct RenderTarget
     TextureHandle textureHandle;
     TextureHandle depthTextureHandle;
 };
-struct RenderQueue;
+struct DispatchedRenderQueue;
 
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
 
@@ -69,6 +69,6 @@ RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
 void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 
-bool drawToTarget(RenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
+bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
 
 #endif
