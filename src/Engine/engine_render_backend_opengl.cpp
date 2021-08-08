@@ -802,12 +802,15 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
             if (cmd->terrainShader.ptr != 0)
             {
                 Heightfield *heightfield = cmd->heightfield;
+                assert(heightfield->columns == heightfield->rows);
+                uint32 vertsPerEdge = heightfield->columns;
+                uint32 meshEdgeCount = ((vertsPerEdge * vertsPerEdge) - vertsPerEdge) * 2;
+                float tileLengthInWorldUnits = heightfield->spacing * (vertsPerEdge - 1);
+                glm::vec3 terrainDimensions =
+                    glm::vec3(tileLengthInWorldUnits, heightfield->maxHeight, tileLengthInWorldUnits);
+
                 uint32 calcTessLevelShaderProgramId = shaders->terrainCalcTessLevelShaderProgramId;
                 uint32 terrainShaderProgramId = getShaderProgramId(cmd->terrainShader);
-                uint32 meshEdgeCount =
-                    (2 * (heightfield->rows * heightfield->columns)) - heightfield->rows - heightfield->columns;
-                glm::vec3 terrainDimensions = glm::vec3(heightfield->spacing * (heightfield->columns - 1),
-                    heightfield->maxHeight, heightfield->spacing * (heightfield->rows - 1));
 
                 // calculate tessellation levels
                 glPatchParameteri(GL_PATCH_VERTICES, 4);
@@ -816,9 +819,9 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     glGetUniformLocation(calcTessLevelShaderProgramId, "targetTriangleSize"), 0.015f);
                 glProgramUniform1i(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "horizontalEdgeCount"),
-                    heightfield->rows * (heightfield->columns - 1));
+                    vertsPerEdge * (vertsPerEdge - 1));
                 glProgramUniform1i(calcTessLevelShaderProgramId,
-                    glGetUniformLocation(calcTessLevelShaderProgramId, "columnCount"), heightfield->columns);
+                    glGetUniformLocation(calcTessLevelShaderProgramId, "vertsPerEdge"), vertsPerEdge);
                 glProgramUniform1f(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"), heightfield->maxHeight);
                 glProgramUniform2fv(calcTessLevelShaderProgramId,

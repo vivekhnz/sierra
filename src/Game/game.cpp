@@ -15,10 +15,11 @@ bool initializeGame(GameMemory *memory)
     GameState *state = &memory->state;
     GameAssets *gameAssets = &state->gameAssets;
     EngineApi *engine = memory->engine;
+    MemoryArena *arena = &memory->arena;
 
-    state->renderCtx = engine->rendererInitialize(&memory->arena);
+    state->renderCtx = engine->rendererInitialize(arena);
 
-    state->assetsArena = pushSubArena(&memory->arena, 200 * 1024 * 1024);
+    state->assetsArena = pushSubArena(arena, 200 * 1024 * 1024);
     state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
 
@@ -61,62 +62,64 @@ bool initializeGame(GameMemory *memory)
     state->firstPersonCameraPos = glm::vec3(0, 4, 50);
     state->firstPersonCameraLookAt = glm::vec3(0, 4, 49);
 
+    float tileLengthInWorldUnits = 128.0f;
     state->heightfield = {};
     state->heightfield.columns = HEIGHTFIELD_COLUMNS;
     state->heightfield.rows = HEIGHTFIELD_ROWS;
-    state->heightfield.spacing = 0.5f;
+    state->heightfield.spacing = tileLengthInWorldUnits / (HEIGHTFIELD_COLUMNS - 1);
     state->heightfield.maxHeight = 25.0f;
     state->heightfield.heights = state->heightfieldHeights;
     state->heightfield.center = glm::vec2(0, 0);
     *state->heightfieldHeights = {0};
 
-    state->terrainMeshElementCount = (state->heightfield.rows - 1) * (state->heightfield.columns - 1) * 4;
-    uint32 vertexBufferStride = 5 * sizeof(float);
-    uint32 vertexBufferSize = state->heightfield.columns * state->heightfield.rows * vertexBufferStride;
-    float *vertices = (float *)malloc(vertexBufferSize);
+    TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
 
-    uint32 elementBufferSize = sizeof(uint32) * state->terrainMeshElementCount;
-    uint32 *indices = (uint32 *)malloc(elementBufferSize);
+    uint32 terrainMeshVertsPerEdge = state->heightfield.columns;
+    uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
+    uint32 terrainMeshVertexSize = 5;
+    glm::vec3 terrainBoundsMin = glm::vec3(tileLengthInWorldUnits * -0.5f, 0, tileLengthInWorldUnits * -0.5f);
+    float terrainMeshSpacing = tileLengthInWorldUnits / (terrainMeshVertsPerEdge - 1);
+    uint32 terrainMeshElementCount = (terrainMeshVertsPerEdge - 1) * (terrainMeshVertsPerEdge - 1) * 4;
 
-    float offsetX = (state->heightfield.columns - 1) * state->heightfield.spacing * -0.5f;
-    float offsetY = (state->heightfield.rows - 1) * state->heightfield.spacing * -0.5f;
-    glm::vec2 uvSize = glm::vec2(1.0f / (state->heightfield.columns - 1), 1.0f / (state->heightfield.rows - 1));
+    float *terrainVertices = pushArray(arena, float, (terrainMeshVertexCount * terrainMeshVertexSize));
+    uint32 *terrainIndices = pushArray(arena, uint32, terrainMeshElementCount);
 
-    float *currentVertex = vertices;
-    uint32 *currentIndex = indices;
-    for (uint32 y = 0; y < state->heightfield.rows; y++)
+    float *currentVertex = terrainVertices;
+    uint32 *currentIndex = terrainIndices;
+    for (uint32 y = 0; y < terrainMeshVertsPerEdge; y++)
     {
-        for (uint32 x = 0; x < state->heightfield.columns; x++)
+        for (uint32 x = 0; x < terrainMeshVertsPerEdge; x++)
         {
-            *currentVertex++ = (x * state->heightfield.spacing) + offsetX;
-            *currentVertex++ = 0;
-            *currentVertex++ = (y * state->heightfield.spacing) + offsetY;
-            *currentVertex++ = uvSize.x * x;
-            *currentVertex++ = uvSize.y * y;
+            *currentVertex++ = terrainBoundsMin.x + (x * terrainMeshSpacing);
+            *currentVertex++ = terrainBoundsMin.y;
+            *currentVertex++ = terrainBoundsMin.z + (y * terrainMeshSpacing);
+            *currentVertex++ = x / (float)(terrainMeshVertsPerEdge - 1);
+            *currentVertex++ = y / (float)(terrainMeshVertsPerEdge - 1);
 
-            if (y < state->heightfield.rows - 1 && x < state->heightfield.columns - 1)
+            if (y < terrainMeshVertsPerEdge - 1 && x < terrainMeshVertsPerEdge - 1)
             {
-                uint32 patchIndex = (y * state->heightfield.columns) + x;
+                uint32 patchIndex = (y * terrainMeshVertsPerEdge) + x;
                 *currentIndex++ = patchIndex;
-                *currentIndex++ = patchIndex + state->heightfield.columns;
-                *currentIndex++ = patchIndex + state->heightfield.columns + 1;
+                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge;
+                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge + 1;
                 *currentIndex++ = patchIndex + 1;
             }
         }
     }
 
+    state->terrainMeshElementCount = terrainMeshElementCount;
     state->terrainMeshVertexBuffer = engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&state->terrainMeshVertexBuffer, vertexBufferSize, vertices);
-    free(vertices);
-
+    engine->rendererUpdateBuffer(&state->terrainMeshVertexBuffer,
+        terrainMeshVertexCount * terrainMeshVertexSize * sizeof(float), terrainVertices);
     state->terrainMeshElementBuffer = engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&state->terrainMeshElementBuffer, elementBufferSize, indices);
-    free(indices);
-
+    engine->rendererUpdateBuffer(
+        &state->terrainMeshElementBuffer, terrainMeshElementCount * sizeof(uint32), terrainIndices);
     state->terrainMeshTessLevelBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    engine->rendererUpdateBuffer(&state->terrainMeshTessLevelBuffer,
-        state->heightfield.columns * state->heightfield.rows * sizeof(glm::vec4), 0);
+    engine->rendererUpdateBuffer(
+        &state->terrainMeshTessLevelBuffer, terrainMeshVertexCount * sizeof(glm::vec4), 0);
+
+    endTemporaryMemory(&terrainMeshMemory);
 
     state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
@@ -359,7 +362,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         float targetHeight = engine->heightfieldGetHeight(
                                  &state->heightfield, state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
             + 1.75f;
-        state->firstPersonCameraPos.y = (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
+        // state->firstPersonCameraPos.y = (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
+        state->firstPersonCameraPos.y = targetHeight;
 
         state->firstPersonCameraLookAt = state->firstPersonCameraPos + lookDir;
 

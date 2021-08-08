@@ -136,11 +136,10 @@ void initializeEditor(EditorMemory *memory)
     // initialize scene world
 #if HEIGHTFIELD_USE_SPLIT_TILES
     sceneState->terrainTileCount = 4;
-    float tileLengthInWorldUnits = 64.0f;
 #else
     sceneState->terrainTileCount = 1;
-    float tileLengthInWorldUnits = 128.0f;
 #endif
+    float tileLengthInWorldUnits = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
 
     sceneState->terrainTiles = pushArray(arena, TerrainTile, sceneState->terrainTileCount);
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
@@ -149,11 +148,15 @@ void initializeEditor(EditorMemory *memory)
         tile->heightfield = pushStruct(arena, Heightfield);
         tile->heightfield->columns = HEIGHTFIELD_COLUMNS;
         tile->heightfield->rows = HEIGHTFIELD_ROWS;
-        tile->heightfield->spacing = tileLengthInWorldUnits / HEIGHTFIELD_COLUMNS;
+        tile->heightfield->spacing = tileLengthInWorldUnits / (HEIGHTFIELD_COLUMNS - 1);
         tile->heightfield->maxHeight = 200;
         tile->heightfield->center = glm::vec2(0, 0);
-        tile->heightfield->heights = pushArray(arena, float, tile->heightfield->columns * tile->heightfield->rows);
-        memset(tile->heightfield->heights, 0, tile->heightfield->columns * tile->heightfield->rows);
+
+        assert(tile->heightfield->columns == tile->heightfield->rows);
+        uint32 heightSamplesPerEdge = tile->heightfield->columns;
+        uint32 heightSampleCount = heightSamplesPerEdge * heightSamplesPerEdge;
+        tile->heightfield->heights = pushArray(arena, float, heightSampleCount);
+        memset(tile->heightfield->heights, 0, heightSampleCount);
 
         tile->committedHeightmap = engine->rendererCreateRenderTarget(
             arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
@@ -189,57 +192,55 @@ void initializeEditor(EditorMemory *memory)
 #endif
 
     // create terrain mesh
-    sceneState->terrainMesh = {};
-    sceneState->terrainMesh.elementCount =
-        (firstTile->heightfield->rows - 1) * (firstTile->heightfield->columns - 1) * 4;
+    TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
 
-    uint32 terrainVertexBufferStride = 5 * sizeof(float);
-    uint32 terrainVertexBufferSize =
-        firstTile->heightfield->columns * firstTile->heightfield->rows * terrainVertexBufferStride;
-    float *terrainVertices = (float *)malloc(terrainVertexBufferSize);
+    assert(firstTile->heightfield->columns == firstTile->heightfield->rows);
+    uint32 terrainMeshVertsPerEdge = firstTile->heightfield->columns;
+    uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
+    uint32 terrainMeshVertexSize = 5;
+    glm::vec3 terrainBoundsMin = glm::vec3(tileLengthInWorldUnits * -0.5f, 0, tileLengthInWorldUnits * -0.5f);
+    float terrainMeshSpacing = tileLengthInWorldUnits / (terrainMeshVertsPerEdge - 1);
+    uint32 terrainMeshElementCount = (terrainMeshVertsPerEdge - 1) * (terrainMeshVertsPerEdge - 1) * 4;
 
-    uint32 terrainElementBufferSize = sizeof(uint32) * sceneState->terrainMesh.elementCount;
-    uint32 *terrainIndices = (uint32 *)malloc(terrainElementBufferSize);
-
-    float offsetX = (firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing * -0.5f;
-    float offsetY = (firstTile->heightfield->rows - 1) * firstTile->heightfield->spacing * -0.5f;
+    float *terrainVertices = pushArray(arena, float, (terrainMeshVertexCount * terrainMeshVertexSize));
+    uint32 *terrainIndices = pushArray(arena, uint32, terrainMeshElementCount);
 
     float *currentVertex = terrainVertices;
     uint32 *currentIndex = terrainIndices;
-    for (uint32 y = 0; y < firstTile->heightfield->rows; y++)
+    for (uint32 y = 0; y < terrainMeshVertsPerEdge; y++)
     {
-        for (uint32 x = 0; x < firstTile->heightfield->columns; x++)
+        for (uint32 x = 0; x < terrainMeshVertsPerEdge; x++)
         {
-            *currentVertex++ = (x * firstTile->heightfield->spacing) + offsetX;
-            *currentVertex++ = 0;
-            *currentVertex++ = (y * firstTile->heightfield->spacing) + offsetY;
-            *currentVertex++ = x / (float)(firstTile->heightfield->columns - 1);
-            *currentVertex++ = y / (float)(firstTile->heightfield->rows - 1);
+            *currentVertex++ = terrainBoundsMin.x + (x * terrainMeshSpacing);
+            *currentVertex++ = terrainBoundsMin.y;
+            *currentVertex++ = terrainBoundsMin.z + (y * terrainMeshSpacing);
+            *currentVertex++ = x / (float)(terrainMeshVertsPerEdge - 1);
+            *currentVertex++ = y / (float)(terrainMeshVertsPerEdge - 1);
 
-            if (y < firstTile->heightfield->rows - 1 && x < firstTile->heightfield->columns - 1)
+            if (y < terrainMeshVertsPerEdge - 1 && x < terrainMeshVertsPerEdge - 1)
             {
-                uint32 patchIndex = (y * firstTile->heightfield->columns) + x;
+                uint32 patchIndex = (y * terrainMeshVertsPerEdge) + x;
                 *currentIndex++ = patchIndex;
-                *currentIndex++ = patchIndex + firstTile->heightfield->columns;
-                *currentIndex++ = patchIndex + firstTile->heightfield->columns + 1;
+                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge;
+                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge + 1;
                 *currentIndex++ = patchIndex + 1;
             }
         }
     }
 
+    sceneState->terrainMesh.elementCount = terrainMeshElementCount;
     sceneState->terrainMesh.vertexBuffer = engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&sceneState->terrainMesh.vertexBuffer, terrainVertexBufferSize, terrainVertices);
-    free(terrainVertices);
-
+    engine->rendererUpdateBuffer(&sceneState->terrainMesh.vertexBuffer,
+        terrainMeshVertexCount * terrainMeshVertexSize * sizeof(float), terrainVertices);
     sceneState->terrainMesh.elementBuffer = engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&sceneState->terrainMesh.elementBuffer, terrainElementBufferSize, terrainIndices);
-    free(terrainIndices);
-
-    // create buffer to store vertex edge data
-    sceneState->tessellationLevelBuffer =
+    engine->rendererUpdateBuffer(
+        &sceneState->terrainMesh.elementBuffer, terrainMeshElementCount * sizeof(uint32), terrainIndices);
+    sceneState->terrainMesh.tessellationLevelBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    engine->rendererUpdateBuffer(&sceneState->tessellationLevelBuffer,
-        firstTile->heightfield->columns * firstTile->heightfield->rows * sizeof(glm::vec4), 0);
+    engine->rendererUpdateBuffer(
+        &sceneState->terrainMesh.tessellationLevelBuffer, terrainMeshVertexCount * sizeof(glm::vec4), 0);
+
+    endTemporaryMemory(&terrainMeshMemory);
 
     sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
@@ -467,10 +468,50 @@ void compositeHeightmap(EditorMemory *memory,
     endTemporaryMemory(&renderQueueMemory);
 }
 
-void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
+void updateHeightfieldHeights(
+    Heightfield *heightfield, uint32 heightmapWidth, uint32 heightmapHeight, uint16 *pixels)
 {
-    uint16 heightmapWidth = HEIGHTMAP_WIDTH;
-    uint16 heightmapHeight = HEIGHTMAP_HEIGHT;
+#if 0
+    uint32 heightSamplesPerEdge = heightfield->columns;
+    uint16 texelsBetweenEdgeSample = heightmapWidth / heightSamplesPerEdge;
+    float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
+
+    uint32 maxX = heightmapWidth - 1;
+    uint32 maxY = heightmapHeight - 1;
+
+    float *dst = (float *)heightfield->heights;
+    for (uint32 y = 0; y < heightSamplesPerEdge; y++)
+    {
+        float ty = (heightmapHeight - 1) * ((float)y / (heightSamplesPerEdge - 2));
+        uint32 yBottom = (uint32)floor(ty);
+
+        for (uint32 x = 0; x < heightSamplesPerEdge; x++)
+        {
+            float tx = (heightmapWidth - 1) * ((float)y / (heightSamplesPerEdge - 2));
+            uint32 xLeft = (uint32)floor(tx);
+
+            float height;
+            if (xLeft >= maxX || yBottom >= maxY)
+            {
+                height = 0;
+            }
+            else
+            {
+                uint16 *bottomLeftTexel = &pixels[(uint32)((yBottom * heightmapWidth) + xLeft)];
+                uint16 bottomLeft = *bottomLeftTexel;
+                uint16 bottomRight = xLeft + 1 > maxX ? 0 : *(bottomLeftTexel + 1);
+                uint16 topLeft = yBottom + 1 > maxY ? 0 : *(bottomLeftTexel + heightmapWidth);
+                uint16 topRight =
+                    xLeft + 1 > maxX || yBottom + 1 > maxY ? 0 : *(bottomLeftTexel + heightmapWidth + 1);
+
+                // todo: bilinear blend
+                height = bottomLeft * heightScalar;
+            }
+
+            *dst++ = height;
+        }
+    }
+#else
     uint16 patchTexelWidth = heightmapWidth / heightfield->columns;
     uint16 patchTexelHeight = heightmapHeight / heightfield->rows;
 
@@ -486,6 +527,7 @@ void updateHeightfieldHeights(Heightfield *heightfield, uint16 *pixels)
         }
         src += (patchTexelHeight - 1) * heightmapWidth;
     }
+#endif
 }
 
 void commitChanges(EditorMemory *memory)
@@ -531,10 +573,10 @@ void discardChanges(EditorMemory *memory)
         TemporaryMemory heightMemory = beginTemporaryMemory(arena);
 
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
+        RenderTarget *target = tile->committedHeightmap;
         GetPixelsResult heightPixels =
-            memory->engineApi->rendererGetPixels(arena, tile->committedHeightmap->textureHandle,
-                tile->committedHeightmap->width, tile->committedHeightmap->height);
-        updateHeightfieldHeights(tile->heightfield, (uint16 *)heightPixels.pixels);
+            memory->engineApi->rendererGetPixels(arena, target->textureHandle, target->width, target->height);
+        updateHeightfieldHeights(tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
 
         endTemporaryMemory(&heightMemory);
     }
@@ -860,20 +902,21 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
-        engine->rendererUpdateTexture(state->importedHeightmapTextureId, GL_UNSIGNED_SHORT, GL_R16, GL_RED,
-            importedHeightmapAsset->texture->width, importedHeightmapAsset->texture->height,
-            importedHeightmapAsset->texture->data);
+        TextureAsset *texture = importedHeightmapAsset->texture;
+        engine->rendererUpdateTexture(
+            state->importedHeightmapTexture, texture->width, texture->height, texture->data);
+
+        TerrainTile *tile = &sceneState->terrainTiles[0];
 
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
         RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
         engine->rendererSetCameraOrtho(rq);
         engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->importedHeightmapTextureId, true);
-        if (engine->rendererDrawToTarget(rq, state->committedHeightmap))
+        engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->importedHeightmapTexture, true);
+        if (engine->rendererDrawToTarget(rq, tile->committedHeightmap))
         {
-            updateHeightfieldHeights(
-                &state->sceneState.heightfield, (uint16 *)importedHeightmapAsset->texture->data);
+            updateHeightfieldHeights(tile->heightfield, texture->width, texture->height, (uint16 *)texture->data);
             state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
         }
 
@@ -1266,8 +1309,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
     // update brush quad instances
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
-    glm::vec2 heightfieldSize = glm::vec2(firstTile->heightfield->columns - 1, firstTile->heightfield->rows - 1)
-        * firstTile->heightfield->spacing;
+    glm::vec2 heightfieldSize = glm::vec2(TERRAIN_TILE_LENGTH_IN_WORLD_UNITS, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
     glm::vec2 halfHeightfieldSize = heightfieldSize * 0.5f;
     glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
     glm::vec2 worldToHeightmapSpace = heightmapSize / heightfieldSize;
@@ -1302,11 +1344,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         {
             TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
 
-            uint32 pixelCount;
-            GetPixelsResult heightPixels =
-                memory->engineApi->rendererGetPixels(&memory->arena, tile->workingHeightmap->textureHandle,
-                    tile->workingHeightmap->width, tile->workingHeightmap->height);
-            updateHeightfieldHeights(tile->heightfield, (uint16 *)heightPixels.pixels);
+            RenderTarget *target = tile->workingHeightmap;
+            GetPixelsResult heightPixels = memory->engineApi->rendererGetPixels(
+                &memory->arena, target->textureHandle, target->width, target->height);
+            updateHeightfieldHeights(
+                tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
 
             endTemporaryMemory(&heightMemory);
         }
@@ -1438,7 +1480,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->terrainMesh.vertexBuffer.id,
-            sceneState->terrainMesh.elementBuffer.id, sceneState->tessellationLevelBuffer.id,
+            sceneState->terrainMesh.elementBuffer.id, sceneState->terrainMesh.tessellationLevelBuffer.id,
             sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
             sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
             sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,

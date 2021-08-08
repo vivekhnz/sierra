@@ -18,11 +18,13 @@
 #define HEIGHTFIELD_ROWS 128
 #define HEIGHTMAP_WIDTH 1024
 #define HEIGHTMAP_HEIGHT 1024
+#define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 64.0f
 #else
 #define HEIGHTMAP_WIDTH 2048
 #define HEIGHTMAP_HEIGHT 2048
 #define HEIGHTFIELD_COLUMNS 256
 #define HEIGHTFIELD_ROWS 256
+#define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 128.0f
 #endif
 
 #define PLATFORM_CAPTURE_MOUSE(name) void name()
@@ -127,13 +129,12 @@ struct SceneState
     {
         RenderBuffer vertexBuffer;
         RenderBuffer elementBuffer;
+        RenderBuffer tessellationLevelBuffer;
         uint32 elementCount;
     } terrainMesh;
 
     TerrainTile *terrainTiles;
     uint32 terrainTileCount;
-
-    RenderBuffer tessellationLevelBuffer;
 
     uint32 nextObjectId;
     RenderMeshInstance objectInstanceData[MAX_OBJECT_INSTANCES];

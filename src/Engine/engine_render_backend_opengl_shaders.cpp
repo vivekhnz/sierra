@@ -364,7 +364,7 @@ layout (std140, binding = 0) uniform Camera
 };
 
 uniform int horizontalEdgeCount;
-uniform int columnCount;
+uniform int vertsPerEdge;
 uniform float targetTriangleSize;
 uniform float terrainHeight;
 uniform vec2 terrainOrigin;
@@ -460,7 +460,7 @@ void main()
     if (gl_GlobalInvocationID.x < horizontalEdgeCount)
     {
         uint aIndex = gl_GlobalInvocationID.x
-            + uint(floor(float(gl_GlobalInvocationID.x) / (columnCount - 1)));
+            + uint(floor(float(gl_GlobalInvocationID.x) / (vertsPerEdge - 1)));
         uint bIndex = aIndex + 1;
 
         Vertex a = vertices[aIndex];
@@ -473,7 +473,7 @@ void main()
     else
     {
         uint aIndex = gl_GlobalInvocationID.x - horizontalEdgeCount;
-        uint bIndex = aIndex + columnCount;
+        uint bIndex = aIndex + vertsPerEdge;
 
         Vertex a = vertices[aIndex];
         Vertex b = vertices[bIndex];

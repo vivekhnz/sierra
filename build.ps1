@@ -166,19 +166,23 @@ $builds += Invoke-Msvc `
     -IncludePaths @(
         'deps',
         'deps\nuget\glm.0.9.9.700\build\native\include'
-    )
-$builds += Invoke-Msvc `
-    -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
-    -IntermediateOutputDirName 'Game' `
-    -NoImportLib `
-    -IncludePaths @(
-        'deps',
-        'deps\nuget\glm.0.9.9.700\build\native\include',
-        'deps\nuget\glfw.3.3.2\build\native\include'
-    ) `
-    -ImportLibs @(
-        "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
-    )
+)
+# don't try build the game executable if it is currently running
+if (!(Get-Process "win32_terrain" -ErrorAction SilentlyContinue)) {
+    $builds += Invoke-Msvc `
+        -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
+        -IntermediateOutputDirName 'Game' `
+        -NoImportLib `
+        -IncludePaths @(
+            'deps',
+            'deps\nuget\glm.0.9.9.700\build\native\include',
+            'deps\nuget\glfw.3.3.2\build\native\include'
+        ) `
+        -ImportLibs @(
+            "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
+        )
+}
+
 $builds += Invoke-Msvc `
     -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
     -IntermediateOutputDirName 'EditorCore' `

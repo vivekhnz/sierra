@@ -9,43 +9,49 @@ float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
     return (l1 * a.y) + (l2 * b.y) + (l3 * c.y);
 }
 
-float getTerrainPatchHeight(Heightfield *heightfield, int32 x, int32 z)
-{
-    uint32 clampedX = (uint32)glm::clamp(x, 0, (int32)heightfield->columns - 1);
-    uint32 clampedZ = (uint32)glm::clamp(z, 0, (int32)heightfield->rows - 1);
-    uint32 i = (clampedZ * heightfield->columns) + clampedX;
-    return heightfield->heights[i];
-}
-
 glm::vec2 getOrigin(Heightfield *heightfield)
 {
-    glm::vec2 result;
-    float halfDim = heightfield->spacing * 0.5f;
-    result.x = heightfield->center.x - ((heightfield->columns - 1) * halfDim);
-    result.y = heightfield->center.y - ((heightfield->rows - 1) * halfDim);
-
+    uint32 heightSamplesPerEdge = heightfield->columns;
+    float distBetweenHeightSamples = heightfield->spacing;
+    float tileLengthInWorldUnits = (heightSamplesPerEdge - 1) * distBetweenHeightSamples;
+    glm::vec2 result = heightfield->center - (tileLengthInWorldUnits * 0.5f);
     return result;
 }
 
 HEIGHTFIELD_GET_HEIGHT(heightfieldGetHeight)
 {
+    glm::vec2 posWorldSpace = glm::vec2(worldX, worldZ);
     glm::vec2 origin = getOrigin(heightfield);
-    float relativeX = worldX - origin.x;
-    float relativeZ = worldZ - origin.y;
-    float normalizedX = relativeX / heightfield->spacing;
-    float normalizedZ = relativeZ / heightfield->spacing;
-    int32 patchX = (int32)floor(normalizedX);
-    int32 patchZ = (int32)floor(normalizedZ);
-    float deltaX = normalizedX - patchX;
-    float deltaZ = normalizedZ - patchZ;
+    glm::vec2 posObjectSpace = posWorldSpace - origin;
 
-    glm::vec3 topLeft = glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ), 0);
-    glm::vec3 topRight = glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ), 0);
-    glm::vec3 bottomLeft = glm::vec3(0, getTerrainPatchHeight(heightfield, patchX, patchZ + 1), 1);
-    glm::vec3 bottomRight = glm::vec3(1, getTerrainPatchHeight(heightfield, patchX + 1, patchZ + 1), 1);
+    float distBetweenHeightSamples = heightfield->spacing;
+    glm::vec2 posSampleSpace = posObjectSpace / distBetweenHeightSamples;
+    glm::vec2 posSampleSpaceFloor = glm::floor(posSampleSpace);
+    glm::vec2 delta = posSampleSpace - posSampleSpaceFloor;
 
-    return deltaX <= 1.0f - deltaZ ? barycentric(topLeft, topRight, bottomLeft, deltaX, deltaZ)
-                                   : barycentric(topRight, bottomRight, bottomLeft, deltaX, deltaZ);
+    uint32 heightSamplesPerEdge = heightfield->columns;
+    int32 x = (int32)posSampleSpaceFloor.x;
+    int32 y = (int32)posSampleSpaceFloor.y;
+
+    if (x < -1 || y < -1 || x >= heightSamplesPerEdge || y >= heightSamplesPerEdge)
+    {
+        return 0.0f;
+    }
+    else
+    {
+        float *topLeftSample = &heightfield->heights[(y * heightSamplesPerEdge) + x];
+        glm::vec3 topLeft = glm::vec3(0, x < 0 ? 0 : *topLeftSample, 0);
+        glm::vec3 topRight = glm::vec3(1, x + 1 >= heightSamplesPerEdge ? 0 : *(topLeftSample + 1), 0);
+        glm::vec3 bottomLeft = glm::vec3(0, y < 0 ? 0 : *(topLeftSample + heightSamplesPerEdge), 1);
+        glm::vec3 bottomRight = glm::vec3(1,
+            x + 1 >= heightSamplesPerEdge || y + 1 >= heightSamplesPerEdge
+                ? 0
+                : *(topLeftSample + heightSamplesPerEdge + 1),
+            1);
+
+        return delta.x <= 1.0f - delta.y ? barycentric(topLeft, topRight, bottomLeft, delta.x, delta.y)
+                                         : barycentric(topRight, bottomRight, bottomLeft, delta.x, delta.y);
+    }
 }
 
 bool isRayIntersectingBox(glm::vec3 rayOrigin, glm::vec3 rayDirection, glm::vec3 boundsMin, glm::vec3 boundsMax)
@@ -136,12 +142,16 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     uint32 yEnd,
     float *inout_hitDistance)
 {
-    // raycast a bounding box first to avoid expensive triangle raycasting
     glm::vec2 origin = getOrigin(heightfield);
+    glm::vec3 origin3 = glm::vec3(origin.x, 0, origin.y);
+    uint32 heightSamplesPerEdge = heightfield->columns;
+    float distBetweenHeightSamples = heightfield->spacing;
+
+    // raycast a bounding box first to avoid expensive triangle raycasting
     glm::vec3 boundsTopLeft =
-        glm::vec3(origin.x + (xStart * heightfield->spacing), 0.0f, origin.y + (yStart * heightfield->spacing));
-    glm::vec3 boundsBottomRight = glm::vec3(origin.x + (xEnd * heightfield->spacing), heightfield->maxHeight,
-        origin.y + (yEnd * heightfield->spacing));
+        origin3 + glm::vec3(xStart * distBetweenHeightSamples, 0, yStart * distBetweenHeightSamples);
+    glm::vec3 boundsBottomRight = origin3
+        + glm::vec3(xEnd * distBetweenHeightSamples, heightfield->maxHeight, yEnd * distBetweenHeightSamples);
     if (!isRayIntersectingBox(rayOrigin, rayDirection, boundsTopLeft, boundsBottomRight))
     {
         return false;
@@ -150,19 +160,21 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
     bool hit = false;
     for (uint32 y = yStart; y < yEnd; y++)
     {
+        float top = y * distBetweenHeightSamples;
+        float bottom = top + distBetweenHeightSamples;
+
         for (uint32 x = xStart; x < xEnd; x++)
         {
+            float left = x * distBetweenHeightSamples;
+            float right = left + distBetweenHeightSamples;
+
             // calculate world-space corners of patch
-            glm::vec3 topLeft = glm::vec3(origin.x + (x * heightfield->spacing),
-                heightfield->heights[(y * heightfield->columns) + x], origin.y + (y * heightfield->spacing));
-            glm::vec3 topRight = glm::vec3(origin.x + ((x + 1) * heightfield->spacing),
-                heightfield->heights[(y * heightfield->columns) + x + 1], origin.y + (y * heightfield->spacing));
-            glm::vec3 bottomRight = glm::vec3(origin.x + ((x + 1) * heightfield->spacing),
-                heightfield->heights[((y + 1) * heightfield->columns) + x + 1],
-                origin.y + ((y + 1) * heightfield->spacing));
-            glm::vec3 bottomLeft = glm::vec3(origin.x + (x * heightfield->spacing),
-                heightfield->heights[((y + 1) * heightfield->columns) + x],
-                origin.y + ((y + 1) * heightfield->spacing));
+            float *topLeftSample = &heightfield->heights[(y * heightSamplesPerEdge) + x];
+            glm::vec3 topLeft = origin3 + glm::vec3(left, *topLeftSample, top);
+            glm::vec3 topRight = origin3 + glm::vec3(right, *(topLeftSample + 1), top);
+            glm::vec3 bottomLeft = origin3 + glm::vec3(left, *(topLeftSample + heightSamplesPerEdge), bottom);
+            glm::vec3 bottomRight =
+                origin3 + glm::vec3(right, *(topLeftSample + heightSamplesPerEdge + 1), bottom);
 
             // raycast against 2 triangles of quad
             float intersectDist;
@@ -189,22 +201,26 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
     *out_intersectionDistance = 999999.0f;
     bool hit = false;
 
+#if 0
+    uint32 heightSamplesPerEdge = heightfield->columns;
+    uint32 maxSample = heightSamplesPerEdge - 2;
+
     // divide heightfield into 64 slices (8x8) and raycast against each slice's bounding box
     // this lets us skip expensive triangle raycasting if we don't hit the bounding box
     constexpr uint32 sliceCount = 8;
-    assert(heightfield->columns < sliceCount || heightfield->columns % sliceCount == 0);
+    assert(maxSample < sliceCount || maxSample % sliceCount == 0);
     assert(heightfield->rows < sliceCount || heightfield->rows % sliceCount == 0);
 
-    uint32 colSlice = heightfield->columns < sliceCount ? heightfield->columns : heightfield->columns / sliceCount;
+    uint32 colSlice = maxSample < sliceCount ? maxSample : maxSample / sliceCount;
     uint32 rowSlice = heightfield->rows < sliceCount ? heightfield->rows : heightfield->rows / sliceCount;
 
     uint32 yStart = 0;
     uint32 yEnd = rowSlice - 1;
-    while (yEnd < heightfield->rows)
+    while (yEnd < maxSample)
     {
         uint32 xStart = 0;
         uint32 xEnd = colSlice - 1;
-        while (xEnd < heightfield->columns)
+        while (xEnd < maxSample)
         {
             hit |= isRayIntersectingHeightfieldSlice(
                 heightfield, rayOrigin, rayDirection, xStart, xEnd, yStart, yEnd, out_intersectionDistance);
@@ -216,6 +232,11 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
         yStart = yEnd;
         yEnd += rowSlice;
     }
+#else
+    uint32 heightSamplesPerEdge = heightfield->columns;
+    hit = isRayIntersectingHeightfieldSlice(heightfield, rayOrigin, rayDirection, 0, heightSamplesPerEdge - 2, 0,
+        heightSamplesPerEdge - 2, out_intersectionDistance);
+#endif
 
     if (hit)
     {
