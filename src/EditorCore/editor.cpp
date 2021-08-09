@@ -146,15 +146,15 @@ void initializeEditor(EditorMemory *memory)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
         tile->heightfield = pushStruct(arena, Heightfield);
-        tile->heightfield->columns = HEIGHTFIELD_COLUMNS;
-        tile->heightfield->rows = HEIGHTFIELD_ROWS;
-        tile->heightfield->spacing = tileLengthInWorldUnits / (HEIGHTFIELD_COLUMNS - 1);
+        tile->heightfield->vertsPerEdge = HEIGHTFIELD_VERTS_PER_EDGE;
+        tile->heightfield->heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
+        tile->heightfield->spaceBetweenVerts = tileLengthInWorldUnits / (HEIGHTFIELD_VERTS_PER_EDGE - 1);
+        tile->heightfield->spaceBetweenHeightSamples = tileLengthInWorldUnits / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
         tile->heightfield->maxHeight = 200;
         tile->heightfield->center = glm::vec2(0, 0);
 
-        assert(tile->heightfield->columns == tile->heightfield->rows);
-        uint32 heightSamplesPerEdge = tile->heightfield->columns;
-        uint32 heightSampleCount = heightSamplesPerEdge * heightSamplesPerEdge;
+        uint32 heightSampleCount =
+            tile->heightfield->heightSamplesPerEdge * tile->heightfield->heightSamplesPerEdge;
         tile->heightfield->heights = pushArray(arena, float, heightSampleCount);
         memset(tile->heightfield->heights, 0, heightSampleCount);
 
@@ -194,8 +194,7 @@ void initializeEditor(EditorMemory *memory)
     // create terrain mesh
     TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
 
-    assert(firstTile->heightfield->columns == firstTile->heightfield->rows);
-    uint32 terrainMeshVertsPerEdge = firstTile->heightfield->columns;
+    uint32 terrainMeshVertsPerEdge = firstTile->heightfield->vertsPerEdge;
     uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
     uint32 terrainMeshVertexSize = 5;
     glm::vec3 terrainBoundsMin = glm::vec3(tileLengthInWorldUnits * -0.5f, 0, tileLengthInWorldUnits * -0.5f);
@@ -512,20 +511,20 @@ void updateHeightfieldHeights(
         }
     }
 #else
-    uint16 patchTexelWidth = heightmapWidth / heightfield->columns;
-    uint16 patchTexelHeight = heightmapHeight / heightfield->rows;
+    uint32 texelsBetweenHorizontalSamples = heightmapWidth / heightfield->heightSamplesPerEdge;
+    uint32 texelsBetweenVerticalSamples = heightmapHeight / heightfield->heightSamplesPerEdge;
 
     uint16 *src = pixels;
     float *dst = (float *)heightfield->heights;
     float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
-    for (uint32 y = 0; y < heightfield->rows; y++)
+    for (uint32 y = 0; y < heightfield->heightSamplesPerEdge; y++)
     {
-        for (uint32 x = 0; x < heightfield->columns; x++)
+        for (uint32 x = 0; x < heightfield->heightSamplesPerEdge; x++)
         {
             *dst++ = *src * heightScalar;
-            src += patchTexelWidth;
+            src += texelsBetweenHorizontalSamples;
         }
-        src += (patchTexelHeight - 1) * heightmapWidth;
+        src += (texelsBetweenVerticalSamples - 1) * heightmapWidth;
     }
 #endif
 }

@@ -5,10 +5,11 @@
 
 struct Heightfield
 {
-    uint32 columns;
-    uint32 rows;
+    uint32 vertsPerEdge;
+    uint32 heightSamplesPerEdge;
     float maxHeight;
-    float spacing;
+    float spaceBetweenVerts;
+    float spaceBetweenHeightSamples;
     float *heights;
     glm::vec2 center;
 };

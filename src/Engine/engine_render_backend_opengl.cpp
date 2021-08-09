@@ -802,10 +802,9 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
             if (cmd->terrainShader.ptr != 0)
             {
                 Heightfield *heightfield = cmd->heightfield;
-                assert(heightfield->columns == heightfield->rows);
-                uint32 vertsPerEdge = heightfield->columns;
+                uint32 vertsPerEdge = heightfield->vertsPerEdge;
                 uint32 meshEdgeCount = ((vertsPerEdge * vertsPerEdge) - vertsPerEdge) * 2;
-                float tileLengthInWorldUnits = heightfield->spacing * (vertsPerEdge - 1);
+                float tileLengthInWorldUnits = heightfield->spaceBetweenVerts * (vertsPerEdge - 1);
                 glm::vec3 terrainDimensions =
                     glm::vec3(tileLengthInWorldUnits, heightfield->maxHeight, tileLengthInWorldUnits);
 

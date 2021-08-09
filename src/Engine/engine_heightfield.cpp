@@ -11,9 +11,8 @@ float barycentric(glm::vec3 a, glm::vec3 b, glm::vec3 c, float x, float y)
 
 glm::vec2 getOrigin(Heightfield *heightfield)
 {
-    uint32 heightSamplesPerEdge = heightfield->columns;
-    float distBetweenHeightSamples = heightfield->spacing;
-    float tileLengthInWorldUnits = (heightSamplesPerEdge - 1) * distBetweenHeightSamples;
+    float tileLengthInWorldUnits =
+        (heightfield->heightSamplesPerEdge - 1) * heightfield->spaceBetweenHeightSamples;
     glm::vec2 result = heightfield->center - (tileLengthInWorldUnits * 0.5f);
     return result;
 }
@@ -24,12 +23,11 @@ HEIGHTFIELD_GET_HEIGHT(heightfieldGetHeight)
     glm::vec2 origin = getOrigin(heightfield);
     glm::vec2 posObjectSpace = posWorldSpace - origin;
 
-    float distBetweenHeightSamples = heightfield->spacing;
-    glm::vec2 posSampleSpace = posObjectSpace / distBetweenHeightSamples;
+    glm::vec2 posSampleSpace = posObjectSpace / heightfield->spaceBetweenHeightSamples;
     glm::vec2 posSampleSpaceFloor = glm::floor(posSampleSpace);
     glm::vec2 delta = posSampleSpace - posSampleSpaceFloor;
 
-    uint32 heightSamplesPerEdge = heightfield->columns;
+    uint32 heightSamplesPerEdge = heightfield->heightSamplesPerEdge;
     int32 x = (int32)posSampleSpaceFloor.x;
     int32 y = (int32)posSampleSpaceFloor.y;
 
@@ -144,8 +142,8 @@ bool isRayIntersectingHeightfieldSlice(Heightfield *heightfield,
 {
     glm::vec2 origin = getOrigin(heightfield);
     glm::vec3 origin3 = glm::vec3(origin.x, 0, origin.y);
-    uint32 heightSamplesPerEdge = heightfield->columns;
-    float distBetweenHeightSamples = heightfield->spacing;
+    uint32 heightSamplesPerEdge = heightfield->heightSamplesPerEdge;
+    float distBetweenHeightSamples = heightfield->spaceBetweenHeightSamples;
 
     // raycast a bounding box first to avoid expensive triangle raycasting
     glm::vec3 boundsTopLeft =
@@ -233,7 +231,7 @@ HEIGHTFIELD_IS_RAY_INTERSECTING(heightfieldIsRayIntersecting)
         yEnd += rowSlice;
     }
 #else
-    uint32 heightSamplesPerEdge = heightfield->columns;
+    uint32 heightSamplesPerEdge = heightfield->heightSamplesPerEdge;
     hit = isRayIntersectingHeightfieldSlice(heightfield, rayOrigin, rayDirection, 0, heightSamplesPerEdge - 2, 0,
         heightSamplesPerEdge - 2, out_intersectionDistance);
 #endif

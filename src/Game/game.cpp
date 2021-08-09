@@ -64,9 +64,10 @@ bool initializeGame(GameMemory *memory)
 
     float tileLengthInWorldUnits = 128.0f;
     state->heightfield = {};
-    state->heightfield.columns = HEIGHTFIELD_COLUMNS;
-    state->heightfield.rows = HEIGHTFIELD_ROWS;
-    state->heightfield.spacing = tileLengthInWorldUnits / (HEIGHTFIELD_COLUMNS - 1);
+    state->heightfield.vertsPerEdge = HEIGHTFIELD_VERTS_PER_EDGE;
+    state->heightfield.heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
+    state->heightfield.spaceBetweenVerts = tileLengthInWorldUnits / (HEIGHTFIELD_VERTS_PER_EDGE - 1);
+    state->heightfield.spaceBetweenHeightSamples = tileLengthInWorldUnits / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
     state->heightfield.maxHeight = 25.0f;
     state->heightfield.heights = state->heightfieldHeights;
     state->heightfield.center = glm::vec2(0, 0);
@@ -74,7 +75,7 @@ bool initializeGame(GameMemory *memory)
 
     TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
 
-    uint32 terrainMeshVertsPerEdge = state->heightfield.columns;
+    uint32 terrainMeshVertsPerEdge = state->heightfield.vertsPerEdge;
     uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
     uint32 terrainMeshVertexSize = 5;
     glm::vec3 terrainBoundsMin = glm::vec3(tileLengthInWorldUnits * -0.5f, 0, tileLengthInWorldUnits * -0.5f);
@@ -216,22 +217,22 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         memory->engine->rendererUpdateTexture(state->heightmapTexture, heightmapAsset->texture->width,
             heightmapAsset->texture->height, heightmapAsset->texture->data);
 
-        uint16 heightmapWidth = 2048;
-        uint16 heightmapHeight = 2048;
-        uint16 patchTexelWidth = heightmapWidth / state->heightfield.columns;
-        uint16 patchTexelHeight = heightmapHeight / state->heightfield.rows;
+        uint32 heightmapWidth = 2048;
+        uint32 heightmapHeight = 2048;
+        uint32 texelsBetweenHorizontalSamples = heightmapWidth / state->heightfield.heightSamplesPerEdge;
+        uint32 texelsBetweenVerticalSamples = heightmapHeight / state->heightfield.heightSamplesPerEdge;
 
         uint16 *src = (uint16 *)heightmapAsset->texture->data;
         float *dst = (float *)state->heightfield.heights;
         float heightScalar = state->heightfield.maxHeight / (float)UINT16_MAX;
-        for (uint32 y = 0; y < state->heightfield.rows; y++)
+        for (uint32 y = 0; y < state->heightfield.heightSamplesPerEdge; y++)
         {
-            for (uint32 x = 0; x < state->heightfield.columns; x++)
+            for (uint32 x = 0; x < state->heightfield.heightSamplesPerEdge; x++)
             {
                 *dst++ = *src * heightScalar;
-                src += patchTexelWidth;
+                src += texelsBetweenHorizontalSamples;
             }
-            src += (patchTexelHeight - 1) * heightmapWidth;
+            src += (texelsBetweenVerticalSamples - 1) * heightmapWidth;
         }
 
         state->heightmapTextureVersion = heightmapAsset->version;
@@ -362,8 +363,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         float targetHeight = engine->heightfieldGetHeight(
                                  &state->heightfield, state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
             + 1.75f;
-        // state->firstPersonCameraPos.y = (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
-        state->firstPersonCameraPos.y = targetHeight;
+        state->firstPersonCameraPos.y = (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
 
         state->firstPersonCameraLookAt = state->firstPersonCameraPos + lookDir;
 

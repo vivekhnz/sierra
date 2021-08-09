@@ -4,8 +4,8 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../Engine/engine.h"
 
-#define HEIGHTFIELD_ROWS 256
-#define HEIGHTFIELD_COLUMNS 256
+#define HEIGHTFIELD_VERTS_PER_EDGE 256
+#define HEIGHTFIELD_SAMPLES_PER_EDGE 256
 #define MATERIAL_COUNT 3
 
 struct GameAssets
@@ -69,7 +69,7 @@ struct GameState
     glm::vec3 firstPersonCameraLookAt;
 
     Heightfield heightfield;
-    float heightfieldHeights[HEIGHTFIELD_ROWS * HEIGHTFIELD_COLUMNS];
+    float heightfieldHeights[HEIGHTFIELD_SAMPLES_PER_EDGE * HEIGHTFIELD_SAMPLES_PER_EDGE];
 
     RenderBuffer terrainMeshVertexBuffer;
     RenderBuffer terrainMeshElementBuffer;
