@@ -14,7 +14,6 @@
 #define HEIGHTFIELD_USE_SPLIT_TILES 0
 
 #if HEIGHTFIELD_USE_SPLIT_TILES
-#define HEIGHTFIELD_VERTS_PER_EDGE 128
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 128
 #define HEIGHTMAP_WIDTH 1024
 #define HEIGHTMAP_HEIGHT 1024
@@ -22,7 +21,6 @@
 #else
 #define HEIGHTMAP_WIDTH 2048
 #define HEIGHTMAP_HEIGHT 2048
-#define HEIGHTFIELD_VERTS_PER_EDGE 256
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 256
 #define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 128.0f
 #endif
@@ -125,14 +123,6 @@ struct TerrainTile
 
 struct SceneState
 {
-    struct TerrainMesh
-    {
-        RenderBuffer vertexBuffer;
-        RenderBuffer elementBuffer;
-        RenderBuffer tessellationLevelBuffer;
-        uint32 elementCount;
-    } terrainMesh;
-
     TerrainTile *terrainTiles;
     uint32 terrainTileCount;
 

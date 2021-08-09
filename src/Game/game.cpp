@@ -64,63 +64,12 @@ bool initializeGame(GameMemory *memory)
 
     float tileLengthInWorldUnits = 128.0f;
     state->heightfield = {};
-    state->heightfield.vertsPerEdge = HEIGHTFIELD_VERTS_PER_EDGE;
     state->heightfield.heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
-    state->heightfield.spaceBetweenVerts = tileLengthInWorldUnits / (HEIGHTFIELD_VERTS_PER_EDGE - 1);
     state->heightfield.spaceBetweenHeightSamples = tileLengthInWorldUnits / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
     state->heightfield.maxHeight = 25.0f;
     state->heightfield.heights = state->heightfieldHeights;
     state->heightfield.center = glm::vec2(0, 0);
     *state->heightfieldHeights = {0};
-
-    TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
-
-    uint32 terrainMeshVertsPerEdge = state->heightfield.vertsPerEdge;
-    uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
-    uint32 terrainMeshVertexSize = 5;
-    glm::vec3 terrainBoundsMin = glm::vec3(tileLengthInWorldUnits * -0.5f, 0, tileLengthInWorldUnits * -0.5f);
-    float terrainMeshSpacing = tileLengthInWorldUnits / (terrainMeshVertsPerEdge - 1);
-    uint32 terrainMeshElementCount = (terrainMeshVertsPerEdge - 1) * (terrainMeshVertsPerEdge - 1) * 4;
-
-    float *terrainVertices = pushArray(arena, float, (terrainMeshVertexCount * terrainMeshVertexSize));
-    uint32 *terrainIndices = pushArray(arena, uint32, terrainMeshElementCount);
-
-    float *currentVertex = terrainVertices;
-    uint32 *currentIndex = terrainIndices;
-    for (uint32 y = 0; y < terrainMeshVertsPerEdge; y++)
-    {
-        for (uint32 x = 0; x < terrainMeshVertsPerEdge; x++)
-        {
-            *currentVertex++ = terrainBoundsMin.x + (x * terrainMeshSpacing);
-            *currentVertex++ = terrainBoundsMin.y;
-            *currentVertex++ = terrainBoundsMin.z + (y * terrainMeshSpacing);
-            *currentVertex++ = x / (float)(terrainMeshVertsPerEdge - 1);
-            *currentVertex++ = y / (float)(terrainMeshVertsPerEdge - 1);
-
-            if (y < terrainMeshVertsPerEdge - 1 && x < terrainMeshVertsPerEdge - 1)
-            {
-                uint32 patchIndex = (y * terrainMeshVertsPerEdge) + x;
-                *currentIndex++ = patchIndex;
-                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge;
-                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge + 1;
-                *currentIndex++ = patchIndex + 1;
-            }
-        }
-    }
-
-    state->terrainMeshElementCount = terrainMeshElementCount;
-    state->terrainMeshVertexBuffer = engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&state->terrainMeshVertexBuffer,
-        terrainMeshVertexCount * terrainMeshVertexSize * sizeof(float), terrainVertices);
-    state->terrainMeshElementBuffer = engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        &state->terrainMeshElementBuffer, terrainMeshElementCount * sizeof(uint32), terrainIndices);
-    state->terrainMeshTessLevelBuffer =
-        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    engine->rendererUpdateBuffer(
-        &state->terrainMeshTessLevelBuffer, terrainMeshVertexCount * sizeof(glm::vec4), 0);
-
-    endTemporaryMemory(&terrainMeshMemory);
 
     state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
@@ -475,11 +424,9 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
-        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, state->terrainMeshVertexBuffer.id,
-        state->terrainMeshElementBuffer.id, state->terrainMeshTessLevelBuffer.id, state->terrainMeshElementCount,
-        MATERIAL_COUNT, state->albedoTextureArrayId, state->normalTextureArrayId,
-        state->displacementTextureArrayId, state->aoTextureArrayId, state->materialPropsBuffer.id,
-        state->isWireframeMode, 0, glm::vec2(0), 0, 0);
+        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->albedoTextureArrayId,
+        state->normalTextureArrayId, state->displacementTextureArrayId, state->aoTextureArrayId,
+        state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);

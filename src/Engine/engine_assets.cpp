@@ -37,6 +37,7 @@ AssetRegistration *registerAsset(Assets *assets, AssetType type, const char *rel
     {
         reg->regType = ASSET_REG_FILE;
         reg->fileState = pushStruct(assets->arena, AssetFileState);
+        *reg->fileState = {};
 
         const char *srcCursor = relativePath;
         while (*srcCursor)
@@ -73,6 +74,7 @@ AssetRegistration *registerAsset(Assets *assets, AssetType type, const char *rel
 ASSETS_INITIALIZE(assetsInitialize)
 {
     Assets *result = pushStruct(arena, Assets);
+    *result = {};
     result->arena = arena;
     result->rctx = rctx;
 

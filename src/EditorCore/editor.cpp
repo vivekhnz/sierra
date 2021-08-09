@@ -146,9 +146,7 @@ void initializeEditor(EditorMemory *memory)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
         tile->heightfield = pushStruct(arena, Heightfield);
-        tile->heightfield->vertsPerEdge = HEIGHTFIELD_VERTS_PER_EDGE;
         tile->heightfield->heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
-        tile->heightfield->spaceBetweenVerts = tileLengthInWorldUnits / (HEIGHTFIELD_VERTS_PER_EDGE - 1);
         tile->heightfield->spaceBetweenHeightSamples = tileLengthInWorldUnits / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
         tile->heightfield->maxHeight = 200;
         tile->heightfield->center = glm::vec2(0, 0);
@@ -190,56 +188,6 @@ void initializeEditor(EditorMemory *memory)
 
     sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
 #endif
-
-    // create terrain mesh
-    TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
-
-    uint32 terrainMeshVertsPerEdge = firstTile->heightfield->vertsPerEdge;
-    uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
-    uint32 terrainMeshVertexSize = 5;
-    glm::vec3 terrainBoundsMin = glm::vec3(tileLengthInWorldUnits * -0.5f, 0, tileLengthInWorldUnits * -0.5f);
-    float terrainMeshSpacing = tileLengthInWorldUnits / (terrainMeshVertsPerEdge - 1);
-    uint32 terrainMeshElementCount = (terrainMeshVertsPerEdge - 1) * (terrainMeshVertsPerEdge - 1) * 4;
-
-    float *terrainVertices = pushArray(arena, float, (terrainMeshVertexCount * terrainMeshVertexSize));
-    uint32 *terrainIndices = pushArray(arena, uint32, terrainMeshElementCount);
-
-    float *currentVertex = terrainVertices;
-    uint32 *currentIndex = terrainIndices;
-    for (uint32 y = 0; y < terrainMeshVertsPerEdge; y++)
-    {
-        for (uint32 x = 0; x < terrainMeshVertsPerEdge; x++)
-        {
-            *currentVertex++ = terrainBoundsMin.x + (x * terrainMeshSpacing);
-            *currentVertex++ = terrainBoundsMin.y;
-            *currentVertex++ = terrainBoundsMin.z + (y * terrainMeshSpacing);
-            *currentVertex++ = x / (float)(terrainMeshVertsPerEdge - 1);
-            *currentVertex++ = y / (float)(terrainMeshVertsPerEdge - 1);
-
-            if (y < terrainMeshVertsPerEdge - 1 && x < terrainMeshVertsPerEdge - 1)
-            {
-                uint32 patchIndex = (y * terrainMeshVertsPerEdge) + x;
-                *currentIndex++ = patchIndex;
-                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge;
-                *currentIndex++ = patchIndex + terrainMeshVertsPerEdge + 1;
-                *currentIndex++ = patchIndex + 1;
-            }
-        }
-    }
-
-    sceneState->terrainMesh.elementCount = terrainMeshElementCount;
-    sceneState->terrainMesh.vertexBuffer = engine->rendererCreateBuffer(RENDERER_VERTEX_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(&sceneState->terrainMesh.vertexBuffer,
-        terrainMeshVertexCount * terrainMeshVertexSize * sizeof(float), terrainVertices);
-    sceneState->terrainMesh.elementBuffer = engine->rendererCreateBuffer(RENDERER_ELEMENT_BUFFER, GL_STATIC_DRAW);
-    engine->rendererUpdateBuffer(
-        &sceneState->terrainMesh.elementBuffer, terrainMeshElementCount * sizeof(uint32), terrainIndices);
-    sceneState->terrainMesh.tessellationLevelBuffer =
-        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_STREAM_COPY);
-    engine->rendererUpdateBuffer(
-        &sceneState->terrainMesh.tessellationLevelBuffer, terrainMeshVertexCount * sizeof(glm::vec4), 0);
-
-    endTemporaryMemory(&terrainMeshMemory);
 
     sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
@@ -1478,10 +1426,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
-            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->terrainMesh.vertexBuffer.id,
-            sceneState->terrainMesh.elementBuffer.id, sceneState->terrainMesh.tessellationLevelBuffer.id,
-            sceneState->terrainMesh.elementCount, sceneState->materialCount, sceneState->albedoTextureArrayId,
-            sceneState->normalTextureArrayId, sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
+            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
+            sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
+            sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
             sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
             sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
     }

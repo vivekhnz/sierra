@@ -114,11 +114,6 @@ struct DrawTerrainCommand
     TextureHandle oppositeHeightmapTexture;
     TextureHandle oppositeReferenceHeightmapTexture;
 
-    uint32 meshVertexBufferId;
-    uint32 meshElementBufferId;
-    uint32 tessellationLevelBufferId;
-    uint32 meshElementCount;
-
     uint32 materialCount;
     uint32 albedoTextureArrayId;
     uint32 normalTextureArrayId;

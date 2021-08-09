@@ -411,11 +411,6 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->oppositeHeightmapTexture = oppositeHeightmapTexture;
     cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
-    cmd->meshVertexBufferId = meshVertexBufferId;
-    cmd->meshElementBufferId = meshElementBufferId;
-    cmd->tessellationLevelBufferId = tessellationLevelBufferId;
-    cmd->meshElementCount = meshElementCount;
-
     cmd->materialCount = materialCount;
     cmd->albedoTextureArrayId = albedoTextureArrayId;
     cmd->normalTextureArrayId = normalTextureArrayId;

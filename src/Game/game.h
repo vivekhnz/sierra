@@ -4,7 +4,6 @@
 #include <glm/gtc/type_ptr.hpp>
 #include "../Engine/engine.h"
 
-#define HEIGHTFIELD_VERTS_PER_EDGE 256
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 256
 #define MATERIAL_COUNT 3
 
@@ -70,11 +69,6 @@ struct GameState
 
     Heightfield heightfield;
     float heightfieldHeights[HEIGHTFIELD_SAMPLES_PER_EDGE * HEIGHTFIELD_SAMPLES_PER_EDGE];
-
-    RenderBuffer terrainMeshVertexBuffer;
-    RenderBuffer terrainMeshElementBuffer;
-    uint32 terrainMeshElementCount;
-    RenderBuffer terrainMeshTessLevelBuffer;
 
     TextureHandle heightmapTexture;
     uint8 heightmapTextureVersion;
