@@ -1429,7 +1429,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
-            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount, MAX_MATERIAL_COUNT,
+            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
             sceneState->textureArrayId_RGBA8_2048x2048, sceneState->textureArrayId_R16_2048x2048,
             sceneState->textureArrayId_R8_2048x2048, sceneState->materialPropsBuffer.id, false, visualizationMode,
             sceneState->worldState.brushPos, sceneState->worldState.brushRadius,

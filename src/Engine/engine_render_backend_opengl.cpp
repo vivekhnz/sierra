@@ -934,8 +934,6 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     glm::value_ptr(cmd->heightmapSize));
                 glProgramUniform1i(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "materialCount"), cmd->materialCount);
-                glProgramUniform1i(terrainShaderProgramId,
-                    glGetUniformLocation(terrainShaderProgramId, "maxMaterialCount"), cmd->maxMaterialCount);
                 glProgramUniform3fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainDimensions"), 1,
                     glm::value_ptr(terrainDimensions));

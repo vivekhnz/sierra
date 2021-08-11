@@ -401,7 +401,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
-        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, MATERIAL_COUNT,
+        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT,
         state->textureArrayId_RGBA8_2048x2048, state->textureArrayId_R16_2048x2048,
         state->textureArrayId_R8_2048x2048, state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0),
         0, 0);

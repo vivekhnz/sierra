@@ -14,7 +14,6 @@ layout (std140, binding = 1) uniform Lighting
 };
 
 uniform int materialCount;
-uniform int maxMaterialCount;
 uniform vec3 terrainDimensions;
 
 layout(binding = 1) uniform sampler2DArray textures_RGB8_2048_2048;

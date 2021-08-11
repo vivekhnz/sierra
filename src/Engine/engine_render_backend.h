@@ -115,7 +115,6 @@ struct DrawTerrainCommand
     TextureHandle oppositeReferenceHeightmapTexture;
 
     uint32 materialCount;
-    uint32 maxMaterialCount;
     uint32 textureArrayId_RGBA8_2048x2048;
     uint32 textureArrayId_R16_2048x2048;
     uint32 textureArrayId_R8_2048x2048;
