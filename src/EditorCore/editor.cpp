@@ -191,14 +191,14 @@ void initializeEditor(EditorMemory *memory)
 
     sceneState->textureArrayId_RGBA8_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT * 2, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->displacementTextureArrayId = engine->rendererCreateTextureArray(
+    sceneState->textureArrayId_R16_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->aoTextureArrayId = engine->rendererCreateTextureArray(
+    sceneState->textureArrayId_R8_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     memset(sceneState->textures_RGBA8_2048x2048, 0, sizeof(sceneState->textures_RGBA8_2048x2048));
-    memset(sceneState->displacementTextures, 0, sizeof(sceneState->displacementTextures));
-    memset(sceneState->aoTextures, 0, sizeof(sceneState->aoTextures));
+    memset(sceneState->textures_R16_2048x2048, 0, sizeof(sceneState->textures_R16_2048x2048));
+    memset(sceneState->textures_R8_2048x2048, 0, sizeof(sceneState->textures_R8_2048x2048));
 
     sceneState->materialPropsBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
@@ -738,11 +738,11 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         if (assetHandle)
         {
             uint32 slice = layerIdx;
-            binding = &sceneState->displacementTextures[slice];
+            binding = &sceneState->textures_R16_2048x2048[slice];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->displacementTextureArrayId, GL_UNSIGNED_SHORT,
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT,
                     GL_RED, asset->texture->width, asset->texture->height, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
@@ -753,12 +753,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         if (assetHandle)
         {
             uint32 slice = layerIdx;
-            binding = &sceneState->aoTextures[slice];
+            binding = &sceneState->textures_R8_2048x2048[slice];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->aoTextureArrayId, GL_UNSIGNED_BYTE, GL_RED,
-                    asset->texture->width, asset->texture->height, slice, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE,
+                    GL_RED, asset->texture->width, asset->texture->height, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -1426,8 +1426,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount, MAX_MATERIAL_COUNT,
-            sceneState->textureArrayId_RGBA8_2048x2048, sceneState->displacementTextureArrayId,
-            sceneState->aoTextureArrayId, sceneState->materialPropsBuffer.id, false, visualizationMode,
+            sceneState->textureArrayId_RGBA8_2048x2048, sceneState->textureArrayId_R16_2048x2048,
+            sceneState->textureArrayId_R8_2048x2048, sceneState->materialPropsBuffer.id, false, visualizationMode,
             sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
             sceneState->worldState.brushFalloff);
     }

@@ -76,9 +76,9 @@ bool initializeGame(GameMemory *memory)
 
     state->textureArrayId_RGBA8_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_RGBA, GL_RGB, 2048, 2048, MATERIAL_COUNT * 2, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->displacementTextureArrayId = engine->rendererCreateTextureArray(
+    state->textureArrayId_R16_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->aoTextureArrayId = engine->rendererCreateTextureArray(
+    state->textureArrayId_R8_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
     /*
@@ -342,14 +342,14 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureGroundDisplacement);
     if (asset->texture && asset->version > state->groundDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->displacementTextureArrayId, GL_UNSIGNED_SHORT, GL_RED,
+        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT, GL_RED,
             asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundAo);
     if (asset->texture && asset->version > state->groundAoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->aoTextureArrayId, GL_UNSIGNED_BYTE, GL_RED,
+        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE, GL_RED,
             asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundAoTextureVersion = asset->version;
     }
@@ -370,14 +370,14 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureRockDisplacement);
     if (asset->texture && asset->version > state->rockDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->displacementTextureArrayId, GL_UNSIGNED_SHORT, GL_RED,
+        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT, GL_RED,
             asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockAo);
     if (asset->texture && asset->version > state->rockAoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->aoTextureArrayId, GL_UNSIGNED_BYTE, GL_RED,
+        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE, GL_RED,
             asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockAoTextureVersion = asset->version;
     }
@@ -398,14 +398,14 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureSnowDisplacement);
     if (asset->texture && asset->version > state->snowDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->displacementTextureArrayId, GL_UNSIGNED_SHORT, GL_RED,
+        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT, GL_RED,
             asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowAo);
     if (asset->texture && asset->version > state->snowAoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->aoTextureArrayId, GL_UNSIGNED_BYTE, GL_RED,
+        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE, GL_RED,
             asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowAoTextureVersion = asset->version;
     }
@@ -423,8 +423,9 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
         state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, MATERIAL_COUNT,
-        state->textureArrayId_RGBA8_2048x2048, state->displacementTextureArrayId, state->aoTextureArrayId,
-        state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
+        state->textureArrayId_RGBA8_2048x2048, state->textureArrayId_R16_2048x2048,
+        state->textureArrayId_R8_2048x2048, state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0),
+        0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);

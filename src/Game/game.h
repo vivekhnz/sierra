@@ -74,8 +74,8 @@ struct GameState
     uint8 heightmapTextureVersion;
 
     uint32 textureArrayId_RGBA8_2048x2048;
-    uint32 displacementTextureArrayId;
-    uint32 aoTextureArrayId;
+    uint32 textureArrayId_R16_2048x2048;
+    uint32 textureArrayId_R8_2048x2048;
 
     RenderBuffer materialPropsBuffer;
 };

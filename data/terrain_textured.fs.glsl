@@ -18,8 +18,8 @@ uniform int maxMaterialCount;
 uniform vec3 terrainDimensions;
 
 layout(binding = 1) uniform sampler2DArray textures_RGB8_2048_2048;
-layout(binding = 3) uniform sampler2DArray displacementTextures;
-layout(binding = 4) uniform sampler2DArray aoTextures;
+layout(binding = 2) uniform sampler2DArray textures_R16_2048x2048;
+layout(binding = 3) uniform sampler2DArray textures_R8_2048x2048;
 
 struct MaterialProperties
 {
@@ -57,12 +57,12 @@ vec3 getNormal(vec2 uv, int slice)
 float getDisplacement(vec2 uv, int slice)
 {
     vec3 uv3 = vec3(uv, slice);
-    return texture(displacementTextures, uv3).r;
+    return texture(textures_R16_2048x2048, uv3).r;
 }
 float getAO(vec2 uv, int slice)
 {
     vec3 uv3 = vec3(uv, slice);
-    return texture(aoTextures, uv3).r;
+    return texture(textures_R8_2048x2048, uv3).r;
 }
 
 vec3 calcTriplanarBlend(vec3 normal)

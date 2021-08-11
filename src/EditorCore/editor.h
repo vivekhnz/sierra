@@ -131,12 +131,12 @@ struct SceneState
     uint32 objectInstanceCount;
 
     uint32 textureArrayId_RGBA8_2048x2048;
-    uint32 displacementTextureArrayId;
-    uint32 aoTextureArrayId;
+    uint32 textureArrayId_R16_2048x2048;
+    uint32 textureArrayId_R8_2048x2048;
 
     TextureAssetBinding textures_RGBA8_2048x2048[MAX_MATERIAL_COUNT * 2];
-    TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
-    TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding textures_R16_2048x2048[MAX_MATERIAL_COUNT];
+    TextureAssetBinding textures_R8_2048x2048[MAX_MATERIAL_COUNT];
 
     RenderBuffer materialPropsBuffer;
     uint32 nextMaterialId;

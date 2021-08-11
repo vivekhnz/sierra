@@ -414,8 +414,8 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->materialCount = materialCount;
     cmd->maxMaterialCount = maxMaterialCount;
     cmd->textureArrayId_RGBA8_2048x2048 = textureArrayId_RGBA8_2048x2048;
-    cmd->displacementTextureArrayId = displacementTextureArrayId;
-    cmd->aoTextureArrayId = aoTextureArrayId;
+    cmd->textureArrayId_R16_2048x2048 = textureArrayId_R16_2048x2048;
+    cmd->textureArrayId_R8_2048x2048 = textureArrayId_R8_2048x2048;
     cmd->materialPropsBufferId = materialPropsBufferId;
 
     cmd->isWireframe = isWireframe;
