@@ -44,9 +44,25 @@ uniform float cursorFalloff;
 
 out vec4 FragColor;
 
-float calcRingOpacity(float radius, float width, float distFromCenter)
+vec3 getAlbedo(vec2 uv, int slice)
 {
-    return max(1 - abs((((distFromCenter - radius) / width) * 2) - 1), 0);
+    vec3 uv3 = vec3(uv, slice);
+    return texture(albedoTextures, uv3).rgb;
+}
+vec3 getNormal(vec2 uv, int slice)
+{
+    vec3 uv3 = vec3(uv, slice);
+    return (texture(normalTextures, uv3).rgb * 2) - 1;
+}
+float getDisplacement(vec2 uv, int slice)
+{
+    vec3 uv3 = vec3(uv, slice);
+    return texture(displacementTextures, uv3).r;
+}
+float getAO(vec2 uv, int slice)
+{
+    vec3 uv3 = vec3(uv, slice);
+    return texture(aoTextures, uv3).r;
 }
 
 vec3 calcTriplanarBlend(vec3 normal)
@@ -57,15 +73,18 @@ vec3 calcTriplanarBlend(vec3 normal)
     blend /= blend.x + blend.y + blend.z;
     return blend;
 }
-
 float triplanar1D(float xVal, float yVal, float zVal, vec3 blend)
 {
     return (xVal * blend.x) + (yVal * blend.y) + (zVal * blend.z);
 }
-
 vec3 triplanar3D(vec3 xVal, vec3 yVal, vec3 zVal, vec3 blend)
 {
     return (xVal * blend.x) + (yVal * blend.y) + (zVal * blend.z);
+}
+
+float calcRingOpacity(float radius, float width, float distFromCenter)
+{
+    return max(1 - abs((((distFromCenter - radius) / width) * 2) - 1), 0);
 }
 
 void main()
@@ -93,12 +112,12 @@ void main()
     for (int i = 0; i < materialCount; i++)
     {
         vec2 textureSizeInWorldUnits = materialProps[i].textureSizeInWorldUnits;
-        vec3 materialTexcoordsX = vec3(baseTexcoordsX / textureSizeInWorldUnits.yy, i);
-        vec3 materialTexcoordsY = vec3(baseTexcoordsY / textureSizeInWorldUnits.xy, i);
-        vec3 materialTexcoordsZ = vec3(baseTexcoordsZ / textureSizeInWorldUnits.xy, i);
+        vec2 mUVX = baseTexcoordsX / textureSizeInWorldUnits.yy;
+        vec2 mUVY = baseTexcoordsY / textureSizeInWorldUnits.xy;
+        vec2 mUVZ = baseTexcoordsZ / textureSizeInWorldUnits.xy;
 
         float currentLayerDisplacement = triplanar1D(0,
-            texture(displacementTextures, materialTexcoordsY).r * triAxisSign.y,
+            getDisplacement(mUVY, i) * triAxisSign.y,
             0, triBlend);
         
         float blendAmount = 1;
@@ -118,29 +137,21 @@ void main()
 
         if (lighting_isTextureEnabled)
         {
-            vec3 mat_albedo = triplanar3D(
-                texture(albedoTextures, materialTexcoordsX).rgb,
-                texture(albedoTextures, materialTexcoordsY).rgb,
-                texture(albedoTextures, materialTexcoordsZ).rgb,
-                triBlend);
+            vec3 mat_albedo = triplanar3D(getAlbedo(mUVX, i), getAlbedo(mUVY, i), getAlbedo(mUVZ, i), triBlend);
             material_albedo = mix(material_albedo, mat_albedo, blendAmount);
         }
         if (lighting_isNormalMapEnabled)
         {
             vec3 mat_normal = triplanar3D(
-                ((texture(normalTextures, materialTexcoordsX).rgb * 2) - 1) * vec3(triAxisSign.x, 1, 1),
-                ((texture(normalTextures, materialTexcoordsY).rgb * 2) - 1) * vec3(triAxisSign.y, 1, 1),
-                ((texture(normalTextures, materialTexcoordsZ).rgb * 2) - 1) * vec3(triAxisSign.z, 1, 1),
+                getNormal(mUVX, i) * vec3(triAxisSign.x, 1, 1),
+                getNormal(mUVY, i) * vec3(triAxisSign.y, 1, 1),
+                getNormal(mUVZ, i) * vec3(triAxisSign.z, 1, 1),
                 triBlend);
             material_normal = mix(material_normal, mat_normal, blendAmount);
         }
         if (lighting_isAOMapEnabled)
         {
-            float mat_ao = triplanar1D(
-                texture(aoTextures, materialTexcoordsX).r,
-                texture(aoTextures, materialTexcoordsY).r,
-                texture(aoTextures, materialTexcoordsZ).r,
-                triBlend);
+            float mat_ao = triplanar1D(getAO(mUVX, i), getAO(mUVY, i), getAO(mUVZ, i), triBlend);
             material_ao = mix(material_ao, mat_ao, blendAmount);
         }
         

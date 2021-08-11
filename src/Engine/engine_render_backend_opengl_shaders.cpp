@@ -211,10 +211,10 @@ vec2 lerp2D(vec2 a, vec2 b, vec2 c, vec2 d)
 }
 float getDisplacement(vec2 uv, int layerIdx, float mip)
 {
-    vec3 uvLayered = vec3(uv, layerIdx);
+    vec3 uv3 = vec3(uv, layerIdx);
     return mix(
-        textureLod(displacementTextures, uvLayered, floor(mip)).x,
-        textureLod(displacementTextures, uvLayered, ceil(mip)).x,
+        textureLod(displacementTextures, uv3, floor(mip)).x,
+        textureLod(displacementTextures, uv3, ceil(mip)).x,
         fract(mip));
 }
 float calcHeight(vec2 uv, sampler2D thisTileTex,
