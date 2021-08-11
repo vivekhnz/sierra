@@ -412,8 +412,8 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->materialCount = materialCount;
-    cmd->albedoTextureArrayId = albedoTextureArrayId;
-    cmd->normalTextureArrayId = normalTextureArrayId;
+    cmd->maxMaterialCount = maxMaterialCount;
+    cmd->textureArrayId_RGBA8_2048x2048 = textureArrayId_RGBA8_2048x2048;
     cmd->displacementTextureArrayId = displacementTextureArrayId;
     cmd->aoTextureArrayId = aoTextureArrayId;
     cmd->materialPropsBufferId = materialPropsBufferId;

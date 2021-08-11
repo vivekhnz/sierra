@@ -918,9 +918,7 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->albedoTextureArrayId);
-                glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->normalTextureArrayId);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->textureArrayId_RGBA8_2048x2048);
                 glActiveTexture(GL_TEXTURE3);
                 glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->displacementTextureArrayId);
                 glActiveTexture(GL_TEXTURE4);
@@ -936,6 +934,8 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     glm::value_ptr(cmd->heightmapSize));
                 glProgramUniform1i(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "materialCount"), cmd->materialCount);
+                glProgramUniform1i(terrainShaderProgramId,
+                    glGetUniformLocation(terrainShaderProgramId, "maxMaterialCount"), cmd->maxMaterialCount);
                 glProgramUniform3fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainDimensions"), 1,
                     glm::value_ptr(terrainDimensions));

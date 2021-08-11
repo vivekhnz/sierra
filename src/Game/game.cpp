@@ -74,10 +74,8 @@ bool initializeGame(GameMemory *memory)
     state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
-    state->albedoTextureArrayId = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_RGBA, GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->normalTextureArrayId = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->textureArrayId_RGBA8_2048x2048 = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_RGBA, GL_RGB, 2048, 2048, MATERIAL_COUNT * 2, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     state->displacementTextureArrayId = engine->rendererCreateTextureArray(
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     state->aoTextureArrayId = engine->rendererCreateTextureArray(
@@ -330,15 +328,15 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureGroundAlbedo);
     if (asset->texture && asset->version > state->groundAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
             asset->texture->width, asset->texture->height, 0, asset->texture->data);
         state->groundAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundNormal);
     if (asset->texture && asset->version > state->groundNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, 0, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, MATERIAL_COUNT, asset->texture->data);
         state->groundNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundDisplacement);
@@ -358,15 +356,15 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureRockAlbedo);
     if (asset->texture && asset->version > state->rockAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
             asset->texture->width, asset->texture->height, 1, asset->texture->data);
         state->rockAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockNormal);
     if (asset->texture && asset->version > state->rockNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, 1, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, MATERIAL_COUNT + 1, asset->texture->data);
         state->rockNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockDisplacement);
@@ -386,15 +384,15 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureSnowAlbedo);
     if (asset->texture && asset->version > state->snowAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
             asset->texture->width, asset->texture->height, 2, asset->texture->data);
         state->snowAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowNormal);
     if (asset->texture && asset->version > state->snowNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, 2, asset->texture->data);
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
+            asset->texture->width, asset->texture->height, MATERIAL_COUNT + 2, asset->texture->data);
         state->snowNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowDisplacement);
@@ -424,8 +422,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
-        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->albedoTextureArrayId,
-        state->normalTextureArrayId, state->displacementTextureArrayId, state->aoTextureArrayId,
+        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, MATERIAL_COUNT,
+        state->textureArrayId_RGBA8_2048x2048, state->displacementTextureArrayId, state->aoTextureArrayId,
         state->materialPropsBuffer.id, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 

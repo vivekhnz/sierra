@@ -73,8 +73,7 @@ struct GameState
     TextureHandle heightmapTexture;
     uint8 heightmapTextureVersion;
 
-    uint32 albedoTextureArrayId;
-    uint32 normalTextureArrayId;
+    uint32 textureArrayId_RGBA8_2048x2048;
     uint32 displacementTextureArrayId;
     uint32 aoTextureArrayId;
 

@@ -130,13 +130,11 @@ struct SceneState
     RenderMeshInstance objectInstanceData[MAX_OBJECT_INSTANCES];
     uint32 objectInstanceCount;
 
-    uint32 albedoTextureArrayId;
-    uint32 normalTextureArrayId;
+    uint32 textureArrayId_RGBA8_2048x2048;
     uint32 displacementTextureArrayId;
     uint32 aoTextureArrayId;
 
-    TextureAssetBinding albedoTextures[MAX_MATERIAL_COUNT];
-    TextureAssetBinding normalTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding textures_RGBA8_2048x2048[MAX_MATERIAL_COUNT * 2];
     TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
     TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 

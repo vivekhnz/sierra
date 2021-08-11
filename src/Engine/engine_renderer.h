@@ -137,7 +137,7 @@ typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
         TextureHandle xAdjacentHeightmapTexture, TextureHandle xAdjacentReferenceHeightmapTexture,                \
         TextureHandle yAdjacentHeightmapTexture, TextureHandle yAdjacentReferenceHeightmapTexture,                \
         TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
-        uint32 materialCount, uint32 albedoTextureArrayId, uint32 normalTextureArrayId,                           \
+        uint32 materialCount, uint32 maxMaterialCount, uint32 textureArrayId_RGBA8_2048x2048,                     \
         uint32 displacementTextureArrayId, uint32 aoTextureArrayId, uint32 materialPropsBufferId,                 \
         bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
 typedef RENDERER_PUSH_TERRAIN(RendererPushTerrain);

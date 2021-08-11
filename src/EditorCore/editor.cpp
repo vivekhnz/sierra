@@ -189,22 +189,17 @@ void initializeEditor(EditorMemory *memory)
     sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
 #endif
 
-    sceneState->albedoTextureArrayId = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->normalTextureArrayId = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->textureArrayId_RGBA8_2048x2048 = engine->rendererCreateTextureArray(
+        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT * 2, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     sceneState->displacementTextureArrayId = engine->rendererCreateTextureArray(
         GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
     sceneState->aoTextureArrayId = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
-    for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
-    {
-        sceneState->albedoTextures[i] = {};
-        sceneState->normalTextures[i] = {};
-        sceneState->displacementTextures[i] = {};
-        sceneState->aoTextures[i] = {};
-    }
+    memset(sceneState->textures_RGBA8_2048x2048, 0, sizeof(sceneState->textures_RGBA8_2048x2048));
+    memset(sceneState->displacementTextures, 0, sizeof(sceneState->displacementTextures));
+    memset(sceneState->aoTextures, 0, sizeof(sceneState->aoTextures));
+
     sceneState->materialPropsBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     sceneState->nextMaterialId = 1;
@@ -712,12 +707,13 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->albedoTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            binding = &sceneState->albedoTextures[layerIdx];
+            uint32 slice = layerIdx;
+            binding = &sceneState->textures_RGBA8_2048x2048[slice];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->albedoTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
-                    asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE,
+                    GL_RGB, asset->texture->width, asset->texture->height, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -726,12 +722,13 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->normalTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            binding = &sceneState->normalTextures[layerIdx];
+            uint32 slice = MAX_MATERIAL_COUNT + layerIdx;
+            binding = &sceneState->textures_RGBA8_2048x2048[slice];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->normalTextureArrayId, GL_UNSIGNED_BYTE, GL_RGB,
-                    asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE,
+                    GL_RGB, asset->texture->width, asset->texture->height, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -740,12 +737,13 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->displacementTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            binding = &sceneState->displacementTextures[layerIdx];
+            uint32 slice = layerIdx;
+            binding = &sceneState->displacementTextures[slice];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(sceneState->displacementTextureArrayId, GL_UNSIGNED_SHORT,
-                    GL_RED, asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
+                    GL_RED, asset->texture->width, asset->texture->height, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -754,12 +752,13 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->aoTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            binding = &sceneState->aoTextures[layerIdx];
+            uint32 slice = layerIdx;
+            binding = &sceneState->aoTextures[slice];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(sceneState->aoTextureArrayId, GL_UNSIGNED_BYTE, GL_RED,
-                    asset->texture->width, asset->texture->height, layerIdx, asset->texture->data);
+                    asset->texture->width, asset->texture->height, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -1426,11 +1425,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
-            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
-            sceneState->albedoTextureArrayId, sceneState->normalTextureArrayId,
-            sceneState->displacementTextureArrayId, sceneState->aoTextureArrayId,
-            sceneState->materialPropsBuffer.id, false, visualizationMode, sceneState->worldState.brushPos,
-            sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
+            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount, MAX_MATERIAL_COUNT,
+            sceneState->textureArrayId_RGBA8_2048x2048, sceneState->displacementTextureArrayId,
+            sceneState->aoTextureArrayId, sceneState->materialPropsBuffer.id, false, visualizationMode,
+            sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
+            sceneState->worldState.brushFalloff);
     }
 
     RenderEffect *rockEffect =
