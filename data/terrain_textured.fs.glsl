@@ -16,7 +16,7 @@ layout (std140, binding = 1) uniform Lighting
 uniform int materialCount;
 uniform vec3 terrainDimensions;
 
-layout(binding = 1) uniform sampler2DArray textures_RGB8_2048_2048;
+layout(binding = 1) uniform sampler2DArray textures_RGB8_2048x2048;
 layout(binding = 2) uniform sampler2DArray textures_R16_2048x2048;
 layout(binding = 3) uniform sampler2DArray textures_R8_2048x2048;
 
@@ -47,12 +47,12 @@ out vec4 FragColor;
 vec3 getAlbedo(vec2 uv, uint textureId)
 {
     vec3 uv3 = vec3(uv, textureId);
-    return texture(textures_RGB8_2048_2048, uv3).rgb;
+    return texture(textures_RGB8_2048x2048, uv3).rgb;
 }
 vec3 getNormal(vec2 uv, uint textureId)
 {
     vec3 uv3 = vec3(uv, textureId);
-    return (texture(textures_RGB8_2048_2048, uv3).rgb * 2) - 1;
+    return (texture(textures_RGB8_2048x2048, uv3).rgb * 2) - 1;
 }
 float getDisplacement(vec2 uv, uint textureId)
 {
