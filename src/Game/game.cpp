@@ -81,42 +81,21 @@ bool initializeGame(GameMemory *memory)
     state->textureArrayId_R8_2048x2048 = engine->rendererCreateTextureArray(
         GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
 
-    /*
-        Material properties consist of:
-          1. Texture Size in world units (vec2)
-          2. Padding (vec2)
-          3. Min Slope (float)
-          4. Max Slope (float)
-          5. Min Altitude (float)
-          6. Max Altitude (float)
-    */
-    float materialProps[MATERIAL_COUNT * 8];
-    materialProps[0] = 2.5f;
-    materialProps[1] = 2.5f;
-    materialProps[2] = 0.0f;
-    materialProps[3] = 0.0f;
-    materialProps[4] = 0.0f;
-    materialProps[5] = 0.0f;
-    materialProps[6] = 0.0f;
-    materialProps[7] = 0.0f;
+    GpuMaterialProperties materialProps[MATERIAL_COUNT];
+    materialProps[0].textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
+    materialProps[0].albedoTexture_normalTexture = 0 << 16 | (MATERIAL_COUNT + 0);
+    materialProps[0].displacementTexture_aoTexture = 0 << 16 | 0;
+    materialProps[0].rampParams = glm::vec4(0, 0, 0, 0);
 
-    materialProps[8] = 13.0f;
-    materialProps[9] = 13.0f;
-    materialProps[10] = 0.0f;
-    materialProps[11] = 0.0f;
-    materialProps[12] = 0.2f;
-    materialProps[13] = 0.4f;
-    materialProps[14] = 0.0f;
-    materialProps[15] = 0.001f;
+    materialProps[1].textureSizeInWorldUnits = glm::vec2(13, 13);
+    materialProps[1].albedoTexture_normalTexture = 1 << 16 | (MATERIAL_COUNT + 1);
+    materialProps[1].displacementTexture_aoTexture = 1 << 16 | 1;
+    materialProps[1].rampParams = glm::vec4(0.2f, 0.4f, 0, 0.001f);
 
-    materialProps[16] = 2.0f;
-    materialProps[17] = 2.0f;
-    materialProps[18] = 0.0f;
-    materialProps[19] = 0.0f;
-    materialProps[20] = 0.4f;
-    materialProps[21] = 0.2f;
-    materialProps[22] = 0.25f;
-    materialProps[23] = 0.28f;
+    materialProps[2].textureSizeInWorldUnits = glm::vec2(2, 2);
+    materialProps[2].albedoTexture_normalTexture = 2 << 16 | (MATERIAL_COUNT + 2);
+    materialProps[2].displacementTexture_aoTexture = 2 << 16 | 2;
+    materialProps[2].rampParams = glm::vec4(0.4f, 0.2f, 0.25f, 0.28f);
 
     state->materialPropsBuffer = engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     engine->rendererUpdateBuffer(&state->materialPropsBuffer, sizeof(materialProps), materialProps);

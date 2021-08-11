@@ -189,7 +189,8 @@ layout(binding = 10) uniform sampler2D oppositeReferenceHeightmapTexture;
 struct MaterialProperties
 {
     vec2 textureSizeInWorldUnits;
-    vec2 _padding;
+    uint albedoTexture_normalTexture;
+    uint displacementTexture_aoTexture;
     vec4 rampParams;
 };
 layout(std430, binding = 1) buffer materialPropsBuffer
@@ -209,9 +210,9 @@ vec2 lerp2D(vec2 a, vec2 b, vec2 c, vec2 d)
 {
     return mix(mix(a, d, gl_TessCoord.x), mix(b, c, gl_TessCoord.x), gl_TessCoord.y);
 }
-float getDisplacement(vec2 uv, int layerIdx, float mip)
+float getDisplacement(vec2 uv, uint textureId, float mip)
 {
-    vec3 uv3 = vec3(uv, layerIdx);
+    vec3 uv3 = vec3(uv, textureId);
     return mix(
         textureLod(textures_R16_2048x2048, uv3, floor(mip)).x,
         textureLod(textures_R16_2048x2048, uv3, ceil(mip)).x,
@@ -304,15 +305,16 @@ void main()
         {
             vec2 textureSizeInWorldUnits = materialProps[i].textureSizeInWorldUnits;
 
-            vec2 materialTexcoordsX = baseTexcoordsX / textureSizeInWorldUnits.yy;
-            vec2 materialTexcoordsY = baseTexcoordsY / textureSizeInWorldUnits.xy;
-            vec2 materialTexcoordsZ = baseTexcoordsZ / textureSizeInWorldUnits.xy;
+            vec2 mUVX = baseTexcoordsX / textureSizeInWorldUnits.yy;
+            vec2 mUVY = baseTexcoordsY / textureSizeInWorldUnits.xy;
+            vec2 mUVZ = baseTexcoordsZ / textureSizeInWorldUnits.xy;
 
             float scaledMip = log2(terrainDimensions.x / textureSizeInWorldUnits.x);
+            uint displacementTexture = materialProps[i].displacementTexture_aoTexture >> 16;
             vec3 currentLayerDisplacement = triplanar3D(
-                vec3(getDisplacement(materialTexcoordsX, i, scaledMip) * -triAxisSign.x, 0, 0),
-                vec3(0, getDisplacement(materialTexcoordsY, i, scaledMip) * triAxisSign.y, 0),
-                vec3(0, 0, getDisplacement(materialTexcoordsZ, i, scaledMip) * triAxisSign.z),
+                vec3(getDisplacement(mUVX, displacementTexture, scaledMip) * -triAxisSign.x, 0, 0),
+                vec3(0, getDisplacement(mUVY, displacementTexture, scaledMip) * triAxisSign.y, 0),
+                vec3(0, 0, getDisplacement(mUVZ, displacementTexture, scaledMip) * triAxisSign.z),
                 triBlend);
             
             if (i == 0)

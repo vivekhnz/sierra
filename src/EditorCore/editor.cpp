@@ -211,7 +211,11 @@ void initializeEditor(EditorMemory *memory)
     state->docState.materialCount = 0;
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
-        state->docState.materialProps[i] = {};
+        GpuMaterialProperties *mat = &state->docState.materialProps[i];
+        *mat = {};
+        mat->albedoTexture_normalTexture = (i << 16) | (MAX_MATERIAL_COUNT + i);
+        mat->displacementTexture_aoTexture = (i << 16) | i;
+
         state->docState.albedoTextureAssetHandles[i] = 0;
         state->docState.normalTextureAssetHandles[i] = 0;
         state->docState.displacementTextureAssetHandles[i] = 0;

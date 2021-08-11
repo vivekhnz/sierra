@@ -24,7 +24,8 @@ layout(binding = 3) uniform sampler2DArray textures_R8_2048x2048;
 struct MaterialProperties
 {
     vec2 textureSizeInWorldUnits;
-    vec2 _padding;
+    uint albedoTexture_normalTexture;
+    uint displacementTexture_aoTexture;
     vec4 rampParams;
 };
 layout(std430, binding = 1) buffer materialPropsBuffer
@@ -44,24 +45,24 @@ uniform float cursorFalloff;
 
 out vec4 FragColor;
 
-vec3 getAlbedo(vec2 uv, int slice)
+vec3 getAlbedo(vec2 uv, uint textureId)
 {
-    vec3 uv3 = vec3(uv, slice);
+    vec3 uv3 = vec3(uv, textureId);
     return texture(textures_RGB8_2048_2048, uv3).rgb;
 }
-vec3 getNormal(vec2 uv, int slice)
+vec3 getNormal(vec2 uv, uint textureId)
 {
-    vec3 uv3 = vec3(uv, maxMaterialCount + slice);
+    vec3 uv3 = vec3(uv, textureId);
     return (texture(textures_RGB8_2048_2048, uv3).rgb * 2) - 1;
 }
-float getDisplacement(vec2 uv, int slice)
+float getDisplacement(vec2 uv, uint textureId)
 {
-    vec3 uv3 = vec3(uv, slice);
+    vec3 uv3 = vec3(uv, textureId);
     return texture(textures_R16_2048x2048, uv3).r;
 }
-float getAO(vec2 uv, int slice)
+float getAO(vec2 uv, uint textureId)
 {
-    vec3 uv3 = vec3(uv, slice);
+    vec3 uv3 = vec3(uv, textureId);
     return texture(textures_R8_2048x2048, uv3).r;
 }
 
@@ -116,8 +117,16 @@ void main()
         vec2 mUVY = baseTexcoordsY / textureSizeInWorldUnits.xy;
         vec2 mUVZ = baseTexcoordsZ / textureSizeInWorldUnits.xy;
 
+        uint albedoTexture_normalTexture = materialProps[i].albedoTexture_normalTexture;
+        uint displacementTexture_aoTexture = materialProps[i].displacementTexture_aoTexture;
+
+        uint albedoTexture = albedoTexture_normalTexture >> 16;
+        uint normalTexture = albedoTexture_normalTexture & 0xFF;
+        uint displacementTexture = displacementTexture_aoTexture >> 16;
+        uint aoTexture = displacementTexture_aoTexture & 0xFF;
+
         float currentLayerDisplacement = triplanar1D(0,
-            getDisplacement(mUVY, i) * triAxisSign.y,
+            getDisplacement(mUVY, displacementTexture) * triAxisSign.y,
             0, triBlend);
         
         float blendAmount = 1;
@@ -137,21 +146,29 @@ void main()
 
         if (lighting_isTextureEnabled)
         {
-            vec3 mat_albedo = triplanar3D(getAlbedo(mUVX, i), getAlbedo(mUVY, i), getAlbedo(mUVZ, i), triBlend);
+            vec3 mat_albedo = triplanar3D(
+                getAlbedo(mUVX, albedoTexture),
+                getAlbedo(mUVY, albedoTexture),
+                getAlbedo(mUVZ, albedoTexture),
+                triBlend);
             material_albedo = mix(material_albedo, mat_albedo, blendAmount);
         }
         if (lighting_isNormalMapEnabled)
         {
             vec3 mat_normal = triplanar3D(
-                getNormal(mUVX, i) * vec3(triAxisSign.x, 1, 1),
-                getNormal(mUVY, i) * vec3(triAxisSign.y, 1, 1),
-                getNormal(mUVZ, i) * vec3(triAxisSign.z, 1, 1),
+                getNormal(mUVX, normalTexture) * vec3(triAxisSign.x, 1, 1),
+                getNormal(mUVY, normalTexture) * vec3(triAxisSign.y, 1, 1),
+                getNormal(mUVZ, normalTexture) * vec3(triAxisSign.z, 1, 1),
                 triBlend);
             material_normal = mix(material_normal, mat_normal, blendAmount);
         }
         if (lighting_isAOMapEnabled)
         {
-            float mat_ao = triplanar1D(getAO(mUVX, i), getAO(mUVY, i), getAO(mUVZ, i), triBlend);
+            float mat_ao = triplanar1D(
+                getAO(mUVX, aoTexture),
+                getAO(mUVY, aoTexture),
+                getAO(mUVZ, aoTexture),
+                triBlend);
             material_ao = mix(material_ao, mat_ao, blendAmount);
         }
         

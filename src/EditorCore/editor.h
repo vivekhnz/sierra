@@ -104,7 +104,8 @@ struct SceneViewState
 struct GpuMaterialProperties
 {
     glm::vec2 textureSizeInWorldUnits;
-    glm::vec2 _padding;
+    uint32 albedoTexture_normalTexture;
+    uint32 displacementTexture_aoTexture;
     glm::vec4 rampParams;
 };
 

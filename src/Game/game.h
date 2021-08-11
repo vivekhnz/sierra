@@ -27,6 +27,14 @@ struct GameAssets
     AssetHandle textureVirtualHeightmap;
 };
 
+struct GpuMaterialProperties
+{
+    glm::vec2 textureSizeInWorldUnits;
+    uint32 albedoTexture_normalTexture;
+    uint32 displacementTexture_aoTexture;
+    glm::vec4 rampParams;
+};
+
 struct GameState
 {
     MemoryArena assetsArena;
