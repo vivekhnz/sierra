@@ -16,6 +16,7 @@ struct ShaderHandle
 enum TextureFormat
 {
     TEXTURE_FORMAT_RGB8,
+    TEXTURE_FORMAT_R8,
     TEXTURE_FORMAT_R16,
     TEXTURE_FORMAT_R8UI,
     TEXTURE_FORMAT_R16UI,

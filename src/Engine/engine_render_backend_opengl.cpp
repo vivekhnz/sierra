@@ -428,49 +428,72 @@ TextureHandle getTextureHandle(uint32 id, TextureFormat format)
 OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format)
 {
     OpenGlTextureDescriptor result = {};
-    if (format == TEXTURE_FORMAT_RGB8)
+
+    switch (format)
     {
+    case TEXTURE_FORMAT_RGB8:
+    case TEXTURE_FORMAT_R8:
+    case TEXTURE_FORMAT_R8UI:
         result.elementType = GL_UNSIGNED_BYTE;
         result.elementSize = sizeof(uint8);
-        result.cpuFormat = GL_RGB;
-        result.gpuFormat = GL_RGB;
-        result.isInteger = false;
-    }
-    else if (format == TEXTURE_FORMAT_R16)
-    {
+        break;
+
+    case TEXTURE_FORMAT_R16:
+    case TEXTURE_FORMAT_R16UI:
         result.elementType = GL_UNSIGNED_SHORT;
         result.elementSize = sizeof(uint16);
-        result.cpuFormat = GL_R16;
-        result.gpuFormat = GL_RED;
-        result.isInteger = false;
-    }
-    else if (format == TEXTURE_FORMAT_R8UI)
-    {
-        result.elementType = GL_UNSIGNED_BYTE;
-        result.elementSize = sizeof(uint8);
-        result.cpuFormat = GL_R8UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else if (format == TEXTURE_FORMAT_R16UI)
-    {
-        result.elementType = GL_UNSIGNED_SHORT;
-        result.elementSize = sizeof(uint16);
-        result.cpuFormat = GL_R16UI;
-        result.gpuFormat = GL_RED_INTEGER;
-        result.isInteger = true;
-    }
-    else if (format == TEXTURE_FORMAT_R32UI)
-    {
+        break;
+
+    case TEXTURE_FORMAT_R32UI:
         result.elementType = GL_UNSIGNED_INT;
         result.elementSize = sizeof(uint32);
-        result.cpuFormat = GL_R32UI;
+        break;
+    }
+
+    switch (format)
+    {
+    case TEXTURE_FORMAT_RGB8:
+        result.gpuFormat = GL_RGB;
+        result.isInteger = false;
+        break;
+
+    case TEXTURE_FORMAT_R8:
+    case TEXTURE_FORMAT_R16:
+        result.gpuFormat = GL_RED;
+        result.isInteger = false;
+        break;
+
+    case TEXTURE_FORMAT_R8UI:
+    case TEXTURE_FORMAT_R16UI:
+    case TEXTURE_FORMAT_R32UI:
         result.gpuFormat = GL_RED_INTEGER;
         result.isInteger = true;
+        break;
     }
-    else
+
+    switch (format)
     {
+    case TEXTURE_FORMAT_RGB8:
+        result.cpuFormat = GL_RGB;
+        break;
+    case TEXTURE_FORMAT_R8:
+        result.cpuFormat = GL_R8;
+        break;
+    case TEXTURE_FORMAT_R16:
+        result.cpuFormat = GL_R16;
+        break;
+    case TEXTURE_FORMAT_R8UI:
+        result.cpuFormat = GL_R8UI;
+        break;
+    case TEXTURE_FORMAT_R16UI:
+        result.cpuFormat = GL_R16UI;
+        break;
+    case TEXTURE_FORMAT_R32UI:
+        result.cpuFormat = GL_R32UI;
+        break;
+    default:
         assert(!"Unknown texture format");
+        break;
     }
 
     return result;
@@ -615,6 +638,34 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
         glBindTexture(GL_TEXTURE_2D, getTextureId(target->depthTextureHandle));
         glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT24, width, height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, 0);
     }
+}
+
+uint32 createTextureArray(uint32 width, uint32 height, uint32 layers, TextureFormat format)
+{
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    uint32 id = 0;
+    glGenTextures(1, &id);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, descriptor.cpuFormat, width, height, layers, 0, descriptor.gpuFormat,
+        descriptor.elementType, 0);
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+    return id;
+}
+void updateTextureArray(uint32 id, uint32 width, uint32 height, uint32 layer, TextureFormat format, void *pixels)
+{
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, descriptor.gpuFormat,
+        descriptor.elementType, pixels);
+    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
 bool applyEffect(RenderEffect *effect)

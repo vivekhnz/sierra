@@ -189,12 +189,12 @@ void initializeEditor(EditorMemory *memory)
     sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
 #endif
 
-    sceneState->textureArrayId_RGBA8_2048x2048 = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_RGB, GL_RGB, 2048, 2048, MAX_MATERIAL_COUNT * 2, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->textureArrayId_R16_2048x2048 = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    sceneState->textureArrayId_R8_2048x2048 = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MAX_MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    sceneState->textureArrayId_RGBA8_2048x2048 =
+        engine->rendererCreateTextureArray(2048, 2048, MAX_MATERIAL_COUNT * 2, TEXTURE_FORMAT_RGB8);
+    sceneState->textureArrayId_R16_2048x2048 =
+        engine->rendererCreateTextureArray(2048, 2048, MAX_MATERIAL_COUNT, TEXTURE_FORMAT_R16);
+    sceneState->textureArrayId_R8_2048x2048 =
+        engine->rendererCreateTextureArray(2048, 2048, MAX_MATERIAL_COUNT, TEXTURE_FORMAT_R8);
 
     memset(sceneState->textures_RGBA8_2048x2048, 0, sizeof(sceneState->textures_RGBA8_2048x2048));
     memset(sceneState->textures_R16_2048x2048, 0, sizeof(sceneState->textures_R16_2048x2048));
@@ -716,8 +716,9 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE,
-                    GL_RGB, asset->texture->width, asset->texture->height, slice, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048,
+                    asset->texture->width, asset->texture->height, slice, TEXTURE_FORMAT_RGB8,
+                    asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -731,8 +732,9 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE,
-                    GL_RGB, asset->texture->width, asset->texture->height, slice, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048,
+                    asset->texture->width, asset->texture->height, slice, TEXTURE_FORMAT_RGB8,
+                    asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -746,8 +748,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT,
-                    GL_RED, asset->texture->width, asset->texture->height, slice, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R16_2048x2048, asset->texture->width,
+                    asset->texture->height, slice, TEXTURE_FORMAT_R16, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -761,8 +763,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE,
-                    GL_RED, asset->texture->width, asset->texture->height, slice, asset->texture->data);
+                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R8_2048x2048, asset->texture->width,
+                    asset->texture->height, slice, TEXTURE_FORMAT_R8, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }

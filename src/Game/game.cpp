@@ -74,12 +74,12 @@ bool initializeGame(GameMemory *memory)
     state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
-    state->textureArrayId_RGBA8_2048x2048 = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_RGBA, GL_RGB, 2048, 2048, MATERIAL_COUNT * 2, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->textureArrayId_R16_2048x2048 = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_SHORT, GL_R16, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
-    state->textureArrayId_R8_2048x2048 = engine->rendererCreateTextureArray(
-        GL_UNSIGNED_BYTE, GL_R8, GL_RED, 2048, 2048, MATERIAL_COUNT, GL_REPEAT, GL_LINEAR_MIPMAP_LINEAR);
+    state->textureArrayId_RGBA8_2048x2048 =
+        engine->rendererCreateTextureArray(2048, 2048, MATERIAL_COUNT * 2, TEXTURE_FORMAT_RGB8);
+    state->textureArrayId_R16_2048x2048 =
+        engine->rendererCreateTextureArray(2048, 2048, MATERIAL_COUNT, TEXTURE_FORMAT_R16);
+    state->textureArrayId_R8_2048x2048 =
+        engine->rendererCreateTextureArray(2048, 2048, MATERIAL_COUNT, TEXTURE_FORMAT_R8);
 
     GpuMaterialProperties materialProps[MATERIAL_COUNT];
     materialProps[0].textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
@@ -307,85 +307,97 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     asset = engine->assetsGetTexture(gameAssets->textureGroundAlbedo);
     if (asset->texture && asset->version > state->groundAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, 0, asset->texture->data);
+        uint32 slice = 0;
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_RGB8, asset->texture->data);
         state->groundAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundNormal);
     if (asset->texture && asset->version > state->groundNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, MATERIAL_COUNT, asset->texture->data);
+        uint32 slice = MATERIAL_COUNT;
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_RGB8, asset->texture->data);
         state->groundNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundDisplacement);
     if (asset->texture && asset->version > state->groundDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT, GL_RED,
-            asset->texture->width, asset->texture->height, 0, asset->texture->data);
+        uint32 slice = 0;
+        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_R16, asset->texture->data);
         state->groundDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureGroundAo);
     if (asset->texture && asset->version > state->groundAoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE, GL_RED,
-            asset->texture->width, asset->texture->height, 0, asset->texture->data);
+        uint32 slice = 0;
+        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_R8, asset->texture->data);
         state->groundAoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockAlbedo);
     if (asset->texture && asset->version > state->rockAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, 1, asset->texture->data);
+        uint32 slice = 1;
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_RGB8, asset->texture->data);
         state->rockAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockNormal);
     if (asset->texture && asset->version > state->rockNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, MATERIAL_COUNT + 1, asset->texture->data);
+        uint32 slice = MATERIAL_COUNT + 1;
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_RGB8, asset->texture->data);
         state->rockNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockDisplacement);
     if (asset->texture && asset->version > state->rockDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT, GL_RED,
-            asset->texture->width, asset->texture->height, 1, asset->texture->data);
+        uint32 slice = 1;
+        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_R16, asset->texture->data);
         state->rockDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureRockAo);
     if (asset->texture && asset->version > state->rockAoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE, GL_RED,
-            asset->texture->width, asset->texture->height, 1, asset->texture->data);
+        uint32 slice = 1;
+        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_R8, asset->texture->data);
         state->rockAoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowAlbedo);
     if (asset->texture && asset->version > state->snowAlbedoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, 2, asset->texture->data);
+        uint32 slice = 2;
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_RGB8, asset->texture->data);
         state->snowAlbedoTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowNormal);
     if (asset->texture && asset->version > state->snowNormalTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, GL_UNSIGNED_BYTE, GL_RGB,
-            asset->texture->width, asset->texture->height, MATERIAL_COUNT + 2, asset->texture->data);
+        uint32 slice = MATERIAL_COUNT + 2;
+        engine->rendererUpdateTextureArray(state->textureArrayId_RGBA8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_RGB8, asset->texture->data);
         state->snowNormalTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowDisplacement);
     if (asset->texture && asset->version > state->snowDisplacementTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, GL_UNSIGNED_SHORT, GL_RED,
-            asset->texture->width, asset->texture->height, 2, asset->texture->data);
+        uint32 slice = 2;
+        engine->rendererUpdateTextureArray(state->textureArrayId_R16_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_R16, asset->texture->data);
         state->snowDisplacementTextureVersion = asset->version;
     }
     asset = engine->assetsGetTexture(gameAssets->textureSnowAo);
     if (asset->texture && asset->version > state->snowAoTextureVersion)
     {
-        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, GL_UNSIGNED_BYTE, GL_RED,
-            asset->texture->width, asset->texture->height, 2, asset->texture->data);
+        uint32 slice = 2;
+        engine->rendererUpdateTextureArray(state->textureArrayId_R8_2048x2048, asset->texture->width,
+            asset->texture->height, slice, TEXTURE_FORMAT_R8, asset->texture->data);
         state->snowAoTextureVersion = asset->version;
     }
 

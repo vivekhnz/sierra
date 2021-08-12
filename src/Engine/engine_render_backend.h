@@ -162,6 +162,9 @@ RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
 void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 
+uint32 createTextureArray(uint32 width, uint32 height, uint32 layers, TextureFormat format);
+void updateTextureArray(uint32 id, uint32 width, uint32 height, uint32 layer, TextureFormat format, void *pixels);
+
 bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
 
 #endif

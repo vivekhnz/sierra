@@ -40,12 +40,10 @@ typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
 // texture arrays
 
 #define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \
-    uint32 name(uint32 elementType, uint32 cpuFormat, uint32 gpuFormat, uint32 width, uint32 height,              \
-        uint32 layers, uint32 wrapMode, uint32 filterMode)
+    uint32 name(uint32 width, uint32 height, uint32 layers, TextureFormat format)
 typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
 #define RENDERER_UPDATE_TEXTURE_ARRAY(name)                                                                       \
-    void name(                                                                                                    \
-        uint32 id, uint32 elementType, uint32 gpuFormat, uint32 width, uint32 height, uint32 layer, void *pixels)
+    void name(uint32 id, uint32 width, uint32 height, uint32 layer, TextureFormat format, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
 // buffers

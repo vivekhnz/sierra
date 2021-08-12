@@ -66,25 +66,11 @@ RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
 
 RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
 {
-    uint32 id = 0;
-    glGenTextures(1, &id);
-
-    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, wrapMode);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, wrapMode);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, filterMode);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, filterMode);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, cpuFormat, width, height, layers, 0, gpuFormat, elementType, 0);
-    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-
-    return id;
+    return createTextureArray(width, height, layers, format);
 }
-
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
-    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, gpuFormat, elementType, pixels);
-    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+    updateTextureArray(id, width, height, layer, format, pixels);
 }
 
 // buffers
