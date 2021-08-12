@@ -18,6 +18,7 @@ struct RenderBuffer
 };
 
 struct RenderContext;
+struct RenderTextureArray;
 struct RenderEffect;
 struct RenderQueue;
 
@@ -39,11 +40,10 @@ typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
 
 // texture arrays
 
-#define RENDERER_CREATE_TEXTURE_ARRAY(name)                                                                       \
-    uint32 name(uint32 width, uint32 height, uint32 layers, TextureFormat format)
-typedef RENDERER_CREATE_TEXTURE_ARRAY(RendererCreateTextureArray);
-#define RENDERER_UPDATE_TEXTURE_ARRAY(name)                                                                       \
-    void name(uint32 id, uint32 width, uint32 height, uint32 layer, TextureFormat format, void *pixels)
+#define RENDERER_GET_TEXTURE_ARRAY(name)                                                                          \
+    RenderTextureArray *name(RenderContext *ctx, uint32 width, uint32 height, TextureFormat format)
+typedef RENDERER_GET_TEXTURE_ARRAY(RendererGetTextureArray);
+#define RENDERER_UPDATE_TEXTURE_ARRAY(name) void name(RenderTextureArray *array, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
 // buffers
@@ -135,9 +135,10 @@ typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
         TextureHandle xAdjacentHeightmapTexture, TextureHandle xAdjacentReferenceHeightmapTexture,                \
         TextureHandle yAdjacentHeightmapTexture, TextureHandle yAdjacentReferenceHeightmapTexture,                \
         TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
-        uint32 materialCount, uint32 textureArrayId_RGBA8_2048x2048, uint32 textureArrayId_R16_2048x2048,         \
-        uint32 textureArrayId_R8_2048x2048, uint32 materialPropsBufferId, bool isWireframe,                       \
-        uint32 visualizationMode, glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
+        uint32 materialCount, RenderTextureArray *textureArray_RGBA8_2048x2048,                                   \
+        RenderTextureArray *textureArray_R16_2048x2048, RenderTextureArray *textureArray_R8_2048x2048,            \
+        uint32 materialPropsBufferId, bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos,            \
+        float cursorRadius, float cursorFalloff)
 typedef RENDERER_PUSH_TERRAIN(RendererPushTerrain);
 
 #define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)

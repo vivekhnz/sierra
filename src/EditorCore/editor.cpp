@@ -197,12 +197,12 @@ void initializeEditor(EditorMemory *memory)
     sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
 #endif
 
-    sceneState->textureArrayId_RGBA8_2048x2048 =
-        engine->rendererCreateTextureArray(2048, 2048, MAX_MATERIAL_COUNT * 2, TEXTURE_FORMAT_RGB8);
-    sceneState->textureArrayId_R16_2048x2048 =
-        engine->rendererCreateTextureArray(2048, 2048, MAX_MATERIAL_COUNT, TEXTURE_FORMAT_R16);
-    sceneState->textureArrayId_R8_2048x2048 =
-        engine->rendererCreateTextureArray(2048, 2048, MAX_MATERIAL_COUNT, TEXTURE_FORMAT_R8);
+    sceneState->textureArray_RGBA8_2048x2048 =
+        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_RGB8);
+    sceneState->textureArray_R16_2048x2048 =
+        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R16);
+    sceneState->textureArray_R8_2048x2048 =
+        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R8);
 
     memset(sceneState->textures_RGBA8_2048x2048, 0, sizeof(sceneState->textures_RGBA8_2048x2048));
     memset(sceneState->textures_R16_2048x2048, 0, sizeof(sceneState->textures_R16_2048x2048));
@@ -724,9 +724,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048,
-                    asset->texture->width, asset->texture->height, slice, TEXTURE_FORMAT_RGB8,
-                    asset->texture->data);
+                engine->rendererUpdateTextureArray(
+                    sceneState->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -740,9 +739,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_RGBA8_2048x2048,
-                    asset->texture->width, asset->texture->height, slice, TEXTURE_FORMAT_RGB8,
-                    asset->texture->data);
+                engine->rendererUpdateTextureArray(
+                    sceneState->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -756,8 +754,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R16_2048x2048, asset->texture->width,
-                    asset->texture->height, slice, TEXTURE_FORMAT_R16, asset->texture->data);
+                engine->rendererUpdateTextureArray(
+                    sceneState->textureArray_R16_2048x2048, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -771,8 +769,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
-                engine->rendererUpdateTextureArray(sceneState->textureArrayId_R8_2048x2048, asset->texture->width,
-                    asset->texture->height, slice, TEXTURE_FORMAT_R8, asset->texture->data);
+                engine->rendererUpdateTextureArray(
+                    sceneState->textureArray_R8_2048x2048, slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -1440,8 +1438,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
-            sceneState->textureArrayId_RGBA8_2048x2048, sceneState->textureArrayId_R16_2048x2048,
-            sceneState->textureArrayId_R8_2048x2048, sceneState->materialPropsBuffer.id, false, visualizationMode,
+            sceneState->textureArray_RGBA8_2048x2048, sceneState->textureArray_R16_2048x2048,
+            sceneState->textureArray_R8_2048x2048, sceneState->materialPropsBuffer.id, false, visualizationMode,
             sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
             sceneState->worldState.brushFalloff);
     }

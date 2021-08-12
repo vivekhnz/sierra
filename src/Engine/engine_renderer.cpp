@@ -4,11 +4,27 @@
 // todo: remove this once all OpenGL-specific code has been moved into OpenGL render backend
 #include <glad/glad.h>
 
+#define LAYERS_PER_TEXTURE_ARRAY 32
+
 ASSETS_GET_SHADER(assetsGetShader);
 ASSETS_GET_MESH(assetsGetMesh);
 
+struct RenderTextureArray
+{
+    uint32 id;
+    uint32 width;
+    uint32 height;
+    TextureFormat format;
+    uint32 layers;
+};
+struct RenderTextureArrayEntry
+{
+    RenderTextureArray textureArray;
+    RenderTextureArrayEntry *next;
+};
 struct RenderContext
 {
+    MemoryArena *arena;
     RenderBackendContext internalCtx;
 
     RenderQuad *quads;
@@ -16,6 +32,9 @@ struct RenderContext
 
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
+
+    RenderTextureArrayEntry *firstTextureArray;
+    RenderTextureArrayEntry *lastTextureArray;
 };
 struct RenderQueue
 {
@@ -32,6 +51,8 @@ struct RenderQueue
 RENDERER_INITIALIZE(rendererInitialize)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
+    *ctx = {};
+    ctx->arena = arena;
     ctx->internalCtx = initializeRenderBackend(arena);
 
     ctx->maxQuads = 65536;
@@ -64,13 +85,53 @@ RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
 
 // texture arrays
 
-RENDERER_CREATE_TEXTURE_ARRAY(rendererCreateTextureArray)
+RENDERER_GET_TEXTURE_ARRAY(rendererGetTextureArray)
 {
-    return createTextureArray(width, height, layers, format);
+    RenderTextureArray *result = 0;
+
+    RenderTextureArrayEntry *current = ctx->firstTextureArray;
+    while (current)
+    {
+        if (current->textureArray.width == width && current->textureArray.height == height
+            && current->textureArray.format == format)
+        {
+            result = &current->textureArray;
+            break;
+        }
+        else
+        {
+            current = current->next;
+        }
+    }
+
+    if (!result)
+    {
+        RenderTextureArrayEntry *entry = pushStruct(ctx->arena, RenderTextureArrayEntry);
+        entry->next = 0;
+        entry->textureArray.id = createTextureArray(width, height, LAYERS_PER_TEXTURE_ARRAY, format);
+        entry->textureArray.width = width;
+        entry->textureArray.height = height;
+        entry->textureArray.format = format;
+        entry->textureArray.layers = LAYERS_PER_TEXTURE_ARRAY;
+
+        if (ctx->lastTextureArray)
+        {
+            ctx->lastTextureArray->next = entry;
+            ctx->lastTextureArray = entry;
+        }
+        else
+        {
+            ctx->firstTextureArray = ctx->lastTextureArray = entry;
+        }
+
+        result = &entry->textureArray;
+    }
+
+    return result;
 }
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
-    updateTextureArray(id, width, height, layer, format, pixels);
+    updateTextureArray(array->id, array->width, array->height, layer, array->format, pixels);
 }
 
 // buffers
@@ -398,9 +459,9 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->materialCount = materialCount;
-    cmd->textureArrayId_RGBA8_2048x2048 = textureArrayId_RGBA8_2048x2048;
-    cmd->textureArrayId_R16_2048x2048 = textureArrayId_R16_2048x2048;
-    cmd->textureArrayId_R8_2048x2048 = textureArrayId_R8_2048x2048;
+    cmd->textureArrayId_RGBA8_2048x2048 = textureArray_RGBA8_2048x2048->id;
+    cmd->textureArrayId_R16_2048x2048 = textureArray_R16_2048x2048->id;
+    cmd->textureArrayId_R8_2048x2048 = textureArray_R8_2048x2048->id;
     cmd->materialPropsBufferId = materialPropsBufferId;
 
     cmd->isWireframe = isWireframe;

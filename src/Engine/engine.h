@@ -27,7 +27,7 @@ struct EngineApi
     RendererUpdateTexture *rendererUpdateTexture;
     RendererGetPixels *rendererGetPixels;
     RendererGetPixelsInRegion *rendererGetPixelsInRegion;
-    RendererCreateTextureArray *rendererCreateTextureArray;
+    RendererGetTextureArray *rendererGetTextureArray;
     RendererUpdateTextureArray *rendererUpdateTextureArray;
     RendererCreateBuffer *rendererCreateBuffer;
     RendererUpdateBuffer *rendererUpdateBuffer;

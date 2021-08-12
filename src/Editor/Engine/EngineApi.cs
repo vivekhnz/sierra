@@ -88,7 +88,7 @@ namespace Terrain.Editor.Engine
         public IntPtr rendererUpdateTexture;
         public IntPtr rendererGetPixels;
         public IntPtr rendererGetPixelsInRegion;
-        public IntPtr rendererCreateTextureArray;
+        public IntPtr rendererGetTextureArray;
         public IntPtr rendererUpdateTextureArray;
         public IntPtr rendererCreateBuffer;
         public IntPtr rendererUpdateBuffer;
