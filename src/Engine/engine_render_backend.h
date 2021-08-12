@@ -152,6 +152,7 @@ ShaderHandle getColoredQuadShader(RenderBackendContext rctx);
 MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
 void destroyMesh(MeshHandle handle);
 
+uint32 getTextureElementSize(TextureFormat format);
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
 void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
 GetPixelsResult getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height);

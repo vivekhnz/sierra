@@ -499,6 +499,11 @@ OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format)
     return result;
 }
 
+uint32 getTextureElementSize(TextureFormat format)
+{
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+    return descriptor.elementSize;
+}
 TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format)
 {
     uint32 id = 0;

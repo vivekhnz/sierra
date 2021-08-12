@@ -28,20 +28,25 @@ bool initializeGame(GameMemory *memory)
     gameAssets->terrainShaderWireframe =
         engine->assetsRegisterShader(assets, "terrain_wireframe.fs.glsl", SHADER_TYPE_TERRAIN);
 
-    gameAssets->textureGroundAlbedo = engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
-    gameAssets->textureGroundNormal = engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
-    gameAssets->textureGroundDisplacement = engine->assetsRegisterTexture(assets, "ground_displacement.tga", true);
-    gameAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
-    gameAssets->textureRockAlbedo = engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
-    gameAssets->textureRockNormal = engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
-    gameAssets->textureRockDisplacement = engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
-    gameAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", false);
-    gameAssets->textureSnowAlbedo = engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
-    gameAssets->textureSnowNormal = engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
-    gameAssets->textureSnowDisplacement = engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
-    gameAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
+    gameAssets->textureGroundAlbedo =
+        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureGroundNormal =
+        engine->assetsRegisterTexture(assets, "ground_normal.bmp", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureGroundDisplacement =
+        engine->assetsRegisterTexture(assets, "ground_displacement.tga", TEXTURE_FORMAT_R16);
+    gameAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", TEXTURE_FORMAT_R8);
+    gameAssets->textureRockAlbedo = engine->assetsRegisterTexture(assets, "rock_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureRockNormal = engine->assetsRegisterTexture(assets, "rock_normal.jpg", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureRockDisplacement =
+        engine->assetsRegisterTexture(assets, "rock_displacement.tga", TEXTURE_FORMAT_R16);
+    gameAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", TEXTURE_FORMAT_R8);
+    gameAssets->textureSnowAlbedo = engine->assetsRegisterTexture(assets, "snow_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureSnowNormal = engine->assetsRegisterTexture(assets, "snow_normal.jpg", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureSnowDisplacement =
+        engine->assetsRegisterTexture(assets, "snow_displacement.tga", TEXTURE_FORMAT_R16);
+    gameAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", TEXTURE_FORMAT_R8);
 
-    gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, true);
+    gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, TEXTURE_FORMAT_R16);
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;

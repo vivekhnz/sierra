@@ -45,7 +45,7 @@ struct ShaderAssetMetadata
 };
 struct TextureAssetMetadata
 {
-    bool is16Bit;
+    TextureFormat format;
 };
 
 struct AssetFileState
@@ -80,7 +80,8 @@ struct Assets;
 #define ASSETS_INITIALIZE(name) Assets *name(MemoryArena *arena, RenderContext *rctx)
 typedef ASSETS_INITIALIZE(AssetsInitialize);
 
-#define ASSETS_REGISTER_TEXTURE(name) AssetHandle name(Assets *assets, const char *relativePath, bool is16Bit)
+#define ASSETS_REGISTER_TEXTURE(name)                                                                             \
+    AssetHandle name(Assets *assets, const char *relativePath, TextureFormat format)
 typedef ASSETS_REGISTER_TEXTURE(AssetsRegisterTexture);
 
 #define ASSETS_REGISTER_SHADER(name) AssetHandle name(Assets *assets, const char *relativePath, ShaderType type)

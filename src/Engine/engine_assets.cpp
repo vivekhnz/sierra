@@ -85,7 +85,7 @@ ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_TEXTURE, relativePath);
     reg->metadata.texture = pushStruct(assets->arena, TextureAssetMetadata);
-    reg->metadata.texture->is16Bit = is16Bit;
+    reg->metadata.texture->format = format;
     return reg->handle;
 }
 ASSETS_REGISTER_SHADER(assetsRegisterShader)
@@ -270,16 +270,18 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         int32 width;
         int32 height;
         int32 channels;
-        uint64 elementSize = 0;
-        if (reg->metadata.texture->is16Bit)
+        uint64 elementSize = getTextureElementSize(reg->metadata.texture->format);
+        if (elementSize == sizeof(uint8))
+        {
+            loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
+        }
+        else if (elementSize == sizeof(uint16))
         {
             loadedData = stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
-            elementSize = 2;
         }
         else
         {
-            loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
-            elementSize = 1;
+            assert(!"Unsupported texture format");
         }
         assert(width >= 0);
         assert(height >= 0);

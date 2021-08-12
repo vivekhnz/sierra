@@ -99,20 +99,28 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->terrainShaderTextured =
         engine->assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
 
-    editorAssets->textureGroundAlbedo = engine->assetsRegisterTexture(assets, "ground_albedo.bmp", false);
-    editorAssets->textureGroundNormal = engine->assetsRegisterTexture(assets, "ground_normal.bmp", false);
+    editorAssets->textureGroundAlbedo =
+        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureGroundNormal =
+        engine->assetsRegisterTexture(assets, "ground_normal.bmp", TEXTURE_FORMAT_RGB8);
     editorAssets->textureGroundDisplacement =
-        engine->assetsRegisterTexture(assets, "ground_displacement.tga", true);
-    editorAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", false);
-    editorAssets->textureRockAlbedo = engine->assetsRegisterTexture(assets, "rock_albedo.jpg", false);
-    editorAssets->textureRockNormal = engine->assetsRegisterTexture(assets, "rock_normal.jpg", false);
-    editorAssets->textureRockDisplacement = engine->assetsRegisterTexture(assets, "rock_displacement.tga", true);
-    editorAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", false);
-    editorAssets->textureSnowAlbedo = engine->assetsRegisterTexture(assets, "snow_albedo.jpg", false);
-    editorAssets->textureSnowNormal = engine->assetsRegisterTexture(assets, "snow_normal.jpg", false);
-    editorAssets->textureSnowDisplacement = engine->assetsRegisterTexture(assets, "snow_displacement.tga", true);
-    editorAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", false);
-    editorAssets->textureVirtualImportedHeightmap = engine->assetsRegisterTexture(assets, 0, true);
+        engine->assetsRegisterTexture(assets, "ground_displacement.tga", TEXTURE_FORMAT_R16);
+    editorAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", TEXTURE_FORMAT_R8);
+    editorAssets->textureRockAlbedo =
+        engine->assetsRegisterTexture(assets, "rock_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureRockNormal =
+        engine->assetsRegisterTexture(assets, "rock_normal.jpg", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureRockDisplacement =
+        engine->assetsRegisterTexture(assets, "rock_displacement.tga", TEXTURE_FORMAT_R16);
+    editorAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", TEXTURE_FORMAT_R8);
+    editorAssets->textureSnowAlbedo =
+        engine->assetsRegisterTexture(assets, "snow_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureSnowNormal =
+        engine->assetsRegisterTexture(assets, "snow_normal.jpg", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureSnowDisplacement =
+        engine->assetsRegisterTexture(assets, "snow_displacement.tga", TEXTURE_FORMAT_R16);
+    editorAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", TEXTURE_FORMAT_R8);
+    editorAssets->textureVirtualImportedHeightmap = engine->assetsRegisterTexture(assets, 0, TEXTURE_FORMAT_R16);
 
     editorAssets->meshRock = engine->assetsRegisterMesh(assets, "rock.obj");
 
