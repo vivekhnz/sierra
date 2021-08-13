@@ -118,7 +118,7 @@ struct DrawTerrainCommand
     uint32 textureArrayId_RGBA8_2048x2048;
     uint32 textureArrayId_R16_2048x2048;
     uint32 textureArrayId_R8_2048x2048;
-    uint32 materialPropsBufferId;
+    RenderTerrainMaterial* materials;
 
     bool isWireframe;
 

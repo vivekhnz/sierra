@@ -105,9 +105,12 @@ bool initializeGame(GameMemory *memory)
             state->textureArray_R16_2048x2048);
         setMaterialTexture(engine, &textures->ao, gameAssets->textureGroundAo, state->textureArray_R8_2048x2048);
 
-        GpuMaterialProperties *mat = &state->materialProps[0];
+        RenderTerrainMaterial *mat = &state->materials[0];
         mat->textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
-        mat->rampParams = glm::vec4(0, 0, 0, 0);
+        mat->slopeStart = 0;
+        mat->slopeEnd = 0;
+        mat->altitudeStart = 0;
+        mat->altitudeEnd = 0;
     }
     {
         TerrainMaterialTextures *textures = &state->materialTextures[1];
@@ -119,9 +122,12 @@ bool initializeGame(GameMemory *memory)
             state->textureArray_R16_2048x2048);
         setMaterialTexture(engine, &textures->ao, gameAssets->textureRockAo, state->textureArray_R8_2048x2048);
 
-        GpuMaterialProperties *mat = &state->materialProps[1];
+        RenderTerrainMaterial *mat = &state->materials[1];
         mat->textureSizeInWorldUnits = glm::vec2(13, 13);
-        mat->rampParams = glm::vec4(0.2f, 0.4f, 0, 0.001f);
+        mat->slopeStart = 0.2f;
+        mat->slopeEnd = 0.4f;
+        mat->altitudeStart = 0;
+        mat->altitudeEnd = 0.001f;
     }
     {
         TerrainMaterialTextures *textures = &state->materialTextures[2];
@@ -133,13 +139,13 @@ bool initializeGame(GameMemory *memory)
             state->textureArray_R16_2048x2048);
         setMaterialTexture(engine, &textures->ao, gameAssets->textureSnowAo, state->textureArray_R8_2048x2048);
 
-        GpuMaterialProperties *mat = &state->materialProps[2];
+        RenderTerrainMaterial *mat = &state->materials[2];
         mat->textureSizeInWorldUnits = glm::vec2(2, 2);
-        mat->rampParams = glm::vec4(0.4f, 0.2f, 0.25f, 0.28f);
+        mat->slopeStart = 0.4f;
+        mat->slopeEnd = 0.2f;
+        mat->altitudeStart = 0.25f;
+        mat->altitudeEnd = 0.28f;
     }
-
-    state->materialPropsBuffer = engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
-    engine->rendererUpdateBuffer(&state->materialPropsBuffer, sizeof(state->materialProps), state->materialProps);
 
     return 1;
 }
@@ -363,18 +369,14 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
     for (uint32 layerIdx = 0; layerIdx < MATERIAL_COUNT; layerIdx++)
     {
+        RenderTerrainMaterial *mat = &state->materials[layerIdx];
         TerrainMaterialTextures *textures = &state->materialTextures[layerIdx];
 
-        uint16 albedoSlice = getMaterialTextureSlice(engine, &textures->albedo);
-        uint16 normalSlice = getMaterialTextureSlice(engine, &textures->normal);
-        uint16 displacementSlice = getMaterialTextureSlice(engine, &textures->displacement);
-        uint16 aoSlice = getMaterialTextureSlice(engine, &textures->ao);
-
-        GpuMaterialProperties *mat = &state->materialProps[layerIdx];
-        mat->albedoTexture_normalTexture = ((uint32)albedoSlice << 16) | normalSlice;
-        mat->displacementTexture_aoTexture = ((uint32)displacementSlice << 16) | aoSlice;
+        mat->albedoTextureIndex = getMaterialTextureSlice(engine, &textures->albedo);
+        mat->normalTextureIndex = getMaterialTextureSlice(engine, &textures->normal);
+        mat->displacementTextureIndex = getMaterialTextureSlice(engine, &textures->displacement);
+        mat->aoTextureIndex = getMaterialTextureSlice(engine, &textures->ao);
     }
-    engine->rendererUpdateBuffer(&state->materialPropsBuffer, sizeof(state->materialProps), state->materialProps);
 
     // render world
     float fov = glm::pi<float>() / 4.0f;
@@ -395,7 +397,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
         state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->textureArray_RGBA8_2048x2048,
-        state->textureArray_R16_2048x2048, state->textureArray_R8_2048x2048, state->materialPropsBuffer.id,
+        state->textureArray_R16_2048x2048, state->textureArray_R8_2048x2048, state->materials,
         state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 

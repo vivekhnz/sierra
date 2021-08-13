@@ -3,6 +3,8 @@
 
 #include <glm/gtc/type_ptr.hpp>
 
+// assets
+
 enum ShaderType
 {
     SHADER_TYPE_QUAD,
@@ -31,6 +33,16 @@ struct MeshHandle
     void *ptr;
 };
 
+// textures
+
+struct GetPixelsResult
+{
+    void *pixels;
+    uint32 count;
+};
+
+// render targets
+
 struct RenderTarget
 {
     uint32 width;
@@ -39,6 +51,17 @@ struct RenderTarget
     TextureHandle textureHandle;
     TextureHandle depthTextureHandle;
 };
+
+// effects
+
+enum RenderEffectBlendMode
+{
+    EFFECT_BLEND_ALPHA_BLEND,
+    EFFECT_BLEND_ADDITIVE,
+    EFFECT_BLEND_MAX
+};
+
+// render queue
 
 struct RenderQuad
 {
@@ -52,18 +75,19 @@ struct RenderMeshInstance
     uint32 id;
     glm::mat4 transform;
 };
-
-enum RenderEffectBlendMode
+struct RenderTerrainMaterial
 {
-    EFFECT_BLEND_ALPHA_BLEND,
-    EFFECT_BLEND_ADDITIVE,
-    EFFECT_BLEND_MAX
-};
+    glm::vec2 textureSizeInWorldUnits;
 
-struct GetPixelsResult
-{
-    void *pixels;
-    uint32 count;
+    uint16 albedoTextureIndex;
+    uint16 normalTextureIndex;
+    uint16 displacementTextureIndex;
+    uint16 aoTextureIndex;
+
+    float slopeStart;
+    float slopeEnd;
+    float altitudeStart;
+    float altitudeEnd;
 };
 
 #endif

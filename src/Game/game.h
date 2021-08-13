@@ -27,14 +27,6 @@ struct GameAssets
     AssetHandle textureVirtualHeightmap;
 };
 
-struct GpuMaterialProperties
-{
-    glm::vec2 textureSizeInWorldUnits;
-    uint32 albedoTexture_normalTexture;
-    uint32 displacementTexture_aoTexture;
-    glm::vec4 rampParams;
-};
-
 struct TextureAssetBinding
 {
     AssetHandle assetHandle;
@@ -88,8 +80,7 @@ struct GameState
     RenderTextureArray *textureArray_R16_2048x2048;
     RenderTextureArray *textureArray_R8_2048x2048;
 
-    GpuMaterialProperties materialProps[MATERIAL_COUNT];
-    RenderBuffer materialPropsBuffer;
+    RenderTerrainMaterial materials[MATERIAL_COUNT];
     TerrainMaterialTextures materialTextures[MATERIAL_COUNT];
 };
 

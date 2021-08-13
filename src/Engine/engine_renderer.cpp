@@ -470,7 +470,7 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->textureArrayId_RGBA8_2048x2048 = textureArray_RGBA8_2048x2048->id;
     cmd->textureArrayId_R16_2048x2048 = textureArray_R16_2048x2048->id;
     cmd->textureArrayId_R8_2048x2048 = textureArray_R8_2048x2048->id;
-    cmd->materialPropsBufferId = materialPropsBufferId;
+    cmd->materials = materials;
 
     cmd->isWireframe = isWireframe;
 

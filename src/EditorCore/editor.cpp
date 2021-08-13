@@ -209,8 +209,6 @@ void initializeEditor(EditorMemory *memory)
     memset(sceneState->displacementTextures, 0, sizeof(sceneState->displacementTextures));
     memset(sceneState->aoTextures, 0, sizeof(sceneState->aoTextures));
 
-    sceneState->materialPropsBuffer =
-        engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     sceneState->nextMaterialId = 1;
 
     // the first bit of the ID is used to signify that this is a mesh instance
@@ -218,7 +216,7 @@ void initializeEditor(EditorMemory *memory)
 
     // initialize document state
     state->docState.materialCount = 0;
-    memset(state->docState.materialProps, 0, sizeof(state->docState.materialProps));
+    memset(state->docState.materials, 0, sizeof(state->docState.materials));
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
         TextureAssetBinding *albedoBinding = &sceneState->albedoTextures[i];
@@ -564,13 +562,13 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
 
             docState->materialIds[index] = cmd->materialId;
 
-            GpuMaterialProperties *material = &docState->materialProps[index];
+            RenderTerrainMaterial *material = &docState->materials[index];
             material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
             material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
-            material->rampParams.x = cmd->slopeStart;
-            material->rampParams.y = cmd->slopeEnd;
-            material->rampParams.z = cmd->altitudeStart;
-            material->rampParams.w = cmd->altitudeEnd;
+            material->slopeStart = cmd->slopeStart;
+            material->slopeEnd = cmd->slopeEnd;
+            material->altitudeStart = cmd->altitudeStart;
+            material->altitudeEnd = cmd->altitudeEnd;
 
             docState->albedoTextureAssetHandles[index] = cmd->albedoTextureAssetHandle;
             docState->normalTextureAssetHandles[index] = cmd->normalTextureAssetHandle;
@@ -587,7 +585,7 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             for (uint32 i = cmd->index; i < docState->materialCount; i++)
             {
                 docState->materialIds[i] = docState->materialIds[i + 1];
-                docState->materialProps[i] = docState->materialProps[i + 1];
+                docState->materials[i] = docState->materials[i + 1];
                 docState->albedoTextureAssetHandles[i] = docState->albedoTextureAssetHandles[i + 1];
                 docState->normalTextureAssetHandles[i] = docState->normalTextureAssetHandles[i + 1];
                 docState->displacementTextureAssetHandles[i] = docState->displacementTextureAssetHandles[i + 1];
@@ -608,7 +606,7 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
     docState->array[cmd->indexB] = temp_##array;
 
             swap(uint32, materialIds);
-            swap(GpuMaterialProperties, materialProps);
+            swap(RenderTerrainMaterial, materials);
             swap(AssetHandle, albedoTextureAssetHandles);
             swap(AssetHandle, normalTextureAssetHandles);
             swap(AssetHandle, displacementTextureAssetHandles);
@@ -643,13 +641,13 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             {
                 if (docState->materialIds[i] == cmd->materialId)
                 {
-                    GpuMaterialProperties *material = &docState->materialProps[i];
+                    RenderTerrainMaterial *material = &docState->materials[i];
                     material->textureSizeInWorldUnits.x = cmd->textureSizeInWorldUnits;
                     material->textureSizeInWorldUnits.y = cmd->textureSizeInWorldUnits;
-                    material->rampParams.x = cmd->slopeStart;
-                    material->rampParams.y = cmd->slopeEnd;
-                    material->rampParams.z = cmd->altitudeStart;
-                    material->rampParams.w = cmd->altitudeEnd;
+                    material->slopeStart = cmd->slopeStart;
+                    material->slopeEnd = cmd->slopeEnd;
+                    material->altitudeStart = cmd->altitudeStart;
+                    material->altitudeEnd = cmd->altitudeEnd;
 
                     break;
                 }
@@ -745,21 +743,16 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     sceneState->materialCount = docState->materialCount;
     for (uint32 layerIdx = 0; layerIdx < docState->materialCount; layerIdx++)
     {
-        uint16 albedoSlice = getMaterialTextureSlice(
+        RenderTerrainMaterial *mat = &docState->materials[layerIdx];
+        mat->albedoTextureIndex = getMaterialTextureSlice(
             engine, docState->albedoTextureAssetHandles[layerIdx], &sceneState->albedoTextures[layerIdx]);
-        uint16 normalSlice = getMaterialTextureSlice(
+        mat->normalTextureIndex = getMaterialTextureSlice(
             engine, docState->normalTextureAssetHandles[layerIdx], &sceneState->normalTextures[layerIdx]);
-        uint16 displacementSlice = getMaterialTextureSlice(engine,
+        mat->displacementTextureIndex = getMaterialTextureSlice(engine,
             docState->displacementTextureAssetHandles[layerIdx], &sceneState->displacementTextures[layerIdx]);
-        uint16 aoSlice = getMaterialTextureSlice(
+        mat->aoTextureIndex = getMaterialTextureSlice(
             engine, docState->aoTextureAssetHandles[layerIdx], &sceneState->aoTextures[layerIdx]);
-
-        GpuMaterialProperties *mat = &docState->materialProps[layerIdx];
-        mat->albedoTexture_normalTexture = ((uint32)albedoSlice << 16) | normalSlice;
-        mat->displacementTexture_aoTexture = ((uint32)displacementSlice << 16) | aoSlice;
     }
-    engine->rendererUpdateBuffer(
-        &sceneState->materialPropsBuffer, sizeof(docState->materialProps), docState->materialProps);
 
     // update object instance state
     sceneState->objectInstanceCount = docState->objectInstanceCount;
@@ -1421,7 +1414,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
             sceneState->textureArray_RGBA8_2048x2048, sceneState->textureArray_R16_2048x2048,
-            sceneState->textureArray_R8_2048x2048, sceneState->materialPropsBuffer.id, false, visualizationMode,
+            sceneState->textureArray_R8_2048x2048, state->previewDocState.materials, false, visualizationMode,
             sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
             sceneState->worldState.brushFalloff);
     }

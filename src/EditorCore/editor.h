@@ -103,14 +103,6 @@ struct SceneViewState
     RenderTarget *pickingRenderTarget;
 };
 
-struct GpuMaterialProperties
-{
-    glm::vec2 textureSizeInWorldUnits;
-    uint32 albedoTexture_normalTexture;
-    uint32 displacementTexture_aoTexture;
-    glm::vec4 rampParams;
-};
-
 struct TerrainTile
 {
     Heightfield *heightfield;
@@ -142,7 +134,6 @@ struct SceneState
     TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
     TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 
-    RenderBuffer materialPropsBuffer;
     uint32 nextMaterialId;
     uint32 materialCount;
 
@@ -188,7 +179,7 @@ struct EditorDocumentState
 {
     uint32 materialCount;
     uint32 materialIds[MAX_MATERIAL_COUNT];
-    GpuMaterialProperties materialProps[MAX_MATERIAL_COUNT];
+    RenderTerrainMaterial materials[MAX_MATERIAL_COUNT];
     AssetHandle albedoTextureAssetHandles[MAX_MATERIAL_COUNT];
     AssetHandle normalTextureAssetHandles[MAX_MATERIAL_COUNT];
     AssetHandle displacementTextureAssetHandles[MAX_MATERIAL_COUNT];

@@ -6,6 +6,7 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
+#define MAX_TERRAIN_MATERIALS 8
 #define OPENGL_UBO_SLOT_CAMERA 0
 #define OPENGL_UBO_SLOT_LIGHTING 1
 
@@ -27,6 +28,14 @@ struct OpenGlInternalShaders
     uint32 terrainTessEvalShaderId;
     uint32 terrainCalcTessLevelShaderId;
     uint32 terrainCalcTessLevelShaderProgramId;
+};
+
+struct OpenGlTerrainMaterialProps
+{
+    glm::vec2 textureSizeInWorldUnits;
+    uint32 albedoTexture_normalTexture;
+    uint32 displacementTexture_aoTexture;
+    glm::vec4 rampParams;
 };
 
 struct OpenGlRenderContext
@@ -55,7 +64,10 @@ struct OpenGlRenderContext
         uint32 vertexBufferId;
         uint32 elementBufferId;
         uint32 tessLevelBufferId;
-    } terrainMesh;
+
+        OpenGlTerrainMaterialProps materialProps[MAX_TERRAIN_MATERIALS];
+        uint32 materialPropsBufferId;
+    } terrain;
 };
 struct OpenGlCameraState
 {
@@ -184,21 +196,25 @@ RenderBackendContext initializeRenderBackend(MemoryArena *arena)
         }
     }
 
-    ctx->terrainMesh.tileLengthInWorldUnits = terrainTileLengthInWorldUnits;
-    ctx->terrainMesh.vertsPerEdge = terrainMeshVertsPerEdge;
-    ctx->terrainMesh.elementCount = terrainMeshElementCount;
+    ctx->terrain.tileLengthInWorldUnits = terrainTileLengthInWorldUnits;
+    ctx->terrain.vertsPerEdge = terrainMeshVertsPerEdge;
+    ctx->terrain.elementCount = terrainMeshElementCount;
 
-    glGenBuffers(1, &ctx->terrainMesh.vertexBufferId);
-    glBindBuffer(GL_ARRAY_BUFFER, ctx->terrainMesh.vertexBufferId);
+    glGenBuffers(1, &ctx->terrain.vertexBufferId);
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->terrain.vertexBufferId);
     glBufferData(GL_ARRAY_BUFFER, terrainMeshVertexCount * terrainMeshVertexSize * sizeof(float), terrainVertices,
         GL_STATIC_DRAW);
-    glGenBuffers(1, &ctx->terrainMesh.elementBufferId);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->terrainMesh.elementBufferId);
+    glGenBuffers(1, &ctx->terrain.elementBufferId);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->terrain.elementBufferId);
     glBufferData(
         GL_ELEMENT_ARRAY_BUFFER, terrainMeshElementCount * sizeof(uint32), terrainIndices, GL_STATIC_DRAW);
-    glGenBuffers(1, &ctx->terrainMesh.tessLevelBufferId);
-    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx->terrainMesh.tessLevelBufferId);
+    glGenBuffers(1, &ctx->terrain.tessLevelBufferId);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx->terrain.tessLevelBufferId);
     glBufferData(GL_SHADER_STORAGE_BUFFER, terrainMeshVertexCount * sizeof(glm::vec4), 0, GL_STREAM_COPY);
+    glGenBuffers(1, &ctx->terrain.materialPropsBufferId);
+    glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx->terrain.materialPropsBufferId);
+    glBufferData(
+        GL_SHADER_STORAGE_BUFFER, sizeof(ctx->terrain.materialProps), ctx->terrain.materialProps, GL_DYNAMIC_DRAW);
 
     endTemporaryMemory(&terrainMeshMemory);
 
@@ -757,11 +773,11 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
     glViewport(0, 0, width, height);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctx->quadInstanceBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->quads, GL_STREAM_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->quads, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctx->meshInstanceBufferId);
     glBufferData(
-        GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->meshInstances, GL_STREAM_DRAW);
+        GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->meshInstances, GL_DYNAMIC_DRAW);
 
     glBindVertexArray(ctx->globalVertexArrayId);
     glEnable(GL_BLEND);
@@ -924,10 +940,31 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
             DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
             if (cmd->terrainShader.ptr != 0)
             {
+                // update terrain material properties
+                assert(cmd->materialCount <= MAX_TERRAIN_MATERIALS);
+                for (uint32 i = 0; i < cmd->materialCount; i++)
+                {
+                    RenderTerrainMaterial *src = &cmd->materials[i];
+                    OpenGlTerrainMaterialProps *dst = &ctx->terrain.materialProps[i];
+
+                    dst->textureSizeInWorldUnits = src->textureSizeInWorldUnits;
+                    dst->albedoTexture_normalTexture =
+                        ((uint32)src->albedoTextureIndex << 16) | src->normalTextureIndex;
+                    dst->displacementTexture_aoTexture =
+                        ((uint32)src->displacementTextureIndex << 16) | src->aoTextureIndex;
+                    dst->rampParams.x = src->slopeStart;
+                    dst->rampParams.y = src->slopeEnd;
+                    dst->rampParams.z = src->altitudeStart;
+                    dst->rampParams.w = src->altitudeEnd;
+                }
+                glBindBuffer(GL_SHADER_STORAGE_BUFFER, ctx->terrain.materialPropsBufferId);
+                glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ctx->terrain.materialProps),
+                    ctx->terrain.materialProps, GL_DYNAMIC_DRAW);
+
                 Heightfield *heightfield = cmd->heightfield;
-                uint32 vertsPerEdge = ctx->terrainMesh.vertsPerEdge;
+                uint32 vertsPerEdge = ctx->terrain.vertsPerEdge;
                 uint32 meshEdgeCount = ((vertsPerEdge * vertsPerEdge) - vertsPerEdge) * 2;
-                float tileLengthInWorldUnits = ctx->terrainMesh.tileLengthInWorldUnits;
+                float tileLengthInWorldUnits = ctx->terrain.tileLengthInWorldUnits;
                 glm::vec3 terrainDimensions =
                     glm::vec3(tileLengthInWorldUnits, heightfield->maxHeight, tileLengthInWorldUnits);
 
@@ -963,8 +1000,8 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeHeightmapTexture));
                 glActiveTexture(GL_TEXTURE10);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeReferenceHeightmapTexture));
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ctx->terrainMesh.tessLevelBufferId);
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrainMesh.vertexBufferId);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ctx->terrain.tessLevelBufferId);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.vertexBufferId);
                 glDispatchCompute(meshEdgeCount, 1, 1);
                 glMemoryBarrier(GL_SHADER_STORAGE_BARRIER_BIT);
 
@@ -981,7 +1018,7 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->textureArrayId_R8_2048x2048);
                 glActiveTexture(GL_TEXTURE4);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->referenceHeightmapTexture));
-                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, cmd->materialPropsBufferId);
+                glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.materialPropsBufferId);
                 glProgramUniform2fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainOrigin"), 1,
                     glm::value_ptr(heightfield->center));
@@ -1003,14 +1040,14 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     glGetUniformLocation(terrainShaderProgramId, "cursorFalloff"), cmd->cursorFalloff);
 
                 uint32 vertexBufferStride = 5 * sizeof(float);
-                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->terrainMesh.elementBufferId);
-                glBindBuffer(GL_ARRAY_BUFFER, ctx->terrainMesh.vertexBufferId);
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ctx->terrain.elementBufferId);
+                glBindBuffer(GL_ARRAY_BUFFER, ctx->terrain.vertexBufferId);
                 glEnableVertexAttribArray(0);
                 glEnableVertexAttribArray(1);
                 glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, 0);
                 glVertexAttribPointer(1, 2, GL_FLOAT, false, vertexBufferStride, (void *)(3 * sizeof(float)));
 
-                glDrawElements(GL_PATCHES, ctx->terrainMesh.elementCount, GL_UNSIGNED_INT, 0);
+                glDrawElements(GL_PATCHES, ctx->terrain.elementCount, GL_UNSIGNED_INT, 0);
 
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
