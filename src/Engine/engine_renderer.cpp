@@ -115,7 +115,7 @@ RENDERER_GET_TEXTURE_ARRAY(rendererGetTextureArray)
         entry->textureArray.height = height;
         entry->textureArray.format = format;
         entry->textureArray.layers = LAYERS_PER_TEXTURE_ARRAY;
-        entry->textureArray.reservedLayers = 0;
+        entry->textureArray.reservedLayers = 1; // layer 0 is the reserved 'null' slice
 
         if (ctx->lastTextureArray)
         {

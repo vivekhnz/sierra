@@ -35,12 +35,19 @@ struct GpuMaterialProperties
     glm::vec4 rampParams;
 };
 
-struct MaterialTextureBinding
+struct TextureAssetBinding
 {
     AssetHandle assetHandle;
     uint8 version;
     RenderTextureArray *textureArray;
     uint16 slice;
+};
+struct TerrainMaterialTextures
+{
+    TextureAssetBinding albedo;
+    TextureAssetBinding normal;
+    TextureAssetBinding displacement;
+    TextureAssetBinding ao;
 };
 
 struct GameState
@@ -81,8 +88,9 @@ struct GameState
     RenderTextureArray *textureArray_R16_2048x2048;
     RenderTextureArray *textureArray_R8_2048x2048;
 
+    GpuMaterialProperties materialProps[MATERIAL_COUNT];
     RenderBuffer materialPropsBuffer;
-    MaterialTextureBinding materialTextures[MATERIAL_COUNT * 4];
+    TerrainMaterialTextures materialTextures[MATERIAL_COUNT];
 };
 
 struct PlatformReadFileResult
