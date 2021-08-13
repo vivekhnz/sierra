@@ -177,14 +177,14 @@ uniform vec2 heightmapSize;
 uniform vec2 terrainOrigin;
 
 layout(binding = 0) uniform sampler2D activeHeightmapTexture;
-layout(binding = 2) uniform sampler2DArray textures_R16_2048x2048;
-layout(binding = 4) uniform sampler2D referenceHeightmapTexture;
-layout(binding = 5) uniform sampler2D xAdjacentActiveHeightmapTexture;
-layout(binding = 6) uniform sampler2D xAdjacentReferenceHeightmapTexture;
-layout(binding = 7) uniform sampler2D yAdjacentActiveHeightmapTexture;
-layout(binding = 8) uniform sampler2D yAdjacentReferenceHeightmapTexture;
-layout(binding = 9) uniform sampler2D oppositeActiveHeightmapTexture;
-layout(binding = 10) uniform sampler2D oppositeReferenceHeightmapTexture;
+layout(binding = 3) uniform sampler2DArray displacementTextures;
+layout(binding = 5) uniform sampler2D referenceHeightmapTexture;
+layout(binding = 6) uniform sampler2D xAdjacentActiveHeightmapTexture;
+layout(binding = 7) uniform sampler2D xAdjacentReferenceHeightmapTexture;
+layout(binding = 8) uniform sampler2D yAdjacentActiveHeightmapTexture;
+layout(binding = 9) uniform sampler2D yAdjacentReferenceHeightmapTexture;
+layout(binding = 10) uniform sampler2D oppositeActiveHeightmapTexture;
+layout(binding = 11) uniform sampler2D oppositeReferenceHeightmapTexture;
 
 struct MaterialProperties
 {
@@ -214,8 +214,8 @@ float getDisplacement(vec2 uv, uint textureId, float mip)
 {
     vec3 uv3 = vec3(uv, textureId);
     return mix(
-        textureLod(textures_R16_2048x2048, uv3, floor(mip)).x,
-        textureLod(textures_R16_2048x2048, uv3, ceil(mip)).x,
+        textureLod(displacementTextures, uv3, floor(mip)).x,
+        textureLod(displacementTextures, uv3, ceil(mip)).x,
         fract(mip));
 }
 float calcHeight(vec2 uv, sampler2D thisTileTex,
@@ -372,9 +372,9 @@ uniform float terrainHeight;
 uniform vec2 terrainOrigin;
 uniform vec2 heightmapSize;
 layout(binding = 0) uniform sampler2D heightmapTexture;
-layout(binding = 5) uniform sampler2D xAdjacentHeightmapTexture;
-layout(binding = 7) uniform sampler2D yAdjacentHeightmapTexture;
-layout(binding = 9) uniform sampler2D oppositeHeightmapTexture;
+layout(binding = 6) uniform sampler2D xAdjacentHeightmapTexture;
+layout(binding = 8) uniform sampler2D yAdjacentHeightmapTexture;
+layout(binding = 10) uniform sampler2D oppositeHeightmapTexture;
 
 vec3 worldToScreen(vec3 p)
 {

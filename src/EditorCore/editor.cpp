@@ -1413,10 +1413,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
-            sceneState->textureArray_RGBA8_2048x2048, sceneState->textureArray_R16_2048x2048,
-            sceneState->textureArray_R8_2048x2048, state->previewDocState.materials, false, visualizationMode,
-            sceneState->worldState.brushPos, sceneState->worldState.brushRadius,
-            sceneState->worldState.brushFalloff);
+            sceneState->textureArray_RGBA8_2048x2048, sceneState->textureArray_RGBA8_2048x2048,
+            sceneState->textureArray_R16_2048x2048, sceneState->textureArray_R8_2048x2048,
+            state->previewDocState.materials, false, visualizationMode, sceneState->worldState.brushPos,
+            sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
     }
 
     RenderEffect *rockEffect =

@@ -115,9 +115,10 @@ struct DrawTerrainCommand
     TextureHandle oppositeReferenceHeightmapTexture;
 
     uint32 materialCount;
-    TextureArrayHandle textureArray_RGBA8_2048x2048;
-    TextureArrayHandle textureArray_R16_2048x2048;
-    TextureArrayHandle textureArray_R8_2048x2048;
+    TextureArrayHandle albedoTextureArray;
+    TextureArrayHandle normalTextureArray;
+    TextureArrayHandle displacementTextureArray;
+    TextureArrayHandle aoTextureArray;
     RenderTerrainMaterial *materials;
 
     bool isWireframe;

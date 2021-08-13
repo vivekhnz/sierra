@@ -397,8 +397,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
     engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
         state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->textureArray_RGBA8_2048x2048,
-        state->textureArray_R16_2048x2048, state->textureArray_R8_2048x2048, state->materials,
-        state->isWireframeMode, 0, glm::vec2(0), 0, 0);
+        state->textureArray_RGBA8_2048x2048, state->textureArray_R16_2048x2048, state->textureArray_R8_2048x2048,
+        state->materials, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);

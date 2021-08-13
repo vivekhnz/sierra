@@ -686,6 +686,11 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
     }
 }
 
+uint32 getTextureId(TextureArrayHandle handle)
+{
+    OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
+    return array->id;
+}
 TextureArrayHandle getTextureArray(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
@@ -1062,17 +1067,17 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     glm::value_ptr(heightfield->center));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->heightmapTexture));
-                glActiveTexture(GL_TEXTURE5);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentHeightmapTexture));
                 glActiveTexture(GL_TEXTURE6);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentReferenceHeightmapTexture));
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentHeightmapTexture));
                 glActiveTexture(GL_TEXTURE7);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentHeightmapTexture));
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentReferenceHeightmapTexture));
                 glActiveTexture(GL_TEXTURE8);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentReferenceHeightmapTexture));
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentHeightmapTexture));
                 glActiveTexture(GL_TEXTURE9);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeHeightmapTexture));
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentReferenceHeightmapTexture));
                 glActiveTexture(GL_TEXTURE10);
+                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeHeightmapTexture));
+                glActiveTexture(GL_TEXTURE11);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeReferenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ctx->terrain.tessLevelBufferId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.vertexBufferId);
@@ -1085,14 +1090,14 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glActiveTexture(GL_TEXTURE1);
-                glBindTexture(
-                    GL_TEXTURE_2D_ARRAY, ((OpenGlTextureArray *)cmd->textureArray_RGBA8_2048x2048.ptr)->id);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->albedoTextureArray));
                 glActiveTexture(GL_TEXTURE2);
-                glBindTexture(
-                    GL_TEXTURE_2D_ARRAY, ((OpenGlTextureArray *)cmd->textureArray_R16_2048x2048.ptr)->id);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->normalTextureArray));
                 glActiveTexture(GL_TEXTURE3);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, ((OpenGlTextureArray *)cmd->textureArray_R8_2048x2048.ptr)->id);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->displacementTextureArray));
                 glActiveTexture(GL_TEXTURE4);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->aoTextureArray));
+                glActiveTexture(GL_TEXTURE5);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->referenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.materialPropsBufferId);
                 glProgramUniform2fv(terrainShaderProgramId,
