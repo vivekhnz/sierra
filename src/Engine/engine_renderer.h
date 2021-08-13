@@ -2,7 +2,6 @@
 #define ENGINE_RENDERER_H
 
 struct RenderContext;
-struct RenderTextureArray;
 struct RenderEffect;
 struct RenderQueue;
 
@@ -25,11 +24,11 @@ typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
 // texture arrays
 
 #define RENDERER_GET_TEXTURE_ARRAY(name)                                                                          \
-    RenderTextureArray *name(RenderContext *ctx, uint32 width, uint32 height, TextureFormat format)
+    TextureArrayHandle name(RenderContext *ctx, uint32 width, uint32 height, TextureFormat format)
 typedef RENDERER_GET_TEXTURE_ARRAY(RendererGetTextureArray);
-#define RENDERER_RESERVE_TEXTURE_SLOT(name) uint16 name(RenderTextureArray *array)
+#define RENDERER_RESERVE_TEXTURE_SLOT(name) uint16 name(TextureArrayHandle handle)
 typedef RENDERER_RESERVE_TEXTURE_SLOT(RendererReserveTextureSlot);
-#define RENDERER_UPDATE_TEXTURE_ARRAY(name) void name(RenderTextureArray *array, uint32 layer, void *pixels)
+#define RENDERER_UPDATE_TEXTURE_ARRAY(name) void name(TextureArrayHandle handle, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 
 // render targets
@@ -114,8 +113,8 @@ typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
         TextureHandle xAdjacentHeightmapTexture, TextureHandle xAdjacentReferenceHeightmapTexture,                \
         TextureHandle yAdjacentHeightmapTexture, TextureHandle yAdjacentReferenceHeightmapTexture,                \
         TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
-        uint32 materialCount, RenderTextureArray *textureArray_RGBA8_2048x2048,                                   \
-        RenderTextureArray *textureArray_R16_2048x2048, RenderTextureArray *textureArray_R8_2048x2048,            \
+        uint32 materialCount, TextureArrayHandle textureArray_RGBA8_2048x2048,                                    \
+        TextureArrayHandle textureArray_R16_2048x2048, TextureArrayHandle textureArray_R8_2048x2048,              \
         RenderTerrainMaterial *materials, bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos,        \
         float cursorRadius, float cursorFalloff)
 typedef RENDERER_PUSH_TERRAIN(RendererPushTerrain);

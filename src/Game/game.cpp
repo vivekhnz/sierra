@@ -11,7 +11,7 @@ float clamp(float value, float min, float max)
 }
 
 void setMaterialTexture(
-    EngineApi *engine, TextureAssetBinding *binding, AssetHandle assetHandle, RenderTextureArray *textureArray)
+    EngineApi *engine, TextureAssetBinding *binding, AssetHandle assetHandle, TextureArrayHandle textureArray)
 {
     binding->assetHandle = assetHandle;
     binding->version = 0;

@@ -115,10 +115,10 @@ struct DrawTerrainCommand
     TextureHandle oppositeReferenceHeightmapTexture;
 
     uint32 materialCount;
-    uint32 textureArrayId_RGBA8_2048x2048;
-    uint32 textureArrayId_R16_2048x2048;
-    uint32 textureArrayId_R8_2048x2048;
-    RenderTerrainMaterial* materials;
+    TextureArrayHandle textureArray_RGBA8_2048x2048;
+    TextureArrayHandle textureArray_R16_2048x2048;
+    TextureArrayHandle textureArray_R8_2048x2048;
+    RenderTerrainMaterial *materials;
 
     bool isWireframe;
 
@@ -163,8 +163,9 @@ RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
 void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 
-uint32 createTextureArray(uint32 width, uint32 height, uint32 layers, TextureFormat format);
-void updateTextureArray(uint32 id, uint32 width, uint32 height, uint32 layer, TextureFormat format, void *pixels);
+TextureArrayHandle getTextureArray(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format);
+uint16 reserveTextureSlot(TextureArrayHandle handle);
+void updateTextureArray(TextureArrayHandle handle, uint32 layer, void *pixels);
 
 bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
 

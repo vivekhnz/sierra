@@ -1,26 +1,9 @@
 #include "engine_renderer.h"
 #include "engine_render_backend.h"
 
-#define LAYERS_PER_TEXTURE_ARRAY 32
-
 ASSETS_GET_SHADER(assetsGetShader);
 ASSETS_GET_MESH(assetsGetMesh);
 
-struct RenderTextureArray
-{
-    uint32 id;
-    uint32 width;
-    uint32 height;
-    TextureFormat format;
-    uint32 layers;
-
-    uint32 reservedLayers;
-};
-struct RenderTextureArrayEntry
-{
-    RenderTextureArray textureArray;
-    RenderTextureArrayEntry *next;
-};
 struct RenderContext
 {
     MemoryArena *arena;
@@ -31,9 +14,6 @@ struct RenderContext
 
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
-
-    RenderTextureArrayEntry *firstTextureArray;
-    RenderTextureArrayEntry *lastTextureArray;
 };
 struct RenderQueue
 {
@@ -86,57 +66,15 @@ RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
 
 RENDERER_GET_TEXTURE_ARRAY(rendererGetTextureArray)
 {
-    RenderTextureArray *result = 0;
-
-    RenderTextureArrayEntry *current = ctx->firstTextureArray;
-    while (current)
-    {
-        if (current->textureArray.width == width && current->textureArray.height == height
-            && current->textureArray.format == format)
-        {
-            result = &current->textureArray;
-            break;
-        }
-        else
-        {
-            current = current->next;
-        }
-    }
-
-    if (!result)
-    {
-        RenderTextureArrayEntry *entry = pushStruct(ctx->arena, RenderTextureArrayEntry);
-        entry->next = 0;
-        entry->textureArray.id = createTextureArray(width, height, LAYERS_PER_TEXTURE_ARRAY, format);
-        entry->textureArray.width = width;
-        entry->textureArray.height = height;
-        entry->textureArray.format = format;
-        entry->textureArray.layers = LAYERS_PER_TEXTURE_ARRAY;
-        entry->textureArray.reservedLayers = 1; // layer 0 is the reserved 'null' slice
-
-        if (ctx->lastTextureArray)
-        {
-            ctx->lastTextureArray->next = entry;
-            ctx->lastTextureArray = entry;
-        }
-        else
-        {
-            ctx->firstTextureArray = ctx->lastTextureArray = entry;
-        }
-
-        result = &entry->textureArray;
-    }
-
-    return result;
+    return getTextureArray(ctx->internalCtx, width, height, format);
 }
 RENDERER_RESERVE_TEXTURE_SLOT(rendererReserveTextureSlot)
 {
-    assert(array->reservedLayers < array->layers);
-    return ++array->reservedLayers;
+    return reserveTextureSlot(handle);
 }
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
-    updateTextureArray(array->id, array->width, array->height, layer, array->format, pixels);
+    updateTextureArray(handle, layer, pixels);
 }
 
 // render targets
@@ -432,9 +370,9 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->materialCount = materialCount;
-    cmd->textureArrayId_RGBA8_2048x2048 = textureArray_RGBA8_2048x2048->id;
-    cmd->textureArrayId_R16_2048x2048 = textureArray_R16_2048x2048->id;
-    cmd->textureArrayId_R8_2048x2048 = textureArray_R8_2048x2048->id;
+    cmd->textureArray_RGBA8_2048x2048 = textureArray_RGBA8_2048x2048;
+    cmd->textureArray_R16_2048x2048 = textureArray_R16_2048x2048;
+    cmd->textureArray_R8_2048x2048 = textureArray_R8_2048x2048;
     cmd->materials = materials;
 
     cmd->isWireframe = isWireframe;

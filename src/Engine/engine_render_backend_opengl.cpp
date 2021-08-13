@@ -6,7 +6,9 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
+#define LAYERS_PER_TEXTURE_ARRAY 32
 #define MAX_TERRAIN_MATERIALS 8
+
 #define OPENGL_UBO_SLOT_CAMERA 0
 #define OPENGL_UBO_SLOT_LIGHTING 1
 
@@ -30,44 +32,37 @@ struct OpenGlInternalShaders
     uint32 terrainCalcTessLevelShaderProgramId;
 };
 
+struct OpenGlTextureDescriptor
+{
+    uint32 elementType;
+    uint32 elementSize;
+    uint32 cpuFormat;
+    uint32 gpuFormat;
+    bool isInteger;
+};
+struct OpenGlTextureArray
+{
+    uint32 id;
+    uint32 width;
+    uint32 height;
+    TextureFormat format;
+    OpenGlTextureDescriptor descriptor;
+    uint32 layers;
+
+    uint32 reservedLayers;
+};
+struct OpenGlTextureArrayEntry
+{
+    OpenGlTextureArray textureArray;
+    OpenGlTextureArrayEntry *next;
+};
+
 struct OpenGlTerrainMaterialProps
 {
     glm::vec2 textureSizeInWorldUnits;
     uint32 albedoTexture_normalTexture;
     uint32 displacementTexture_aoTexture;
     glm::vec4 rampParams;
-};
-
-struct OpenGlRenderContext
-{
-    // access this via getInternalShaders which handles the engine DLL being reloaded
-    OpenGlInternalShaders _shaders;
-
-    uint32 globalVertexArrayId;
-
-    uint32 cameraUniformBufferId;
-    uint32 lightingUniformBufferId;
-
-    uint32 quadElementBufferId;
-    uint32 quadTopDownVertexBufferId;
-    uint32 quadBottomUpVertexBufferId;
-
-    uint32 quadInstanceBufferId;
-    uint32 meshInstanceBufferId;
-
-    struct
-    {
-        float tileLengthInWorldUnits;
-        uint32 vertsPerEdge;
-        uint32 elementCount;
-
-        uint32 vertexBufferId;
-        uint32 elementBufferId;
-        uint32 tessLevelBufferId;
-
-        OpenGlTerrainMaterialProps materialProps[MAX_TERRAIN_MATERIALS];
-        uint32 materialPropsBufferId;
-    } terrain;
 };
 struct OpenGlCameraState
 {
@@ -91,14 +86,6 @@ struct OpenGlMesh
     uint32 elementBufferId;
     uint32 elementCount;
 };
-struct OpenGlTextureDescriptor
-{
-    uint32 elementType;
-    uint32 elementSize;
-    uint32 cpuFormat;
-    uint32 gpuFormat;
-    bool isInteger;
-};
 struct OpenGlRenderTarget
 {
     RenderTarget extTarget;
@@ -108,10 +95,48 @@ struct OpenGlRenderTarget
     uint32 framebufferId;
 };
 
+struct OpenGlRenderContext
+{
+    MemoryArena *arena;
+
+    // access this via getInternalShaders which handles the engine DLL being reloaded
+    OpenGlInternalShaders _shaders;
+
+    uint32 globalVertexArrayId;
+
+    uint32 cameraUniformBufferId;
+    uint32 lightingUniformBufferId;
+
+    uint32 quadElementBufferId;
+    uint32 quadTopDownVertexBufferId;
+    uint32 quadBottomUpVertexBufferId;
+
+    uint32 quadInstanceBufferId;
+    uint32 meshInstanceBufferId;
+
+    OpenGlTextureArrayEntry *firstTextureArray;
+    OpenGlTextureArrayEntry *lastTextureArray;
+
+    struct
+    {
+        float tileLengthInWorldUnits;
+        uint32 vertsPerEdge;
+        uint32 elementCount;
+
+        uint32 vertexBufferId;
+        uint32 elementBufferId;
+        uint32 tessLevelBufferId;
+
+        OpenGlTerrainMaterialProps materialProps[MAX_TERRAIN_MATERIALS];
+        uint32 materialPropsBufferId;
+    } terrain;
+};
+
 RenderBackendContext initializeRenderBackend(MemoryArena *arena)
 {
     OpenGlRenderContext *ctx = pushStruct(arena, OpenGlRenderContext);
     *ctx = {};
+    ctx->arena = arena;
 
     glGenVertexArrays(1, &ctx->globalVertexArrayId);
 
@@ -661,31 +686,80 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
     }
 }
 
-uint32 createTextureArray(uint32 width, uint32 height, uint32 layers, TextureFormat format)
+TextureArrayHandle getTextureArray(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format)
 {
-    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+    OpenGlTextureArray *result = 0;
 
-    uint32 id = 0;
-    glGenTextures(1, &id);
+    OpenGlTextureArrayEntry *current = ctx->firstTextureArray;
+    while (current)
+    {
+        if (current->textureArray.width == width && current->textureArray.height == height
+            && current->textureArray.format == format)
+        {
+            result = &current->textureArray;
+            break;
+        }
+        else
+        {
+            current = current->next;
+        }
+    }
 
-    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, descriptor.cpuFormat, width, height, layers, 0, descriptor.gpuFormat,
-        descriptor.elementType, 0);
-    glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+    if (!result)
+    {
+        OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+        uint32 id = 0;
+        glGenTextures(1, &id);
 
-    return id;
+        glBindTexture(GL_TEXTURE_2D_ARRAY, id);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, descriptor.cpuFormat, width, height, LAYERS_PER_TEXTURE_ARRAY, 0,
+            descriptor.gpuFormat, descriptor.elementType, 0);
+        glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
+
+        OpenGlTextureArrayEntry *entry = pushStruct(ctx->arena, OpenGlTextureArrayEntry);
+        entry->next = 0;
+        entry->textureArray.id = id;
+        entry->textureArray.width = width;
+        entry->textureArray.height = height;
+        entry->textureArray.format = format;
+        entry->textureArray.descriptor = descriptor;
+        entry->textureArray.layers = LAYERS_PER_TEXTURE_ARRAY;
+        entry->textureArray.reservedLayers = 1; // layer 0 is the reserved 'null' slice
+
+        if (ctx->lastTextureArray)
+        {
+            ctx->lastTextureArray->next = entry;
+            ctx->lastTextureArray = entry;
+        }
+        else
+        {
+            ctx->firstTextureArray = ctx->lastTextureArray = entry;
+        }
+
+        result = &entry->textureArray;
+    }
+
+    return {result};
 }
-void updateTextureArray(uint32 id, uint32 width, uint32 height, uint32 layer, TextureFormat format, void *pixels)
+uint16 reserveTextureSlot(TextureArrayHandle handle)
 {
-    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+    OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
 
-    glBindTexture(GL_TEXTURE_2D_ARRAY, id);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, width, height, 1, descriptor.gpuFormat,
-        descriptor.elementType, pixels);
+    assert(array->reservedLayers < array->layers);
+    return ++array->reservedLayers;
+}
+void updateTextureArray(TextureArrayHandle handle, uint32 layer, void *pixels)
+{
+    OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
+
+    glBindTexture(GL_TEXTURE_2D_ARRAY, array->id);
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, array->width, array->height, 1,
+        array->descriptor.gpuFormat, array->descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
 
@@ -1011,11 +1085,13 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->textureArrayId_RGBA8_2048x2048);
+                glBindTexture(
+                    GL_TEXTURE_2D_ARRAY, ((OpenGlTextureArray *)cmd->textureArray_RGBA8_2048x2048.ptr)->id);
                 glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->textureArrayId_R16_2048x2048);
+                glBindTexture(
+                    GL_TEXTURE_2D_ARRAY, ((OpenGlTextureArray *)cmd->textureArray_R16_2048x2048.ptr)->id);
                 glActiveTexture(GL_TEXTURE3);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, cmd->textureArrayId_R8_2048x2048);
+                glBindTexture(GL_TEXTURE_2D_ARRAY, ((OpenGlTextureArray *)cmd->textureArray_R8_2048x2048.ptr)->id);
                 glActiveTexture(GL_TEXTURE4);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->referenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.materialPropsBufferId);

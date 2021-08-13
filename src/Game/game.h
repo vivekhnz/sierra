@@ -31,7 +31,7 @@ struct TextureAssetBinding
 {
     AssetHandle assetHandle;
     uint8 version;
-    RenderTextureArray *textureArray;
+    TextureArrayHandle textureArray;
     uint16 slice;
 };
 struct TerrainMaterialTextures
@@ -76,9 +76,9 @@ struct GameState
     TextureHandle heightmapTexture;
     uint8 heightmapTextureVersion;
 
-    RenderTextureArray *textureArray_RGBA8_2048x2048;
-    RenderTextureArray *textureArray_R16_2048x2048;
-    RenderTextureArray *textureArray_R8_2048x2048;
+    TextureArrayHandle textureArray_RGBA8_2048x2048;
+    TextureArrayHandle textureArray_R16_2048x2048;
+    TextureArrayHandle textureArray_R8_2048x2048;
 
     RenderTerrainMaterial materials[MATERIAL_COUNT];
     TerrainMaterialTextures materialTextures[MATERIAL_COUNT];

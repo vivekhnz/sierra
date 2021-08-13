@@ -32,6 +32,10 @@ struct MeshHandle
 {
     void *ptr;
 };
+struct TextureArrayHandle
+{
+    void *ptr;
+};
 
 // textures
 
