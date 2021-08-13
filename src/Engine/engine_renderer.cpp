@@ -370,10 +370,6 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->materialCount = materialCount;
-    cmd->albedoTextureArray = albedoTextureArray;
-    cmd->normalTextureArray = normalTextureArray;
-    cmd->displacementTextureArray = displacementTextureArray;
-    cmd->aoTextureArray = aoTextureArray;
     cmd->materials = materials;
 
     cmd->isWireframe = isWireframe;

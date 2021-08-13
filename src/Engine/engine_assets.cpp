@@ -263,6 +263,7 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         if (!reg->asset.texture)
         {
             reg->asset.texture = pushStruct(assets->arena, TextureAsset);
+            reg->asset.texture->format = reg->metadata.texture->format;
         }
 
         const stbi_uc *rawData = static_cast<stbi_uc *>(data);

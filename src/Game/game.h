@@ -76,10 +76,6 @@ struct GameState
     TextureHandle heightmapTexture;
     uint8 heightmapTextureVersion;
 
-    TextureArrayHandle textureArray_RGBA8_2048x2048;
-    TextureArrayHandle textureArray_R16_2048x2048;
-    TextureArrayHandle textureArray_R8_2048x2048;
-
     RenderTerrainMaterial materials[MATERIAL_COUNT];
     TerrainMaterialTextures materialTextures[MATERIAL_COUNT];
 };

@@ -767,6 +767,18 @@ void updateTextureArray(TextureArrayHandle handle, uint32 layer, void *pixels)
         array->descriptor.gpuFormat, array->descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 }
+uint32 getTextureId(RenderBackendContext rctx, TextureAsset *asset)
+{
+    uint32 result = 0;
+
+    if (asset)
+    {
+        TextureArrayHandle array = getTextureArray(rctx, asset->width, asset->height, asset->format);
+        result = getTextureId(array);
+    }
+
+    return result;
+}
 
 bool applyEffect(RenderEffect *effect)
 {
@@ -1040,6 +1052,19 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(ctx->terrain.materialProps),
                     ctx->terrain.materialProps, GL_DYNAMIC_DRAW);
 
+                uint32 albedoTextureArrayId = 0;
+                uint32 normalTextureArrayId = 0;
+                uint32 displacementTextureArrayId = 0;
+                uint32 aoTextureArrayId = 0;
+                if (cmd->materialCount > 0)
+                {
+                    RenderTerrainMaterial *firstMaterial = &cmd->materials[0];
+                    albedoTextureArrayId = getTextureId(rq->ctx, firstMaterial->albedoTextureAsset);
+                    normalTextureArrayId = getTextureId(rq->ctx, firstMaterial->normalTextureAsset);
+                    displacementTextureArrayId = getTextureId(rq->ctx, firstMaterial->displacementTextureAsset);
+                    aoTextureArrayId = getTextureId(rq->ctx, firstMaterial->aoTextureAsset);
+                }
+
                 Heightfield *heightfield = cmd->heightfield;
                 uint32 vertsPerEdge = ctx->terrain.vertsPerEdge;
                 uint32 meshEdgeCount = ((vertsPerEdge * vertsPerEdge) - vertsPerEdge) * 2;
@@ -1090,13 +1115,13 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 glBlendEquation(GL_FUNC_ADD);
                 glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 glActiveTexture(GL_TEXTURE1);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->albedoTextureArray));
+                glBindTexture(GL_TEXTURE_2D_ARRAY, albedoTextureArrayId);
                 glActiveTexture(GL_TEXTURE2);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->normalTextureArray));
+                glBindTexture(GL_TEXTURE_2D_ARRAY, normalTextureArrayId);
                 glActiveTexture(GL_TEXTURE3);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->displacementTextureArray));
+                glBindTexture(GL_TEXTURE_2D_ARRAY, displacementTextureArrayId);
                 glActiveTexture(GL_TEXTURE4);
-                glBindTexture(GL_TEXTURE_2D_ARRAY, getTextureId(cmd->aoTextureArray));
+                glBindTexture(GL_TEXTURE_2D_ARRAY, aoTextureArrayId);
                 glActiveTexture(GL_TEXTURE5);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->referenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.materialPropsBufferId);

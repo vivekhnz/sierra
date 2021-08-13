@@ -125,10 +125,6 @@ struct SceneState
     RenderMeshInstance objectInstanceData[MAX_OBJECT_INSTANCES];
     uint32 objectInstanceCount;
 
-    TextureArrayHandle textureArray_RGBA8_2048x2048;
-    TextureArrayHandle textureArray_R16_2048x2048;
-    TextureArrayHandle textureArray_R8_2048x2048;
-
     TextureAssetBinding albedoTextures[MAX_MATERIAL_COUNT];
     TextureAssetBinding normalTextures[MAX_MATERIAL_COUNT];
     TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];

@@ -79,6 +79,7 @@ struct RenderMeshInstance
     uint32 id;
     glm::mat4 transform;
 };
+struct TextureAsset;
 struct RenderTerrainMaterial
 {
     glm::vec2 textureSizeInWorldUnits;
@@ -87,6 +88,11 @@ struct RenderTerrainMaterial
     uint16 normalTextureIndex;
     uint16 displacementTextureIndex;
     uint16 aoTextureIndex;
+
+    TextureAsset *albedoTextureAsset;
+    TextureAsset *normalTextureAsset;
+    TextureAsset *displacementTextureAsset;
+    TextureAsset *aoTextureAsset;
 
     float slopeStart;
     float slopeEnd;

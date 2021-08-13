@@ -16,6 +16,7 @@ struct TextureAsset
 {
     uint32 width;
     uint32 height;
+    TextureFormat format;
     void *data;
 };
 struct MeshAsset
