@@ -204,9 +204,10 @@ void initializeEditor(EditorMemory *memory)
     sceneState->textureArray_R8_2048x2048 =
         engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R8);
 
-    memset(sceneState->textures_RGBA8_2048x2048, 0, sizeof(sceneState->textures_RGBA8_2048x2048));
-    memset(sceneState->textures_R16_2048x2048, 0, sizeof(sceneState->textures_R16_2048x2048));
-    memset(sceneState->textures_R8_2048x2048, 0, sizeof(sceneState->textures_R8_2048x2048));
+    memset(sceneState->albedoTextures, 0, sizeof(sceneState->albedoTextures));
+    memset(sceneState->normalTextures, 0, sizeof(sceneState->normalTextures));
+    memset(sceneState->displacementTextures, 0, sizeof(sceneState->displacementTextures));
+    memset(sceneState->aoTextures, 0, sizeof(sceneState->aoTextures));
 
     sceneState->materialPropsBuffer =
         engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
@@ -219,10 +220,20 @@ void initializeEditor(EditorMemory *memory)
     state->docState.materialCount = 0;
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
+        TextureAssetBinding *albedoBinding = &sceneState->albedoTextures[i];
+        TextureAssetBinding *normalBinding = &sceneState->normalTextures[i];
+        TextureAssetBinding *displacementBinding = &sceneState->displacementTextures[i];
+        TextureAssetBinding *aoBinding = &sceneState->aoTextures[i];
+
+        albedoBinding->slice = i;
+        normalBinding->slice = MAX_MATERIAL_COUNT + i;
+        displacementBinding->slice = i;
+        aoBinding->slice = i;
+
         GpuMaterialProperties *mat = &state->docState.materialProps[i];
         *mat = {};
-        mat->albedoTexture_normalTexture = (i << 16) | (MAX_MATERIAL_COUNT + i);
-        mat->displacementTexture_aoTexture = (i << 16) | i;
+        mat->albedoTexture_normalTexture = ((uint32)albedoBinding->slice << 16) | normalBinding->slice;
+        mat->displacementTexture_aoTexture = ((uint32)displacementBinding->slice << 16) | aoBinding->slice;
 
         state->docState.albedoTextureAssetHandles[i] = 0;
         state->docState.normalTextureAssetHandles[i] = 0;
@@ -719,13 +730,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->albedoTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            uint32 slice = layerIdx;
-            binding = &sceneState->textures_RGBA8_2048x2048[slice];
+            binding = &sceneState->albedoTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(
-                    sceneState->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
+                    sceneState->textureArray_RGBA8_2048x2048, binding->slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -734,13 +744,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->normalTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            uint32 slice = MAX_MATERIAL_COUNT + layerIdx;
-            binding = &sceneState->textures_RGBA8_2048x2048[slice];
+            binding = &sceneState->normalTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(
-                    sceneState->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
+                    sceneState->textureArray_RGBA8_2048x2048, binding->slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -749,13 +758,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->displacementTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            uint32 slice = layerIdx;
-            binding = &sceneState->textures_R16_2048x2048[slice];
+            binding = &sceneState->displacementTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(
-                    sceneState->textureArray_R16_2048x2048, slice, asset->texture->data);
+                    sceneState->textureArray_R16_2048x2048, binding->slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }
@@ -764,13 +772,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
         assetHandle = docState->aoTextureAssetHandles[layerIdx];
         if (assetHandle)
         {
-            uint32 slice = layerIdx;
-            binding = &sceneState->textures_R8_2048x2048[slice];
+            binding = &sceneState->aoTextures[layerIdx];
             asset = engine->assetsGetTexture(assetHandle);
             if (asset->texture && (assetHandle != binding->assetHandle || asset->version > binding->version))
             {
                 engine->rendererUpdateTextureArray(
-                    sceneState->textureArray_R8_2048x2048, slice, asset->texture->data);
+                    sceneState->textureArray_R8_2048x2048, binding->slice, asset->texture->data);
                 binding->assetHandle = assetHandle;
                 binding->version = asset->version;
             }

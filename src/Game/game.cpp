@@ -10,6 +10,19 @@ float clamp(float value, float min, float max)
     return (value < min ? min : (value > max ? max : value));
 }
 
+void setMaterialTexture(MaterialTextureBinding *materialTextures,
+    uint32 idx,
+    AssetHandle assetHandle,
+    RenderTextureArray *textureArray,
+    uint16 slice)
+{
+    MaterialTextureBinding *binding = &materialTextures[idx];
+    binding->assetHandle = assetHandle;
+    binding->version = 0;
+    binding->textureArray = textureArray;
+    binding->slice = slice;
+}
+
 bool initializeGame(GameMemory *memory)
 {
     GameState *state = &memory->state;
@@ -104,6 +117,32 @@ bool initializeGame(GameMemory *memory)
 
     state->materialPropsBuffer = engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     engine->rendererUpdateBuffer(&state->materialPropsBuffer, sizeof(materialProps), materialProps);
+
+    uint32 idx = 0;
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureGroundAlbedo, state->textureArray_RGBA8_2048x2048, 0);
+    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureGroundNormal,
+        state->textureArray_RGBA8_2048x2048, MATERIAL_COUNT);
+    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureGroundDisplacement,
+        state->textureArray_R16_2048x2048, 0);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureGroundAo, state->textureArray_R8_2048x2048, 0);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureRockAlbedo, state->textureArray_RGBA8_2048x2048, 1);
+    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureRockNormal,
+        state->textureArray_RGBA8_2048x2048, MATERIAL_COUNT + 1);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureRockDisplacement, state->textureArray_R16_2048x2048, 1);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureRockAo, state->textureArray_R8_2048x2048, 1);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureSnowAlbedo, state->textureArray_RGBA8_2048x2048, 2);
+    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureSnowNormal,
+        state->textureArray_RGBA8_2048x2048, MATERIAL_COUNT + 2);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureSnowDisplacement, state->textureArray_R16_2048x2048, 2);
+    setMaterialTexture(
+        state->materialTextures, idx++, gameAssets->textureSnowAo, state->textureArray_R8_2048x2048, 2);
 
     return 1;
 }
@@ -308,90 +347,18 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     glm::vec3 *cameraLookAt =
         state->isOrbitCameraMode ? &state->orbitCameraLookAt : &state->firstPersonCameraLookAt;
 
-    LoadedAsset *asset;
-    asset = engine->assetsGetTexture(gameAssets->textureGroundAlbedo);
-    if (asset->texture && asset->version > state->groundAlbedoTextureVersion)
+    for (uint32 i = 0; i < arrayCount(state->materialTextures); i++)
     {
-        uint32 slice = 0;
-        engine->rendererUpdateTextureArray(state->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
-        state->groundAlbedoTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureGroundNormal);
-    if (asset->texture && asset->version > state->groundNormalTextureVersion)
-    {
-        uint32 slice = MATERIAL_COUNT;
-        engine->rendererUpdateTextureArray(state->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
-        state->groundNormalTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureGroundDisplacement);
-    if (asset->texture && asset->version > state->groundDisplacementTextureVersion)
-    {
-        uint32 slice = 0;
-        engine->rendererUpdateTextureArray(state->textureArray_R16_2048x2048, slice, asset->texture->data);
-        state->groundDisplacementTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureGroundAo);
-    if (asset->texture && asset->version > state->groundAoTextureVersion)
-    {
-        uint32 slice = 0;
-        engine->rendererUpdateTextureArray(state->textureArray_R8_2048x2048, slice, asset->texture->data);
-        state->groundAoTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureRockAlbedo);
-    if (asset->texture && asset->version > state->rockAlbedoTextureVersion)
-    {
-        uint32 slice = 1;
-        engine->rendererUpdateTextureArray(state->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
-        state->rockAlbedoTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureRockNormal);
-    if (asset->texture && asset->version > state->rockNormalTextureVersion)
-    {
-        uint32 slice = MATERIAL_COUNT + 1;
-        engine->rendererUpdateTextureArray(state->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
-        state->rockNormalTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureRockDisplacement);
-    if (asset->texture && asset->version > state->rockDisplacementTextureVersion)
-    {
-        uint32 slice = 1;
-        engine->rendererUpdateTextureArray(state->textureArray_R16_2048x2048, slice, asset->texture->data);
-        state->rockDisplacementTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureRockAo);
-    if (asset->texture && asset->version > state->rockAoTextureVersion)
-    {
-        uint32 slice = 1;
-        engine->rendererUpdateTextureArray(state->textureArray_R8_2048x2048, slice, asset->texture->data);
-        state->rockAoTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureSnowAlbedo);
-    if (asset->texture && asset->version > state->snowAlbedoTextureVersion)
-    {
-        uint32 slice = 2;
-        engine->rendererUpdateTextureArray(state->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
-        state->snowAlbedoTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureSnowNormal);
-    if (asset->texture && asset->version > state->snowNormalTextureVersion)
-    {
-        uint32 slice = MATERIAL_COUNT + 2;
-        engine->rendererUpdateTextureArray(state->textureArray_RGBA8_2048x2048, slice, asset->texture->data);
-        state->snowNormalTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureSnowDisplacement);
-    if (asset->texture && asset->version > state->snowDisplacementTextureVersion)
-    {
-        uint32 slice = 2;
-        engine->rendererUpdateTextureArray(state->textureArray_R16_2048x2048, slice, asset->texture->data);
-        state->snowDisplacementTextureVersion = asset->version;
-    }
-    asset = engine->assetsGetTexture(gameAssets->textureSnowAo);
-    if (asset->texture && asset->version > state->snowAoTextureVersion)
-    {
-        uint32 slice = 2;
-        engine->rendererUpdateTextureArray(state->textureArray_R8_2048x2048, slice, asset->texture->data);
-        state->snowAoTextureVersion = asset->version;
+        MaterialTextureBinding *binding = &state->materialTextures[i];
+        if (binding->assetHandle)
+        {
+            LoadedAsset *asset = engine->assetsGetTexture(binding->assetHandle);
+            if (asset->texture && asset->version > binding->version)
+            {
+                engine->rendererUpdateTextureArray(binding->textureArray, binding->slice, asset->texture->data);
+                binding->version = asset->version;
+            }
+        }
     }
 
     AssetHandle terrainShader =

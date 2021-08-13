@@ -86,6 +86,7 @@ struct TextureAssetBinding
 {
     AssetHandle assetHandle;
     uint8 version;
+    uint16 slice;
 };
 
 struct SceneViewState
@@ -135,9 +136,10 @@ struct SceneState
     RenderTextureArray *textureArray_R16_2048x2048;
     RenderTextureArray *textureArray_R8_2048x2048;
 
-    TextureAssetBinding textures_RGBA8_2048x2048[MAX_MATERIAL_COUNT * 2];
-    TextureAssetBinding textures_R16_2048x2048[MAX_MATERIAL_COUNT];
-    TextureAssetBinding textures_R8_2048x2048[MAX_MATERIAL_COUNT];
+    TextureAssetBinding albedoTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding normalTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
+    TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 
     RenderBuffer materialPropsBuffer;
     uint32 nextMaterialId;
