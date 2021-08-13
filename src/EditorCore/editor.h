@@ -86,6 +86,7 @@ struct TextureAssetBinding
 {
     AssetHandle assetHandle;
     uint8 version;
+    RenderTextureArray *textureArray;
     uint16 slice;
 };
 

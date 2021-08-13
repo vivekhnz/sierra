@@ -47,6 +47,7 @@ API_EXPORT ENGINE_GET_API(engineGetApi)
     Api.rendererGetPixels = rendererGetPixels;
     Api.rendererGetPixelsInRegion = rendererGetPixelsInRegion;
     Api.rendererGetTextureArray = rendererGetTextureArray;
+    Api.rendererReserveTextureSlot = rendererReserveTextureSlot;
     Api.rendererUpdateTextureArray = rendererUpdateTextureArray;
     Api.rendererCreateBuffer = rendererCreateBuffer;
     Api.rendererUpdateBuffer = rendererUpdateBuffer;

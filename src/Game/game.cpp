@@ -10,17 +10,15 @@ float clamp(float value, float min, float max)
     return (value < min ? min : (value > max ? max : value));
 }
 
-void setMaterialTexture(MaterialTextureBinding *materialTextures,
-    uint32 idx,
-    AssetHandle assetHandle,
-    RenderTextureArray *textureArray,
-    uint16 slice)
+uint16 setMaterialTexture(
+    EngineApi *engine, MaterialTextureBinding *binding, AssetHandle assetHandle, RenderTextureArray *textureArray)
 {
-    MaterialTextureBinding *binding = &materialTextures[idx];
     binding->assetHandle = assetHandle;
     binding->version = 0;
     binding->textureArray = textureArray;
-    binding->slice = slice;
+    binding->slice = engine->rendererReserveTextureSlot(textureArray);
+
+    return binding->slice;
 }
 
 bool initializeGame(GameMemory *memory)
@@ -99,50 +97,62 @@ bool initializeGame(GameMemory *memory)
     state->textureArray_R8_2048x2048 =
         engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R8);
 
+    MaterialTextureBinding *currentBinding = state->materialTextures;
     GpuMaterialProperties materialProps[MATERIAL_COUNT];
-    materialProps[0].textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
-    materialProps[0].albedoTexture_normalTexture = 0 << 16 | (MATERIAL_COUNT + 0);
-    materialProps[0].displacementTexture_aoTexture = 0 << 16 | 0;
-    materialProps[0].rampParams = glm::vec4(0, 0, 0, 0);
+    {
+        GpuMaterialProperties *mat = &materialProps[0];
 
-    materialProps[1].textureSizeInWorldUnits = glm::vec2(13, 13);
-    materialProps[1].albedoTexture_normalTexture = 1 << 16 | (MATERIAL_COUNT + 1);
-    materialProps[1].displacementTexture_aoTexture = 1 << 16 | 1;
-    materialProps[1].rampParams = glm::vec4(0.2f, 0.4f, 0, 0.001f);
+        uint16 albedo = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureGroundAlbedo, state->textureArray_RGBA8_2048x2048);
+        uint16 normal = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureGroundNormal, state->textureArray_RGBA8_2048x2048);
+        uint16 displacement = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureGroundDisplacement, state->textureArray_R16_2048x2048);
+        uint16 ao = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureGroundAo, state->textureArray_R8_2048x2048);
 
-    materialProps[2].textureSizeInWorldUnits = glm::vec2(2, 2);
-    materialProps[2].albedoTexture_normalTexture = 2 << 16 | (MATERIAL_COUNT + 2);
-    materialProps[2].displacementTexture_aoTexture = 2 << 16 | 2;
-    materialProps[2].rampParams = glm::vec4(0.4f, 0.2f, 0.25f, 0.28f);
+        mat->textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
+        mat->albedoTexture_normalTexture = ((uint32)albedo << 16) | normal;
+        mat->displacementTexture_aoTexture = ((uint32)displacement << 16) | ao;
+        mat->rampParams = glm::vec4(0, 0, 0, 0);
+    }
+    {
+        GpuMaterialProperties *mat = &materialProps[1];
+
+        uint16 albedo = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureRockAlbedo, state->textureArray_RGBA8_2048x2048);
+        uint16 normal = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureRockNormal, state->textureArray_RGBA8_2048x2048);
+        uint16 displacement = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureRockDisplacement, state->textureArray_R16_2048x2048);
+        uint16 ao = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureRockAo, state->textureArray_R8_2048x2048);
+
+        mat->textureSizeInWorldUnits = glm::vec2(13, 13);
+        mat->albedoTexture_normalTexture = ((uint32)albedo << 16) | normal;
+        mat->displacementTexture_aoTexture = ((uint32)displacement << 16) | ao;
+        mat->rampParams = glm::vec4(0.2f, 0.4f, 0, 0.001f);
+    }
+    {
+        GpuMaterialProperties *mat = &materialProps[2];
+
+        uint16 albedo = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureSnowAlbedo, state->textureArray_RGBA8_2048x2048);
+        uint16 normal = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureSnowNormal, state->textureArray_RGBA8_2048x2048);
+        uint16 displacement = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureSnowDisplacement, state->textureArray_R16_2048x2048);
+        uint16 ao = setMaterialTexture(
+            engine, currentBinding++, gameAssets->textureSnowAo, state->textureArray_R8_2048x2048);
+
+        mat->textureSizeInWorldUnits = glm::vec2(2, 2);
+        mat->albedoTexture_normalTexture = ((uint32)albedo << 16) | normal;
+        mat->displacementTexture_aoTexture = ((uint32)displacement << 16) | ao;
+        mat->rampParams = glm::vec4(0.4f, 0.2f, 0.25f, 0.28f);
+    }
 
     state->materialPropsBuffer = engine->rendererCreateBuffer(RENDERER_SHADER_STORAGE_BUFFER, GL_DYNAMIC_DRAW);
     engine->rendererUpdateBuffer(&state->materialPropsBuffer, sizeof(materialProps), materialProps);
-
-    uint32 idx = 0;
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureGroundAlbedo, state->textureArray_RGBA8_2048x2048, 0);
-    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureGroundNormal,
-        state->textureArray_RGBA8_2048x2048, MATERIAL_COUNT);
-    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureGroundDisplacement,
-        state->textureArray_R16_2048x2048, 0);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureGroundAo, state->textureArray_R8_2048x2048, 0);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureRockAlbedo, state->textureArray_RGBA8_2048x2048, 1);
-    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureRockNormal,
-        state->textureArray_RGBA8_2048x2048, MATERIAL_COUNT + 1);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureRockDisplacement, state->textureArray_R16_2048x2048, 1);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureRockAo, state->textureArray_R8_2048x2048, 1);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureSnowAlbedo, state->textureArray_RGBA8_2048x2048, 2);
-    setMaterialTexture(state->materialTextures, idx++, gameAssets->textureSnowNormal,
-        state->textureArray_RGBA8_2048x2048, MATERIAL_COUNT + 2);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureSnowDisplacement, state->textureArray_R16_2048x2048, 2);
-    setMaterialTexture(
-        state->materialTextures, idx++, gameAssets->textureSnowAo, state->textureArray_R8_2048x2048, 2);
 
     return 1;
 }

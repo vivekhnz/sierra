@@ -43,6 +43,8 @@ typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
 #define RENDERER_GET_TEXTURE_ARRAY(name)                                                                          \
     RenderTextureArray *name(RenderContext *ctx, uint32 width, uint32 height, TextureFormat format)
 typedef RENDERER_GET_TEXTURE_ARRAY(RendererGetTextureArray);
+#define RENDERER_RESERVE_TEXTURE_SLOT(name) uint16 name(RenderTextureArray *array)
+typedef RENDERER_RESERVE_TEXTURE_SLOT(RendererReserveTextureSlot);
 #define RENDERER_UPDATE_TEXTURE_ARRAY(name) void name(RenderTextureArray *array, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
 

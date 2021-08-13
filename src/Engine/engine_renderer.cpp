@@ -16,6 +16,8 @@ struct RenderTextureArray
     uint32 height;
     TextureFormat format;
     uint32 layers;
+
+    uint32 reservedLayers;
 };
 struct RenderTextureArrayEntry
 {
@@ -113,6 +115,7 @@ RENDERER_GET_TEXTURE_ARRAY(rendererGetTextureArray)
         entry->textureArray.height = height;
         entry->textureArray.format = format;
         entry->textureArray.layers = LAYERS_PER_TEXTURE_ARRAY;
+        entry->textureArray.reservedLayers = 0;
 
         if (ctx->lastTextureArray)
         {
@@ -128,6 +131,11 @@ RENDERER_GET_TEXTURE_ARRAY(rendererGetTextureArray)
     }
 
     return result;
+}
+RENDERER_RESERVE_TEXTURE_SLOT(rendererReserveTextureSlot)
+{
+    assert(array->reservedLayers < array->layers);
+    return ++array->reservedLayers;
 }
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
