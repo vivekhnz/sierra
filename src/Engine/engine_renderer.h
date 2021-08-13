@@ -1,22 +1,6 @@
 #ifndef ENGINE_RENDERER_H
 #define ENGINE_RENDERER_H
 
-// todo: remove this once renderer APIs are decoupled from OpenGL
-#include <glad/glad.h>
-
-enum RendererBufferType
-{
-    RENDERER_VERTEX_BUFFER,
-    RENDERER_ELEMENT_BUFFER,
-    RENDERER_SHADER_STORAGE_BUFFER
-};
-struct RenderBuffer
-{
-    uint32 id;
-    uint32 type;
-    uint32 usage;
-};
-
 struct RenderContext;
 struct RenderTextureArray;
 struct RenderEffect;
@@ -47,13 +31,6 @@ typedef RENDERER_GET_TEXTURE_ARRAY(RendererGetTextureArray);
 typedef RENDERER_RESERVE_TEXTURE_SLOT(RendererReserveTextureSlot);
 #define RENDERER_UPDATE_TEXTURE_ARRAY(name) void name(RenderTextureArray *array, uint32 layer, void *pixels)
 typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
-
-// buffers
-
-#define RENDERER_CREATE_BUFFER(name) RenderBuffer name(RendererBufferType type, uint32 usage)
-typedef RENDERER_CREATE_BUFFER(RendererCreateBuffer);
-#define RENDERER_UPDATE_BUFFER(name) void name(RenderBuffer *buffer, uint64 size, void *data)
-typedef RENDERER_UPDATE_BUFFER(RendererUpdateBuffer);
 
 // render targets
 
@@ -139,7 +116,7 @@ typedef RENDERER_PUSH_MESHES(RendererPushMeshes);
         TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
         uint32 materialCount, RenderTextureArray *textureArray_RGBA8_2048x2048,                                   \
         RenderTextureArray *textureArray_R16_2048x2048, RenderTextureArray *textureArray_R8_2048x2048,            \
-        RenderTerrainMaterial* materials, bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos,            \
+        RenderTerrainMaterial *materials, bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos,        \
         float cursorRadius, float cursorFalloff)
 typedef RENDERER_PUSH_TERRAIN(RendererPushTerrain);
 

@@ -30,8 +30,6 @@ struct EngineApi
     RendererGetTextureArray *rendererGetTextureArray;
     RendererReserveTextureSlot *rendererReserveTextureSlot;
     RendererUpdateTextureArray *rendererUpdateTextureArray;
-    RendererCreateBuffer *rendererCreateBuffer;
-    RendererUpdateBuffer *rendererUpdateBuffer;
     RendererCreateRenderTarget *rendererCreateRenderTarget;
     RendererResizeRenderTarget *rendererResizeRenderTarget;
     RendererCreateEffect *rendererCreateEffect;

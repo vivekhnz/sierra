@@ -1,9 +1,6 @@
 #include "engine_renderer.h"
 #include "engine_render_backend.h"
 
-// todo: remove this once all OpenGL-specific code has been moved into OpenGL render backend
-#include <glad/glad.h>
-
 #define LAYERS_PER_TEXTURE_ARRAY 32
 
 ASSETS_GET_SHADER(assetsGetShader);
@@ -140,38 +137,6 @@ RENDERER_RESERVE_TEXTURE_SLOT(rendererReserveTextureSlot)
 RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
 {
     updateTextureArray(array->id, array->width, array->height, layer, array->format, pixels);
-}
-
-// buffers
-
-RENDERER_CREATE_BUFFER(rendererCreateBuffer)
-{
-    RenderBuffer result = {};
-    result.usage = usage;
-
-    glGenBuffers(1, &result.id);
-
-    if (type == RENDERER_VERTEX_BUFFER)
-    {
-        result.type = GL_ARRAY_BUFFER;
-    }
-    else if (type == RENDERER_ELEMENT_BUFFER)
-    {
-        result.type = GL_ELEMENT_ARRAY_BUFFER;
-    }
-    else if (type == RENDERER_SHADER_STORAGE_BUFFER)
-    {
-        result.type = GL_SHADER_STORAGE_BUFFER;
-    }
-    assert(result.type);
-
-    return result;
-}
-
-RENDERER_UPDATE_BUFFER(rendererUpdateBuffer)
-{
-    glBindBuffer(buffer->type, buffer->id);
-    glBufferData(buffer->type, size, data, buffer->usage);
 }
 
 // render targets
