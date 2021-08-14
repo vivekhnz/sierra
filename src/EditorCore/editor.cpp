@@ -1276,7 +1276,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
-    glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
 
     RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
@@ -1332,6 +1331,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                     ->textureHandle;
         }
 
+        glm::vec2 heightmapSize = glm::vec2(activeHeightmap->width, activeHeightmap->height);
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
@@ -1349,14 +1349,14 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
 
-    // selection render target is only 8 bits so mask out the 24 most significant bits
-    // otherwise IDs will get clamped
-    RenderEffect *mesh8BitIdEffect =
-        engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
-
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS && state->uiState.selectedObjectCount > 0)
     {
+        // selection render target is only 8 bits so mask out the 24 most significant bits
+        // otherwise IDs will get clamped
+        RenderEffect *mesh8BitIdEffect =
+            engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        engine->rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
+
         uint32 objectsFound = 0;
         for (uint32 i = 0;
              i < state->previewDocState.objectInstanceCount && objectsFound < state->uiState.selectedObjectCount;
@@ -1381,13 +1381,16 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
     engine->rendererClear(rq, 0, 0, 0, 1);
-    RenderEffect *mesh32BitIdEffect =
-        engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
-    for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
     {
-        engine->rendererPushMeshes(
-            rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
+        RenderEffect *mesh32BitIdEffect =
+            engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        engine->rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
+        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+        {
+            engine->rendererPushMeshes(
+                rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
+        }
     }
     engine->rendererDrawToTarget(rq, pickingRenderTarget);
 
