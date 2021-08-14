@@ -27,19 +27,12 @@ struct GameAssets
     AssetHandle textureVirtualHeightmap;
 };
 
-struct TextureAssetBinding
-{
-    AssetHandle assetHandle;
-    uint8 version;
-    TextureArrayHandle textureArray;
-    uint16 slice;
-};
 struct TerrainMaterialTextures
 {
-    TextureAssetBinding albedo;
-    TextureAssetBinding normal;
-    TextureAssetBinding displacement;
-    TextureAssetBinding ao;
+    AssetHandle albedo;
+    AssetHandle normal;
+    AssetHandle displacement;
+    AssetHandle ao;
 };
 
 struct GameState

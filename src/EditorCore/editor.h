@@ -82,14 +82,6 @@ struct ObjectTransform
     glm::vec3 scale;
 };
 
-struct TextureAssetBinding
-{
-    AssetHandle assetHandle;
-    uint8 version;
-    TextureArrayHandle textureArray;
-    uint16 slice;
-};
-
 struct SceneViewState
 {
     float orbitCameraDistance;
@@ -124,11 +116,6 @@ struct SceneState
     uint32 nextObjectId;
     RenderMeshInstance objectInstanceData[MAX_OBJECT_INSTANCES];
     uint32 objectInstanceCount;
-
-    TextureAssetBinding albedoTextures[MAX_MATERIAL_COUNT];
-    TextureAssetBinding normalTextures[MAX_MATERIAL_COUNT];
-    TextureAssetBinding displacementTextures[MAX_MATERIAL_COUNT];
-    TextureAssetBinding aoTextures[MAX_MATERIAL_COUNT];
 
     uint32 nextMaterialId;
     uint32 materialCount;

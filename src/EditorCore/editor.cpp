@@ -197,18 +197,6 @@ void initializeEditor(EditorMemory *memory)
     sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
 #endif
 
-    TextureArrayHandle textureArray_RGBA8_2048x2048 =
-        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_RGB8);
-    TextureArrayHandle textureArray_R16_2048x2048 =
-        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R16);
-    TextureArrayHandle textureArray_R8_2048x2048 =
-        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R8);
-
-    memset(sceneState->albedoTextures, 0, sizeof(sceneState->albedoTextures));
-    memset(sceneState->normalTextures, 0, sizeof(sceneState->normalTextures));
-    memset(sceneState->displacementTextures, 0, sizeof(sceneState->displacementTextures));
-    memset(sceneState->aoTextures, 0, sizeof(sceneState->aoTextures));
-
     sceneState->nextMaterialId = 1;
 
     // the first bit of the ID is used to signify that this is a mesh instance
@@ -219,21 +207,6 @@ void initializeEditor(EditorMemory *memory)
     memset(state->docState.materials, 0, sizeof(state->docState.materials));
     for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
     {
-        TextureAssetBinding *albedoBinding = &sceneState->albedoTextures[i];
-        TextureAssetBinding *normalBinding = &sceneState->normalTextures[i];
-        TextureAssetBinding *displacementBinding = &sceneState->displacementTextures[i];
-        TextureAssetBinding *aoBinding = &sceneState->aoTextures[i];
-
-        albedoBinding->textureArray = textureArray_RGBA8_2048x2048;
-        normalBinding->textureArray = textureArray_RGBA8_2048x2048;
-        displacementBinding->textureArray = textureArray_R16_2048x2048;
-        aoBinding->textureArray = textureArray_R8_2048x2048;
-
-        albedoBinding->slice = engine->rendererReserveTextureSlot(albedoBinding->textureArray);
-        normalBinding->slice = engine->rendererReserveTextureSlot(normalBinding->textureArray);
-        displacementBinding->slice = engine->rendererReserveTextureSlot(displacementBinding->textureArray);
-        aoBinding->slice = engine->rendererReserveTextureSlot(aoBinding->textureArray);
-
         state->docState.albedoTextureAssetHandles[i] = 0;
         state->docState.normalTextureAssetHandles[i] = 0;
         state->docState.displacementTextureAssetHandles[i] = 0;
@@ -712,30 +685,14 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
     }
 }
 
-struct MaterialTextureInfo
+TextureAsset *getMaterialTexture(EngineApi *engine, AssetHandle assetHandle)
 {
-    TextureAsset *textureAsset;
-    uint16 slot;
-};
-MaterialTextureInfo getMaterialTexture(EngineApi *engine, AssetHandle assetHandle, TextureAssetBinding *binding)
-{
-    MaterialTextureInfo result = {};
+    TextureAsset *result = {};
 
     if (assetHandle)
     {
         LoadedAsset *asset = engine->assetsGetTexture(assetHandle);
-        if (asset->texture)
-        {
-            result.textureAsset = asset->texture;
-            result.slot = binding->slice;
-
-            if ((assetHandle != binding->assetHandle || asset->version > binding->version))
-            {
-                engine->rendererUpdateTextureArray(binding->textureArray, binding->slice, asset->texture->data);
-                binding->assetHandle = assetHandle;
-                binding->version = asset->version;
-            }
-        }
+        result = asset->texture;
     }
 
     return result;
@@ -750,25 +707,12 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     sceneState->materialCount = docState->materialCount;
     for (uint32 layerIdx = 0; layerIdx < docState->materialCount; layerIdx++)
     {
-        MaterialTextureInfo albedo = getMaterialTexture(
-            engine, docState->albedoTextureAssetHandles[layerIdx], &sceneState->albedoTextures[layerIdx]);
-        MaterialTextureInfo normal = getMaterialTexture(
-            engine, docState->normalTextureAssetHandles[layerIdx], &sceneState->normalTextures[layerIdx]);
-        MaterialTextureInfo displacement = getMaterialTexture(engine,
-            docState->displacementTextureAssetHandles[layerIdx], &sceneState->displacementTextures[layerIdx]);
-        MaterialTextureInfo ao = getMaterialTexture(
-            engine, docState->aoTextureAssetHandles[layerIdx], &sceneState->aoTextures[layerIdx]);
-
         RenderTerrainMaterial *mat = &docState->materials[layerIdx];
-
-        mat->albedoTextureIndex = albedo.slot;
-        mat->albedoTextureAsset = albedo.textureAsset;
-        mat->normalTextureIndex = normal.slot;
-        mat->normalTextureAsset = normal.textureAsset;
-        mat->displacementTextureIndex = displacement.slot;
-        mat->displacementTextureAsset = displacement.textureAsset;
-        mat->aoTextureIndex = ao.slot;
-        mat->aoTextureAsset = ao.textureAsset;
+        mat->albedoTextureAsset = getMaterialTexture(engine, docState->albedoTextureAssetHandles[layerIdx]);
+        mat->normalTextureAsset = getMaterialTexture(engine, docState->normalTextureAssetHandles[layerIdx]);
+        mat->displacementTextureAsset =
+            getMaterialTexture(engine, docState->displacementTextureAssetHandles[layerIdx]);
+        mat->aoTextureAsset = getMaterialTexture(engine, docState->aoTextureAssetHandles[layerIdx]);
     }
 
     // update object instance state

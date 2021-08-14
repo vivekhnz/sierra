@@ -1038,11 +1038,14 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     RenderTerrainMaterial *src = &cmd->materials[i];
                     OpenGlTerrainMaterialProps *dst = &ctx->terrain.materialProps[i];
 
+                    uint16 albedo = src->albedoTextureAsset ? src->albedoTextureAsset->slot : 0;
+                    uint16 normal = src->normalTextureAsset ? src->normalTextureAsset->slot : 0;
+                    uint16 displacement = src->displacementTextureAsset ? src->displacementTextureAsset->slot : 0;
+                    uint16 ao = src->aoTextureAsset ? src->aoTextureAsset->slot : 0;
+
                     dst->textureSizeInWorldUnits = src->textureSizeInWorldUnits;
-                    dst->albedoTexture_normalTexture =
-                        ((uint32)src->albedoTextureIndex << 16) | src->normalTextureIndex;
-                    dst->displacementTexture_aoTexture =
-                        ((uint32)src->displacementTextureIndex << 16) | src->aoTextureIndex;
+                    dst->albedoTexture_normalTexture = ((uint32)albedo << 16) | normal;
+                    dst->displacementTexture_aoTexture = ((uint32)displacement << 16) | ao;
                     dst->rampParams.x = src->slopeStart;
                     dst->rampParams.y = src->slopeEnd;
                     dst->rampParams.z = src->altitudeStart;

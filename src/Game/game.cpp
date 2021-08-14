@@ -10,15 +10,6 @@ float clamp(float value, float min, float max)
     return (value < min ? min : (value > max ? max : value));
 }
 
-void setMaterialTexture(
-    EngineApi *engine, TextureAssetBinding *binding, AssetHandle assetHandle, TextureArrayHandle textureArray)
-{
-    binding->assetHandle = assetHandle;
-    binding->version = 0;
-    binding->textureArray = textureArray;
-    binding->slice = engine->rendererReserveTextureSlot(textureArray);
-}
-
 bool initializeGame(GameMemory *memory)
 {
     GameState *state = &memory->state;
@@ -97,13 +88,10 @@ bool initializeGame(GameMemory *memory)
 
     {
         TerrainMaterialTextures *textures = &state->materialTextures[0];
-        setMaterialTexture(
-            engine, &textures->albedo, gameAssets->textureGroundAlbedo, textureArray_RGBA8_2048x2048);
-        setMaterialTexture(
-            engine, &textures->normal, gameAssets->textureGroundNormal, textureArray_RGBA8_2048x2048);
-        setMaterialTexture(
-            engine, &textures->displacement, gameAssets->textureGroundDisplacement, textureArray_R16_2048x2048);
-        setMaterialTexture(engine, &textures->ao, gameAssets->textureGroundAo, textureArray_R8_2048x2048);
+        textures->albedo = gameAssets->textureGroundAlbedo;
+        textures->normal = gameAssets->textureGroundNormal;
+        textures->displacement = gameAssets->textureGroundDisplacement;
+        textures->ao = gameAssets->textureGroundAo;
 
         RenderTerrainMaterial *mat = &state->materials[0];
         mat->textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
@@ -114,11 +102,10 @@ bool initializeGame(GameMemory *memory)
     }
     {
         TerrainMaterialTextures *textures = &state->materialTextures[1];
-        setMaterialTexture(engine, &textures->albedo, gameAssets->textureRockAlbedo, textureArray_RGBA8_2048x2048);
-        setMaterialTexture(engine, &textures->normal, gameAssets->textureRockNormal, textureArray_RGBA8_2048x2048);
-        setMaterialTexture(
-            engine, &textures->displacement, gameAssets->textureRockDisplacement, textureArray_R16_2048x2048);
-        setMaterialTexture(engine, &textures->ao, gameAssets->textureRockAo, textureArray_R8_2048x2048);
+        textures->albedo = gameAssets->textureRockAlbedo;
+        textures->normal = gameAssets->textureRockNormal;
+        textures->displacement = gameAssets->textureRockDisplacement;
+        textures->ao = gameAssets->textureRockAo;
 
         RenderTerrainMaterial *mat = &state->materials[1];
         mat->textureSizeInWorldUnits = glm::vec2(13, 13);
@@ -129,11 +116,10 @@ bool initializeGame(GameMemory *memory)
     }
     {
         TerrainMaterialTextures *textures = &state->materialTextures[2];
-        setMaterialTexture(engine, &textures->albedo, gameAssets->textureSnowAlbedo, textureArray_RGBA8_2048x2048);
-        setMaterialTexture(engine, &textures->normal, gameAssets->textureSnowNormal, textureArray_RGBA8_2048x2048);
-        setMaterialTexture(
-            engine, &textures->displacement, gameAssets->textureSnowDisplacement, textureArray_R16_2048x2048);
-        setMaterialTexture(engine, &textures->ao, gameAssets->textureSnowAo, textureArray_R8_2048x2048);
+        textures->albedo = gameAssets->textureSnowAlbedo;
+        textures->normal = gameAssets->textureSnowNormal;
+        textures->displacement = gameAssets->textureSnowDisplacement;
+        textures->ao = gameAssets->textureSnowAo;
 
         RenderTerrainMaterial *mat = &state->materials[2];
         mat->textureSizeInWorldUnits = glm::vec2(2, 2);
@@ -156,31 +142,14 @@ bool isNewButtonPress(GameInput *input, GameInputButtons button)
     return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
 }
 
-struct MaterialTextureInfo
+TextureAsset *getMaterialTexture(EngineApi *engine, AssetHandle assetHandle)
 {
-    TextureAsset *textureAsset;
-    uint16 slot;
-};
-MaterialTextureInfo getMaterialTexture(EngineApi *engine, TextureAssetBinding *binding)
-{
-    MaterialTextureInfo result = {};
+    TextureAsset *result = {};
 
-    AssetHandle assetHandle = binding->assetHandle;
     if (assetHandle)
     {
         LoadedAsset *asset = engine->assetsGetTexture(assetHandle);
-        if (asset->texture)
-        {
-            result.textureAsset = asset->texture;
-            result.slot = binding->slice;
-
-            if ((assetHandle != binding->assetHandle || asset->version > binding->version))
-            {
-                engine->rendererUpdateTextureArray(binding->textureArray, binding->slice, asset->texture->data);
-                binding->assetHandle = assetHandle;
-                binding->version = asset->version;
-            }
-        }
+        result = asset->texture;
     }
 
     return result;
@@ -372,21 +341,12 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
     for (uint32 layerIdx = 0; layerIdx < MATERIAL_COUNT; layerIdx++)
     {
-        TerrainMaterialTextures *textures = &state->materialTextures[layerIdx];
-        MaterialTextureInfo albedo = getMaterialTexture(engine, &textures->albedo);
-        MaterialTextureInfo normal = getMaterialTexture(engine, &textures->normal);
-        MaterialTextureInfo displacement = getMaterialTexture(engine, &textures->displacement);
-        MaterialTextureInfo ao = getMaterialTexture(engine, &textures->ao);
-
         RenderTerrainMaterial *mat = &state->materials[layerIdx];
-        mat->albedoTextureIndex = albedo.slot;
-        mat->albedoTextureAsset = albedo.textureAsset;
-        mat->normalTextureIndex = normal.slot;
-        mat->normalTextureAsset = normal.textureAsset;
-        mat->displacementTextureIndex = displacement.slot;
-        mat->displacementTextureAsset = displacement.textureAsset;
-        mat->aoTextureIndex = ao.slot;
-        mat->aoTextureAsset = ao.textureAsset;
+        TerrainMaterialTextures *textures = &state->materialTextures[layerIdx];
+        mat->albedoTextureAsset = getMaterialTexture(engine, textures->albedo);
+        mat->normalTextureAsset = getMaterialTexture(engine, textures->normal);
+        mat->displacementTextureAsset = getMaterialTexture(engine, textures->displacement);
+        mat->aoTextureAsset = getMaterialTexture(engine, textures->ao);
     }
 
     // render world

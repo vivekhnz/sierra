@@ -84,11 +84,6 @@ struct RenderTerrainMaterial
 {
     glm::vec2 textureSizeInWorldUnits;
 
-    uint16 albedoTextureIndex;
-    uint16 normalTextureIndex;
-    uint16 displacementTextureIndex;
-    uint16 aoTextureIndex;
-
     TextureAsset *albedoTextureAsset;
     TextureAsset *normalTextureAsset;
     TextureAsset *displacementTextureAsset;

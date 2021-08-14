@@ -260,18 +260,14 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     }
     else if (assetType == ASSET_TYPE_TEXTURE)
     {
-        if (!reg->asset.texture)
-        {
-            reg->asset.texture = pushStruct(assets->arena, TextureAsset);
-            reg->asset.texture->format = reg->metadata.texture->format;
-        }
+        TextureFormat format = reg->metadata.texture->format;
 
         const stbi_uc *rawData = static_cast<stbi_uc *>(data);
         void *loadedData;
         int32 width;
         int32 height;
         int32 channels;
-        uint64 elementSize = getTextureElementSize(reg->metadata.texture->format);
+        uint64 elementSize = getTextureElementSize(format);
         if (elementSize == sizeof(uint8))
         {
             loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
@@ -287,14 +283,30 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
         assert(width >= 0);
         assert(height >= 0);
 
-        reg->asset.texture->width = (uint32)width;
-        reg->asset.texture->height = (uint32)height;
-
         uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
-        reg->asset.texture->data = (uint8 *)pushSize(assets->arena, requiredStorage);
-        memcpy(reg->asset.texture->data, loadedData, requiredStorage);
+        void *texels = (uint8 *)pushSize(assets->arena, requiredStorage);
+        memcpy(texels, loadedData, requiredStorage);
 
         stbi_image_free(loadedData);
+
+        TextureArrayHandle textureArray =
+            rendererGetTextureArray(assets->rctx, (uint32)width, (uint32)height, format);
+
+        if (reg->asset.texture)
+        {
+            // todo: reclaim asset memory
+        }
+        else
+        {
+            reg->asset.texture = pushStruct(assets->arena, TextureAsset);
+            reg->asset.texture->width = (uint32)width;
+            reg->asset.texture->height = (uint32)height;
+            reg->asset.texture->format = format;
+            reg->asset.texture->data = texels;
+            reg->asset.texture->slot = rendererReserveTextureSlot(textureArray);
+        }
+
+        rendererUpdateTextureArray(textureArray, reg->asset.texture->slot, texels);
     }
     else if (assetType == ASSET_TYPE_MESH)
     {
