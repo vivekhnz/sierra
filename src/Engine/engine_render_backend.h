@@ -98,6 +98,20 @@ struct DrawMeshesCommand
     uint32 instanceOffset;
     uint32 instanceCount;
 };
+struct ResolvedTerrainMaterial
+{
+    glm::vec2 textureSizeInWorldUnits;
+
+    TextureAsset *albedoTexture;
+    TextureAsset *normalTexture;
+    TextureAsset *displacementTexture;
+    TextureAsset *aoTexture;
+
+    float slopeStart;
+    float slopeEnd;
+    float altitudeStart;
+    float altitudeEnd;
+};
 struct DrawTerrainCommand
 {
     Heightfield *heightfield;
@@ -115,7 +129,7 @@ struct DrawTerrainCommand
     TextureHandle oppositeReferenceHeightmapTexture;
 
     uint32 materialCount;
-    RenderTerrainMaterial *materials;
+    ResolvedTerrainMaterial *materials;
 
     bool isWireframe;
 

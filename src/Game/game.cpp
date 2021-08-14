@@ -80,46 +80,40 @@ bool initializeGame(GameMemory *memory)
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
     {
-        TerrainMaterialTextures *textures = &state->materialTextures[0];
-        textures->albedo = gameAssets->textureGroundAlbedo;
-        textures->normal = gameAssets->textureGroundNormal;
-        textures->displacement = gameAssets->textureGroundDisplacement;
-        textures->ao = gameAssets->textureGroundAo;
-
         RenderTerrainMaterial *mat = &state->materials[0];
         mat->textureSizeInWorldUnits = glm::vec2(2.5f, 2.5f);
         mat->slopeStart = 0;
         mat->slopeEnd = 0;
         mat->altitudeStart = 0;
         mat->altitudeEnd = 0;
+        mat->albedoTexture = gameAssets->textureGroundAlbedo;
+        mat->normalTexture = gameAssets->textureGroundNormal;
+        mat->displacementTexture = gameAssets->textureGroundDisplacement;
+        mat->aoTexture = gameAssets->textureGroundAo;
     }
     {
-        TerrainMaterialTextures *textures = &state->materialTextures[1];
-        textures->albedo = gameAssets->textureRockAlbedo;
-        textures->normal = gameAssets->textureRockNormal;
-        textures->displacement = gameAssets->textureRockDisplacement;
-        textures->ao = gameAssets->textureRockAo;
-
         RenderTerrainMaterial *mat = &state->materials[1];
         mat->textureSizeInWorldUnits = glm::vec2(13, 13);
         mat->slopeStart = 0.2f;
         mat->slopeEnd = 0.4f;
         mat->altitudeStart = 0;
         mat->altitudeEnd = 0.001f;
+        mat->albedoTexture = gameAssets->textureRockAlbedo;
+        mat->normalTexture = gameAssets->textureRockNormal;
+        mat->displacementTexture = gameAssets->textureRockDisplacement;
+        mat->aoTexture = gameAssets->textureRockAo;
     }
     {
-        TerrainMaterialTextures *textures = &state->materialTextures[2];
-        textures->albedo = gameAssets->textureSnowAlbedo;
-        textures->normal = gameAssets->textureSnowNormal;
-        textures->displacement = gameAssets->textureSnowDisplacement;
-        textures->ao = gameAssets->textureSnowAo;
-
         RenderTerrainMaterial *mat = &state->materials[2];
         mat->textureSizeInWorldUnits = glm::vec2(2, 2);
         mat->slopeStart = 0.4f;
         mat->slopeEnd = 0.2f;
         mat->altitudeStart = 0.25f;
         mat->altitudeEnd = 0.28f;
+        mat->albedoTexture = gameAssets->textureSnowAlbedo;
+        mat->normalTexture = gameAssets->textureSnowNormal;
+        mat->displacementTexture = gameAssets->textureSnowDisplacement;
+        mat->aoTexture = gameAssets->textureSnowAo;
     }
 
     return 1;
@@ -133,19 +127,6 @@ bool isButtonDown(GameInput *input, GameInputButtons button)
 bool isNewButtonPress(GameInput *input, GameInputButtons button)
 {
     return (input->pressedButtons & button) && !(input->prevPressedButtons & button);
-}
-
-TextureAsset *getMaterialTexture(EngineApi *engine, AssetHandle assetHandle)
-{
-    TextureAsset *result = {};
-
-    if (assetHandle)
-    {
-        LoadedAsset *asset = engine->assetsGetTexture(assetHandle);
-        result = asset->texture;
-    }
-
-    return result;
 }
 
 API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
@@ -330,16 +311,6 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 
         // capture mouse if first person camera is active
         memory->platformCaptureMouse();
-    }
-
-    for (uint32 layerIdx = 0; layerIdx < MATERIAL_COUNT; layerIdx++)
-    {
-        RenderTerrainMaterial *mat = &state->materials[layerIdx];
-        TerrainMaterialTextures *textures = &state->materialTextures[layerIdx];
-        mat->albedoTextureAsset = getMaterialTexture(engine, textures->albedo);
-        mat->normalTextureAsset = getMaterialTexture(engine, textures->normal);
-        mat->displacementTextureAsset = getMaterialTexture(engine, textures->displacement);
-        mat->aoTextureAsset = getMaterialTexture(engine, textures->ao);
     }
 
     // render world

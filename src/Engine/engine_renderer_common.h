@@ -84,10 +84,10 @@ struct RenderTerrainMaterial
 {
     glm::vec2 textureSizeInWorldUnits;
 
-    TextureAsset *albedoTextureAsset;
-    TextureAsset *normalTextureAsset;
-    TextureAsset *displacementTextureAsset;
-    TextureAsset *aoTextureAsset;
+    AssetHandle albedoTexture;
+    AssetHandle normalTexture;
+    AssetHandle displacementTexture;
+    AssetHandle aoTexture;
 
     float slopeStart;
     float slopeEnd;

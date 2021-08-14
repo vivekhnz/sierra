@@ -1072,13 +1072,13 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 assert(cmd->materialCount <= MAX_TERRAIN_MATERIALS);
                 for (uint32 i = 0; i < cmd->materialCount; i++)
                 {
-                    RenderTerrainMaterial *src = &cmd->materials[i];
+                    ResolvedTerrainMaterial *src = &cmd->materials[i];
                     OpenGlTerrainMaterialProps *dst = &ctx->terrain.materialProps[i];
 
-                    uint16 albedo = getSlotIndex(src->albedoTextureAsset);
-                    uint16 normal = getSlotIndex(src->normalTextureAsset);
-                    uint16 displacement = getSlotIndex(src->displacementTextureAsset);
-                    uint16 ao = getSlotIndex(src->aoTextureAsset);
+                    uint16 albedo = getSlotIndex(src->albedoTexture);
+                    uint16 normal = getSlotIndex(src->normalTexture);
+                    uint16 displacement = getSlotIndex(src->displacementTexture);
+                    uint16 ao = getSlotIndex(src->aoTexture);
 
                     dst->textureSizeInWorldUnits = src->textureSizeInWorldUnits;
                     dst->albedoTexture_normalTexture = ((uint32)albedo << 16) | normal;
@@ -1098,11 +1098,11 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 uint32 aoTextureArrayId = 0;
                 if (cmd->materialCount > 0)
                 {
-                    RenderTerrainMaterial *firstMaterial = &cmd->materials[0];
-                    albedoTextureArrayId = getTextureArrayId(firstMaterial->albedoTextureAsset);
-                    normalTextureArrayId = getTextureArrayId(firstMaterial->normalTextureAsset);
-                    displacementTextureArrayId = getTextureArrayId(firstMaterial->displacementTextureAsset);
-                    aoTextureArrayId = getTextureArrayId(firstMaterial->aoTextureAsset);
+                    ResolvedTerrainMaterial *firstMaterial = &cmd->materials[0];
+                    albedoTextureArrayId = getTextureArrayId(firstMaterial->albedoTexture);
+                    normalTextureArrayId = getTextureArrayId(firstMaterial->normalTexture);
+                    displacementTextureArrayId = getTextureArrayId(firstMaterial->displacementTexture);
+                    aoTextureArrayId = getTextureArrayId(firstMaterial->aoTexture);
                 }
 
                 Heightfield *heightfield = cmd->heightfield;

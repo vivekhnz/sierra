@@ -2,6 +2,7 @@
 #include "engine_render_backend.h"
 
 ASSETS_GET_SHADER(assetsGetShader);
+ASSETS_GET_TEXTURE(assetsGetTexture);
 ASSETS_GET_MESH(assetsGetMesh);
 
 struct RenderContext
@@ -328,6 +329,16 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
     rq->meshInstanceCount += instanceCount;
 }
 
+TextureAsset *getTexture(AssetHandle assetHandle)
+{
+    TextureAsset *result = 0;
+    if (assetHandle)
+    {
+        LoadedAsset *asset = assetsGetTexture(assetHandle);
+        result = asset->texture;
+    }
+    return result;
+}
 RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 {
     DrawTerrainCommand *cmd = pushRenderCommand(rq, DrawTerrainCommand);
@@ -355,7 +366,22 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->materialCount = materialCount;
-    cmd->materials = materials;
+    cmd->materials = pushArray(rq->arena, ResolvedTerrainMaterial, cmd->materialCount);
+    for (uint32 i = 0; i < cmd->materialCount; i++)
+    {
+        RenderTerrainMaterial *src = &materials[i];
+        ResolvedTerrainMaterial *dst = &cmd->materials[i];
+
+        dst->textureSizeInWorldUnits = src->textureSizeInWorldUnits;
+        dst->albedoTexture = getTexture(src->albedoTexture);
+        dst->normalTexture = getTexture(src->normalTexture);
+        dst->displacementTexture = getTexture(src->displacementTexture);
+        dst->aoTexture = getTexture(src->aoTexture);
+        dst->slopeStart = src->slopeStart;
+        dst->slopeEnd = src->slopeEnd;
+        dst->altitudeStart = src->altitudeStart;
+        dst->altitudeEnd = src->altitudeEnd;
+    }
 
     cmd->isWireframe = isWireframe;
 

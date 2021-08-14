@@ -27,14 +27,6 @@ struct GameAssets
     AssetHandle textureVirtualHeightmap;
 };
 
-struct TerrainMaterialTextures
-{
-    AssetHandle albedo;
-    AssetHandle normal;
-    AssetHandle displacement;
-    AssetHandle ao;
-};
-
 struct GameState
 {
     MemoryArena assetsArena;
@@ -70,7 +62,6 @@ struct GameState
     uint8 heightmapTextureVersion;
 
     RenderTerrainMaterial materials[MATERIAL_COUNT];
-    TerrainMaterialTextures materialTextures[MATERIAL_COUNT];
 };
 
 struct PlatformReadFileResult

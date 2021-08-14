@@ -685,18 +685,6 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
     }
 }
 
-TextureAsset *getMaterialTexture(EngineApi *engine, AssetHandle assetHandle)
-{
-    TextureAsset *result = {};
-
-    if (assetHandle)
-    {
-        LoadedAsset *asset = engine->assetsGetTexture(assetHandle);
-        result = asset->texture;
-    }
-
-    return result;
-}
 void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
@@ -708,11 +696,10 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     for (uint32 layerIdx = 0; layerIdx < docState->materialCount; layerIdx++)
     {
         RenderTerrainMaterial *mat = &docState->materials[layerIdx];
-        mat->albedoTextureAsset = getMaterialTexture(engine, docState->albedoTextureAssetHandles[layerIdx]);
-        mat->normalTextureAsset = getMaterialTexture(engine, docState->normalTextureAssetHandles[layerIdx]);
-        mat->displacementTextureAsset =
-            getMaterialTexture(engine, docState->displacementTextureAssetHandles[layerIdx]);
-        mat->aoTextureAsset = getMaterialTexture(engine, docState->aoTextureAssetHandles[layerIdx]);
+        mat->albedoTexture = docState->albedoTextureAssetHandles[layerIdx];
+        mat->normalTexture = docState->normalTextureAssetHandles[layerIdx];
+        mat->displacementTexture = docState->displacementTextureAssetHandles[layerIdx];
+        mat->aoTexture = docState->aoTextureAssetHandles[layerIdx];
     }
 
     // update object instance state
