@@ -118,7 +118,6 @@ struct SceneState
     uint32 objectInstanceCount;
 
     uint32 nextMaterialId;
-    uint32 materialCount;
 
     struct WorldState
     {
@@ -163,10 +162,6 @@ struct EditorDocumentState
     uint32 materialCount;
     uint32 materialIds[MAX_MATERIAL_COUNT];
     RenderTerrainMaterial materials[MAX_MATERIAL_COUNT];
-    AssetHandle albedoTextureAssetHandles[MAX_MATERIAL_COUNT];
-    AssetHandle normalTextureAssetHandles[MAX_MATERIAL_COUNT];
-    AssetHandle displacementTextureAssetHandles[MAX_MATERIAL_COUNT];
-    AssetHandle aoTextureAssetHandles[MAX_MATERIAL_COUNT];
 
     uint32 objectInstanceCount;
     uint32 objectIds[MAX_OBJECT_INSTANCES];

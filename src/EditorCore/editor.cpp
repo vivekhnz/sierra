@@ -205,13 +205,6 @@ void initializeEditor(EditorMemory *memory)
     // initialize document state
     state->docState.materialCount = 0;
     memset(state->docState.materials, 0, sizeof(state->docState.materials));
-    for (uint32 i = 0; i < MAX_MATERIAL_COUNT; i++)
-    {
-        state->docState.albedoTextureAssetHandles[i] = 0;
-        state->docState.normalTextureAssetHandles[i] = 0;
-        state->docState.displacementTextureAssetHandles[i] = 0;
-        state->docState.aoTextureAssetHandles[i] = 0;
-    }
     state->previewDocState = state->docState;
 
     // setup transaction state
@@ -543,10 +536,10 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             material->altitudeStart = cmd->altitudeStart;
             material->altitudeEnd = cmd->altitudeEnd;
 
-            docState->albedoTextureAssetHandles[index] = cmd->albedoTextureAssetHandle;
-            docState->normalTextureAssetHandles[index] = cmd->normalTextureAssetHandle;
-            docState->displacementTextureAssetHandles[index] = cmd->displacementTextureAssetHandle;
-            docState->aoTextureAssetHandles[index] = cmd->aoTextureAssetHandle;
+            material->albedoTexture = cmd->albedoTextureAssetHandle;
+            material->normalTexture = cmd->normalTextureAssetHandle;
+            material->displacementTexture = cmd->displacementTextureAssetHandle;
+            material->aoTexture = cmd->aoTextureAssetHandle;
         }
         break;
         case EDITOR_COMMAND_DeleteMaterialCommand:
@@ -559,10 +552,6 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             {
                 docState->materialIds[i] = docState->materialIds[i + 1];
                 docState->materials[i] = docState->materials[i + 1];
-                docState->albedoTextureAssetHandles[i] = docState->albedoTextureAssetHandles[i + 1];
-                docState->normalTextureAssetHandles[i] = docState->normalTextureAssetHandles[i + 1];
-                docState->displacementTextureAssetHandles[i] = docState->displacementTextureAssetHandles[i + 1];
-                docState->aoTextureAssetHandles[i] = docState->aoTextureAssetHandles[i + 1];
             }
         }
         break;
@@ -580,10 +569,6 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
 
             swap(uint32, materialIds);
             swap(RenderTerrainMaterial, materials);
-            swap(AssetHandle, albedoTextureAssetHandles);
-            swap(AssetHandle, normalTextureAssetHandles);
-            swap(AssetHandle, displacementTextureAssetHandles);
-            swap(AssetHandle, aoTextureAssetHandles);
         }
         break;
         case EDITOR_COMMAND_SetMaterialTextureCommand:
@@ -593,14 +578,15 @@ void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
             {
                 if (docState->materialIds[i] == cmd->materialId)
                 {
+                    RenderTerrainMaterial *mat = &docState->materials[i];
                     AssetHandle *materialTextureAssetHandles[] = {
-                        docState->albedoTextureAssetHandles,       //
-                        docState->normalTextureAssetHandles,       //
-                        docState->displacementTextureAssetHandles, //
-                        docState->aoTextureAssetHandles            //
+                        &mat->albedoTexture,       //
+                        &mat->normalTexture,       //
+                        &mat->displacementTexture, //
+                        &mat->aoTexture            //
                     };
-                    AssetHandle *textureAssetHandles = materialTextureAssetHandles[(uint32)cmd->textureType];
-                    textureAssetHandles[i] = cmd->assetHandle;
+                    AssetHandle *toModify = materialTextureAssetHandles[(uint32)cmd->textureType];
+                    *toModify = cmd->assetHandle;
 
                     break;
                 }
@@ -690,17 +676,6 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
     EngineApi *engine = memory->engineApi;
-
-    // update material state
-    sceneState->materialCount = docState->materialCount;
-    for (uint32 layerIdx = 0; layerIdx < docState->materialCount; layerIdx++)
-    {
-        RenderTerrainMaterial *mat = &docState->materials[layerIdx];
-        mat->albedoTexture = docState->albedoTextureAssetHandles[layerIdx];
-        mat->normalTexture = docState->normalTextureAssetHandles[layerIdx];
-        mat->displacementTexture = docState->displacementTextureAssetHandles[layerIdx];
-        mat->aoTexture = docState->aoTextureAssetHandles[layerIdx];
-    }
 
     // update object instance state
     sceneState->objectInstanceCount = docState->objectInstanceCount;
@@ -1360,7 +1335,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
-            oppActiveHeightmapTexture, oppRefHeightmapTexture, sceneState->materialCount,
+            oppActiveHeightmapTexture, oppRefHeightmapTexture, state->previewDocState.materialCount,
             state->previewDocState.materials, false, visualizationMode, sceneState->worldState.brushPos,
             sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
     }
