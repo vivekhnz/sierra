@@ -13,8 +13,8 @@ namespace Terrain.Editor.Core
     {
         public MemoryArena Data;
 
-        public PlatformCaptureMouse PlatformCaptureMouse;
-        public PlatformPublishTransaction PlatformPublishTransaction;
+        public IntPtr PlatformCaptureMouse;
+        public IntPtr PlatformPublishTransaction;
 
         public IntPtr EngineApiPtr;
     }
@@ -267,12 +267,16 @@ namespace Terrain.Editor.Core
 
     internal static class EditorCore
     {
-        private static EditorMemory memory;
+        private static IntPtr appMemoryDataPtr;
         private static IntPtr moduleHandle;
 
         private static Func<string, IntPtr> loadLibrary;
         private static Func<IntPtr, string, IntPtr> getProcAddress;
         private static Func<IntPtr, bool> freeLibrary;
+
+        private delegate void TransactionPublishedCallback(ref byte commandBufferBaseAddress);
+        private static TransactionPublishedCallback onTransactionPublished
+            = new TransactionPublishedCallback(OnTransactionPublished);
 
         private static EditorUiState defaultEditorState = default(EditorUiState);
 
@@ -321,6 +325,18 @@ namespace Terrain.Editor.Core
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
 
+        private static ref EditorMemory GetEditorMemory()
+        {
+            Span<EditorMemory> memorySpan;
+            unsafe
+            {
+                void* ptr = appMemoryDataPtr.ToPointer();
+                int size = Marshal.SizeOf<EditorMemory>();
+                memorySpan = new Span<EditorMemory>(ptr, size);
+            }
+            return ref memorySpan[0];
+        }
+
         internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
             PlatformCaptureMouse captureMouse, Func<string, IntPtr> loadLibrary,
             Func<IntPtr, string, IntPtr> getProcAddress, Func<IntPtr, bool> freeLibrary)
@@ -329,21 +345,19 @@ namespace Terrain.Editor.Core
             EditorCore.getProcAddress = getProcAddress;
             EditorCore.freeLibrary = freeLibrary;
 
-            memory = new EditorMemory
-            {
-                Data = new MemoryArena
-                {
-                    BaseAddress = appMemoryDataPtr,
-                    Size = (ulong)appMemorySizeInBytes,
-                    Used = 0
-                },
-                PlatformCaptureMouse = captureMouse,
-                PlatformPublishTransaction = OnTransactionPublished
-            };
+            EditorCore.appMemoryDataPtr = appMemoryDataPtr;
+
+            ref EditorMemory memory = ref GetEditorMemory();
+            memory.Data.BaseAddress = appMemoryDataPtr + Marshal.SizeOf<EditorMemory>();
+            memory.Data.Size = (ulong)(appMemorySizeInBytes - Marshal.SizeOf<EditorMemory>());
+            memory.Data.Used = 0;
+            memory.PlatformCaptureMouse = Marshal.GetFunctionPointerForDelegate(captureMouse);
+            memory.PlatformPublishTransaction = Marshal.GetFunctionPointerForDelegate(onTransactionPublished);
         }
 
         internal static void UpdateEngineApi(IntPtr engineApiPtr)
         {
+            ref EditorMemory memory = ref GetEditorMemory();
             memory.EngineApiPtr = engineApiPtr;
         }
 
@@ -418,16 +432,16 @@ namespace Terrain.Editor.Core
         }
 
         internal static void Update(float deltaTime, ref EditorInput input)
-            => editorUpdate?.Invoke(ref memory, deltaTime, ref input);
+            => editorUpdate?.Invoke(ref GetEditorMemory(), deltaTime, ref input);
 
         internal static void RenderSceneView(ref EditorViewContext vctx)
-            => editorRenderSceneView?.Invoke(ref memory, ref vctx);
+            => editorRenderSceneView?.Invoke(ref GetEditorMemory(), ref vctx);
 
         internal static void RenderHeightmapPreview(ref EditorViewContext vctx)
-            => editorRenderHeightmapPreview?.Invoke(ref memory, ref vctx);
+            => editorRenderHeightmapPreview?.Invoke(ref GetEditorMemory(), ref vctx);
 
         internal static IntPtr GetImportedHeightmapAssetHandle()
-            => editorGetImportedHeightmapAssetHandle?.Invoke(ref memory) ?? IntPtr.Zero;
+            => editorGetImportedHeightmapAssetHandle?.Invoke(ref GetEditorMemory()) ?? IntPtr.Zero;
 
         internal static ref EditorUiState GetUiState()
         {
@@ -437,36 +451,36 @@ namespace Terrain.Editor.Core
             }
             else
             {
-                return ref editorGetUiState(ref memory);
+                return ref editorGetUiState(ref GetEditorMemory());
             }
         }
 
         internal static void AddMaterial(TerrainMaterialProperties props)
-            => editorAddMaterial?.Invoke(ref memory, props);
+            => editorAddMaterial?.Invoke(ref GetEditorMemory(), props);
 
         internal static void DeleteMaterial(int index)
-            => editorDeleteMaterial?.Invoke(ref memory, (uint)index);
+            => editorDeleteMaterial?.Invoke(ref GetEditorMemory(), (uint)index);
 
         internal static void SwapMaterial(int indexA, int indexB)
-            => editorSwapMaterial?.Invoke(ref memory, (uint)indexA, (uint)indexB);
+            => editorSwapMaterial?.Invoke(ref GetEditorMemory(), (uint)indexA, (uint)indexB);
 
         internal static void SetMaterialTexture(uint materialId,
             TerrainMaterialTextureType textureType, IntPtr assetHandle)
-            => editorSetMaterialTexture?.Invoke(ref memory, materialId, textureType, assetHandle);
+            => editorSetMaterialTexture?.Invoke(ref GetEditorMemory(), materialId, textureType, assetHandle);
 
         internal static void SetMaterialProperties(uint materialId, float textureSize,
             float slopeStart, float slopeEnd, float altitudeStart, float altitudeEnd)
         {
-            editorSetMaterialProperties?.Invoke(ref memory, materialId, textureSize,
+            editorSetMaterialProperties?.Invoke(ref GetEditorMemory(), materialId, textureSize,
                 slopeStart, slopeEnd, altitudeStart, altitudeEnd);
         }
 
         internal static float GetObjectProperty(uint objectId, ObjectProperty property)
-            => editorGetObjectProperty?.Invoke(ref memory, objectId, property) ?? 0;
+            => editorGetObjectProperty?.Invoke(ref GetEditorMemory(), objectId, property) ?? 0;
 
         internal static bool BeginTransaction(out Transaction tx)
         {
-            tx = new Transaction(editorBeginTransaction?.Invoke(ref memory) ?? IntPtr.Zero);
+            tx = new Transaction(editorBeginTransaction?.Invoke(ref GetEditorMemory()) ?? IntPtr.Zero);
             return tx.Pointer != IntPtr.Zero;
         }
 
@@ -480,7 +494,7 @@ namespace Terrain.Editor.Core
             => editorDiscardTransaction?.Invoke(tx.Pointer);
 
         internal static void AddObject(Transaction tx)
-            => editorAddObject?.Invoke(ref memory, tx.Pointer);
+            => editorAddObject?.Invoke(ref GetEditorMemory(), tx.Pointer);
 
         internal static void DeleteObject(Transaction tx, uint objectId)
             => editorDeleteObject?.Invoke(tx.Pointer, objectId);
