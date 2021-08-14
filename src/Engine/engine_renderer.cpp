@@ -62,21 +62,6 @@ RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
     return getPixelsInRegion(arena, handle, x, y, width, height);
 }
 
-// texture arrays
-
-RENDERER_GET_TEXTURE_ARRAY(rendererGetTextureArray)
-{
-    return getTextureArray(ctx->internalCtx, width, height, format);
-}
-RENDERER_RESERVE_TEXTURE_SLOT(rendererReserveTextureSlot)
-{
-    return reserveTextureSlot(handle);
-}
-RENDERER_UPDATE_TEXTURE_ARRAY(rendererUpdateTextureArray)
-{
-    updateTextureArray(handle, layer, pixels);
-}
-
 // render targets
 
 RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)

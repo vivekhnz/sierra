@@ -56,6 +56,11 @@ struct OpenGlTextureArrayEntry
     OpenGlTextureArray textureArray;
     OpenGlTextureArrayEntry *next;
 };
+struct OpenGlTextureSlot
+{
+    OpenGlTextureArray *array;
+    uint16 slotIndex;
+};
 
 struct OpenGlTerrainMaterialProps
 {
@@ -686,14 +691,51 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
     }
 }
 
+#if 0
 uint32 getTextureId(TextureArrayHandle handle)
 {
     OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
     return array->id;
 }
-TextureArrayHandle getTextureArray(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format)
+uint32 getTextureId(RenderBackendContext rctx, TextureAsset *asset)
 {
-    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+    uint32 result = 0;
+
+    if (asset)
+    {
+        TextureArrayHandle array = getTextureArray(rctx, asset->width, asset->height, asset->format);
+        result = getTextureId(array);
+    }
+
+    return result;
+}
+#endif
+uint16 getSlotIndex(TextureAsset *asset)
+{
+    uint16 result = 0;
+
+    if (asset && asset->slot.ptr)
+    {
+        OpenGlTextureSlot *slot = (OpenGlTextureSlot *)asset->slot.ptr;
+        result = slot->slotIndex;
+    }
+
+    return result;
+}
+uint32 getTextureArrayId(TextureAsset *asset)
+{
+    uint16 result = 0;
+
+    if (asset && asset->slot.ptr)
+    {
+        OpenGlTextureSlot *slot = (OpenGlTextureSlot *)asset->slot.ptr;
+        result = slot->array->id;
+    }
+
+    return result;
+}
+OpenGlTextureArray *getTextureArray(OpenGlRenderContext *ctx, uint32 width, uint32 height, TextureFormat format)
+{
     OpenGlTextureArray *result = 0;
 
     OpenGlTextureArrayEntry *current = ctx->firstTextureArray;
@@ -749,35 +791,30 @@ TextureArrayHandle getTextureArray(RenderBackendContext rctx, uint32 width, uint
         result = &entry->textureArray;
     }
 
-    return {result};
+    return result;
 }
-uint16 reserveTextureSlot(TextureArrayHandle handle)
+TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format)
 {
-    OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+    OpenGlTextureArray *array = getTextureArray(ctx, width, height, format);
 
     assert(array->reservedLayers < array->layers);
-    return ++array->reservedLayers;
+    uint16 slotIndex = ++array->reservedLayers;
+
+    OpenGlTextureSlot *result = pushStruct(ctx->arena, OpenGlTextureSlot);
+    result->array = array;
+    result->slotIndex = slotIndex;
+    return {result};
 }
-void updateTextureArray(TextureArrayHandle handle, uint32 layer, void *pixels)
+void updateTextureSlot(TextureSlotHandle handle, void *pixels)
 {
-    OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
+    OpenGlTextureSlot *slot = (OpenGlTextureSlot *)handle.ptr;
+    OpenGlTextureArray *array = slot->array;
 
     glBindTexture(GL_TEXTURE_2D_ARRAY, array->id);
-    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, layer, array->width, array->height, 1,
+    glTexSubImage3D(GL_TEXTURE_2D_ARRAY, 0, 0, 0, slot->slotIndex, array->width, array->height, 1,
         array->descriptor.gpuFormat, array->descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
-}
-uint32 getTextureId(RenderBackendContext rctx, TextureAsset *asset)
-{
-    uint32 result = 0;
-
-    if (asset)
-    {
-        TextureArrayHandle array = getTextureArray(rctx, asset->width, asset->height, asset->format);
-        result = getTextureId(array);
-    }
-
-    return result;
 }
 
 bool applyEffect(RenderEffect *effect)
@@ -1038,10 +1075,10 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                     RenderTerrainMaterial *src = &cmd->materials[i];
                     OpenGlTerrainMaterialProps *dst = &ctx->terrain.materialProps[i];
 
-                    uint16 albedo = src->albedoTextureAsset ? src->albedoTextureAsset->slot : 0;
-                    uint16 normal = src->normalTextureAsset ? src->normalTextureAsset->slot : 0;
-                    uint16 displacement = src->displacementTextureAsset ? src->displacementTextureAsset->slot : 0;
-                    uint16 ao = src->aoTextureAsset ? src->aoTextureAsset->slot : 0;
+                    uint16 albedo = getSlotIndex(src->albedoTextureAsset);
+                    uint16 normal = getSlotIndex(src->normalTextureAsset);
+                    uint16 displacement = getSlotIndex(src->displacementTextureAsset);
+                    uint16 ao = getSlotIndex(src->aoTextureAsset);
 
                     dst->textureSizeInWorldUnits = src->textureSizeInWorldUnits;
                     dst->albedoTexture_normalTexture = ((uint32)albedo << 16) | normal;
@@ -1062,10 +1099,10 @@ bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, Render
                 if (cmd->materialCount > 0)
                 {
                     RenderTerrainMaterial *firstMaterial = &cmd->materials[0];
-                    albedoTextureArrayId = getTextureId(rq->ctx, firstMaterial->albedoTextureAsset);
-                    normalTextureArrayId = getTextureId(rq->ctx, firstMaterial->normalTextureAsset);
-                    displacementTextureArrayId = getTextureId(rq->ctx, firstMaterial->displacementTextureAsset);
-                    aoTextureArrayId = getTextureId(rq->ctx, firstMaterial->aoTextureAsset);
+                    albedoTextureArrayId = getTextureArrayId(firstMaterial->albedoTextureAsset);
+                    normalTextureArrayId = getTextureArrayId(firstMaterial->normalTextureAsset);
+                    displacementTextureArrayId = getTextureArrayId(firstMaterial->displacementTextureAsset);
+                    aoTextureArrayId = getTextureArrayId(firstMaterial->aoTextureAsset);
                 }
 
                 Heightfield *heightfield = cmd->heightfield;

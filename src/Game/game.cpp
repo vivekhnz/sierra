@@ -79,13 +79,6 @@ bool initializeGame(GameMemory *memory)
     state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
-    TextureArrayHandle textureArray_RGBA8_2048x2048 =
-        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_RGB8);
-    TextureArrayHandle textureArray_R16_2048x2048 =
-        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R16);
-    TextureArrayHandle textureArray_R8_2048x2048 =
-        engine->rendererGetTextureArray(state->renderCtx, 2048, 2048, TEXTURE_FORMAT_R8);
-
     {
         TerrainMaterialTextures *textures = &state->materialTextures[0];
         textures->albedo = gameAssets->textureGroundAlbedo;

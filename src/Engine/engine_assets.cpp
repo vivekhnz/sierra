@@ -289,24 +289,22 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
 
         stbi_image_free(loadedData);
 
-        TextureArrayHandle textureArray =
-            rendererGetTextureArray(assets->rctx, (uint32)width, (uint32)height, format);
-
         if (reg->asset.texture)
         {
             // todo: reclaim asset memory
+            assert((uint32)width == reg->asset.texture->width);
+            assert((uint32)height == reg->asset.texture->height);
         }
         else
         {
             reg->asset.texture = pushStruct(assets->arena, TextureAsset);
             reg->asset.texture->width = (uint32)width;
             reg->asset.texture->height = (uint32)height;
-            reg->asset.texture->format = format;
-            reg->asset.texture->data = texels;
-            reg->asset.texture->slot = rendererReserveTextureSlot(textureArray);
+            reg->asset.texture->slot =
+                reserveTextureSlot(assets->rctx->internalCtx, (uint32)width, (uint32)height, format);
         }
-
-        rendererUpdateTextureArray(textureArray, reg->asset.texture->slot, texels);
+        reg->asset.texture->data = texels;
+        updateTextureSlot(reg->asset.texture->slot, texels);
     }
     else if (assetType == ASSET_TYPE_MESH)
     {

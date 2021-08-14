@@ -160,9 +160,8 @@ RenderTarget *createRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
 void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 
-TextureArrayHandle getTextureArray(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format);
-uint16 reserveTextureSlot(TextureArrayHandle handle);
-void updateTextureArray(TextureArrayHandle handle, uint32 layer, void *pixels);
+TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format);
+void updateTextureSlot(TextureSlotHandle handle, void *pixels);
 
 bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
 

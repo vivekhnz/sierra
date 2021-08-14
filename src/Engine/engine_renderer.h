@@ -21,16 +21,6 @@ typedef RENDERER_GET_PIXELS(RendererGetPixels);
     GetPixelsResult name(MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height)
 typedef RENDERER_GET_PIXELS_IN_REGION(RendererGetPixelsInRegion);
 
-// texture arrays
-
-#define RENDERER_GET_TEXTURE_ARRAY(name)                                                                          \
-    TextureArrayHandle name(RenderContext *ctx, uint32 width, uint32 height, TextureFormat format)
-typedef RENDERER_GET_TEXTURE_ARRAY(RendererGetTextureArray);
-#define RENDERER_RESERVE_TEXTURE_SLOT(name) uint16 name(TextureArrayHandle handle)
-typedef RENDERER_RESERVE_TEXTURE_SLOT(RendererReserveTextureSlot);
-#define RENDERER_UPDATE_TEXTURE_ARRAY(name) void name(TextureArrayHandle handle, uint32 layer, void *pixels)
-typedef RENDERER_UPDATE_TEXTURE_ARRAY(RendererUpdateTextureArray);
-
 // render targets
 
 #define RENDERER_CREATE_RENDER_TARGET(name)                                                                       \

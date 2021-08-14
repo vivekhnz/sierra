@@ -28,11 +28,11 @@ struct TextureHandle
 {
     void *ptr;
 };
-struct MeshHandle
+struct TextureSlotHandle
 {
     void *ptr;
 };
-struct TextureArrayHandle
+struct MeshHandle
 {
     void *ptr;
 };
