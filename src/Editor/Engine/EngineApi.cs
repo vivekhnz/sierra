@@ -66,49 +66,4 @@ namespace Terrain.Editor.Engine
 
     delegate void AssetsSetAssetData(IntPtr assetHandle, in byte data, ulong size);
     delegate void AssetsInvalidateAsset(IntPtr assetHandle);
-
-    [StructLayout(LayoutKind.Sequential)]
-    internal struct EngineApi
-    {
-        public IntPtr assetsInitialize;
-        public IntPtr assetsRegisterShader;
-        public IntPtr assetsRegisterTexture;
-        public IntPtr assetsRegisterMesh;
-        public IntPtr assetsGetShader;
-        public IntPtr assetsGetTexture;
-        public IntPtr assetsGetMesh;
-        public AssetsSetAssetData assetsSetAssetData;
-        public AssetsInvalidateAsset assetsInvalidateAsset;
-
-        public IntPtr heightfieldGetHeight;
-        public IntPtr heightfieldIsRayIntersecting;
-
-        public IntPtr rendererInitialize;
-        public IntPtr rendererCreateTexture;
-        public IntPtr rendererUpdateTexture;
-        public IntPtr rendererGetPixels;
-        public IntPtr rendererGetPixelsInRegion;
-        public IntPtr rendererCreateRenderTarget;
-        public IntPtr rendererResizeRenderTarget;
-        public IntPtr rendererCreateEffect;
-        public IntPtr rendererSetEffectFloat;
-        public IntPtr rendererSetEffectVec3;
-        public IntPtr rendererSetEffectInt;
-        public IntPtr rendererSetEffectUint;
-        public IntPtr rendererSetEffectTexture;
-        public IntPtr rendererCreateQueue;
-        public IntPtr rendererSetCameraOrtho;
-        public IntPtr rendererSetCameraOrthoOffset;
-        public IntPtr rendererSetCameraPersp;
-        public IntPtr rendererSetLighting;
-        public IntPtr rendererClear;
-        public IntPtr rendererPushTexturedQuad;
-        public IntPtr rendererPushColoredQuad;
-        public IntPtr rendererPushQuad;
-        public IntPtr rendererPushQuads;
-        public IntPtr rendererPushMeshes;
-        public IntPtr rendererPushTerrain;
-        public IntPtr rendererDrawToTarget;
-        public IntPtr rendererDrawToScreen;
-    }
 }

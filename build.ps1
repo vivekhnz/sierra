@@ -57,6 +57,87 @@ function Initialize-Environment([string] $Platform) {
     }
 }
 
+function Write-GeneratedCode {
+    # extract engine APIs
+    $engineHeaderFiles = @(
+        'src\Engine\engine_assets.h',
+        'src\Engine\engine_heightfield.h',
+        'src\Engine\engine_renderer.h'
+    )
+    $apiDefineMacro = [regex]::new('^#define (?<macro>([A-Z]|\d|_)+)\(name\)')
+    $apis = New-Object System.Collections.ArrayList
+    foreach ($headerFile in $engineHeaderFiles) {
+        $lines = Get-Content $headerFile
+        for ($i = 0; $i -lt $lines.Count; $i++) {
+            $line = $lines[$i]
+            $macroMatch = $apiDefineMacro.Match($line)
+            if ($macroMatch.Success) {
+                $macroName = $macroMatch.Groups['macro'].Value
+                $typeNameBuilder = [System.Text.StringBuilder]::new()
+                $uppercase = $true
+                for ($j = 0; $j -lt $macroName.Length; $j++) {
+                    $char = $macroName[$j]
+                    if ($char -eq '_') {
+                        $uppercase = $true
+                    }
+                    elseif ($uppercase) {
+                        $typeNameBuilder.Append($char) | Out-Null
+                        $uppercase = $false
+                    }
+                    else {
+                        $typeNameBuilder.Append([char]::ToLower($char)) | Out-Null
+                    }
+                }
+                $typeName = $typeNameBuilder.ToString()
+                $functionName = [char]::ToLower($typeName[0]) + $typeName.Substring(1)
+                $apis.Add([PSCustomObject]@{
+                    MacroName = $macroName;
+                    TypeName = $typeName;
+                    FunctionName = $functionName;
+                }) | Out-Null
+            }
+        }
+    }
+
+    # engine_generated.h
+    $generatedSrcBuilder = [System.Text.StringBuilder]::new()
+    foreach ($api in $apis) {
+        $generatedSrcBuilder.AppendLine("typedef $($api.MacroName)($($api.TypeName));") | Out-Null
+    }
+    $generatedSrcBuilder.AppendLine("`nstruct EngineApi`n{") | Out-Null
+    foreach ($api in $apis) {
+        $generatedSrcBuilder.AppendLine("    $($api.TypeName) *$($api.FunctionName);") | Out-Null
+    }
+    $generatedSrcBuilder.AppendLine("};") | Out-Null
+    [System.IO.File]::WriteAllText('src\Engine\engine_generated.h', $generatedSrcBuilder.ToString())
+
+    # engine_generated.cpp
+    $generatedSrcBuilder.Clear() | Out-Null
+    $generatedSrcBuilder.AppendLine("void bindApi(EngineApi *api)`n{") | Out-Null
+    foreach ($api in $apis) {
+        $generatedSrcBuilder.AppendLine("    api->$($api.FunctionName) = $($api.FunctionName);") | Out-Null
+    }
+    $generatedSrcBuilder.AppendLine("};") | Out-Null
+    [System.IO.File]::WriteAllText('src\Engine\engine_generated.cpp', $generatedSrcBuilder.ToString())
+
+    # EngineApi.Generated.cs
+    $csharpTypedApis = @(
+        'assetsSetAssetData',
+        'assetsInvalidateAsset'
+    );
+    $generatedSrcBuilder.Clear() | Out-Null
+    $generatedSrcBuilder.AppendLine("using System;`nusing System.Runtime.InteropServices;`n`nnamespace Terrain.Editor.Engine`n{`n    [StructLayout(LayoutKind.Sequential)]`n    internal struct EngineApi`n    {") | Out-Null
+    foreach ($api in $apis) {
+        $type = 'IntPtr'
+        if ($csharpTypedApis -contains $api.FunctionName) {
+            $type = $api.TypeName
+        }
+        $generatedSrcBuilder.AppendLine("        public $type $($api.FunctionName);") | Out-Null
+    }
+    $generatedSrcBuilder.AppendLine("    }`n}") | Out-Null
+    [System.IO.File]::WriteAllText('src\Editor\Engine\EngineApi.Generated.cs', $generatedSrcBuilder.ToString())
+}
+
 function Invoke-Msvc {
     param
     (
@@ -103,8 +184,8 @@ function Invoke-Msvc {
         $linkerFlags += '/NOIMPLIB'
     }
 
-    $args = $CommonCompilerFlags + $compilerFlags + '/link' + $CommonLinkerFlags + $linkerFlags
-    $proc = Start-Process cl -ArgumentList $args -NoNewWindow -PassThru
+    $procArgs = $CommonCompilerFlags + $compilerFlags + '/link' + $CommonLinkerFlags + $linkerFlags
+    $proc = Start-Process cl -ArgumentList $procArgs -NoNewWindow -PassThru
     $proc.Handle | Out-Null
 
     return @{
@@ -120,7 +201,7 @@ function Invoke-Dotnet {
         [Parameter(Mandatory = $true)] [string] $OutputName
     )
 
-    $args = @(
+    $procArgs = @(
         'build',
         $SolutionFile,
         '--noLogo',
@@ -128,7 +209,7 @@ function Invoke-Dotnet {
         '--no-incremental',
         '-p:CopyRetryCount=0'
     )
-    $proc = Start-Process dotnet -ArgumentList $args -NoNewWindow -PassThru
+    $proc = Start-Process dotnet -ArgumentList $procArgs -NoNewWindow -PassThru
     $proc.Handle | Out-Null
     
     return @{
@@ -149,6 +230,8 @@ if (!(Test-Path 'deps\nuget\glfw*')) {
 
 $LockFilePath = "$OutputPath\build.lock"
 [System.IO.File]::WriteAllText($LockFilePath, 'build');
+
+Write-GeneratedCode
 
 $builds = @()
 $builds += Invoke-Msvc `

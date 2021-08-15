@@ -6,3 +6,6 @@ deps/nuget
 .vs
 *.vcxproj.user
 src/Editor/Properties/launchSettings.json
+src/Engine/engine_generated.h
+src/Engine/engine_generated.cpp
+src/Editor/Engine/EngineApi.Generated.cs
