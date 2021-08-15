@@ -6,7 +6,7 @@
 extern EnginePlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
-#define LAYERS_PER_TEXTURE_ARRAY 32
+#define SLOTS_PER_TEXTURE_ARRAY 32
 #define MAX_TERRAIN_MATERIALS 8
 
 #define OPENGL_UBO_SLOT_CAMERA 0
@@ -47,9 +47,9 @@ struct OpenGlTextureArray
     uint32 height;
     TextureFormat format;
     OpenGlTextureDescriptor descriptor;
-    uint32 layers;
 
-    uint32 reservedLayers;
+    uint32 maxSlots;
+    uint32 usedSlots;
 };
 struct OpenGlTextureArrayEntry
 {
@@ -478,64 +478,46 @@ OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format)
     switch (format)
     {
     case TEXTURE_FORMAT_RGB8:
-    case TEXTURE_FORMAT_R8:
-    case TEXTURE_FORMAT_R8UI:
         result.elementType = GL_UNSIGNED_BYTE;
         result.elementSize = sizeof(uint8);
-        break;
-
-    case TEXTURE_FORMAT_R16:
-    case TEXTURE_FORMAT_R16UI:
-        result.elementType = GL_UNSIGNED_SHORT;
-        result.elementSize = sizeof(uint16);
-        break;
-
-    case TEXTURE_FORMAT_R32UI:
-        result.elementType = GL_UNSIGNED_INT;
-        result.elementSize = sizeof(uint32);
-        break;
-    }
-
-    switch (format)
-    {
-    case TEXTURE_FORMAT_RGB8:
+        result.cpuFormat = GL_RGB;
         result.gpuFormat = GL_RGB;
         result.isInteger = false;
         break;
-
     case TEXTURE_FORMAT_R8:
-    case TEXTURE_FORMAT_R16:
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
+        result.cpuFormat = GL_R8;
         result.gpuFormat = GL_RED;
         result.isInteger = false;
         break;
-
+    case TEXTURE_FORMAT_R16:
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
+        result.cpuFormat = GL_R16;
+        result.gpuFormat = GL_RED;
+        result.isInteger = false;
+        break;
     case TEXTURE_FORMAT_R8UI:
-    case TEXTURE_FORMAT_R16UI:
-    case TEXTURE_FORMAT_R32UI:
+        result.elementType = GL_UNSIGNED_BYTE;
+        result.elementSize = sizeof(uint8);
+        result.cpuFormat = GL_R8UI;
         result.gpuFormat = GL_RED_INTEGER;
         result.isInteger = true;
         break;
-    }
-
-    switch (format)
-    {
-    case TEXTURE_FORMAT_RGB8:
-        result.cpuFormat = GL_RGB;
-        break;
-    case TEXTURE_FORMAT_R8:
-        result.cpuFormat = GL_R8;
-        break;
-    case TEXTURE_FORMAT_R16:
-        result.cpuFormat = GL_R16;
-        break;
-    case TEXTURE_FORMAT_R8UI:
-        result.cpuFormat = GL_R8UI;
-        break;
     case TEXTURE_FORMAT_R16UI:
+        result.elementType = GL_UNSIGNED_SHORT;
+        result.elementSize = sizeof(uint16);
         result.cpuFormat = GL_R16UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
         break;
     case TEXTURE_FORMAT_R32UI:
+        result.elementType = GL_UNSIGNED_INT;
+        result.elementSize = sizeof(uint32);
         result.cpuFormat = GL_R32UI;
+        result.gpuFormat = GL_RED_INTEGER;
+        result.isInteger = true;
         break;
     default:
         assert(!"Unknown texture format");
@@ -691,25 +673,6 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
     }
 }
 
-#if 0
-uint32 getTextureId(TextureArrayHandle handle)
-{
-    OpenGlTextureArray *array = (OpenGlTextureArray *)handle.ptr;
-    return array->id;
-}
-uint32 getTextureId(RenderBackendContext rctx, TextureAsset *asset)
-{
-    uint32 result = 0;
-
-    if (asset)
-    {
-        TextureArrayHandle array = getTextureArray(rctx, asset->width, asset->height, asset->format);
-        result = getTextureId(array);
-    }
-
-    return result;
-}
-#endif
 uint16 getSlotIndex(TextureAsset *asset)
 {
     uint16 result = 0;
@@ -764,7 +727,7 @@ OpenGlTextureArray *getTextureArray(OpenGlRenderContext *ctx, uint32 width, uint
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_WRAP_T, GL_REPEAT);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
         glTexParameteri(GL_TEXTURE_2D_ARRAY, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, descriptor.cpuFormat, width, height, LAYERS_PER_TEXTURE_ARRAY, 0,
+        glTexImage3D(GL_TEXTURE_2D_ARRAY, 0, descriptor.cpuFormat, width, height, SLOTS_PER_TEXTURE_ARRAY, 0,
             descriptor.gpuFormat, descriptor.elementType, 0);
         glGenerateMipmap(GL_TEXTURE_2D_ARRAY);
 
@@ -775,8 +738,8 @@ OpenGlTextureArray *getTextureArray(OpenGlRenderContext *ctx, uint32 width, uint
         entry->textureArray.height = height;
         entry->textureArray.format = format;
         entry->textureArray.descriptor = descriptor;
-        entry->textureArray.layers = LAYERS_PER_TEXTURE_ARRAY;
-        entry->textureArray.reservedLayers = 1; // layer 0 is the reserved 'null' slice
+        entry->textureArray.maxSlots = SLOTS_PER_TEXTURE_ARRAY;
+        entry->textureArray.usedSlots = 1; // slot 0 is the reserved 'null' slice
 
         if (ctx->lastTextureArray)
         {
@@ -798,8 +761,8 @@ TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, ui
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlTextureArray *array = getTextureArray(ctx, width, height, format);
 
-    assert(array->reservedLayers < array->layers);
-    uint16 slotIndex = ++array->reservedLayers;
+    assert(array->usedSlots < array->maxSlots);
+    uint16 slotIndex = ++array->usedSlots;
 
     OpenGlTextureSlot *result = pushStruct(ctx->arena, OpenGlTextureSlot);
     result->array = array;
