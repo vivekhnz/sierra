@@ -135,7 +135,15 @@ function Write-GeneratedCode {
         $generatedSrcBuilder.AppendLine("        public $type $($api.FunctionName);") | Out-Null
     }
     $generatedSrcBuilder.AppendLine("    }`n}") | Out-Null
-    [System.IO.File]::WriteAllText('src\Editor\Engine\EngineApi.Generated.cs', $generatedSrcBuilder.ToString())
+    [System.IO.File]::WriteAllText('src\Editor\Engine\EngineApi.Generated.cs', $generatedSrcBuilder.ToString());
+
+    # editor_generated.cpp
+    $generatedSrcBuilder.Clear() | Out-Null
+    $generatedSrcBuilder.AppendLine("global_variable EngineApi *Engine;") | Out-Null
+    foreach ($api in $apis) {
+        $generatedSrcBuilder.AppendLine("#define $($api.FunctionName) Engine->$($api.FunctionName)") | Out-Null
+    }
+    [System.IO.File]::WriteAllText('src\EditorCore\editor_generated.cpp', $generatedSrcBuilder.ToString());
 }
 
 function Invoke-Msvc {

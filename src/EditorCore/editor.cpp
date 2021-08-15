@@ -1,47 +1,9 @@
 #include "editor.h"
 
 #include "editor_transactions.cpp"
-#include <glm/gtx/quaternion.hpp>
+#include "editor_generated.cpp"
 
-global_variable EngineApi *Engine;
-#define assetsInitialize Engine->assetsInitialize
-#define assetsRegisterShader Engine->assetsRegisterShader
-#define assetsRegisterTexture Engine->assetsRegisterTexture
-#define assetsRegisterMesh Engine->assetsRegisterMesh
-#define assetsGetShader Engine->assetsGetShader
-#define assetsGetTexture Engine->assetsGetTexture
-#define assetsGetMesh Engine->assetsGetMesh
-#define assetsSetAssetData Engine->assetsSetAssetData
-#define assetsInvalidateAsset Engine->assetsInvalidateAsset
-#define heightfieldGetHeight Engine->heightfieldGetHeight
-#define heightfieldIsRayIntersecting Engine->heightfieldIsRayIntersecting
-#define rendererInitialize Engine->rendererInitialize
-#define rendererCreateTexture Engine->rendererCreateTexture
-#define rendererUpdateTexture Engine->rendererUpdateTexture
-#define rendererGetPixels Engine->rendererGetPixels
-#define rendererGetPixelsInRegion Engine->rendererGetPixelsInRegion
-#define rendererCreateRenderTarget Engine->rendererCreateRenderTarget
-#define rendererResizeRenderTarget Engine->rendererResizeRenderTarget
-#define rendererCreateEffect Engine->rendererCreateEffect
-#define rendererSetEffectFloat Engine->rendererSetEffectFloat
-#define rendererSetEffectVec3 Engine->rendererSetEffectVec3
-#define rendererSetEffectInt Engine->rendererSetEffectInt
-#define rendererSetEffectUint Engine->rendererSetEffectUint
-#define rendererSetEffectTexture Engine->rendererSetEffectTexture
-#define rendererCreateQueue Engine->rendererCreateQueue
-#define rendererSetCameraOrtho Engine->rendererSetCameraOrtho
-#define rendererSetCameraOrthoOffset Engine->rendererSetCameraOrthoOffset
-#define rendererSetCameraPersp Engine->rendererSetCameraPersp
-#define rendererSetLighting Engine->rendererSetLighting
-#define rendererClear Engine->rendererClear
-#define rendererPushTexturedQuad Engine->rendererPushTexturedQuad
-#define rendererPushColoredQuad Engine->rendererPushColoredQuad
-#define rendererPushQuad Engine->rendererPushQuad
-#define rendererPushQuads Engine->rendererPushQuads
-#define rendererPushMeshes Engine->rendererPushMeshes
-#define rendererPushTerrain Engine->rendererPushTerrain
-#define rendererDrawToTarget Engine->rendererDrawToTarget
-#define rendererDrawToScreen Engine->rendererDrawToScreen
+#include <glm/gtx/quaternion.hpp>
 
 enum BrushVisualizationMode
 {

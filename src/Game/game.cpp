@@ -1,7 +1,5 @@
 #include "game.h"
 
-#include "../Engine/engine.h"
-
 #define MAX_PATH 260
 #define arrayCount(array) (sizeof(array) / sizeof(array[0]))
 

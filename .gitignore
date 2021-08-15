@@ -9,3 +9,4 @@ src/Editor/Properties/launchSettings.json
 src/Engine/engine_generated.h
 src/Engine/engine_generated.cpp
 src/Editor/Engine/EngineApi.Generated.cs
+src/EditorCore/editor_generated.cpp
