@@ -139,11 +139,17 @@ function Write-GeneratedCode {
 
     # editor_generated.cpp
     $generatedSrcBuilder.Clear() | Out-Null
-    $generatedSrcBuilder.AppendLine("global_variable EngineApi *Engine;") | Out-Null
     foreach ($api in $apis) {
         $generatedSrcBuilder.AppendLine("#define $($api.FunctionName) Engine->$($api.FunctionName)") | Out-Null
     }
     [System.IO.File]::WriteAllText('src\EditorCore\editor_generated.cpp', $generatedSrcBuilder.ToString());
+
+    # game_generated.cpp
+    $generatedSrcBuilder.Clear() | Out-Null
+    foreach ($api in $apis) {
+        $generatedSrcBuilder.AppendLine("#define $($api.FunctionName) Engine->$($api.FunctionName)") | Out-Null
+    }
+    [System.IO.File]::WriteAllText('src\Game\game_generated.cpp', $generatedSrcBuilder.ToString());
 }
 
 function Invoke-Msvc {

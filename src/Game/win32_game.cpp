@@ -232,7 +232,7 @@ void win32LoadEngineCode(Win32EngineCode *engineCode)
     {
         EngineGetApi *engineGetApi = (EngineGetApi *)GetProcAddress(engineCode->dllModule, "engineGetApi");
         engineCode->api = engineGetApi((GetGLProcAddress *)glfwGetProcAddress, platformMemory->enginePlatformApi);
-        platformMemory->gameMemory->engine = engineCode->api;
+        platformMemory->gameMemory->engineApi = engineCode->api;
     }
 }
 void win32UnloadEngineCode(Win32EngineCode *engineCode)

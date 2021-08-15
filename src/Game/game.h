@@ -95,7 +95,7 @@ struct GameMemory
 
     GameState state;
 
-    EngineApi *engine;
+    EngineApi *engineApi;
     MemoryArena arena;
 };
 

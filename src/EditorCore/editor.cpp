@@ -2,8 +2,9 @@
 
 #include "editor_transactions.cpp"
 #include "editor_generated.cpp"
-
 #include <glm/gtx/quaternion.hpp>
+
+global_variable EngineApi *Engine;
 
 enum BrushVisualizationMode
 {

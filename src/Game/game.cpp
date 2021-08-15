@@ -1,5 +1,9 @@
 #include "game.h"
 
+#include "game_generated.cpp"
+
+global_variable EngineApi *Engine;
+
 #define MAX_PATH 260
 #define arrayCount(array) (sizeof(array) / sizeof(array[0]))
 
@@ -12,39 +16,36 @@ bool initializeGame(GameMemory *memory)
 {
     GameState *state = &memory->state;
     GameAssets *gameAssets = &state->gameAssets;
-    EngineApi *engine = memory->engine;
     MemoryArena *arena = &memory->arena;
 
-    state->renderCtx = engine->rendererInitialize(arena);
+    state->renderCtx = rendererInitialize(arena);
 
     state->assetsArena = pushSubArena(arena, 200 * 1024 * 1024);
-    state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
+    state->engineAssets = assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
 
     gameAssets->terrainShaderTextured =
-        engine->assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
+        assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
     gameAssets->terrainShaderWireframe =
-        engine->assetsRegisterShader(assets, "terrain_wireframe.fs.glsl", SHADER_TYPE_TERRAIN);
+        assetsRegisterShader(assets, "terrain_wireframe.fs.glsl", SHADER_TYPE_TERRAIN);
 
-    gameAssets->textureGroundAlbedo =
-        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", TEXTURE_FORMAT_RGB8);
-    gameAssets->textureGroundNormal =
-        engine->assetsRegisterTexture(assets, "ground_normal.bmp", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureGroundAlbedo = assetsRegisterTexture(assets, "ground_albedo.bmp", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureGroundNormal = assetsRegisterTexture(assets, "ground_normal.bmp", TEXTURE_FORMAT_RGB8);
     gameAssets->textureGroundDisplacement =
-        engine->assetsRegisterTexture(assets, "ground_displacement.tga", TEXTURE_FORMAT_R16);
-    gameAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", TEXTURE_FORMAT_R8);
-    gameAssets->textureRockAlbedo = engine->assetsRegisterTexture(assets, "rock_albedo.jpg", TEXTURE_FORMAT_RGB8);
-    gameAssets->textureRockNormal = engine->assetsRegisterTexture(assets, "rock_normal.jpg", TEXTURE_FORMAT_RGB8);
+        assetsRegisterTexture(assets, "ground_displacement.tga", TEXTURE_FORMAT_R16);
+    gameAssets->textureGroundAo = assetsRegisterTexture(assets, "ground_ao.tga", TEXTURE_FORMAT_R8);
+    gameAssets->textureRockAlbedo = assetsRegisterTexture(assets, "rock_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureRockNormal = assetsRegisterTexture(assets, "rock_normal.jpg", TEXTURE_FORMAT_RGB8);
     gameAssets->textureRockDisplacement =
-        engine->assetsRegisterTexture(assets, "rock_displacement.tga", TEXTURE_FORMAT_R16);
-    gameAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", TEXTURE_FORMAT_R8);
-    gameAssets->textureSnowAlbedo = engine->assetsRegisterTexture(assets, "snow_albedo.jpg", TEXTURE_FORMAT_RGB8);
-    gameAssets->textureSnowNormal = engine->assetsRegisterTexture(assets, "snow_normal.jpg", TEXTURE_FORMAT_RGB8);
+        assetsRegisterTexture(assets, "rock_displacement.tga", TEXTURE_FORMAT_R16);
+    gameAssets->textureRockAo = assetsRegisterTexture(assets, "rock_ao.tga", TEXTURE_FORMAT_R8);
+    gameAssets->textureSnowAlbedo = assetsRegisterTexture(assets, "snow_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    gameAssets->textureSnowNormal = assetsRegisterTexture(assets, "snow_normal.jpg", TEXTURE_FORMAT_RGB8);
     gameAssets->textureSnowDisplacement =
-        engine->assetsRegisterTexture(assets, "snow_displacement.tga", TEXTURE_FORMAT_R16);
-    gameAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", TEXTURE_FORMAT_R8);
+        assetsRegisterTexture(assets, "snow_displacement.tga", TEXTURE_FORMAT_R16);
+    gameAssets->textureSnowAo = assetsRegisterTexture(assets, "snow_ao.tga", TEXTURE_FORMAT_R8);
 
-    gameAssets->textureVirtualHeightmap = engine->assetsRegisterTexture(assets, 0, TEXTURE_FORMAT_R16);
+    gameAssets->textureVirtualHeightmap = assetsRegisterTexture(assets, 0, TEXTURE_FORMAT_R16);
 
     state->isOrbitCameraMode = false;
     state->isWireframeMode = false;
@@ -74,7 +75,7 @@ bool initializeGame(GameMemory *memory)
     state->heightfield.center = glm::vec2(0, 0);
     *state->heightfieldHeights = {0};
 
-    state->heightmapTexture = engine->rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
+    state->heightmapTexture = rendererCreateTexture(2048, 2048, TEXTURE_FORMAT_R16);
     memory->platformQueueAssetLoad(gameAssets->textureVirtualHeightmap, "heightmap.tga");
 
     {
@@ -129,6 +130,7 @@ bool isNewButtonPress(GameInput *input, GameInputButtons button)
 
 API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
 {
+    Engine = memory->engineApi;
     if (!memory->isInitialized)
     {
         if (!initializeGame(memory))
@@ -139,7 +141,6 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         memory->isInitialized = true;
     }
 
-    EngineApi *engine = memory->engine;
     GameState *state = &memory->state;
     GameAssets *gameAssets = &state->gameAssets;
     RenderContext *rctx = state->renderCtx;
@@ -151,10 +152,10 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         memory->platformExitGame();
     }
 
-    LoadedAsset *heightmapAsset = engine->assetsGetTexture(gameAssets->textureVirtualHeightmap);
+    LoadedAsset *heightmapAsset = assetsGetTexture(gameAssets->textureVirtualHeightmap);
     if (heightmapAsset->texture && heightmapAsset->version != state->heightmapTextureVersion)
     {
-        memory->engine->rendererUpdateTexture(state->heightmapTexture, heightmapAsset->texture->width,
+        rendererUpdateTexture(state->heightmapTexture, heightmapAsset->texture->width,
             heightmapAsset->texture->height, heightmapAsset->texture->data);
 
         uint32 heightmapWidth = 2048;
@@ -300,11 +301,10 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
         }
 
         // smoothly lerp Y to terrain height
-        float targetHeight = engine->heightfieldGetHeight(
-                                 &state->heightfield, state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
+        float targetHeight =
+            heightfieldGetHeight(&state->heightfield, state->firstPersonCameraPos.x, state->firstPersonCameraPos.z)
             + 1.75f;
         state->firstPersonCameraPos.y = (state->firstPersonCameraPos.y * 0.95f) + (targetHeight * 0.05f);
-
         state->firstPersonCameraLookAt = state->firstPersonCameraPos + lookDir;
 
         // capture mouse if first person camera is active
@@ -323,15 +323,15 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
     glm::vec2 heightmapSize = glm::vec2(2048, 2048);
 
-    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
-    engine->rendererSetLighting(rq, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled,
-        state->isNormalMapEnabled, state->isAOMapEnabled, state->isDisplacementMapEnabled);
-    engine->rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-    engine->rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
+    RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
+    rendererSetLighting(rq, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled, state->isNormalMapEnabled,
+        state->isAOMapEnabled, state->isDisplacementMapEnabled);
+    rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
+    rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
         state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->materials,
         state->isWireframeMode, 0, glm::vec2(0), 0, 0);
-    engine->rendererDrawToScreen(rq, viewport.width, viewport.height);
+    rendererDrawToScreen(rq, viewport.width, viewport.height);
 
     endTemporaryMemory(&renderQueueMemory);
 }
