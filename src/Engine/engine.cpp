@@ -9,23 +9,19 @@
 #include "../../deps/fast_obj/fast_obj.c"
 
 global_variable EngineApi Api;
-global_variable bool IsGLLoaded;
+global_variable bool WasEngineReloaded = true;
 global_variable EnginePlatformApi Platform;
 
 API_EXPORT ENGINE_GET_API(engineGetApi)
 {
     Platform = platformApi;
-    if (!IsGLLoaded)
+    if (WasEngineReloaded)
     {
-        bool glLoadSucceeded = getGlProcAddress ? gladLoadGLLoader(getGlProcAddress) : gladLoadGL();
-        if (glLoadSucceeded)
-        {
-            IsGLLoaded = true;
-        }
-        else
-        {
-            assert(!"Failed to initialize GLAD");
-        }
+        RenderBackendInitParams initParams;
+        initParams.getGlProcAddress = getGlProcAddress;
+        reloadRenderBackend(initParams);
+
+        WasEngineReloaded = false;
     }
 
     Api.assetsInitialize = assetsInitialize;

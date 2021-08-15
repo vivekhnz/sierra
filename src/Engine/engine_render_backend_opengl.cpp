@@ -137,6 +137,12 @@ struct OpenGlRenderContext
     } terrain;
 };
 
+void reloadRenderBackend(RenderBackendInitParams initParams)
+{
+    bool glLoadSucceeded =
+        initParams.getGlProcAddress ? gladLoadGLLoader(initParams.getGlProcAddress) : gladLoadGL();
+    assert(glLoadSucceeded);
+}
 RenderBackendContext initializeRenderBackend(MemoryArena *arena)
 {
     OpenGlRenderContext *ctx = pushStruct(arena, OpenGlRenderContext);
