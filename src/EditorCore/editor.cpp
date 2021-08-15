@@ -1,8 +1,47 @@
 #include "editor.h"
 
 #include "editor_transactions.cpp"
-
 #include <glm/gtx/quaternion.hpp>
+
+global_variable EngineApi *Engine;
+#define assetsInitialize Engine->assetsInitialize
+#define assetsRegisterShader Engine->assetsRegisterShader
+#define assetsRegisterTexture Engine->assetsRegisterTexture
+#define assetsRegisterMesh Engine->assetsRegisterMesh
+#define assetsGetShader Engine->assetsGetShader
+#define assetsGetTexture Engine->assetsGetTexture
+#define assetsGetMesh Engine->assetsGetMesh
+#define assetsSetAssetData Engine->assetsSetAssetData
+#define assetsInvalidateAsset Engine->assetsInvalidateAsset
+#define heightfieldGetHeight Engine->heightfieldGetHeight
+#define heightfieldIsRayIntersecting Engine->heightfieldIsRayIntersecting
+#define rendererInitialize Engine->rendererInitialize
+#define rendererCreateTexture Engine->rendererCreateTexture
+#define rendererUpdateTexture Engine->rendererUpdateTexture
+#define rendererGetPixels Engine->rendererGetPixels
+#define rendererGetPixelsInRegion Engine->rendererGetPixelsInRegion
+#define rendererCreateRenderTarget Engine->rendererCreateRenderTarget
+#define rendererResizeRenderTarget Engine->rendererResizeRenderTarget
+#define rendererCreateEffect Engine->rendererCreateEffect
+#define rendererSetEffectFloat Engine->rendererSetEffectFloat
+#define rendererSetEffectVec3 Engine->rendererSetEffectVec3
+#define rendererSetEffectInt Engine->rendererSetEffectInt
+#define rendererSetEffectUint Engine->rendererSetEffectUint
+#define rendererSetEffectTexture Engine->rendererSetEffectTexture
+#define rendererCreateQueue Engine->rendererCreateQueue
+#define rendererSetCameraOrtho Engine->rendererSetCameraOrtho
+#define rendererSetCameraOrthoOffset Engine->rendererSetCameraOrthoOffset
+#define rendererSetCameraPersp Engine->rendererSetCameraPersp
+#define rendererSetLighting Engine->rendererSetLighting
+#define rendererClear Engine->rendererClear
+#define rendererPushTexturedQuad Engine->rendererPushTexturedQuad
+#define rendererPushColoredQuad Engine->rendererPushColoredQuad
+#define rendererPushQuad Engine->rendererPushQuad
+#define rendererPushQuads Engine->rendererPushQuads
+#define rendererPushMeshes Engine->rendererPushMeshes
+#define rendererPushTerrain Engine->rendererPushTerrain
+#define rendererDrawToTarget Engine->rendererDrawToTarget
+#define rendererDrawToScreen Engine->rendererDrawToScreen
 
 enum BrushVisualizationMode
 {
@@ -73,56 +112,47 @@ void initializeEditor(EditorMemory *memory)
     assert(arena->used == 0);
 
     EditorState *state = pushStruct(arena, EditorState);
-    EngineApi *engine = memory->engineApi;
 
-    state->renderCtx = engine->rendererInitialize(arena);
+    state->renderCtx = rendererInitialize(arena);
 
     state->assetsArena = pushSubArena(arena, 200 * 1024 * 1024);
-    state->engineAssets = engine->assetsInitialize(&state->assetsArena, state->renderCtx);
+    state->engineAssets = assetsInitialize(&state->assetsArena, state->renderCtx);
     Assets *assets = state->engineAssets;
     EditorAssets *editorAssets = &state->editorAssets;
 
-    editorAssets->quadShaderBrushMask =
-        engine->assetsRegisterShader(assets, "quad_brush_mask.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderBrushMask = assetsRegisterShader(assets, "quad_brush_mask.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderBrushBlendAddSub =
-        engine->assetsRegisterShader(assets, "quad_brush_blend_add_sub.fs.glsl", SHADER_TYPE_QUAD);
+        assetsRegisterShader(assets, "quad_brush_blend_add_sub.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderBrushBlendFlatten =
-        engine->assetsRegisterShader(assets, "quad_brush_blend_flatten.fs.glsl", SHADER_TYPE_QUAD);
+        assetsRegisterShader(assets, "quad_brush_blend_flatten.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderBrushBlendSmooth =
-        engine->assetsRegisterShader(assets, "quad_brush_blend_smooth.fs.glsl", SHADER_TYPE_QUAD);
-    editorAssets->quadShaderOutline =
-        engine->assetsRegisterShader(assets, "quad_outline.fs.glsl", SHADER_TYPE_QUAD);
+        assetsRegisterShader(assets, "quad_brush_blend_smooth.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderOutline = assetsRegisterShader(assets, "quad_outline.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderIdVisualiser =
-        engine->assetsRegisterShader(assets, "quad_id_visualiser.fs.glsl", SHADER_TYPE_QUAD);
-    editorAssets->meshShaderId = engine->assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
-    editorAssets->meshShaderRock = engine->assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
+        assetsRegisterShader(assets, "quad_id_visualiser.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->meshShaderId = assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
+    editorAssets->meshShaderRock = assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->terrainShaderTextured =
-        engine->assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
+        assetsRegisterShader(assets, "terrain_textured.fs.glsl", SHADER_TYPE_TERRAIN);
 
-    editorAssets->textureGroundAlbedo =
-        engine->assetsRegisterTexture(assets, "ground_albedo.bmp", TEXTURE_FORMAT_RGB8);
-    editorAssets->textureGroundNormal =
-        engine->assetsRegisterTexture(assets, "ground_normal.bmp", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureGroundAlbedo = assetsRegisterTexture(assets, "ground_albedo.bmp", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureGroundNormal = assetsRegisterTexture(assets, "ground_normal.bmp", TEXTURE_FORMAT_RGB8);
     editorAssets->textureGroundDisplacement =
-        engine->assetsRegisterTexture(assets, "ground_displacement.tga", TEXTURE_FORMAT_R16);
-    editorAssets->textureGroundAo = engine->assetsRegisterTexture(assets, "ground_ao.tga", TEXTURE_FORMAT_R8);
-    editorAssets->textureRockAlbedo =
-        engine->assetsRegisterTexture(assets, "rock_albedo.jpg", TEXTURE_FORMAT_RGB8);
-    editorAssets->textureRockNormal =
-        engine->assetsRegisterTexture(assets, "rock_normal.jpg", TEXTURE_FORMAT_RGB8);
+        assetsRegisterTexture(assets, "ground_displacement.tga", TEXTURE_FORMAT_R16);
+    editorAssets->textureGroundAo = assetsRegisterTexture(assets, "ground_ao.tga", TEXTURE_FORMAT_R8);
+    editorAssets->textureRockAlbedo = assetsRegisterTexture(assets, "rock_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureRockNormal = assetsRegisterTexture(assets, "rock_normal.jpg", TEXTURE_FORMAT_RGB8);
     editorAssets->textureRockDisplacement =
-        engine->assetsRegisterTexture(assets, "rock_displacement.tga", TEXTURE_FORMAT_R16);
-    editorAssets->textureRockAo = engine->assetsRegisterTexture(assets, "rock_ao.tga", TEXTURE_FORMAT_R8);
-    editorAssets->textureSnowAlbedo =
-        engine->assetsRegisterTexture(assets, "snow_albedo.jpg", TEXTURE_FORMAT_RGB8);
-    editorAssets->textureSnowNormal =
-        engine->assetsRegisterTexture(assets, "snow_normal.jpg", TEXTURE_FORMAT_RGB8);
+        assetsRegisterTexture(assets, "rock_displacement.tga", TEXTURE_FORMAT_R16);
+    editorAssets->textureRockAo = assetsRegisterTexture(assets, "rock_ao.tga", TEXTURE_FORMAT_R8);
+    editorAssets->textureSnowAlbedo = assetsRegisterTexture(assets, "snow_albedo.jpg", TEXTURE_FORMAT_RGB8);
+    editorAssets->textureSnowNormal = assetsRegisterTexture(assets, "snow_normal.jpg", TEXTURE_FORMAT_RGB8);
     editorAssets->textureSnowDisplacement =
-        engine->assetsRegisterTexture(assets, "snow_displacement.tga", TEXTURE_FORMAT_R16);
-    editorAssets->textureSnowAo = engine->assetsRegisterTexture(assets, "snow_ao.tga", TEXTURE_FORMAT_R8);
-    editorAssets->textureVirtualImportedHeightmap = engine->assetsRegisterTexture(assets, 0, TEXTURE_FORMAT_R16);
+        assetsRegisterTexture(assets, "snow_displacement.tga", TEXTURE_FORMAT_R16);
+    editorAssets->textureSnowAo = assetsRegisterTexture(assets, "snow_ao.tga", TEXTURE_FORMAT_R8);
+    editorAssets->textureVirtualImportedHeightmap = assetsRegisterTexture(assets, 0, TEXTURE_FORMAT_R16);
 
-    editorAssets->meshRock = engine->assetsRegisterMesh(assets, "rock.obj");
+    editorAssets->meshRock = assetsRegisterMesh(assets, "rock.obj");
 
     state->uiState.selectedObjectCount = 0;
     state->uiState.selectedObjectIds = pushArray(arena, uint32, MAX_OBJECT_INSTANCES);
@@ -133,10 +163,9 @@ void initializeEditor(EditorMemory *memory)
 
     SceneState *sceneState = &state->sceneState;
 
-    state->importedHeightmapTexture =
-        engine->rendererCreateTexture(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16);
+    state->importedHeightmapTexture = rendererCreateTexture(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16);
     state->temporaryHeightmap =
-        engine->rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
 
     state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
@@ -164,16 +193,16 @@ void initializeEditor(EditorMemory *memory)
         tile->heightfield->heights = pushArray(arena, float, heightSampleCount);
         memset(tile->heightfield->heights, 0, heightSampleCount);
 
-        tile->committedHeightmap = engine->rendererCreateRenderTarget(
-            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->workingBrushInfluenceMask = engine->rendererCreateRenderTarget(
-            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->workingHeightmap = engine->rendererCreateRenderTarget(
-            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->previewBrushInfluenceMask = engine->rendererCreateRenderTarget(
-            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->previewHeightmap = engine->rendererCreateRenderTarget(
-            arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->committedHeightmap =
+            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->workingBrushInfluenceMask =
+            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->workingHeightmap =
+            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->previewBrushInfluenceMask =
+            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+        tile->previewHeightmap =
+            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
 
         tile->xAdjTile = 0;
         tile->yAdjTile = 0;
@@ -298,7 +327,6 @@ void compositeHeightmap(EditorMemory *memory,
     uint32 brushInstanceCount,
     glm::vec2 heightmapOffset)
 {
-    EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     float brushFalloff = state->uiState.terrainBrushFalloff;
@@ -327,15 +355,15 @@ void compositeHeightmap(EditorMemory *memory,
 
     // render brush influence mask
     RenderEffect *maskEffect =
-        engine->rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
-    engine->rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
-    engine->rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
+        rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
+    rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
+    rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
 
-    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraOrthoOffset(rq, heightmapOffset);
-    engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
-    engine->rendererDrawToTarget(rq, brushInfluenceMask);
+    RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererSetCameraOrthoOffset(rq, heightmapOffset);
+    rendererClear(rq, 0, 0, 0, 1);
+    rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
+    rendererDrawToTarget(rq, brushInfluenceMask);
 
     // render heightmap
     if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
@@ -345,19 +373,19 @@ void compositeHeightmap(EditorMemory *memory,
         uint32 iterations = 3;
         for (uint32 i = 0; i < iterations; i++)
         {
-            RenderEffect *effect = engine->rendererCreateEffect(
+            RenderEffect *effect = rendererCreateEffect(
                 &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
-            engine->rendererSetEffectInt(effect, "iterationCount", iterations);
-            engine->rendererSetEffectInt(effect, "iteration", i);
-            engine->rendererSetEffectInt(effect, "heightmapWidth", iterationOutput->width);
-            engine->rendererSetEffectTexture(effect, 0, inputTexture);
-            engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureHandle);
+            rendererSetEffectInt(effect, "iterationCount", iterations);
+            rendererSetEffectInt(effect, "iteration", i);
+            rendererSetEffectInt(effect, "heightmapWidth", iterationOutput->width);
+            rendererSetEffectTexture(effect, 0, inputTexture);
+            rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureHandle);
 
-            RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-            engine->rendererSetCameraOrtho(rq);
-            engine->rendererClear(rq, 0, 0, 0, 1);
-            engine->rendererPushQuad(rq, getBounds(iterationOutput), effect);
-            engine->rendererDrawToTarget(rq, iterationOutput);
+            RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+            rendererSetCameraOrtho(rq);
+            rendererClear(rq, 0, 0, 0, 1);
+            rendererPushQuad(rq, getBounds(iterationOutput), effect);
+            rendererDrawToTarget(rq, iterationOutput);
 
             inputTexture = iterationOutput->textureHandle;
             iterationOutput = i % 2 == 0 ? state->temporaryHeightmap : output;
@@ -368,31 +396,31 @@ void compositeHeightmap(EditorMemory *memory,
         RenderEffect *effect = 0;
         if (tool == TERRAIN_BRUSH_TOOL_RAISE)
         {
-            effect = engine->rendererCreateEffect(
+            effect = rendererCreateEffect(
                 &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-            engine->rendererSetEffectFloat(effect, "blendSign", 1);
+            rendererSetEffectFloat(effect, "blendSign", 1);
         }
         else if (tool == TERRAIN_BRUSH_TOOL_LOWER)
         {
-            effect = engine->rendererCreateEffect(
+            effect = rendererCreateEffect(
                 &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-            engine->rendererSetEffectFloat(effect, "blendSign", -1);
+            rendererSetEffectFloat(effect, "blendSign", -1);
         }
         else if (tool == TERRAIN_BRUSH_TOOL_FLATTEN)
         {
-            effect = engine->rendererCreateEffect(
+            effect = rendererCreateEffect(
                 &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-            engine->rendererSetEffectFloat(effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
+            rendererSetEffectFloat(effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
         }
         assert(effect);
-        engine->rendererSetEffectTexture(effect, 0, baseHeightmapTexture);
-        engine->rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureHandle);
+        rendererSetEffectTexture(effect, 0, baseHeightmapTexture);
+        rendererSetEffectTexture(effect, 1, brushInfluenceMask->textureHandle);
 
-        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-        engine->rendererSetCameraOrtho(rq);
-        engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushQuad(rq, getBounds(output), effect);
-        engine->rendererDrawToTarget(rq, output);
+        RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+        rendererSetCameraOrtho(rq);
+        rendererClear(rq, 0, 0, 0, 1);
+        rendererPushQuad(rq, getBounds(output), effect);
+        rendererDrawToTarget(rq, output);
     }
 
     endTemporaryMemory(&renderQueueMemory);
@@ -462,7 +490,6 @@ void updateHeightfieldHeights(
 
 void commitChanges(EditorMemory *memory)
 {
-    EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
@@ -472,12 +499,12 @@ void commitChanges(EditorMemory *memory)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
 
-        RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-        engine->rendererSetCameraOrtho(rq);
-        engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(
+        RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+        rendererSetCameraOrtho(rq);
+        rendererClear(rq, 0, 0, 0, 1);
+        rendererPushTexturedQuad(
             rq, getBounds(tile->committedHeightmap), tile->workingHeightmap->textureHandle, true);
-        if (engine->rendererDrawToTarget(rq, tile->committedHeightmap))
+        if (rendererDrawToTarget(rq, tile->committedHeightmap))
         {
             rendered = true;
         }
@@ -505,7 +532,7 @@ void discardChanges(EditorMemory *memory)
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
         RenderTarget *target = tile->committedHeightmap;
         GetPixelsResult heightPixels =
-            memory->engineApi->rendererGetPixels(arena, target->textureHandle, target->width, target->height);
+            rendererGetPixels(arena, target->textureHandle, target->width, target->height);
         updateHeightfieldHeights(tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
 
         endTemporaryMemory(&heightMemory);
@@ -675,7 +702,6 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
-    EngineApi *engine = memory->engineApi;
 
     // update object instance state
     sceneState->objectInstanceCount = docState->objectInstanceCount;
@@ -720,6 +746,8 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
+    Engine = memory->engineApi;
+
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
 
@@ -748,29 +776,28 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
     updateFromDocumentState(memory, &state->previewDocState);
 
-    EngineApi *engine = memory->engineApi;
     EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
 
     // todo: reimplement functionality to import a heightmap
 #if 0
-    LoadedAsset *importedHeightmapAsset = engine->assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
+    LoadedAsset *importedHeightmapAsset = assetsGetTexture(editorAssets->textureVirtualImportedHeightmap);
     if (importedHeightmapAsset->texture
         && importedHeightmapAsset->version != state->importedHeightmapTextureVersion)
     {
         TextureAsset *texture = importedHeightmapAsset->texture;
-        engine->rendererUpdateTexture(
+        rendererUpdateTexture(
             state->importedHeightmapTexture, texture->width, texture->height, texture->data);
 
         TerrainTile *tile = &sceneState->terrainTiles[0];
 
         TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-        RenderQueue *rq = engine->rendererCreateQueue(rctx, &memory->arena);
-        engine->rendererSetCameraOrtho(rq);
-        engine->rendererClear(rq, 0, 0, 0, 1);
-        engine->rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->importedHeightmapTexture, true);
-        if (engine->rendererDrawToTarget(rq, tile->committedHeightmap))
+        RenderQueue *rq = rendererCreateQueue(rctx, &memory->arena);
+        rendererSetCameraOrtho(rq);
+        rendererClear(rq, 0, 0, 0, 1);
+        rendererPushTexturedQuad(rq, {0, 0, 1, 1}, state->importedHeightmapTexture, true);
+        if (rendererDrawToTarget(rq, tile->committedHeightmap))
         {
             updateHeightfieldHeights(tile->heightfield, texture->width, texture->height, (uint16 *)texture->data);
             state->importedHeightmapTextureVersion = importedHeightmapAsset->version;
@@ -848,7 +875,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                         TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
 
-                        GetPixelsResult pickedPixels = engine->rendererGetPixelsInRegion(
+                        GetPixelsResult pickedPixels = rendererGetPixelsInRegion(
                             &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1);
                         assert(pickedPixels.count == 1);
                         uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
@@ -920,8 +947,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
                         glm::vec3 hitPt;
                         float hitDist = 0;
-                        if (engine->heightfieldIsRayIntersecting(
-                                heightfield, cameraPos, mouseRayDir, &hitPt, &hitDist)
+                        if (heightfieldIsRayIntersecting(heightfield, cameraPos, mouseRayDir, &hitPt, &hitDist)
                             && hitDist < minHitDist)
                         {
                             minHitDist = hitDist;
@@ -1201,8 +1227,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
             TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
 
             RenderTarget *target = tile->workingHeightmap;
-            GetPixelsResult heightPixels = memory->engineApi->rendererGetPixels(
-                &memory->arena, target->textureHandle, target->width, target->height);
+            GetPixelsResult heightPixels =
+                rendererGetPixels(&memory->arena, target->textureHandle, target->width, target->height);
             updateHeightfieldHeights(
                 tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
 
@@ -1213,7 +1239,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
-    EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     EditorAssets *editorAssets = &state->editorAssets;
     SceneState *sceneState = &state->sceneState;
@@ -1229,12 +1254,12 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         glm::vec3 lookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
             sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
         viewState->cameraPos = viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
-        viewState->sceneRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, TEXTURE_FORMAT_RGB8, true);
-        viewState->selectionRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, TEXTURE_FORMAT_R8UI, true);
-        viewState->pickingRenderTarget = engine->rendererCreateRenderTarget(
-            &memory->arena, view->width, view->height, TEXTURE_FORMAT_R32UI, true);
+        viewState->sceneRenderTarget =
+            rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_RGB8, true);
+        viewState->selectionRenderTarget =
+            rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_R8UI, true);
+        viewState->pickingRenderTarget =
+            rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_R32UI, true);
         view->viewState = viewState;
     }
 
@@ -1243,9 +1268,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     RenderTarget *pickingRenderTarget = viewState->pickingRenderTarget;
     if (view->width != sceneRenderTarget->width || view->height != sceneRenderTarget->height)
     {
-        engine->rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
-        engine->rendererResizeRenderTarget(selectionRenderTarget, view->width, view->height);
-        engine->rendererResizeRenderTarget(pickingRenderTarget, view->width, view->height);
+        rendererResizeRenderTarget(sceneRenderTarget, view->width, view->height);
+        rendererResizeRenderTarget(selectionRenderTarget, view->width, view->height);
+        rendererResizeRenderTarget(pickingRenderTarget, view->width, view->height);
     }
 
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
@@ -1277,16 +1302,16 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
+    RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
 
     glm::vec4 lightDir = glm::vec4(0);
     lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
     lightDir.y = cos(state->uiState.sceneLightDirection * glm::pi<float>() * 0.5);
     lightDir.z = 0.2f;
-    engine->rendererSetLighting(rq, &lightDir, true, true, true, true, true);
+    rendererSetLighting(rq, &lightDir, true, true, true, true, true);
 
-    engine->rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
+    rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
@@ -1332,7 +1357,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
 
         glm::vec2 heightmapSize = glm::vec2(activeHeightmap->width, activeHeightmap->height);
-        engine->rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
+        rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, state->previewDocState.materialCount,
@@ -1341,21 +1366,21 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     RenderEffect *rockEffect =
-        engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererPushMeshes(
+        rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
+    rendererPushMeshes(
         rq, editorAssets->meshRock, sceneState->objectInstanceData, sceneState->objectInstanceCount, rockEffect);
-    engine->rendererDrawToTarget(rq, sceneRenderTarget);
+    rendererDrawToTarget(rq, sceneRenderTarget);
 
-    rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererClear(rq, 0, 0, 0, 1);
+    rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererClear(rq, 0, 0, 0, 1);
 
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS && state->uiState.selectedObjectCount > 0)
     {
         // selection render target is only 8 bits so mask out the 24 most significant bits
         // otherwise IDs will get clamped
         RenderEffect *mesh8BitIdEffect =
-            engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-        engine->rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
+            rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
 
         uint32 objectsFound = 0;
         for (uint32 i = 0;
@@ -1367,7 +1392,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             {
                 if (state->uiState.selectedObjectIds[j] == objectId)
                 {
-                    engine->rendererPushMeshes(
+                    rendererPushMeshes(
                         rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
 
                     objectsFound++;
@@ -1377,54 +1402,53 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
         assert(objectsFound == state->uiState.selectedObjectCount);
     }
-    engine->rendererDrawToTarget(rq, selectionRenderTarget);
+    rendererDrawToTarget(rq, selectionRenderTarget);
 
-    rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererClear(rq, 0, 0, 0, 1);
+    rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererClear(rq, 0, 0, 0, 1);
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
     {
         RenderEffect *mesh32BitIdEffect =
-            engine->rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-        engine->rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
+            rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
         for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
         {
-            engine->rendererPushMeshes(
+            rendererPushMeshes(
                 rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
         }
     }
-    engine->rendererDrawToTarget(rq, pickingRenderTarget);
+    rendererDrawToTarget(rq, pickingRenderTarget);
 
     RenderEffect *effect =
-        engine->rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
-    engine->rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureHandle);
-    engine->rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureHandle);
-    engine->rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureHandle);
-    engine->rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureHandle);
+        rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
+    rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureHandle);
+    rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureHandle);
+    rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureHandle);
+    rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureHandle);
 
-    rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraOrtho(rq);
-    engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushQuad(rq, getBounds(sceneRenderTarget), effect);
-    engine->rendererDrawToScreen(rq, view->width, view->height);
+    rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererSetCameraOrtho(rq);
+    rendererClear(rq, 0, 0, 0, 1);
+    rendererPushQuad(rq, getBounds(sceneRenderTarget), effect);
+    rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
 }
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
 {
-    EngineApi *engine = memory->engineApi;
     EditorState *state = (EditorState *)memory->arena.baseAddress;
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     // todo: stitch each tile's heightmap together
     TerrainTile *tile = &state->sceneState.terrainTiles[0];
-    RenderQueue *rq = engine->rendererCreateQueue(state->renderCtx, &memory->arena);
-    engine->rendererSetCameraOrtho(rq);
-    engine->rendererClear(rq, 0, 0, 0, 1);
-    engine->rendererPushTexturedQuad(
+    RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    rendererSetCameraOrtho(rq);
+    rendererClear(rq, 0, 0, 0, 1);
+    rendererPushTexturedQuad(
         rq, {0, 0, (float)view->width, (float)view->height}, tile->workingHeightmap->textureHandle, false);
-    engine->rendererDrawToScreen(rq, view->width, view->height);
+    rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
 }
