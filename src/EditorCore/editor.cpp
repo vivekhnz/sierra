@@ -130,7 +130,6 @@ void initializeEditor(EditorMemory *memory)
     state->temporaryHeightmap =
         rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
 
-    state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
     // initialize scene world
@@ -373,7 +372,8 @@ void compositeHeightmap(EditorMemory *memory,
         {
             effect = rendererCreateEffect(
                 &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-            rendererSetEffectFloat(effect, "flattenHeight", state->activeBrushStrokeInitialHeight);
+            rendererSetEffectFloat(
+                effect, "flattenHeight", state->sceneState.handledInput.activeBrushStrokeInitialHeight);
         }
         assert(effect);
         rendererSetEffectTexture(effect, 0, baseHeightmapTexture);
@@ -451,13 +451,12 @@ void updateHeightfieldHeights(
 #endif
 }
 
-void commitChanges(EditorMemory *memory)
+bool commitChanges(EditorMemory *memory)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    bool rendered = false;
+    bool committed = false;
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
@@ -469,23 +468,23 @@ void commitChanges(EditorMemory *memory)
             rq, getBounds(tile->committedHeightmap), tile->workingHeightmap->textureHandle, true);
         if (rendererDrawToTarget(rq, tile->committedHeightmap))
         {
-            rendered = true;
+            committed = true;
         }
-    }
-    if (rendered)
-    {
-        state->isEditingHeightmap = false;
-        state->activeBrushStrokeInstanceCount = 0;
     }
 
     endTemporaryMemory(&renderQueueMemory);
+
+    if (committed)
+    {
+        state->activeBrushStrokeInstanceCount = 0;
+    }
+    return committed;
 }
 
 void discardChanges(EditorMemory *memory)
 {
     MemoryArena *arena = &memory->arena;
     EditorState *state = (EditorState *)arena->baseAddress;
-    state->isEditingHeightmap = false;
     state->activeBrushStrokeInstanceCount = 0;
 
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
@@ -707,6 +706,405 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     }
 }
 
+SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *input, float deltaTime)
+{
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    SceneState *sceneState = &state->sceneState;
+    EditorUiState *uiState = (EditorUiState *)&state->uiState;
+    SceneViewHandledInput prevHandledInput = state->sceneState.handledInput;
+
+    SceneViewHandledInput result;
+    result.activeViewState = (SceneViewState *)input->activeViewState;
+    result.brushCursorPos = glm::vec2(-10000, -10000);
+    result.isAdjustingBrushParameters = false;
+    result.shouldCaptureMouse = false;
+    result.isManipulatingCamera = false;
+
+    result.isEditingHeightmap = prevHandledInput.isEditingHeightmap;
+    result.activeBrushStrokeInitialHeight = prevHandledInput.activeBrushStrokeInitialHeight;
+
+    SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
+    if (activeViewState)
+    {
+        // orbit distance is modified by scrolling the mouse wheel
+        activeViewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
+
+        if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
+        {
+            // update the look at position if the middle mouse button is pressed
+            glm::vec3 lookDir = glm::normalize(activeViewState->cameraLookAt - activeViewState->cameraPos);
+            glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(lookDir, xDir);
+            glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
+            float panMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 2.5f, 300.0f);
+            activeViewState->cameraLookAt += pan * panMagnitude * 0.000333f;
+
+            result.isManipulatingCamera = true;
+        }
+        if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
+        {
+            // update yaw & pitch if the right mouse button is pressed
+            float rotateMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 14.0f, 70.0f);
+            float rotateSensitivity = rotateMagnitude * 0.000833f;
+            activeViewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
+            activeViewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
+
+            result.isManipulatingCamera = true;
+        }
+
+        // calculate camera position
+        glm::vec3 newLookDir =
+            glm::vec3(cos(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch),
+                sin(activeViewState->orbitCameraPitch),
+                sin(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch));
+        activeViewState->cameraPos =
+            activeViewState->cameraLookAt + (newLookDir * activeViewState->orbitCameraDistance);
+
+        if (result.isManipulatingCamera)
+        {
+            result.shouldCaptureMouse = true;
+
+            if (prevHandledInput.isEditingHeightmap)
+            {
+                if (commitChanges(memory))
+                {
+                    result.isEditingHeightmap = false;
+                }
+            }
+        }
+        else
+        {
+            if (prevHandledInput.isEditingHeightmap && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
+            {
+                discardChanges(memory);
+                result.isEditingHeightmap = false;
+            }
+            else
+            {
+                if (uiState->currentContext == EDITOR_CTX_OBJECTS)
+                {
+                    if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                    {
+                        RenderTarget *pickingTarget = activeViewState->pickingRenderTarget;
+                        uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
+                        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingTarget->height);
+
+                        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
+
+                        GetPixelsResult pickedPixels = rendererGetPixelsInRegion(
+                            &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1);
+                        assert(pickedPixels.count == 1);
+                        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
+
+                        endTemporaryMemory(&pickingMemory);
+
+                        if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
+                        {
+                            if (pickedId != 0)
+                            {
+                                bool wasAlreadySelected = false;
+                                for (uint32 i = 0; i < uiState->selectedObjectCount; i++)
+                                {
+                                    if (uiState->selectedObjectIds[i] == pickedId)
+                                    {
+                                        uiState->selectedObjectIds[i] =
+                                            uiState->selectedObjectIds[uiState->selectedObjectCount - 1];
+                                        uiState->selectedObjectCount--;
+
+                                        wasAlreadySelected = true;
+                                        break;
+                                    }
+                                }
+                                if (!wasAlreadySelected)
+                                {
+                                    uiState->selectedObjectIds[uiState->selectedObjectCount++] = pickedId;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            if (pickedId == 0)
+                            {
+                                uiState->selectedObjectCount = 0;
+                            }
+                            else
+                            {
+                                uiState->selectedObjectCount = 1;
+                                uiState->selectedObjectIds[0] = pickedId;
+                            }
+                        }
+                    }
+                }
+                else if (uiState->currentContext == EDITOR_CTX_TERRAIN)
+                {
+                    glm::vec3 cameraPos = activeViewState->cameraPos;
+                    glm::vec3 up = glm::vec3(0, 1, 0);
+                    float aspectRatio = (float)activeViewState->sceneRenderTarget->width
+                        / (float)activeViewState->sceneRenderTarget->height;
+                    glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
+                    glm::mat4 cameraTransform =
+                        projection * glm::lookAt(cameraPos, activeViewState->cameraLookAt, up);
+
+                    glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
+                    glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
+                    glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
+                    glm::vec4 worldPos = inverseViewProjection * screenPos;
+                    glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
+
+                    TerrainTile *hoveredTile = 0;
+                    float minHitDist = FLT_MAX;
+                    glm::vec3 cursorWorldPos;
+                    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+                    {
+                        TerrainTile *tile = &sceneState->terrainTiles[i];
+                        Heightfield *heightfield = tile->heightfield;
+
+                        glm::vec3 hitPt;
+                        float hitDist = 0;
+                        if (heightfieldIsRayIntersecting(heightfield, cameraPos, mouseRayDir, &hitPt, &hitDist)
+                            && hitDist < minHitDist)
+                        {
+                            minHitDist = hitDist;
+                            hoveredTile = tile;
+                            cursorWorldPos = hitPt;
+                        }
+                    }
+
+                    if (hoveredTile)
+                    {
+                        Heightfield *heightfield = hoveredTile->heightfield;
+                        result.brushCursorPos.x = cursorWorldPos.x;
+                        result.brushCursorPos.y = cursorWorldPos.z;
+
+                        if (!prevHandledInput.isEditingHeightmap)
+                        {
+                            result.activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
+                        }
+
+                        if (isButtonDown(input, EDITOR_INPUT_KEY_R))
+                        {
+                            float brushRadiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
+
+                            result.shouldCaptureMouse = true;
+                            result.isAdjustingBrushParameters = true;
+                            uiState->terrainBrushRadius =
+                                glm::clamp(uiState->terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
+                        }
+                        else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
+                        {
+                            float brushFalloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                            result.shouldCaptureMouse = true;
+                            result.isAdjustingBrushParameters = true;
+                            uiState->terrainBrushFalloff =
+                                glm::clamp(uiState->terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
+                        }
+                        else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
+                        {
+                            float brushStrengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+
+                            result.shouldCaptureMouse = true;
+                            result.isAdjustingBrushParameters = true;
+                            uiState->terrainBrushStrength =
+                                glm::clamp(uiState->terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
+                        }
+                        else
+                        {
+                            if (prevHandledInput.isEditingHeightmap)
+                            {
+                                if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
+                                {
+                                    if (state->activeBrushStrokeInstanceCount == 0)
+                                    {
+                                        state->activeBrushStrokePositions[0] = result.brushCursorPos;
+                                        state->activeBrushStrokeInstanceCount = 1;
+                                    }
+                                    else if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
+                                    {
+                                        glm::vec2 *nextBrushInstance =
+                                            &state->activeBrushStrokePositions
+                                                 [state->activeBrushStrokeInstanceCount];
+                                        glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
+
+                                        glm::vec2 diff = result.brushCursorPos - *prevBrushInstance;
+                                        glm::vec2 direction = glm::normalize(diff);
+                                        float distanceRemaining = glm::length(diff);
+
+                                        const float BRUSH_INSTANCE_SPACING = 0.64f;
+                                        while (distanceRemaining > BRUSH_INSTANCE_SPACING
+                                            && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
+                                        {
+                                            *nextBrushInstance++ =
+                                                *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
+                                            state->activeBrushStrokeInstanceCount++;
+
+                                            distanceRemaining -= BRUSH_INSTANCE_SPACING;
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    if (commitChanges(memory))
+                                    {
+                                        result.isEditingHeightmap = false;
+                                    }
+                                }
+                            }
+                            else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                            {
+                                result.isEditingHeightmap = true;
+                                result.activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
+                            }
+                        }
+                    }
+                    else if (prevHandledInput.isEditingHeightmap)
+                    {
+                        if (commitChanges(memory))
+                        {
+                            result.isEditingHeightmap = false;
+                        }
+                    }
+                }
+            }
+        }
+    }
+    else
+    {
+        discardChanges(memory);
+        result.isEditingHeightmap = false;
+    }
+    if (!result.isEditingHeightmap)
+    {
+        if (isButtonDown(input, EDITOR_INPUT_KEY_F1))
+        {
+            uiState->currentContext = EDITOR_CTX_TERRAIN;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_F2))
+        {
+            uiState->currentContext = EDITOR_CTX_OBJECTS;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_F3))
+        {
+            uiState->currentContext = EDITOR_CTX_SCENE;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_1))
+        {
+            uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_RAISE;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_2))
+        {
+            uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_LOWER;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_3))
+        {
+            uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_FLATTEN;
+        }
+        else if (isButtonDown(input, EDITOR_INPUT_KEY_4))
+        {
+            uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_SMOOTH;
+        }
+    }
+
+    // move object with arrow keys
+    uint64 moveBtnsMask =
+        EDITOR_INPUT_KEY_LEFT | EDITOR_INPUT_KEY_RIGHT | EDITOR_INPUT_KEY_UP | EDITOR_INPUT_KEY_DOWN;
+    uint64 moveBtnsCurrentlyPressed = input->pressedButtons & moveBtnsMask;
+    uint64 moveBtnsPreviouslyPressed = input->prevPressedButtons & moveBtnsMask;
+    uint64 moveBtnsNewlyPressed = moveBtnsCurrentlyPressed & ~moveBtnsPreviouslyPressed;
+    if (!state->moveObjectTx.tx && moveBtnsNewlyPressed && uiState->currentContext == EDITOR_CTX_OBJECTS
+        && uiState->selectedObjectCount > 0)
+    {
+        state->moveObjectTx.tx = beginTransaction(&state->transactions);
+        if (state->moveObjectTx.tx)
+        {
+            state->moveObjectTx.delta = glm::vec3(0);
+            state->moveObjectTx.objectCount = 0;
+
+            uint32 objectsFound = 0;
+            for (uint32 i = 0;
+                 i < state->docState.objectInstanceCount && objectsFound < uiState->selectedObjectCount; i++)
+            {
+                uint32 objectId = state->docState.objectIds[i];
+                for (uint32 j = 0; j < uiState->selectedObjectCount; j++)
+                {
+                    if (uiState->selectedObjectIds[j] == objectId)
+                    {
+                        state->moveObjectTx.objectIds[state->moveObjectTx.objectCount++] = objectId;
+
+                        objectsFound++;
+                        break;
+                    }
+                }
+            }
+            assert(objectsFound == uiState->selectedObjectCount);
+        }
+    }
+    if (state->moveObjectTx.tx)
+    {
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
+        {
+            discardTransaction(state->moveObjectTx.tx);
+            state->moveObjectTx.tx = 0;
+        }
+        else if (moveBtnsCurrentlyPressed)
+        {
+            glm::vec3 objectTranslation = glm::vec3(0);
+            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_LEFT) * -1.0f;
+            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
+            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
+            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
+            state->moveObjectTx.delta += objectTranslation * 10.0f * deltaTime;
+
+            clearTransaction(state->moveObjectTx.tx);
+
+            uint32 objectsFound = 0;
+            for (uint32 i = 0;
+                 i < state->docState.objectInstanceCount && objectsFound < state->moveObjectTx.objectCount; i++)
+            {
+                uint32 objectId = state->docState.objectIds[i];
+                for (uint32 j = 0; j < state->moveObjectTx.objectCount; j++)
+                {
+                    if (state->moveObjectTx.objectIds[j] == objectId)
+                    {
+                        ObjectTransform *transform = &state->docState.objectTransforms[i];
+
+                        float x = transform->position.x + state->moveObjectTx.delta.x;
+                        float z = transform->position.z + state->moveObjectTx.delta.z;
+                        setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
+                        setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
+
+                        objectsFound++;
+                        break;
+                    }
+                }
+            }
+            assert(objectsFound == state->moveObjectTx.objectCount);
+        }
+        else
+        {
+            commitTransaction(state->moveObjectTx.tx);
+            state->moveObjectTx.tx = 0;
+        }
+    }
+
+    // delete selected objects with DEL key
+    if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE) && uiState->selectedObjectCount > 0)
+    {
+        Transaction *tx = beginTransaction(&state->transactions);
+        if (tx)
+        {
+            for (uint32 i = 0; i < uiState->selectedObjectCount; i++)
+            {
+                DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
+                cmd->objectId = uiState->selectedObjectIds[i];
+            }
+            commitTransaction(tx);
+        }
+    }
+
+    return result;
+}
+
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     Engine = memory->engineApi;
@@ -770,387 +1168,11 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 #endif
 
-    glm::vec2 newBrushPos = glm::vec2(-10000, -10000);
-    state->isAdjustingBrushParameters = false;
-
-    bool isManipulatingCamera = false;
-    SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
-    if (activeViewState)
+    sceneState->handledInput = handleSceneViewInput(memory, input, deltaTime);
+    if (sceneState->handledInput.shouldCaptureMouse)
     {
-        // orbit distance is modified by scrolling the mouse wheel
-        activeViewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
-
-        if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
-        {
-            // update the look at position if the middle mouse button is pressed
-            glm::vec3 lookDir = glm::normalize(activeViewState->cameraLookAt - activeViewState->cameraPos);
-            glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
-            glm::vec3 yDir = cross(lookDir, xDir);
-            glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
-            float panMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 2.5f, 300.0f);
-            activeViewState->cameraLookAt += pan * panMagnitude * 0.000333f;
-
-            isManipulatingCamera = true;
-        }
-        if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
-        {
-            // update yaw & pitch if the right mouse button is pressed
-            float rotateMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 14.0f, 70.0f);
-            float rotateSensitivity = rotateMagnitude * 0.000833f;
-            activeViewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
-            activeViewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
-
-            isManipulatingCamera = true;
-        }
-
-        // calculate camera position
-        glm::vec3 newLookDir =
-            glm::vec3(cos(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch),
-                sin(activeViewState->orbitCameraPitch),
-                sin(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch));
-        activeViewState->cameraPos =
-            activeViewState->cameraLookAt + (newLookDir * activeViewState->orbitCameraDistance);
-
-        if (isManipulatingCamera)
-        {
-            memory->platformCaptureMouse();
-
-            if (state->isEditingHeightmap)
-            {
-                commitChanges(memory);
-            }
-        }
-        else
-        {
-            if (state->isEditingHeightmap && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
-            {
-                discardChanges(memory);
-            }
-            else
-            {
-                if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
-                {
-                    if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
-                    {
-                        RenderTarget *pickingTarget = activeViewState->pickingRenderTarget;
-                        uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
-                        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingTarget->height);
-
-                        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
-
-                        GetPixelsResult pickedPixels = rendererGetPixelsInRegion(
-                            &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1);
-                        assert(pickedPixels.count == 1);
-                        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
-
-                        endTemporaryMemory(&pickingMemory);
-
-                        if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
-                        {
-                            if (pickedId != 0)
-                            {
-                                bool wasAlreadySelected = false;
-                                for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
-                                {
-                                    if (state->uiState.selectedObjectIds[i] == pickedId)
-                                    {
-                                        state->uiState.selectedObjectIds[i] =
-                                            state->uiState
-                                                .selectedObjectIds[state->uiState.selectedObjectCount - 1];
-                                        state->uiState.selectedObjectCount--;
-
-                                        wasAlreadySelected = true;
-                                        break;
-                                    }
-                                }
-                                if (!wasAlreadySelected)
-                                {
-                                    state->uiState.selectedObjectIds[state->uiState.selectedObjectCount++] =
-                                        pickedId;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (pickedId == 0)
-                            {
-                                state->uiState.selectedObjectCount = 0;
-                            }
-                            else
-                            {
-                                state->uiState.selectedObjectCount = 1;
-                                state->uiState.selectedObjectIds[0] = pickedId;
-                            }
-                        }
-                    }
-                }
-                else if (state->uiState.currentContext == EDITOR_CTX_TERRAIN)
-                {
-                    glm::vec3 cameraPos = activeViewState->cameraPos;
-                    glm::vec3 up = glm::vec3(0, 1, 0);
-                    float aspectRatio = (float)activeViewState->sceneRenderTarget->width
-                        / (float)activeViewState->sceneRenderTarget->height;
-                    glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
-                    glm::mat4 cameraTransform =
-                        projection * glm::lookAt(cameraPos, activeViewState->cameraLookAt, up);
-
-                    glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
-                    glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
-                    glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
-                    glm::vec4 worldPos = inverseViewProjection * screenPos;
-                    glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
-
-                    TerrainTile *hoveredTile = 0;
-                    float minHitDist = FLT_MAX;
-                    glm::vec3 cursorWorldPos;
-                    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
-                    {
-                        TerrainTile *tile = &sceneState->terrainTiles[i];
-                        Heightfield *heightfield = tile->heightfield;
-
-                        glm::vec3 hitPt;
-                        float hitDist = 0;
-                        if (heightfieldIsRayIntersecting(heightfield, cameraPos, mouseRayDir, &hitPt, &hitDist)
-                            && hitDist < minHitDist)
-                        {
-                            minHitDist = hitDist;
-                            hoveredTile = tile;
-                            cursorWorldPos = hitPt;
-                        }
-                    }
-
-                    if (hoveredTile)
-                    {
-                        Heightfield *heightfield = hoveredTile->heightfield;
-                        newBrushPos.x = cursorWorldPos.x;
-                        newBrushPos.y = cursorWorldPos.z;
-
-                        if (!state->isEditingHeightmap)
-                        {
-                            state->activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
-                        }
-
-                        if (isButtonDown(input, EDITOR_INPUT_KEY_R))
-                        {
-                            float brushRadiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
-
-                            memory->platformCaptureMouse();
-                            state->uiState.terrainBrushRadius =
-                                glm::clamp(state->uiState.terrainBrushRadius + brushRadiusIncrease, 2.0f, 128.0f);
-                            state->isAdjustingBrushParameters = true;
-                        }
-                        else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
-                        {
-                            float brushFalloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
-
-                            memory->platformCaptureMouse();
-                            state->uiState.terrainBrushFalloff =
-                                glm::clamp(state->uiState.terrainBrushFalloff + brushFalloffIncrease, 0.0f, 0.99f);
-                            state->isAdjustingBrushParameters = true;
-                        }
-                        else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
-                        {
-                            float brushStrengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
-
-                            memory->platformCaptureMouse();
-                            state->uiState.terrainBrushStrength = glm::clamp(
-                                state->uiState.terrainBrushStrength + brushStrengthIncrease, 0.01f, 1.0f);
-                            state->isAdjustingBrushParameters = true;
-                        }
-                        else
-                        {
-                            if (state->isEditingHeightmap)
-                            {
-                                if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
-                                {
-                                    glm::vec2 *nextBrushInstance =
-                                        &state->activeBrushStrokePositions[state->activeBrushStrokeInstanceCount];
-                                    if (state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
-                                    {
-                                        if (state->activeBrushStrokeInstanceCount == 0)
-                                        {
-                                            *nextBrushInstance++ = newBrushPos;
-                                            state->activeBrushStrokeInstanceCount++;
-                                        }
-                                        else
-                                        {
-                                            glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
-
-                                            glm::vec2 diff = newBrushPos - *prevBrushInstance;
-                                            glm::vec2 direction = glm::normalize(diff);
-                                            float distanceRemaining = glm::length(diff);
-
-                                            const float BRUSH_INSTANCE_SPACING = 0.64f;
-                                            while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                                                && state->activeBrushStrokeInstanceCount < MAX_BRUSH_QUADS - 1)
-                                            {
-                                                *nextBrushInstance++ =
-                                                    *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
-                                                state->activeBrushStrokeInstanceCount++;
-
-                                                distanceRemaining -= BRUSH_INSTANCE_SPACING;
-                                            }
-                                        }
-                                    }
-                                }
-                                else
-                                {
-                                    commitChanges(memory);
-                                }
-                            }
-                            else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
-                            {
-                                state->isEditingHeightmap = true;
-                                state->activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
-                            }
-                        }
-                    }
-                    else if (state->isEditingHeightmap)
-                    {
-                        commitChanges(memory);
-                    }
-                }
-            }
-        }
+        memory->platformCaptureMouse();
     }
-    else
-    {
-        discardChanges(memory);
-    }
-    if (!state->isEditingHeightmap)
-    {
-        if (isButtonDown(input, EDITOR_INPUT_KEY_F1))
-        {
-            state->uiState.currentContext = EDITOR_CTX_TERRAIN;
-        }
-        else if (isButtonDown(input, EDITOR_INPUT_KEY_F2))
-        {
-            state->uiState.currentContext = EDITOR_CTX_OBJECTS;
-        }
-        else if (isButtonDown(input, EDITOR_INPUT_KEY_F3))
-        {
-            state->uiState.currentContext = EDITOR_CTX_SCENE;
-        }
-        else if (isButtonDown(input, EDITOR_INPUT_KEY_1))
-        {
-            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_RAISE;
-        }
-        else if (isButtonDown(input, EDITOR_INPUT_KEY_2))
-        {
-            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_LOWER;
-        }
-        else if (isButtonDown(input, EDITOR_INPUT_KEY_3))
-        {
-            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_FLATTEN;
-        }
-        else if (isButtonDown(input, EDITOR_INPUT_KEY_4))
-        {
-            state->uiState.terrainBrushTool = TERRAIN_BRUSH_TOOL_SMOOTH;
-        }
-    }
-
-    // move object with arrow keys
-    uint64 moveBtnsMask =
-        EDITOR_INPUT_KEY_LEFT | EDITOR_INPUT_KEY_RIGHT | EDITOR_INPUT_KEY_UP | EDITOR_INPUT_KEY_DOWN;
-    uint64 moveBtnsCurrentlyPressed = input->pressedButtons & moveBtnsMask;
-    uint64 moveBtnsPreviouslyPressed = input->prevPressedButtons & moveBtnsMask;
-    uint64 moveBtnsNewlyPressed = moveBtnsCurrentlyPressed & ~moveBtnsPreviouslyPressed;
-    if (!state->moveObjectTx.tx && moveBtnsNewlyPressed && state->uiState.currentContext == EDITOR_CTX_OBJECTS
-        && state->uiState.selectedObjectCount > 0)
-    {
-        state->moveObjectTx.tx = beginTransaction(&state->transactions);
-        if (state->moveObjectTx.tx)
-        {
-            state->moveObjectTx.delta = glm::vec3(0);
-            state->moveObjectTx.objectCount = 0;
-
-            uint32 objectsFound = 0;
-            for (uint32 i = 0;
-                 i < state->docState.objectInstanceCount && objectsFound < state->uiState.selectedObjectCount; i++)
-            {
-                uint32 objectId = state->docState.objectIds[i];
-                for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
-                {
-                    if (state->uiState.selectedObjectIds[j] == objectId)
-                    {
-                        state->moveObjectTx.objectIds[state->moveObjectTx.objectCount++] = objectId;
-
-                        objectsFound++;
-                        break;
-                    }
-                }
-            }
-            assert(objectsFound == state->uiState.selectedObjectCount);
-        }
-    }
-    if (state->moveObjectTx.tx)
-    {
-        if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
-        {
-            discardTransaction(state->moveObjectTx.tx);
-            state->moveObjectTx.tx = 0;
-        }
-        else if (moveBtnsCurrentlyPressed)
-        {
-            glm::vec3 objectTranslation = glm::vec3(0);
-            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_LEFT) * -1.0f;
-            objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
-            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
-            objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
-            state->moveObjectTx.delta += objectTranslation * 10.0f * deltaTime;
-
-            clearTransaction(state->moveObjectTx.tx);
-
-            uint32 objectsFound = 0;
-            for (uint32 i = 0;
-                 i < state->docState.objectInstanceCount && objectsFound < state->moveObjectTx.objectCount; i++)
-            {
-                uint32 objectId = state->docState.objectIds[i];
-                for (uint32 j = 0; j < state->moveObjectTx.objectCount; j++)
-                {
-                    if (state->moveObjectTx.objectIds[j] == objectId)
-                    {
-                        ObjectTransform *transform = &state->docState.objectTransforms[i];
-
-                        float x = transform->position.x + state->moveObjectTx.delta.x;
-                        float z = transform->position.z + state->moveObjectTx.delta.z;
-                        setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
-                        setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
-
-                        objectsFound++;
-                        break;
-                    }
-                }
-            }
-            assert(objectsFound == state->moveObjectTx.objectCount);
-        }
-        else
-        {
-            commitTransaction(state->moveObjectTx.tx);
-            state->moveObjectTx.tx = 0;
-        }
-    }
-
-    // delete selected objects with DEL key
-    if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE) && state->uiState.selectedObjectCount > 0)
-    {
-        Transaction *tx = beginTransaction(&state->transactions);
-        if (tx)
-        {
-            for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
-            {
-                DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
-                cmd->objectId = state->uiState.selectedObjectIds[i];
-            }
-            commitTransaction(tx);
-        }
-    }
-
-    // update brush highlight
-    sceneState->worldState.brushPos = newBrushPos;
-    sceneState->worldState.brushCursorVisibleView = isManipulatingCamera ? (SceneViewState *)0 : activeViewState;
-    sceneState->worldState.brushRadius = state->uiState.terrainBrushRadius;
-    sceneState->worldState.brushFalloff = state->uiState.terrainBrushFalloff;
 
     // update brush quad instances
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
@@ -1158,7 +1180,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     glm::vec2 halfHeightfieldSize = heightfieldSize * 0.5f;
     glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
     glm::vec2 worldToHeightmapSpace = heightmapSize / heightfieldSize;
-    glm::vec2 newBrushPosHeightmapSpace = (newBrushPos + halfHeightfieldSize) * worldToHeightmapSpace;
+    glm::vec2 newBrushPosHeightmapSpace =
+        (sceneState->handledInput.brushCursorPos + halfHeightfieldSize) * worldToHeightmapSpace;
     float brushStrokeQuadWidth = state->uiState.terrainBrushRadius * worldToHeightmapSpace.x;
     state->previewBrushStrokeQuad.x = newBrushPosHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
     state->previewBrushStrokeQuad.y = newBrushPosHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
@@ -1185,7 +1208,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         compositeHeightmap(memory, tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask,
             tile->previewHeightmap, &state->previewBrushStrokeQuad, 1, offset);
 
-        if (state->isEditingHeightmap)
+        if (sceneState->handledInput.isEditingHeightmap)
         {
             TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
 
@@ -1236,15 +1259,16 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         rendererResizeRenderTarget(pickingRenderTarget, view->width, view->height);
     }
 
+    SceneViewHandledInput *handledInput = &sceneState->handledInput;
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
     bool renderPreviewHeightmap = false;
     bool compareToCommittedHeightmap = false;
-    if (sceneState->worldState.brushCursorVisibleView == viewState)
+    if (handledInput->activeViewState == viewState && !handledInput->isManipulatingCamera)
     {
-        if (state->isAdjustingBrushParameters)
+        if (handledInput->isAdjustingBrushParameters)
         {
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
-            if (state->isEditingHeightmap)
+            if (handledInput->isEditingHeightmap)
             {
                 compareToCommittedHeightmap = true;
             }
@@ -1253,7 +1277,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 renderPreviewHeightmap = true;
             }
         }
-        else if (state->isEditingHeightmap)
+        else if (handledInput->isEditingHeightmap)
         {
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
         }
@@ -1324,8 +1348,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, state->previewDocState.materialCount,
-            state->previewDocState.materials, false, visualizationMode, sceneState->worldState.brushPos,
-            sceneState->worldState.brushRadius, sceneState->worldState.brushFalloff);
+            state->previewDocState.materials, false, visualizationMode, handledInput->brushCursorPos,
+            state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
     }
 
     RenderEffect *rockEffect =

@@ -108,6 +108,18 @@ struct TerrainTile
     TerrainTile *yAdjTile;
 };
 
+struct SceneViewHandledInput
+{
+    SceneViewState *activeViewState;
+    glm::vec2 brushCursorPos;
+    bool isAdjustingBrushParameters;
+    bool shouldCaptureMouse;
+    bool isManipulatingCamera;
+
+    bool isEditingHeightmap;
+    float activeBrushStrokeInitialHeight;
+};
+
 struct SceneState
 {
     TerrainTile *terrainTiles;
@@ -119,13 +131,7 @@ struct SceneState
 
     uint32 nextMaterialId;
 
-    struct WorldState
-    {
-        glm::vec2 brushPos;
-        float brushRadius;
-        float brushFalloff;
-        SceneViewState *brushCursorVisibleView;
-    } worldState;
+    SceneViewHandledInput handledInput;
 };
 
 struct EditorAssets
@@ -183,12 +189,9 @@ struct EditorState
 
     RenderTarget *temporaryHeightmap;
 
-    bool isEditingHeightmap;
-    bool isAdjustingBrushParameters;
     glm::vec2 activeBrushStrokePositions[MAX_BRUSH_QUADS];
     RenderQuad activeBrushStrokeQuads[MAX_BRUSH_QUADS];
     uint32 activeBrushStrokeInstanceCount;
-    float activeBrushStrokeInitialHeight;
     RenderQuad previewBrushStrokeQuad;
 
     struct
