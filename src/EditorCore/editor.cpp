@@ -762,67 +762,66 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
     }
 }
 
-SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *input, float deltaTime)
+SceneViewHandledInput handleSceneViewInput(EditorMemory *memory,
+    SceneViewState *viewState,
+    float deltaTime,
+    EditorInput *input,
+    SceneViewHandledInput *prevHandledInput)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
     EditorUiState *uiState = (EditorUiState *)&state->uiState;
-    SceneViewHandledInput prevHandledInput = state->sceneState.handledInput;
 
     SceneViewHandledInput result;
-    result.activeViewState = (SceneViewState *)input->activeViewState;
     result.brushCursorPos = glm::vec2(-10000, -10000);
     result.isAdjustingBrushParameters = false;
     result.shouldCaptureMouse = false;
     result.isManipulatingCamera = false;
+    result.isActive = input->isActive;
 
-    result.isEditingHeightmap = prevHandledInput.isEditingHeightmap;
-    result.activeBrushStrokeInitialHeight = prevHandledInput.activeBrushStrokeInitialHeight;
+    result.isEditingHeightmap = prevHandledInput->isEditingHeightmap;
+    result.activeBrushStrokeInitialHeight = prevHandledInput->activeBrushStrokeInitialHeight;
 
-    SceneViewState *activeViewState = (SceneViewState *)input->activeViewState;
-    if (activeViewState)
+    if (input->isActive)
     {
         // orbit distance is modified by scrolling the mouse wheel
-        activeViewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
+        viewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
         if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
         {
             // update the look at position if the middle mouse button is pressed
-            glm::vec3 lookDir = glm::normalize(activeViewState->cameraLookAt - activeViewState->cameraPos);
+            glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
             glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
-            float panMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 2.5f, 300.0f);
-            activeViewState->cameraLookAt += pan * panMagnitude * 0.000333f;
+            float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
+            viewState->cameraLookAt += pan * panMagnitude * 0.000333f;
 
             result.isManipulatingCamera = true;
         }
         if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
         {
             // update yaw & pitch if the right mouse button is pressed
-            float rotateMagnitude = glm::clamp(activeViewState->orbitCameraDistance, 14.0f, 70.0f);
+            float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
             float rotateSensitivity = rotateMagnitude * 0.000833f;
-            activeViewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
-            activeViewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
+            viewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
+            viewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
 
             result.isManipulatingCamera = true;
         }
 
         // calculate camera position
-        glm::vec3 newLookDir =
-            glm::vec3(cos(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch),
-                sin(activeViewState->orbitCameraPitch),
-                sin(activeViewState->orbitCameraYaw) * cos(activeViewState->orbitCameraPitch));
-        activeViewState->cameraPos =
-            activeViewState->cameraLookAt + (newLookDir * activeViewState->orbitCameraDistance);
+        glm::vec3 newLookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
+            sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
+        viewState->cameraPos = viewState->cameraLookAt + (newLookDir * viewState->orbitCameraDistance);
 
         if (result.isManipulatingCamera)
         {
             result.shouldCaptureMouse = true;
 
-            if (prevHandledInput.isEditingHeightmap)
+            if (prevHandledInput->isEditingHeightmap)
             {
-                if (commitChanges(memory, &prevHandledInput))
+                if (commitChanges(memory, prevHandledInput))
                 {
                     result.isEditingHeightmap = false;
                 }
@@ -830,9 +829,9 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
         }
         else
         {
-            if (prevHandledInput.isEditingHeightmap && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
+            if (prevHandledInput->isEditingHeightmap && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
             {
-                discardChanges(memory, &prevHandledInput);
+                discardChanges(memory, prevHandledInput);
                 result.isEditingHeightmap = false;
             }
             else
@@ -841,7 +840,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                 {
                     if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
                     {
-                        RenderTarget *pickingTarget = activeViewState->pickingRenderTarget;
+                        RenderTarget *pickingTarget = viewState->pickingRenderTarget;
                         uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
                         uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingTarget->height);
 
@@ -893,13 +892,12 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                 }
                 else if (uiState->currentContext == EDITOR_CTX_TERRAIN)
                 {
-                    glm::vec3 cameraPos = activeViewState->cameraPos;
+                    glm::vec3 cameraPos = viewState->cameraPos;
                     glm::vec3 up = glm::vec3(0, 1, 0);
-                    float aspectRatio = (float)activeViewState->sceneRenderTarget->width
-                        / (float)activeViewState->sceneRenderTarget->height;
+                    float aspectRatio =
+                        (float)viewState->sceneRenderTarget->width / (float)viewState->sceneRenderTarget->height;
                     glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
-                    glm::mat4 cameraTransform =
-                        projection * glm::lookAt(cameraPos, activeViewState->cameraLookAt, up);
+                    glm::mat4 cameraTransform = projection * glm::lookAt(cameraPos, viewState->cameraLookAt, up);
 
                     glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
                     glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
@@ -932,7 +930,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                         result.brushCursorPos.x = cursorWorldPos.x;
                         result.brushCursorPos.y = cursorWorldPos.z;
 
-                        if (!prevHandledInput.isEditingHeightmap)
+                        if (!prevHandledInput->isEditingHeightmap)
                         {
                             result.activeBrushStrokeInitialHeight = cursorWorldPos.y / heightfield->maxHeight;
                         }
@@ -966,7 +964,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                         }
                         else
                         {
-                            if (prevHandledInput.isEditingHeightmap)
+                            if (prevHandledInput->isEditingHeightmap)
                             {
                                 if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
                                 {
@@ -1000,7 +998,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                                 }
                                 else
                                 {
-                                    if (commitChanges(memory, &prevHandledInput))
+                                    if (commitChanges(memory, prevHandledInput))
                                     {
                                         result.isEditingHeightmap = false;
                                     }
@@ -1013,9 +1011,9 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                             }
                         }
                     }
-                    else if (prevHandledInput.isEditingHeightmap)
+                    else if (prevHandledInput->isEditingHeightmap)
                     {
-                        if (commitChanges(memory, &prevHandledInput))
+                        if (commitChanges(memory, prevHandledInput))
                         {
                             result.isEditingHeightmap = false;
                         }
@@ -1024,9 +1022,9 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
             }
         }
     }
-    else
+    else if (prevHandledInput->isActive)
     {
-        discardChanges(memory, &prevHandledInput);
+        discardChanges(memory, prevHandledInput);
         result.isEditingHeightmap = false;
     }
     if (!result.isEditingHeightmap)
@@ -1223,17 +1221,6 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         endTemporaryMemory(&renderQueueMemory);
     }
 #endif
-
-    SceneViewHandledInput handledInput = handleSceneViewInput(memory, input, deltaTime);
-    if (handledInput.shouldCaptureMouse)
-    {
-        memory->platformCaptureMouse();
-    }
-    if (handledInput.isEditingHeightmap || handledInput.isAdjustingBrushParameters)
-    {
-        compositeHeightmaps(memory, &handledInput);
-    }
-    sceneState->handledInput = handledInput;
 }
 
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
@@ -1249,6 +1236,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->orbitCameraYaw = glm::radians(180.0f);
         viewState->orbitCameraPitch = glm::radians(15.0f);
         viewState->cameraLookAt = glm::vec3(0, 0, 0);
+        viewState->prevHandledInput = {};
 
         glm::vec3 lookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
             sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
@@ -1272,16 +1260,27 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         rendererResizeRenderTarget(pickingRenderTarget, view->width, view->height);
     }
 
-    SceneViewHandledInput *handledInput = &sceneState->handledInput;
+    SceneViewHandledInput handledInput =
+        handleSceneViewInput(memory, viewState, deltaTime, input, &viewState->prevHandledInput);
+    if (handledInput.shouldCaptureMouse)
+    {
+        memory->platformCaptureMouse();
+    }
+    if (handledInput.isEditingHeightmap || handledInput.isAdjustingBrushParameters)
+    {
+        compositeHeightmaps(memory, &handledInput);
+    }
+    viewState->prevHandledInput = handledInput;
+
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
     bool renderPreviewHeightmap = false;
     bool compareToCommittedHeightmap = false;
-    if (handledInput->activeViewState == viewState && !handledInput->isManipulatingCamera)
+    if (handledInput.isActive && !handledInput.isManipulatingCamera)
     {
-        if (handledInput->isAdjustingBrushParameters)
+        if (handledInput.isAdjustingBrushParameters)
         {
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
-            if (handledInput->isEditingHeightmap)
+            if (handledInput.isEditingHeightmap)
             {
                 compareToCommittedHeightmap = true;
             }
@@ -1290,7 +1289,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 renderPreviewHeightmap = true;
             }
         }
-        else if (handledInput->isEditingHeightmap)
+        else if (handledInput.isEditingHeightmap)
         {
             visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
         }
@@ -1361,7 +1360,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, state->previewDocState.materialCount,
-            state->previewDocState.materials, false, visualizationMode, handledInput->brushCursorPos,
+            state->previewDocState.materials, false, visualizationMode, handledInput.brushCursorPos,
             state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
     }
 

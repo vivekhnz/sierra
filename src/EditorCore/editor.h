@@ -82,6 +82,17 @@ struct ObjectTransform
     glm::vec3 scale;
 };
 
+struct SceneViewHandledInput
+{
+    bool isActive;
+    glm::vec2 brushCursorPos;
+    bool isAdjustingBrushParameters;
+    bool shouldCaptureMouse;
+    bool isManipulatingCamera;
+
+    bool isEditingHeightmap;
+    float activeBrushStrokeInitialHeight;
+};
 struct SceneViewState
 {
     float orbitCameraDistance;
@@ -93,6 +104,8 @@ struct SceneViewState
     RenderTarget *sceneRenderTarget;
     RenderTarget *selectionRenderTarget;
     RenderTarget *pickingRenderTarget;
+
+    SceneViewHandledInput prevHandledInput;
 };
 
 struct TerrainTile
@@ -108,18 +121,6 @@ struct TerrainTile
     TerrainTile *yAdjTile;
 };
 
-struct SceneViewHandledInput
-{
-    SceneViewState *activeViewState;
-    glm::vec2 brushCursorPos;
-    bool isAdjustingBrushParameters;
-    bool shouldCaptureMouse;
-    bool isManipulatingCamera;
-
-    bool isEditingHeightmap;
-    float activeBrushStrokeInitialHeight;
-};
-
 struct SceneState
 {
     TerrainTile *terrainTiles;
@@ -130,8 +131,6 @@ struct SceneState
     uint32 objectInstanceCount;
 
     uint32 nextMaterialId;
-
-    SceneViewHandledInput handledInput;
 };
 
 struct EditorAssets
@@ -228,8 +227,7 @@ struct EditorMemory
 
 struct EditorInput
 {
-    void *activeViewState;
-
+    bool isActive;
     float scrollOffset;
     glm::vec2 normalizedCursorPos;
     glm::vec2 cursorOffset;
@@ -313,13 +311,15 @@ struct EditorViewContext
     uint32 height;
 };
 
-#define EDITOR_UPDATE(name) void name(EditorMemory *memory, float deltaTime, EditorInput *input)
+#define EDITOR_UPDATE(name) void name(EditorMemory *memory, float deltaTime)
 typedef EDITOR_UPDATE(EditorUpdate);
 
-#define EDITOR_RENDER_SCENE_VIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
+#define EDITOR_RENDER_SCENE_VIEW(name)                                                                            \
+    void name(EditorMemory *memory, EditorViewContext *view, float deltaTime, EditorInput *input)
 typedef EDITOR_RENDER_SCENE_VIEW(EditorRenderSceneView);
 
-#define EDITOR_RENDER_HEIGHTMAP_PREVIEW(name) void name(EditorMemory *memory, EditorViewContext *view)
+#define EDITOR_RENDER_HEIGHTMAP_PREVIEW(name)                                                                     \
+    void name(EditorMemory *memory, EditorViewContext *view, float deltaTime, EditorInput *input)
 typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 
 #define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(name) AssetHandle name(EditorMemory *memory)

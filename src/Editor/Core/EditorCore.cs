@@ -22,7 +22,7 @@ namespace Terrain.Editor.Core
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorInput
     {
-        public IntPtr ActiveViewState;
+        public bool IsActive;
         public float ScrollOffset;
         public Vector2 NormalizedCursorPos;
         public Vector2 CursorOffset;
@@ -280,9 +280,11 @@ namespace Terrain.Editor.Core
 
         private static EditorUiState defaultEditorState = default(EditorUiState);
 
-        delegate void EditorUpdate(ref EditorMemory memory, float deltaTime, ref EditorInput input);
-        delegate void EditorRenderSceneView(ref EditorMemory memory, ref EditorViewContext view);
-        delegate void EditorRenderHeightmapPreview(ref EditorMemory memory, ref EditorViewContext view);
+        delegate void EditorUpdate(ref EditorMemory memory, float deltaTime);
+        delegate void EditorRenderSceneView(ref EditorMemory memory, ref EditorViewContext view,
+            float deltaTime, ref EditorInput input);
+        delegate void EditorRenderHeightmapPreview(ref EditorMemory memory, ref EditorViewContext view,
+            float deltaTime, ref EditorInput input);
         delegate IntPtr EditorGetImportedHeightmapAssetHandle(ref EditorMemory memory);
         delegate ref EditorUiState EditorGetUiState(ref EditorMemory memory);
         delegate void EditorAddMaterial(ref EditorMemory memory, TerrainMaterialProperties props);
@@ -431,14 +433,14 @@ namespace Terrain.Editor.Core
             TransactionPublished?.Invoke(commands);
         }
 
-        internal static void Update(float deltaTime, ref EditorInput input)
-            => editorUpdate?.Invoke(ref GetEditorMemory(), deltaTime, ref input);
+        internal static void Update(float deltaTime)
+            => editorUpdate?.Invoke(ref GetEditorMemory(), deltaTime);
 
-        internal static void RenderSceneView(ref EditorViewContext vctx)
-            => editorRenderSceneView?.Invoke(ref GetEditorMemory(), ref vctx);
+        internal static void RenderSceneView(ref EditorViewContext vctx, float deltaTime, ref EditorInput input)
+            => editorRenderSceneView?.Invoke(ref GetEditorMemory(), ref vctx, deltaTime, ref input);
 
-        internal static void RenderHeightmapPreview(ref EditorViewContext vctx)
-            => editorRenderHeightmapPreview?.Invoke(ref GetEditorMemory(), ref vctx);
+        internal static void RenderHeightmapPreview(ref EditorViewContext vctx, float deltaTime, ref EditorInput input)
+            => editorRenderHeightmapPreview?.Invoke(ref GetEditorMemory(), ref vctx, deltaTime, ref input);
 
         internal static IntPtr GetImportedHeightmapAssetHandle()
             => editorGetImportedHeightmapAssetHandle?.Invoke(ref GetEditorMemory()) ?? IntPtr.Zero;
