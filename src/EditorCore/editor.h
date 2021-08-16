@@ -192,7 +192,6 @@ struct EditorState
     glm::vec2 activeBrushStrokePositions[MAX_BRUSH_QUADS];
     RenderQuad activeBrushStrokeQuads[MAX_BRUSH_QUADS];
     uint32 activeBrushStrokeInstanceCount;
-    RenderQuad previewBrushStrokeQuad;
 
     struct
     {

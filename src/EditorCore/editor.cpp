@@ -287,7 +287,8 @@ void compositeHeightmap(EditorMemory *memory,
     RenderTarget *output,
     RenderQuad *brushInstances,
     uint32 brushInstanceCount,
-    glm::vec2 heightmapOffset)
+    glm::vec2 heightmapOffset,
+    SceneViewHandledInput *handledInput)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
 
@@ -372,8 +373,7 @@ void compositeHeightmap(EditorMemory *memory,
         {
             effect = rendererCreateEffect(
                 &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-            rendererSetEffectFloat(
-                effect, "flattenHeight", state->sceneState.handledInput.activeBrushStrokeInitialHeight);
+            rendererSetEffectFloat(effect, "flattenHeight", handledInput->activeBrushStrokeInitialHeight);
         }
         assert(effect);
         rendererSetEffectTexture(effect, 0, baseHeightmapTexture);
@@ -451,7 +451,60 @@ void updateHeightfieldHeights(
 #endif
 }
 
-bool commitChanges(EditorMemory *memory)
+void compositeHeightmaps(EditorMemory *memory, SceneViewHandledInput *handledInput)
+{
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    SceneState *sceneState = &state->sceneState;
+
+    // update brush quad instances
+    glm::vec2 heightfieldSize = glm::vec2(TERRAIN_TILE_LENGTH_IN_WORLD_UNITS, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
+    glm::vec2 halfHeightfieldSize = heightfieldSize * 0.5f;
+    glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
+    glm::vec2 worldToHeightmapSpace = heightmapSize / heightfieldSize;
+    float brushStrokeQuadWidth = state->uiState.terrainBrushRadius * worldToHeightmapSpace.x;
+
+    for (uint32 i = 0; i < state->activeBrushStrokeInstanceCount; i++)
+    {
+        glm::vec2 pos = state->activeBrushStrokePositions[i];
+        glm::vec2 posHeightmapSpace = (pos + halfHeightfieldSize) * worldToHeightmapSpace;
+        RenderQuad *quad = &state->activeBrushStrokeQuads[i];
+        quad->x = posHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
+        quad->y = posHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
+        quad->width = brushStrokeQuadWidth;
+        quad->height = brushStrokeQuadWidth;
+    }
+
+    glm::vec2 brushCursorPosInHeightmapSpace =
+        (handledInput->brushCursorPos + halfHeightfieldSize) * worldToHeightmapSpace;
+    RenderQuad previewBrushStrokeQuad;
+    previewBrushStrokeQuad.x = brushCursorPosInHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
+    previewBrushStrokeQuad.y = brushCursorPosInHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
+    previewBrushStrokeQuad.width = brushStrokeQuadWidth;
+    previewBrushStrokeQuad.height = brushStrokeQuadWidth;
+
+    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+    {
+        TerrainTile *tile = &sceneState->terrainTiles[i];
+        glm::vec2 offset = tile->heightfield->center * worldToHeightmapSpace;
+
+        compositeHeightmap(memory, tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask,
+            tile->workingHeightmap, state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount, offset,
+            handledInput);
+        compositeHeightmap(memory, tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask,
+            tile->previewHeightmap, &previewBrushStrokeQuad, 1, offset, handledInput);
+
+        TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
+
+        RenderTarget *target = tile->workingHeightmap;
+        GetPixelsResult heightPixels =
+            rendererGetPixels(&memory->arena, target->textureHandle, target->width, target->height);
+        updateHeightfieldHeights(tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
+
+        endTemporaryMemory(&heightMemory);
+    }
+}
+
+bool commitChanges(EditorMemory *memory, SceneViewHandledInput *handledInput)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
@@ -477,11 +530,12 @@ bool commitChanges(EditorMemory *memory)
     if (committed)
     {
         state->activeBrushStrokeInstanceCount = 0;
+        compositeHeightmaps(memory, handledInput);
     }
     return committed;
 }
 
-void discardChanges(EditorMemory *memory)
+void discardChanges(EditorMemory *memory, SceneViewHandledInput *handledInput)
 {
     MemoryArena *arena = &memory->arena;
     EditorState *state = (EditorState *)arena->baseAddress;
@@ -499,6 +553,8 @@ void discardChanges(EditorMemory *memory)
 
         endTemporaryMemory(&heightMemory);
     }
+
+    compositeHeightmaps(memory, handledInput);
 }
 
 void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
@@ -766,7 +822,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
 
             if (prevHandledInput.isEditingHeightmap)
             {
-                if (commitChanges(memory))
+                if (commitChanges(memory, &prevHandledInput))
                 {
                     result.isEditingHeightmap = false;
                 }
@@ -776,7 +832,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
         {
             if (prevHandledInput.isEditingHeightmap && isButtonDown(input, EDITOR_INPUT_KEY_ESCAPE))
             {
-                discardChanges(memory);
+                discardChanges(memory, &prevHandledInput);
                 result.isEditingHeightmap = false;
             }
             else
@@ -944,7 +1000,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                                 }
                                 else
                                 {
-                                    if (commitChanges(memory))
+                                    if (commitChanges(memory, &prevHandledInput))
                                     {
                                         result.isEditingHeightmap = false;
                                     }
@@ -959,7 +1015,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
                     }
                     else if (prevHandledInput.isEditingHeightmap)
                     {
-                        if (commitChanges(memory))
+                        if (commitChanges(memory, &prevHandledInput))
                         {
                             result.isEditingHeightmap = false;
                         }
@@ -970,7 +1026,7 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory, EditorInput *in
     }
     else
     {
-        discardChanges(memory);
+        discardChanges(memory, &prevHandledInput);
         result.isEditingHeightmap = false;
     }
     if (!result.isEditingHeightmap)
@@ -1168,59 +1224,16 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     }
 #endif
 
-    sceneState->handledInput = handleSceneViewInput(memory, input, deltaTime);
-    if (sceneState->handledInput.shouldCaptureMouse)
+    SceneViewHandledInput handledInput = handleSceneViewInput(memory, input, deltaTime);
+    if (handledInput.shouldCaptureMouse)
     {
         memory->platformCaptureMouse();
     }
-
-    // update brush quad instances
-    TerrainTile *firstTile = &sceneState->terrainTiles[0];
-    glm::vec2 heightfieldSize = glm::vec2(TERRAIN_TILE_LENGTH_IN_WORLD_UNITS, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
-    glm::vec2 halfHeightfieldSize = heightfieldSize * 0.5f;
-    glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
-    glm::vec2 worldToHeightmapSpace = heightmapSize / heightfieldSize;
-    glm::vec2 newBrushPosHeightmapSpace =
-        (sceneState->handledInput.brushCursorPos + halfHeightfieldSize) * worldToHeightmapSpace;
-    float brushStrokeQuadWidth = state->uiState.terrainBrushRadius * worldToHeightmapSpace.x;
-    state->previewBrushStrokeQuad.x = newBrushPosHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
-    state->previewBrushStrokeQuad.y = newBrushPosHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
-    state->previewBrushStrokeQuad.width = brushStrokeQuadWidth;
-    state->previewBrushStrokeQuad.height = brushStrokeQuadWidth;
-    for (uint32 i = 0; i < state->activeBrushStrokeInstanceCount; i++)
+    if (handledInput.isEditingHeightmap || handledInput.isAdjustingBrushParameters)
     {
-        glm::vec2 pos = state->activeBrushStrokePositions[i];
-        glm::vec2 posHeightmapSpace = (pos + halfHeightfieldSize) * worldToHeightmapSpace;
-        RenderQuad *quad = &state->activeBrushStrokeQuads[i];
-        quad->x = posHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
-        quad->y = posHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
-        quad->width = brushStrokeQuadWidth;
-        quad->height = brushStrokeQuadWidth;
+        compositeHeightmaps(memory, &handledInput);
     }
-
-    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
-    {
-        TerrainTile *tile = &sceneState->terrainTiles[i];
-        glm::vec2 offset = tile->heightfield->center * worldToHeightmapSpace;
-
-        compositeHeightmap(memory, tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask,
-            tile->workingHeightmap, state->activeBrushStrokeQuads, state->activeBrushStrokeInstanceCount, offset);
-        compositeHeightmap(memory, tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask,
-            tile->previewHeightmap, &state->previewBrushStrokeQuad, 1, offset);
-
-        if (sceneState->handledInput.isEditingHeightmap)
-        {
-            TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
-
-            RenderTarget *target = tile->workingHeightmap;
-            GetPixelsResult heightPixels =
-                rendererGetPixels(&memory->arena, target->textureHandle, target->width, target->height);
-            updateHeightfieldHeights(
-                tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
-
-            endTemporaryMemory(&heightMemory);
-        }
-    }
+    sceneState->handledInput = handledInput;
 }
 
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
