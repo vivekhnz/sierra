@@ -82,16 +82,43 @@ struct ObjectTransform
     glm::vec3 scale;
 };
 
+enum SceneViewInteractionType
+{
+    SCENE_VIEW_INTERACTION_NONE,
+    SCENE_VIEW_INTERACTION_DISABLED,
+
+    SCENE_VIEW_INTERACTION_SET_CONTEXT,
+
+    SCENE_VIEW_INTERACTION_CAMERA_DOLLY,
+    SCENE_VIEW_INTERACTION_CAMERA_PAN,
+    SCENE_VIEW_INTERACTION_CAMERA_ORBIT,
+
+    SCENE_VIEW_INTERACTION_TERRAIN_DRAW,
+    SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS,
+    SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF,
+    SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH,
+    SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL,
+
+    SCENE_VIEW_INTERACTION_OBJECTS_SET_SELECTED,
+    SCENE_VIEW_INTERACTION_OBJECTS_TOGGLE_SELECTION_STATE,
+    SCENE_VIEW_INTERACTION_OBJECTS_CLEAR_SELECTION,
+    SCENE_VIEW_INTERACTION_OBJECTS_DELETE_SELECTION
+};
+struct SceneViewInteraction
+{
+    SceneViewInteractionType type;
+    bool cancel;
+
+    union
+    {
+        glm::vec3 cursorWorldPos;
+        uint32 id;
+    };
+};
 struct SceneViewHandledInput
 {
-    bool isActive;
     glm::vec2 brushCursorPos;
-    bool isAdjustingBrushParameters;
-    bool shouldCaptureMouse;
-    bool isManipulatingCamera;
-
-    bool isEditingHeightmap;
-    float activeBrushStrokeInitialHeight;
+    SceneViewInteraction interaction;
 };
 struct SceneViewState
 {
@@ -105,7 +132,7 @@ struct SceneViewState
     RenderTarget *selectionRenderTarget;
     RenderTarget *pickingRenderTarget;
 
-    SceneViewHandledInput prevHandledInput;
+    SceneViewInteraction prevInteraction;
 };
 
 struct TerrainTile
@@ -188,9 +215,13 @@ struct EditorState
 
     RenderTarget *temporaryHeightmap;
 
-    glm::vec2 activeBrushStrokePositions[MAX_BRUSH_QUADS];
-    RenderQuad activeBrushStrokeQuads[MAX_BRUSH_QUADS];
-    uint32 activeBrushStrokeInstanceCount;
+    struct
+    {
+        glm::vec2 positions[MAX_BRUSH_QUADS];
+        RenderQuad quads[MAX_BRUSH_QUADS];
+        uint32 instanceCount;
+        float startingHeight;
+    } activeBrushStroke;
 
     struct
     {
