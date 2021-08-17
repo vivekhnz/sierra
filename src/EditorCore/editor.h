@@ -114,11 +114,6 @@ struct SceneViewInteraction
         uint32 id;
     };
 };
-struct SceneViewHandledInput
-{
-    glm::vec2 brushCursorPos;
-    SceneViewInteraction interaction;
-};
 struct SceneViewState
 {
     float orbitCameraDistance;
@@ -131,7 +126,8 @@ struct SceneViewState
     RenderTarget *selectionRenderTarget;
     RenderTarget *pickingRenderTarget;
 
-    SceneViewInteraction prevInteraction;
+    SceneViewInteraction interaction;
+    SceneViewInteraction nextInteraction;
 };
 
 struct TerrainTile
