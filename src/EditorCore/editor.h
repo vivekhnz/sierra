@@ -85,7 +85,6 @@ struct ObjectTransform
 enum SceneViewInteractionType
 {
     SCENE_VIEW_INTERACTION_NONE,
-    SCENE_VIEW_INTERACTION_DISABLED,
 
     SCENE_VIEW_INTERACTION_SET_CONTEXT,
 

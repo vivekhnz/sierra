@@ -839,13 +839,10 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory,
     result.brushCursorPos = glm::vec2(-10000, -10000);
 
     result.interaction = {};
-    result.interaction.type = SCENE_VIEW_INTERACTION_DISABLED;
+    result.interaction.type = SCENE_VIEW_INTERACTION_NONE;
 
     if (input->isActive)
     {
-        result.interaction = {};
-        result.interaction.type = SCENE_VIEW_INTERACTION_NONE;
-
         // switch editor context
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_F1))
         {
@@ -896,12 +893,16 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory,
         }
 
         // camera controls
-        if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
+        if ((prevInteraction->type == SCENE_VIEW_INTERACTION_CAMERA_PAN
+                && isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
+            || isNewButtonPress(input, EDITOR_INPUT_MOUSE_MIDDLE))
         {
             result.interaction = {};
             result.interaction.type = SCENE_VIEW_INTERACTION_CAMERA_PAN;
         }
-        if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
+        if ((prevInteraction->type == SCENE_VIEW_INTERACTION_CAMERA_ORBIT
+                && isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
+            || isNewButtonPress(input, EDITOR_INPUT_MOUSE_RIGHT))
         {
             result.interaction = {};
             result.interaction.type = SCENE_VIEW_INTERACTION_CAMERA_ORBIT;
@@ -953,19 +954,25 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory,
                 result.brushCursorPos.y = cursorWorldPos.z;
 
                 // adjust brush parameters
-                if (isButtonDown(input, EDITOR_INPUT_KEY_R))
+                if ((prevInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS
+                        && isButtonDown(input, EDITOR_INPUT_KEY_R))
+                    || isNewButtonPress(input, EDITOR_INPUT_KEY_R))
                 {
                     result.interaction = {};
                     result.interaction.type = SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS;
                     result.interaction.cursorWorldPos = cursorWorldPos;
                 }
-                if (isButtonDown(input, EDITOR_INPUT_KEY_F))
+                if ((prevInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF
+                        && isButtonDown(input, EDITOR_INPUT_KEY_F))
+                    || isNewButtonPress(input, EDITOR_INPUT_KEY_F))
                 {
                     result.interaction = {};
                     result.interaction.type = SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF;
                     result.interaction.cursorWorldPos = cursorWorldPos;
                 }
-                if (isButtonDown(input, EDITOR_INPUT_KEY_S))
+                if ((prevInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH
+                        && isButtonDown(input, EDITOR_INPUT_KEY_S))
+                    || isNewButtonPress(input, EDITOR_INPUT_KEY_S))
                 {
                     result.interaction = {};
                     result.interaction.type = SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH;
@@ -1422,11 +1429,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
     bool renderPreviewHeightmap = false;
     bool compareToCommittedHeightmap = false;
-    bool isInteractionDisabled = handledInput.interaction.type == SCENE_VIEW_INTERACTION_DISABLED;
     bool isManipulatingCamera = handledInput.interaction.type == SCENE_VIEW_INTERACTION_CAMERA_DOLLY
         || handledInput.interaction.type == SCENE_VIEW_INTERACTION_CAMERA_PAN
         || handledInput.interaction.type == SCENE_VIEW_INTERACTION_CAMERA_ORBIT;
-    if (!isInteractionDisabled && !isManipulatingCamera)
+    if (!isManipulatingCamera)
     {
         bool isAdjustingBrushParameters =
             handledInput.interaction.type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS
