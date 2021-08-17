@@ -973,18 +973,34 @@ SceneViewHandledInput handleSceneViewInput(EditorMemory *memory,
                 }
 
                 // edit terrain heightmap
-                bool wasAlreadyDrawing = prevInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_DRAW;
-                if ((wasAlreadyDrawing && isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
-                    || isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
-                {
-                    result.interaction = {};
-                    result.interaction.type = SCENE_VIEW_INTERACTION_TERRAIN_DRAW;
-                    result.interaction.cursorWorldPos = cursorWorldPos;
+                SceneViewInteraction drawInteraction = {};
+                drawInteraction.type = SCENE_VIEW_INTERACTION_TERRAIN_DRAW;
+                drawInteraction.cursorWorldPos = cursorWorldPos;
 
+                if (prevInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_DRAW)
+                {
                     if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
                     {
-                        result.interaction.cancel = true;
+                        // stop drawing and discard changes
                     }
+                    else
+                    {
+                        if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
+                        {
+                            // continue drawing
+                            result.interaction = drawInteraction;
+                        }
+                        else
+                        {
+                            // stop drawing and commit changes
+                            prevInteraction->completed = true;
+                        }
+                    }
+                }
+                else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
+                {
+                    // start drawing
+                    result.interaction = drawInteraction;
                 }
             }
         }
@@ -1207,7 +1223,7 @@ void sceneViewBeginInteraction(EditorMemory *memory, SceneViewInteraction *inter
     break;
     }
 }
-void sceneViewEndInteraction(EditorMemory *memory, SceneViewInteraction *interaction, bool wasInterrupted)
+void sceneViewEndInteraction(EditorMemory *memory, SceneViewInteraction *interaction)
 {
     switch (interaction->type)
     {
@@ -1217,13 +1233,13 @@ void sceneViewEndInteraction(EditorMemory *memory, SceneViewInteraction *interac
         cursorPos2d.x = interaction->cursorWorldPos.x;
         cursorPos2d.y = interaction->cursorWorldPos.z;
 
-        if (wasInterrupted)
+        if (interaction->completed)
         {
-            discardChanges(memory, cursorPos2d);
+            commitChanges(memory, cursorPos2d);
         }
         else
         {
-            commitChanges(memory, cursorPos2d);
+            discardChanges(memory, cursorPos2d);
         }
     }
     break;
@@ -1243,22 +1259,10 @@ void sceneViewInteract(EditorMemory *memory,
     bool recompositeHeightmaps = false;
     SceneViewInteraction *interaction = &handledInput->interaction;
 
-    if (interaction->cancel)
+    if (interaction->type != prevInteraction->type)
     {
-        sceneViewEndInteraction(memory, interaction, true);
-        interaction->type = SCENE_VIEW_INTERACTION_NONE;
-    }
-    else if (interaction->type != prevInteraction->type)
-    {
-        if (interaction->type == SCENE_VIEW_INTERACTION_NONE)
-        {
-            sceneViewEndInteraction(memory, prevInteraction, false);
-        }
-        else
-        {
-            sceneViewEndInteraction(memory, prevInteraction, true);
-            sceneViewBeginInteraction(memory, interaction);
-        }
+        sceneViewEndInteraction(memory, prevInteraction);
+        sceneViewBeginInteraction(memory, interaction);
     }
 
     switch (interaction->type)

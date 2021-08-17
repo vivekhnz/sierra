@@ -107,7 +107,7 @@ enum SceneViewInteractionType
 struct SceneViewInteraction
 {
     SceneViewInteractionType type;
-    bool cancel;
+    bool completed;
 
     union
     {
