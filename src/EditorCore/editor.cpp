@@ -1370,44 +1370,68 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
         rq = rendererCreateQueue(state->renderCtx, &memory->arena);
         rendererClear(rq, 0, 0, 0, 1);
-        RenderEffect *mesh8BitIdEffect =
+
+        /*
+         * The selection render target is only 8 bits per pixel so we need to mask out the 24 most significant
+         * bits to prevent OpenGL from clamping our IDs. We also mask out the 25th most significant bit as we
+         * use that bit to store whether the object should use the alternate outline effect.
+         */
+        RenderEffect *mesh7BitIdEffect =
             rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-        // selection render target is only 8 bits so mask out the 24 most significant bits to prevent IDs from
-        // getting clamped
-        rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
-        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+        rendererSetEffectUint(mesh7BitIdEffect, "idMask", 0x0000007F);
+        for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
         {
-            uint32 objectId = state->previewDocState.objectIds[i];
-
-            Interaction pickInteraction = {};
-            pickInteraction.target.type = INTERACTION_TARGET_OBJECT;
-            pickInteraction.target.id = (void *)objectId;
-
-#if 0
-            if (isInteractionHot(&viewState->interactionState, &pickInteraction))
+            uint32 objectId = state->uiState.selectedObjectIds[i];
+            for (uint32 j = 0; j < state->previewDocState.objectInstanceCount; j++)
             {
-                rendererPushMeshes(
-                    rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
-            }
-#endif
-            for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
-            {
-                if (state->uiState.selectedObjectIds[j] == objectId)
+                if (objectId == state->previewDocState.objectIds[j])
                 {
-                    rendererPushMeshes(
-                        rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
+                    RenderMeshInstance *instance = &sceneState->objectInstanceData[j];
+                    rendererPushMeshes(rq, editorAssets->meshRock, instance, 1, mesh7BitIdEffect);
                     break;
                 }
             }
         }
+
+        RenderMeshInstance hotInstance = {};
+
+        if (viewState->interactionState.hot.target.type == INTERACTION_TARGET_OBJECT
+            && viewState->interactionState.hot.target.id)
+        {
+            uint32 hotObjectId = (uint32)viewState->interactionState.hot.target.id;
+            for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+            {
+                if (state->previewDocState.objectIds[i] == hotObjectId)
+                {
+                    RenderMeshInstance *instance = &sceneState->objectInstanceData[i];
+                    hotInstance.transform = instance->transform;
+                    hotInstance.id = 0x80;
+                    break;
+                }
+            }
+
+            if (hotInstance.id)
+            {
+                RenderEffect *mesh8BitIdEffect =
+                    rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+                rendererSetEffectUint(mesh7BitIdEffect, "idMask", 0x000000FF);
+                rendererPushMeshes(rq, editorAssets->meshRock, &hotInstance, 1, mesh8BitIdEffect);
+            }
+        }
         rendererDrawToTarget(rq, selectionRenderTarget);
 
+#if 0
+        compositeEffect =
+            rendererCreateEffect(&memory->arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectTexture(compositeEffect, 0, selectionRenderTarget->textureHandle);
+#else
         compositeEffect =
             rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
         rendererSetEffectTexture(compositeEffect, 0, sceneRenderTarget->textureHandle);
         rendererSetEffectTexture(compositeEffect, 1, sceneRenderTarget->depthTextureHandle);
         rendererSetEffectTexture(compositeEffect, 2, selectionRenderTarget->textureHandle);
         rendererSetEffectTexture(compositeEffect, 3, selectionRenderTarget->depthTextureHandle);
+#endif
     }
 
     rq = rendererCreateQueue(state->renderCtx, &memory->arena);

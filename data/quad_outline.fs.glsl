@@ -34,6 +34,10 @@ void main()
     {
         blend *= 0.4;
     }
+    if ((uvec4(gather3) & 0x80) != 0 || (uvec4(gather2) & 0x80) != 0)
+    {
+        selectionColor = vec3(1, 1, 1);
+    }
     vec3 outColor = mix(sceneColor, selectionColor, blend);
     
     FragColor = vec4(outColor, 1);
