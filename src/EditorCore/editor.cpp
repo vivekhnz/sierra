@@ -325,7 +325,10 @@ void compositeHeightmap(EditorMemory *memory,
     RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
     rendererSetCameraOrthoOffset(rq, heightmapOffset);
     rendererClear(rq, 0, 0, 0, 1);
-    rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
+    if (brushInstances)
+    {
+        rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
+    }
     rendererDrawToTarget(rq, brushInfluenceMask);
 
     // render heightmap
@@ -451,7 +454,7 @@ void updateHeightfieldHeights(
 #endif
 }
 
-void compositeHeightmaps(EditorMemory *memory, glm::vec2 brushCursorPos)
+void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
@@ -474,12 +477,17 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 brushCursorPos)
         quad->height = brushStrokeQuadWidth;
     }
 
-    glm::vec2 brushCursorPosInHeightmapSpace = (brushCursorPos + halfHeightfieldSize) * worldToHeightmapSpace;
     RenderQuad previewBrushStrokeQuad;
-    previewBrushStrokeQuad.x = brushCursorPosInHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
-    previewBrushStrokeQuad.y = brushCursorPosInHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
-    previewBrushStrokeQuad.width = brushStrokeQuadWidth;
-    previewBrushStrokeQuad.height = brushStrokeQuadWidth;
+    RenderQuad *previewBrushStrokeQuadPtr = 0;
+    if (brushCursorPos)
+    {
+        glm::vec2 brushCursorPosInHeightmapSpace = (*brushCursorPos + halfHeightfieldSize) * worldToHeightmapSpace;
+        previewBrushStrokeQuad.x = brushCursorPosInHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
+        previewBrushStrokeQuad.y = brushCursorPosInHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
+        previewBrushStrokeQuad.width = brushStrokeQuadWidth;
+        previewBrushStrokeQuad.height = brushStrokeQuadWidth;
+        previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
+    }
 
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
@@ -490,7 +498,7 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 brushCursorPos)
             tile->workingHeightmap, state->activeBrushStroke.quads, state->activeBrushStroke.instanceCount, offset,
             state->activeBrushStroke.startingHeight);
         compositeHeightmap(memory, tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask,
-            tile->previewHeightmap, &previewBrushStrokeQuad, 1, offset, state->activeBrushStroke.startingHeight);
+            tile->previewHeightmap, previewBrushStrokeQuadPtr, 1, offset, state->activeBrushStroke.startingHeight);
 
         TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
 
@@ -503,7 +511,7 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 brushCursorPos)
     }
 }
 
-bool commitChanges(EditorMemory *memory, glm::vec2 brushCursorPos)
+bool commitChanges(EditorMemory *memory, glm::vec2 *brushCursorPos)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
@@ -534,7 +542,7 @@ bool commitChanges(EditorMemory *memory, glm::vec2 brushCursorPos)
     return committed;
 }
 
-void discardChanges(EditorMemory *memory, glm::vec2 brushCursorPos)
+void discardChanges(EditorMemory *memory, glm::vec2 *brushCursorPos)
 {
     MemoryArena *arena = &memory->arena;
     EditorState *state = (EditorState *)arena->baseAddress;
@@ -825,236 +833,352 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 #endif
 }
 
-void sceneViewBeginInteraction(EditorMemory *memory, SceneViewInteraction *interaction)
+uint64 getInteractionTriggerButtons(InteractionTargetType target)
 {
-    EditorState *state = (EditorState *)memory->arena.baseAddress;
-    EditorUiState *uiState = &state->uiState;
+    uint64 result = 0;
 
-    switch (interaction->type)
+    switch (target)
     {
-    case SCENE_VIEW_INTERACTION_SET_CONTEXT:
-    {
-        uiState->currentContext = (EditorContext)interaction->id;
+    case INTERACTION_TARGET_CAMERA:
+        result = EDITOR_INPUT_MOUSE_MIDDLE | EDITOR_INPUT_MOUSE_RIGHT;
+        break;
+    case INTERACTION_TARGET_TERRAIN:
+        result = EDITOR_INPUT_MOUSE_LEFT | EDITOR_INPUT_KEY_R | EDITOR_INPUT_KEY_F | EDITOR_INPUT_KEY_S;
+        break;
+    case INTERACTION_TARGET_OBJECT:
+        result = EDITOR_INPUT_MOUSE_LEFT;
+        break;
     }
-    break;
 
-    case SCENE_VIEW_INTERACTION_TERRAIN_DRAW:
-    case SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS:
-    case SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF:
-    case SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH:
-    {
-        TerrainTile *firstTile = &state->sceneState.terrainTiles[0];
-        state->activeBrushStroke.startingHeight =
-            interaction->cursorWorldPos.y / firstTile->heightfield->maxHeight;
-    }
-    break;
-
-    case SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL:
-    {
-        uiState->terrainBrushTool = (TerrainBrushTool)interaction->id;
-    }
-    break;
-
-    case SCENE_VIEW_INTERACTION_OBJECTS_SET_SELECTED:
-    {
-        uiState->selectedObjectCount = 1;
-        uiState->selectedObjectIds[0] = interaction->id;
-    }
-    break;
-
-    case SCENE_VIEW_INTERACTION_OBJECTS_TOGGLE_SELECTION_STATE:
-    {
-        bool wasAlreadySelected = false;
-        for (uint32 i = 0; i < uiState->selectedObjectCount; i++)
-        {
-            if (uiState->selectedObjectIds[i] == interaction->id)
-            {
-                uiState->selectedObjectIds[i] = uiState->selectedObjectIds[uiState->selectedObjectCount - 1];
-                uiState->selectedObjectCount--;
-
-                wasAlreadySelected = true;
-                break;
-            }
-        }
-        if (!wasAlreadySelected)
-        {
-            uiState->selectedObjectIds[uiState->selectedObjectCount++] = interaction->id;
-        }
-    }
-    break;
-
-    case SCENE_VIEW_INTERACTION_OBJECTS_CLEAR_SELECTION:
-    {
-        uiState->selectedObjectCount = 0;
-    }
-    break;
-
-    case SCENE_VIEW_INTERACTION_OBJECTS_DELETE_SELECTION:
-    {
-        Transaction *tx = beginTransaction(&state->transactions);
-        if (tx)
-        {
-            for (uint32 i = 0; i < uiState->selectedObjectCount; i++)
-            {
-                DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
-                cmd->objectId = uiState->selectedObjectIds[i];
-            }
-            commitTransaction(tx);
-        }
-    }
-    break;
-    }
+    return result;
 }
-void sceneViewEndInteraction(EditorMemory *memory, SceneViewInteraction *interaction)
+void sceneViewEndInteraction(EditorMemory *memory,
+    SceneViewState *viewState,
+    EditorInput *input,
+    glm::vec3 *mouseWorldPos,
+    bool wasCancelled)
 {
-    switch (interaction->type)
+    switch (viewState->interactionState.active.target.type)
     {
-    case SCENE_VIEW_INTERACTION_TERRAIN_DRAW:
+    case INTERACTION_TARGET_TERRAIN:
     {
-        glm::vec2 cursorPos2d;
-        cursorPos2d.x = interaction->cursorWorldPos.x;
-        cursorPos2d.y = interaction->cursorWorldPos.z;
-
-        if (interaction->completed)
+        glm::vec2 brushCursorPos;
+        glm::vec2 *brushCursorPosPtr = 0;
+        if (mouseWorldPos)
         {
-            commitChanges(memory, cursorPos2d);
+            brushCursorPos.x = mouseWorldPos->x;
+            brushCursorPos.y = mouseWorldPos->z;
+            brushCursorPosPtr = &brushCursorPos;
+        }
+        if (wasCancelled)
+        {
+            discardChanges(memory, brushCursorPosPtr);
         }
         else
         {
-            discardChanges(memory, cursorPos2d);
+            commitChanges(memory, brushCursorPosPtr);
         }
     }
     break;
     }
+    viewState->interactionState.active = {};
+    viewState->interactionState.activeArena.used = 0;
 }
-void sceneViewInteract(
-    EditorMemory *memory, SceneViewState *viewState, float mouseScrollOffset, glm::vec2 mouseCursorOffset)
+void sceneViewContinueInteraction(
+    EditorMemory *memory, SceneViewState *viewState, EditorInput *input, glm::vec3 *mouseWorldPos)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     EditorUiState *uiState = &state->uiState;
-    bool captureMouse = false;
-    bool recalculateCameraPos = false;
-    bool recompositeHeightmaps = false;
 
-    if (viewState->nextInteraction.type != viewState->interaction.type)
+    switch (viewState->interactionState.active.target.type)
     {
-        sceneViewEndInteraction(memory, &viewState->interaction);
-        sceneViewBeginInteraction(memory, &viewState->nextInteraction);
-    }
+    case INTERACTION_TARGET_CAMERA:
+    {
+        // dolly
+        viewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
-    switch (viewState->nextInteraction.type)
-    {
-    case SCENE_VIEW_INTERACTION_CAMERA_DOLLY:
-    {
-        viewState->orbitCameraDistance *= 1.0f - (glm::sign(mouseScrollOffset) * 0.05f);
-        captureMouse = true;
-        recalculateCameraPos = true;
-    }
-    break;
-    case SCENE_VIEW_INTERACTION_CAMERA_PAN:
-    {
-        glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
-        glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
-        glm::vec3 yDir = cross(lookDir, xDir);
-        glm::vec3 pan = (xDir * mouseCursorOffset.x) + (yDir * mouseCursorOffset.y);
-        float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
-        viewState->cameraLookAt += pan * panMagnitude * 0.000333f;
-        captureMouse = true;
-        recalculateCameraPos = true;
-    }
-    break;
-    case SCENE_VIEW_INTERACTION_CAMERA_ORBIT:
-    {
-        float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
-        float rotateSensitivity = rotateMagnitude * 0.000833f;
-        viewState->orbitCameraYaw += glm::radians(mouseCursorOffset.x * rotateSensitivity);
-        viewState->orbitCameraPitch += glm::radians(mouseCursorOffset.y * rotateSensitivity);
-        captureMouse = true;
-        recalculateCameraPos = true;
-    }
-    break;
-    case SCENE_VIEW_INTERACTION_TERRAIN_DRAW:
-    {
-        glm::vec2 cursorPos2d;
-        cursorPos2d.x = viewState->nextInteraction.cursorWorldPos.x;
-        cursorPos2d.y = viewState->nextInteraction.cursorWorldPos.z;
-
-        if (state->activeBrushStroke.instanceCount == 0)
+        if (isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
         {
-            state->activeBrushStroke.positions[0] = cursorPos2d;
-            state->activeBrushStroke.instanceCount = 1;
+            // pan
+            glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
+            glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
+            glm::vec3 yDir = cross(lookDir, xDir);
+            glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
+            float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
+            viewState->cameraLookAt += pan * panMagnitude * 0.000333f;
         }
-        else if (state->activeBrushStroke.instanceCount < MAX_BRUSH_QUADS - 1)
+        else if (isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
         {
-            glm::vec2 *nextBrushInstance =
-                &state->activeBrushStroke.positions[state->activeBrushStroke.instanceCount];
-            glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
-
-            glm::vec2 diff = cursorPos2d - *prevBrushInstance;
-            glm::vec2 direction = glm::normalize(diff);
-            float distanceRemaining = glm::length(diff);
-
-            const float BRUSH_INSTANCE_SPACING = 0.64f;
-            while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                && state->activeBrushStroke.instanceCount < MAX_BRUSH_QUADS - 1)
-            {
-                *nextBrushInstance++ = *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
-                state->activeBrushStroke.instanceCount++;
-
-                distanceRemaining -= BRUSH_INSTANCE_SPACING;
-            }
+            // orbit
+            float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
+            float rotateSensitivity = rotateMagnitude * 0.000833f;
+            viewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
+            viewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
         }
 
-        recompositeHeightmaps = true;
-    }
-    break;
-    case SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS:
-    {
-        float radiusIncrease = 0.0625f * (mouseCursorOffset.x + mouseCursorOffset.y);
-        uiState->terrainBrushRadius = glm::clamp(uiState->terrainBrushRadius + radiusIncrease, 2.0f, 128.0f);
-        captureMouse = true;
-        recompositeHeightmaps = true;
-    }
-    break;
-    case SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF:
-    {
-        float falloffIncrease = (mouseCursorOffset.x + mouseCursorOffset.y) * 0.001f;
-        uiState->terrainBrushFalloff = glm::clamp(uiState->terrainBrushFalloff + falloffIncrease, 0.0f, 0.99f);
-        captureMouse = true;
-        recompositeHeightmaps = true;
-    }
-    break;
-    case SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH:
-    {
-        float strengthIncrease = (mouseCursorOffset.x + mouseCursorOffset.y) * 0.001f;
-        uiState->terrainBrushStrength = glm::clamp(uiState->terrainBrushStrength + strengthIncrease, 0.01f, 1.0f);
-        captureMouse = true;
-        recompositeHeightmaps = true;
-    }
-    break;
-    }
-
-    if (recalculateCameraPos)
-    {
-        glm::vec3 newLookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
-            sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
-        viewState->cameraPos = viewState->cameraLookAt + (newLookDir * viewState->orbitCameraDistance);
-    }
-    if (recompositeHeightmaps)
-    {
-        glm::vec2 cursorPos2d;
-        cursorPos2d.x = viewState->nextInteraction.cursorWorldPos.x;
-        cursorPos2d.y = viewState->nextInteraction.cursorWorldPos.z;
-        compositeHeightmaps(memory, cursorPos2d);
-    }
-    if (captureMouse)
-    {
         memory->platformCaptureMouse();
     }
+    break;
+    case INTERACTION_TARGET_TERRAIN:
+    {
+        if (mouseWorldPos)
+        {
+            TerrainInteractionState *interactionState =
+                (TerrainInteractionState *)viewState->interactionState.active.state;
+            interactionState->isAdjustingBrushParameters = false;
 
-    viewState->interaction = viewState->nextInteraction;
+            glm::vec2 brushCursorPos = glm::vec2(mouseWorldPos->x, mouseWorldPos->z);
+            if (isButtonDown(input, EDITOR_INPUT_KEY_R))
+            {
+                // adjust brush radius
+                float radiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
+                uiState->terrainBrushRadius =
+                    glm::clamp(uiState->terrainBrushRadius + radiusIncrease, 2.0f, 128.0f);
+
+                memory->platformCaptureMouse();
+                interactionState->isAdjustingBrushParameters = true;
+            }
+            else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
+            {
+                // adjust brush falloff
+                float falloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                uiState->terrainBrushFalloff =
+                    glm::clamp(uiState->terrainBrushFalloff + falloffIncrease, 0.0f, 0.99f);
+
+                memory->platformCaptureMouse();
+                interactionState->isAdjustingBrushParameters = true;
+            }
+            else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
+            {
+                // adjust brush strength
+                float strengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                uiState->terrainBrushStrength =
+                    glm::clamp(uiState->terrainBrushStrength + strengthIncrease, 0.01f, 1.0f);
+
+                memory->platformCaptureMouse();
+                interactionState->isAdjustingBrushParameters = true;
+            }
+            else if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
+            {
+                // add brush instances
+                if (state->activeBrushStroke.instanceCount == 0)
+                {
+                    state->activeBrushStroke.positions[0] = brushCursorPos;
+                    state->activeBrushStroke.instanceCount = 1;
+                }
+                else if (state->activeBrushStroke.instanceCount < MAX_BRUSH_QUADS - 1)
+                {
+                    glm::vec2 *nextBrushInstance =
+                        &state->activeBrushStroke.positions[state->activeBrushStroke.instanceCount];
+                    glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
+
+                    glm::vec2 diff = brushCursorPos - *prevBrushInstance;
+                    glm::vec2 direction = glm::normalize(diff);
+                    float distanceRemaining = glm::length(diff);
+
+                    const float BRUSH_INSTANCE_SPACING = 0.64f;
+                    while (distanceRemaining > BRUSH_INSTANCE_SPACING
+                        && state->activeBrushStroke.instanceCount < MAX_BRUSH_QUADS - 1)
+                    {
+                        *nextBrushInstance++ = *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
+                        state->activeBrushStroke.instanceCount++;
+
+                        distanceRemaining -= BRUSH_INSTANCE_SPACING;
+                    }
+                }
+            }
+            interactionState->hasUncommittedChanges = state->activeBrushStroke.instanceCount > 0;
+            compositeHeightmaps(memory, &brushCursorPos);
+        }
+        else
+        {
+            sceneViewEndInteraction(memory, viewState, input, mouseWorldPos, false);
+        }
+    }
+    break;
+    }
 }
+void sceneViewBeginInteraction(
+    EditorMemory *memory, SceneViewState *viewState, EditorInput *input, glm::vec3 *mouseWorldPos)
+{
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    EditorUiState *uiState = &state->uiState;
 
+    switch (viewState->interactionState.hot.target.type)
+    {
+    case INTERACTION_TARGET_TERRAIN:
+    {
+        assert(mouseWorldPos);
+
+        TerrainInteractionState *interactionState =
+            pushStruct(&viewState->interactionState.activeArena, TerrainInteractionState);
+        viewState->interactionState.hot.state = interactionState;
+
+        TerrainTile *firstTile = &state->sceneState.terrainTiles[0];
+        state->activeBrushStroke.startingHeight = mouseWorldPos->y / firstTile->heightfield->maxHeight;
+        state->activeBrushStroke.instanceCount = 0;
+    }
+    break;
+    case INTERACTION_TARGET_OBJECT:
+    {
+        uint32 pickedId = (uint32)viewState->interactionState.hot.target.id;
+        if (pickedId)
+        {
+            if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
+            {
+                // toggle selection state
+                bool wasAlreadySelected = false;
+                for (uint32 i = 0; i < uiState->selectedObjectCount; i++)
+                {
+                    if (uiState->selectedObjectIds[i] == pickedId)
+                    {
+                        uiState->selectedObjectIds[i] =
+                            uiState->selectedObjectIds[uiState->selectedObjectCount - 1];
+                        uiState->selectedObjectCount--;
+
+                        wasAlreadySelected = true;
+                        break;
+                    }
+                }
+                if (!wasAlreadySelected)
+                {
+                    uiState->selectedObjectIds[uiState->selectedObjectCount++] = pickedId;
+                }
+            }
+            else
+            {
+                // select picked object
+                uiState->selectedObjectCount = 1;
+                uiState->selectedObjectIds[0] = pickedId;
+            }
+        }
+        else
+        {
+            // clear selection
+            uiState->selectedObjectCount = 0;
+        }
+    }
+    break;
+    }
+
+    viewState->interactionState.active = viewState->interactionState.hot;
+
+    sceneViewContinueInteraction(memory, viewState, input, mouseWorldPos);
+}
+void sceneViewInteract(
+    EditorMemory *memory, SceneViewState *viewState, EditorInput *input, glm::vec3 *mouseWorldPos)
+{
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    EditorUiState *uiState = &state->uiState;
+
+    if (viewState->interactionState.active.target.type)
+    {
+        sceneViewContinueInteraction(memory, viewState, input, mouseWorldPos);
+        if (!input->isActive || isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
+        {
+            sceneViewEndInteraction(memory, viewState, input, mouseWorldPos, true);
+        }
+        if (!(input->pressedButtons
+                & getInteractionTriggerButtons(viewState->interactionState.active.target.type)))
+        {
+            sceneViewEndInteraction(memory, viewState, input, mouseWorldPos, false);
+        }
+    }
+    else if (input->isActive)
+    {
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F1))
+        {
+            uiState->currentContext = EDITOR_CTX_TERRAIN;
+        }
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F2))
+        {
+            uiState->currentContext = EDITOR_CTX_OBJECTS;
+        }
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F3))
+        {
+            uiState->currentContext = EDITOR_CTX_SCENE;
+        }
+
+        switch (uiState->currentContext)
+        {
+        case EDITOR_CTX_TERRAIN:
+        {
+            if (isNewButtonPress(input, EDITOR_INPUT_KEY_1))
+            {
+                uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_RAISE;
+            }
+            if (isNewButtonPress(input, EDITOR_INPUT_KEY_2))
+            {
+                uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_LOWER;
+            }
+            if (isNewButtonPress(input, EDITOR_INPUT_KEY_3))
+            {
+                uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_FLATTEN;
+            }
+            if (isNewButtonPress(input, EDITOR_INPUT_KEY_4))
+            {
+                uiState->terrainBrushTool = TERRAIN_BRUSH_TOOL_SMOOTH;
+            }
+        }
+        break;
+        case EDITOR_CTX_OBJECTS:
+        {
+            if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE))
+            {
+                Transaction *tx = beginTransaction(&state->transactions);
+                if (tx)
+                {
+                    for (uint32 i = 0; i < uiState->selectedObjectCount; i++)
+                    {
+                        DeleteObjectCommand *cmd = pushCommand(tx, DeleteObjectCommand);
+                        cmd->objectId = uiState->selectedObjectIds[i];
+                    }
+                    commitTransaction(tx);
+                }
+            }
+        }
+        break;
+        }
+        if (input->scrollOffset != 0)
+        {
+            viewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
+        }
+
+        uint64 prevUnpressedButtons = ~input->prevPressedButtons;
+        if ((input->pressedButtons & getInteractionTriggerButtons(INTERACTION_TARGET_CAMERA))
+            & prevUnpressedButtons)
+        {
+            viewState->interactionState.hot = {};
+            viewState->interactionState.hot.target.type = INTERACTION_TARGET_CAMERA;
+            sceneViewBeginInteraction(memory, viewState, input, mouseWorldPos);
+        }
+        else
+        {
+            viewState->interactionState.hot = viewState->interactionState.nextHot;
+            if ((input->pressedButtons & getInteractionTriggerButtons(viewState->interactionState.hot.target.type))
+                & prevUnpressedButtons)
+            {
+                sceneViewBeginInteraction(memory, viewState, input, mouseWorldPos);
+            }
+        }
+    }
+    else
+    {
+        viewState->interactionState.hot = {};
+    }
+}
+inline bool areInteractionTargetsEqual(InteractionTarget *a, InteractionTarget *b)
+{
+    return a->type == b->type && a->id == b->id;
+}
+inline bool isInteractionActive(InteractionState *state, Interaction *interaction)
+{
+    return areInteractionTargetsEqual(&state->active.target, &interaction->target);
+}
+inline bool isInteractionHot(InteractionState *state, Interaction *interaction)
+{
+    return areInteractionTargetsEqual(&state->hot.target, &interaction->target);
+}
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
@@ -1069,12 +1193,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         viewState->orbitCameraYaw = glm::radians(180.0f);
         viewState->orbitCameraPitch = glm::radians(15.0f);
         viewState->cameraLookAt = glm::vec3(0, 0, 0);
-        viewState->interaction = {};
-        viewState->nextInteraction = {};
-
-        glm::vec3 lookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
-            sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
-        viewState->cameraPos = viewState->cameraLookAt + (lookDir * viewState->orbitCameraDistance);
+        viewState->interactionState = {};
+        viewState->interactionState.activeArena = pushSubArena(&memory->arena, 1 * 1024 * 1024);
         viewState->sceneRenderTarget =
             rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_RGB8, true);
         viewState->selectionRenderTarget =
@@ -1083,6 +1203,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_R32UI, true);
         view->viewState = viewState;
     }
+
+    glm::vec3 cameraLookDir = glm::vec3(cos(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch),
+        sin(viewState->orbitCameraPitch), sin(viewState->orbitCameraYaw) * cos(viewState->orbitCameraPitch));
+    viewState->cameraPos = viewState->cameraLookAt + (cameraLookDir * viewState->orbitCameraDistance);
 
     RenderTarget *sceneRenderTarget = viewState->sceneRenderTarget;
     RenderTarget *selectionRenderTarget = viewState->selectionRenderTarget;
@@ -1094,354 +1218,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         rendererResizeRenderTarget(pickingRenderTarget, view->width, view->height);
     }
 
-    SceneViewInteraction *interaction = &viewState->interaction;
-    SceneViewInteraction *nextInteraction = &viewState->nextInteraction;
-    glm::vec2 brushCursorPos = glm::vec2(-10000, -10000);
-
-    *nextInteraction = {};
-    nextInteraction->type = SCENE_VIEW_INTERACTION_NONE;
-    if (input->isActive)
-    {
-        // switch editor context
-        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F1))
-        {
-            *nextInteraction = {};
-            nextInteraction->type = SCENE_VIEW_INTERACTION_SET_CONTEXT;
-            nextInteraction->id = EDITOR_CTX_TERRAIN;
-        }
-        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F2))
-        {
-            *nextInteraction = {};
-            nextInteraction->type = SCENE_VIEW_INTERACTION_SET_CONTEXT;
-            nextInteraction->id = EDITOR_CTX_OBJECTS;
-        }
-        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F3))
-        {
-            *nextInteraction = {};
-            nextInteraction->type = SCENE_VIEW_INTERACTION_SET_CONTEXT;
-            nextInteraction->id = EDITOR_CTX_SCENE;
-        }
-
-        // switch terrain brush tool
-        if (uiState->currentContext == EDITOR_CTX_TERRAIN)
-        {
-            if (isNewButtonPress(input, EDITOR_INPUT_KEY_1))
-            {
-                *nextInteraction = {};
-                nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL;
-                nextInteraction->id = TERRAIN_BRUSH_TOOL_RAISE;
-            }
-            if (isNewButtonPress(input, EDITOR_INPUT_KEY_2))
-            {
-                *nextInteraction = {};
-                nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL;
-                nextInteraction->id = TERRAIN_BRUSH_TOOL_LOWER;
-            }
-            if (isNewButtonPress(input, EDITOR_INPUT_KEY_3))
-            {
-                *nextInteraction = {};
-                nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL;
-                nextInteraction->id = TERRAIN_BRUSH_TOOL_FLATTEN;
-            }
-            if (isNewButtonPress(input, EDITOR_INPUT_KEY_4))
-            {
-                *nextInteraction = {};
-                nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL;
-                nextInteraction->id = TERRAIN_BRUSH_TOOL_SMOOTH;
-            }
-        }
-
-        // camera controls
-        if ((interaction->type == SCENE_VIEW_INTERACTION_CAMERA_PAN
-                && isButtonDown(input, EDITOR_INPUT_MOUSE_MIDDLE))
-            || isNewButtonPress(input, EDITOR_INPUT_MOUSE_MIDDLE))
-        {
-            *nextInteraction = {};
-            nextInteraction->type = SCENE_VIEW_INTERACTION_CAMERA_PAN;
-        }
-        if ((interaction->type == SCENE_VIEW_INTERACTION_CAMERA_ORBIT
-                && isButtonDown(input, EDITOR_INPUT_MOUSE_RIGHT))
-            || isNewButtonPress(input, EDITOR_INPUT_MOUSE_RIGHT))
-        {
-            *nextInteraction = {};
-            nextInteraction->type = SCENE_VIEW_INTERACTION_CAMERA_ORBIT;
-        }
-        if (input->scrollOffset != 0)
-        {
-            *nextInteraction = {};
-            nextInteraction->type = SCENE_VIEW_INTERACTION_CAMERA_DOLLY;
-        }
-
-        if (uiState->currentContext == EDITOR_CTX_TERRAIN)
-        {
-            glm::vec3 cameraPos = viewState->cameraPos;
-            glm::vec3 up = glm::vec3(0, 1, 0);
-            float aspectRatio =
-                (float)viewState->sceneRenderTarget->width / (float)viewState->sceneRenderTarget->height;
-            glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
-            glm::mat4 cameraTransform = projection * glm::lookAt(cameraPos, viewState->cameraLookAt, up);
-
-            glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
-            glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
-            glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
-            glm::vec4 worldPos = inverseViewProjection * screenPos;
-            glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
-
-            TerrainTile *hoveredTile = 0;
-            float minHitDist = FLT_MAX;
-            glm::vec3 cursorWorldPos;
-            for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
-            {
-                TerrainTile *tile = &sceneState->terrainTiles[i];
-                Heightfield *heightfield = tile->heightfield;
-
-                glm::vec3 hitPt;
-                float hitDist = 0;
-                if (heightfieldIsRayIntersecting(heightfield, cameraPos, mouseRayDir, &hitPt, &hitDist)
-                    && hitDist < minHitDist)
-                {
-                    minHitDist = hitDist;
-                    hoveredTile = tile;
-                    cursorWorldPos = hitPt;
-                }
-            }
-
-            if (hoveredTile)
-            {
-                Heightfield *heightfield = hoveredTile->heightfield;
-                brushCursorPos.x = cursorWorldPos.x;
-                brushCursorPos.y = cursorWorldPos.z;
-
-                // adjust brush parameters
-                if ((interaction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS
-                        && isButtonDown(input, EDITOR_INPUT_KEY_R))
-                    || isNewButtonPress(input, EDITOR_INPUT_KEY_R))
-                {
-                    *nextInteraction = {};
-                    nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS;
-                    nextInteraction->cursorWorldPos = cursorWorldPos;
-                }
-                if ((interaction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF
-                        && isButtonDown(input, EDITOR_INPUT_KEY_F))
-                    || isNewButtonPress(input, EDITOR_INPUT_KEY_F))
-                {
-                    *nextInteraction = {};
-                    nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF;
-                    nextInteraction->cursorWorldPos = cursorWorldPos;
-                }
-                if ((interaction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH
-                        && isButtonDown(input, EDITOR_INPUT_KEY_S))
-                    || isNewButtonPress(input, EDITOR_INPUT_KEY_S))
-                {
-                    *nextInteraction = {};
-                    nextInteraction->type = SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH;
-                    nextInteraction->cursorWorldPos = cursorWorldPos;
-                }
-
-                // edit terrain heightmap
-                SceneViewInteraction drawInteraction = {};
-                drawInteraction.type = SCENE_VIEW_INTERACTION_TERRAIN_DRAW;
-                drawInteraction.cursorWorldPos = cursorWorldPos;
-
-                if (interaction->type == SCENE_VIEW_INTERACTION_TERRAIN_DRAW)
-                {
-                    if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
-                    {
-                        // stop drawing and discard changes
-                    }
-                    else
-                    {
-                        if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
-                        {
-                            // continue drawing
-                            *nextInteraction = drawInteraction;
-                        }
-                        else
-                        {
-                            // stop drawing and commit changes
-                            interaction->completed = true;
-                        }
-                    }
-                }
-                else if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
-                {
-                    // start drawing
-                    *nextInteraction = drawInteraction;
-                }
-            }
-        }
-        else if (uiState->currentContext == EDITOR_CTX_OBJECTS)
-        {
-#if 0
-            // move object with arrow keys
-            uint64 moveBtnsMask =
-                EDITOR_INPUT_KEY_LEFT | EDITOR_INPUT_KEY_RIGHT | EDITOR_INPUT_KEY_UP | EDITOR_INPUT_KEY_DOWN;
-            uint64 moveBtnsCurrentlyPressed = input->pressedButtons & moveBtnsMask;
-            uint64 moveBtnsPreviouslyPressed = input->prevPressedButtons & moveBtnsMask;
-            uint64 moveBtnsNewlyPressed = moveBtnsCurrentlyPressed & ~moveBtnsPreviouslyPressed;
-            if (!state->moveObjectTx.tx && moveBtnsNewlyPressed && uiState->selectedObjectCount > 0)
-            {
-                state->moveObjectTx.tx = beginTransaction(&state->transactions);
-                if (state->moveObjectTx.tx)
-                {
-                    state->moveObjectTx.delta = glm::vec3(0);
-                    state->moveObjectTx.objectCount = 0;
-
-                    uint32 objectsFound = 0;
-                    for (uint32 i = 0;
-                         i < state->docState.objectInstanceCount && objectsFound < uiState->selectedObjectCount;
-                         i++)
-                    {
-                        uint32 objectId = state->docState.objectIds[i];
-                        for (uint32 j = 0; j < uiState->selectedObjectCount; j++)
-                        {
-                            if (uiState->selectedObjectIds[j] == objectId)
-                            {
-                                state->moveObjectTx.objectIds[state->moveObjectTx.objectCount++] = objectId;
-
-                                objectsFound++;
-                                break;
-                            }
-                        }
-                    }
-                    assert(objectsFound == uiState->selectedObjectCount);
-                }
-            }
-            if (state->moveObjectTx.tx)
-            {
-                if (isNewButtonPress(input, EDITOR_INPUT_KEY_ESCAPE))
-                {
-                    discardTransaction(state->moveObjectTx.tx);
-                    state->moveObjectTx.tx = 0;
-                }
-                else if (moveBtnsCurrentlyPressed)
-                {
-                    glm::vec3 objectTranslation = glm::vec3(0);
-                    objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_LEFT) * -1.0f;
-                    objectTranslation.x += isButtonDown(input, EDITOR_INPUT_KEY_RIGHT) * 1.0f;
-                    objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_UP) * -1.0f;
-                    objectTranslation.z += isButtonDown(input, EDITOR_INPUT_KEY_DOWN) * 1.0f;
-                    state->moveObjectTx.delta += objectTranslation * 10.0f * deltaTime;
-
-                    clearTransaction(state->moveObjectTx.tx);
-
-                    uint32 objectsFound = 0;
-                    for (uint32 i = 0;
-                         i < state->docState.objectInstanceCount && objectsFound < state->moveObjectTx.objectCount;
-                         i++)
-                    {
-                        uint32 objectId = state->docState.objectIds[i];
-                        for (uint32 j = 0; j < state->moveObjectTx.objectCount; j++)
-                        {
-                            if (state->moveObjectTx.objectIds[j] == objectId)
-                            {
-                                ObjectTransform *transform = &state->docState.objectTransforms[i];
-
-                                float x = transform->position.x + state->moveObjectTx.delta.x;
-                                float z = transform->position.z + state->moveObjectTx.delta.z;
-                                setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_X, x);
-                                setProperty(state->moveObjectTx.tx, objectId, PROP_OBJ_POSITION_Z, z);
-
-                                objectsFound++;
-                                break;
-                            }
-                        }
-                    }
-                    assert(objectsFound == state->moveObjectTx.objectCount);
-                }
-                else
-                {
-                    commitTransaction(state->moveObjectTx.tx);
-                    state->moveObjectTx.tx = 0;
-                }
-            }
-#endif
-
-            // delete selected objects with DEL key
-            if (isNewButtonPress(input, EDITOR_INPUT_KEY_DELETE) && uiState->selectedObjectCount > 0)
-            {
-                *nextInteraction = {};
-                nextInteraction->type = SCENE_VIEW_INTERACTION_OBJECTS_DELETE_SELECTION;
-            }
-
-            // pick objects
-            if (isNewButtonPress(input, EDITOR_INPUT_MOUSE_LEFT))
-            {
-                RenderTarget *pickingTarget = viewState->pickingRenderTarget;
-                uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingTarget->width);
-                uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingTarget->height);
-
-                TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
-
-                GetPixelsResult pickedPixels = rendererGetPixelsInRegion(
-                    &memory->arena, pickingTarget->textureHandle, cursorX, cursorY, 1, 1);
-                assert(pickedPixels.count == 1);
-                uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
-
-                endTemporaryMemory(&pickingMemory);
-
-                if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
-                {
-                    if (pickedId != 0)
-                    {
-                        *nextInteraction = {};
-                        nextInteraction->type = SCENE_VIEW_INTERACTION_OBJECTS_TOGGLE_SELECTION_STATE;
-                        nextInteraction->id = pickedId;
-                    }
-                }
-                else
-                {
-                    if (pickedId == 0)
-                    {
-                        *nextInteraction = {};
-                        nextInteraction->type = SCENE_VIEW_INTERACTION_OBJECTS_CLEAR_SELECTION;
-                    }
-                    else
-                    {
-                        *nextInteraction = {};
-                        nextInteraction->type = SCENE_VIEW_INTERACTION_OBJECTS_SET_SELECTED;
-                        nextInteraction->id = pickedId;
-                    }
-                }
-            }
-        }
-    }
-
-    sceneViewInteract(memory, viewState, input->scrollOffset, input->cursorOffset);
-
-    BrushVisualizationMode visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_NONE;
-    bool renderPreviewHeightmap = false;
-    bool compareToCommittedHeightmap = false;
-    bool isManipulatingCamera = nextInteraction->type == SCENE_VIEW_INTERACTION_CAMERA_DOLLY
-        || nextInteraction->type == SCENE_VIEW_INTERACTION_CAMERA_PAN
-        || nextInteraction->type == SCENE_VIEW_INTERACTION_CAMERA_ORBIT;
-    if (!isManipulatingCamera)
-    {
-        bool isAdjustingBrushParameters = nextInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS
-            || nextInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF
-            || nextInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH;
-        bool isEditingHeightmap = nextInteraction->type == SCENE_VIEW_INTERACTION_TERRAIN_DRAW;
-        if (isAdjustingBrushParameters)
-        {
-            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA;
-            if (isEditingHeightmap)
-            {
-                compareToCommittedHeightmap = true;
-            }
-            else
-            {
-                renderPreviewHeightmap = true;
-            }
-        }
-        else if (isEditingHeightmap)
-        {
-            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
-        }
-        else
-        {
-            visualizationMode = BrushVisualizationMode::BRUSH_VIS_MODE_CURSOR_ONLY;
-        }
-    }
+    viewState->interactionState.nextHot = {};
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
@@ -1454,10 +1231,60 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     lightDir.z = 0.2f;
     rendererSetLighting(rq, &lightDir, true, true, true, true, true);
 
+    glm::vec3 up = glm::vec3(0, 1, 0);
+    float aspectRatio = (float)viewState->sceneRenderTarget->width / (float)viewState->sceneRenderTarget->height;
+    glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
+    glm::mat4 cameraTransform = projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
+    glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
+    glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
+    glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
+    glm::vec4 worldPos = inverseViewProjection * screenPos;
+    glm::vec3 mouseRayOrigin = viewState->cameraPos;
+    glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
+    glm::vec3 mouseWorldPos = glm::vec3(-10000, -10000, -10000);
+    bool wasMouseWorldPosFound = false;
+
     rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
+
+        Interaction editTerrainInteraction = {};
+        editTerrainInteraction.target.type = INTERACTION_TARGET_TERRAIN;
+
+        if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
+        {
+            float hitDist;
+            if (heightfieldIsRayIntersecting(
+                    tile->heightfield, mouseRayOrigin, mouseRayDir, &mouseWorldPos, &hitDist))
+            {
+                viewState->interactionState.nextHot = editTerrainInteraction;
+                wasMouseWorldPosFound = true;
+            }
+        }
+
+        BrushVisualizationMode visualizationMode = BRUSH_VIS_MODE_NONE;
+        bool renderPreviewHeightmap = false;
+        bool compareToCommittedHeightmap = false;
+        if (isInteractionActive(&viewState->interactionState, &editTerrainInteraction))
+        {
+            TerrainInteractionState *interactionState =
+                (TerrainInteractionState *)viewState->interactionState.active.state;
+            visualizationMode = interactionState->isAdjustingBrushParameters ? BRUSH_VIS_MODE_SHOW_HEIGHT_DELTA
+                                                                             : BRUSH_VIS_MODE_HIGHLIGHT_CURSOR;
+            if (interactionState->hasUncommittedChanges)
+            {
+                compareToCommittedHeightmap = true;
+            }
+            else
+            {
+                renderPreviewHeightmap = true;
+            }
+        }
+        else if (isInteractionHot(&viewState->interactionState, &editTerrainInteraction))
+        {
+            visualizationMode = BRUSH_VIS_MODE_CURSOR_ONLY;
+        }
 
         RenderTarget *activeHeightmap = renderPreviewHeightmap ? tile->previewHeightmap : tile->workingHeightmap;
         RenderTarget *refHeightmap =
@@ -1500,6 +1327,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
 
         glm::vec2 heightmapSize = glm::vec2(activeHeightmap->width, activeHeightmap->height);
+        glm::vec2 brushCursorPos = glm::vec2(mouseWorldPos.x, mouseWorldPos.z);
         rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
@@ -1507,50 +1335,17 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             state->previewDocState.materials, false, visualizationMode, brushCursorPos,
             state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
     }
-
     RenderEffect *rockEffect =
         rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
     rendererPushMeshes(
         rq, editorAssets->meshRock, sceneState->objectInstanceData, sceneState->objectInstanceCount, rockEffect);
     rendererDrawToTarget(rq, sceneRenderTarget);
 
-    rq = rendererCreateQueue(state->renderCtx, &memory->arena);
-    rendererClear(rq, 0, 0, 0, 1);
-
-    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS && state->uiState.selectedObjectCount > 0)
-    {
-        // selection render target is only 8 bits so mask out the 24 most significant bits
-        // otherwise IDs will get clamped
-        RenderEffect *mesh8BitIdEffect =
-            rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
-
-        uint32 objectsFound = 0;
-        for (uint32 i = 0;
-             i < state->previewDocState.objectInstanceCount && objectsFound < state->uiState.selectedObjectCount;
-             i++)
-        {
-            uint32 objectId = state->previewDocState.objectIds[i];
-            for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
-            {
-                if (state->uiState.selectedObjectIds[j] == objectId)
-                {
-                    rendererPushMeshes(
-                        rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
-
-                    objectsFound++;
-                    break;
-                }
-            }
-        }
-        assert(objectsFound == state->uiState.selectedObjectCount);
-    }
-    rendererDrawToTarget(rq, selectionRenderTarget);
-
-    rq = rendererCreateQueue(state->renderCtx, &memory->arena);
-    rendererClear(rq, 0, 0, 0, 1);
+    RenderEffect *compositeEffect = 0;
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
     {
+        rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+        rendererClear(rq, 0, 0, 0, 1);
         RenderEffect *mesh32BitIdEffect =
             rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
         rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
@@ -1559,23 +1354,79 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             rendererPushMeshes(
                 rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
         }
-    }
-    rendererDrawToTarget(rq, pickingRenderTarget);
+        rendererDrawToTarget(rq, pickingRenderTarget);
 
-    RenderEffect *effect =
-        rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
-    rendererSetEffectTexture(effect, 0, sceneRenderTarget->textureHandle);
-    rendererSetEffectTexture(effect, 1, sceneRenderTarget->depthTextureHandle);
-    rendererSetEffectTexture(effect, 2, selectionRenderTarget->textureHandle);
-    rendererSetEffectTexture(effect, 3, selectionRenderTarget->depthTextureHandle);
+        uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingRenderTarget->width);
+        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingRenderTarget->height);
+        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
+        GetPixelsResult pickedPixels =
+            rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
+        assert(pickedPixels.count == 1);
+        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
+        endTemporaryMemory(&pickingMemory);
+        viewState->interactionState.nextHot = {};
+        viewState->interactionState.nextHot.target.type = INTERACTION_TARGET_OBJECT;
+        viewState->interactionState.nextHot.target.id = (void *)pickedId;
+
+        rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+        rendererClear(rq, 0, 0, 0, 1);
+        RenderEffect *mesh8BitIdEffect =
+            rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        // selection render target is only 8 bits so mask out the 24 most significant bits to prevent IDs from
+        // getting clamped
+        rendererSetEffectUint(mesh8BitIdEffect, "idMask", 0x000000FF);
+        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
+        {
+            uint32 objectId = state->previewDocState.objectIds[i];
+
+            Interaction pickInteraction = {};
+            pickInteraction.target.type = INTERACTION_TARGET_OBJECT;
+            pickInteraction.target.id = (void *)objectId;
+
+#if 0
+            if (isInteractionHot(&viewState->interactionState, &pickInteraction))
+            {
+                rendererPushMeshes(
+                    rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
+            }
+#endif
+            for (uint32 j = 0; j < state->uiState.selectedObjectCount; j++)
+            {
+                if (state->uiState.selectedObjectIds[j] == objectId)
+                {
+                    rendererPushMeshes(
+                        rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh8BitIdEffect);
+                    break;
+                }
+            }
+        }
+        rendererDrawToTarget(rq, selectionRenderTarget);
+
+        compositeEffect =
+            rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectTexture(compositeEffect, 0, sceneRenderTarget->textureHandle);
+        rendererSetEffectTexture(compositeEffect, 1, sceneRenderTarget->depthTextureHandle);
+        rendererSetEffectTexture(compositeEffect, 2, selectionRenderTarget->textureHandle);
+        rendererSetEffectTexture(compositeEffect, 3, selectionRenderTarget->depthTextureHandle);
+    }
 
     rq = rendererCreateQueue(state->renderCtx, &memory->arena);
     rendererSetCameraOrtho(rq);
     rendererClear(rq, 0, 0, 0, 1);
-    rendererPushQuad(rq, getBounds(sceneRenderTarget), effect);
+    RenderQuad screenQuad = getBounds(sceneRenderTarget);
+    if (compositeEffect)
+    {
+        rendererPushQuad(rq, screenQuad, compositeEffect);
+    }
+    else
+    {
+        rendererPushTexturedQuad(rq, screenQuad, sceneRenderTarget->textureHandle, true);
+    }
     rendererDrawToScreen(rq, view->width, view->height);
 
     endTemporaryMemory(&renderQueueMemory);
+
+    sceneViewInteract(memory, viewState, input, wasMouseWorldPosFound ? &mouseWorldPos : 0);
 }
 
 API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)

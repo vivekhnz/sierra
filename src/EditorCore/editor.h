@@ -82,37 +82,36 @@ struct ObjectTransform
     glm::vec3 scale;
 };
 
-enum SceneViewInteractionType
+enum InteractionTargetType
 {
-    SCENE_VIEW_INTERACTION_NONE,
+    INTERACTION_TARGET_NONE,
 
-    SCENE_VIEW_INTERACTION_SET_CONTEXT,
-
-    SCENE_VIEW_INTERACTION_CAMERA_DOLLY,
-    SCENE_VIEW_INTERACTION_CAMERA_PAN,
-    SCENE_VIEW_INTERACTION_CAMERA_ORBIT,
-
-    SCENE_VIEW_INTERACTION_TERRAIN_DRAW,
-    SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_RADIUS,
-    SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_FALLOFF,
-    SCENE_VIEW_INTERACTION_TERRAIN_ADJUST_STRENGTH,
-    SCENE_VIEW_INTERACTION_TERRAIN_SET_TOOL,
-
-    SCENE_VIEW_INTERACTION_OBJECTS_SET_SELECTED,
-    SCENE_VIEW_INTERACTION_OBJECTS_TOGGLE_SELECTION_STATE,
-    SCENE_VIEW_INTERACTION_OBJECTS_CLEAR_SELECTION,
-    SCENE_VIEW_INTERACTION_OBJECTS_DELETE_SELECTION
+    INTERACTION_TARGET_CAMERA,
+    INTERACTION_TARGET_TERRAIN,
+    INTERACTION_TARGET_OBJECT
 };
-struct SceneViewInteraction
+struct InteractionTarget
 {
-    SceneViewInteractionType type;
-    bool completed;
+    InteractionTargetType type;
+    void *id;
+};
+struct Interaction
+{
+    InteractionTarget target;
+    void *state;
+};
+struct InteractionState
+{
+    Interaction hot;
+    Interaction nextHot;
+    Interaction active;
+    MemoryArena activeArena;
+};
 
-    union
-    {
-        glm::vec3 cursorWorldPos;
-        uint32 id;
-    };
+struct TerrainInteractionState
+{
+    bool hasUncommittedChanges;
+    bool isAdjustingBrushParameters;
 };
 struct SceneViewState
 {
@@ -126,8 +125,7 @@ struct SceneViewState
     RenderTarget *selectionRenderTarget;
     RenderTarget *pickingRenderTarget;
 
-    SceneViewInteraction interaction;
-    SceneViewInteraction nextInteraction;
+    InteractionState interactionState;
 };
 
 struct TerrainTile
