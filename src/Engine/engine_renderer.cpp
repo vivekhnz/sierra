@@ -226,25 +226,44 @@ void *pushRenderCommandInternal(RenderQueue *rq, RenderQueueCommandType type, ui
 }
 #define pushRenderCommand(rq, type) (type *)pushRenderCommandInternal(rq, RENDER_CMD_##type, sizeof(type))
 
+glm::mat4 getOrthoTransform(RenderOutput *output, glm::vec2 cameraPos)
+{
+    // map from ([0 - width], [0 - height]) -> ([-1 - 1], [-1 - 1])
+    glm::mat4 result = glm::identity<glm::mat4>();
+    result = glm::scale(result, glm::vec3(2.0f / output->width, 2.0f / output->height, 1));
+    result = glm::translate(
+        result, glm::vec3(-((output->width * 0.5f) + cameraPos.x), -((output->height * 0.5f) + cameraPos.y), 0));
+
+    return result;
+}
 RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
+    cmd->transform = getOrthoTransform(&rq->output, glm::vec2(0, 0));
     cmd->isOrthographic = true;
-    cmd->cameraPos = glm::vec3(0, 0, 0);
+
+    return cmd->transform;
 }
 RENDERER_SET_CAMERA_ORTHO_OFFSET(rendererSetCameraOrthoOffset)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
+    cmd->transform = getOrthoTransform(&rq->output, cameraPos);
     cmd->isOrthographic = true;
-    cmd->cameraPos = glm::vec3(cameraPos.x, cameraPos.y, 0);
+
+    return cmd->transform;
 }
 RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
+    float nearPlane = 0.1f;
+    float farPlane = 10000;
+    glm::vec3 up = glm::vec3(0, 1, 0);
+    float aspectRatio = (float)rq->output.width / (float)rq->output.height;
+    glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
+    cmd->transform = projection * glm::lookAt(cameraPos, lookAt, up);
     cmd->isOrthographic = false;
-    cmd->cameraPos = cameraPos;
-    cmd->lookAt = lookAt;
-    cmd->fov = fov;
+
+    return cmd->transform;
 }
 
 RENDERER_SET_LIGHTING(rendererSetLighting)

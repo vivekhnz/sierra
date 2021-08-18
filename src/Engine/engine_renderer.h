@@ -55,10 +55,10 @@ struct RenderOutput
 // render queue
 
 #define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena, RenderOutput output)
-#define RENDERER_SET_CAMERA_ORTHO(name) void name(RenderQueue *rq)
-#define RENDERER_SET_CAMERA_ORTHO_OFFSET(name) void name(RenderQueue *rq, glm::vec2 cameraPos)
+#define RENDERER_SET_CAMERA_ORTHO(name) glm::mat4 name(RenderQueue *rq)
+#define RENDERER_SET_CAMERA_ORTHO_OFFSET(name) glm::mat4 name(RenderQueue *rq, glm::vec2 cameraPos)
 #define RENDERER_SET_CAMERA_PERSP(name)                                                                           \
-    void name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
+    glm::mat4 name(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
 #define RENDERER_SET_LIGHTING(name)                                                                               \
     void name(RenderQueue *rq, glm::vec4 *lightDir, bool isLightingEnabled, bool isTextureEnabled,                \
         bool isNormalMapEnabled, bool isAOMapEnabled, bool isDisplacementMapEnabled)

@@ -897,26 +897,14 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             SetCameraCommand *cmd = (SetCameraCommand *)commandData;
 
             OpenGlCameraState camera = {};
+            camera.transform = cmd->transform;
             if (cmd->isOrthographic)
             {
-                // map from ([0 - width], [0 - height]) -> ([-1 - 1], [-1 - 1])
-                camera.transform = glm::identity<glm::mat4>();
-                camera.transform = glm::scale(camera.transform, glm::vec3(2.0f / width, 2.0f / height, 1));
-                camera.transform = glm::translate(camera.transform,
-                    glm::vec3(-((width * 0.5f) + cmd->cameraPos.x), -((height * 0.5f) + cmd->cameraPos.y), 0));
-
                 glDisable(GL_DEPTH_TEST);
                 glDepthFunc(GL_ALWAYS);
             }
             else
             {
-                float nearPlane = 0.1f;
-                float farPlane = 10000;
-                glm::vec3 up = glm::vec3(0, 1, 0);
-                float aspectRatio = (float)width / (float)height;
-                glm::mat4 projection = glm::perspective(cmd->fov, aspectRatio, nearPlane, farPlane);
-                camera.transform = projection * glm::lookAt(cmd->cameraPos, cmd->lookAt, up);
-
                 glEnable(GL_DEPTH_TEST);
                 glDepthFunc(GL_LESS);
             }

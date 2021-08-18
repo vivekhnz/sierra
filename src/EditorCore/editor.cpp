@@ -1227,7 +1227,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(sceneRenderTarget));
-    rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
+    glm::mat4 cameraTransform =
+        rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
 
     glm::vec4 lightDir = glm::vec4(0);
     lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
@@ -1235,10 +1236,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     lightDir.z = 0.2f;
     rendererSetLighting(rq, &lightDir, true, true, true, true, true);
 
-    glm::vec3 up = glm::vec3(0, 1, 0);
-    float aspectRatio = (float)viewState->sceneRenderTarget->width / (float)viewState->sceneRenderTarget->height;
-    glm::mat4 projection = glm::perspective(glm::pi<float>() / 4.0f, aspectRatio, 0.1f, 10000.0f);
-    glm::mat4 cameraTransform = projection * glm::lookAt(viewState->cameraPos, viewState->cameraLookAt, up);
     glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
     glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
     glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
