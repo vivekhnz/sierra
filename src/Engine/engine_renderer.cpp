@@ -20,6 +20,7 @@ struct RenderQueue
 {
     MemoryArena *arena;
     RenderContext *ctx;
+    RenderOutput output;
 
     RenderQueueCommandHeader *firstCommand;
     RenderQueueCommandHeader *lastCommand;
@@ -198,6 +199,7 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     *result = {};
     result->arena = arena;
     result->ctx = ctx;
+    result->output = output;
 
     return result;
 }
@@ -391,26 +393,15 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->cursorFalloff = cursorFalloff;
 }
 
-DispatchedRenderQueue dispatch(RenderQueue *rq)
+RENDERER_DRAW(rendererDraw)
 {
-    DispatchedRenderQueue result;
-    result.ctx = rq->ctx->internalCtx;
-    result.quads = rq->ctx->quads;
-    result.quadCount = rq->quadCount;
-    result.meshInstances = rq->ctx->meshInstances;
-    result.meshInstanceCount = rq->meshInstanceCount;
-    result.firstCommand = rq->firstCommand;
+    DispatchedRenderQueue dispatched;
+    dispatched.ctx = rq->ctx->internalCtx;
+    dispatched.quads = rq->ctx->quads;
+    dispatched.quadCount = rq->quadCount;
+    dispatched.meshInstances = rq->ctx->meshInstances;
+    dispatched.meshInstanceCount = rq->meshInstanceCount;
+    dispatched.firstCommand = rq->firstCommand;
 
-    return result;
-}
-
-RENDERER_DRAW_TO_TARGET(rendererDrawToTarget)
-{
-    DispatchedRenderQueue dispatched = dispatch(rq);
-    return drawToTarget(&dispatched, target->width, target->height, target);
-}
-RENDERER_DRAW_TO_SCREEN(rendererDrawToScreen)
-{
-    DispatchedRenderQueue dispatched = dispatch(rq);
-    return drawToTarget(&dispatched, width, height, 0);
+    return drawToOutput(&dispatched, &rq->output);
 }

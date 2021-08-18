@@ -5,6 +5,17 @@ struct RenderContext;
 struct RenderEffect;
 struct RenderQueue;
 
+struct RenderOutput
+{
+    uint32 width;
+    uint32 height;
+    RenderTarget *target;
+};
+#define getScreenRenderOutput(width, height)                                                                      \
+    {                                                                                                             \
+        width, height, 0                                                                                          \
+    }
+
 #define RENDERER_INITIALIZE(name) RenderContext *name(MemoryArena *arena)
 
 // textures
@@ -26,6 +37,10 @@ struct RenderQueue;
     {                                                                                                             \
         0, 0, (float)(renderTarget->width), (float)(renderTarget->height)                                         \
     }
+#define getRenderOutput(renderTarget)                                                                             \
+    {                                                                                                             \
+        renderTarget->width, renderTarget->height, renderTarget                                                   \
+    }
 
 // effects
 
@@ -39,7 +54,7 @@ struct RenderQueue;
 
 // render queue
 
-#define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena)
+#define RENDERER_CREATE_QUEUE(name) RenderQueue *name(RenderContext *ctx, MemoryArena *arena, RenderOutput output)
 #define RENDERER_SET_CAMERA_ORTHO(name) void name(RenderQueue *rq)
 #define RENDERER_SET_CAMERA_ORTHO_OFFSET(name) void name(RenderQueue *rq, glm::vec2 cameraPos)
 #define RENDERER_SET_CAMERA_PERSP(name)                                                                           \
@@ -65,7 +80,6 @@ struct RenderQueue;
         TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
         uint32 materialCount, RenderTerrainMaterial *materials, bool isWireframe, uint32 visualizationMode,       \
         glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
-#define RENDERER_DRAW_TO_TARGET(name) bool name(RenderQueue *rq, RenderTarget *target)
-#define RENDERER_DRAW_TO_SCREEN(name) bool name(RenderQueue *rq, uint32 width, uint32 height)
+#define RENDERER_DRAW(name) bool name(RenderQueue *rq)
 
 #endif

@@ -857,10 +857,14 @@ bool applyEffect(RenderEffect *effect)
 
     return !isMissingResources;
 }
-bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target)
+bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rq->ctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
+
+    uint32 width = output->width;
+    uint32 height = output->height;
+    RenderTarget *target = output->target;
 
     if (target)
     {

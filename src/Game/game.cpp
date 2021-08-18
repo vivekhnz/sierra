@@ -323,7 +323,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
     glm::vec2 heightmapSize = glm::vec2(2048, 2048);
 
-    RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena);
+    RenderQueue *rq = rendererCreateQueue(
+        state->renderCtx, &memory->arena, getScreenRenderOutput(viewport.width, viewport.height));
     rendererSetCameraPersp(rq, *cameraPos, *cameraLookAt, fov);
     rendererSetLighting(rq, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled, state->isNormalMapEnabled,
         state->isAOMapEnabled, state->isDisplacementMapEnabled);
@@ -331,7 +332,7 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
         state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->materials,
         state->isWireframeMode, 0, glm::vec2(0), 0, 0);
-    rendererDrawToScreen(rq, viewport.width, viewport.height);
+    rendererDraw(rq);
 
     endTemporaryMemory(&renderQueueMemory);
 }

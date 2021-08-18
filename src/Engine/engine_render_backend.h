@@ -182,6 +182,6 @@ void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format);
 void updateTextureSlot(TextureSlotHandle handle, void *pixels);
 
-bool drawToTarget(DispatchedRenderQueue *rq, uint32 width, uint32 height, RenderTarget *target);
+bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output);
 
 #endif
