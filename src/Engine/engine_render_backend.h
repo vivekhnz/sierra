@@ -69,7 +69,6 @@ struct RenderQueueCommandHeader
 struct SetCameraCommand
 {
     glm::mat4 transform;
-    bool isOrthographic;
 };
 struct SetLightingCommand
 {

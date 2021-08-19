@@ -9,12 +9,6 @@ struct RenderContext
 {
     MemoryArena *arena;
     RenderBackendContext internalCtx;
-
-    RenderQuad *quads;
-    uint32 maxQuads;
-
-    RenderMeshInstance *meshInstances;
-    uint32 maxMeshInstances;
 };
 struct RenderQueue
 {
@@ -25,7 +19,12 @@ struct RenderQueue
     RenderQueueCommandHeader *firstCommand;
     RenderQueueCommandHeader *lastCommand;
 
+    RenderQuad *quads;
+    uint32 maxQuads;
     uint32 quadCount;
+
+    RenderMeshInstance *meshInstances;
+    uint32 maxMeshInstances;
     uint32 meshInstanceCount;
 };
 
@@ -35,12 +34,6 @@ RENDERER_INITIALIZE(rendererInitialize)
     *ctx = {};
     ctx->arena = arena;
     ctx->internalCtx = initializeRenderBackend(arena);
-
-    ctx->maxQuads = 65536;
-    ctx->quads = pushArray(arena, RenderQuad, ctx->maxQuads);
-
-    ctx->maxMeshInstances = 4096;
-    ctx->meshInstances = pushArray(arena, RenderMeshInstance, ctx->maxMeshInstances);
 
     return ctx;
 }
@@ -201,6 +194,12 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     result->ctx = ctx;
     result->output = output;
 
+    result->maxQuads = 65536;
+    result->quads = pushArray(arena, RenderQuad, result->maxQuads);
+
+    result->maxMeshInstances = 4096;
+    result->meshInstances = pushArray(arena, RenderMeshInstance, result->maxMeshInstances);
+
     return result;
 }
 
@@ -240,7 +239,6 @@ RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     cmd->transform = getOrthoTransform(&rq->output, glm::vec2(0, 0));
-    cmd->isOrthographic = true;
 
     return cmd->transform;
 }
@@ -248,7 +246,6 @@ RENDERER_SET_CAMERA_ORTHO_OFFSET(rendererSetCameraOrthoOffset)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     cmd->transform = getOrthoTransform(&rq->output, cameraPos);
-    cmd->isOrthographic = true;
 
     return cmd->transform;
 }
@@ -261,7 +258,6 @@ RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
     float aspectRatio = (float)rq->output.width / (float)rq->output.height;
     glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);
     cmd->transform = projection * glm::lookAt(cameraPos, lookAt, up);
-    cmd->isOrthographic = false;
 
     return cmd->transform;
 }
@@ -290,7 +286,7 @@ void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffec
 {
     if (quadCount > 0)
     {
-        assert(rq->quadCount + quadCount < rq->ctx->maxQuads);
+        assert(rq->quadCount + quadCount < rq->maxQuads);
 
         DrawQuadsCommand *cmd = pushRenderCommand(rq, DrawQuadsCommand);
         cmd->effect = effect;
@@ -298,7 +294,7 @@ void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffec
         cmd->instanceOffset = rq->quadCount;
         cmd->instanceCount = quadCount;
 
-        memcpy(rq->ctx->quads + rq->quadCount, quads, sizeof(RenderQuad) * quadCount);
+        memcpy(rq->quads + rq->quadCount, quads, sizeof(RenderQuad) * quadCount);
         rq->quadCount += quadCount;
     }
 }
@@ -329,7 +325,7 @@ RENDERER_PUSH_QUADS(rendererPushQuads)
 
 RENDERER_PUSH_MESHES(rendererPushMeshes)
 {
-    assert(rq->meshInstanceCount + instanceCount < rq->ctx->maxMeshInstances);
+    assert(rq->meshInstanceCount + instanceCount < rq->maxMeshInstances);
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
@@ -346,7 +342,7 @@ RENDERER_PUSH_MESHES(rendererPushMeshes)
         }
     }
 
-    memcpy(rq->ctx->meshInstances + rq->meshInstanceCount, instances, sizeof(RenderMeshInstance) * instanceCount);
+    memcpy(rq->meshInstances + rq->meshInstanceCount, instances, sizeof(RenderMeshInstance) * instanceCount);
     rq->meshInstanceCount += instanceCount;
 }
 
@@ -416,9 +412,9 @@ RENDERER_DRAW(rendererDraw)
 {
     DispatchedRenderQueue dispatched;
     dispatched.ctx = rq->ctx->internalCtx;
-    dispatched.quads = rq->ctx->quads;
+    dispatched.quads = rq->quads;
     dispatched.quadCount = rq->quadCount;
-    dispatched.meshInstances = rq->ctx->meshInstances;
+    dispatched.meshInstances = rq->meshInstances;
     dispatched.meshInstanceCount = rq->meshInstanceCount;
     dispatched.firstCommand = rq->firstCommand;
 

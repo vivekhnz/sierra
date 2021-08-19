@@ -1342,16 +1342,35 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
-    RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(sceneRenderTarget));
-    viewState->cameraTransform =
-        rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
-    viewState->invCameraTransform = glm::inverse(viewState->cameraTransform);
+    RenderQueue *sceneRq =
+        rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(sceneRenderTarget));
+    rendererClear(sceneRq, 0.3f, 0.3f, 0.3f, 1);
+
+    RenderQueue *pickingRq =
+        rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(pickingRenderTarget));
+    rendererClear(pickingRq, 0, 0, 0, 1);
+
+    RenderQueue *selectionRq =
+        rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(selectionRenderTarget));
+    rendererClear(selectionRq, 0, 0, 0, 1);
+
+    RenderQueue *compositeRq =
+        rendererCreateQueue(state->renderCtx, &memory->arena, getScreenRenderOutput(view->width, view->height));
+    rendererClear(compositeRq, 0, 0, 0, 1);
 
     glm::vec4 lightDir = glm::vec4(0);
     lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
     lightDir.y = cos(state->uiState.sceneLightDirection * glm::pi<float>() * 0.5);
     lightDir.z = 0.2f;
-    rendererSetLighting(rq, &lightDir, true, true, true, true, true);
+    rendererSetLighting(sceneRq, &lightDir, true, true, true, true, true);
+
+    float fov = glm::pi<float>() / 4.0f;
+    viewState->cameraTransform =
+        rendererSetCameraPersp(sceneRq, viewState->cameraPos, viewState->cameraLookAt, fov);
+    viewState->invCameraTransform = glm::inverse(viewState->cameraTransform);
+    rendererSetCameraPersp(pickingRq, viewState->cameraPos, viewState->cameraLookAt, fov);
+    rendererSetCameraPersp(selectionRq, viewState->cameraPos, viewState->cameraLookAt, fov);
+    rendererSetCameraPersp(compositeRq, viewState->cameraPos, viewState->cameraLookAt, fov);
 
     glm::vec2 mousePosNdc =
         glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
@@ -1360,7 +1379,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     glm::vec3 mouseWorldPos = glm::vec3(-10000, -10000, -10000);
     bool wasMouseWorldPosFound = false;
 
-    rendererClear(rq, 0.3f, 0.3f, 0.3f, 1);
+    // draw terrain
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
@@ -1444,49 +1463,28 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
         glm::vec2 heightmapSize = glm::vec2(activeHeightmap->width, activeHeightmap->height);
         glm::vec2 brushCursorPos = glm::vec2(mouseWorldPos.x, mouseWorldPos.z);
-        rendererPushTerrain(rq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
+        rendererPushTerrain(sceneRq, tile->heightfield, heightmapSize, editorAssets->terrainShaderTextured,
             activeHeightmap->textureHandle, refHeightmap->textureHandle, xAdjActiveHeightmapTexture,
             xAdjRefHeightmapTexture, yAdjActiveHeightmapTexture, yAdjRefHeightmapTexture,
             oppActiveHeightmapTexture, oppRefHeightmapTexture, state->previewDocState.materialCount,
             state->previewDocState.materials, false, visualizationMode, brushCursorPos,
             state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
     }
+
+    // draw all object instances
     RenderEffect *rockEffect =
         rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
-    rendererPushMeshes(
-        rq, editorAssets->meshRock, sceneState->objectInstanceData, sceneState->objectInstanceCount, rockEffect);
-    rendererDraw(rq);
+    rendererPushMeshes(sceneRq, editorAssets->meshRock, sceneState->objectInstanceData,
+        sceneState->objectInstanceCount, rockEffect);
 
-    RenderEffect *compositeEffect = 0;
+    RenderEffect *mesh32BitIdEffect =
+        rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
+    rendererPushMeshes(pickingRq, editorAssets->meshRock, sceneState->objectInstanceData,
+        sceneState->objectInstanceCount, mesh32BitIdEffect);
+
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
     {
-        rq = rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(pickingRenderTarget));
-        rendererClear(rq, 0, 0, 0, 1);
-        RenderEffect *mesh32BitIdEffect =
-            rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
-        for (uint32 i = 0; i < state->previewDocState.objectInstanceCount; i++)
-        {
-            rendererPushMeshes(
-                rq, editorAssets->meshRock, &sceneState->objectInstanceData[i], 1, mesh32BitIdEffect);
-        }
-        rendererDraw(rq);
-
-        uint32 cursorX = (uint32)mousePosScreen.x;
-        uint32 cursorY = (uint32)mousePosScreen.y;
-        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
-        GetPixelsResult pickedPixels =
-            rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
-        assert(pickedPixels.count == 1);
-        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
-        endTemporaryMemory(&pickingMemory);
-        viewState->interactionState.nextHot = {};
-        viewState->interactionState.nextHot.target.type = INTERACTION_TARGET_OBJECT;
-        viewState->interactionState.nextHot.target.id = (void *)((uint64)pickedId);
-
-        rq = rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(selectionRenderTarget));
-        rendererClear(rq, 0, 0, 0, 1);
-
         /*
          * The selection render target is only 8 bits per pixel so we need to mask out the 24 most significant
          * bits to prevent OpenGL from clamping our IDs. We also mask out the 25th most significant bit as we
@@ -1495,6 +1493,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         RenderEffect *mesh7BitIdEffect =
             rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
         rendererSetEffectUint(mesh7BitIdEffect, "idMask", 0x0000007F);
+
+        // draw selected object instances
         for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
         {
             uint32 objectId = state->uiState.selectedObjectIds[i];
@@ -1503,14 +1503,14 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 if (objectId == state->previewDocState.objectIds[j])
                 {
                     RenderMeshInstance *instance = &sceneState->objectInstanceData[j];
-                    rendererPushMeshes(rq, editorAssets->meshRock, instance, 1, mesh7BitIdEffect);
+                    rendererPushMeshes(selectionRq, editorAssets->meshRock, instance, 1, mesh7BitIdEffect);
                     break;
                 }
             }
         }
 
+        // draw hot object instance
         RenderMeshInstance hotInstance = {};
-
         if (viewState->interactionState.hot.target.type == INTERACTION_TARGET_OBJECT
             && viewState->interactionState.hot.target.id)
         {
@@ -1527,22 +1527,93 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                     break;
                 }
             }
-
             if (hotInstance.id)
             {
                 RenderEffect *mesh8BitIdEffect =
                     rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
                 rendererSetEffectUint(mesh7BitIdEffect, "idMask", 0x000000FF);
-                rendererPushMeshes(rq, editorAssets->meshRock, &hotInstance, 1, mesh8BitIdEffect);
+                rendererPushMeshes(selectionRq, editorAssets->meshRock, &hotInstance, 1, mesh8BitIdEffect);
             }
         }
-        rendererDraw(rq);
 
+        // identify hot object
+        rendererDraw(pickingRq);
+        uint32 cursorX = (uint32)mousePosScreen.x;
+        uint32 cursorY = (uint32)mousePosScreen.y;
+        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
+        GetPixelsResult pickedPixels =
+            rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
+        assert(pickedPixels.count == 1);
+        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
+        endTemporaryMemory(&pickingMemory);
+        viewState->interactionState.nextHot = {};
+        viewState->interactionState.nextHot.target.type = INTERACTION_TARGET_OBJECT;
+        viewState->interactionState.nextHot.target.id = (void *)((uint64)pickedId);
+    }
+
+    // draw 2D overlays
+    rendererSetCameraOrtho(sceneRq);
+    rendererSetCameraOrtho(pickingRq);
+    rendererSetCameraOrtho(selectionRq);
+    rendererSetCameraOrtho(compositeRq);
+    if (uiState->currentContext == EDITOR_CTX_OBJECTS)
+    {
+        // draw manipulator
+        if (state->uiState.selectedObjectCount > 0)
+        {
+            // calculate manipulator handle position
+            glm::vec3 manipulatorHandlePos = glm::vec3(0);
+            uint32 foundObjects = 0;
+            for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
+            {
+                uint32 objectId = state->uiState.selectedObjectIds[i];
+                for (uint32 j = 0; j < state->previewDocState.objectInstanceCount; j++)
+                {
+                    if (objectId == state->previewDocState.objectIds[j])
+                    {
+                        ObjectTransform *instance = &state->previewDocState.objectTransforms[j];
+                        foundObjects++;
+                        manipulatorHandlePos += instance->position;
+                        break;
+                    }
+                }
+            }
+            manipulatorHandlePos /= (float)foundObjects;
+
+            float handleDim = 8;
+            glm::vec2 handleScreenPos = worldToScreen(viewState, manipulatorHandlePos);
+            RenderQuad handleQuad = {handleScreenPos.x - (handleDim * 0.5f),
+                handleScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
+
+            Interaction dragHandleInteraction = {};
+            dragHandleInteraction.target.type = INTERACTION_TARGET_MANIPULATOR;
+
+            glm::vec3 handleColor = glm::vec3(1, 1, 1);
+            if (isInteractionHot(&viewState->interactionState, &dragHandleInteraction))
+            {
+                handleColor = glm::vec3(1, 1, 0);
+            }
+            rendererPushColoredQuad(sceneRq, handleQuad, handleColor);
+
+            if (mousePosScreen.x >= handleQuad.x && mousePosScreen.x < handleQuad.x + handleQuad.width
+                && mousePosScreen.y >= handleQuad.y && mousePosScreen.y < handleQuad.y + handleQuad.height)
+            {
+                viewState->interactionState.nextHot = dragHandleInteraction;
+            }
+        }
+    }
+
+    // composite final scene
+    rendererDraw(sceneRq);
+    RenderEffect *compositeEffect = 0;
+    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
+    {
 #if 0
         compositeEffect =
             rendererCreateEffect(&memory->arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectTexture(compositeEffect, 0, selectionRenderTarget->textureHandle);
+        rendererSetEffectTexture(compositeEffect, 0, pickingRenderTarget->textureHandle);
 #else
+        rendererDraw(selectionRq);
         compositeEffect =
             rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
         rendererSetEffectTexture(compositeEffect, 0, sceneRenderTarget->textureHandle);
@@ -1552,61 +1623,17 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 #endif
     }
 
-    rq = rendererCreateQueue(state->renderCtx, &memory->arena, getScreenRenderOutput(view->width, view->height));
-    rendererSetCameraOrtho(rq);
-    rendererClear(rq, 0, 0, 0, 1);
+    rendererSetCameraOrtho(compositeRq);
     RenderQuad screenQuad = getBounds(sceneRenderTarget);
     if (compositeEffect)
     {
-        rendererPushQuad(rq, screenQuad, compositeEffect);
+        rendererPushQuad(compositeRq, screenQuad, compositeEffect);
     }
     else
     {
-        rendererPushTexturedQuad(rq, screenQuad, sceneRenderTarget->textureHandle, true);
+        rendererPushTexturedQuad(compositeRq, screenQuad, sceneRenderTarget->textureHandle, true);
     }
-    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS && state->uiState.selectedObjectCount > 0)
-    {
-        // calculate manipulator handle position
-        glm::vec3 manipulatorHandlePos = glm::vec3(0);
-        uint32 foundObjects = 0;
-        for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
-        {
-            uint32 objectId = state->uiState.selectedObjectIds[i];
-            for (uint32 j = 0; j < state->previewDocState.objectInstanceCount; j++)
-            {
-                if (objectId == state->previewDocState.objectIds[j])
-                {
-                    ObjectTransform *instance = &state->previewDocState.objectTransforms[j];
-                    foundObjects++;
-                    manipulatorHandlePos += instance->position;
-                    break;
-                }
-            }
-        }
-        manipulatorHandlePos /= (float)foundObjects;
-
-        float handleDim = 8;
-        glm::vec2 handleScreenPos = worldToScreen(viewState, manipulatorHandlePos);
-        RenderQuad handleQuad = {
-            handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
-
-        Interaction dragHandleInteraction = {};
-        dragHandleInteraction.target.type = INTERACTION_TARGET_MANIPULATOR;
-
-        if (mousePosScreen.x >= handleQuad.x && mousePosScreen.x < handleQuad.x + handleQuad.width
-            && mousePosScreen.y >= handleQuad.y && mousePosScreen.y < handleQuad.y + handleQuad.height)
-        {
-            viewState->interactionState.nextHot = dragHandleInteraction;
-        }
-
-        glm::vec3 handleColor = glm::vec3(1, 1, 1);
-        if (isInteractionHot(&viewState->interactionState, &dragHandleInteraction))
-        {
-            handleColor = glm::vec3(1, 1, 0);
-        }
-        rendererPushColoredQuad(rq, handleQuad, handleColor);
-    }
-    rendererDraw(rq);
+    rendererDraw(compositeRq);
 
     endTemporaryMemory(&renderQueueMemory);
 

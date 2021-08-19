@@ -883,6 +883,8 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
     glBindVertexArray(ctx->globalVertexArrayId);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
 
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
@@ -898,16 +900,6 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
 
             OpenGlCameraState camera = {};
             camera.transform = cmd->transform;
-            if (cmd->isOrthographic)
-            {
-                glDisable(GL_DEPTH_TEST);
-                glDepthFunc(GL_ALWAYS);
-            }
-            else
-            {
-                glEnable(GL_DEPTH_TEST);
-                glDepthFunc(GL_LESS);
-            }
 
             glBindBuffer(GL_UNIFORM_BUFFER, ctx->cameraUniformBufferId);
             glBufferSubData(GL_UNIFORM_BUFFER, 0, sizeof(camera), &camera);
