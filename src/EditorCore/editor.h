@@ -88,7 +88,8 @@ enum InteractionTargetType
 
     INTERACTION_TARGET_CAMERA,
     INTERACTION_TARGET_TERRAIN,
-    INTERACTION_TARGET_OBJECT
+    INTERACTION_TARGET_OBJECT,
+    INTERACTION_TARGET_MANIPULATOR
 };
 struct InteractionTarget
 {
@@ -113,6 +114,15 @@ struct TerrainInteractionState
     bool hasUncommittedChanges;
     bool isAdjustingBrushParameters;
 };
+struct ManipulatorInteractionState
+{
+    float distanceToHandle;
+    glm::vec3 initialWorldPos;
+
+    Transaction *tx;
+    uint32 objectCount;
+    uint32 *objectIds;
+};
 struct SceneViewState
 {
     float orbitCameraDistance;
@@ -120,6 +130,9 @@ struct SceneViewState
     float orbitCameraPitch;
     glm::vec3 cameraPos;
     glm::vec3 cameraLookAt;
+
+    glm::mat4 cameraTransform;
+    glm::mat4 invCameraTransform;
 
     RenderTarget *sceneRenderTarget;
     RenderTarget *selectionRenderTarget;
@@ -215,14 +228,6 @@ struct EditorState
         uint32 instanceCount;
         float startingHeight;
     } activeBrushStroke;
-
-    struct
-    {
-        Transaction *tx;
-        uint32 objectIds[MAX_OBJECT_INSTANCES];
-        uint32 objectCount;
-        glm::vec3 delta;
-    } moveObjectTx;
 
     // state related to the user interface e.g. current brush tool, brush radius etc.
     // can be directly read from and written to by the editor UI

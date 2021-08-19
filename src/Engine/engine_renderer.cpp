@@ -256,7 +256,7 @@ RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     float nearPlane = 0.1f;
-    float farPlane = 10000;
+    float farPlane = 100000;
     glm::vec3 up = glm::vec3(0, 1, 0);
     float aspectRatio = (float)rq->output.width / (float)rq->output.height;
     glm::mat4 projection = glm::perspective(fov, aspectRatio, nearPlane, farPlane);

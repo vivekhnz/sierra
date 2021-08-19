@@ -835,6 +835,33 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 #endif
 }
 
+glm::vec3 ndcToWorld(SceneViewState *viewState, glm::vec2 ndc, float distance)
+{
+    glm::vec4 screenPos = glm::vec4(ndc.x, ndc.y, 1.0f, 1.0f);
+    glm::vec4 worldPos = viewState->invCameraTransform * screenPos;
+    glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
+    glm::vec3 result = dir * distance;
+    return result;
+}
+glm::vec2 worldToNdc(SceneViewState *viewState, glm::vec3 world)
+{
+    glm::vec4 projectedPos = viewState->cameraTransform * glm::vec4(world, 1);
+    glm::vec2 result = (glm::vec2(projectedPos.x, projectedPos.y) / projectedPos.w);
+    return result;
+}
+glm::vec2 ndcToScreen(SceneViewState *viewState, glm::vec2 ndc)
+{
+    glm::vec2 result = (ndc + glm::vec2(1, 1))
+        * glm::vec2(viewState->sceneRenderTarget->width * 0.5f, viewState->sceneRenderTarget->height * 0.5f);
+    return result;
+}
+glm::vec2 worldToScreen(SceneViewState *viewState, glm::vec3 world)
+{
+    glm::vec2 ndcPos = worldToNdc(viewState, world);
+    glm::vec2 result = ndcToScreen(viewState, ndcPos);
+    return result;
+}
+
 uint64 getInteractionTriggerButtons(InteractionTargetType target)
 {
     uint64 result = 0;
@@ -850,6 +877,9 @@ uint64 getInteractionTriggerButtons(InteractionTargetType target)
     case INTERACTION_TARGET_OBJECT:
         result = EDITOR_INPUT_MOUSE_LEFT;
         break;
+    case INTERACTION_TARGET_MANIPULATOR:
+        result = EDITOR_INPUT_MOUSE_LEFT;
+        break;
     }
 
     return result;
@@ -860,6 +890,7 @@ void sceneViewEndInteraction(EditorMemory *memory,
     glm::vec3 *mouseWorldPos,
     bool wasCancelled)
 {
+    EditorState *state = (EditorState *)memory->arena.baseAddress;
     switch (viewState->interactionState.active.target.type)
     {
     case INTERACTION_TARGET_TERRAIN:
@@ -879,6 +910,20 @@ void sceneViewEndInteraction(EditorMemory *memory,
         else
         {
             commitChanges(memory, brushCursorPosPtr);
+        }
+    }
+    break;
+    case INTERACTION_TARGET_MANIPULATOR:
+    {
+        ManipulatorInteractionState *interactionState =
+            (ManipulatorInteractionState *)viewState->interactionState.active.state;
+        if (wasCancelled)
+        {
+            discardTransaction(interactionState->tx);
+        }
+        else
+        {
+            commitTransaction(interactionState->tx);
         }
     }
     break;
@@ -998,6 +1043,35 @@ void sceneViewContinueInteraction(
         }
     }
     break;
+    case INTERACTION_TARGET_MANIPULATOR:
+    {
+        ManipulatorInteractionState *interactionState =
+            (ManipulatorInteractionState *)viewState->interactionState.active.state;
+
+        glm::vec2 mousePosNdc =
+            glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
+        glm::vec3 mouseWorldP = ndcToWorld(viewState, mousePosNdc, interactionState->distanceToHandle);
+        glm::vec3 delta = mouseWorldP - interactionState->initialWorldPos;
+
+        clearTransaction(interactionState->tx);
+        for (uint32 i = 0; i < interactionState->objectCount; i++)
+        {
+            uint32 objectId = interactionState->objectIds[i];
+            for (uint32 j = 0; j < state->docState.objectInstanceCount; j++)
+            {
+                if (state->docState.objectIds[j] == objectId)
+                {
+                    ObjectTransform *transform = &state->docState.objectTransforms[j];
+                    glm::vec3 newP = transform->position + delta;
+                    setProperty(interactionState->tx, objectId, PROP_OBJ_POSITION_X, newP.x);
+                    setProperty(interactionState->tx, objectId, PROP_OBJ_POSITION_Y, newP.y);
+                    setProperty(interactionState->tx, objectId, PROP_OBJ_POSITION_Z, newP.z);
+                    break;
+                }
+            }
+        }
+    }
+    break;
     }
 }
 void sceneViewBeginInteraction(
@@ -1061,6 +1135,48 @@ void sceneViewBeginInteraction(
             // clear selection
             uiState->selectedObjectCount = 0;
         }
+    }
+    break;
+    case INTERACTION_TARGET_MANIPULATOR:
+    {
+        ManipulatorInteractionState *interactionState =
+            pushStruct(&viewState->interactionState.activeArena, ManipulatorInteractionState);
+        viewState->interactionState.hot.state = interactionState;
+
+        interactionState->tx = beginTransaction(&state->transactions);
+        assert(interactionState->tx);
+
+        // record the IDs of the selected objects and calculate the position of the handle
+        interactionState->objectCount = 0;
+        interactionState->objectIds =
+            pushArray(&viewState->interactionState.activeArena, uint32, state->uiState.selectedObjectCount);
+        glm::vec3 handlePos = glm::vec3(0);
+        for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
+        {
+            uint32 objectId = state->uiState.selectedObjectIds[i];
+            for (uint32 j = 0; j < state->docState.objectInstanceCount; j++)
+            {
+                if (objectId == state->docState.objectIds[j])
+                {
+                    ObjectTransform *instance = &state->docState.objectTransforms[j];
+                    interactionState->objectIds[interactionState->objectCount++] = objectId;
+                    handlePos += instance->position;
+                    break;
+                }
+            }
+        }
+        assert(interactionState->objectCount);
+        handlePos = handlePos / (float)interactionState->objectCount;
+
+        /*
+         * We compute the distance to the view space plane using the handle world position but consider the initial
+         * world position of the interaction to be the current position of the mouse cursor along this plane. This
+         * prevents a small 'jump' if the user does not click in the exact center of the manipulator handle.
+         */
+        interactionState->distanceToHandle = glm::distance(viewState->cameraPos, handlePos);
+        glm::vec2 mousePosNdc =
+            glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
+        interactionState->initialWorldPos = ndcToWorld(viewState, mousePosNdc, interactionState->distanceToHandle);
     }
     break;
     }
@@ -1227,8 +1343,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(sceneRenderTarget));
-    glm::mat4 cameraTransform =
+    viewState->cameraTransform =
         rendererSetCameraPersp(rq, viewState->cameraPos, viewState->cameraLookAt, glm::pi<float>() / 4.0f);
+    viewState->invCameraTransform = glm::inverse(viewState->cameraTransform);
 
     glm::vec4 lightDir = glm::vec4(0);
     lightDir.x = sin(state->uiState.sceneLightDirection * glm::pi<float>() * -0.5);
@@ -1236,12 +1353,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     lightDir.z = 0.2f;
     rendererSetLighting(rq, &lightDir, true, true, true, true, true);
 
-    glm::vec2 mousePos = (input->normalizedCursorPos * 2.0f) - 1.0f;
-    glm::mat4 inverseViewProjection = glm::inverse(cameraTransform);
-    glm::vec4 screenPos = glm::vec4(mousePos.x, -mousePos.y, 1.0f, 1.0f);
-    glm::vec4 worldPos = inverseViewProjection * screenPos;
-    glm::vec3 mouseRayOrigin = viewState->cameraPos;
-    glm::vec3 mouseRayDir = glm::normalize(glm::vec3(worldPos));
+    glm::vec2 mousePosNdc =
+        glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
+    glm::vec2 mousePosScreen = ndcToScreen(viewState, mousePosNdc);
+    glm::vec3 mouseRayDir = ndcToWorld(viewState, mousePosNdc, 1);
     glm::vec3 mouseWorldPos = glm::vec3(-10000, -10000, -10000);
     bool wasMouseWorldPosFound = false;
 
@@ -1257,7 +1372,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         {
             float hitDist;
             if (heightfieldIsRayIntersecting(
-                    tile->heightfield, mouseRayOrigin, mouseRayDir, &mouseWorldPos, &hitDist))
+                    tile->heightfield, viewState->cameraPos, mouseRayDir, &mouseWorldPos, &hitDist))
             {
                 viewState->interactionState.nextHot = editTerrainInteraction;
                 wasMouseWorldPosFound = true;
@@ -1357,8 +1472,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         }
         rendererDraw(rq);
 
-        uint32 cursorX = (uint32)(input->normalizedCursorPos.x * pickingRenderTarget->width);
-        uint32 cursorY = (uint32)((1.0f - input->normalizedCursorPos.y) * pickingRenderTarget->height);
+        uint32 cursorX = (uint32)mousePosScreen.x;
+        uint32 cursorY = (uint32)mousePosScreen.y;
         TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
         GetPixelsResult pickedPixels =
             rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
@@ -1448,6 +1563,48 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     else
     {
         rendererPushTexturedQuad(rq, screenQuad, sceneRenderTarget->textureHandle, true);
+    }
+    if (state->uiState.currentContext == EDITOR_CTX_OBJECTS && state->uiState.selectedObjectCount > 0)
+    {
+        // calculate manipulator handle position
+        glm::vec3 manipulatorHandlePos = glm::vec3(0);
+        uint32 foundObjects = 0;
+        for (uint32 i = 0; i < state->uiState.selectedObjectCount; i++)
+        {
+            uint32 objectId = state->uiState.selectedObjectIds[i];
+            for (uint32 j = 0; j < state->previewDocState.objectInstanceCount; j++)
+            {
+                if (objectId == state->previewDocState.objectIds[j])
+                {
+                    ObjectTransform *instance = &state->previewDocState.objectTransforms[j];
+                    foundObjects++;
+                    manipulatorHandlePos += instance->position;
+                    break;
+                }
+            }
+        }
+        manipulatorHandlePos /= (float)foundObjects;
+
+        float handleDim = 8;
+        glm::vec2 handleScreenPos = worldToScreen(viewState, manipulatorHandlePos);
+        RenderQuad handleQuad = {
+            handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
+
+        Interaction dragHandleInteraction = {};
+        dragHandleInteraction.target.type = INTERACTION_TARGET_MANIPULATOR;
+
+        if (mousePosScreen.x >= handleQuad.x && mousePosScreen.x < handleQuad.x + handleQuad.width
+            && mousePosScreen.y >= handleQuad.y && mousePosScreen.y < handleQuad.y + handleQuad.height)
+        {
+            viewState->interactionState.nextHot = dragHandleInteraction;
+        }
+
+        glm::vec3 handleColor = glm::vec3(1, 1, 1);
+        if (isInteractionHot(&viewState->interactionState, &dragHandleInteraction))
+        {
+            handleColor = glm::vec3(1, 1, 0);
+        }
+        rendererPushColoredQuad(rq, handleQuad, handleColor);
     }
     rendererDraw(rq);
 
