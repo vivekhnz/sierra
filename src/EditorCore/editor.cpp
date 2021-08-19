@@ -1100,9 +1100,9 @@ void sceneViewBeginInteraction(
         uint64 pickedId64 = (uint64)viewState->interactionState.hot.target.id;
         assert(pickedId64 <= UINT32_MAX);
         uint32 pickedId = (uint32)pickedId64;
-        if (pickedId)
+        if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
         {
-            if (isButtonDown(input, EDITOR_INPUT_KEY_LEFT_CONTROL))
+            if (pickedId)
             {
                 // toggle selection state
                 bool wasAlreadySelected = false;
@@ -1123,12 +1123,12 @@ void sceneViewBeginInteraction(
                     uiState->selectedObjectIds[uiState->selectedObjectCount++] = pickedId;
                 }
             }
-            else
-            {
-                // select picked object
-                uiState->selectedObjectCount = 1;
-                uiState->selectedObjectIds[0] = pickedId;
-            }
+        }
+        else if (pickedId)
+        {
+            // select picked object
+            uiState->selectedObjectCount = 1;
+            uiState->selectedObjectIds[0] = pickedId;
         }
         else
         {
