@@ -174,6 +174,7 @@ struct EditorAssets
     AssetHandle quadShaderBrushBlendSmooth;
     AssetHandle quadShaderOutline;
     AssetHandle quadShaderIdVisualiser;
+    AssetHandle quadShaderId;
     AssetHandle meshShaderId;
     AssetHandle meshShaderRock;
     AssetHandle terrainShaderTextured;

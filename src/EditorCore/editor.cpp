@@ -93,6 +93,7 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->quadShaderOutline = assetsRegisterShader(assets, "quad_outline.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderIdVisualiser =
         assetsRegisterShader(assets, "quad_id_visualiser.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderId = assetsRegisterShader(assets, "quad_id.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->meshShaderId = assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->meshShaderRock = assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->terrainShaderTextured =
@@ -1535,20 +1536,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 rendererPushMeshes(selectionRq, editorAssets->meshRock, &hotInstance, 1, mesh8BitIdEffect);
             }
         }
-
-        // identify hot object
-        rendererDraw(pickingRq);
-        uint32 cursorX = (uint32)mousePosScreen.x;
-        uint32 cursorY = (uint32)mousePosScreen.y;
-        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
-        GetPixelsResult pickedPixels =
-            rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
-        assert(pickedPixels.count == 1);
-        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
-        endTemporaryMemory(&pickingMemory);
-        viewState->interactionState.nextHot = {};
-        viewState->interactionState.nextHot.target.type = INTERACTION_TARGET_OBJECT;
-        viewState->interactionState.nextHot.target.id = (void *)((uint64)pickedId);
     }
 
     // draw 2D overlays
@@ -1558,6 +1545,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetCameraOrtho(compositeRq);
     if (uiState->currentContext == EDITOR_CTX_OBJECTS)
     {
+        Interaction dragHandleInteraction = {};
+        dragHandleInteraction.target.type = INTERACTION_TARGET_MANIPULATOR;
+
         // draw manipulator
         if (state->uiState.selectedObjectCount > 0)
         {
@@ -1585,9 +1575,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             RenderQuad handleQuad = {handleScreenPos.x - (handleDim * 0.5f),
                 handleScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
 
-            Interaction dragHandleInteraction = {};
-            dragHandleInteraction.target.type = INTERACTION_TARGET_MANIPULATOR;
-
             glm::vec3 handleColor = glm::vec3(1, 1, 1);
             if (isInteractionHot(&viewState->interactionState, &dragHandleInteraction))
             {
@@ -1595,11 +1582,40 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
             rendererPushColoredQuad(sceneRq, handleQuad, handleColor);
 
+            RenderEffect *handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", 1);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
+
             if (mousePosScreen.x >= handleQuad.x && mousePosScreen.x < handleQuad.x + handleQuad.width
                 && mousePosScreen.y >= handleQuad.y && mousePosScreen.y < handleQuad.y + handleQuad.height)
             {
                 viewState->interactionState.nextHot = dragHandleInteraction;
             }
+        }
+
+        // identify hot object
+        rendererDraw(pickingRq);
+        uint32 cursorX = (uint32)mousePosScreen.x;
+        uint32 cursorY = (uint32)mousePosScreen.y;
+        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
+        GetPixelsResult pickedPixels =
+            rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
+        assert(pickedPixels.count == 1);
+        uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
+        endTemporaryMemory(&pickingMemory);
+
+        if (!pickedId || pickedId & 0x80000000)
+        {
+            // picked ID is a mesh instance
+            viewState->interactionState.nextHot = {};
+            viewState->interactionState.nextHot.target.type = INTERACTION_TARGET_OBJECT;
+            viewState->interactionState.nextHot.target.id = (void *)((uint64)pickedId);
+        }
+        else
+        {
+            // picked ID is a manipulator
+            viewState->interactionState.nextHot = dragHandleInteraction;
         }
     }
 
