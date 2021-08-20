@@ -36,7 +36,10 @@ enum ManipulatorInteractionMode
     MANIPULATOR_TRANSLATE_VIEW_SPACE = 1,
     MANIPULATOR_TRANSLATE_X,
     MANIPULATOR_TRANSLATE_Y,
-    MANIPULATOR_TRANSLATE_Z
+    MANIPULATOR_TRANSLATE_Z,
+    MANIPULATOR_TRANSLATE_XY,
+    MANIPULATOR_TRANSLATE_XZ,
+    MANIPULATOR_TRANSLATE_YZ
 };
 
 bool isButtonDown(EditorInput *input, EditorInputButtons button)
@@ -1101,19 +1104,35 @@ void sceneViewContinueInteraction(
         {
             glm::vec3 axis;
             glm::vec3 axisNormal;
+            bool restrictToAxis;
             switch (mode)
             {
             case MANIPULATOR_TRANSLATE_X:
                 axis = glm::vec3(1, 0, 0);
                 axisNormal = glm::vec3(0, 1, 0);
+                restrictToAxis = true;
                 break;
             case MANIPULATOR_TRANSLATE_Y:
                 axis = glm::vec3(0, 1, 0);
-                axisNormal = glm::vec3(0, 0, -1);
+                axisNormal = glm::vec3(1, 0, 0);
+                restrictToAxis = true;
                 break;
             case MANIPULATOR_TRANSLATE_Z:
                 axis = glm::vec3(0, 0, 1);
                 axisNormal = glm::vec3(0, 1, 0);
+                restrictToAxis = true;
+                break;
+            case MANIPULATOR_TRANSLATE_XY:
+                axisNormal = glm::vec3(0, 0, 1);
+                restrictToAxis = false;
+                break;
+            case MANIPULATOR_TRANSLATE_XZ:
+                axisNormal = glm::vec3(0, 1, 0);
+                restrictToAxis = false;
+                break;
+            case MANIPULATOR_TRANSLATE_YZ:
+                axisNormal = glm::vec3(1, 0, 0);
+                restrictToAxis = false;
                 break;
 
             default:
@@ -1121,14 +1140,17 @@ void sceneViewContinueInteraction(
             }
 
             glm::vec3 initialP = interactionState->initialWorldPos;
-            glm::vec3 planeP = ndcToWorld(viewState, mousePosNdc, initialP, axisNormal);
+            glm::vec3 translatedP = ndcToWorld(viewState, mousePosNdc, initialP, axisNormal);
 
-            glm::vec3 diff = planeP - initialP;
-            float diffMagnitude = glm::length(diff);
-            glm::vec3 diffNormalised = diff / diffMagnitude;
-            glm::vec3 axisRestrictedP = initialP + (axis * glm::dot(axis, diffNormalised) * diffMagnitude);
+            if (restrictToAxis)
+            {
+                glm::vec3 diff = translatedP - initialP;
+                float diffMagnitude = glm::length(diff);
+                glm::vec3 diffNormalised = diff / diffMagnitude;
+                translatedP = initialP + (axis * glm::dot(axis, diffNormalised) * diffMagnitude);
+            }
 
-            delta = axisRestrictedP - interactionState->initialWorldPos;
+            delta = translatedP - interactionState->initialWorldPos;
         }
 
         clearTransaction(interactionState->tx);
@@ -1706,6 +1728,57 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 0, 1));
+            handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
+
+            // XY-plane translation
+            mode = MANIPULATOR_TRANSLATE_XY;
+            offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos - glm::vec3(0, 0, 1));
+            dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
+            handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 64.0f);
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            handleQuad = {handleScreenPos.x - 2, handleScreenPos.y - 2, 4, 4};
+            rendererPushColoredQuad(sceneRq, handleQuad, glm::vec3(0, 0, 1));
+            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
+                handleDim, handleDim};
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
+            handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
+
+            // XZ-plane translation
+            mode = MANIPULATOR_TRANSLATE_XZ;
+            offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos - glm::vec3(0, 1, 0));
+            dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
+            handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 64.0f);
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            handleQuad = {handleScreenPos.x - 2, handleScreenPos.y - 2, 4, 4};
+            rendererPushColoredQuad(sceneRq, handleQuad, glm::vec3(0, 1, 0));
+            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
+                handleDim, handleDim};
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
+            handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
+
+            // YZ-plane translation
+            mode = MANIPULATOR_TRANSLATE_YZ;
+            offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos - glm::vec3(1, 0, 0));
+            dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
+            handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 64.0f);
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            handleQuad = {handleScreenPos.x - 2, handleScreenPos.y - 2, 4, 4};
+            rendererPushColoredQuad(sceneRq, handleQuad, glm::vec3(1, 0, 0));
+            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
+                handleDim, handleDim};
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
             handleIdEffect =
                 rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
             rendererSetEffectUint(handleIdEffect, "id", mode);
