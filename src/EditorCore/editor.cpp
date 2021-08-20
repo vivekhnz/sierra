@@ -14,6 +14,31 @@ enum BrushVisualizationMode
     BRUSH_VIS_MODE_HIGHLIGHT_CURSOR = 3
 };
 
+struct TerrainInteractionState
+{
+    bool hasUncommittedChanges;
+    bool isAdjustingBrushParameters;
+};
+struct ManipulatorInteractionState
+{
+    glm::vec3 initialWorldPos;
+    float initialDistance;
+    glm::vec2 mousePosOffset;
+
+    Transaction *tx;
+    uint32 objectCount;
+    uint32 *objectIds;
+};
+enum ManipulatorInteractionMode
+{
+    MANIPULATOR_UNKNOWN,
+
+    MANIPULATOR_TRANSLATE_VIEW_SPACE = 1,
+    MANIPULATOR_TRANSLATE_X,
+    MANIPULATOR_TRANSLATE_Y,
+    MANIPULATOR_TRANSLATE_Z
+};
+
 bool isButtonDown(EditorInput *input, EditorInputButtons button)
 {
     return input->pressedButtons & button;
@@ -836,12 +861,22 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 #endif
 }
 
+glm::vec3 ndcToWorld(SceneViewState *viewState, glm::vec2 ndc, glm::vec3 knownPointOnPlane, glm::vec3 planeNormal)
+{
+    glm::vec4 screenPos = glm::vec4(ndc.x, ndc.y, 1.0f, 1.0f);
+    glm::vec4 worldPos = viewState->invCameraTransform * screenPos;
+    glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
+    glm::vec3 refVector = knownPointOnPlane - viewState->cameraPos;
+    float distance = glm::dot(refVector, planeNormal) / glm::dot(dir, planeNormal);
+    glm::vec3 result = viewState->cameraPos + (dir * distance);
+    return result;
+}
 glm::vec3 ndcToWorld(SceneViewState *viewState, glm::vec2 ndc, float distance)
 {
     glm::vec4 screenPos = glm::vec4(ndc.x, ndc.y, 1.0f, 1.0f);
     glm::vec4 worldPos = viewState->invCameraTransform * screenPos;
     glm::vec3 dir = glm::normalize(glm::vec3(worldPos));
-    glm::vec3 result = dir * distance;
+    glm::vec3 result = viewState->cameraPos + (dir * distance);
     return result;
 }
 glm::vec2 worldToNdc(SceneViewState *viewState, glm::vec3 world)
@@ -1051,8 +1086,50 @@ void sceneViewContinueInteraction(
 
         glm::vec2 mousePosNdc =
             glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
-        glm::vec3 mouseWorldP = ndcToWorld(viewState, mousePosNdc, interactionState->distanceToHandle);
-        glm::vec3 delta = mouseWorldP - interactionState->initialWorldPos;
+        mousePosNdc += interactionState->mousePosOffset;
+
+        glm::vec3 delta = glm::vec3(0);
+
+        ManipulatorInteractionMode mode =
+            (ManipulatorInteractionMode)((uint64)viewState->interactionState.active.target.id);
+        if (mode == MANIPULATOR_TRANSLATE_VIEW_SPACE)
+        {
+            glm::vec3 translatedP = ndcToWorld(viewState, mousePosNdc, interactionState->initialDistance);
+            delta = translatedP - interactionState->initialWorldPos;
+        }
+        else
+        {
+            glm::vec3 axis;
+            glm::vec3 axisNormal;
+            switch (mode)
+            {
+            case MANIPULATOR_TRANSLATE_X:
+                axis = glm::vec3(1, 0, 0);
+                axisNormal = glm::vec3(0, 1, 0);
+                break;
+            case MANIPULATOR_TRANSLATE_Y:
+                axis = glm::vec3(0, 1, 0);
+                axisNormal = glm::vec3(0, 0, -1);
+                break;
+            case MANIPULATOR_TRANSLATE_Z:
+                axis = glm::vec3(0, 0, 1);
+                axisNormal = glm::vec3(0, 1, 0);
+                break;
+
+            default:
+                assert(!"Unsupported manipulator mode");
+            }
+
+            glm::vec3 initialP = interactionState->initialWorldPos;
+            glm::vec3 planeP = ndcToWorld(viewState, mousePosNdc, initialP, axisNormal);
+
+            glm::vec3 diff = planeP - initialP;
+            float diffMagnitude = glm::length(diff);
+            glm::vec3 diffNormalised = diff / diffMagnitude;
+            glm::vec3 axisRestrictedP = initialP + (axis * glm::dot(axis, diffNormalised) * diffMagnitude);
+
+            delta = axisRestrictedP - interactionState->initialWorldPos;
+        }
 
         clearTransaction(interactionState->tx);
         for (uint32 i = 0; i < interactionState->objectCount; i++)
@@ -1167,17 +1244,14 @@ void sceneViewBeginInteraction(
             }
         }
         assert(interactionState->objectCount);
-        handlePos = handlePos / (float)interactionState->objectCount;
+        interactionState->initialWorldPos = handlePos / (float)interactionState->objectCount;
+        interactionState->initialDistance = glm::distance(viewState->cameraPos, interactionState->initialWorldPos);
 
-        /*
-         * We compute the distance to the view space plane using the handle world position but consider the initial
-         * world position of the interaction to be the current position of the mouse cursor along this plane. This
-         * prevents a small 'jump' if the user does not click in the exact center of the manipulator handle.
-         */
-        interactionState->distanceToHandle = glm::distance(viewState->cameraPos, handlePos);
+        // calculate the mouse offset in NDC-space from the center of the manipulator handle
         glm::vec2 mousePosNdc =
             glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
-        interactionState->initialWorldPos = ndcToWorld(viewState, mousePosNdc, interactionState->distanceToHandle);
+        glm::vec2 handlePosNdc = worldToNdc(viewState, interactionState->initialWorldPos);
+        interactionState->mousePosOffset = handlePosNdc - mousePosNdc;
     }
     break;
     }
@@ -1376,7 +1450,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     glm::vec2 mousePosNdc =
         glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
     glm::vec2 mousePosScreen = ndcToScreen(viewState, mousePosNdc);
-    glm::vec3 mouseRayDir = ndcToWorld(viewState, mousePosNdc, 1);
+    glm::vec3 mouseRayDir = ndcToWorld(viewState, mousePosNdc, 1) - viewState->cameraPos;
     glm::vec3 mouseWorldPos = glm::vec3(-10000, -10000, -10000);
     bool wasMouseWorldPosFound = false;
 
@@ -1545,9 +1619,6 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetCameraOrtho(compositeRq);
     if (uiState->currentContext == EDITOR_CTX_OBJECTS)
     {
-        Interaction dragHandleInteraction = {};
-        dragHandleInteraction.target.type = INTERACTION_TARGET_MANIPULATOR;
-
         // draw manipulator
         if (state->uiState.selectedObjectCount > 0)
         {
@@ -1570,28 +1641,75 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
             manipulatorHandlePos /= (float)foundObjects;
 
-            float handleDim = 8;
-            glm::vec2 handleScreenPos = worldToScreen(viewState, manipulatorHandlePos);
-            RenderQuad handleQuad = {handleScreenPos.x - (handleDim * 0.5f),
-                handleScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
+            float handleDim = 16;
+            RenderQuad handleQuad;
+            RenderEffect *handleIdEffect;
+            ManipulatorInteractionMode mode;
+            bool isHot;
+            glm::vec2 offsetHandleScreenPos;
+            glm::vec2 dirToOffsetHandle;
+            glm::vec2 handleScreenPos;
 
-            glm::vec3 handleColor = glm::vec3(1, 1, 1);
-            if (isInteractionHot(&viewState->interactionState, &dragHandleInteraction))
-            {
-                handleColor = glm::vec3(1, 1, 0);
-            }
-            rendererPushColoredQuad(sceneRq, handleQuad, handleColor);
+            glm::vec2 manipulatorCenterScreenPos = worldToScreen(viewState, manipulatorHandlePos);
 
-            RenderEffect *handleIdEffect =
+            // view-space translation
+            mode = MANIPULATOR_TRANSLATE_VIEW_SPACE;
+            handleQuad = {manipulatorCenterScreenPos.x - (handleDim * 0.5f),
+                manipulatorCenterScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(1, 1, 1));
+            handleIdEffect =
                 rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
-            rendererSetEffectUint(handleIdEffect, "id", 1);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
-            if (mousePosScreen.x >= handleQuad.x && mousePosScreen.x < handleQuad.x + handleQuad.width
-                && mousePosScreen.y >= handleQuad.y && mousePosScreen.y < handleQuad.y + handleQuad.height)
-            {
-                viewState->interactionState.nextHot = dragHandleInteraction;
-            }
+            handleDim = 8;
+
+            // X-axis translation
+            mode = MANIPULATOR_TRANSLATE_X;
+            offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos + glm::vec3(1, 0, 0));
+            dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
+            handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 48.0f);
+            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
+                handleDim, handleDim};
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(1, 0, 0));
+            handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
+
+            // Y-axis translation
+            mode = MANIPULATOR_TRANSLATE_Y;
+            offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos + glm::vec3(0, 1, 0));
+            dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
+            handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 48.0f);
+            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
+                handleDim, handleDim};
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 1, 0));
+            handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
+
+            // Z-axis translation
+            mode = MANIPULATOR_TRANSLATE_Z;
+            offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos + glm::vec3(0, 0, 1));
+            dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
+            handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 48.0f);
+            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
+                handleDim, handleDim};
+            isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
+                && viewState->interactionState.hot.target.id == (void *)mode;
+            rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 0, 1));
+            handleIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectUint(handleIdEffect, "id", mode);
+            rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
         }
 
         // identify hot object
@@ -1615,7 +1733,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         else
         {
             // picked ID is a manipulator
-            viewState->interactionState.nextHot = dragHandleInteraction;
+            viewState->interactionState.nextHot = {};
+            viewState->interactionState.nextHot.target.type = INTERACTION_TARGET_MANIPULATOR;
+            viewState->interactionState.nextHot.target.id = (void *)((uint64)pickedId);
         }
     }
 

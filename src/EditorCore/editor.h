@@ -109,20 +109,6 @@ struct InteractionState
     MemoryArena activeArena;
 };
 
-struct TerrainInteractionState
-{
-    bool hasUncommittedChanges;
-    bool isAdjustingBrushParameters;
-};
-struct ManipulatorInteractionState
-{
-    float distanceToHandle;
-    glm::vec3 initialWorldPos;
-
-    Transaction *tx;
-    uint32 objectCount;
-    uint32 *objectIds;
-};
 struct SceneViewState
 {
     float orbitCameraDistance;
