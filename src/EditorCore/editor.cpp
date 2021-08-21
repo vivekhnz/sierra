@@ -162,7 +162,7 @@ void initializeEditor(EditorMemory *memory)
     state->activeBrushStroke = {};
 
     // initialize scene world
-#if HEIGHTFIELD_USE_SPLIT_TILES
+#if FEATURE_TERRAIN_USE_SPLIT_TILES
     sceneState->terrainTileCount = 4;
 #else
     sceneState->terrainTileCount = 1;
@@ -200,7 +200,7 @@ void initializeEditor(EditorMemory *memory)
     }
     TerrainTile *firstTile = &sceneState->terrainTiles[0];
 
-#if HEIGHTFIELD_USE_SPLIT_TILES
+#if FEATURE_TERRAIN_USE_SPLIT_TILES
     float halfTileWidth = (firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing * 0.5f;
     float halfTileHeight = (firstTile->heightfield->rows - 1) * firstTile->heightfield->spacing * 0.5f;
 
@@ -244,6 +244,7 @@ void initializeEditor(EditorMemory *memory)
     state->transactions.committedSize = 1 * 1024 * 1024;
     state->transactions.committedBaseAddress = pushSize(&memory->arena, state->transactions.committedSize);
 
+#if FEATURE_TERRAIN_MATERIALS
     // add default materials
     Transaction *addMaterialsTx = beginTransaction(&state->transactions);
     if (addMaterialsTx)
@@ -286,7 +287,9 @@ void initializeEditor(EditorMemory *memory)
 
         commitTransaction(addMaterialsTx);
     }
+#endif
 
+#if FEATURE_OBJECTS
     // add default objects
     Transaction *addObjectsTx = beginTransaction(&state->transactions);
     if (addObjectsTx)
@@ -308,6 +311,7 @@ void initializeEditor(EditorMemory *memory)
         }
         commitTransaction(addObjectsTx);
     }
+#endif
 }
 
 void compositeHeightmap(EditorMemory *memory,
@@ -1307,6 +1311,7 @@ void sceneViewInteract(
         {
             uiState->currentContext = EDITOR_CTX_TERRAIN;
         }
+#if FEATURE_OBJECTS
         if (isNewButtonPress(input, EDITOR_INPUT_KEY_F2))
         {
             uiState->currentContext = EDITOR_CTX_OBJECTS;
@@ -1315,6 +1320,12 @@ void sceneViewInteract(
         {
             uiState->currentContext = EDITOR_CTX_SCENE;
         }
+#else
+        if (isNewButtonPress(input, EDITOR_INPUT_KEY_F2))
+        {
+            uiState->currentContext = EDITOR_CTX_SCENE;
+        }
+#endif
 
         switch (uiState->currentContext)
         {

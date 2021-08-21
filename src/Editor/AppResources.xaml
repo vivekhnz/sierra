@@ -3,6 +3,10 @@
     xmlns:vm="clr-namespace:Terrain.Editor.ViewModels"
     xmlns:utils="clr-namespace:Terrain.Editor.Utilities">
 
+  <!-- Feature flags -->
+  <Visibility x:Key="FeatureFlagVisibility_TerrainMaterials">Collapsed</Visibility>
+  <Visibility x:Key="FeatureFlagVisibility_Objects">Collapsed</Visibility>
+
   <vm:EditorAssetsViewModel x:Key="EditorAssets" />
   <vm:EditorDocumentViewModel x:Key="EditorDocument" />
 

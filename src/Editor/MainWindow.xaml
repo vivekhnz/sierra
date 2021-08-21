@@ -115,7 +115,7 @@
                 </Grid>
               </StackPanel>
             </Expander>
-            <Grid>
+            <Grid Visibility="{StaticResource FeatureFlagVisibility_TerrainMaterials}">
               <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIALS"
                   IsExpanded="True">
                 <Grid Margin="0 0 0 8">
@@ -158,7 +158,7 @@
               </StackPanel>
             </Grid>
             <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
-                IsExpanded="True">
+                IsExpanded="True" Visibility="{StaticResource FeatureFlagVisibility_TerrainMaterials}">
               <StackPanel Orientation="Vertical" Margin="12">
                 <Grid Margin="0 0 0 8">
                   <Grid.ColumnDefinitions>
@@ -292,7 +292,7 @@
             </Expander>
           </StackPanel>
         </TabItem>
-        <TabItem Header="OBJECTS">
+        <TabItem Header="OBJECTS" Visibility="{StaticResource FeatureFlagVisibility_Objects}">
           <StackPanel Orientation="Vertical">
             <Grid>
               <Expander Style="{StaticResource SidebarExpanderStyle}" Header="OUTLINE"
