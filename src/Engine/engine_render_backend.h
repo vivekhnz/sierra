@@ -95,6 +95,7 @@ struct DrawQuadsCommand
 struct DrawLineCommand
 {
     uint32 vertexIndex;
+    uint32 vertexCount;
     glm::vec3 color;
 };
 struct DrawMeshesCommand

@@ -1002,7 +1002,7 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
 
-            glDrawArrays(GL_LINES, cmd->vertexIndex, 2);
+            glDrawArrays(GL_LINE_STRIP, cmd->vertexIndex, cmd->vertexCount);
 
             glDisableVertexAttribArray(0);
         }

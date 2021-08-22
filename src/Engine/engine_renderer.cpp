@@ -10,6 +10,11 @@ struct RenderContext
     MemoryArena *arena;
     RenderBackendContext internalCtx;
 };
+struct VertexLink
+{
+    glm::vec3 point;
+    VertexLink *next;
+};
 struct RenderQueue
 {
     MemoryArena *arena;
@@ -30,6 +35,14 @@ struct RenderQueue
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
     uint32 meshInstanceCount;
+
+    struct
+    {
+        bool isActive;
+        glm::vec3 color;
+        VertexLink *firstVertex;
+        VertexLink *lastVertex;
+    } currentLine;
 };
 
 RENDERER_INITIALIZE(rendererInitialize)
@@ -330,16 +343,64 @@ RENDERER_PUSH_QUADS(rendererPushQuads)
     pushQuads(rq, quads, quadCount, effect, true);
 }
 
+inline void addPrimitiveVertex(RenderQueue *rq, glm::vec3 point)
+{
+    assert(rq->primitiveVertexCount < rq->maxPrimitiveVertices + 1);
+    rq->primitiveVertices[rq->primitiveVertexCount++] = point;
+}
 RENDERER_PUSH_LINE(rendererPushLine)
 {
-    assert(rq->primitiveVertexCount + 1 < rq->maxPrimitiveVertices);
+    DrawLineCommand *cmd = pushRenderCommand(rq, DrawLineCommand);
+    cmd->vertexIndex = rq->primitiveVertexCount;
+    cmd->vertexCount = 2;
+    cmd->color = color;
+
+    addPrimitiveVertex(rq, start);
+    addPrimitiveVertex(rq, end);
+}
+RENDERER_BEGIN_LINE(rendererBeginLine)
+{
+    assert(!rq->currentLine.isActive);
+    rq->currentLine.isActive = true;
+    rq->currentLine.color = color;
+
+    rq->currentLine.firstVertex = pushStruct(rq->arena, VertexLink);
+    rq->currentLine.firstVertex->point = start;
+    rq->currentLine.firstVertex->next = 0;
+    rq->currentLine.lastVertex = rq->currentLine.firstVertex;
+}
+RENDERER_EXTEND_LINE(rendererExtendLine)
+{
+    assert(rq->currentLine.isActive);
+
+    VertexLink *newLink = pushStruct(rq->arena, VertexLink);
+    newLink->point = point;
+    newLink->next = 0;
+
+    rq->currentLine.lastVertex->next = newLink;
+    rq->currentLine.lastVertex = newLink;
+}
+RENDERER_END_LINE(rendererEndLine)
+{
+    assert(rq->currentLine.isActive);
+    rq->currentLine.isActive = false;
 
     DrawLineCommand *cmd = pushRenderCommand(rq, DrawLineCommand);
     cmd->vertexIndex = rq->primitiveVertexCount;
-    cmd->color = color;
+    cmd->vertexCount = 1;
+    cmd->color = rq->currentLine.color;
 
-    rq->primitiveVertices[rq->primitiveVertexCount++] = start;
-    rq->primitiveVertices[rq->primitiveVertexCount++] = end;
+    for (VertexLink *current = rq->currentLine.firstVertex; current; current = current->next)
+    {
+        addPrimitiveVertex(rq, current->point);
+        cmd->vertexCount++;
+    }
+    addPrimitiveVertex(rq, end);
+}
+RENDERER_END_LINE_LOOP(rendererEndLineLoop)
+{
+    assert(rq->currentLine.isActive);
+    rendererEndLine(rq, rq->currentLine.firstVertex->point);
 }
 
 RENDERER_PUSH_MESHES(rendererPushMeshes)
