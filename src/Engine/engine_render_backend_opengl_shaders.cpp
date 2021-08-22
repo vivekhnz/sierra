@@ -33,13 +33,42 @@ void main()
 {
     FragColor = vec4(texture(imageTexture, uv).rgb, 1);
 }
-
 )glsl";
 
 // colored quad fragment shader
 global_variable char *ShaderSrc_ColoredQuadFragment = R"glsl(
 #version 430 core
 layout(location = 0) in vec2 uv;
+
+uniform vec3 color;
+
+out vec4 FragColor;
+
+void main()
+{
+    FragColor = vec4(color, 1);
+}
+)glsl";
+
+// primitive vertex shader
+global_variable char *ShaderSrc_PrimitiveVertex = R"glsl(
+#version 430 core
+layout(location = 0) in vec3 in_pos;
+
+layout (std140, binding = 0) uniform Camera
+{
+    mat4 camera_transform;
+};
+
+void main()
+{
+    gl_Position = camera_transform * vec4(in_pos, 1);
+}
+)glsl";
+
+// colored primitive fragment shader
+global_variable char *ShaderSrc_ColoredPrimitiveFragment = R"glsl(
+#version 430 core
 
 uniform vec3 color;
 

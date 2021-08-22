@@ -69,6 +69,7 @@ struct RenderOutput
 #define RENDERER_PUSH_QUAD(name) void name(RenderQueue *rq, RenderQuad quad, RenderEffect *effect)
 #define RENDERER_PUSH_QUADS(name)                                                                                 \
     void name(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect)
+#define RENDERER_PUSH_LINE(name) void name(RenderQueue *rq, glm::vec3 start, glm::vec3 end, glm::vec3 color)
 #define RENDERER_PUSH_MESHES(name)                                                                                \
     void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances, uint32 instanceCount,             \
         RenderEffect *effect)

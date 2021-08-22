@@ -16,20 +16,23 @@ struct OpenGlInternalShaders
 {
     bool initialized;
 
-    uint32 quadVertexShaderId;
-    uint32 texturedQuadFragmentShaderId;
-    uint32 coloredQuadFragmentShaderId;
+    uint32 vertexShaderQuad;
+    uint32 vertexShaderPrimitive;
+    uint32 vertexShaderMesh;
+    uint32 vertexShaderTerrain;
 
-    uint32 texturedQuadShaderProgramId;
-    uint32 coloredQuadShaderProgramId;
+    uint32 fragmentShaderTexturedQuad;
+    uint32 fragmentShaderColoredQuad;
+    uint32 fragmentShaderColoredPrimitive;
 
-    uint32 meshVertexShaderId;
+    uint32 tessCtrlShaderTerrain;
+    uint32 tessEvalShaderTerrain;
+    uint32 computeShaderTerrainCalcTessLevel;
 
-    uint32 terrainVertexShaderId;
-    uint32 terrainTessCtrlShaderId;
-    uint32 terrainTessEvalShaderId;
-    uint32 terrainCalcTessLevelShaderId;
-    uint32 terrainCalcTessLevelShaderProgramId;
+    uint32 shaderProgramTexturedQuad;
+    uint32 shaderProgramColoredQuad;
+    uint32 shaderProgramColoredPrimitive;
+    uint32 shaderProgramTerrainCalcTessLevel;
 };
 
 struct OpenGlTextureDescriptor
@@ -117,6 +120,7 @@ struct OpenGlRenderContext
     uint32 quadBottomUpVertexBufferId;
 
     uint32 quadInstanceBufferId;
+    uint32 primitiveInstanceBufferId;
     uint32 meshInstanceBufferId;
 
     OpenGlTextureArrayEntry *firstTextureArray;
@@ -192,6 +196,7 @@ RenderBackendContext initializeRenderBackend(MemoryArena *arena)
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(quadIndices), quadIndices, GL_STATIC_DRAW);
 
     glGenBuffers(1, &ctx->quadInstanceBufferId);
+    glGenBuffers(1, &ctx->primitiveInstanceBufferId);
     glGenBuffers(1, &ctx->meshInstanceBufferId);
 
     // create terrain mesh
@@ -330,43 +335,57 @@ OpenGlInternalShaders *getInternalShaders(OpenGlRenderContext *ctx)
     {
         if (shaders->initialized)
         {
-            glDeleteProgram(shaders->texturedQuadShaderProgramId);
-            glDeleteProgram(shaders->coloredQuadShaderProgramId);
-            glDeleteProgram(shaders->terrainCalcTessLevelShaderProgramId);
-            glDeleteShader(shaders->quadVertexShaderId);
-            glDeleteShader(shaders->texturedQuadFragmentShaderId);
-            glDeleteShader(shaders->coloredQuadFragmentShaderId);
-            glDeleteShader(shaders->meshVertexShaderId);
-            glDeleteShader(shaders->terrainVertexShaderId);
-            glDeleteShader(shaders->terrainTessCtrlShaderId);
-            glDeleteShader(shaders->terrainTessEvalShaderId);
-            glDeleteShader(shaders->terrainCalcTessLevelShaderId);
+            glDeleteProgram(shaders->shaderProgramTexturedQuad);
+            glDeleteProgram(shaders->shaderProgramColoredQuad);
+            glDeleteProgram(shaders->shaderProgramColoredPrimitive);
+            glDeleteProgram(shaders->shaderProgramTerrainCalcTessLevel);
+            glDeleteShader(shaders->vertexShaderQuad);
+            glDeleteShader(shaders->vertexShaderPrimitive);
+            glDeleteShader(shaders->vertexShaderMesh);
+            glDeleteShader(shaders->vertexShaderTerrain);
+            glDeleteShader(shaders->fragmentShaderTexturedQuad);
+            glDeleteShader(shaders->fragmentShaderColoredQuad);
+            glDeleteShader(shaders->fragmentShaderColoredPrimitive);
+            glDeleteShader(shaders->tessCtrlShaderTerrain);
+            glDeleteShader(shaders->tessEvalShaderTerrain);
+            glDeleteShader(shaders->computeShaderTerrainCalcTessLevel);
         }
 
         // create quad shader programs
-        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_QuadVertex, &shaders->quadVertexShaderId));
+        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_QuadVertex, &shaders->vertexShaderQuad));
         assert(createOpenGlShader(
-            GL_FRAGMENT_SHADER, ShaderSrc_TexturedQuadFragment, &shaders->texturedQuadFragmentShaderId));
-        uint32 texturedQuadShaderIds[] = {shaders->quadVertexShaderId, shaders->texturedQuadFragmentShaderId};
-        assert(createOpenGlShaderProgram(2, texturedQuadShaderIds, &shaders->texturedQuadShaderProgramId));
+            GL_FRAGMENT_SHADER, ShaderSrc_TexturedQuadFragment, &shaders->fragmentShaderTexturedQuad));
+        uint32 texturedQuadShaderIds[] = {shaders->vertexShaderQuad, shaders->fragmentShaderTexturedQuad};
+        assert(createOpenGlShaderProgram(
+            arrayCount(texturedQuadShaderIds), texturedQuadShaderIds, &shaders->shaderProgramTexturedQuad));
         assert(createOpenGlShader(
-            GL_FRAGMENT_SHADER, ShaderSrc_ColoredQuadFragment, &shaders->coloredQuadFragmentShaderId));
-        uint32 coloredQuadShaderIds[] = {shaders->quadVertexShaderId, shaders->coloredQuadFragmentShaderId};
-        assert(createOpenGlShaderProgram(2, coloredQuadShaderIds, &shaders->coloredQuadShaderProgramId));
+            GL_FRAGMENT_SHADER, ShaderSrc_ColoredQuadFragment, &shaders->fragmentShaderColoredQuad));
+        uint32 coloredQuadShaderIds[] = {shaders->vertexShaderQuad, shaders->fragmentShaderColoredQuad};
+        assert(createOpenGlShaderProgram(
+            arrayCount(coloredQuadShaderIds), coloredQuadShaderIds, &shaders->shaderProgramColoredQuad));
+
+        // create primitive shader programs
+        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_PrimitiveVertex, &shaders->vertexShaderPrimitive));
+        assert(createOpenGlShader(
+            GL_FRAGMENT_SHADER, ShaderSrc_ColoredPrimitiveFragment, &shaders->fragmentShaderColoredPrimitive));
+        uint32 coloredPrimitiveShaderIds[] = {
+            shaders->vertexShaderPrimitive, shaders->fragmentShaderColoredPrimitive};
+        assert(createOpenGlShaderProgram(arrayCount(coloredPrimitiveShaderIds), coloredPrimitiveShaderIds,
+            &shaders->shaderProgramColoredPrimitive));
 
         // create mesh vertex shader
-        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_MeshVertex, &shaders->meshVertexShaderId));
+        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_MeshVertex, &shaders->vertexShaderMesh));
 
         // create terrain shaders
-        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_TerrainVertex, &shaders->terrainVertexShaderId));
+        assert(createOpenGlShader(GL_VERTEX_SHADER, ShaderSrc_TerrainVertex, &shaders->vertexShaderTerrain));
         assert(createOpenGlShader(
-            GL_TESS_CONTROL_SHADER, ShaderSrc_TerrainTessCtrl, &shaders->terrainTessCtrlShaderId));
+            GL_TESS_CONTROL_SHADER, ShaderSrc_TerrainTessCtrl, &shaders->tessCtrlShaderTerrain));
         assert(createOpenGlShader(
-            GL_TESS_EVALUATION_SHADER, ShaderSrc_TerrainTessEval, &shaders->terrainTessEvalShaderId));
+            GL_TESS_EVALUATION_SHADER, ShaderSrc_TerrainTessEval, &shaders->tessEvalShaderTerrain));
         assert(createOpenGlShader(
-            GL_COMPUTE_SHADER, ShaderSrc_TerrainCalcTessLevel, &shaders->terrainCalcTessLevelShaderId));
+            GL_COMPUTE_SHADER, ShaderSrc_TerrainCalcTessLevel, &shaders->computeShaderTerrainCalcTessLevel));
         assert(createOpenGlShaderProgram(
-            1, &shaders->terrainCalcTessLevelShaderId, &shaders->terrainCalcTessLevelShaderProgramId));
+            1, &shaders->computeShaderTerrainCalcTessLevel, &shaders->shaderProgramTerrainCalcTessLevel));
 
         shaders->initialized = true;
         WasRendererReloaded = false;
@@ -386,17 +405,17 @@ bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderH
     switch (type)
     {
     case SHADER_TYPE_QUAD:
-        shaderIds[0] = shaders->quadVertexShaderId;
+        shaderIds[0] = shaders->vertexShaderQuad;
         shaderCount = 2;
         break;
     case SHADER_TYPE_MESH:
-        shaderIds[0] = shaders->meshVertexShaderId;
+        shaderIds[0] = shaders->vertexShaderMesh;
         shaderCount = 2;
         break;
     case SHADER_TYPE_TERRAIN:
-        shaderIds[0] = shaders->terrainVertexShaderId;
-        shaderIds[1] = shaders->terrainTessCtrlShaderId;
-        shaderIds[2] = shaders->terrainTessEvalShaderId;
+        shaderIds[0] = shaders->vertexShaderTerrain;
+        shaderIds[1] = shaders->tessCtrlShaderTerrain;
+        shaderIds[2] = shaders->tessEvalShaderTerrain;
         shaderCount = 4;
         break;
     }
@@ -424,13 +443,13 @@ ShaderHandle getTexturedQuadShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return getShaderHandle(shaders->texturedQuadShaderProgramId);
+    return getShaderHandle(shaders->shaderProgramTexturedQuad);
 }
 ShaderHandle getColoredQuadShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
-    return getShaderHandle(shaders->coloredQuadShaderProgramId);
+    return getShaderHandle(shaders->shaderProgramColoredQuad);
 }
 
 MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
@@ -876,6 +895,10 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
     glBindBuffer(GL_ARRAY_BUFFER, ctx->quadInstanceBufferId);
     glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->quads, GL_DYNAMIC_DRAW);
 
+    glBindBuffer(GL_ARRAY_BUFFER, ctx->primitiveInstanceBufferId);
+    glBufferData(
+        GL_ARRAY_BUFFER, sizeof(glm::vec3) * rq->primitiveVertexCount, rq->primitiveVertices, GL_DYNAMIC_DRAW);
+
     glBindBuffer(GL_ARRAY_BUFFER, ctx->meshInstanceBufferId);
     glBufferData(
         GL_ARRAY_BUFFER, sizeof(RenderMeshInstance) * rq->meshInstanceCount, rq->meshInstances, GL_DYNAMIC_DRAW);
@@ -883,8 +906,6 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
     glBindVertexArray(ctx->globalVertexArrayId);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
 
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
@@ -933,6 +954,9 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
             if (applyEffect(cmd->effect))
             {
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_LESS);
+
                 uint32 vertexBufferId =
                     cmd->isTopDown ? ctx->quadTopDownVertexBufferId : ctx->quadBottomUpVertexBufferId;
                 uint32 vertexBufferStride = 4 * sizeof(float);
@@ -962,11 +986,35 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             }
         }
         break;
+        case RENDER_CMD_DrawLineCommand:
+        {
+            DrawLineCommand *cmd = (DrawLineCommand *)commandData;
+
+            glDisable(GL_DEPTH_TEST);
+
+            glUseProgram(shaders->shaderProgramColoredPrimitive);
+            glProgramUniform3fv(shaders->shaderProgramColoredPrimitive,
+                glGetUniformLocation(shaders->shaderProgramColoredPrimitive, "color"), 1,
+                glm::value_ptr(cmd->color));
+
+            uint32 vertexBufferStride = sizeof(glm::vec3);
+            glBindBuffer(GL_ARRAY_BUFFER, ctx->primitiveInstanceBufferId);
+            glEnableVertexAttribArray(0);
+            glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
+
+            glDrawArrays(GL_LINES, cmd->vertexIndex, 2);
+
+            glDisableVertexAttribArray(0);
+        }
+        break;
         case RENDER_CMD_DrawMeshesCommand:
         {
             DrawMeshesCommand *cmd = (DrawMeshesCommand *)commandData;
             if (applyEffect(cmd->effect) && cmd->mesh.ptr != 0)
             {
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_LESS);
+
                 OpenGlMesh *glMesh = (OpenGlMesh *)cmd->mesh.ptr;
                 uint32 vertexBufferStride = 6 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, glMesh->vertexBufferId);
@@ -1021,6 +1069,9 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
             if (cmd->terrainShader.ptr != 0)
             {
+                glEnable(GL_DEPTH_TEST);
+                glDepthFunc(GL_LESS);
+
                 // update terrain material properties
                 assert(cmd->materialCount <= MAX_TERRAIN_MATERIALS);
                 for (uint32 i = 0; i < cmd->materialCount; i++)
@@ -1065,7 +1116,7 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                 glm::vec3 terrainDimensions =
                     glm::vec3(tileLengthInWorldUnits, heightfield->maxHeight, tileLengthInWorldUnits);
 
-                uint32 calcTessLevelShaderProgramId = shaders->terrainCalcTessLevelShaderProgramId;
+                uint32 calcTessLevelShaderProgramId = shaders->shaderProgramTerrainCalcTessLevel;
                 uint32 terrainShaderProgramId = getShaderProgramId(cmd->terrainShader);
 
                 // calculate tessellation levels

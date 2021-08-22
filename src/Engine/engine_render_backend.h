@@ -57,6 +57,7 @@ enum RenderQueueCommandType
     RENDER_CMD_SetLightingCommand,
     RENDER_CMD_ClearCommand,
     RENDER_CMD_DrawQuadsCommand,
+    RENDER_CMD_DrawLineCommand,
     RENDER_CMD_DrawMeshesCommand,
     RENDER_CMD_DrawTerrainCommand
 };
@@ -90,6 +91,11 @@ struct DrawQuadsCommand
     bool isTopDown;
     uint32 instanceOffset;
     uint32 instanceCount;
+};
+struct DrawLineCommand
+{
+    uint32 vertexIndex;
+    glm::vec3 color;
 };
 struct DrawMeshesCommand
 {
@@ -145,6 +151,9 @@ struct DispatchedRenderQueue
 
     RenderQuad *quads;
     uint32 quadCount;
+
+    glm::vec3 *primitiveVertices;
+    uint32 primitiveVertexCount;
 
     RenderMeshInstance *meshInstances;
     uint32 meshInstanceCount;

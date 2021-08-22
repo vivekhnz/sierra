@@ -23,6 +23,10 @@ struct RenderQueue
     uint32 maxQuads;
     uint32 quadCount;
 
+    glm::vec3 *primitiveVertices;
+    uint32 maxPrimitiveVertices;
+    uint32 primitiveVertexCount;
+
     RenderMeshInstance *meshInstances;
     uint32 maxMeshInstances;
     uint32 meshInstanceCount;
@@ -197,6 +201,9 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     result->maxQuads = 65536;
     result->quads = pushArray(arena, RenderQuad, result->maxQuads);
 
+    result->maxPrimitiveVertices = 4096;
+    result->primitiveVertices = pushArray(arena, glm::vec3, result->maxPrimitiveVertices);
+
     result->maxMeshInstances = 4096;
     result->meshInstances = pushArray(arena, RenderMeshInstance, result->maxMeshInstances);
 
@@ -286,7 +293,7 @@ void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffec
 {
     if (quadCount > 0)
     {
-        assert(rq->quadCount + quadCount < rq->maxQuads);
+        assert(rq->quadCount + quadCount < rq->maxQuads + 1);
 
         DrawQuadsCommand *cmd = pushRenderCommand(rq, DrawQuadsCommand);
         cmd->effect = effect;
@@ -323,9 +330,21 @@ RENDERER_PUSH_QUADS(rendererPushQuads)
     pushQuads(rq, quads, quadCount, effect, true);
 }
 
+RENDERER_PUSH_LINE(rendererPushLine)
+{
+    assert(rq->primitiveVertexCount + 1 < rq->maxPrimitiveVertices);
+
+    DrawLineCommand *cmd = pushRenderCommand(rq, DrawLineCommand);
+    cmd->vertexIndex = rq->primitiveVertexCount;
+    cmd->color = color;
+
+    rq->primitiveVertices[rq->primitiveVertexCount++] = start;
+    rq->primitiveVertices[rq->primitiveVertexCount++] = end;
+}
+
 RENDERER_PUSH_MESHES(rendererPushMeshes)
 {
-    assert(rq->meshInstanceCount + instanceCount < rq->maxMeshInstances);
+    assert(rq->meshInstanceCount + instanceCount < rq->maxMeshInstances + 1);
 
     DrawMeshesCommand *cmd = pushRenderCommand(rq, DrawMeshesCommand);
     cmd->effect = effect;
@@ -414,6 +433,8 @@ RENDERER_DRAW(rendererDraw)
     dispatched.ctx = rq->ctx->internalCtx;
     dispatched.quads = rq->quads;
     dispatched.quadCount = rq->quadCount;
+    dispatched.primitiveVertices = rq->primitiveVertices;
+    dispatched.primitiveVertexCount = rq->primitiveVertexCount;
     dispatched.meshInstances = rq->meshInstances;
     dispatched.meshInstanceCount = rq->meshInstanceCount;
     dispatched.firstCommand = rq->firstCommand;
