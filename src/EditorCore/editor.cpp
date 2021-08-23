@@ -175,7 +175,7 @@ void initializeEditor(EditorMemory *memory)
         TerrainTile *tile = &sceneState->terrainTiles[i];
         tile->heightfield = pushStruct(arena, Heightfield);
         tile->heightfield->heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
-        tile->heightfield->spaceBetweenHeightSamples = tileLengthInWorldUnits / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
+        tile->heightfield->spaceBetweenHeightSamples = tileLengthInWorldUnits / HEIGHTFIELD_SAMPLES_PER_EDGE;
         tile->heightfield->maxHeight = 200;
         tile->heightfield->center = glm::vec2(0, 0);
 
@@ -198,23 +198,22 @@ void initializeEditor(EditorMemory *memory)
         tile->xAdjTile = 0;
         tile->yAdjTile = 0;
     }
-    TerrainTile *firstTile = &sceneState->terrainTiles[0];
 
 #if FEATURE_TERRAIN_USE_SPLIT_TILES
-    float halfTileWidth = (firstTile->heightfield->columns - 1) * firstTile->heightfield->spacing * 0.5f;
-    float halfTileHeight = (firstTile->heightfield->rows - 1) * firstTile->heightfield->spacing * 0.5f;
+    TerrainTile *firstTile = &sceneState->terrainTiles[0];
+    float halfTileLength = tileLengthInWorldUnits * 0.5f;
 
-    sceneState->terrainTiles[0].heightfield->center = glm::vec2(-halfTileWidth, -halfTileHeight);
+    sceneState->terrainTiles[0].heightfield->center = glm::vec2(-halfTileLength, -halfTileLength);
     sceneState->terrainTiles[0].xAdjTile = &sceneState->terrainTiles[1];
     sceneState->terrainTiles[0].yAdjTile = &sceneState->terrainTiles[2];
 
-    sceneState->terrainTiles[1].heightfield->center = glm::vec2(halfTileWidth, -halfTileHeight);
+    sceneState->terrainTiles[1].heightfield->center = glm::vec2(halfTileLength, -halfTileLength);
     sceneState->terrainTiles[1].yAdjTile = &sceneState->terrainTiles[3];
 
-    sceneState->terrainTiles[2].heightfield->center = glm::vec2(-halfTileWidth, halfTileHeight);
+    sceneState->terrainTiles[2].heightfield->center = glm::vec2(-halfTileLength, halfTileLength);
     sceneState->terrainTiles[2].xAdjTile = &sceneState->terrainTiles[3];
 
-    sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileWidth, halfTileHeight);
+    sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileLength, halfTileLength);
 #endif
 
     sceneState->nextMaterialId = 1;
@@ -905,6 +904,45 @@ glm::vec2 worldToScreen(SceneViewState *viewState, glm::vec3 world)
     return result;
 }
 
+bool isRayIntersectingTriangle(glm::vec3 rayOrigin,
+    glm::vec3 rayVector,
+    glm::vec3 v1,
+    glm::vec3 v2,
+    glm::vec3 v3,
+    float *out_intersectionDistance)
+{
+    // Moller-Trumbore intersection algorithm
+    // https://en.wikipedia.org/wiki/M%C3%B6ller%E2%80%93Trumbore_intersection_algorithm
+
+    const float EPSILON = 0.0000001f;
+    glm::vec3 h, s, q;
+    float a, f, u, v;
+    glm::vec3 edge1 = v2 - v1;
+    glm::vec3 edge2 = v3 - v1;
+    h = glm::cross(rayVector, edge2);
+    a = glm::dot(edge1, h);
+    if (a > -EPSILON && a < EPSILON)
+        return false; // ray is parallel to this triangle
+
+    f = 1.0 / a;
+    s = rayOrigin - v1;
+    u = f * glm::dot(s, h);
+    if (u < 0.0 || u > 1.0)
+        return false;
+    q = glm::cross(s, edge1);
+    v = f * glm::dot(rayVector, q);
+    if (v < 0.0 || u + v > 1.0)
+        return false;
+
+    // compute t to find out where the intersection point is on the line
+    float t = f * glm::dot(edge2, q);
+    if (t <= EPSILON)
+        return false; // there is a line intersection but not a ray intersection
+
+    *out_intersectionDistance = t;
+    return true;
+}
+
 uint64 getInteractionTriggerButtons(InteractionTargetType target)
 {
     uint64 result = 0;
@@ -1487,24 +1525,131 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     glm::vec3 mouseWorldPos = glm::vec3(-10000, -10000, -10000);
     bool wasMouseWorldPosFound = false;
 
+    // hit test terrain
+    Interaction editTerrainInteraction = {};
+    editTerrainInteraction.target.type = INTERACTION_TARGET_TERRAIN;
+
+#define DEBUG_RENDER_RAYCAST_WIREFRAME 0
+    if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
+    {
+        TerrainTile *firstTile = &sceneState->terrainTiles[0];
+        uint32 samplesPerEdge = firstTile->heightfield->heightSamplesPerEdge;
+        float spacing = firstTile->heightfield->spaceBetweenHeightSamples;
+
+        float closestRayHitDist = FLT_MAX;
+#if DEBUG_RENDER_RAYCAST_WIREFRAME
+        glm::vec3 hitTriA;
+        glm::vec3 hitTriB;
+        glm::vec3 hitTriC;
+#endif
+
+        for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+        {
+            TerrainTile *tile = &sceneState->terrainTiles[i];
+            glm::vec2 origin = tile->heightfield->center - (samplesPerEdge * spacing * 0.5f);
+
+            float zero = 0;
+            float *xAdjTileHeights = tile->xAdjTile ? tile->xAdjTile->heightfield->heights : 0;
+            float *yAdjTileHeights = tile->yAdjTile ? tile->yAdjTile->heightfield->heights : 0;
+            float *oppTileHeights =
+                tile->xAdjTile && tile->xAdjTile->yAdjTile ? tile->xAdjTile->yAdjTile->heightfield->heights : 0;
+
+            for (uint32 y = 0; y < samplesPerEdge; y++)
+            {
+                bool isLastRow = y == samplesPerEdge - 1;
+                uint32 yOffset = y * samplesPerEdge;
+
+                for (uint32 x = 0; x < samplesPerEdge; x++)
+                {
+                    bool isLastColumn = x == samplesPerEdge - 1;
+
+                    float *topLeftSample = tile->heightfield->heights + yOffset + x;
+                    float *topRightSample = topLeftSample + 1;
+                    float *bottomRightSample = topLeftSample + samplesPerEdge + 1;
+                    float *bottomLeftSample = topLeftSample + samplesPerEdge;
+                    if (isLastColumn && isLastRow)
+                    {
+                        topRightSample = xAdjTileHeights ? xAdjTileHeights + yOffset : &zero;
+                        bottomRightSample = oppTileHeights ? oppTileHeights : &zero;
+                        bottomLeftSample = yAdjTileHeights ? yAdjTileHeights + x : &zero;
+                    }
+                    else if (isLastColumn)
+                    {
+                        topRightSample = xAdjTileHeights ? xAdjTileHeights + yOffset : &zero;
+                        bottomRightSample = xAdjTileHeights
+                            ? xAdjTileHeights + yOffset + tile->heightfield->heightSamplesPerEdge
+                            : &zero;
+                    }
+                    else if (isLastRow)
+                    {
+                        bottomLeftSample = yAdjTileHeights ? yAdjTileHeights + x : &zero;
+                        bottomRightSample = yAdjTileHeights ? yAdjTileHeights + x + 1 : &zero;
+                    }
+
+                    glm::vec2 start = glm::vec2(origin.x + (x * spacing), origin.y + (y * spacing));
+                    glm::vec3 topLeft = glm::vec3(start.x, *topLeftSample, start.y);
+                    glm::vec3 topRight = glm::vec3(start.x + spacing, *topRightSample, start.y);
+                    glm::vec3 bottomRight = glm::vec3(start.x + spacing, *bottomRightSample, start.y + spacing);
+                    glm::vec3 bottomLeft = glm::vec3(start.x, *bottomLeftSample, start.y + spacing);
+
+                    float rayHitDist;
+                    if (isRayIntersectingTriangle(
+                            viewState->cameraPos, mouseRayDir, topLeft, topRight, bottomRight, &rayHitDist)
+                        && rayHitDist < closestRayHitDist)
+                    {
+                        closestRayHitDist = rayHitDist;
+#if DEBUG_RENDER_RAYCAST_WIREFRAME
+                        hitTriA = topLeft;
+                        hitTriB = topRight;
+                        hitTriC = bottomRight;
+#endif
+                    }
+                    if (isRayIntersectingTriangle(
+                            viewState->cameraPos, mouseRayDir, topLeft, bottomLeft, bottomRight, &rayHitDist)
+                        && rayHitDist < closestRayHitDist)
+                    {
+                        closestRayHitDist = rayHitDist;
+#if DEBUG_RENDER_RAYCAST_WIREFRAME
+                        hitTriA = topLeft;
+                        hitTriB = bottomLeft;
+                        hitTriC = bottomRight;
+#endif
+                    }
+
+#if DEBUG_RENDER_RAYCAST_WIREFRAME
+                    glm::vec3 color = glm::vec3(1, 0, 0.5);
+                    rendererBeginLine(sceneRq, topLeft, color);
+                    rendererExtendLine(sceneRq, topRight);
+                    rendererExtendLine(sceneRq, bottomRight);
+                    rendererEndLineLoop(sceneRq);
+                    rendererBeginLine(sceneRq, topLeft, color);
+                    rendererExtendLine(sceneRq, bottomRight);
+                    rendererExtendLine(sceneRq, bottomLeft);
+                    rendererEndLineLoop(sceneRq);
+#endif
+                }
+            }
+        }
+
+        if (closestRayHitDist < FLT_MAX)
+        {
+#if DEBUG_RENDER_RAYCAST_WIREFRAME
+            rendererBeginLine(sceneRq, hitTriA, glm::vec3(1, 1, 0));
+            rendererExtendLine(sceneRq, hitTriB);
+            rendererExtendLine(sceneRq, hitTriC);
+            rendererEndLineLoop(sceneRq);
+#endif
+
+            mouseWorldPos = viewState->cameraPos + (mouseRayDir * closestRayHitDist);
+            viewState->interactionState.nextHot = editTerrainInteraction;
+            wasMouseWorldPosFound = true;
+        }
+    }
+
     // draw terrain
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
-
-        Interaction editTerrainInteraction = {};
-        editTerrainInteraction.target.type = INTERACTION_TARGET_TERRAIN;
-
-        if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
-        {
-            float hitDist;
-            if (heightfieldIsRayIntersecting(
-                    tile->heightfield, viewState->cameraPos, mouseRayDir, &mouseWorldPos, &hitDist))
-            {
-                viewState->interactionState.nextHot = editTerrainInteraction;
-                wasMouseWorldPosFound = true;
-            }
-        }
 
         BrushVisualizationMode visualizationMode = BRUSH_VIS_MODE_NONE;
         bool renderPreviewHeightmap = false;
@@ -1650,7 +1795,18 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetCameraOrtho(pickingRq);
     rendererSetCameraOrtho(selectionRq);
     rendererSetCameraOrtho(compositeRq);
-    if (uiState->currentContext == EDITOR_CTX_OBJECTS)
+
+    if (uiState->currentContext == EDITOR_CTX_TERRAIN)
+    {
+#if DEBUG_RENDER_RAYCAST_WIREFRAME
+        glm::vec2 mouseRayHitPosScreen = worldToScreen(viewState, mouseWorldPos);
+        float quadDim = 4.0f;
+        RenderQuad quad = {mouseRayHitPosScreen.x - (quadDim * 0.5f), mouseRayHitPosScreen.y - (quadDim * 0.5f),
+            quadDim, quadDim};
+        rendererPushColoredQuad(sceneRq, quad, glm::vec3(1, 1, 1));
+#endif
+    }
+    else if (uiState->currentContext == EDITOR_CTX_OBJECTS)
     {
         // draw manipulator
         if (state->uiState.selectedObjectCount > 0)

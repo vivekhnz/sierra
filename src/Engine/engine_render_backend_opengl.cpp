@@ -202,8 +202,8 @@ RenderBackendContext initializeRenderBackend(MemoryArena *arena)
     // create terrain mesh
     TemporaryMemory terrainMeshMemory = beginTemporaryMemory(arena);
 
-    float terrainTileLengthInWorldUnits = 128.0f;
-    uint32 terrainMeshVertsPerEdge = 256;
+    float terrainTileLengthInWorldUnits = 64.0f;
+    uint32 terrainMeshVertsPerEdge = 32;
     uint32 terrainMeshVertexCount = terrainMeshVertsPerEdge * terrainMeshVertsPerEdge;
     uint32 terrainMeshVertexSize = 5;
     glm::vec3 terrainBoundsMin =
@@ -906,6 +906,9 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
     glBindVertexArray(ctx->globalVertexArrayId);
     glEnable(GL_BLEND);
     glEnable(GL_CULL_FACE);
+    glEnable(GL_DEPTH_TEST);
+    glDepthRange(0, 1);
+    glDepthFunc(GL_LESS);
 
     bool isMissingResources = false;
     RenderQueueCommandHeader *command = rq->firstCommand;
@@ -954,9 +957,6 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
             if (applyEffect(cmd->effect))
             {
-                glEnable(GL_DEPTH_TEST);
-                glDepthFunc(GL_LESS);
-
                 uint32 vertexBufferId =
                     cmd->isTopDown ? ctx->quadTopDownVertexBufferId : ctx->quadBottomUpVertexBufferId;
                 uint32 vertexBufferStride = 4 * sizeof(float);
@@ -990,19 +990,22 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
         {
             DrawLineCommand *cmd = (DrawLineCommand *)commandData;
 
-            glDisable(GL_DEPTH_TEST);
-
-            glUseProgram(shaders->shaderProgramColoredPrimitive);
-            glProgramUniform3fv(shaders->shaderProgramColoredPrimitive,
-                glGetUniformLocation(shaders->shaderProgramColoredPrimitive, "color"), 1,
-                glm::value_ptr(cmd->color));
-
             uint32 vertexBufferStride = sizeof(glm::vec3);
             glBindBuffer(GL_ARRAY_BUFFER, ctx->primitiveInstanceBufferId);
             glEnableVertexAttribArray(0);
             glVertexAttribPointer(0, 3, GL_FLOAT, false, vertexBufferStride, (void *)0);
+            glUseProgram(shaders->shaderProgramColoredPrimitive);
 
+            glDepthRange(0, 0);
+            glDepthFunc(GL_ALWAYS);
+
+            glProgramUniform3fv(shaders->shaderProgramColoredPrimitive,
+                glGetUniformLocation(shaders->shaderProgramColoredPrimitive, "color"), 1,
+                glm::value_ptr(cmd->color));
             glDrawArrays(GL_LINE_STRIP, cmd->vertexIndex, cmd->vertexCount);
+
+            glDepthRange(0, 1);
+            glDepthFunc(GL_LESS);
 
             glDisableVertexAttribArray(0);
         }
@@ -1012,9 +1015,6 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             DrawMeshesCommand *cmd = (DrawMeshesCommand *)commandData;
             if (applyEffect(cmd->effect) && cmd->mesh.ptr != 0)
             {
-                glEnable(GL_DEPTH_TEST);
-                glDepthFunc(GL_LESS);
-
                 OpenGlMesh *glMesh = (OpenGlMesh *)cmd->mesh.ptr;
                 uint32 vertexBufferStride = 6 * sizeof(float);
                 glBindBuffer(GL_ARRAY_BUFFER, glMesh->vertexBufferId);
@@ -1069,9 +1069,6 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             DrawTerrainCommand *cmd = (DrawTerrainCommand *)commandData;
             if (cmd->terrainShader.ptr != 0)
             {
-                glEnable(GL_DEPTH_TEST);
-                glDepthFunc(GL_LESS);
-
                 // update terrain material properties
                 assert(cmd->materialCount <= MAX_TERRAIN_MATERIALS);
                 for (uint32 i = 0; i < cmd->materialCount; i++)

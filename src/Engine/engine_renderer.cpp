@@ -214,7 +214,7 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     result->maxQuads = 65536;
     result->quads = pushArray(arena, RenderQuad, result->maxQuads);
 
-    result->maxPrimitiveVertices = 4096;
+    result->maxPrimitiveVertices = 1000000;
     result->primitiveVertices = pushArray(arena, glm::vec3, result->maxPrimitiveVertices);
 
     result->maxMeshInstances = 4096;
