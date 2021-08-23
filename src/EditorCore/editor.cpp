@@ -428,63 +428,56 @@ void compositeHeightmap(EditorMemory *memory,
 void updateHeightfieldHeights(
     Heightfield *heightfield, uint32 heightmapWidth, uint32 heightmapHeight, uint16 *pixels)
 {
-#if 0
-    uint32 heightSamplesPerEdge = heightfield->columns;
-    uint16 texelsBetweenEdgeSample = heightmapWidth / heightSamplesPerEdge;
-    float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
-
-    uint32 maxX = heightmapWidth - 1;
-    uint32 maxY = heightmapHeight - 1;
-
-    float *dst = (float *)heightfield->heights;
-    for (uint32 y = 0; y < heightSamplesPerEdge; y++)
-    {
-        float ty = (heightmapHeight - 1) * ((float)y / (heightSamplesPerEdge - 2));
-        uint32 yBottom = (uint32)floor(ty);
-
-        for (uint32 x = 0; x < heightSamplesPerEdge; x++)
-        {
-            float tx = (heightmapWidth - 1) * ((float)y / (heightSamplesPerEdge - 2));
-            uint32 xLeft = (uint32)floor(tx);
-
-            float height;
-            if (xLeft >= maxX || yBottom >= maxY)
-            {
-                height = 0;
-            }
-            else
-            {
-                uint16 *bottomLeftTexel = &pixels[(uint32)((yBottom * heightmapWidth) + xLeft)];
-                uint16 bottomLeft = *bottomLeftTexel;
-                uint16 bottomRight = xLeft + 1 > maxX ? 0 : *(bottomLeftTexel + 1);
-                uint16 topLeft = yBottom + 1 > maxY ? 0 : *(bottomLeftTexel + heightmapWidth);
-                uint16 topRight =
-                    xLeft + 1 > maxX || yBottom + 1 > maxY ? 0 : *(bottomLeftTexel + heightmapWidth + 1);
-
-                // todo: bilinear blend
-                height = bottomLeft * heightScalar;
-            }
-
-            *dst++ = height;
-        }
-    }
-#else
-    uint32 texelsBetweenHorizontalSamples = heightmapWidth / heightfield->heightSamplesPerEdge;
-    uint32 texelsBetweenVerticalSamples = heightmapHeight / heightfield->heightSamplesPerEdge;
-
-    uint16 *src = pixels;
+    uint32 samplesPerEdge = heightfield->heightSamplesPerEdge;
     float *dst = (float *)heightfield->heights;
     float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
+
+    uint16 zero = 0;
     for (uint32 y = 0; y < heightfield->heightSamplesPerEdge; y++)
     {
+        float ty = ((heightmapHeight - 1) * y) / (float)samplesPerEdge;
+        uint32 tTop = (uint32)floor(ty);
+        bool isLastRow = tTop == heightmapHeight - 1;
+        float yLerp = ty - (float)tTop;
+
         for (uint32 x = 0; x < heightfield->heightSamplesPerEdge; x++)
         {
-            *dst++ = *src * heightScalar;
-            src += texelsBetweenHorizontalSamples;
+            float tx = ((heightmapWidth - 1) * x) / (float)samplesPerEdge;
+            uint32 tLeft = (uint32)floor(tx);
+            bool isLastColumn = tLeft == heightmapWidth - 1;
+            float xLerp = tx - (float)tLeft;
+
+            uint16 *topLeft = &pixels[(tTop * heightmapWidth) + tLeft];
+            uint16 *topRight = topLeft + 1;
+            uint16 *bottomLeft = topLeft + heightmapWidth;
+            uint16 *bottomRight = topLeft + heightmapWidth + 1;
+
+            if (isLastColumn && isLastRow)
+            {
+                topRight = topLeft;
+                bottomRight = topLeft;
+                bottomLeft = topLeft;
+            }
+            else if (isLastColumn)
+            {
+                topRight = topLeft;
+                bottomRight = bottomLeft;
+            }
+            else if (isLastRow)
+            {
+                bottomLeft = topLeft;
+                bottomRight = topRight;
+            }
+
+            float topBlended = ((1 - xLerp) * *topLeft) + (xLerp * *topRight);
+            float bottomBlended = ((1 - xLerp) * *bottomLeft) + (xLerp * *bottomRight);
+            float blended = ((1 - yLerp) * topBlended) + (yLerp * bottomBlended);
+
+            blended = *topLeft;
+
+            *dst++ = blended * heightScalar;
         }
-        src += (texelsBetweenVerticalSamples - 1) * heightmapWidth;
     }
-#endif
 }
 
 void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
