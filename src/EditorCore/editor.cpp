@@ -320,46 +320,21 @@ void compositeHeightmap(EditorMemory *memory,
     RenderQuad *brushInstances,
     uint32 brushInstanceCount,
     glm::vec2 heightmapOffset,
-    float flattenBrushHeight)
+    float flattenBrushHeight,
+    RenderEffect *influenceMaskEffect,
+    TerrainBrushTool tool)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-
-    float brushFalloff = state->uiState.terrainBrushFalloff;
-    float brushStrength = 1;
-    TerrainBrushTool tool = state->uiState.terrainBrushTool;
-
-    RenderEffectBlendMode maskBlendMode = EFFECT_BLEND_MAX;
-    if (tool != TERRAIN_BRUSH_TOOL_FLATTEN)
-    {
-        /*
-         * Because the spacing between brush instances is constant, higher radius brushes will
-         * result in more brush instances being drawn, meaning the terrain will be influenced
-         * more. As a result, we should decrease the brush strength as the brush radius
-         * increases to ensure the perceived brush strength remains constant.
-         */
-        brushStrength = 0.01f + (0.01875f * state->uiState.terrainBrushStrength);
-        brushStrength /= 4.0f * pow(state->uiState.terrainBrushRadius, 0.5f);
-        maskBlendMode = EFFECT_BLEND_ADDITIVE;
-    }
-    if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
-    {
-        brushStrength *= 4;
-    }
 
     TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     // render brush influence mask
-    RenderEffect *maskEffect =
-        rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
-    rendererSetEffectFloat(maskEffect, "brushFalloff", brushFalloff);
-    rendererSetEffectFloat(maskEffect, "brushStrength", brushStrength);
-
     RenderQueue *rq = rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(brushInfluenceMask));
     rendererSetCameraOrthoOffset(rq, heightmapOffset);
     rendererClear(rq, 0, 0, 0, 1);
     if (brushInstances)
     {
-        rendererPushQuads(rq, brushInstances, brushInstanceCount, maskEffect);
+        rendererPushQuads(rq, brushInstances, brushInstanceCount, influenceMaskEffect);
     }
     rendererDraw(rq);
 
@@ -429,52 +404,28 @@ void updateHeightfieldHeights(
     Heightfield *heightfield, uint32 heightmapWidth, uint32 heightmapHeight, uint16 *pixels)
 {
     uint32 samplesPerEdge = heightfield->heightSamplesPerEdge;
-    float *dst = (float *)heightfield->heights;
     float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
-
-    uint16 zero = 0;
-    for (uint32 y = 0; y < heightfield->heightSamplesPerEdge; y++)
+    float *dst = (float *)heightfield->heights;
+    for (uint32 y = 0; y < samplesPerEdge; y++)
     {
         float ty = ((heightmapHeight - 1) * y) / (float)samplesPerEdge;
         uint32 tTop = (uint32)floor(ty);
-        bool isLastRow = tTop == heightmapHeight - 1;
+        uint32 tBottom = min(tTop + 1, heightmapHeight - 1);
         float yLerp = ty - (float)tTop;
 
-        for (uint32 x = 0; x < heightfield->heightSamplesPerEdge; x++)
+        for (uint32 x = 0; x < samplesPerEdge; x++)
         {
             float tx = ((heightmapWidth - 1) * x) / (float)samplesPerEdge;
             uint32 tLeft = (uint32)floor(tx);
-            bool isLastColumn = tLeft == heightmapWidth - 1;
+            uint32 tRight = min(tLeft + 1, heightmapWidth - 1);
             float xLerp = tx - (float)tLeft;
 
-            uint16 *topLeft = &pixels[(tTop * heightmapWidth) + tLeft];
-            uint16 *topRight = topLeft + 1;
-            uint16 *bottomLeft = topLeft + heightmapWidth;
-            uint16 *bottomRight = topLeft + heightmapWidth + 1;
+            uint16 topLeft = pixels[(tTop * heightmapWidth) + tLeft];
+            uint16 topRight = pixels[(tTop * heightmapWidth) + tRight];
+            uint16 bottomLeft = pixels[(tBottom * heightmapWidth) + tLeft];
+            uint16 bottomRight = pixels[(tBottom * heightmapWidth) + tRight];
 
-            if (isLastColumn && isLastRow)
-            {
-                topRight = topLeft;
-                bottomRight = topLeft;
-                bottomLeft = topLeft;
-            }
-            else if (isLastColumn)
-            {
-                topRight = topLeft;
-                bottomRight = bottomLeft;
-            }
-            else if (isLastRow)
-            {
-                bottomLeft = topLeft;
-                bottomRight = topRight;
-            }
-
-            float topBlended = ((1 - xLerp) * *topLeft) + (xLerp * *topRight);
-            float bottomBlended = ((1 - xLerp) * *bottomLeft) + (xLerp * *bottomRight);
-            float blended = ((1 - yLerp) * topBlended) + (yLerp * bottomBlended);
-
-            blended = *topLeft;
-
+            float blended = lerp(lerp(topLeft, topRight, xLerp), lerp(bottomLeft, bottomRight, xLerp), yLerp);
             *dst++ = blended * heightScalar;
         }
     }
@@ -515,6 +466,33 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
         previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
     }
 
+    float brushFalloff = state->uiState.terrainBrushFalloff;
+    float brushStrength = 1;
+    RenderEffectBlendMode maskBlendMode = EFFECT_BLEND_MAX;
+    if (state->uiState.terrainBrushTool != TERRAIN_BRUSH_TOOL_FLATTEN)
+    {
+        /*
+         * Because the spacing between brush instances is constant, higher radius brushes will
+         * result in more brush instances being drawn, meaning the terrain will be influenced
+         * more. As a result, we should decrease the brush strength as the brush radius
+         * increases to ensure the perceived brush strength remains constant.
+         */
+        brushStrength = 0.01f + (0.01875f * state->uiState.terrainBrushStrength);
+        brushStrength /= 4.0f * pow(state->uiState.terrainBrushRadius, 0.5f);
+        maskBlendMode = EFFECT_BLEND_ADDITIVE;
+    }
+    if (state->uiState.terrainBrushTool == TERRAIN_BRUSH_TOOL_SMOOTH)
+    {
+        brushStrength *= 4;
+    }
+
+    TemporaryMemory renderMemory = beginTemporaryMemory(&memory->arena);
+
+    RenderEffect *influenceMaskEffect =
+        rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
+    rendererSetEffectFloat(influenceMaskEffect, "brushFalloff", brushFalloff);
+    rendererSetEffectFloat(influenceMaskEffect, "brushStrength", brushStrength);
+
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
@@ -522,9 +500,10 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
 
         compositeHeightmap(memory, tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask,
             tile->workingHeightmap, state->activeBrushStroke.quads, state->activeBrushStroke.instanceCount, offset,
-            state->activeBrushStroke.startingHeight);
+            state->activeBrushStroke.startingHeight, influenceMaskEffect, state->uiState.terrainBrushTool);
         compositeHeightmap(memory, tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask,
-            tile->previewHeightmap, previewBrushStrokeQuadPtr, 1, offset, state->activeBrushStroke.startingHeight);
+            tile->previewHeightmap, previewBrushStrokeQuadPtr, 1, offset, state->activeBrushStroke.startingHeight,
+            influenceMaskEffect, state->uiState.terrainBrushTool);
 
         TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
 
@@ -535,6 +514,8 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
 
         endTemporaryMemory(&heightMemory);
     }
+
+    endTemporaryMemory(&renderMemory);
 }
 
 bool commitChanges(EditorMemory *memory, glm::vec2 *brushCursorPos)
