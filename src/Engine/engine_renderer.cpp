@@ -98,8 +98,6 @@ RenderEffect *createEffect(MemoryArena *arena, ShaderHandle shaderHandle, Render
     result->arena = arena;
     result->shaderHandle = shaderHandle;
     result->blendMode = blendMode;
-    result->firstParameter = 0;
-    result->lastParameter = 0;
 
     return result;
 }
@@ -120,11 +118,64 @@ RENDERER_CREATE_EFFECT(rendererCreateEffect)
     return result;
 }
 
+RENDERER_CREATE_EFFECT_OVERRIDE(rendererCreateEffectOverride)
+{
+    MemoryArena *arena = baseEffect->arena;
+    RenderEffect *result = pushStruct(arena, RenderEffect);
+    *result = {};
+
+    result->arena = arena;
+    result->shaderHandle = baseEffect->shaderHandle;
+    result->blendMode = baseEffect->blendMode;
+
+    if (baseEffect->firstParameter)
+    {
+        result->firstParameter = pushStruct(arena, RenderEffectParameterLink);
+        *result->firstParameter = {};
+        result->firstParameter->param = baseEffect->firstParameter->param;
+
+        RenderEffectParameterLink *last = result->firstParameter;
+        for (RenderEffectParameterLink *link = baseEffect->firstParameter->next; link; link = link->next)
+        {
+            RenderEffectParameterLink *copy = pushStruct(arena, RenderEffectParameterLink);
+            *copy = {};
+            copy->param = link->param;
+
+            last->next = copy;
+            last = copy;
+        }
+        result->lastParameter = last;
+    }
+    if (baseEffect->firstTexture)
+    {
+        result->firstTexture = pushStruct(arena, RenderEffectTextureLink);
+        *result->firstTexture = {};
+        result->firstTexture->texture = baseEffect->firstTexture->texture;
+
+        RenderEffectTextureLink *last = result->firstTexture;
+        for (RenderEffectTextureLink *link = baseEffect->firstTexture->next; link; link = link->next)
+        {
+            RenderEffectTextureLink *copy = pushStruct(arena, RenderEffectTextureLink);
+            *copy = {};
+            copy->texture = link->texture;
+
+            last->next = copy;
+            last = copy;
+        }
+        result->lastTexture = last;
+    }
+
+    return result;
+}
+
 inline RenderEffectParameter *pushEffectParameter(RenderEffect *effect, char *paramName)
 {
     RenderEffectParameter *param = pushStruct(effect->arena, RenderEffectParameter);
     *param = {};
-    param->next = 0;
+
+    RenderEffectParameterLink *link = pushStruct(effect->arena, RenderEffectParameterLink);
+    *link = {};
+    link->param = param;
 
     char *srcCursor = paramName;
     uint32 length = 0;
@@ -143,12 +194,12 @@ inline RenderEffectParameter *pushEffectParameter(RenderEffect *effect, char *pa
 
     if (effect->lastParameter)
     {
-        effect->lastParameter->next = param;
+        effect->lastParameter->next = link;
     }
-    effect->lastParameter = param;
+    effect->lastParameter = link;
     if (!effect->firstParameter)
     {
-        effect->firstParameter = param;
+        effect->firstParameter = link;
     }
 
     return param;
@@ -188,16 +239,19 @@ RENDERER_SET_EFFECT_TEXTURE(rendererSetEffectTexture)
     *texture = {};
     texture->slot = slot;
     texture->handle = handle;
-    texture->next = 0;
+
+    RenderEffectTextureLink *link = pushStruct(effect->arena, RenderEffectTextureLink);
+    *link = {};
+    link->texture = texture;
 
     if (effect->lastTexture)
     {
-        effect->lastTexture->next = texture;
+        effect->lastTexture->next = link;
     }
-    effect->lastTexture = texture;
+    effect->lastTexture = link;
     if (!effect->firstTexture)
     {
-        effect->firstTexture = texture;
+        effect->firstTexture = link;
     }
 }
 

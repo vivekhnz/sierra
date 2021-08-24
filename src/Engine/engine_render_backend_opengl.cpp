@@ -838,9 +838,9 @@ bool applyEffect(RenderEffect *effect)
         break;
         }
 
-        RenderEffectParameter *effectParam = effect->firstParameter;
-        while (effectParam)
+        for (RenderEffectParameterLink *link = effect->firstParameter; link; link = link->next)
         {
+            RenderEffectParameter *effectParam = link->param;
             uint32 loc = glGetUniformLocation(shaderProgramId, effectParam->name);
             switch (effectParam->type)
             {
@@ -860,17 +860,13 @@ bool applyEffect(RenderEffect *effect)
                 assert(!"Invalid effect parameter type");
                 break;
             }
-
-            effectParam = effectParam->next;
         }
 
-        RenderEffectTexture *effectTexture = effect->firstTexture;
-        while (effectTexture)
+        for (RenderEffectTextureLink *link = effect->firstTexture; link; link = link->next)
         {
+            RenderEffectTexture *effectTexture = link->texture;
             glActiveTexture(GL_TEXTURE0 + effectTexture->slot);
             glBindTexture(GL_TEXTURE_2D, getTextureId(effectTexture->handle));
-
-            effectTexture = effectTexture->next;
         }
     }
 

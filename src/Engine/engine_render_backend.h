@@ -32,23 +32,31 @@ struct RenderEffectParameter
         uint32 u;
         glm::vec3 v3;
     } value;
-    RenderEffectParameter *next;
+};
+struct RenderEffectParameterLink
+{
+    RenderEffectParameter *param;
+    RenderEffectParameterLink *next;
 };
 struct RenderEffectTexture
 {
     uint32 slot;
     TextureHandle handle;
-    RenderEffectTexture *next;
+};
+struct RenderEffectTextureLink
+{
+    RenderEffectTexture *texture;
+    RenderEffectTextureLink *next;
 };
 struct RenderEffect
 {
     MemoryArena *arena;
     ShaderHandle shaderHandle;
     RenderEffectBlendMode blendMode;
-    RenderEffectParameter *firstParameter;
-    RenderEffectParameter *lastParameter;
-    RenderEffectTexture *firstTexture;
-    RenderEffectTexture *lastTexture;
+    RenderEffectParameterLink *firstParameter;
+    RenderEffectParameterLink *lastParameter;
+    RenderEffectTextureLink *firstTexture;
+    RenderEffectTextureLink *lastTexture;
 };
 
 enum RenderQueueCommandType

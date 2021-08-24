@@ -407,6 +407,42 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
     rendererSetEffectFloat(influenceMaskEffect, "brushFalloff", brushFalloff);
     rendererSetEffectFloat(influenceMaskEffect, "brushStrength", brushStrength);
 
+    uint32 smoothIterations = 3;
+    RenderEffect *brushEffect = 0;
+    switch (tool)
+    {
+    case TERRAIN_BRUSH_TOOL_RAISE:
+    {
+        brushEffect = rendererCreateEffect(
+            &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectFloat(brushEffect, "blendSign", 1);
+    }
+    break;
+    case TERRAIN_BRUSH_TOOL_LOWER:
+    {
+        brushEffect = rendererCreateEffect(
+            &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectFloat(brushEffect, "blendSign", -1);
+    }
+    break;
+    case TERRAIN_BRUSH_TOOL_FLATTEN:
+    {
+        brushEffect = rendererCreateEffect(
+            &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectFloat(brushEffect, "flattenHeight", state->activeBrushStroke.startingHeight);
+    }
+    break;
+    case TERRAIN_BRUSH_TOOL_SMOOTH:
+    {
+        brushEffect = rendererCreateEffect(
+            &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
+        rendererSetEffectInt(brushEffect, "iterationCount", smoothIterations);
+        rendererSetEffectInt(brushEffect, "heightmapWidth", HEIGHTMAP_WIDTH);
+    }
+    break;
+    }
+    assert(brushEffect);
+
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
@@ -434,21 +470,19 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
         rendererDraw(previewInfluenceRq);
 
         // render heightmap
+        RenderEffect *workingEffect = rendererCreateEffectOverride(brushEffect);
+        RenderEffect *previewEffect = rendererCreateEffectOverride(brushEffect);
+
         if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
         {
-            uint32 iterations = 3;
-
             TextureHandle workingInputTexture = tile->committedHeightmap->textureHandle;
             RenderTarget *workingIterationOutput = tile->workingHeightmap;
-            for (uint32 i = 0; i < iterations; i++)
+            rendererSetEffectTexture(workingEffect, 1, tile->workingBrushInfluenceMask->textureHandle);
+            for (uint32 i = 0; i < smoothIterations; i++)
             {
-                RenderEffect *effect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectInt(effect, "iterationCount", iterations);
+                RenderEffect *effect = rendererCreateEffectOverride(workingEffect);
                 rendererSetEffectInt(effect, "iteration", i);
-                rendererSetEffectInt(effect, "heightmapWidth", HEIGHTMAP_WIDTH);
                 rendererSetEffectTexture(effect, 0, workingInputTexture);
-                rendererSetEffectTexture(effect, 1, tile->workingBrushInfluenceMask->textureHandle);
 
                 RenderQueue *rq =
                     rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(workingIterationOutput));
@@ -463,15 +497,12 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
 
             TextureHandle previewInputTexture = tile->workingHeightmap->textureHandle;
             RenderTarget *previewIterationOutput = tile->previewHeightmap;
-            for (uint32 i = 0; i < iterations; i++)
+            rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
+            for (uint32 i = 0; i < smoothIterations; i++)
             {
-                RenderEffect *effect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectInt(effect, "iterationCount", iterations);
+                RenderEffect *effect = rendererCreateEffectOverride(previewEffect);
                 rendererSetEffectInt(effect, "iteration", i);
-                rendererSetEffectInt(effect, "heightmapWidth", HEIGHTMAP_WIDTH);
                 rendererSetEffectTexture(effect, 0, previewInputTexture);
-                rendererSetEffectTexture(effect, 1, tile->previewBrushInfluenceMask->textureHandle);
 
                 RenderQueue *rq =
                     rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(previewIterationOutput));
@@ -486,46 +517,8 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
         }
         else
         {
-            RenderEffect *workingEffect = 0;
-            RenderEffect *previewEffect = 0;
-
-            if (tool == TERRAIN_BRUSH_TOOL_RAISE)
-            {
-                workingEffect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectFloat(workingEffect, "blendSign", 1);
-
-                previewEffect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectFloat(previewEffect, "blendSign", 1);
-            }
-            else if (tool == TERRAIN_BRUSH_TOOL_LOWER)
-            {
-                workingEffect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectFloat(workingEffect, "blendSign", -1);
-
-                previewEffect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectFloat(previewEffect, "blendSign", -1);
-            }
-            else if (tool == TERRAIN_BRUSH_TOOL_FLATTEN)
-            {
-                workingEffect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectFloat(workingEffect, "flattenHeight", state->activeBrushStroke.startingHeight);
-
-                previewEffect = rendererCreateEffect(
-                    &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-                rendererSetEffectFloat(previewEffect, "flattenHeight", state->activeBrushStroke.startingHeight);
-            }
-            assert(workingEffect && previewEffect);
-
             rendererSetEffectTexture(workingEffect, 0, tile->committedHeightmap->textureHandle);
             rendererSetEffectTexture(workingEffect, 1, tile->workingBrushInfluenceMask->textureHandle);
-            rendererSetEffectTexture(previewEffect, 0, tile->workingHeightmap->textureHandle);
-            rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
-
             RenderQueue *workingOutputRq =
                 rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->workingHeightmap));
             rendererSetCameraOrtho(workingOutputRq);
@@ -533,6 +526,8 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
             rendererPushQuad(workingOutputRq, getBounds(tile->workingHeightmap), workingEffect);
             rendererDraw(workingOutputRq);
 
+            rendererSetEffectTexture(previewEffect, 0, tile->workingHeightmap->textureHandle);
+            rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
             RenderQueue *previewOutputRq =
                 rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->previewHeightmap));
             rendererSetCameraOrtho(previewOutputRq);
@@ -1742,8 +1737,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererPushMeshes(sceneRq, editorAssets->meshRock, sceneState->objectInstanceData,
         sceneState->objectInstanceCount, rockEffect);
 
-    RenderEffect *mesh32BitIdEffect =
+    RenderEffect *meshIdEffect =
         rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *mesh32BitIdEffect = rendererCreateEffectOverride(meshIdEffect);
     rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
     rendererPushMeshes(pickingRq, editorAssets->meshRock, sceneState->objectInstanceData,
         sceneState->objectInstanceCount, mesh32BitIdEffect);
@@ -1755,8 +1751,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
          * bits to prevent OpenGL from clamping our IDs. We also mask out the 25th most significant bit as we
          * use that bit to store whether the object should use the alternate outline effect.
          */
-        RenderEffect *mesh7BitIdEffect =
-            rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        RenderEffect *mesh7BitIdEffect = rendererCreateEffectOverride(meshIdEffect);
         rendererSetEffectUint(mesh7BitIdEffect, "idMask", 0x0000007F);
 
         // draw selected object instances
@@ -1794,8 +1789,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
             if (hotInstance.id)
             {
-                RenderEffect *mesh8BitIdEffect =
-                    rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+                RenderEffect *mesh8BitIdEffect = rendererCreateEffectOverride(meshIdEffect);
                 rendererSetEffectUint(mesh7BitIdEffect, "idMask", 0x000000FF);
                 rendererPushMeshes(selectionRq, editorAssets->meshRock, &hotInstance, 1, mesh8BitIdEffect);
             }
@@ -1842,6 +1836,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
             manipulatorHandlePos /= (float)foundObjects;
 
+            RenderEffect *quadIdEffect =
+                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+
             float handleDim = 16;
             RenderQuad handleQuad;
             RenderEffect *handleIdEffect;
@@ -1860,8 +1857,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(1, 1, 1));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
@@ -1877,8 +1873,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(1, 0, 0));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
@@ -1892,8 +1887,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 1, 0));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
@@ -1907,8 +1901,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 0, 1));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
@@ -1924,8 +1917,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
                 handleDim, handleDim};
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
@@ -1941,8 +1933,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
                 handleDim, handleDim};
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
 
@@ -1958,8 +1949,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
                 handleDim, handleDim};
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
-            handleIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+            handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
             rendererPushQuad(pickingRq, handleQuad, handleIdEffect);
         }

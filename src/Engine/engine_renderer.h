@@ -46,6 +46,7 @@ struct RenderOutput
 
 #define RENDERER_CREATE_EFFECT(name)                                                                              \
     RenderEffect *name(MemoryArena *arena, AssetHandle shaderAsset, RenderEffectBlendMode blendMode)
+#define RENDERER_CREATE_EFFECT_OVERRIDE(name) RenderEffect *name(RenderEffect *baseEffect)
 #define RENDERER_SET_EFFECT_FLOAT(name) void name(RenderEffect *effect, char *paramName, float value)
 #define RENDERER_SET_EFFECT_VEC3(name) void name(RenderEffect *effect, char *paramName, glm::vec3 value)
 #define RENDERER_SET_EFFECT_INT(name) void name(RenderEffect *effect, char *paramName, int32 value)
