@@ -847,6 +847,9 @@ bool applyEffect(RenderEffect *effect)
             case EFFECT_PARAM_TYPE_FLOAT:
                 glProgramUniform1f(shaderProgramId, loc, effectParam->value.f);
                 break;
+            case EFFECT_PARAM_TYPE_VEC2:
+                glProgramUniform2fv(shaderProgramId, loc, 1, glm::value_ptr(effectParam->value.v2));
+                break;
             case EFFECT_PARAM_TYPE_VEC3:
                 glProgramUniform3fv(shaderProgramId, loc, 1, glm::value_ptr(effectParam->value.v3));
                 break;

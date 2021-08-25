@@ -17,6 +17,7 @@ struct RenderBackendInitParams
 enum RenderEffectParameterType
 {
     EFFECT_PARAM_TYPE_FLOAT,
+    EFFECT_PARAM_TYPE_VEC2,
     EFFECT_PARAM_TYPE_VEC3,
     EFFECT_PARAM_TYPE_INT,
     EFFECT_PARAM_TYPE_UINT
@@ -30,6 +31,7 @@ struct RenderEffectParameter
         float f;
         int32 i;
         uint32 u;
+        glm::vec2 v2;
         glm::vec3 v3;
     } value;
 };

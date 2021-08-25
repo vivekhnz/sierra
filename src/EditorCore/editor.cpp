@@ -475,44 +475,66 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
 
         if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
         {
-            TextureHandle workingInputTexture = tile->committedHeightmap->textureHandle;
-            RenderTarget *workingIterationOutput = tile->workingHeightmap;
             rendererSetEffectTexture(workingEffect, 1, tile->workingBrushInfluenceMask->textureHandle);
+            RenderTarget *workingBaseTarget = tile->committedHeightmap;
             for (uint32 i = 0; i < smoothIterations; i++)
             {
-                RenderEffect *effect = rendererCreateEffectOverride(workingEffect);
-                rendererSetEffectInt(effect, "iteration", i);
-                rendererSetEffectTexture(effect, 0, workingInputTexture);
+                RenderEffect *horizontalEffect = rendererCreateEffectOverride(workingEffect);
+                rendererSetEffectInt(horizontalEffect, "iteration", i);
+                rendererSetEffectVec2(horizontalEffect, "blurDirection", glm::vec2(1, 0));
+                rendererSetEffectTexture(horizontalEffect, 0, workingBaseTarget->textureHandle);
 
-                RenderQueue *rq =
-                    rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(workingIterationOutput));
-                rendererSetCameraOrtho(rq);
-                rendererClear(rq, 0, 0, 0, 1);
-                rendererPushQuad(rq, getBounds(workingIterationOutput), effect);
-                rendererDraw(rq);
+                RenderQueue *horizontalRq = rendererCreateQueue(
+                    state->renderCtx, &memory->arena, getRenderOutput(state->temporaryHeightmap));
+                rendererSetCameraOrtho(horizontalRq);
+                rendererClear(horizontalRq, 0, 0, 0, 1);
+                rendererPushQuad(horizontalRq, getBounds(state->temporaryHeightmap), horizontalEffect);
+                rendererDraw(horizontalRq);
 
-                workingInputTexture = workingIterationOutput->textureHandle;
-                workingIterationOutput = i % 2 == 0 ? state->temporaryHeightmap : tile->workingHeightmap;
+                RenderEffect *verticalEffect = rendererCreateEffectOverride(workingEffect);
+                rendererSetEffectInt(verticalEffect, "iteration", i);
+                rendererSetEffectVec2(verticalEffect, "blurDirection", glm::vec2(0, 1));
+                rendererSetEffectTexture(verticalEffect, 0, state->temporaryHeightmap->textureHandle);
+
+                RenderQueue *verticalRq =
+                    rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->workingHeightmap));
+                rendererSetCameraOrtho(verticalRq);
+                rendererClear(verticalRq, 0, 0, 0, 1);
+                rendererPushQuad(verticalRq, getBounds(tile->workingHeightmap), verticalEffect);
+                rendererDraw(verticalRq);
+
+                workingBaseTarget = tile->workingHeightmap;
             }
 
-            TextureHandle previewInputTexture = tile->workingHeightmap->textureHandle;
-            RenderTarget *previewIterationOutput = tile->previewHeightmap;
             rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
+            RenderTarget *previewBaseTarget = tile->workingHeightmap;
             for (uint32 i = 0; i < smoothIterations; i++)
             {
-                RenderEffect *effect = rendererCreateEffectOverride(previewEffect);
-                rendererSetEffectInt(effect, "iteration", i);
-                rendererSetEffectTexture(effect, 0, previewInputTexture);
+                RenderEffect *horizontalEffect = rendererCreateEffectOverride(previewEffect);
+                rendererSetEffectInt(horizontalEffect, "iteration", i);
+                rendererSetEffectVec2(horizontalEffect, "blurDirection", glm::vec2(1, 0));
+                rendererSetEffectTexture(horizontalEffect, 0, previewBaseTarget->textureHandle);
 
-                RenderQueue *rq =
-                    rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(previewIterationOutput));
-                rendererSetCameraOrtho(rq);
-                rendererClear(rq, 0, 0, 0, 1);
-                rendererPushQuad(rq, getBounds(previewIterationOutput), effect);
-                rendererDraw(rq);
+                RenderQueue *horizontalRq = rendererCreateQueue(
+                    state->renderCtx, &memory->arena, getRenderOutput(state->temporaryHeightmap));
+                rendererSetCameraOrtho(horizontalRq);
+                rendererClear(horizontalRq, 0, 0, 0, 1);
+                rendererPushQuad(horizontalRq, getBounds(state->temporaryHeightmap), horizontalEffect);
+                rendererDraw(horizontalRq);
 
-                previewInputTexture = previewIterationOutput->textureHandle;
-                previewIterationOutput = i % 2 == 0 ? state->temporaryHeightmap : tile->previewHeightmap;
+                RenderEffect *verticalEffect = rendererCreateEffectOverride(previewEffect);
+                rendererSetEffectInt(verticalEffect, "iteration", i);
+                rendererSetEffectVec2(verticalEffect, "blurDirection", glm::vec2(0, 1));
+                rendererSetEffectTexture(verticalEffect, 0, state->temporaryHeightmap->textureHandle);
+
+                RenderQueue *verticalRq =
+                    rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->previewHeightmap));
+                rendererSetCameraOrtho(verticalRq);
+                rendererClear(verticalRq, 0, 0, 0, 1);
+                rendererPushQuad(verticalRq, getBounds(tile->previewHeightmap), verticalEffect);
+                rendererDraw(verticalRq);
+
+                previewBaseTarget = tile->previewHeightmap;
             }
         }
         else

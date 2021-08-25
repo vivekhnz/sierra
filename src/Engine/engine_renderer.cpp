@@ -211,21 +211,24 @@ RENDERER_SET_EFFECT_FLOAT(rendererSetEffectFloat)
     param->type = EFFECT_PARAM_TYPE_FLOAT;
     param->value.f = value;
 }
-
+RENDERER_SET_EFFECT_VEC2(rendererSetEffectVec2)
+{
+    RenderEffectParameter *param = pushEffectParameter(effect, paramName);
+    param->type = EFFECT_PARAM_TYPE_VEC2;
+    param->value.v2 = value;
+}
 RENDERER_SET_EFFECT_VEC3(rendererSetEffectVec3)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_VEC3;
     param->value.v3 = value;
 }
-
 RENDERER_SET_EFFECT_INT(rendererSetEffectInt)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_INT;
     param->value.i = value;
 }
-
 RENDERER_SET_EFFECT_UINT(rendererSetEffectUint)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
