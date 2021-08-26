@@ -163,57 +163,48 @@ void initializeEditor(EditorMemory *memory)
 
     // initialize scene world
 #if FEATURE_TERRAIN_USE_SPLIT_TILES
-    sceneState->terrainTileCount = 4;
+    int32 tileColumns = 2;
+    int32 tileRows = 2;
+    float tileLengthInWorldUnits = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
+    glm::vec2 topLeftTileCenter = glm::vec2(1 - tileColumns, 1 - tileRows) * tileLengthInWorldUnits * 0.5f;
+
+    sceneState->terrainTileCount = tileColumns * tileRows;
+    sceneState->terrainTiles = pushArray(arena, TerrainTile, sceneState->terrainTileCount);
+    TerrainTile *currentTile = sceneState->terrainTiles;
+    for (uint32 y = 0; y < tileRows; y++)
+    {
+        for (uint32 x = 0; x < tileColumns; x++)
+        {
+            TerrainTile *tile = currentTile++;
+            tile->heightfield = pushStruct(arena, Heightfield);
+            tile->heightfield->heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
+            tile->heightfield->spaceBetweenHeightSamples = tileLengthInWorldUnits / HEIGHTFIELD_SAMPLES_PER_EDGE;
+            tile->heightfield->maxHeight = 200;
+
+            uint32 heightSampleCount =
+                tile->heightfield->heightSamplesPerEdge * tile->heightfield->heightSamplesPerEdge;
+            tile->heightfield->heights = pushArray(arena, float, heightSampleCount);
+            memset(tile->heightfield->heights, 0, heightSampleCount);
+
+            tile->committedHeightmap =
+                rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+            tile->workingBrushInfluenceMask =
+                rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+            tile->workingHeightmap =
+                rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+            tile->previewBrushInfluenceMask =
+                rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+            tile->previewHeightmap =
+                rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
+
+            tile->heightfield->center =
+                topLeftTileCenter + glm::vec2(x * tileLengthInWorldUnits, y * tileLengthInWorldUnits);
+            tile->xAdjTile = x == tileColumns - 1 ? 0 : &sceneState->terrainTiles[(y * tileColumns) + x + 1];
+            tile->yAdjTile = y == tileRows - 1 ? 0 : &sceneState->terrainTiles[((y + 1) * tileRows) + x];
+        }
+    }
 #else
     sceneState->terrainTileCount = 1;
-#endif
-    float tileLengthInWorldUnits = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
-
-    sceneState->terrainTiles = pushArray(arena, TerrainTile, sceneState->terrainTileCount);
-    for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
-    {
-        TerrainTile *tile = &sceneState->terrainTiles[i];
-        tile->heightfield = pushStruct(arena, Heightfield);
-        tile->heightfield->heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
-        tile->heightfield->spaceBetweenHeightSamples = tileLengthInWorldUnits / HEIGHTFIELD_SAMPLES_PER_EDGE;
-        tile->heightfield->maxHeight = 200;
-        tile->heightfield->center = glm::vec2(0, 0);
-
-        uint32 heightSampleCount =
-            tile->heightfield->heightSamplesPerEdge * tile->heightfield->heightSamplesPerEdge;
-        tile->heightfield->heights = pushArray(arena, float, heightSampleCount);
-        memset(tile->heightfield->heights, 0, heightSampleCount);
-
-        tile->committedHeightmap =
-            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->workingBrushInfluenceMask =
-            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->workingHeightmap =
-            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->previewBrushInfluenceMask =
-            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-        tile->previewHeightmap =
-            rendererCreateRenderTarget(arena, HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT, TEXTURE_FORMAT_R16, false);
-
-        tile->xAdjTile = 0;
-        tile->yAdjTile = 0;
-    }
-
-#if FEATURE_TERRAIN_USE_SPLIT_TILES
-    TerrainTile *firstTile = &sceneState->terrainTiles[0];
-    float halfTileLength = tileLengthInWorldUnits * 0.5f;
-
-    sceneState->terrainTiles[0].heightfield->center = glm::vec2(-halfTileLength, -halfTileLength);
-    sceneState->terrainTiles[0].xAdjTile = &sceneState->terrainTiles[1];
-    sceneState->terrainTiles[0].yAdjTile = &sceneState->terrainTiles[2];
-
-    sceneState->terrainTiles[1].heightfield->center = glm::vec2(halfTileLength, -halfTileLength);
-    sceneState->terrainTiles[1].yAdjTile = &sceneState->terrainTiles[3];
-
-    sceneState->terrainTiles[2].heightfield->center = glm::vec2(-halfTileLength, halfTileLength);
-    sceneState->terrainTiles[2].xAdjTile = &sceneState->terrainTiles[3];
-
-    sceneState->terrainTiles[3].heightfield->center = glm::vec2(halfTileLength, halfTileLength);
 #endif
 
     sceneState->nextMaterialId = 1;
