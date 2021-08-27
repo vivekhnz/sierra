@@ -73,6 +73,7 @@ struct RenderOutput
 #define RENDERER_EXTEND_LINE(name) void name(RenderQueue *rq, glm::vec3 point)
 #define RENDERER_END_LINE(name) void name(RenderQueue *rq, glm::vec3 end)
 #define RENDERER_END_LINE_LOOP(name) void name(RenderQueue *rq)
+#define RENDERER_PUSH_QUAD_OUTLINE(name) void name(RenderQueue *rq, rect2 quad, glm::vec3 color)
 #define RENDERER_PUSH_MESHES(name)                                                                                \
     void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances, uint32 instanceCount,             \
         RenderEffect *effect)

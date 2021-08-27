@@ -1543,7 +1543,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     Interaction editTerrainInteraction = {};
     editTerrainInteraction.target.type = INTERACTION_TARGET_TERRAIN;
 
-#define DEBUG_TERRAIN_VIS 1
+#define DEBUG_TERRAIN_VIS 0
 #if DEBUG_TERRAIN_VIS
 #define DEBUG_TERRAIN_VIS_RAYCAST 0
 #define DEBUG_TERRAIN_VIS_TILE_BOUNDS 0
@@ -1652,13 +1652,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
 
 #if DEBUG_TERRAIN_VIS_TILE_BOUNDS
-            glm::vec3 color = glm::vec3(0, 0.5, 1);
-            float tileLength = samplesPerEdge * spacing;
-            rendererBeginLine(sceneRq, glm::vec3(origin.x, 0, origin.y), color);
-            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y));
-            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y + tileLength));
-            rendererExtendLine(sceneRq, glm::vec3(origin.x, 0, origin.y + tileLength));
-            rendererEndLineLoop(sceneRq);
+            rect2 tileBounds = rectCenterDim(tile->heightfield->center, samplesPerEdge * spacing);
+            rendererPushQuadOutline(sceneRq, tileBounds, glm::vec3(0, 0.5, 1));
 #endif
         }
 
@@ -1673,13 +1668,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
 #if DEBUG_TERRAIN_VIS_HEIGHTMAP
             glm::vec2 origin = hitTile->heightfield->center - (samplesPerEdge * spacing * 0.5f);
-            glm::vec3 color = glm::vec3(1, 1, 0);
-            float tileLength = samplesPerEdge * spacing;
-            rendererBeginLine(sceneRq, glm::vec3(origin.x, 0, origin.y), color);
-            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y));
-            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y + tileLength));
-            rendererExtendLine(sceneRq, glm::vec3(origin.x, 0, origin.y + tileLength));
-            rendererEndLineLoop(sceneRq);
+            rect2 tileBounds = rectCenterDim(hitTile->heightfield->center, samplesPerEdge * spacing);
+            rendererPushQuadOutline(sceneRq, tileBounds, glm::vec3(1, 1, 0));
 #endif
 
             mouseWorldPos = viewState->cameraPos + (mouseRayDir * closestRayHitDist);

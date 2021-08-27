@@ -464,6 +464,15 @@ RENDERER_END_LINE_LOOP(rendererEndLineLoop)
     rendererEndLine(rq, rq->currentLine.firstVertex->point);
 }
 
+RENDERER_PUSH_QUAD_OUTLINE(rendererPushQuadOutline)
+{
+    rendererBeginLine(rq, glm::vec3(quad.x, 0, quad.y), color);
+    rendererExtendLine(rq, glm::vec3(quad.x + quad.width, 0, quad.y));
+    rendererExtendLine(rq, glm::vec3(quad.x + quad.width, 0, quad.y + quad.height));
+    rendererExtendLine(rq, glm::vec3(quad.x, 0, quad.y + quad.height));
+    rendererEndLineLoop(rq);
+}
+
 RENDERER_PUSH_MESHES(rendererPushMeshes)
 {
     assert(rq->meshInstanceCount + instanceCount < rq->maxMeshInstances + 1);
