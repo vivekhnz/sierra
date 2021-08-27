@@ -351,22 +351,15 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
     {
         glm::vec2 pos = state->activeBrushStroke.positions[i];
         glm::vec2 posHeightmapSpace = (pos + halfHeightfieldSize) * worldToHeightmapSpace;
-        RenderQuad *quad = &state->activeBrushStroke.quads[i];
-        quad->x = posHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
-        quad->y = posHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
-        quad->width = brushStrokeQuadWidth;
-        quad->height = brushStrokeQuadWidth;
+        state->activeBrushStroke.quads[i] = rectCenterDim(posHeightmapSpace, brushStrokeQuadWidth);
     }
 
-    RenderQuad previewBrushStrokeQuad;
-    RenderQuad *previewBrushStrokeQuadPtr = 0;
+    rect2 previewBrushStrokeQuad;
+    rect2 *previewBrushStrokeQuadPtr = 0;
     if (brushCursorPos)
     {
         glm::vec2 brushCursorPosInHeightmapSpace = (*brushCursorPos + halfHeightfieldSize) * worldToHeightmapSpace;
-        previewBrushStrokeQuad.x = brushCursorPosInHeightmapSpace.x - (brushStrokeQuadWidth * 0.5f);
-        previewBrushStrokeQuad.y = brushCursorPosInHeightmapSpace.y - (brushStrokeQuadWidth * 0.5f);
-        previewBrushStrokeQuad.width = brushStrokeQuadWidth;
-        previewBrushStrokeQuad.height = brushStrokeQuadWidth;
+        previewBrushStrokeQuad = rectCenterDim(brushCursorPosInHeightmapSpace, brushStrokeQuadWidth);
         previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
     }
 
@@ -1819,10 +1812,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     {
 #if DEBUG_RENDER_RAYCAST_WIREFRAME
         glm::vec2 mouseRayHitPosScreen = worldToScreen(viewState, mouseWorldPos);
-        float quadDim = 4.0f;
-        RenderQuad quad = {mouseRayHitPosScreen.x - (quadDim * 0.5f), mouseRayHitPosScreen.y - (quadDim * 0.5f),
-            quadDim, quadDim};
-        rendererPushColoredQuad(sceneRq, quad, glm::vec3(1, 1, 1));
+        rendererPushColoredQuad(sceneRq, rectCenterDim(mouseRayHitPosScreen, 4), glm::vec3(1, 1, 1));
 #endif
     }
     else if (uiState->currentContext == EDITOR_CTX_OBJECTS)
@@ -1853,7 +1843,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
 
             float handleDim = 16;
-            RenderQuad handleQuad;
+            rect2 handleQuad;
             RenderEffect *handleIdEffect;
             ManipulatorInteractionMode mode;
             bool isHot;
@@ -1865,8 +1855,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
             // view-space translation
             mode = MANIPULATOR_TRANSLATE_VIEW_SPACE;
-            handleQuad = {manipulatorCenterScreenPos.x - (handleDim * 0.5f),
-                manipulatorCenterScreenPos.y - (handleDim * 0.5f), handleDim, handleDim};
+            handleQuad = rectCenterDim(manipulatorCenterScreenPos, handleDim);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(1, 1, 1));
@@ -1881,8 +1870,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos + glm::vec3(1, 0, 0));
             dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
             handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 48.0f);
-            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
-                handleDim, handleDim};
+            handleQuad = rectCenterDim(handleScreenPos, handleDim);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(1, 0, 0));
@@ -1895,8 +1883,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos + glm::vec3(0, 1, 0));
             dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
             handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 48.0f);
-            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
-                handleDim, handleDim};
+            handleQuad = rectCenterDim(handleScreenPos, handleDim);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 1, 0));
@@ -1909,8 +1896,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             offsetHandleScreenPos = worldToScreen(viewState, manipulatorHandlePos + glm::vec3(0, 0, 1));
             dirToOffsetHandle = glm::normalize(offsetHandleScreenPos - manipulatorCenterScreenPos);
             handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 48.0f);
-            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
-                handleDim, handleDim};
+            handleQuad = rectCenterDim(handleScreenPos, handleDim);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0, 0, 1));
@@ -1925,10 +1911,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 64.0f);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
-            handleQuad = {handleScreenPos.x - 2, handleScreenPos.y - 2, 4, 4};
-            rendererPushColoredQuad(sceneRq, handleQuad, glm::vec3(0, 0, 1));
-            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
-                handleDim, handleDim};
+            rendererPushColoredQuad(sceneRq, rectCenterDim(handleScreenPos, 4), glm::vec3(0, 0, 1));
+            handleQuad = rectCenterDim(handleScreenPos, handleDim);
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
             handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
@@ -1941,10 +1925,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 64.0f);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
-            handleQuad = {handleScreenPos.x - 2, handleScreenPos.y - 2, 4, 4};
-            rendererPushColoredQuad(sceneRq, handleQuad, glm::vec3(0, 1, 0));
-            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
-                handleDim, handleDim};
+            rendererPushColoredQuad(sceneRq, rectCenterDim(handleScreenPos, 4), glm::vec3(0, 1, 0));
+            handleQuad = rectCenterDim(handleScreenPos, handleDim);
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
             handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
@@ -1957,10 +1939,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             handleScreenPos = manipulatorCenterScreenPos + (dirToOffsetHandle * 64.0f);
             isHot = viewState->interactionState.hot.target.type == INTERACTION_TARGET_MANIPULATOR
                 && viewState->interactionState.hot.target.id == (void *)mode;
-            handleQuad = {handleScreenPos.x - 2, handleScreenPos.y - 2, 4, 4};
-            rendererPushColoredQuad(sceneRq, handleQuad, glm::vec3(1, 0, 0));
-            handleQuad = {handleScreenPos.x - (handleDim * 0.5f), handleScreenPos.y - (handleDim * 0.5f),
-                handleDim, handleDim};
+            rendererPushColoredQuad(sceneRq, rectCenterDim(handleScreenPos, 4), glm::vec3(1, 0, 0));
+            handleQuad = rectCenterDim(handleScreenPos, handleDim);
             rendererPushColoredQuad(sceneRq, handleQuad, isHot ? glm::vec3(1, 1, 0) : glm::vec3(0.5f, 0.5f, 0.5f));
             handleIdEffect = rendererCreateEffectOverride(quadIdEffect);
             rendererSetEffectUint(handleIdEffect, "id", mode);
@@ -2015,7 +1995,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     rendererSetCameraOrtho(compositeRq);
-    RenderQuad screenQuad = getBounds(sceneRenderTarget);
+    rect2 screenQuad = getBounds(sceneRenderTarget);
     if (compositeEffect)
     {
         rendererPushQuad(compositeRq, screenQuad, compositeEffect);

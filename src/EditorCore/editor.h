@@ -214,7 +214,7 @@ struct EditorState
     struct
     {
         glm::vec2 positions[MAX_BRUSH_QUADS];
-        RenderQuad quads[MAX_BRUSH_QUADS];
+        rect2 quads[MAX_BRUSH_QUADS];
         uint32 instanceCount;
         float startingHeight;
     } activeBrushStroke;

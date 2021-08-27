@@ -33,10 +33,7 @@ struct RenderOutput
     RenderTarget *name(                                                                                           \
         MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer)
 #define RENDERER_RESIZE_RENDER_TARGET(name) void name(RenderTarget *target, uint32 width, uint32 height)
-#define getBounds(renderTarget)                                                                                   \
-    {                                                                                                             \
-        0, 0, (float)(renderTarget->width), (float)(renderTarget->height)                                         \
-    }
+#define getBounds(renderTarget) rectMinDim(0, 0, renderTarget->width, renderTarget->height)
 #define getRenderOutput(renderTarget)                                                                             \
     {                                                                                                             \
         renderTarget->width, renderTarget->height, renderTarget                                                   \
@@ -66,11 +63,10 @@ struct RenderOutput
         bool isNormalMapEnabled, bool isAOMapEnabled, bool isDisplacementMapEnabled)
 #define RENDERER_CLEAR(name) void name(RenderQueue *rq, float r, float g, float b, float a)
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                                         \
-    void name(RenderQueue *rq, RenderQuad quad, TextureHandle textureHandle, bool isTopDown)
-#define RENDERER_PUSH_COLORED_QUAD(name) void name(RenderQueue *rq, RenderQuad quad, glm::vec3 color)
-#define RENDERER_PUSH_QUAD(name) void name(RenderQueue *rq, RenderQuad quad, RenderEffect *effect)
-#define RENDERER_PUSH_QUADS(name)                                                                                 \
-    void name(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect)
+    void name(RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown)
+#define RENDERER_PUSH_COLORED_QUAD(name) void name(RenderQueue *rq, rect2 quad, glm::vec3 color)
+#define RENDERER_PUSH_QUAD(name) void name(RenderQueue *rq, rect2 quad, RenderEffect *effect)
+#define RENDERER_PUSH_QUADS(name) void name(RenderQueue *rq, rect2 *quads, uint32 quadCount, RenderEffect *effect)
 #define RENDERER_PUSH_LINE(name) void name(RenderQueue *rq, glm::vec3 start, glm::vec3 end, glm::vec3 color)
 #define RENDERER_BEGIN_LINE(name) void name(RenderQueue *rq, glm::vec3 start, glm::vec3 color)
 #define RENDERER_EXTEND_LINE(name) void name(RenderQueue *rq, glm::vec3 point)

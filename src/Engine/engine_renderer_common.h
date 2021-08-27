@@ -67,13 +67,6 @@ enum RenderEffectBlendMode
 
 // render queue
 
-struct RenderQuad
-{
-    float x;
-    float y;
-    float width;
-    float height;
-};
 struct RenderMeshInstance
 {
     uint32 id;

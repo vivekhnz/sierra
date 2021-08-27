@@ -892,7 +892,7 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
     glViewport(0, 0, width, height);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctx->quadInstanceBufferId);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(RenderQuad) * rq->quadCount, rq->quads, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(rect2) * rq->quadCount, rq->quads, GL_DYNAMIC_DRAW);
 
     glBindBuffer(GL_ARRAY_BUFFER, ctx->primitiveInstanceBufferId);
     glBufferData(

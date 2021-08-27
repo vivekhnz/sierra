@@ -160,7 +160,7 @@ struct DispatchedRenderQueue
 {
     RenderBackendContext ctx;
 
-    RenderQuad *quads;
+    rect2 *quads;
     uint32 quadCount;
 
     glm::vec3 *primitiveVertices;

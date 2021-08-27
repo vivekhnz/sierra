@@ -24,7 +24,7 @@ struct RenderQueue
     RenderQueueCommandHeader *firstCommand;
     RenderQueueCommandHeader *lastCommand;
 
-    RenderQuad *quads;
+    rect2 *quads;
     uint32 maxQuads;
     uint32 quadCount;
 
@@ -269,7 +269,7 @@ RENDERER_CREATE_QUEUE(rendererCreateQueue)
     result->output = output;
 
     result->maxQuads = 65536;
-    result->quads = pushArray(arena, RenderQuad, result->maxQuads);
+    result->quads = pushArray(arena, rect2, result->maxQuads);
 
     result->maxPrimitiveVertices = 1000000;
     result->primitiveVertices = pushArray(arena, glm::vec3, result->maxPrimitiveVertices);
@@ -359,7 +359,7 @@ RENDERER_CLEAR(rendererClear)
     cmd->color.a = a;
 }
 
-void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
+void pushQuads(RenderQueue *rq, rect2 *quads, uint32 quadCount, RenderEffect *effect, bool isTopDown)
 {
     if (quadCount > 0)
     {
@@ -371,7 +371,7 @@ void pushQuads(RenderQueue *rq, RenderQuad *quads, uint32 quadCount, RenderEffec
         cmd->instanceOffset = rq->quadCount;
         cmd->instanceCount = quadCount;
 
-        memcpy(rq->quads + rq->quadCount, quads, sizeof(RenderQuad) * quadCount);
+        memcpy(rq->quads + rq->quadCount, quads, sizeof(rect2) * quadCount);
         rq->quadCount += quadCount;
     }
 }
