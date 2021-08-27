@@ -122,6 +122,8 @@ void initializeEditor(EditorMemory *memory)
     editorAssets->quadShaderIdVisualiser =
         assetsRegisterShader(assets, "quad_id_visualiser.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->quadShaderId = assetsRegisterShader(assets, "quad_id.fs.glsl", SHADER_TYPE_QUAD);
+    editorAssets->quadShaderTextureMultiplied =
+        assetsRegisterShader(assets, "quad_texture_multiplied.fs.glsl", SHADER_TYPE_QUAD);
     editorAssets->meshShaderId = assetsRegisterShader(assets, "mesh_id.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->meshShaderRock = assetsRegisterShader(assets, "mesh_rock.fs.glsl", SHADER_TYPE_MESH);
     editorAssets->terrainShaderTextured =
@@ -1460,26 +1462,27 @@ inline bool isInteractionHot(InteractionState *state, Interaction *interaction)
 }
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
-    EditorState *state = (EditorState *)memory->arena.baseAddress;
+    MemoryArena *arena = &memory->arena;
+    EditorState *state = (EditorState *)arena->baseAddress;
     EditorAssets *editorAssets = &state->editorAssets;
     SceneState *sceneState = &state->sceneState;
     EditorUiState *uiState = &state->uiState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
     if (!viewState)
     {
-        viewState = pushStruct(&memory->arena, SceneViewState);
+        viewState = pushStruct(arena, SceneViewState);
         viewState->orbitCameraDistance = 112.5f;
         viewState->orbitCameraYaw = glm::radians(180.0f);
         viewState->orbitCameraPitch = glm::radians(15.0f);
         viewState->cameraLookAt = glm::vec3(0, 0, 0);
         viewState->interactionState = {};
-        viewState->interactionState.activeArena = pushSubArena(&memory->arena, 1 * 1024 * 1024);
+        viewState->interactionState.activeArena = pushSubArena(arena, 1 * 1024 * 1024);
         viewState->sceneRenderTarget =
-            rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_RGB8, true);
+            rendererCreateRenderTarget(arena, view->width, view->height, TEXTURE_FORMAT_RGB8, true);
         viewState->selectionRenderTarget =
-            rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_R8UI, true);
+            rendererCreateRenderTarget(arena, view->width, view->height, TEXTURE_FORMAT_R8UI, true);
         viewState->pickingRenderTarget =
-            rendererCreateRenderTarget(&memory->arena, view->width, view->height, TEXTURE_FORMAT_R32UI, true);
+            rendererCreateRenderTarget(arena, view->width, view->height, TEXTURE_FORMAT_R32UI, true);
         view->viewState = viewState;
     }
 
@@ -1499,22 +1502,20 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     viewState->interactionState.nextHot = {};
 
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+    TemporaryMemory renderQueueMemory = beginTemporaryMemory(arena);
 
-    RenderQueue *sceneRq =
-        rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(sceneRenderTarget));
+    RenderQueue *sceneRq = rendererCreateQueue(state->renderCtx, arena, getRenderOutput(sceneRenderTarget));
     rendererClear(sceneRq, 0.3f, 0.3f, 0.3f, 1);
 
-    RenderQueue *pickingRq =
-        rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(pickingRenderTarget));
+    RenderQueue *pickingRq = rendererCreateQueue(state->renderCtx, arena, getRenderOutput(pickingRenderTarget));
     rendererClear(pickingRq, 0, 0, 0, 1);
 
     RenderQueue *selectionRq =
-        rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(selectionRenderTarget));
+        rendererCreateQueue(state->renderCtx, arena, getRenderOutput(selectionRenderTarget));
     rendererClear(selectionRq, 0, 0, 0, 1);
 
     RenderQueue *compositeRq =
-        rendererCreateQueue(state->renderCtx, &memory->arena, getScreenRenderOutput(view->width, view->height));
+        rendererCreateQueue(state->renderCtx, arena, getScreenRenderOutput(view->width, view->height));
     rendererClear(compositeRq, 0, 0, 0, 1);
 
     glm::vec4 lightDir = glm::vec4(0);
@@ -1542,19 +1543,24 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     Interaction editTerrainInteraction = {};
     editTerrainInteraction.target.type = INTERACTION_TARGET_TERRAIN;
 
-#define DEBUG_RENDER_RAYCAST_WIREFRAME 0
+#define DEBUG_TERRAIN_VIS 1
+#if DEBUG_TERRAIN_VIS
+#define DEBUG_TERRAIN_VIS_RAYCAST 0
+#define DEBUG_TERRAIN_VIS_TILE_BOUNDS 0
+#define DEBUG_TERRAIN_VIS_HEIGHTMAP 0
+
+    glm::vec3 hitTriA;
+    glm::vec3 hitTriB;
+    glm::vec3 hitTriC;
+    TerrainTile *hitTile = 0;
+#endif
+
     if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
     {
         TerrainTile *firstTile = &sceneState->terrainTiles[0];
         uint32 samplesPerEdge = firstTile->heightfield->heightSamplesPerEdge;
         float spacing = firstTile->heightfield->spaceBetweenHeightSamples;
-
         float closestRayHitDist = FLT_MAX;
-#if DEBUG_RENDER_RAYCAST_WIREFRAME
-        glm::vec3 hitTriA;
-        glm::vec3 hitTriB;
-        glm::vec3 hitTriC;
-#endif
 
         for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
         {
@@ -1611,10 +1617,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                         && rayHitDist < closestRayHitDist)
                     {
                         closestRayHitDist = rayHitDist;
-#if DEBUG_RENDER_RAYCAST_WIREFRAME
+#if DEBUG_TERRAIN_VIS
                         hitTriA = topLeft;
                         hitTriB = topRight;
                         hitTriC = bottomRight;
+                        hitTile = tile;
 #endif
                     }
                     if (isRayIntersectingTriangle(
@@ -1622,14 +1629,15 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                         && rayHitDist < closestRayHitDist)
                     {
                         closestRayHitDist = rayHitDist;
-#if DEBUG_RENDER_RAYCAST_WIREFRAME
+#if DEBUG_TERRAIN_VIS
                         hitTriA = topLeft;
                         hitTriB = bottomLeft;
                         hitTriC = bottomRight;
+                        hitTile = tile;
 #endif
                     }
 
-#if DEBUG_RENDER_RAYCAST_WIREFRAME
+#if DEBUG_TERRAIN_VIS_RAYCAST
                     glm::vec3 color = glm::vec3(1, 0, 0.5);
                     rendererBeginLine(sceneRq, topLeft, color);
                     rendererExtendLine(sceneRq, topRight);
@@ -1642,14 +1650,35 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 #endif
                 }
             }
+
+#if DEBUG_TERRAIN_VIS_TILE_BOUNDS
+            glm::vec3 color = glm::vec3(0, 0.5, 1);
+            float tileLength = samplesPerEdge * spacing;
+            rendererBeginLine(sceneRq, glm::vec3(origin.x, 0, origin.y), color);
+            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y));
+            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y + tileLength));
+            rendererExtendLine(sceneRq, glm::vec3(origin.x, 0, origin.y + tileLength));
+            rendererEndLineLoop(sceneRq);
+#endif
         }
 
         if (closestRayHitDist < FLT_MAX)
         {
-#if DEBUG_RENDER_RAYCAST_WIREFRAME
+#if DEBUG_TERRAIN_VIS_RAYCAST
             rendererBeginLine(sceneRq, hitTriA, glm::vec3(1, 1, 0));
             rendererExtendLine(sceneRq, hitTriB);
             rendererExtendLine(sceneRq, hitTriC);
+            rendererEndLineLoop(sceneRq);
+#endif
+
+#if DEBUG_TERRAIN_VIS_HEIGHTMAP
+            glm::vec2 origin = hitTile->heightfield->center - (samplesPerEdge * spacing * 0.5f);
+            glm::vec3 color = glm::vec3(1, 1, 0);
+            float tileLength = samplesPerEdge * spacing;
+            rendererBeginLine(sceneRq, glm::vec3(origin.x, 0, origin.y), color);
+            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y));
+            rendererExtendLine(sceneRq, glm::vec3(origin.x + tileLength, 0, origin.y + tileLength));
+            rendererExtendLine(sceneRq, glm::vec3(origin.x, 0, origin.y + tileLength));
             rendererEndLineLoop(sceneRq);
 #endif
 
@@ -1738,13 +1767,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     // draw all object instances
-    RenderEffect *rockEffect =
-        rendererCreateEffect(&memory->arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *rockEffect = rendererCreateEffect(arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
     rendererPushMeshes(sceneRq, editorAssets->meshRock, sceneState->objectInstanceData,
         sceneState->objectInstanceCount, rockEffect);
 
-    RenderEffect *meshIdEffect =
-        rendererCreateEffect(&memory->arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *meshIdEffect = rendererCreateEffect(arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
     RenderEffect *mesh32BitIdEffect = rendererCreateEffectOverride(meshIdEffect);
     rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
     rendererPushMeshes(pickingRq, editorAssets->meshRock, sceneState->objectInstanceData,
@@ -1810,9 +1837,20 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     if (uiState->currentContext == EDITOR_CTX_TERRAIN)
     {
-#if DEBUG_RENDER_RAYCAST_WIREFRAME
+#if DEBUG_TERRAIN_VIS_RAYCAST
         glm::vec2 mouseRayHitPosScreen = worldToScreen(viewState, mouseWorldPos);
         rendererPushColoredQuad(sceneRq, rectCenterDim(mouseRayHitPosScreen, 4), glm::vec3(1, 1, 1));
+#endif
+#if DEBUG_TERRAIN_VIS_HEIGHTMAP
+        if (hitTile)
+        {
+            RenderEffect *effect =
+                rendererCreateEffect(arena, editorAssets->quadShaderTextureMultiplied, EFFECT_BLEND_ALPHA_BLEND);
+            rendererSetEffectTexture(effect, 0, hitTile->workingHeightmap->textureHandle);
+            rendererSetEffectFloat(effect, "multiplier", 4);
+            rendererPushQuadBottomUp(
+                sceneRq, rectMaxDim(glm::vec2(view->width - 10, view->height - 10), 300), effect);
+        }
 #endif
     }
     else if (uiState->currentContext == EDITOR_CTX_OBJECTS)
@@ -1840,7 +1878,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             manipulatorHandlePos /= (float)foundObjects;
 
             RenderEffect *quadIdEffect =
-                rendererCreateEffect(&memory->arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
+                rendererCreateEffect(arena, editorAssets->quadShaderId, EFFECT_BLEND_ALPHA_BLEND);
 
             float handleDim = 16;
             rect2 handleQuad;
@@ -1951,9 +1989,9 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         rendererDraw(pickingRq);
         uint32 cursorX = (uint32)mousePosScreen.x;
         uint32 cursorY = (uint32)mousePosScreen.y;
-        TemporaryMemory pickingMemory = beginTemporaryMemory(&memory->arena);
+        TemporaryMemory pickingMemory = beginTemporaryMemory(arena);
         GetPixelsResult pickedPixels =
-            rendererGetPixelsInRegion(&memory->arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
+            rendererGetPixelsInRegion(arena, pickingRenderTarget->textureHandle, cursorX, cursorY, 1, 1);
         assert(pickedPixels.count == 1);
         uint32 pickedId = ((uint32 *)pickedPixels.pixels)[0];
         endTemporaryMemory(&pickingMemory);
@@ -1981,12 +2019,11 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     {
 #if 0
         compositeEffect =
-            rendererCreateEffect(&memory->arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
+            rendererCreateEffect(arena, editorAssets->quadShaderIdVisualiser, EFFECT_BLEND_ALPHA_BLEND);
         rendererSetEffectTexture(compositeEffect, 0, pickingRenderTarget->textureHandle);
 #else
         rendererDraw(selectionRq);
-        compositeEffect =
-            rendererCreateEffect(&memory->arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
+        compositeEffect = rendererCreateEffect(arena, editorAssets->quadShaderOutline, EFFECT_BLEND_ALPHA_BLEND);
         rendererSetEffectTexture(compositeEffect, 0, sceneRenderTarget->textureHandle);
         rendererSetEffectTexture(compositeEffect, 1, sceneRenderTarget->depthTextureHandle);
         rendererSetEffectTexture(compositeEffect, 2, selectionRenderTarget->textureHandle);
@@ -2024,7 +2061,7 @@ API_EXPORT EDITOR_RENDER_HEIGHTMAP_PREVIEW(editorRenderHeightmapPreview)
     rendererSetCameraOrtho(rq);
     rendererClear(rq, 0, 0, 0, 1);
     rendererPushTexturedQuad(
-        rq, {0, 0, (float)view->width, (float)view->height}, tile->workingHeightmap->textureHandle, false);
+        rq, rectMinDim(0, 0, view->width, view->height), tile->workingHeightmap->textureHandle, false);
     rendererDraw(rq);
 
     endTemporaryMemory(&renderQueueMemory);

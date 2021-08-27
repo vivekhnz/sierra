@@ -395,6 +395,10 @@ RENDERER_PUSH_QUAD(rendererPushQuad)
 {
     pushQuads(rq, &quad, 1, effect, true);
 }
+RENDERER_PUSH_QUAD_BOTTOM_UP(rendererPushQuadBottomUp)
+{
+    pushQuads(rq, &quad, 1, effect, false);
+}
 RENDERER_PUSH_QUADS(rendererPushQuads)
 {
     pushQuads(rq, quads, quadCount, effect, true);

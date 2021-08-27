@@ -38,6 +38,14 @@ inline rect2 rectMinDim(glm::vec2 min, float dim)
 {
     return rectMinDim(min.x, min.y, dim, dim);
 }
+inline rect2 rectMaxDim(glm::vec2 max, glm::vec2 dim)
+{
+    return rectMinDim(max.x - dim.x, max.y - dim.y, dim.x, dim.y);
+}
+inline rect2 rectMaxDim(glm::vec2 max, float dim)
+{
+    return rectMinDim(max.x - dim, max.y - dim, dim, dim);
+}
 inline rect2 rectCenterDim(glm::vec2 center, glm::vec2 dim)
 {
     return rectMinDim(center.x - (dim.x * 0.5f), center.y - (dim.y * 0.5f), dim.x, dim.y);

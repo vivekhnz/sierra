@@ -956,6 +956,9 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
             DrawQuadsCommand *cmd = (DrawQuadsCommand *)commandData;
             if (applyEffect(cmd->effect))
             {
+                glDepthRange(0, 0);
+                glDepthFunc(GL_ALWAYS);
+
                 uint32 vertexBufferId =
                     cmd->isTopDown ? ctx->quadTopDownVertexBufferId : ctx->quadBottomUpVertexBufferId;
                 uint32 vertexBufferStride = 4 * sizeof(float);
@@ -978,6 +981,9 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                 glDisableVertexAttribArray(0);
                 glDisableVertexAttribArray(1);
                 glDisableVertexAttribArray(2);
+
+                glDepthRange(0, 1);
+                glDepthFunc(GL_LESS);
             }
             else
             {
