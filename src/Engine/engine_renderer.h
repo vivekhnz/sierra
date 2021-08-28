@@ -73,16 +73,14 @@ struct RenderOutput
 #define RENDERER_EXTEND_LINE(name) void name(RenderQueue *rq, glm::vec3 point)
 #define RENDERER_END_LINE(name) void name(RenderQueue *rq, glm::vec3 end)
 #define RENDERER_END_LINE_LOOP(name) void name(RenderQueue *rq)
-#define RENDERER_PUSH_QUAD_OUTLINE(name) void name(RenderQueue *rq, rect2 quad, glm::vec3 color)
+#define RENDERER_PUSH_QUAD_OUTLINE_XY(name) void name(RenderQueue *rq, rect2 quad, glm::vec3 color)
+#define RENDERER_PUSH_QUAD_OUTLINE_XZ(name) void name(RenderQueue *rq, rect2 quad, glm::vec3 color)
 #define RENDERER_PUSH_MESHES(name)                                                                                \
     void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances, uint32 instanceCount,             \
         RenderEffect *effect)
 #define RENDERER_PUSH_TERRAIN(name)                                                                               \
-    void name(RenderQueue *rq, Heightfield *heightfield, glm::vec2 heightmapSize, AssetHandle terrainShader,      \
-        TextureHandle heightmapTexture, TextureHandle referenceHeightmapTexture,                                  \
-        TextureHandle xAdjacentHeightmapTexture, TextureHandle xAdjacentReferenceHeightmapTexture,                \
-        TextureHandle yAdjacentHeightmapTexture, TextureHandle yAdjacentReferenceHeightmapTexture,                \
-        TextureHandle oppositeHeightmapTexture, TextureHandle oppositeReferenceHeightmapTexture,                  \
+    void name(RenderQueue *rq, Heightfield *heightfield, glm::vec2 heightmapSize, float heightmapOverlapInTexels, \
+        AssetHandle terrainShader, TextureHandle heightmapTexture, TextureHandle referenceHeightmapTexture,       \
         uint32 materialCount, RenderTerrainMaterial *materials, bool isWireframe, uint32 visualizationMode,       \
         glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
 #define RENDERER_DRAW(name) bool name(RenderQueue *rq)

@@ -204,16 +204,11 @@ uniform int materialCount;
 uniform vec3 terrainDimensions;
 uniform vec2 heightmapSize;
 uniform vec2 terrainOrigin;
+uniform float heightmapOverlapInTexels;
 
 layout(binding = 0) uniform sampler2D activeHeightmapTexture;
 layout(binding = 3) uniform sampler2DArray displacementTextures;
 layout(binding = 5) uniform sampler2D referenceHeightmapTexture;
-layout(binding = 6) uniform sampler2D xAdjacentActiveHeightmapTexture;
-layout(binding = 7) uniform sampler2D xAdjacentReferenceHeightmapTexture;
-layout(binding = 8) uniform sampler2D yAdjacentActiveHeightmapTexture;
-layout(binding = 9) uniform sampler2D yAdjacentReferenceHeightmapTexture;
-layout(binding = 10) uniform sampler2D oppositeActiveHeightmapTexture;
-layout(binding = 11) uniform sampler2D oppositeReferenceHeightmapTexture;
 
 struct MaterialProperties
 {
@@ -247,38 +242,19 @@ float getDisplacement(vec2 uv, uint textureId, float mip)
         textureLod(displacementTextures, uv3, ceil(mip)).x,
         fract(mip));
 }
-float calcHeight(vec2 uv, sampler2D thisTileTex,
-    sampler2D xAdjacentTex, sampler2D yAdjacentTex, sampler2D oppositeTex)
+float calcHeight(vec2 uv, sampler2D heightmapTexture)
 {
-    vec2 minUV = 1 / (2 * heightmapSize);
-    vec2 maxUV = 1 - minUV;
-    vec2 uvClamped = min(uv + minUV, maxUV);
-    float result = texture(thisTileTex, uvClamped).x;
-
-    vec2 adjBlend = clamp((uv + (2 * minUV) - 1) / (2 * minUV), 0, 1);
-    if (adjBlend.x > 0 && adjBlend.y > 0)
-    {
-        result = texture(oppositeTex, clamp(uv + minUV - 1, minUV, maxUV)).x;
-    }
-    else
-    {
-        vec2 adjUV = clamp(uv + minUV - 1, minUV, maxUV);
-        float adjXHeight = texture(xAdjacentTex, vec2(adjUV.x, uvClamped.y)).x;
-        float adjYHeight = texture(yAdjacentTex, vec2(uvClamped.x, adjUV.y)).x;
-        result = mix(mix(result, adjXHeight, adjBlend.x), adjYHeight, adjBlend.y);
-    }
-    return result;
+    vec2 innerHeightmapSize = heightmapSize - (2 * heightmapOverlapInTexels);
+    vec2 uvT = ((innerHeightmapSize * uv) + (heightmapOverlapInTexels + 0.5f)) / heightmapSize;
+    return texture(heightmapTexture, uvT).x;
 }
 float height(vec2 uv)
 {
-    return calcHeight(uv, activeHeightmapTexture,
-        xAdjacentActiveHeightmapTexture, yAdjacentActiveHeightmapTexture, oppositeActiveHeightmapTexture);
+    return calcHeight(uv, activeHeightmapTexture);
 }
 float refHeight(vec2 uv)
 {
-    return calcHeight(uv, referenceHeightmapTexture,
-        xAdjacentReferenceHeightmapTexture, yAdjacentReferenceHeightmapTexture,
-        oppositeReferenceHeightmapTexture);
+    return calcHeight(uv, referenceHeightmapTexture);
 }
 vec3 calcTriplanarBlend(vec3 normal)
 {
@@ -298,11 +274,11 @@ void main()
     // calculate normal
     vec2 hUV = lerp2D(in_heightmapUV[0], in_heightmapUV[1], in_heightmapUV[2], in_heightmapUV[3]);
     float altitude = height(hUV);
-    float normalSampleOffsetInTexels = 8;
+    float normalSampleOffsetInTexels = 7;
     vec2 normalSampleOffsetInUvCoords = normalSampleOffsetInTexels / heightmapSize;
-    float hL = height(vec2(hUV.x, hUV.y));
+    float hL = height(vec2(hUV.x - normalSampleOffsetInUvCoords.x, hUV.y));
     float hR = height(vec2(hUV.x + normalSampleOffsetInUvCoords.x, hUV.y));
-    float hD = height(vec2(hUV.x, hUV.y));
+    float hD = height(vec2(hUV.x, hUV.y - normalSampleOffsetInUvCoords.x));
     float hU = height(vec2(hUV.x, hUV.y + normalSampleOffsetInUvCoords.y));
     
     float nY = (2 * terrainDimensions.x * normalSampleOffsetInUvCoords.x) / terrainDimensions.y;
@@ -400,42 +376,23 @@ uniform float targetTriangleSize;
 uniform float terrainHeight;
 uniform vec2 terrainOrigin;
 uniform vec2 heightmapSize;
+uniform float heightmapOverlapInTexels;
 layout(binding = 0) uniform sampler2D heightmapTexture;
-layout(binding = 6) uniform sampler2D xAdjacentHeightmapTexture;
-layout(binding = 8) uniform sampler2D yAdjacentHeightmapTexture;
-layout(binding = 10) uniform sampler2D oppositeHeightmapTexture;
 
 vec3 worldToScreen(vec3 p)
 {
     vec4 clipPos = camera_transform * vec4(p, 1.0f);
     return clipPos.xyz / clipPos.w;
 }
-float calcHeight(vec2 uv, sampler2D thisTileTex,
-    sampler2D xAdjacentTex, sampler2D yAdjacentTex, sampler2D oppositeTex)
+float calcHeight(vec2 uv, sampler2D heightmapTexture)
 {
-    vec2 minUV = 1 / (2 * heightmapSize);
-    vec2 maxUV = 1 - minUV;
-    vec2 uvClamped = min(uv + minUV, maxUV);
-    float result = texture(thisTileTex, uvClamped).x;
-
-    vec2 adjBlend = clamp((uv + (2 * minUV) - 1) / (2 * minUV), 0, 1);
-    if (adjBlend.x > 0 && adjBlend.y > 0)
-    {
-        result = texture(oppositeTex, clamp(uv + minUV - 1, minUV, maxUV)).x;
-    }
-    else
-    {
-        vec2 adjUV = clamp(uv + minUV - 1, minUV, maxUV);
-        float adjXHeight = texture(xAdjacentTex, vec2(adjUV.x, uvClamped.y)).x;
-        float adjYHeight = texture(yAdjacentTex, vec2(uvClamped.x, adjUV.y)).x;
-        result = mix(mix(result, adjXHeight, adjBlend.x), adjYHeight, adjBlend.y);
-    }
-    return result;
+    vec2 innerHeightmapSize = heightmapSize - (2 * heightmapOverlapInTexels);
+    vec2 uvT = ((innerHeightmapSize * uv) + (heightmapOverlapInTexels + 0.5f)) / heightmapSize;
+    return texture(heightmapTexture, uvT).x;
 }
 float height(vec2 uv)
 {
-    return calcHeight(uv, heightmapTexture, xAdjacentHeightmapTexture, yAdjacentHeightmapTexture,
-        oppositeHeightmapTexture).x * terrainHeight;
+    return calcHeight(uv, heightmapTexture).x * terrainHeight;
 }
 
 float calcTessLevel(Vertex a, Vertex b)

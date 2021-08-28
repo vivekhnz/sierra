@@ -464,7 +464,15 @@ RENDERER_END_LINE_LOOP(rendererEndLineLoop)
     rendererEndLine(rq, rq->currentLine.firstVertex->point);
 }
 
-RENDERER_PUSH_QUAD_OUTLINE(rendererPushQuadOutline)
+RENDERER_PUSH_QUAD_OUTLINE_XY(rendererPushQuadOutlineXy)
+{
+    rendererBeginLine(rq, glm::vec3(quad.x, quad.y, 0), color);
+    rendererExtendLine(rq, glm::vec3(quad.x + quad.width, quad.y, 0));
+    rendererExtendLine(rq, glm::vec3(quad.x + quad.width, quad.y + quad.height, 0));
+    rendererExtendLine(rq, glm::vec3(quad.x, quad.y + quad.height, 0));
+    rendererEndLineLoop(rq);
+}
+RENDERER_PUSH_QUAD_OUTLINE_XZ(rendererPushQuadOutlineXz)
 {
     rendererBeginLine(rq, glm::vec3(quad.x, 0, quad.y), color);
     rendererExtendLine(rq, glm::vec3(quad.x + quad.width, 0, quad.y));
@@ -512,6 +520,7 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
     cmd->heightfield = heightfield;
     cmd->heightmapSize = heightmapSize;
+    cmd->heightmapOverlapInTexels = heightmapOverlapInTexels;
 
     cmd->terrainShader = {0};
     if (terrainShader)
@@ -525,12 +534,6 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 
     cmd->heightmapTexture = heightmapTexture;
     cmd->referenceHeightmapTexture = referenceHeightmapTexture;
-    cmd->xAdjacentHeightmapTexture = xAdjacentHeightmapTexture;
-    cmd->xAdjacentReferenceHeightmapTexture = xAdjacentReferenceHeightmapTexture;
-    cmd->yAdjacentHeightmapTexture = yAdjacentHeightmapTexture;
-    cmd->yAdjacentReferenceHeightmapTexture = yAdjacentReferenceHeightmapTexture;
-    cmd->oppositeHeightmapTexture = oppositeHeightmapTexture;
-    cmd->oppositeReferenceHeightmapTexture = oppositeReferenceHeightmapTexture;
 
     cmd->materialCount = materialCount;
     cmd->materials = pushArray(rq->arena, ResolvedTerrainMaterial, cmd->materialCount);

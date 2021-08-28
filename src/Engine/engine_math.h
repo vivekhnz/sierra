@@ -59,5 +59,17 @@ inline rect2 rectMinMax(glm::vec2 min, glm::vec2 max)
 {
     return rectMinDim(min.x, min.y, max.x - min.x, max.y - min.y);
 }
+inline glm::vec2 getMin(rect2 rect)
+{
+    return glm::vec2(rect.x, rect.y);
+}
+inline glm::vec2 getCenter(rect2 rect)
+{
+    return glm::vec2(rect.x + (rect.width * 0.5f), rect.y + (rect.height * 0.5f));
+}
+inline glm::vec2 getMax(rect2 rect)
+{
+    return glm::vec2(rect.x + rect.width, rect.y + rect.height);
+}
 
 #endif

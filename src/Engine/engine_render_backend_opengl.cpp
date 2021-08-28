@@ -1138,18 +1138,6 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                     glm::value_ptr(heightfield->center));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->heightmapTexture));
-                glActiveTexture(GL_TEXTURE6);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentHeightmapTexture));
-                glActiveTexture(GL_TEXTURE7);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->xAdjacentReferenceHeightmapTexture));
-                glActiveTexture(GL_TEXTURE8);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentHeightmapTexture));
-                glActiveTexture(GL_TEXTURE9);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->yAdjacentReferenceHeightmapTexture));
-                glActiveTexture(GL_TEXTURE10);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeHeightmapTexture));
-                glActiveTexture(GL_TEXTURE11);
-                glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->oppositeReferenceHeightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ctx->terrain.tessLevelBufferId);
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.vertexBufferId);
                 glDispatchCompute(meshEdgeCount, 1, 1);
@@ -1177,6 +1165,9 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                 glProgramUniform2fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "heightmapSize"), 1,
                     glm::value_ptr(cmd->heightmapSize));
+                glProgramUniform1f(terrainShaderProgramId,
+                    glGetUniformLocation(terrainShaderProgramId, "heightmapOverlapInTexels"),
+                    cmd->heightmapOverlapInTexels);
                 glProgramUniform1i(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "materialCount"), cmd->materialCount);
                 glProgramUniform3fv(terrainShaderProgramId,

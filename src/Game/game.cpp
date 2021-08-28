@@ -329,9 +329,8 @@ API_EXPORT GAME_UPDATE_AND_RENDER(gameUpdateAndRender)
     rendererSetLighting(rq, &lightDir, state->isLightingEnabled, state->isAlbedoEnabled, state->isNormalMapEnabled,
         state->isAOMapEnabled, state->isDisplacementMapEnabled);
     rendererClear(rq, 0.392f, 0.584f, 0.929f, 1);
-    rendererPushTerrain(rq, &state->heightfield, heightmapSize, terrainShader, state->heightmapTexture,
-        state->heightmapTexture, {0}, {0}, {0}, {0}, {0}, {0}, MATERIAL_COUNT, state->materials,
-        state->isWireframeMode, 0, glm::vec2(0), 0, 0);
+    rendererPushTerrain(rq, &state->heightfield, heightmapSize, 0, terrainShader, state->heightmapTexture,
+        state->heightmapTexture, MATERIAL_COUNT, state->materials, state->isWireframeMode, 0, glm::vec2(0), 0, 0);
     rendererDraw(rq);
 
     endTemporaryMemory(&renderQueueMemory);

@@ -133,17 +133,12 @@ struct DrawTerrainCommand
 {
     Heightfield *heightfield;
     glm::vec2 heightmapSize;
+    float heightmapOverlapInTexels;
 
     ShaderHandle terrainShader;
 
     TextureHandle heightmapTexture;
     TextureHandle referenceHeightmapTexture;
-    TextureHandle xAdjacentHeightmapTexture;
-    TextureHandle xAdjacentReferenceHeightmapTexture;
-    TextureHandle yAdjacentHeightmapTexture;
-    TextureHandle yAdjacentReferenceHeightmapTexture;
-    TextureHandle oppositeHeightmapTexture;
-    TextureHandle oppositeReferenceHeightmapTexture;
 
     uint32 materialCount;
     ResolvedTerrainMaterial *materials;
