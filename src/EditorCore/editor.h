@@ -4,6 +4,7 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include "editor_transactions.h"
+#include "editor_heightmap.h"
 
 // feature flags
 #define FEATURE_TERRAIN_USE_SPLIT_TILES 1
@@ -11,20 +12,17 @@
 #define FEATURE_OBJECTS 0
 
 #define MAX_MATERIAL_COUNT 8
-#define MAX_BRUSH_QUADS 2048
 #define BRUSH_QUAD_INSTANCE_BUFFER_STRIDE (2 * sizeof(float))
 #define BRUSH_QUAD_INSTANCE_BUFFER_SIZE (MAX_BRUSH_QUADS * BRUSH_QUAD_INSTANCE_BUFFER_STRIDE)
 #define MAX_OBJECT_INSTANCES 32
 
 #if FEATURE_TERRAIN_USE_SPLIT_TILES
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 32
-#define HEIGHTMAP_WIDTH 1024
-#define HEIGHTMAP_HEIGHT 1024
+#define HEIGHTMAP_DIM 1024
 #define HEIGHTMAP_OVERLAP_IN_TEXELS 8.0f
 #define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 64.0f
 #else
-#define HEIGHTMAP_WIDTH 2048
-#define HEIGHTMAP_HEIGHT 2048
+#define HEIGHTMAP_DIM 2048
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 256
 #define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 128.0f
 #endif
@@ -212,13 +210,6 @@ struct EditorState
     uint8 importedHeightmapTextureVersion;
 
     RenderTarget *temporaryHeightmap;
-
-    struct
-    {
-        glm::vec2 positions[MAX_BRUSH_QUADS];
-        uint32 instanceCount;
-        float startingHeight;
-    } activeBrushStroke;
 
     // state related to the user interface e.g. current brush tool, brush radius etc.
     // can be directly read from and written to by the editor UI
