@@ -1,5 +1,7 @@
 #include "editor_heightmap.h"
 
+#define SMOOTH_EFFECT_ITERATIONS 3
+
 void drawFullSizeQuadToTarget(RenderContext *rctx, MemoryArena *arena, RenderEffect *effect, RenderTarget *target)
 {
     RenderQueue *rq = rendererCreateQueue(rctx, arena, getRenderOutput(target));
@@ -27,17 +29,100 @@ void drawInfluenceMask(RenderContext *rctx,
     rendererDraw(rq);
 }
 
+RenderEffect *createSmoothEffect(MemoryArena *arena,
+    EditorAssets *assets,
+    TextureHandle baseTexture,
+    TextureHandle influenceTexture,
+    uint32 iteration,
+    glm::vec2 blurDirection)
+{
+    RenderEffect *effect =
+        rendererCreateEffect(arena, assets->quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
+    rendererSetEffectInt(effect, "iteration", iteration);
+    rendererSetEffectInt(effect, "iterationCount", SMOOTH_EFFECT_ITERATIONS);
+    rendererSetEffectInt(effect, "heightmapWidth", HEIGHTMAP_DIM);
+    rendererSetEffectVec2(effect, "blurDirection", blurDirection);
+    rendererSetEffectTexture(effect, 0, baseTexture);
+    rendererSetEffectTexture(effect, 1, influenceTexture);
+    return effect;
+}
+RenderEffect *createAddSubEffect(MemoryArena *arena,
+    EditorAssets *assets,
+    TextureHandle baseTexture,
+    TextureHandle influenceTexture,
+    float blendSign)
+{
+    RenderEffect *effect =
+        rendererCreateEffect(arena, assets->quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
+    rendererSetEffectFloat(effect, "blendSign", blendSign);
+    rendererSetEffectTexture(effect, 0, baseTexture);
+    rendererSetEffectTexture(effect, 1, influenceTexture);
+    return effect;
+}
+RenderEffect *createFlattenEffect(MemoryArena *arena,
+    EditorAssets *assets,
+    TextureHandle baseTexture,
+    TextureHandle influenceTexture,
+    float flattenHeight)
+{
+    RenderEffect *effect =
+        rendererCreateEffect(arena, assets->quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
+    rendererSetEffectFloat(effect, "flattenHeight", flattenHeight);
+    rendererSetEffectTexture(effect, 0, baseTexture);
+    rendererSetEffectTexture(effect, 1, influenceTexture);
+    return effect;
+}
+
+void applySmoothEffectToTarget(MemoryArena *arena,
+    RenderContext *rctx,
+    EditorAssets *assets,
+    RenderTarget *inputTarget,
+    RenderTarget *maskTarget,
+    RenderTarget *tempTarget,
+    RenderTarget *outputTarget)
+{
+    RenderTarget *iterationInputTarget = inputTarget;
+    for (uint32 i = 0; i < SMOOTH_EFFECT_ITERATIONS; i++)
+    {
+        RenderEffect *horizontalEffect = createSmoothEffect(
+            arena, assets, iterationInputTarget->textureHandle, maskTarget->textureHandle, i, glm::vec2(1, 0));
+        drawFullSizeQuadToTarget(rctx, arena, horizontalEffect, tempTarget);
+
+        RenderEffect *verticalEffect = createSmoothEffect(
+            arena, assets, tempTarget->textureHandle, maskTarget->textureHandle, i, glm::vec2(0, 1));
+        drawFullSizeQuadToTarget(rctx, arena, verticalEffect, outputTarget);
+
+        iterationInputTarget = outputTarget;
+    }
+}
+
 void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::vec2 *brushCursorPos)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
 
     // update brush quad instances
-    float tileDim = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
     float heightmapDimWithoutOverlap = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
-    float worldToHeightmapSpace = heightmapDimWithoutOverlap / tileDim;
-    float extendedTileDim = tileDim * (HEIGHTMAP_DIM / heightmapDimWithoutOverlap);
+    float worldToHeightmapSpace = heightmapDimWithoutOverlap / TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
+    float extendedTileDim = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * (HEIGHTMAP_DIM / heightmapDimWithoutOverlap);
+    float brushStrokeQuadDim = state->uiState.terrainBrushRadius * worldToHeightmapSpace;
+    rect2 *activeBrushStrokeQuads = pushArray(&memory->arena, rect2, activeBrushStroke->instanceCount);
+    for (uint32 i = 0; i < activeBrushStroke->instanceCount; i++)
+    {
+        glm::vec2 pos = activeBrushStroke->positions[i];
+        glm::vec2 posHeightmapSpace = pos * worldToHeightmapSpace;
+        activeBrushStrokeQuads[i] = rectCenterDim(posHeightmapSpace, brushStrokeQuadDim);
+    }
+    rect2 previewBrushStrokeQuad;
+    rect2 *previewBrushStrokeQuadPtr = 0;
+    if (brushCursorPos)
+    {
+        glm::vec2 brushCursorPosInHeightmapSpace = *brushCursorPos * worldToHeightmapSpace;
+        previewBrushStrokeQuad = rectCenterDim(brushCursorPosInHeightmapSpace, brushStrokeQuadDim);
+        previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
+    }
 
+    // set up influence mask effect
     float brushFalloff = state->uiState.terrainBrushFalloff;
     float brushStrength = 1;
     RenderEffectBlendMode maskBlendMode = EFFECT_BLEND_MAX;
@@ -61,63 +146,10 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
 
     TemporaryMemory renderMemory = beginTemporaryMemory(&memory->arena);
 
-    float brushStrokeQuadDim = state->uiState.terrainBrushRadius * worldToHeightmapSpace;
-    rect2 *activeBrushStrokeQuads = pushArray(&memory->arena, rect2, activeBrushStroke->instanceCount);
-    for (uint32 i = 0; i < activeBrushStroke->instanceCount; i++)
-    {
-        glm::vec2 pos = activeBrushStroke->positions[i];
-        glm::vec2 posHeightmapSpace = pos * worldToHeightmapSpace;
-        activeBrushStrokeQuads[i] = rectCenterDim(posHeightmapSpace, brushStrokeQuadDim);
-    }
-    rect2 previewBrushStrokeQuad;
-    rect2 *previewBrushStrokeQuadPtr = 0;
-    if (brushCursorPos)
-    {
-        glm::vec2 brushCursorPosInHeightmapSpace = *brushCursorPos * worldToHeightmapSpace;
-        previewBrushStrokeQuad = rectCenterDim(brushCursorPosInHeightmapSpace, brushStrokeQuadDim);
-        previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
-    }
-
     RenderEffect *influenceMaskEffect =
         rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
     rendererSetEffectFloat(influenceMaskEffect, "brushFalloff", brushFalloff);
     rendererSetEffectFloat(influenceMaskEffect, "brushStrength", brushStrength);
-
-    uint32 smoothIterations = 3;
-    RenderEffect *brushEffect = 0;
-    switch (tool)
-    {
-    case TERRAIN_BRUSH_TOOL_RAISE:
-    {
-        brushEffect = rendererCreateEffect(
-            &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectFloat(brushEffect, "blendSign", 1);
-    }
-    break;
-    case TERRAIN_BRUSH_TOOL_LOWER:
-    {
-        brushEffect = rendererCreateEffect(
-            &memory->arena, state->editorAssets.quadShaderBrushBlendAddSub, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectFloat(brushEffect, "blendSign", -1);
-    }
-    break;
-    case TERRAIN_BRUSH_TOOL_FLATTEN:
-    {
-        brushEffect = rendererCreateEffect(
-            &memory->arena, state->editorAssets.quadShaderBrushBlendFlatten, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectFloat(brushEffect, "flattenHeight", activeBrushStroke->startingHeight);
-    }
-    break;
-    case TERRAIN_BRUSH_TOOL_SMOOTH:
-    {
-        brushEffect = rendererCreateEffect(
-            &memory->arena, state->editorAssets.quadShaderBrushBlendSmooth, EFFECT_BLEND_ALPHA_BLEND);
-        rendererSetEffectInt(brushEffect, "iterationCount", smoothIterations);
-        rendererSetEffectInt(brushEffect, "heightmapWidth", HEIGHTMAP_DIM);
-    }
-    break;
-    }
-    assert(brushEffect);
 
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
@@ -134,60 +166,53 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
             influenceMaskEffect, tile->previewBrushInfluenceMask);
 
         // render heightmap
-        RenderEffect *workingEffect = rendererCreateEffectOverride(brushEffect);
-        RenderEffect *previewEffect = rendererCreateEffectOverride(brushEffect);
-
-        if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
+        switch (tool)
         {
-            rendererSetEffectTexture(workingEffect, 1, tile->workingBrushInfluenceMask->textureHandle);
-            RenderTarget *workingBaseTarget = tile->committedHeightmap;
-            for (uint32 i = 0; i < smoothIterations; i++)
-            {
-                RenderEffect *horizontalEffect = rendererCreateEffectOverride(workingEffect);
-                rendererSetEffectInt(horizontalEffect, "iteration", i);
-                rendererSetEffectVec2(horizontalEffect, "blurDirection", glm::vec2(1, 0));
-                rendererSetEffectTexture(horizontalEffect, 0, workingBaseTarget->textureHandle);
-                drawFullSizeQuadToTarget(
-                    state->renderCtx, &memory->arena, horizontalEffect, state->temporaryHeightmap);
-
-                RenderEffect *verticalEffect = rendererCreateEffectOverride(workingEffect);
-                rendererSetEffectInt(verticalEffect, "iteration", i);
-                rendererSetEffectVec2(verticalEffect, "blurDirection", glm::vec2(0, 1));
-                rendererSetEffectTexture(verticalEffect, 0, state->temporaryHeightmap->textureHandle);
-                drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, verticalEffect, tile->workingHeightmap);
-
-                workingBaseTarget = tile->workingHeightmap;
-            }
-
-            rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
-            RenderTarget *previewBaseTarget = tile->workingHeightmap;
-            for (uint32 i = 0; i < smoothIterations; i++)
-            {
-                RenderEffect *horizontalEffect = rendererCreateEffectOverride(previewEffect);
-                rendererSetEffectInt(horizontalEffect, "iteration", i);
-                rendererSetEffectVec2(horizontalEffect, "blurDirection", glm::vec2(1, 0));
-                rendererSetEffectTexture(horizontalEffect, 0, previewBaseTarget->textureHandle);
-                drawFullSizeQuadToTarget(
-                    state->renderCtx, &memory->arena, horizontalEffect, state->temporaryHeightmap);
-
-                RenderEffect *verticalEffect = rendererCreateEffectOverride(previewEffect);
-                rendererSetEffectInt(verticalEffect, "iteration", i);
-                rendererSetEffectVec2(verticalEffect, "blurDirection", glm::vec2(0, 1));
-                rendererSetEffectTexture(verticalEffect, 0, state->temporaryHeightmap->textureHandle);
-                drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, verticalEffect, tile->previewHeightmap);
-
-                previewBaseTarget = tile->previewHeightmap;
-            }
-        }
-        else
+        case TERRAIN_BRUSH_TOOL_RAISE:
         {
-            rendererSetEffectTexture(workingEffect, 0, tile->committedHeightmap->textureHandle);
-            rendererSetEffectTexture(workingEffect, 1, tile->workingBrushInfluenceMask->textureHandle);
+            RenderEffect *workingEffect = createAddSubEffect(&memory->arena, &state->editorAssets,
+                tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask->textureHandle, 1);
             drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, workingEffect, tile->workingHeightmap);
 
-            rendererSetEffectTexture(previewEffect, 0, tile->workingHeightmap->textureHandle);
-            rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
+            RenderEffect *previewEffect = createAddSubEffect(&memory->arena, &state->editorAssets,
+                tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask->textureHandle, 1);
             drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, previewEffect, tile->previewHeightmap);
+        }
+        break;
+        case TERRAIN_BRUSH_TOOL_LOWER:
+        {
+            RenderEffect *workingEffect = createAddSubEffect(&memory->arena, &state->editorAssets,
+                tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask->textureHandle, -1);
+            drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, workingEffect, tile->workingHeightmap);
+
+            RenderEffect *previewEffect = createAddSubEffect(&memory->arena, &state->editorAssets,
+                tile->workingHeightmap->textureHandle, tile->previewBrushInfluenceMask->textureHandle, -1);
+            drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, previewEffect, tile->previewHeightmap);
+        }
+        break;
+        case TERRAIN_BRUSH_TOOL_FLATTEN:
+        {
+            RenderEffect *workingEffect =
+                createFlattenEffect(&memory->arena, &state->editorAssets, tile->committedHeightmap->textureHandle,
+                    tile->workingBrushInfluenceMask->textureHandle, activeBrushStroke->startingHeight);
+            drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, workingEffect, tile->workingHeightmap);
+
+            RenderEffect *previewEffect =
+                createFlattenEffect(&memory->arena, &state->editorAssets, tile->workingHeightmap->textureHandle,
+                    tile->previewBrushInfluenceMask->textureHandle, activeBrushStroke->startingHeight);
+            drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, previewEffect, tile->previewHeightmap);
+        }
+        break;
+        case TERRAIN_BRUSH_TOOL_SMOOTH:
+        {
+            applySmoothEffectToTarget(&memory->arena, state->renderCtx, &state->editorAssets,
+                tile->committedHeightmap, tile->workingBrushInfluenceMask, state->temporaryHeightmap,
+                tile->workingHeightmap);
+            applySmoothEffectToTarget(&memory->arena, state->renderCtx, &state->editorAssets,
+                tile->workingHeightmap, tile->previewBrushInfluenceMask, state->temporaryHeightmap,
+                tile->previewHeightmap);
+        }
+        break;
         }
 
         endTemporaryMemory(&tileRenderMemory);
