@@ -341,6 +341,23 @@ void updateHeightfieldHeights(
     }
 }
 
+void updateHeightfieldHeightsFromRenderTarget(MemoryArena *arena, Heightfield *heightfield, RenderTarget *target)
+{
+    TemporaryMemory heightMemory = beginTemporaryMemory(arena);
+    GetPixelsResult heightPixels = rendererGetPixels(arena, target->textureHandle, target->width, target->height);
+    updateHeightfieldHeights(heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
+    endTemporaryMemory(&heightMemory);
+}
+
+void drawFullSizeQuadToTarget(RenderContext *rctx, MemoryArena *arena, RenderEffect *effect, RenderTarget *target)
+{
+    RenderQueue *rq = rendererCreateQueue(rctx, arena, getRenderOutput(target));
+    rendererSetCameraOrtho(rq);
+    rendererClear(rq, 0, 0, 0, 1);
+    rendererPushQuad(rq, getBounds(target), effect);
+    rendererDraw(rq);
+}
+
 void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
@@ -349,27 +366,9 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
     // update brush quad instances
     glm::vec2 tileSize = glm::vec2(TERRAIN_TILE_LENGTH_IN_WORLD_UNITS, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
     glm::vec2 heightmapSize = glm::vec2(HEIGHTMAP_WIDTH, HEIGHTMAP_HEIGHT);
-    float heightmapOverlapInTexels = HEIGHTMAP_OVERLAP_IN_TEXELS;
-    glm::vec2 heightmapSizeWithoutOverlap = heightmapSize - (2 * heightmapOverlapInTexels);
+    glm::vec2 heightmapSizeWithoutOverlap = heightmapSize - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
     glm::vec2 worldToHeightmapSpace = heightmapSizeWithoutOverlap / tileSize;
-    float brushStrokeQuadDim = state->uiState.terrainBrushRadius * worldToHeightmapSpace.x;
     glm::vec2 extendedTileSize = tileSize * (heightmapSize / heightmapSizeWithoutOverlap);
-
-    for (uint32 i = 0; i < state->activeBrushStroke.instanceCount; i++)
-    {
-        glm::vec2 pos = state->activeBrushStroke.positions[i];
-        glm::vec2 posHeightmapSpace = pos * worldToHeightmapSpace;
-        state->activeBrushStroke.quads[i] = rectCenterDim(posHeightmapSpace, brushStrokeQuadDim);
-    }
-
-    rect2 previewBrushStrokeQuad;
-    rect2 *previewBrushStrokeQuadPtr = 0;
-    if (brushCursorPos)
-    {
-        glm::vec2 brushCursorPosInHeightmapSpace = *brushCursorPos * worldToHeightmapSpace;
-        previewBrushStrokeQuad = rectCenterDim(brushCursorPosInHeightmapSpace, brushStrokeQuadDim);
-        previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
-    }
 
     float brushFalloff = state->uiState.terrainBrushFalloff;
     float brushStrength = 1;
@@ -393,6 +392,23 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
     }
 
     TemporaryMemory renderMemory = beginTemporaryMemory(&memory->arena);
+
+    float brushStrokeQuadDim = state->uiState.terrainBrushRadius * worldToHeightmapSpace.x;
+    rect2 *activeBrushStrokeQuads = pushArray(&memory->arena, rect2, state->activeBrushStroke.instanceCount);
+    for (uint32 i = 0; i < state->activeBrushStroke.instanceCount; i++)
+    {
+        glm::vec2 pos = state->activeBrushStroke.positions[i];
+        glm::vec2 posHeightmapSpace = pos * worldToHeightmapSpace;
+        activeBrushStrokeQuads[i] = rectCenterDim(posHeightmapSpace, brushStrokeQuadDim);
+    }
+    rect2 previewBrushStrokeQuad;
+    rect2 *previewBrushStrokeQuadPtr = 0;
+    if (brushCursorPos)
+    {
+        glm::vec2 brushCursorPosInHeightmapSpace = *brushCursorPos * worldToHeightmapSpace;
+        previewBrushStrokeQuad = rectCenterDim(brushCursorPosInHeightmapSpace, brushStrokeQuadDim);
+        previewBrushStrokeQuadPtr = &previewBrushStrokeQuad;
+    }
 
     RenderEffect *influenceMaskEffect =
         rendererCreateEffect(&memory->arena, state->editorAssets.quadShaderBrushMask, maskBlendMode);
@@ -441,15 +457,15 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
         glm::vec2 minCornerWorldSpace = tile->heightfield->center - (extendedTileSize * 0.5f);
         glm::vec2 offset = minCornerWorldSpace * worldToHeightmapSpace;
 
-        TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
+        TemporaryMemory tileRenderMemory = beginTemporaryMemory(&memory->arena);
 
         // render brush influence mask
         RenderQueue *workingInfluenceRq = rendererCreateQueue(
             state->renderCtx, &memory->arena, getRenderOutput(tile->workingBrushInfluenceMask));
         rendererClear(workingInfluenceRq, 0, 0, 0, 1);
         rendererSetCameraOrthoOffset(workingInfluenceRq, offset);
-        rendererPushQuads(workingInfluenceRq, state->activeBrushStroke.quads,
-            state->activeBrushStroke.instanceCount, influenceMaskEffect);
+        rendererPushQuads(workingInfluenceRq, activeBrushStrokeQuads, state->activeBrushStroke.instanceCount,
+            influenceMaskEffect);
         rendererDraw(workingInfluenceRq);
 
         RenderQueue *previewInfluenceRq = rendererCreateQueue(
@@ -476,25 +492,14 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
                 rendererSetEffectInt(horizontalEffect, "iteration", i);
                 rendererSetEffectVec2(horizontalEffect, "blurDirection", glm::vec2(1, 0));
                 rendererSetEffectTexture(horizontalEffect, 0, workingBaseTarget->textureHandle);
-
-                RenderQueue *horizontalRq = rendererCreateQueue(
-                    state->renderCtx, &memory->arena, getRenderOutput(state->temporaryHeightmap));
-                rendererSetCameraOrtho(horizontalRq);
-                rendererClear(horizontalRq, 0, 0, 0, 1);
-                rendererPushQuad(horizontalRq, getBounds(state->temporaryHeightmap), horizontalEffect);
-                rendererDraw(horizontalRq);
+                drawFullSizeQuadToTarget(
+                    state->renderCtx, &memory->arena, horizontalEffect, state->temporaryHeightmap);
 
                 RenderEffect *verticalEffect = rendererCreateEffectOverride(workingEffect);
                 rendererSetEffectInt(verticalEffect, "iteration", i);
                 rendererSetEffectVec2(verticalEffect, "blurDirection", glm::vec2(0, 1));
                 rendererSetEffectTexture(verticalEffect, 0, state->temporaryHeightmap->textureHandle);
-
-                RenderQueue *verticalRq =
-                    rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->workingHeightmap));
-                rendererSetCameraOrtho(verticalRq);
-                rendererClear(verticalRq, 0, 0, 0, 1);
-                rendererPushQuad(verticalRq, getBounds(tile->workingHeightmap), verticalEffect);
-                rendererDraw(verticalRq);
+                drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, verticalEffect, tile->workingHeightmap);
 
                 workingBaseTarget = tile->workingHeightmap;
             }
@@ -507,25 +512,14 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
                 rendererSetEffectInt(horizontalEffect, "iteration", i);
                 rendererSetEffectVec2(horizontalEffect, "blurDirection", glm::vec2(1, 0));
                 rendererSetEffectTexture(horizontalEffect, 0, previewBaseTarget->textureHandle);
-
-                RenderQueue *horizontalRq = rendererCreateQueue(
-                    state->renderCtx, &memory->arena, getRenderOutput(state->temporaryHeightmap));
-                rendererSetCameraOrtho(horizontalRq);
-                rendererClear(horizontalRq, 0, 0, 0, 1);
-                rendererPushQuad(horizontalRq, getBounds(state->temporaryHeightmap), horizontalEffect);
-                rendererDraw(horizontalRq);
+                drawFullSizeQuadToTarget(
+                    state->renderCtx, &memory->arena, horizontalEffect, state->temporaryHeightmap);
 
                 RenderEffect *verticalEffect = rendererCreateEffectOverride(previewEffect);
                 rendererSetEffectInt(verticalEffect, "iteration", i);
                 rendererSetEffectVec2(verticalEffect, "blurDirection", glm::vec2(0, 1));
                 rendererSetEffectTexture(verticalEffect, 0, state->temporaryHeightmap->textureHandle);
-
-                RenderQueue *verticalRq =
-                    rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->previewHeightmap));
-                rendererSetCameraOrtho(verticalRq);
-                rendererClear(verticalRq, 0, 0, 0, 1);
-                rendererPushQuad(verticalRq, getBounds(tile->previewHeightmap), verticalEffect);
-                rendererDraw(verticalRq);
+                drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, verticalEffect, tile->previewHeightmap);
 
                 previewBaseTarget = tile->previewHeightmap;
             }
@@ -534,33 +528,16 @@ void compositeHeightmaps(EditorMemory *memory, glm::vec2 *brushCursorPos)
         {
             rendererSetEffectTexture(workingEffect, 0, tile->committedHeightmap->textureHandle);
             rendererSetEffectTexture(workingEffect, 1, tile->workingBrushInfluenceMask->textureHandle);
-            RenderQueue *workingOutputRq =
-                rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->workingHeightmap));
-            rendererSetCameraOrtho(workingOutputRq);
-            rendererClear(workingOutputRq, 0, 0, 0, 1);
-            rendererPushQuad(workingOutputRq, getBounds(tile->workingHeightmap), workingEffect);
-            rendererDraw(workingOutputRq);
+            drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, workingEffect, tile->workingHeightmap);
 
             rendererSetEffectTexture(previewEffect, 0, tile->workingHeightmap->textureHandle);
             rendererSetEffectTexture(previewEffect, 1, tile->previewBrushInfluenceMask->textureHandle);
-            RenderQueue *previewOutputRq =
-                rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->previewHeightmap));
-            rendererSetCameraOrtho(previewOutputRq);
-            rendererClear(previewOutputRq, 0, 0, 0, 1);
-            rendererPushQuad(previewOutputRq, getBounds(tile->previewHeightmap), previewEffect);
-            rendererDraw(previewOutputRq);
+            drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, previewEffect, tile->previewHeightmap);
         }
 
-        endTemporaryMemory(&renderQueueMemory);
+        endTemporaryMemory(&tileRenderMemory);
 
-        TemporaryMemory heightMemory = beginTemporaryMemory(&memory->arena);
-
-        RenderTarget *target = tile->workingHeightmap;
-        GetPixelsResult heightPixels =
-            rendererGetPixels(&memory->arena, target->textureHandle, target->width, target->height);
-        updateHeightfieldHeights(tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
-
-        endTemporaryMemory(&heightMemory);
+        updateHeightfieldHeightsFromRenderTarget(&memory->arena, tile->heightfield, tile->workingHeightmap);
     }
 
     endTemporaryMemory(&renderMemory);
@@ -606,15 +583,8 @@ void discardChanges(EditorMemory *memory, glm::vec2 *brushCursorPos)
 
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
-        TemporaryMemory heightMemory = beginTemporaryMemory(arena);
-
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        RenderTarget *target = tile->committedHeightmap;
-        GetPixelsResult heightPixels =
-            rendererGetPixels(arena, target->textureHandle, target->width, target->height);
-        updateHeightfieldHeights(tile->heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
-
-        endTemporaryMemory(&heightMemory);
+        updateHeightfieldHeightsFromRenderTarget(arena, tile->heightfield, tile->committedHeightmap);
     }
 
     compositeHeightmaps(memory, brushCursorPos);
