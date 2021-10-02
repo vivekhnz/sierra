@@ -175,6 +175,7 @@ void initializeEditor(EditorMemory *memory)
     TerrainTile *currentTile = sceneState->terrainTiles;
     for (uint32 y = 0; y < tileRows; y++)
     {
+        TerrainTile *tileToLeft = 0;
         for (uint32 x = 0; x < tileColumns; x++)
         {
             TerrainTile *tile = currentTile++;
@@ -202,8 +203,11 @@ void initializeEditor(EditorMemory *memory)
 
             tile->heightfield->center =
                 topLeftTileCenter + glm::vec2(x * tileLengthInWorldUnits, y * tileLengthInWorldUnits);
-            tile->xAdjTile = x == tileColumns - 1 ? 0 : &sceneState->terrainTiles[(y * tileColumns) + x + 1];
-            tile->yAdjTile = y == tileRows - 1 ? 0 : &sceneState->terrainTiles[((y + 1) * tileRows) + x];
+            tile->tileToLeft = tileToLeft;
+            tile->tileToRight = x == tileColumns - 1 ? 0 : &sceneState->terrainTiles[(y * tileColumns) + x + 1];
+            tile->tileBelow = y == tileRows - 1 ? 0 : &sceneState->terrainTiles[((y + 1) * tileRows) + x];
+
+            tileToLeft = tile;
         }
     }
 #else
@@ -352,13 +356,13 @@ void updateHeightfieldHeightsFromRenderTarget(MemoryArena *arena, Heightfield *h
 bool commitChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::vec2 *brushCursorPos)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;
-    TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
 
     bool committed = false;
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
 
+        TemporaryMemory renderQueueMemory = beginTemporaryMemory(&memory->arena);
         RenderQueue *rq =
             rendererCreateQueue(state->renderCtx, &memory->arena, getRenderOutput(tile->committedHeightmap));
         rendererSetCameraOrtho(rq);
@@ -369,9 +373,8 @@ bool commitChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::ve
         {
             committed = true;
         }
+        endTemporaryMemory(&renderQueueMemory);
     }
-
-    endTemporaryMemory(&renderQueueMemory);
 
     if (committed)
     {

@@ -27,11 +27,15 @@ layout(location = 0) in vec2 uv;
 
 layout(binding = 0) uniform sampler2D imageTexture;
 
+uniform vec2 uvScale;
+uniform vec2 uvOffset;
+
 out vec4 FragColor;
 
 void main()
 {
-    FragColor = vec4(texture(imageTexture, uv).rgb, 1);
+    vec2 transformedUv = (uv * uvScale) + uvOffset;
+    FragColor = vec4(texture(imageTexture, transformedUv).rgb, 1);
 }
 )glsl";
 

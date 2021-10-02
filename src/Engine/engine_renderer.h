@@ -64,6 +64,8 @@ struct RenderOutput
 #define RENDERER_CLEAR(name) void name(RenderQueue *rq, float r, float g, float b, float a)
 #define RENDERER_PUSH_TEXTURED_QUAD(name)                                                                         \
     void name(RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown)
+#define RENDERER_PUSH_TEXTURED_QUAD_REGION(name)                                                                  \
+    void name(RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown, rect2 uvRect)
 #define RENDERER_PUSH_COLORED_QUAD(name) void name(RenderQueue *rq, rect2 quad, glm::vec3 color)
 #define RENDERER_PUSH_QUAD(name) void name(RenderQueue *rq, rect2 quad, RenderEffect *effect)
 #define RENDERER_PUSH_QUAD_BOTTOM_UP(name) void name(RenderQueue *rq, rect2 quad, RenderEffect *effect)

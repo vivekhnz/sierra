@@ -1,6 +1,6 @@
 #include "editor_heightmap.h"
 
-#define SMOOTH_EFFECT_ITERATIONS 3
+#define SMOOTH_EFFECT_ITERATIONS 1
 
 void drawFullSizeQuadToTarget(RenderContext *rctx, MemoryArena *arena, RenderEffect *effect, RenderTarget *target)
 {
@@ -9,6 +9,30 @@ void drawFullSizeQuadToTarget(RenderContext *rctx, MemoryArena *arena, RenderEff
     rendererClear(rq, 0, 0, 0, 1);
     rendererPushQuad(rq, getBounds(target), effect);
     rendererDraw(rq);
+}
+void blitToTarget(RenderContext *rctx,
+    MemoryArena *arena,
+    TextureHandle srcTexture,
+    rect2 srcUvRect,
+    RenderTarget *target,
+    rect2 dstQuad)
+{
+    RenderQueue *rq = rendererCreateQueue(rctx, arena, getRenderOutput(target));
+    rendererSetCameraOrtho(rq);
+    rendererPushTexturedQuadRegion(rq, dstQuad, srcTexture, true, srcUvRect);
+    rendererDraw(rq);
+}
+void blitTileRegion(RenderContext *rctx,
+    MemoryArena *arena,
+    TerrainTile *srcTile,
+    rect2 srcUvRect,
+    TerrainTile *dstTile,
+    rect2 dstQuad)
+{
+    blitToTarget(
+        rctx, arena, srcTile->previewHeightmap->textureHandle, srcUvRect, dstTile->previewHeightmap, dstQuad);
+    blitToTarget(
+        rctx, arena, srcTile->workingHeightmap->textureHandle, srcUvRect, dstTile->workingHeightmap, dstQuad);
 }
 
 void drawInfluenceMask(RenderContext *rctx,
@@ -216,6 +240,64 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         }
 
         endTemporaryMemory(&tileRenderMemory);
+    }
+
+    if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
+    {
+        float overlapInTexels = HEIGHTMAP_OVERLAP_IN_TEXELS;
+        float overlapInUvSpace = overlapInTexels / HEIGHTMAP_DIM;
+        float heightmapDimWithoutOverlapInUvSpace = heightmapDimWithoutOverlap / HEIGHTMAP_DIM;
+
+        float wT = HEIGHTMAP_DIM;
+        float wU = 1;
+        float oT = HEIGHTMAP_OVERLAP_IN_TEXELS;
+        float oU = oT / wT;
+        float eT = heightmapDimWithoutOverlap;
+        float eU = eT / wT;
+
+        for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
+        {
+            TerrainTile *tile = &sceneState->terrainTiles[i];
+            TerrainTile *tileToRight = tile->tileToRight;
+            TerrainTile *tileBelow = tile->tileBelow;
+
+            TemporaryMemory tileRenderMemory = beginTemporaryMemory(&memory->arena);
+
+            if (tileToRight)
+            {
+                blitTileRegion(state->renderCtx, &memory->arena, tile, rectMinDim(eU, oU, oU, eU), tileToRight,
+                    rectMinDim(0, oT, oT, eT));
+                blitTileRegion(state->renderCtx, &memory->arena, tileToRight, rectMinDim(oU, oU, oU, eU), tile,
+                    rectMinDim(wT - oT, oT, oT, eT));
+            }
+            if (tileBelow)
+            {
+                blitTileRegion(state->renderCtx, &memory->arena, tile, rectMinDim(oU, eU, eU, oU), tileBelow,
+                    rectMinDim(oT, 0, eT, oT));
+                blitTileRegion(state->renderCtx, &memory->arena, tileBelow, rectMinDim(oU, oU, eU, oU), tile,
+                    rectMinDim(oT, wT - oT, eT, oT));
+
+                TerrainTile *tileBelowToLeft = tileBelow->tileToLeft;
+                if (tileBelowToLeft)
+                {
+                    blitTileRegion(state->renderCtx, &memory->arena, tile, rectMinDim(oU, eU, oU, oU),
+                        tileBelowToLeft, rectMinDim(wT - oT, 0, oT, oT));
+                    blitTileRegion(state->renderCtx, &memory->arena, tileBelowToLeft, rectMinDim(eU, oU, oU, oU),
+                        tile, rectMinDim(0, wT - oT, oT, oT));
+                }
+
+                TerrainTile *tileBelowToRight = tileBelow->tileToRight;
+                if (tileBelowToRight)
+                {
+                    blitTileRegion(state->renderCtx, &memory->arena, tile, rectMinDim(eU, eU, oU, oU),
+                        tileBelowToRight, rectMinDim(0, 0, oT, oT));
+                    blitTileRegion(state->renderCtx, &memory->arena, tileBelowToRight, rectMinDim(oU, oU, oU, oU),
+                        tile, rectMinDim(wT - oT, wT - oT, oT, oT));
+                }
+            }
+
+            endTemporaryMemory(&tileRenderMemory);
+        }
     }
 
     endTemporaryMemory(&renderMemory);

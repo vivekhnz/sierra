@@ -19,7 +19,7 @@
 #if FEATURE_TERRAIN_USE_SPLIT_TILES
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 32
 #define HEIGHTMAP_DIM 1024
-#define HEIGHTMAP_OVERLAP_IN_TEXELS 8.0f
+#define HEIGHTMAP_OVERLAP_IN_TEXELS 42.0f
 #define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 64.0f
 #else
 #define HEIGHTMAP_DIM 2048
@@ -138,8 +138,9 @@ struct TerrainTile
     RenderTarget *previewBrushInfluenceMask;
     RenderTarget *previewHeightmap;
 
-    TerrainTile *xAdjTile;
-    TerrainTile *yAdjTile;
+    TerrainTile *tileToLeft;
+    TerrainTile *tileToRight;
+    TerrainTile *tileBelow;
 };
 
 struct SceneState

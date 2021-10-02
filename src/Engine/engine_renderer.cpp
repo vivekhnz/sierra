@@ -381,6 +381,18 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     RenderEffect *effect =
         createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectTexture(effect, 0, textureHandle);
+    rendererSetEffectVec2(effect, "uvScale", glm::vec2(1, 1));
+    rendererSetEffectVec2(effect, "uvOffset", glm::vec2(0, 0));
+    pushQuads(rq, &quad, 1, effect, isTopDown);
+}
+RENDERER_PUSH_TEXTURED_QUAD_REGION(rendererPushTexturedQuadRegion)
+{
+    RenderEffect *effect =
+        createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
+    rendererSetEffectTexture(effect, 0, textureHandle);
+    rendererSetEffectVec2(effect, "uvScale", glm::vec2(uvRect.width, uvRect.height));
+    rendererSetEffectVec2(effect, "uvOffset", glm::vec2(uvRect.x, uvRect.y));
+
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
 RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
