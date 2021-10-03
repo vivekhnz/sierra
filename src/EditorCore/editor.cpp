@@ -1974,3 +1974,8 @@ API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
     assert(tx);
     setProperty(tx, objectId, property, value);
 }
+
+API_EXPORT EDITOR_INVALIDATE_ASSET(editorInvalidateAsset)
+{
+    assetsInvalidateAsset(assetHandle);
+}

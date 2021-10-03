@@ -89,11 +89,6 @@ namespace Terrain.Editor.Engine
             api.assetsSetAssetData(
                 assetHandle, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
         }
-
-        internal static void InvalidateAsset(IntPtr assetHandle)
-        {
-            api.assetsInvalidateAsset(assetHandle);
-        }
     }
 
     internal static class EngineExtensions

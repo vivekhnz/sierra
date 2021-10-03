@@ -472,7 +472,7 @@ namespace Terrain.Editor.Platform
                 if (lastWriteTimeUtc > asset.LastUpdatedTimeUtc)
                 {
                     asset.LastUpdatedTimeUtc = lastWriteTimeUtc;
-                    TerrainEngine.InvalidateAsset(asset.AssetHandle);
+                    EditorCore.InvalidateAsset(asset.AssetHandle);
                 }
             }
 

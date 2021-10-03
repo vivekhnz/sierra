@@ -384,4 +384,7 @@ typedef EDITOR_DELETE_OBJECT(EditorDeleteObject);
     void name(Transaction *tx, uint32 objectId, ObjectProperty property, float value)
 typedef EDITOR_SET_OBJECT_PROPERTY(EditorSetObjectProperty);
 
+#define EDITOR_INVALIDATE_ASSET(name) void name(AssetHandle assetHandle)
+typedef EDITOR_INVALIDATE_ASSET(EditorInvalidateAsset);
+
 #endif

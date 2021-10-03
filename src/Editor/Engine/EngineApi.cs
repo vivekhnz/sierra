@@ -65,5 +65,4 @@ namespace Terrain.Editor.Engine
     }
 
     delegate void AssetsSetAssetData(IntPtr assetHandle, in byte data, ulong size);
-    delegate void AssetsInvalidateAsset(IntPtr assetHandle);
 }

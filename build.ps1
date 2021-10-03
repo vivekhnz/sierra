@@ -122,8 +122,7 @@ function Write-GeneratedCode {
 
     # EngineApi.Generated.cs
     $csharpTypedApis = @(
-        'assetsSetAssetData',
-        'assetsInvalidateAsset'
+        'assetsSetAssetData'
     );
     $generatedSrcBuilder.Clear() | Out-Null
     $generatedSrcBuilder.AppendLine("using System;`nusing System.Runtime.InteropServices;`n`nnamespace Terrain.Editor.Engine`n{`n    [StructLayout(LayoutKind.Sequential)]`n    internal struct EngineApi`n    {") | Out-Null
