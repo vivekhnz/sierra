@@ -1975,6 +1975,11 @@ API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
     setProperty(tx, objectId, property, value);
 }
 
+API_EXPORT EDITOR_SET_ASSET_DATA(editorSetAssetData)
+{
+    assetsSetAssetData(assetHandle, data, size);
+}
+
 API_EXPORT EDITOR_INVALIDATE_ASSET(editorInvalidateAsset)
 {
     assetsInvalidateAsset(assetHandle);

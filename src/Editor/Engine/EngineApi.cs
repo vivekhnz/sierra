@@ -63,6 +63,4 @@ namespace Terrain.Editor.Engine
         public bool IsUpToDate;
         public bool IsLoadQueued;
     }
-
-    delegate void AssetsSetAssetData(IntPtr assetHandle, in byte data, ulong size);
 }

@@ -483,7 +483,7 @@ namespace Terrain.Editor.Platform
                 try
                 {
                     var data = File.ReadAllBytes(request.Path);
-                    TerrainEngine.SetAssetData(request.AssetHandle, data);
+                    EditorCore.SetAssetData(request.AssetHandle, data);
 
                     assetLoadRequests.RemoveAt(i);
                     i--;

@@ -83,12 +83,6 @@ namespace Terrain.Editor.Engine
         {
             AssetRegistered?.Invoke(in assetReg);
         }
-
-        internal static void SetAssetData(IntPtr assetHandle, ReadOnlySpan<byte> data)
-        {
-            api.assetsSetAssetData(
-                assetHandle, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
-        }
     }
 
     internal static class EngineExtensions

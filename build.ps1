@@ -121,17 +121,10 @@ function Write-GeneratedCode {
     [System.IO.File]::WriteAllText('src\Engine\engine_generated.cpp', $generatedSrcBuilder.ToString())
 
     # EngineApi.Generated.cs
-    $csharpTypedApis = @(
-        'assetsSetAssetData'
-    );
     $generatedSrcBuilder.Clear() | Out-Null
     $generatedSrcBuilder.AppendLine("using System;`nusing System.Runtime.InteropServices;`n`nnamespace Terrain.Editor.Engine`n{`n    [StructLayout(LayoutKind.Sequential)]`n    internal struct EngineApi`n    {") | Out-Null
     foreach ($api in $apis) {
-        $type = 'IntPtr'
-        if ($csharpTypedApis -contains $api.FunctionName) {
-            $type = $api.TypeName
-        }
-        $generatedSrcBuilder.AppendLine("        public $type $($api.FunctionName);") | Out-Null
+        $generatedSrcBuilder.AppendLine("        public IntPtr $($api.FunctionName);") | Out-Null
     }
     $generatedSrcBuilder.AppendLine("    }`n}") | Out-Null
     [System.IO.File]::WriteAllText('src\Editor\Engine\EngineApi.Generated.cs', $generatedSrcBuilder.ToString());

@@ -304,6 +304,7 @@ namespace Terrain.Editor.Core
         delegate void EditorDeleteObject(IntPtr tx, uint objectId);
         delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
+        delegate void EditorSetAssetData(IntPtr assetHandle, in byte data, ulong size);
         delegate void EditorInvalidateAsset(IntPtr assetHandle);
 
         private static EditorUpdate editorUpdate;
@@ -324,6 +325,7 @@ namespace Terrain.Editor.Core
         private static EditorAddObject editorAddObject;
         private static EditorDeleteObject editorDeleteObject;
         private static EditorSetObjectProperty editorSetObjectProperty;
+        private static EditorSetAssetData editorSetAssetData;
         private static EditorInvalidateAsset editorInvalidateAsset;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
@@ -417,6 +419,7 @@ namespace Terrain.Editor.Core
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
+            editorSetAssetData = GetApi<EditorSetAssetData>("editorSetAssetData");
             editorInvalidateAsset = GetApi<EditorInvalidateAsset>("editorInvalidateAsset");
 
             return moduleHandle != IntPtr.Zero;
@@ -507,6 +510,9 @@ namespace Terrain.Editor.Core
         internal static void SetObjectProperty(
             Transaction tx, uint objectId, ObjectProperty property, float value)
             => editorSetObjectProperty?.Invoke(tx.Pointer, objectId, property, value);
+
+        internal static void SetAssetData(IntPtr assetHandle, ReadOnlySpan<byte> data)
+            => editorSetAssetData(assetHandle, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
 
         internal static void InvalidateAsset(IntPtr assetHandle)
             => editorInvalidateAsset?.Invoke(assetHandle);
