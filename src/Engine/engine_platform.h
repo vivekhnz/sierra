@@ -83,8 +83,8 @@ typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 #define PLATFORM_QUEUE_ASSET_LOAD(name) bool name(AssetHandle assetHandle, const char *relativePath)
 typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
 
-#define PLATFORM_WATCH_ASSET_FILE(name) void name(AssetHandle assetHandle, const char *relativePath)
-typedef PLATFORM_WATCH_ASSET_FILE(PlatformWatchAssetFile);
+#define PLATFORM_GET_FILE_LAST_WRITE_TIME(name) uint64 name(const char *relativePath)
+typedef PLATFORM_GET_FILE_LAST_WRITE_TIME(PlatformGetFileLastWriteTime);
 
 struct AssetRegistration;
 #define PLATFORM_NOTIFY_ASSET_REGISTERED(name) void name(AssetRegistration *assetReg)
@@ -94,7 +94,7 @@ struct EnginePlatformApi
 {
     PlatformLogMessage *logMessage;
     PlatformQueueAssetLoad *queueAssetLoad;
-    PlatformWatchAssetFile *watchAssetFile;
+    PlatformGetFileLastWriteTime *getFileLastWriteTime;
     PlatformNotifyAssetRegistered *notifyAssetRegistered;
 };
 

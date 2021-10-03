@@ -621,6 +621,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->isInitialized = true;
     }
 
+    assetsWatchForChanges(state->engineAssets);
+
     // apply committed transactions
     for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions); isTransactionValid(&tx);
          tx = getNextCommittedTransaction(&tx))
@@ -1978,9 +1980,4 @@ API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
 API_EXPORT EDITOR_SET_ASSET_DATA(editorSetAssetData)
 {
     assetsSetAssetData(assetHandle, data, size);
-}
-
-API_EXPORT EDITOR_INVALIDATE_ASSET(editorInvalidateAsset)
-{
-    assetsInvalidateAsset(assetHandle);
 }

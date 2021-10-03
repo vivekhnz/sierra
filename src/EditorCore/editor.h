@@ -387,7 +387,4 @@ typedef EDITOR_SET_OBJECT_PROPERTY(EditorSetObjectProperty);
 #define EDITOR_SET_ASSET_DATA(name) void name(AssetHandle assetHandle, void *data, uint64 size)
 typedef EDITOR_SET_ASSET_DATA(EditorSetAssetData);
 
-#define EDITOR_INVALIDATE_ASSET(name) void name(AssetHandle assetHandle)
-typedef EDITOR_INVALIDATE_ASSET(EditorInvalidateAsset);
-
 #endif

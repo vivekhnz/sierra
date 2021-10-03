@@ -120,15 +120,6 @@ function Write-GeneratedCode {
     $generatedSrcBuilder.AppendLine("};") | Out-Null
     [System.IO.File]::WriteAllText('src\Engine\engine_generated.cpp', $generatedSrcBuilder.ToString())
 
-    # EngineApi.Generated.cs
-    $generatedSrcBuilder.Clear() | Out-Null
-    $generatedSrcBuilder.AppendLine("using System;`nusing System.Runtime.InteropServices;`n`nnamespace Terrain.Editor.Engine`n{`n    [StructLayout(LayoutKind.Sequential)]`n    internal struct EngineApi`n    {") | Out-Null
-    foreach ($api in $apis) {
-        $generatedSrcBuilder.AppendLine("        public IntPtr $($api.FunctionName);") | Out-Null
-    }
-    $generatedSrcBuilder.AppendLine("    }`n}") | Out-Null
-    [System.IO.File]::WriteAllText('src\Editor\Engine\EngineApi.Generated.cs', $generatedSrcBuilder.ToString());
-
     # editor_generated.cpp
     $generatedSrcBuilder.Clear() | Out-Null
     foreach ($api in $apis) {

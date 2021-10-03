@@ -54,6 +54,7 @@ struct AssetFileState
     char *relativePath;
     bool isUpToDate;
     bool isLoadQueued;
+    uint64 lastWriteTime;
 };
 
 enum AssetRegistrationType
@@ -87,6 +88,6 @@ struct Assets;
 #define ASSETS_GET_TEXTURE(name) LoadedAsset *name(AssetHandle assetHandle)
 #define ASSETS_GET_MESH(name) LoadedAsset *name(AssetHandle assetHandle)
 #define ASSETS_SET_ASSET_DATA(name) void name(AssetHandle assetHandle, void *data, uint64 size)
-#define ASSETS_INVALIDATE_ASSET(name) void name(AssetHandle assetHandle)
+#define ASSETS_WATCH_FOR_CHANGES(name) void name(Assets *assets)
 
 #endif

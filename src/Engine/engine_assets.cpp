@@ -55,7 +55,7 @@ AssetRegistration *registerAsset(Assets *assets, AssetType type, const char *rel
         }
         *dstCursor = 0;
 
-        Platform.watchAssetFile(reg->handle, relativePath);
+        reg->fileState->lastWriteTime = Platform.getFileLastWriteTime(reg->fileState->relativePath);
     }
     else
     {
@@ -101,6 +101,12 @@ ASSETS_REGISTER_MESH(assetsRegisterMesh)
     return reg->handle;
 }
 
+void invalidateAsset(AssetRegistration *reg)
+{
+    reg->fileState->isUpToDate = false;
+    reg->fileState->isLoadQueued = false;
+}
+
 LoadedAsset *getAsset(Assets *assets, uint32 assetId)
 {
     if (WasAssetSystemReloaded)
@@ -111,8 +117,7 @@ LoadedAsset *getAsset(Assets *assets, uint32 assetId)
             AssetRegistration *reg = &assets->registeredAssets[i];
             if (reg->assetType == ASSET_TYPE_SHADER && reg->regType == ASSET_REG_FILE)
             {
-                reg->fileState->isUpToDate = false;
-                reg->fileState->isLoadQueued = false;
+                invalidateAsset(reg);
             }
         }
 
@@ -329,18 +334,19 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
     }
 }
 
-ASSETS_INVALIDATE_ASSET(assetsInvalidateAsset)
+ASSETS_WATCH_FOR_CHANGES(assetsWatchForChanges)
 {
-    AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
-    Assets *assets = handle->assets;
-    uint32 assetId = handle->id;
-
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    assert(assetIdx < assets->registeredAssetCount);
-    AssetRegistration *reg = &assets->registeredAssets[assetIdx];
-    if (reg->regType == ASSET_REG_FILE)
+    for (uint32 i = 0; i < assets->registeredAssetCount; i++)
     {
-        reg->fileState->isUpToDate = false;
-        reg->fileState->isLoadQueued = false;
+        AssetRegistration *reg = &assets->registeredAssets[i];
+        if (reg->regType == ASSET_REG_FILE)
+        {
+            uint64 lastWriteTime = Platform.getFileLastWriteTime(reg->fileState->relativePath);
+            if (lastWriteTime > reg->fileState->lastWriteTime)
+            {
+                invalidateAsset(reg);
+                reg->fileState->lastWriteTime = lastWriteTime;
+            }
+        }
     }
 }

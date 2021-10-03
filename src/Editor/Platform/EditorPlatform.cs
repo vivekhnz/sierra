@@ -33,12 +33,6 @@ namespace Terrain.Editor.Platform
             public IntPtr AssetHandle;
             public string Path;
         }
-        private class WatchedAsset
-        {
-            public IntPtr AssetHandle;
-            public string Path;
-            public DateTime LastUpdatedTimeUtc;
-        }
         private class ReloadableCode
         {
             public string DllPath;
@@ -81,12 +75,11 @@ namespace Terrain.Editor.Platform
 
         private static string assetsDirectoryPath;
         private static List<AssetLoadRequest> assetLoadRequests = new List<AssetLoadRequest>();
-        private static List<WatchedAsset> watchedAssets = new List<WatchedAsset>();
 
         private static PlatformCaptureMouse editorPlatformCaptureMouse = CaptureMouse;
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
-        private static PlatformWatchAssetFile editorPlatformWatchAssetFile = WatchAssetFile;
+        private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
 
         public static bool IsViewportHovered { get; private set; } = false;
 
@@ -116,7 +109,7 @@ namespace Terrain.Editor.Platform
                 Win32.MemoryProtection.ReadWrite);
 
             TerrainEngine.Initialize(editorPlatformLogMessage, editorPlatformQueueAssetLoad,
-                editorPlatformWatchAssetFile, Win32.LoadLibrary, Win32.GetProcAddress,
+                editorPlatformGetFileLastWriteTime, Win32.LoadLibrary, Win32.GetProcAddress,
                 Win32.FreeLibrary);
             EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
                 editorPlatformCaptureMouse, Win32.LoadLibrary,
@@ -241,15 +234,11 @@ namespace Terrain.Editor.Platform
             return QueueAssetLoad(assetHandle, Path.Combine(assetsDirectoryPath, relativePath));
         }
 
-        private static void WatchAssetFile(IntPtr assetHandle, string relativePath)
+        private static long GetFileLastWriteTime(string relativePath)
         {
-            var asset = new WatchedAsset
-            {
-                AssetHandle = assetHandle,
-                Path = Path.Combine(assetsDirectoryPath, relativePath)
-            };
-            asset.LastUpdatedTimeUtc = File.GetLastWriteTimeUtc(asset.Path);
-            watchedAssets.Add(asset);
+            string absolutePath = Path.Combine(assetsDirectoryPath, relativePath);
+            DateTime lastWriteTimeUtc = File.GetLastWriteTimeUtc(absolutePath);
+            return lastWriteTimeUtc.Ticks;
         }
 
         private static ViewportInput GetInputState()
@@ -462,17 +451,6 @@ namespace Terrain.Editor.Platform
                     {
                         editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
                     }
-                }
-            }
-
-            // invalidate watched assets that have changed
-            foreach (var asset in watchedAssets)
-            {
-                DateTime lastWriteTimeUtc = File.GetLastWriteTimeUtc(asset.Path);
-                if (lastWriteTimeUtc > asset.LastUpdatedTimeUtc)
-                {
-                    asset.LastUpdatedTimeUtc = lastWriteTimeUtc;
-                    EditorCore.InvalidateAsset(asset.AssetHandle);
                 }
             }
 

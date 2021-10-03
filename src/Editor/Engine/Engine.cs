@@ -7,8 +7,7 @@ namespace Terrain.Editor.Engine
 {
     internal static class TerrainEngine
     {
-        private delegate IntPtr EngineGetApi(
-            IntPtr getGlProcAddress, EnginePlatformApi platformApi);
+        private delegate IntPtr EngineGetApi(IntPtr getGlProcAddress, EnginePlatformApi platformApi);
 
         private static IntPtr moduleHandle;
 
@@ -19,15 +18,13 @@ namespace Terrain.Editor.Engine
             = new PlatformNotifyAssetRegistered(TerrainEngine.OnAssetRegistered);
         private static EnginePlatformApi platformApi;
 
-        private static EngineApi api;
-
         internal static IntPtr EngineApiPtr { get; private set; }
 
         internal delegate void AssetRegisteredEventHandler(in AssetRegistration assetReg);
         internal static event AssetRegisteredEventHandler AssetRegistered;
 
         internal static void Initialize(PlatformLogMessage logMessage,
-            PlatformQueueAssetLoad queueAssetLoad, PlatformWatchAssetFile watchAssetFile,
+            PlatformQueueAssetLoad queueAssetLoad, PlatformGetFileLastWriteTime getFileLastWriteTime,
             Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
             Func<IntPtr, bool> freeLibrary)
         {
@@ -39,7 +36,7 @@ namespace Terrain.Editor.Engine
             {
                 LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
                 QueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
-                WatchAssetFile = Marshal.GetFunctionPointerForDelegate(watchAssetFile),
+                GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime),
                 NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
             };
         }
@@ -50,7 +47,6 @@ namespace Terrain.Editor.Engine
             {
                 freeLibrary(moduleHandle);
                 moduleHandle = IntPtr.Zero;
-                api = default(EngineApi);
             }
 
             bool didShadowCopySucceed = false;
@@ -71,11 +67,8 @@ namespace Terrain.Editor.Engine
             if (moduleHandle != IntPtr.Zero)
             {
                 IntPtr engineGetApiPtr = getProcAddress(moduleHandle, "engineGetApi");
-                EngineGetApi engineGetApi = Marshal
-                    .GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
-
+                EngineGetApi engineGetApi = Marshal.GetDelegateForFunctionPointer<EngineGetApi>(engineGetApiPtr);
                 EngineApiPtr = engineGetApi(IntPtr.Zero, platformApi);
-                api = Marshal.PtrToStructure<EngineApi>(EngineApiPtr);
             }
         }
 
