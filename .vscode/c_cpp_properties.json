@@ -5,15 +5,12 @@
             "includePath": [
                 "${workspaceFolder}/src/**",
                 "${workspaceFolder}/deps",
-                "${workspaceFolder}/deps/nuget/glfw.3.3.2/build/native/include",
                 "${workspaceFolder}/deps/nuget/glm.0.9.9.700/build/native/include"
             ],
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE",
-                "GLFW_EXPOSE_NATIVE_WIN32",
-                "GLFW_EXPOSE_NATIVE_WGL"
+                "_UNICODE"
             ],
             "windowsSdkVersion": "10.0.18362.0",
             "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.24.28314/bin/Hostx64/x64/cl.exe",

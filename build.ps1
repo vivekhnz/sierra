@@ -143,13 +143,6 @@ function Write-GeneratedCode {
         $generatedSrcBuilder.AppendLine("#define $($api.FunctionName) Engine->$($api.FunctionName)") | Out-Null
     }
     [System.IO.File]::WriteAllText('src\EditorCore\editor_generated.cpp', $generatedSrcBuilder.ToString());
-
-    # game_generated.cpp
-    $generatedSrcBuilder.Clear() | Out-Null
-    foreach ($api in $apis) {
-        $generatedSrcBuilder.AppendLine("#define $($api.FunctionName) Engine->$($api.FunctionName)") | Out-Null
-    }
-    [System.IO.File]::WriteAllText('src\Game\game_generated.cpp', $generatedSrcBuilder.ToString());
 }
 
 function Invoke-Msvc {
@@ -238,7 +231,7 @@ if (!(Test-Path $OutputPath)) {
     New-Item -Path $OutputPath -ItemType Directory | Out-Null
 }
 
-if (!(Test-Path 'deps\nuget\glfw*')) {
+if (!(Test-Path 'deps\nuget\glm*')) {
     & nuget restore 'packages.config'
 }
 
@@ -257,30 +250,6 @@ $builds += Invoke-Msvc `
         'deps\nuget\glm.0.9.9.700\build\native\include'
     )
 $builds += Invoke-Msvc `
-    -SourceFile 'src\Game\game.cpp' -OutputName 'terrain_game' `
-    -IntermediateOutputDirName 'Game' `
-    -BuildDll -RandomizePdbFilename -NoImportLib `
-    -IncludePaths @(
-        'deps',
-        'deps\nuget\glm.0.9.9.700\build\native\include'
-)
-# don't try build the game executable if it is currently running
-if (!(Get-Process "win32_terrain" -ErrorAction SilentlyContinue)) {
-    $builds += Invoke-Msvc `
-        -SourceFile 'src\Game\win32_game.cpp' -OutputName 'win32_terrain' `
-        -IntermediateOutputDirName 'Game' `
-        -NoImportLib `
-        -IncludePaths @(
-            'deps',
-            'deps\nuget\glm.0.9.9.700\build\native\include',
-            'deps\nuget\glfw.3.3.2\build\native\include'
-        ) `
-        -ImportLibs @(
-            "deps\nuget\glfw.3.3.2\build\native\lib\dynamic\v142\$platform\glfw3dll.lib"
-        )
-}
-
-$builds += Invoke-Msvc `
     -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
     -IntermediateOutputDirName 'EditorCore' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
@@ -292,12 +261,6 @@ $builds += Invoke-Msvc `
 # don't try build the editor executable if it is currently running
 if (!(Get-Process "Terrain.Editor" -ErrorAction SilentlyContinue)) {
     $builds += Invoke-Dotnet -SolutionFile 'Terrain.sln' -OutputName 'Editor'
-}
-
-$glfwDllSrcPath = "deps\nuget\glfw.3.3.2\build\native\bin\dynamic\v142\$platform\glfw3.dll"
-$glfwDllDstPath = "$OutputPath\glfw3.dll"
-if (!(Test-Path $glfwDllDstPath)) {
-    Copy-Item -Path $glfwDllSrcPath -Destination $glfwDllDstPath
 }
 
 $builds.Process | Wait-Process
