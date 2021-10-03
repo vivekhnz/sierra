@@ -1977,7 +1977,7 @@ API_EXPORT EDITOR_SET_OBJECT_PROPERTY(editorSetObjectProperty)
     setProperty(tx, objectId, property, value);
 }
 
-API_EXPORT EDITOR_SET_ASSET_DATA(editorSetAssetData)
+API_EXPORT EDITOR_LOAD_ASSET(editorLoadAsset)
 {
-    assetsSetAssetData(assetHandle, data, size);
+    assetsLoadAsset(assetHandle, path);
 }

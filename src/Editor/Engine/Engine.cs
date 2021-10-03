@@ -25,6 +25,7 @@ namespace Terrain.Editor.Engine
 
         internal static void Initialize(PlatformLogMessage logMessage,
             PlatformQueueAssetLoad queueAssetLoad, PlatformGetFileLastWriteTime getFileLastWriteTime,
+            PlatformGetFileSize getFileSize, PlatformReadEntireFile readEntireFile,
             Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
             Func<IntPtr, bool> freeLibrary)
         {
@@ -37,6 +38,8 @@ namespace Terrain.Editor.Engine
                 LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
                 QueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
                 GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime),
+                GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize),
+                ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile),
                 NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered)
             };
         }

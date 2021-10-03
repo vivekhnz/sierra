@@ -86,6 +86,12 @@ typedef PLATFORM_QUEUE_ASSET_LOAD(PlatformQueueAssetLoad);
 #define PLATFORM_GET_FILE_LAST_WRITE_TIME(name) uint64 name(const char *relativePath)
 typedef PLATFORM_GET_FILE_LAST_WRITE_TIME(PlatformGetFileLastWriteTime);
 
+#define PLATFORM_GET_FILE_SIZE(name) uint64 name(const char *path)
+typedef PLATFORM_GET_FILE_SIZE(PlatformGetFileSize);
+
+#define PLATFORM_READ_ENTIRE_FILE(name) void name(const char *path, void *buffer)
+typedef PLATFORM_READ_ENTIRE_FILE(PlatformReadEntireFile);
+
 struct AssetRegistration;
 #define PLATFORM_NOTIFY_ASSET_REGISTERED(name) void name(AssetRegistration *assetReg)
 typedef PLATFORM_NOTIFY_ASSET_REGISTERED(PlatformNotifyAssetRegistered);
@@ -95,6 +101,8 @@ struct EnginePlatformApi
     PlatformLogMessage *logMessage;
     PlatformQueueAssetLoad *queueAssetLoad;
     PlatformGetFileLastWriteTime *getFileLastWriteTime;
+    PlatformGetFileSize *getFileSize;
+    PlatformReadEntireFile *readEntireFile;
     PlatformNotifyAssetRegistered *notifyAssetRegistered;
 };
 

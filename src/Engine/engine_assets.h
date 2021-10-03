@@ -87,7 +87,7 @@ struct Assets;
 #define ASSETS_GET_SHADER(name) LoadedAsset *name(AssetHandle assetHandle)
 #define ASSETS_GET_TEXTURE(name) LoadedAsset *name(AssetHandle assetHandle)
 #define ASSETS_GET_MESH(name) LoadedAsset *name(AssetHandle assetHandle)
-#define ASSETS_SET_ASSET_DATA(name) void name(AssetHandle assetHandle, void *data, uint64 size)
+#define ASSETS_LOAD_ASSET(name) void name(AssetHandle assetHandle, char *path)
 #define ASSETS_WATCH_FOR_CHANGES(name) void name(Assets *assets)
 
 #endif

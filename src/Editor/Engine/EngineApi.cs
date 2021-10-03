@@ -14,6 +14,8 @@ namespace Terrain.Editor.Engine
     internal delegate void PlatformLogMessage(string message);
     internal delegate bool PlatformQueueAssetLoad(IntPtr assetHandle, string relativePath);
     internal delegate long PlatformGetFileLastWriteTime(string relativePath);
+    internal delegate long PlatformGetFileSize(string path);
+    internal delegate void PlatformReadEntireFile(string path, ref byte bufferBaseAddress);
     internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
 
     [StructLayout(LayoutKind.Sequential)]
@@ -22,6 +24,8 @@ namespace Terrain.Editor.Engine
         public IntPtr LogMessage;
         public IntPtr QueueAssetLoad;
         public IntPtr GetFileLastWriteTime;
+        public IntPtr GetFileSize;
+        public IntPtr ReadEntireFile;
         public IntPtr NotifyAssetRegistered;
     }
 

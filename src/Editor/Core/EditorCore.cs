@@ -304,7 +304,7 @@ namespace Terrain.Editor.Core
         delegate void EditorDeleteObject(IntPtr tx, uint objectId);
         delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
-        delegate void EditorSetAssetData(IntPtr assetHandle, in byte data, ulong size);
+        delegate void EditorLoadAsset(IntPtr assetHandle, string path);
 
         private static EditorUpdate editorUpdate;
         private static EditorRenderSceneView editorRenderSceneView;
@@ -324,7 +324,7 @@ namespace Terrain.Editor.Core
         private static EditorAddObject editorAddObject;
         private static EditorDeleteObject editorDeleteObject;
         private static EditorSetObjectProperty editorSetObjectProperty;
-        private static EditorSetAssetData editorSetAssetData;
+        private static EditorLoadAsset editorLoadAsset;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
@@ -417,7 +417,7 @@ namespace Terrain.Editor.Core
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
-            editorSetAssetData = GetApi<EditorSetAssetData>("editorSetAssetData");
+            editorLoadAsset = GetApi<EditorLoadAsset>("editorLoadAsset");
 
             return moduleHandle != IntPtr.Zero;
         }
@@ -508,7 +508,7 @@ namespace Terrain.Editor.Core
             Transaction tx, uint objectId, ObjectProperty property, float value)
             => editorSetObjectProperty?.Invoke(tx.Pointer, objectId, property, value);
 
-        internal static void SetAssetData(IntPtr assetHandle, ReadOnlySpan<byte> data)
-            => editorSetAssetData(assetHandle, MemoryMarshal.AsRef<byte>(data), (ulong)data.Length);
+        internal static void LoadAsset(IntPtr assetHandle, string path)
+            => editorLoadAsset(assetHandle, path);
     }
 }

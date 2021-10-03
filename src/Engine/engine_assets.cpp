@@ -234,7 +234,7 @@ void fastObjLoadMesh(MemoryArena *memory, const char *path, void *data, uint64 s
     fast_obj_destroy(mesh);
 }
 
-ASSETS_SET_ASSET_DATA(assetsSetAssetData)
+ASSETS_LOAD_ASSET(assetsLoadAsset)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     Assets *assets = handle->assets;
@@ -242,10 +242,14 @@ ASSETS_SET_ASSET_DATA(assetsSetAssetData)
 
     uint32 assetIdx = ASSET_GET_INDEX(assetId);
     uint32 assetType = ASSET_GET_TYPE(assetId);
-
     assert(assetIdx < assets->registeredAssetCount);
-    AssetRegistration *reg = &assets->registeredAssets[assetIdx];
 
+    // todo: free file memory at the end of this function
+    uint64 size = Platform.getFileSize(path);
+    void *data = pushSize(assets->arena, size);
+    Platform.readEntireFile(path, data);
+
+    AssetRegistration *reg = &assets->registeredAssets[assetIdx];
     if (assetType == ASSET_TYPE_SHADER)
     {
         char *src = static_cast<char *>(data);

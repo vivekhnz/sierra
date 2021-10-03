@@ -80,6 +80,8 @@ namespace Terrain.Editor.Platform
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
         private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
+        private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
+        private static PlatformReadEntireFile editorPlatformReadEntireFile = ReadEntireFile;
 
         public static bool IsViewportHovered { get; private set; } = false;
 
@@ -109,8 +111,8 @@ namespace Terrain.Editor.Platform
                 Win32.MemoryProtection.ReadWrite);
 
             TerrainEngine.Initialize(editorPlatformLogMessage, editorPlatformQueueAssetLoad,
-                editorPlatformGetFileLastWriteTime, Win32.LoadLibrary, Win32.GetProcAddress,
-                Win32.FreeLibrary);
+                editorPlatformGetFileLastWriteTime, editorPlatformGetFileSize, editorPlatformReadEntireFile,
+                Win32.LoadLibrary, Win32.GetProcAddress, Win32.FreeLibrary);
             EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
                 editorPlatformCaptureMouse, Win32.LoadLibrary,
                 Win32.GetProcAddress, Win32.FreeLibrary);
@@ -239,6 +241,22 @@ namespace Terrain.Editor.Platform
             string absolutePath = Path.Combine(assetsDirectoryPath, relativePath);
             DateTime lastWriteTimeUtc = File.GetLastWriteTimeUtc(absolutePath);
             return lastWriteTimeUtc.Ticks;
+        }
+        private static long GetFileSize(string path)
+        {
+            return new FileInfo(path).Length;
+        }
+        private static void ReadEntireFile(string path, ref byte bufferBaseAddress)
+        {
+            long fileSize = GetFileSize(path);
+            Debug.Assert(fileSize < int.MaxValue);
+
+            var span = MemoryMarshal.CreateSpan(ref bufferBaseAddress, (int)fileSize);
+            using (var stream = File.OpenRead(path))
+            {
+                int readBytes = stream.Read(span);
+                Debug.Assert(readBytes == fileSize);
+            }
         }
 
         private static ViewportInput GetInputState()
@@ -460,9 +478,7 @@ namespace Terrain.Editor.Platform
                 var request = assetLoadRequests[i];
                 try
                 {
-                    var data = File.ReadAllBytes(request.Path);
-                    EditorCore.SetAssetData(request.AssetHandle, data);
-
+                    EditorCore.LoadAsset(request.AssetHandle, request.Path);
                     assetLoadRequests.RemoveAt(i);
                     i--;
                 }
