@@ -1,10 +1,8 @@
 #include "editor.h"
 
+global_variable bool WasAssemblyReloaded = true;
+
 #include "../Engine/engine.cpp"
-
-#include "editor_generated.cpp"
-global_variable EngineApi *Engine;
-
 #include "editor_transactions.cpp"
 #include "editor_heightmap.cpp"
 #include <glm/gtx/quaternion.hpp>
@@ -606,7 +604,7 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
-    if (!Engine)
+    if (WasAssemblyReloaded)
     {
         EnginePlatformApi enginePlatformApi = {};
         enginePlatformApi.logMessage = memory->platformApi.logMessage;
@@ -614,8 +612,9 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         enginePlatformApi.getFileSize = memory->platformApi.getFileSize;
         enginePlatformApi.readEntireFile = memory->platformApi.readEntireFile;
         enginePlatformApi.notifyAssetRegistered = memory->platformApi.notifyAssetRegistered;
+        reloadEngine(0, enginePlatformApi);
 
-        Engine = engineGetApi(0, enginePlatformApi);
+        WasAssemblyReloaded = false;
     }
 
     EditorState *state = (EditorState *)memory->arena.baseAddress;

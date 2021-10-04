@@ -7,11 +7,7 @@
 #include "engine_renderer.h"
 #include "engine_assets.h"
 
-#include "engine_generated.h"
-
 typedef void *GetGLProcAddress(const char *procName);
-
-#define ENGINE_GET_API(name) EngineApi *name(GetGLProcAddress *getGlProcAddress, EnginePlatformApi platformApi)
-typedef ENGINE_GET_API(EngineGetApi);
+void reloadEngine(GetGLProcAddress *getGlProcAddress, EnginePlatformApi platformApi);
 
 #endif
