@@ -1,7 +1,7 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "../Engine/engine.h"
+#include "engine.h"
 #include "editor_transactions.h"
 #include "editor_heightmap.h"
 

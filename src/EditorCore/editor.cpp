@@ -2,7 +2,7 @@
 
 global_variable bool WasAssemblyReloaded = true;
 
-#include "../Engine/engine.cpp"
+#include "engine.cpp"
 #include "editor_transactions.cpp"
 #include "editor_heightmap.cpp"
 #include <glm/gtx/quaternion.hpp>
