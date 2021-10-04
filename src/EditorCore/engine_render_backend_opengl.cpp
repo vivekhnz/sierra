@@ -3,7 +3,7 @@
 #include "../../deps/glad/glad.c"
 #include "engine_render_backend_opengl_shaders.cpp"
 
-extern EnginePlatformApi Platform;
+extern EditorPlatformApi Platform;
 global_variable bool WasRendererReloaded = true;
 
 #define SLOTS_PER_TEXTURE_ARRAY 32
@@ -141,10 +141,9 @@ struct OpenGlRenderContext
     } terrain;
 };
 
-void reloadRenderBackend(RenderBackendInitParams initParams)
+void reloadRenderBackend()
 {
-    bool glLoadSucceeded =
-        initParams.getGlProcAddress ? gladLoadGLLoader(initParams.getGlProcAddress) : gladLoadGL();
+    bool glLoadSucceeded = gladLoadGL();
     assert(glLoadSucceeded);
 }
 RenderBackendContext initializeRenderBackend(MemoryArena *arena)

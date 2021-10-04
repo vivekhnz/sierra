@@ -1,7 +1,11 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include "engine.h"
+#include "engine_platform.h"
+#include "engine_math.h"
+#include "engine_renderer_common.h"
+#include "engine_renderer.h"
+#include "engine_assets.h"
 #include "editor_transactions.h"
 #include "editor_heightmap.h"
 
@@ -25,12 +29,6 @@
 #define HEIGHTFIELD_SAMPLES_PER_EDGE 256
 #define TERRAIN_TILE_LENGTH_IN_WORLD_UNITS 128.0f
 #endif
-
-#define PLATFORM_CAPTURE_MOUSE(name) void name()
-typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
-
-#define PLATFORM_PUBLISH_TRANSACTION(name) void name(void *commandBufferBaseAddress)
-typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
 
 enum EditorContext
 {
@@ -229,16 +227,6 @@ struct EditorState
     SceneState sceneState;
 };
 
-struct EditorPlatformApi
-{
-    PlatformCaptureMouse *captureMouse;
-    PlatformLogMessage *logMessage;
-    PlatformGetFileLastWriteTime *getFileLastWriteTime;
-    PlatformGetFileSize *getFileSize;
-    PlatformReadEntireFile *readEntireFile;
-    PlatformNotifyAssetRegistered *notifyAssetRegistered;
-    PlatformPublishTransaction *publishTransaction;
-};
 struct EditorMemory
 {
     MemoryArena arena;

@@ -8,10 +8,6 @@ struct RenderBackendContext
 {
     void *ptr;
 };
-struct RenderBackendInitParams
-{
-    GetGLProcAddress *getGlProcAddress;
-};
 
 enum RenderEffectParameterType
 {
@@ -168,7 +164,7 @@ struct DispatchedRenderQueue
     RenderQueueCommandHeader *firstCommand;
 };
 
-void reloadRenderBackend(RenderBackendInitParams initParams);
+void reloadRenderBackend();
 RenderBackendContext initializeRenderBackend(MemoryArena *arena);
 
 bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);

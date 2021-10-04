@@ -5,6 +5,7 @@
 
 // assets
 
+typedef void *AssetHandle;
 enum ShaderType
 {
     SHADER_TYPE_QUAD,

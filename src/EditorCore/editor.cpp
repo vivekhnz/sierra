@@ -1,10 +1,16 @@
 #include "editor.h"
 
 global_variable bool WasAssemblyReloaded = true;
+global_variable EditorPlatformApi Platform;
 
-#include "engine.cpp"
+#include "engine_renderer.cpp"
+#include "engine_render_backend_opengl.cpp"
+#include "engine_assets.cpp"
 #include "editor_transactions.cpp"
 #include "editor_heightmap.cpp"
+
+#include "../../deps/stb/stb_image.c"
+#include "../../deps/fast_obj/fast_obj.c"
 #include <glm/gtx/quaternion.hpp>
 
 enum BrushVisualizationMode
@@ -606,14 +612,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     if (WasAssemblyReloaded)
     {
-        EnginePlatformApi enginePlatformApi = {};
-        enginePlatformApi.logMessage = memory->platformApi.logMessage;
-        enginePlatformApi.getFileLastWriteTime = memory->platformApi.getFileLastWriteTime;
-        enginePlatformApi.getFileSize = memory->platformApi.getFileSize;
-        enginePlatformApi.readEntireFile = memory->platformApi.readEntireFile;
-        enginePlatformApi.notifyAssetRegistered = memory->platformApi.notifyAssetRegistered;
-        reloadEngine(0, enginePlatformApi);
-
+        Platform = memory->platformApi;
+        reloadRenderBackend();
         WasAssemblyReloaded = false;
     }
 

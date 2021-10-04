@@ -3,7 +3,7 @@
 #include <stb/stb_image.h>
 #include <fast_obj/fast_obj.h>
 
-extern EnginePlatformApi Platform;
+extern EditorPlatformApi Platform;
 global_variable bool WasAssetSystemReloaded = true;
 
 #define ASSET_GET_INDEX(id) (id & 0x0FFFFFFF)

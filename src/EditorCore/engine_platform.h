@@ -75,7 +75,8 @@ inline void endTemporaryMemory(TemporaryMemory *temp)
     temp->arena->used = temp->used;
 }
 
-typedef void *AssetHandle;
+#define PLATFORM_CAPTURE_MOUSE(name) void name()
+typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
 
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
@@ -93,13 +94,18 @@ struct AssetRegistration;
 #define PLATFORM_NOTIFY_ASSET_REGISTERED(name) void name(AssetRegistration *assetReg)
 typedef PLATFORM_NOTIFY_ASSET_REGISTERED(PlatformNotifyAssetRegistered);
 
-struct EnginePlatformApi
+#define PLATFORM_PUBLISH_TRANSACTION(name) void name(void *commandBufferBaseAddress)
+typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
+
+struct EditorPlatformApi
 {
+    PlatformCaptureMouse *captureMouse;
     PlatformLogMessage *logMessage;
     PlatformGetFileLastWriteTime *getFileLastWriteTime;
     PlatformGetFileSize *getFileSize;
     PlatformReadEntireFile *readEntireFile;
     PlatformNotifyAssetRegistered *notifyAssetRegistered;
+    PlatformPublishTransaction *publishTransaction;
 };
 
 #endif
