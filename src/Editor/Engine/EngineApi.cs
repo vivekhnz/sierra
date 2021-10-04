@@ -12,7 +12,6 @@ namespace Terrain.Editor.Engine
     }
 
     internal delegate void PlatformLogMessage(string message);
-    internal delegate bool PlatformQueueAssetLoad(IntPtr assetHandle, string relativePath);
     internal delegate long PlatformGetFileLastWriteTime(string relativePath);
     internal delegate long PlatformGetFileSize(string path);
     internal delegate void PlatformReadEntireFile(string path, ref byte bufferBaseAddress);
@@ -22,7 +21,6 @@ namespace Terrain.Editor.Engine
     struct EnginePlatformApi
     {
         public IntPtr LogMessage;
-        public IntPtr QueueAssetLoad;
         public IntPtr GetFileLastWriteTime;
         public IntPtr GetFileSize;
         public IntPtr ReadEntireFile;

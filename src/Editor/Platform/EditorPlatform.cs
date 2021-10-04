@@ -28,11 +28,6 @@ namespace Terrain.Editor.Platform
 
     internal static class EditorPlatform
     {
-        private class AssetLoadRequest
-        {
-            public IntPtr AssetHandle;
-            public string Path;
-        }
         private class ReloadableCode
         {
             public string DllPath;
@@ -74,11 +69,9 @@ namespace Terrain.Editor.Platform
         private static List<EditorViewportWindow> viewportWindows = new List<EditorViewportWindow>();
 
         private static string assetsDirectoryPath;
-        private static List<AssetLoadRequest> assetLoadRequests = new List<AssetLoadRequest>();
 
         private static PlatformCaptureMouse editorPlatformCaptureMouse = CaptureMouse;
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
-        private static PlatformQueueAssetLoad editorPlatformQueueAssetLoad = QueueAssetLoadRelative;
         private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
         private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
         private static PlatformReadEntireFile editorPlatformReadEntireFile = ReadEntireFile;
@@ -110,8 +103,8 @@ namespace Terrain.Editor.Platform
                 Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
                 Win32.MemoryProtection.ReadWrite);
 
-            TerrainEngine.Initialize(editorPlatformLogMessage, editorPlatformQueueAssetLoad,
-                editorPlatformGetFileLastWriteTime, editorPlatformGetFileSize, editorPlatformReadEntireFile,
+            TerrainEngine.Initialize(editorPlatformLogMessage, editorPlatformGetFileLastWriteTime,
+                editorPlatformGetFileSize, editorPlatformReadEntireFile,
                 Win32.LoadLibrary, Win32.GetProcAddress, Win32.FreeLibrary);
             EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
                 editorPlatformCaptureMouse, Win32.LoadLibrary,
@@ -220,39 +213,29 @@ namespace Terrain.Editor.Platform
             Debug.WriteLine(message);
         }
 
-        internal static bool QueueAssetLoad(IntPtr assetHandle, string absolutePath)
+        private static string GetAssetFilePath(string relativePath)
         {
-            assetLoadRequests.Add(new AssetLoadRequest
-            {
-                AssetHandle = assetHandle,
-                Path = absolutePath
-            });
-
-            return true;
+            return Path.Combine(assetsDirectoryPath, relativePath);
         }
-
-        private static bool QueueAssetLoadRelative(IntPtr assetHandle, string relativePath)
-        {
-            return QueueAssetLoad(assetHandle, Path.Combine(assetsDirectoryPath, relativePath));
-        }
-
         private static long GetFileLastWriteTime(string relativePath)
         {
-            string absolutePath = Path.Combine(assetsDirectoryPath, relativePath);
+            string absolutePath = GetAssetFilePath(relativePath);
             DateTime lastWriteTimeUtc = File.GetLastWriteTimeUtc(absolutePath);
             return lastWriteTimeUtc.Ticks;
         }
-        private static long GetFileSize(string path)
+        private static long GetFileSize(string relativePath)
         {
-            return new FileInfo(path).Length;
+            string absolutePath = GetAssetFilePath(relativePath);
+            return new FileInfo(absolutePath).Length;
         }
-        private static void ReadEntireFile(string path, ref byte bufferBaseAddress)
+        private static void ReadEntireFile(string relativePath, ref byte bufferBaseAddress)
         {
-            long fileSize = GetFileSize(path);
+            long fileSize = GetFileSize(relativePath);
             Debug.Assert(fileSize < int.MaxValue);
 
             var span = MemoryMarshal.CreateSpan(ref bufferBaseAddress, (int)fileSize);
-            using (var stream = File.OpenRead(path))
+            string absolutePath = GetAssetFilePath(relativePath);
+            using (var stream = File.OpenRead(absolutePath))
             {
                 int readBytes = stream.Read(span);
                 Debug.Assert(readBytes == fileSize);
@@ -469,22 +452,6 @@ namespace Terrain.Editor.Platform
                     {
                         editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
                     }
-                }
-            }
-
-            // action any asset load requests
-            for (int i = 0; i < assetLoadRequests.Count; i++)
-            {
-                var request = assetLoadRequests[i];
-                try
-                {
-                    EditorCore.LoadAsset(request.AssetHandle, request.Path);
-                    assetLoadRequests.RemoveAt(i);
-                    i--;
-                }
-                catch (IOException)
-                {
-                    // ignore and try again next tick
                 }
             }
 

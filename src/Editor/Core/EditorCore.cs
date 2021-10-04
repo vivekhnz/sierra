@@ -304,7 +304,6 @@ namespace Terrain.Editor.Core
         delegate void EditorDeleteObject(IntPtr tx, uint objectId);
         delegate void EditorSetObjectProperty(IntPtr tx, uint objectId,
             ObjectProperty property, float value);
-        delegate void EditorLoadAsset(IntPtr assetHandle, string path);
 
         private static EditorUpdate editorUpdate;
         private static EditorRenderSceneView editorRenderSceneView;
@@ -324,7 +323,6 @@ namespace Terrain.Editor.Core
         private static EditorAddObject editorAddObject;
         private static EditorDeleteObject editorDeleteObject;
         private static EditorSetObjectProperty editorSetObjectProperty;
-        private static EditorLoadAsset editorLoadAsset;
 
         internal delegate void TransactionPublishedEventHandler(EditorCommandList commands);
         internal static event TransactionPublishedEventHandler TransactionPublished;
@@ -417,7 +415,6 @@ namespace Terrain.Editor.Core
             editorAddObject = GetApi<EditorAddObject>("editorAddObject");
             editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
             editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
-            editorLoadAsset = GetApi<EditorLoadAsset>("editorLoadAsset");
 
             return moduleHandle != IntPtr.Zero;
         }
@@ -507,8 +504,5 @@ namespace Terrain.Editor.Core
         internal static void SetObjectProperty(
             Transaction tx, uint objectId, ObjectProperty property, float value)
             => editorSetObjectProperty?.Invoke(tx.Pointer, objectId, property, value);
-
-        internal static void LoadAsset(IntPtr assetHandle, string path)
-            => editorLoadAsset(assetHandle, path);
     }
 }

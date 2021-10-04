@@ -37,6 +37,8 @@ namespace Terrain.Editor
 
         private void miOpen_Click(object sender, RoutedEventArgs e)
         {
+            // todo: reimplement functionality to import a heightmap
+#if false
             var ofd = new OpenFileDialog
             {
                 Filter = "TGA (*.tga)|*.tga",
@@ -50,6 +52,7 @@ namespace Terrain.Editor
                     EditorPlatform.QueueAssetLoad(heightmapAssetHandle, ofd.FileName);
                 }
             }
+#endif
         }
 
         private void OnTransactionPublished(EditorCommandList commands)

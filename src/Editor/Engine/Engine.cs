@@ -24,10 +24,9 @@ namespace Terrain.Editor.Engine
         internal static event AssetRegisteredEventHandler AssetRegistered;
 
         internal static void Initialize(PlatformLogMessage logMessage,
-            PlatformQueueAssetLoad queueAssetLoad, PlatformGetFileLastWriteTime getFileLastWriteTime,
-            PlatformGetFileSize getFileSize, PlatformReadEntireFile readEntireFile,
-            Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
-            Func<IntPtr, bool> freeLibrary)
+            PlatformGetFileLastWriteTime getFileLastWriteTime, PlatformGetFileSize getFileSize,
+            PlatformReadEntireFile readEntireFile, Func<string, IntPtr> loadLibrary,
+            Func<IntPtr, string, IntPtr> getProcAddress, Func<IntPtr, bool> freeLibrary)
         {
             TerrainEngine.loadLibrary = loadLibrary;
             TerrainEngine.getProcAddress = getProcAddress;
@@ -36,7 +35,6 @@ namespace Terrain.Editor.Engine
             platformApi = new EnginePlatformApi
             {
                 LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage),
-                QueueAssetLoad = Marshal.GetFunctionPointerForDelegate(queueAssetLoad),
                 GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime),
                 GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize),
                 ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile),

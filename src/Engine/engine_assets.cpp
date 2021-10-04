@@ -10,6 +10,7 @@ global_variable bool WasAssetSystemReloaded = true;
 #define ASSET_GET_TYPE(id) ((id & 0xF0000000) >> 28)
 
 #define MAX_ASSETS 4096
+#define MAX_QUEUED_ASSET_LOADS 8
 
 struct Assets
 {
@@ -18,6 +19,9 @@ struct Assets
 
     AssetRegistration registeredAssets[MAX_ASSETS];
     uint32 registeredAssetCount;
+
+    AssetRegistration *queuedAssetsToLoad[MAX_QUEUED_ASSET_LOADS];
+    uint32 queuedAssetLoadCount;
 };
 struct AssetHandleInternal
 {
@@ -107,6 +111,16 @@ void invalidateAsset(AssetRegistration *reg)
     reg->fileState->isLoadQueued = false;
 }
 
+bool queueAssetLoad(Assets *assets, AssetRegistration *reg)
+{
+    if (assets->queuedAssetLoadCount < MAX_QUEUED_ASSET_LOADS)
+    {
+        assets->queuedAssetsToLoad[assets->queuedAssetLoadCount++] = reg;
+        return true;
+    }
+    return false;
+}
+
 LoadedAsset *getAsset(Assets *assets, uint32 assetId)
 {
     if (WasAssetSystemReloaded)
@@ -133,7 +147,7 @@ LoadedAsset *getAsset(Assets *assets, uint32 assetId)
         AssetFileState *fileState = reg->fileState;
         if (fileState->relativePath && !fileState->isUpToDate && !fileState->isLoadQueued)
         {
-            if (Platform.queueAssetLoad(reg->handle, fileState->relativePath))
+            if (queueAssetLoad(assets, reg))
             {
                 fileState->isLoadQueued = true;
             }
@@ -234,108 +248,107 @@ void fastObjLoadMesh(MemoryArena *memory, const char *path, void *data, uint64 s
     fast_obj_destroy(mesh);
 }
 
-ASSETS_LOAD_ASSET(assetsLoadAsset)
+ASSETS_LOAD_QUEUED_ASSETS(assetsLoadQueuedAssets)
 {
-    AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
-    Assets *assets = handle->assets;
-    uint32 assetId = handle->id;
-
-    uint32 assetIdx = ASSET_GET_INDEX(assetId);
-    uint32 assetType = ASSET_GET_TYPE(assetId);
-    assert(assetIdx < assets->registeredAssetCount);
-
-    // todo: free file memory at the end of this function
-    uint64 size = Platform.getFileSize(path);
-    void *data = pushSize(assets->arena, size);
-    Platform.readEntireFile(path, data);
-
-    AssetRegistration *reg = &assets->registeredAssets[assetIdx];
-    if (assetType == ASSET_TYPE_SHADER)
+    for (uint32 i = 0; i < assets->queuedAssetLoadCount; i++)
     {
-        char *src = static_cast<char *>(data);
-        ShaderHandle handle;
-        if (createShader(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
+        AssetRegistration *reg = assets->queuedAssetsToLoad[i];
+        assert(reg->regType == ASSET_REG_FILE);
+        assert(reg->fileState->relativePath);
+
+        // todo: free file memory at the end of this function
+        uint64 size = Platform.getFileSize(reg->fileState->relativePath);
+        void *data = pushSize(assets->arena, size);
+        Platform.readEntireFile(reg->fileState->relativePath, data);
+
+        if (reg->assetType == ASSET_TYPE_SHADER)
         {
-            if (reg->asset.shader)
+            char *src = static_cast<char *>(data);
+            ShaderHandle handle;
+            if (createShader(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
             {
-                destroyShader(reg->asset.shader->handle);
+                if (reg->asset.shader)
+                {
+                    destroyShader(reg->asset.shader->handle);
+                }
+                else
+                {
+                    reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
+                }
+                reg->asset.shader->handle = handle;
+            }
+        }
+        else if (reg->assetType == ASSET_TYPE_TEXTURE)
+        {
+            TextureFormat format = reg->metadata.texture->format;
+
+            const stbi_uc *rawData = static_cast<stbi_uc *>(data);
+            void *loadedData;
+            int32 width;
+            int32 height;
+            int32 channels;
+            uint64 elementSize = getTextureElementSize(format);
+            if (elementSize == sizeof(uint8))
+            {
+                loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
+            }
+            else if (elementSize == sizeof(uint16))
+            {
+                loadedData = stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
             }
             else
             {
-                reg->asset.shader = pushStruct(assets->arena, ShaderAsset);
+                assert(!"Unsupported texture format");
             }
-            reg->asset.shader->handle = handle;
+            assert(width >= 0);
+            assert(height >= 0);
+
+            uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
+            void *texels = (uint8 *)pushSize(assets->arena, requiredStorage);
+            memcpy(texels, loadedData, requiredStorage);
+
+            stbi_image_free(loadedData);
+
+            if (reg->asset.texture)
+            {
+                // todo: reclaim asset memory
+                assert((uint32)width == reg->asset.texture->width);
+                assert((uint32)height == reg->asset.texture->height);
+            }
+            else
+            {
+                reg->asset.texture = pushStruct(assets->arena, TextureAsset);
+                reg->asset.texture->width = (uint32)width;
+                reg->asset.texture->height = (uint32)height;
+                reg->asset.texture->slot =
+                    reserveTextureSlot(assets->rctx->internalCtx, (uint32)width, (uint32)height, format);
+            }
+            reg->asset.texture->data = texels;
+            updateTextureSlot(reg->asset.texture->slot, texels);
+        }
+        else if (reg->assetType == ASSET_TYPE_MESH)
+        {
+            if (reg->asset.mesh)
+            {
+                destroyMesh(reg->asset.mesh->handle);
+            }
+            else
+            {
+                reg->asset.mesh = pushStruct(assets->arena, MeshAsset);
+            }
+            MeshAsset *mesh = reg->asset.mesh;
+            fastObjLoadMesh(assets->arena, reg->fileState->relativePath, data, size, mesh);
+
+            mesh->handle =
+                createMesh(assets->arena, mesh->vertices, mesh->vertexCount, mesh->indices, mesh->elementCount);
+        }
+        reg->asset.version++;
+        if (reg->regType == ASSET_REG_FILE)
+        {
+            reg->fileState->isUpToDate = true;
         }
     }
-    else if (assetType == ASSET_TYPE_TEXTURE)
-    {
-        TextureFormat format = reg->metadata.texture->format;
-
-        const stbi_uc *rawData = static_cast<stbi_uc *>(data);
-        void *loadedData;
-        int32 width;
-        int32 height;
-        int32 channels;
-        uint64 elementSize = getTextureElementSize(format);
-        if (elementSize == sizeof(uint8))
-        {
-            loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
-        }
-        else if (elementSize == sizeof(uint16))
-        {
-            loadedData = stbi_load_16_from_memory(rawData, size, &width, &height, &channels, 0);
-        }
-        else
-        {
-            assert(!"Unsupported texture format");
-        }
-        assert(width >= 0);
-        assert(height >= 0);
-
-        uint64 requiredStorage = (uint64)width * (uint64)height * (uint64)channels * elementSize;
-        void *texels = (uint8 *)pushSize(assets->arena, requiredStorage);
-        memcpy(texels, loadedData, requiredStorage);
-
-        stbi_image_free(loadedData);
-
-        if (reg->asset.texture)
-        {
-            // todo: reclaim asset memory
-            assert((uint32)width == reg->asset.texture->width);
-            assert((uint32)height == reg->asset.texture->height);
-        }
-        else
-        {
-            reg->asset.texture = pushStruct(assets->arena, TextureAsset);
-            reg->asset.texture->width = (uint32)width;
-            reg->asset.texture->height = (uint32)height;
-            reg->asset.texture->slot =
-                reserveTextureSlot(assets->rctx->internalCtx, (uint32)width, (uint32)height, format);
-        }
-        reg->asset.texture->data = texels;
-        updateTextureSlot(reg->asset.texture->slot, texels);
-    }
-    else if (assetType == ASSET_TYPE_MESH)
-    {
-        if (reg->asset.mesh)
-        {
-            destroyMesh(reg->asset.mesh->handle);
-        }
-        else
-        {
-            reg->asset.mesh = pushStruct(assets->arena, MeshAsset);
-        }
-        MeshAsset *mesh = reg->asset.mesh;
-        fastObjLoadMesh(assets->arena, reg->fileState->relativePath, data, size, mesh);
-
-        mesh->handle =
-            createMesh(assets->arena, mesh->vertices, mesh->vertexCount, mesh->indices, mesh->elementCount);
-    }
-    reg->asset.version++;
-    if (reg->regType == ASSET_REG_FILE)
-    {
-        reg->fileState->isUpToDate = true;
-    }
+    assets->queuedAssetLoadCount = 0;
 }
 
 ASSETS_WATCH_FOR_CHANGES(assetsWatchForChanges)
