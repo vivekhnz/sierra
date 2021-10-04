@@ -205,7 +205,7 @@ struct EditorState
 
     EditorAssets editorAssets;
     RenderContext *renderCtx;
-    Assets *engineAssets;
+    Assets *assetCtx;
 
     TextureHandle importedHeightmapTexture;
     uint8 importedHeightmapTextureVersion;

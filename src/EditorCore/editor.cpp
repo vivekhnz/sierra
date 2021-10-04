@@ -115,8 +115,8 @@ void initializeEditor(EditorMemory *memory)
     state->renderCtx = rendererInitialize(arena);
 
     state->assetsArena = pushSubArena(arena, 200 * 1024 * 1024);
-    state->engineAssets = assetsInitialize(&state->assetsArena, state->renderCtx);
-    Assets *assets = state->engineAssets;
+    state->assetCtx = assetsInitialize(&state->assetsArena, state->renderCtx);
+    Assets *assets = state->assetCtx;
     EditorAssets *editorAssets = &state->editorAssets;
 
     editorAssets->quadShaderBrushMask = assetsRegisterShader(assets, "quad_brush_mask.fs.glsl", SHADER_TYPE_QUAD);
@@ -626,8 +626,8 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
         state->isInitialized = true;
     }
 
-    assetsWatchForChanges(state->engineAssets);
-    assetsLoadQueuedAssets(state->engineAssets);
+    assetsWatchForChanges(state->assetCtx);
+    assetsLoadQueuedAssets(state->assetCtx);
 
     // apply committed transactions
     for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions); isTransactionValid(&tx);

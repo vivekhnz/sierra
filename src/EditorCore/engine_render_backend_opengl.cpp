@@ -107,7 +107,7 @@ struct OpenGlRenderContext
 {
     MemoryArena *arena;
 
-    // access this via getInternalShaders which handles the engine DLL being reloaded
+    // access this via getInternalShaders which handles the assembly being reloaded
     OpenGlInternalShaders _shaders;
 
     uint32 globalVertexArrayId;
