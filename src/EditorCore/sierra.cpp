@@ -634,7 +634,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
          tx = getNextCommittedTransaction(&tx))
     {
         applyTransaction(&tx, &state->docState);
-        memory->platformApi.publishTransaction(tx.commandBufferBaseAddress);
+        Platform.publishTransaction(tx.commandBufferBaseAddress);
     }
     state->transactions.committedUsed = 0;
 
@@ -644,7 +644,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
          tx = getNextActiveTransaction(&tx))
     {
         applyTransaction(&tx, &state->previewDocState);
-        memory->platformApi.publishTransaction(tx.commandBufferBaseAddress);
+        Platform.publishTransaction(tx.commandBufferBaseAddress);
     }
     updateFromDocumentState(memory, &state->previewDocState);
 
@@ -859,7 +859,7 @@ void sceneViewContinueInteraction(
             viewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
         }
 
-        memory->platformApi.captureMouse();
+        Platform.captureMouse();
     }
     break;
     case INTERACTION_TARGET_TERRAIN:
@@ -880,7 +880,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushRadius =
                     glm::clamp(uiState->terrainBrushRadius + radiusIncrease, 2.0f, 128.0f);
 
-                memory->platformApi.captureMouse();
+                Platform.captureMouse();
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
@@ -890,7 +890,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushFalloff =
                     glm::clamp(uiState->terrainBrushFalloff + falloffIncrease, 0.0f, 0.99f);
 
-                memory->platformApi.captureMouse();
+                Platform.captureMouse();
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
@@ -900,7 +900,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushStrength =
                     glm::clamp(uiState->terrainBrushStrength + strengthIncrease, 0.01f, 1.0f);
 
-                memory->platformApi.captureMouse();
+                Platform.captureMouse();
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
