@@ -265,11 +265,11 @@ void assetsLoadQueuedAssets(Assets *assets)
         {
             char *src = static_cast<char *>(data);
             ShaderHandle handle;
-            if (createShader(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
+            if (renderBackendCreateShader(assets->rctx->internalCtx, reg->metadata.shader->type, src, &handle))
             {
                 if (reg->asset.shader)
                 {
-                    destroyShader(reg->asset.shader->handle);
+                    renderBackendDestroyShader(reg->asset.shader->handle);
                 }
                 else
                 {
@@ -287,7 +287,7 @@ void assetsLoadQueuedAssets(Assets *assets)
             int32 width;
             int32 height;
             int32 channels;
-            uint64 elementSize = getTextureElementSize(format);
+            uint64 elementSize = renderBackendGetTextureElementSize(format);
             if (elementSize == sizeof(uint8))
             {
                 loadedData = stbi_load_from_memory(rawData, size, &width, &height, &channels, 0);
@@ -320,17 +320,17 @@ void assetsLoadQueuedAssets(Assets *assets)
                 reg->asset.texture = pushStruct(assets->arena, TextureAsset);
                 reg->asset.texture->width = (uint32)width;
                 reg->asset.texture->height = (uint32)height;
-                reg->asset.texture->slot =
-                    reserveTextureSlot(assets->rctx->internalCtx, (uint32)width, (uint32)height, format);
+                reg->asset.texture->slot = renderBackendReserveTextureSlot(
+                    assets->rctx->internalCtx, (uint32)width, (uint32)height, format);
             }
             reg->asset.texture->data = texels;
-            updateTextureSlot(reg->asset.texture->slot, texels);
+            renderBackendUpdateTextureSlot(reg->asset.texture->slot, texels);
         }
         else if (reg->assetType == ASSET_TYPE_MESH)
         {
             if (reg->asset.mesh)
             {
-                destroyMesh(reg->asset.mesh->handle);
+                renderBackendDestroyMesh(reg->asset.mesh->handle);
             }
             else
             {
@@ -339,8 +339,8 @@ void assetsLoadQueuedAssets(Assets *assets)
             MeshAsset *mesh = reg->asset.mesh;
             fastObjLoadMesh(assets->arena, reg->fileState->relativePath, data, size, mesh);
 
-            mesh->handle =
-                createMesh(assets->arena, mesh->vertices, mesh->vertexCount, mesh->indices, mesh->elementCount);
+            mesh->handle = renderBackendCreateMesh(
+                assets->arena, mesh->vertices, mesh->vertexCount, mesh->indices, mesh->elementCount);
         }
         reg->asset.version++;
         if (reg->regType == ASSET_REG_FILE)

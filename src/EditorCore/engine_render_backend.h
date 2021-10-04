@@ -164,32 +164,34 @@ struct DispatchedRenderQueue
     RenderQueueCommandHeader *firstCommand;
 };
 
-void reloadRenderBackend();
-RenderBackendContext initializeRenderBackend(MemoryArena *arena);
+void renderBackendReload();
+RenderBackendContext renderBackendInitialize(MemoryArena *arena);
 
-bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);
-void destroyShader(ShaderHandle handle);
+bool renderBackendCreateShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle);
+void renderBackendDestroyShader(ShaderHandle handle);
 
-ShaderHandle getTexturedQuadShader(RenderBackendContext rctx);
-ShaderHandle getColoredQuadShader(RenderBackendContext rctx);
+ShaderHandle renderBackendGetTexturedQuadShader(RenderBackendContext rctx);
+ShaderHandle renderBackendGetColoredQuadShader(RenderBackendContext rctx);
 
-MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
-void destroyMesh(MeshHandle handle);
+MeshHandle renderBackendCreateMesh(
+    MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount);
+void renderBackendDestroyMesh(MeshHandle handle);
 
-uint32 getTextureElementSize(TextureFormat format);
-TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format);
-void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
-GetPixelsResult getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height);
-GetPixelsResult getPixelsInRegion(
+uint32 renderBackendGetTextureElementSize(TextureFormat format);
+TextureHandle renderBackendCreateTexture(uint32 width, uint32 height, TextureFormat format);
+void renderBackendUpdateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels);
+GetPixelsResult renderBackendGetPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height);
+GetPixelsResult renderBackendGetPixelsInRegion(
     MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height);
 
-RenderTarget *createRenderTarget(
+RenderTarget *renderBackendCreateRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);
-void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
+void renderBackendResizeRenderTarget(RenderTarget *target, uint32 width, uint32 height);
 
-TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format);
-void updateTextureSlot(TextureSlotHandle handle, void *pixels);
+TextureSlotHandle renderBackendReserveTextureSlot(
+    RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format);
+void renderBackendUpdateTextureSlot(TextureSlotHandle handle, void *pixels);
 
-bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output);
+bool renderBackendDrawToOutput(DispatchedRenderQueue *rq, RenderOutput *output);
 
 #endif

@@ -613,7 +613,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     if (WasAssemblyReloaded)
     {
         Platform = memory->platformApi;
-        reloadRenderBackend();
+        renderBackendReload();
         WasAssemblyReloaded = false;
     }
 

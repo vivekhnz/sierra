@@ -141,12 +141,12 @@ struct OpenGlRenderContext
     } terrain;
 };
 
-void reloadRenderBackend()
+void renderBackendReload()
 {
     bool glLoadSucceeded = gladLoadGL();
     assert(glLoadSucceeded);
 }
-RenderBackendContext initializeRenderBackend(MemoryArena *arena)
+RenderBackendContext renderBackendInitialize(MemoryArena *arena)
 {
     OpenGlRenderContext *ctx = pushStruct(arena, OpenGlRenderContext);
     *ctx = {};
@@ -392,7 +392,7 @@ OpenGlInternalShaders *getInternalShaders(OpenGlRenderContext *ctx)
     return shaders;
 }
 
-bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle)
+bool renderBackendCreateShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderHandle *out_handle)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     bool result = false;
@@ -432,26 +432,27 @@ bool createShader(RenderBackendContext rctx, ShaderType type, char *src, ShaderH
 
     return result;
 }
-void destroyShader(ShaderHandle handle)
+void renderBackendDestroyShader(ShaderHandle handle)
 {
     uint32 id = getShaderProgramId(handle);
     glDeleteProgram(id);
 }
 
-ShaderHandle getTexturedQuadShader(RenderBackendContext rctx)
+ShaderHandle renderBackendGetTexturedQuadShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
     return getShaderHandle(shaders->shaderProgramTexturedQuad);
 }
-ShaderHandle getColoredQuadShader(RenderBackendContext rctx)
+ShaderHandle renderBackendGetColoredQuadShader(RenderBackendContext rctx)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);
     return getShaderHandle(shaders->shaderProgramColoredQuad);
 }
 
-MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
+MeshHandle renderBackendCreateMesh(
+    MemoryArena *arena, void *vertices, uint32 vertexCount, void *indices, uint32 indexCount)
 {
     OpenGlMesh *result = pushStruct(arena, OpenGlMesh);
     result->elementCount = indexCount;
@@ -467,7 +468,7 @@ MeshHandle createMesh(MemoryArena *arena, void *vertices, uint32 vertexCount, vo
 
     return {result};
 }
-void destroyMesh(MeshHandle handle)
+void renderBackendDestroyMesh(MeshHandle handle)
 {
     OpenGlMesh *mesh = (OpenGlMesh *)handle.ptr;
     glDeleteBuffers(1, &mesh->vertexBufferId);
@@ -551,12 +552,12 @@ OpenGlTextureDescriptor getTextureDescriptor(TextureFormat format)
     return result;
 }
 
-uint32 getTextureElementSize(TextureFormat format)
+uint32 renderBackendGetTextureElementSize(TextureFormat format)
 {
     OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
     return descriptor.elementSize;
 }
-TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format)
+TextureHandle renderBackendCreateTexture(uint32 width, uint32 height, TextureFormat format)
 {
     uint32 id = 0;
     glGenTextures(1, &id);
@@ -575,7 +576,7 @@ TextureHandle createTexture(uint32 width, uint32 height, TextureFormat format)
 
     return getTextureHandle(id, format);
 }
-void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels)
+void renderBackendUpdateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 {
     uint32 id = getTextureId(handle);
     TextureFormat format = getTextureFormat(handle);
@@ -586,7 +587,7 @@ void updateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixe
         descriptor.elementType, pixels);
     glGenerateMipmap(GL_TEXTURE_2D);
 }
-GetPixelsResult getPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height)
+GetPixelsResult renderBackendGetPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height)
 {
     GetPixelsResult result;
 
@@ -604,7 +605,7 @@ GetPixelsResult getPixels(MemoryArena *arena, TextureHandle handle, uint32 width
 
     return result;
 }
-GetPixelsResult getPixelsInRegion(
+GetPixelsResult renderBackendGetPixelsInRegion(
     MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height)
 {
     GetPixelsResult result;
@@ -623,7 +624,7 @@ GetPixelsResult getPixelsInRegion(
     return result;
 }
 
-RenderTarget *createRenderTarget(
+RenderTarget *renderBackendCreateRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer)
 {
     OpenGlRenderTarget *internalTarget = pushStruct(arena, OpenGlRenderTarget);
@@ -680,7 +681,7 @@ RenderTarget *createRenderTarget(
 
     return target;
 }
-void resizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
+void renderBackendResizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
 {
     OpenGlRenderTarget *internalTarget = (OpenGlRenderTarget *)target;
     OpenGlTextureDescriptor *descriptor = &internalTarget->descriptor;
@@ -780,7 +781,8 @@ OpenGlTextureArray *getTextureArray(OpenGlRenderContext *ctx, uint32 width, uint
 
     return result;
 }
-TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format)
+TextureSlotHandle renderBackendReserveTextureSlot(
+    RenderBackendContext rctx, uint32 width, uint32 height, TextureFormat format)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
     OpenGlTextureArray *array = getTextureArray(ctx, width, height, format);
@@ -793,7 +795,7 @@ TextureSlotHandle reserveTextureSlot(RenderBackendContext rctx, uint32 width, ui
     result->slotIndex = slotIndex;
     return {result};
 }
-void updateTextureSlot(TextureSlotHandle handle, void *pixels)
+void renderBackendUpdateTextureSlot(TextureSlotHandle handle, void *pixels)
 {
     OpenGlTextureSlot *slot = (OpenGlTextureSlot *)handle.ptr;
     OpenGlTextureArray *array = slot->array;
@@ -874,7 +876,7 @@ bool applyEffect(RenderEffect *effect)
 
     return !isMissingResources;
 }
-bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
+bool renderBackendDrawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
 {
     OpenGlRenderContext *ctx = (OpenGlRenderContext *)rq->ctx.ptr;
     OpenGlInternalShaders *shaders = getInternalShaders(ctx);

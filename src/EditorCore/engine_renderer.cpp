@@ -50,7 +50,7 @@ RenderContext *rendererInitialize(MemoryArena *arena)
     RenderContext *ctx = pushStruct(arena, RenderContext);
     *ctx = {};
     ctx->arena = arena;
-    ctx->internalCtx = initializeRenderBackend(arena);
+    ctx->internalCtx = renderBackendInitialize(arena);
 
     return ctx;
 }
@@ -59,20 +59,20 @@ RenderContext *rendererInitialize(MemoryArena *arena)
 
 TextureHandle rendererCreateTexture(uint32 width, uint32 height, TextureFormat format)
 {
-    return createTexture(width, height, format);
+    return renderBackendCreateTexture(width, height, format);
 }
 void rendererUpdateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 {
-    updateTexture(handle, width, height, pixels);
+    renderBackendUpdateTexture(handle, width, height, pixels);
 }
 GetPixelsResult rendererGetPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height)
 {
-    return getPixels(arena, handle, width, height);
+    return renderBackendGetPixels(arena, handle, width, height);
 }
 GetPixelsResult rendererGetPixelsInRegion(
     MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height)
 {
-    return getPixelsInRegion(arena, handle, x, y, width, height);
+    return renderBackendGetPixelsInRegion(arena, handle, x, y, width, height);
 }
 
 // render targets
@@ -80,14 +80,14 @@ GetPixelsResult rendererGetPixelsInRegion(
 RenderTarget *rendererCreateRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer)
 {
-    return createRenderTarget(arena, width, height, format, createDepthBuffer);
+    return renderBackendCreateRenderTarget(arena, width, height, format, createDepthBuffer);
 }
 void rendererResizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
 {
     target->width = width;
     target->height = height;
 
-    resizeRenderTarget(target, width, height);
+    renderBackendResizeRenderTarget(target, width, height);
 }
 
 // effects
@@ -386,8 +386,8 @@ void pushQuads(RenderQueue *rq, rect2 *quads, uint32 quadCount, RenderEffect *ef
 
 void rendererPushTexturedQuad(RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown)
 {
-    RenderEffect *effect =
-        createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *effect = createEffect(
+        rq->arena, renderBackendGetTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectTexture(effect, 0, textureHandle);
     rendererSetEffectVec2(effect, "uvScale", glm::vec2(1, 1));
     rendererSetEffectVec2(effect, "uvOffset", glm::vec2(0, 0));
@@ -396,8 +396,8 @@ void rendererPushTexturedQuad(RenderQueue *rq, rect2 quad, TextureHandle texture
 void rendererPushTexturedQuadRegion(
     RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown, rect2 uvRect)
 {
-    RenderEffect *effect =
-        createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
+    RenderEffect *effect = createEffect(
+        rq->arena, renderBackendGetTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectTexture(effect, 0, textureHandle);
     rendererSetEffectVec2(effect, "uvScale", glm::vec2(uvRect.width, uvRect.height));
     rendererSetEffectVec2(effect, "uvOffset", glm::vec2(uvRect.x, uvRect.y));
@@ -407,7 +407,7 @@ void rendererPushTexturedQuadRegion(
 void rendererPushColoredQuad(RenderQueue *rq, rect2 quad, glm::vec3 color)
 {
     RenderEffect *effect =
-        createEffect(rq->arena, getColoredQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
+        createEffect(rq->arena, renderBackendGetColoredQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
     rendererSetEffectVec3(effect, "color", color);
     pushQuads(rq, &quad, 1, effect, true);
 }
@@ -610,5 +610,5 @@ bool rendererDraw(RenderQueue *rq)
     dispatched.meshInstanceCount = rq->meshInstanceCount;
     dispatched.firstCommand = rq->firstCommand;
 
-    return drawToOutput(&dispatched, &rq->output);
+    return renderBackendDrawToOutput(&dispatched, &rq->output);
 }
