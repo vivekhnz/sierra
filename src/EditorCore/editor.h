@@ -1,8 +1,7 @@
 #ifndef EDITOR_H
 #define EDITOR_H
 
-#include <glm/gtc/type_ptr.hpp>
-
+#include "../Engine/engine.h"
 #include "editor_transactions.h"
 #include "editor_heightmap.h"
 
@@ -236,8 +235,7 @@ struct EditorMemory
 
     PlatformCaptureMouse *platformCaptureMouse;
     PlatformPublishTransaction *platformPublishTransaction;
-
-    EngineApi *engineApi;
+    EnginePlatformApi enginePlatformApi;
 };
 
 struct EditorInput

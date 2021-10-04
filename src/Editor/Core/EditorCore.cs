@@ -15,8 +15,7 @@ namespace Terrain.Editor.Core
 
         public IntPtr PlatformCaptureMouse;
         public IntPtr PlatformPublishTransaction;
-
-        public IntPtr EngineApiPtr;
+        public EnginePlatformApi EnginePlatformApi;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -278,6 +277,11 @@ namespace Terrain.Editor.Core
         private static TransactionPublishedCallback onTransactionPublished
             = new TransactionPublishedCallback(OnTransactionPublished);
 
+        private static PlatformNotifyAssetRegistered onAssetRegistered
+            = new PlatformNotifyAssetRegistered(EditorCore.OnAssetRegistered);
+        internal delegate void AssetRegisteredEventHandler(in AssetRegistration assetReg);
+        internal static event AssetRegisteredEventHandler AssetRegistered;
+
         private static EditorUiState defaultEditorState = default(EditorUiState);
 
         delegate void EditorUpdate(ref EditorMemory memory, float deltaTime);
@@ -340,7 +344,9 @@ namespace Terrain.Editor.Core
         }
 
         internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
-            PlatformCaptureMouse captureMouse, Func<string, IntPtr> loadLibrary,
+            PlatformCaptureMouse captureMouse, PlatformLogMessage logMessage,
+            PlatformGetFileLastWriteTime getFileLastWriteTime, PlatformGetFileSize getFileSize,
+            PlatformReadEntireFile readEntireFile, Func<string, IntPtr> loadLibrary,
             Func<IntPtr, string, IntPtr> getProcAddress, Func<IntPtr, bool> freeLibrary)
         {
             EditorCore.loadLibrary = loadLibrary;
@@ -355,12 +361,11 @@ namespace Terrain.Editor.Core
             memory.Data.Used = 0;
             memory.PlatformCaptureMouse = Marshal.GetFunctionPointerForDelegate(captureMouse);
             memory.PlatformPublishTransaction = Marshal.GetFunctionPointerForDelegate(onTransactionPublished);
-        }
-
-        internal static void UpdateEngineApi(IntPtr engineApiPtr)
-        {
-            ref EditorMemory memory = ref GetEditorMemory();
-            memory.EngineApiPtr = engineApiPtr;
+            memory.EnginePlatformApi.LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage);
+            memory.EnginePlatformApi.GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime);
+            memory.EnginePlatformApi.GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize);
+            memory.EnginePlatformApi.ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile);
+            memory.EnginePlatformApi.NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered);
         }
 
         internal static bool ReloadCode(string dllPath, string dllShadowCopyPath)
@@ -431,6 +436,11 @@ namespace Terrain.Editor.Core
             ReadOnlySpan<byte> commandsSpan = byteSpan.Slice(sizeof(ulong));
             EditorCommandList commands = new EditorCommandList(commandsSpan);
             TransactionPublished?.Invoke(commands);
+        }
+
+        private static void OnAssetRegistered(in AssetRegistration assetReg)
+        {
+            AssetRegistered?.Invoke(in assetReg);
         }
 
         internal static void Update(float deltaTime)
@@ -504,5 +514,13 @@ namespace Terrain.Editor.Core
         internal static void SetObjectProperty(
             Transaction tx, uint objectId, ObjectProperty property, float value)
             => editorSetObjectProperty?.Invoke(tx.Pointer, objectId, property, value);
+    }
+
+    internal static class EditorExtensions
+    {
+        internal static AssetFileState GetFileState(this AssetRegistration assetReg)
+        {
+            return Marshal.PtrToStructure<AssetFileState>(assetReg.StatePtr);
+        }
     }
 }

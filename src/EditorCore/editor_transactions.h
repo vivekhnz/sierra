@@ -1,8 +1,6 @@
 #ifndef EDITOR_TRANSACTIONS_H
 #define EDITOR_TRANSACTIONS_H
 
-#include "../Engine/engine.h"
-
 #define MAX_CONCURRENT_TRANSACTIONS 4
 
 enum EditorCommandType

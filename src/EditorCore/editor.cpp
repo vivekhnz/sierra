@@ -1,5 +1,7 @@
 #include "editor.h"
 
+#include "../Engine/engine.cpp"
+
 #include "editor_generated.cpp"
 global_variable EngineApi *Engine;
 
@@ -604,7 +606,10 @@ void updateFromDocumentState(EditorMemory *memory, EditorDocumentState *docState
 
 API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
-    Engine = memory->engineApi;
+    if (!Engine)
+    {
+        Engine = engineGetApi(0, memory->enginePlatformApi);
+    }
 
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;

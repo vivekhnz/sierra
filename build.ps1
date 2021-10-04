@@ -224,14 +224,6 @@ Write-GeneratedCode
 
 $builds = @()
 $builds += Invoke-Msvc `
-    -SourceFile 'src\Engine\engine.cpp' -OutputName 'terrain_engine' `
-    -IntermediateOutputDirName 'Engine' `
-    -BuildDll -RandomizePdbFilename -NoImportLib `
-    -IncludePaths @(
-        'deps',
-        'deps\nuget\glm.0.9.9.700\build\native\include'
-    )
-$builds += Invoke-Msvc `
     -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
     -IntermediateOutputDirName 'EditorCore' `
     -BuildDll -RandomizePdbFilename -NoImportLib `

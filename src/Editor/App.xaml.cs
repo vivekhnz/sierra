@@ -26,7 +26,7 @@ namespace Terrain.Editor
             Assets = (EditorAssetsViewModel)FindResource("EditorAssets");
             Document = (EditorDocumentViewModel)FindResource("EditorDocument");
 
-            TerrainEngine.AssetRegistered += Assets.OnAssetRegistered;
+            EditorCore.AssetRegistered += Assets.OnAssetRegistered;
             EditorCore.TransactionPublished += Document.OnTransactionPublished;
 
             EditorPlatform.Initialize();

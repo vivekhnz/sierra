@@ -47,7 +47,6 @@ namespace Terrain.Editor.Platform
         private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
 
         private static string buildLockFilePath;
-        private static ReloadableCode engineCode;
         private static ReloadableCode editorCode;
 
         private static IntPtr mainWindowHwnd;
@@ -83,13 +82,6 @@ namespace Terrain.Editor.Platform
             assetsDirectoryPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "../../../data");
             buildLockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build.lock");
-            engineCode = new ReloadableCode
-            {
-                DllPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.dll"),
-                DllShadowCopyPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_engine.copy_editor.dll")
-            };
             editorCode = new ReloadableCode
             {
                 DllPath = Path.Combine(
@@ -102,12 +94,9 @@ namespace Terrain.Editor.Platform
             IntPtr appMemoryPtr = Win32.VirtualAlloc(IntPtr.Zero, (uint)appMemorySizeInBytes,
                 Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
                 Win32.MemoryProtection.ReadWrite);
-
-            TerrainEngine.Initialize(editorPlatformLogMessage, editorPlatformGetFileLastWriteTime,
-                editorPlatformGetFileSize, editorPlatformReadEntireFile,
-                Win32.LoadLibrary, Win32.GetProcAddress, Win32.FreeLibrary);
             EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
-                editorPlatformCaptureMouse, Win32.LoadLibrary,
+                editorPlatformCaptureMouse, editorPlatformLogMessage, editorPlatformGetFileLastWriteTime,
+                editorPlatformGetFileSize, editorPlatformReadEntireFile, Win32.LoadLibrary,
                 Win32.GetProcAddress, Win32.FreeLibrary);
 
             var dummyWindowClass = new Win32.WindowClass
@@ -136,10 +125,6 @@ namespace Terrain.Editor.Platform
                 lpszClassName = ViewportWindowClassName
             };
             Win32.RegisterClass(ref viewportWindowClass);
-
-            TerrainEngine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-            EditorCore.UpdateEngineApi(TerrainEngine.EngineApiPtr);
-            engineCode.DllLastWriteTimeUtc = File.GetLastWriteTimeUtc(engineCode.DllPath);
 
             lastTickTime = DateTime.UtcNow;
         }
@@ -437,14 +422,6 @@ namespace Terrain.Editor.Platform
         {
             if (!File.Exists(buildLockFilePath))
             {
-                DateTime engineCodeDllLastWriteTime = File.GetLastWriteTimeUtc(engineCode.DllPath);
-                if (engineCodeDllLastWriteTime > engineCode.DllLastWriteTimeUtc)
-                {
-                    TerrainEngine.ReloadCode(engineCode.DllPath, engineCode.DllShadowCopyPath);
-                    EditorCore.UpdateEngineApi(TerrainEngine.EngineApiPtr);
-                    engineCode.DllLastWriteTimeUtc = engineCodeDllLastWriteTime;
-                }
-
                 DateTime editorCodeDllLastWriteTime = File.GetLastWriteTimeUtc(editorCode.DllPath);
                 if (editorCodeDllLastWriteTime > editorCode.DllLastWriteTimeUtc)
                 {
