@@ -1,5 +1,5 @@
-#ifndef ENGINE_PLATFORM_H
-#define ENGINE_PLATFORM_H
+#ifndef SIERRA_PLATFORM_H
+#define SIERRA_PLATFORM_H
 
 #include <stdint.h>
 

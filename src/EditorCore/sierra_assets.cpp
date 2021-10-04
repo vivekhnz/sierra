@@ -1,4 +1,4 @@
-#include "engine_assets.h"
+#include "sierra_assets.h"
 
 #include <stb/stb_image.h>
 #include <fast_obj/fast_obj.h>

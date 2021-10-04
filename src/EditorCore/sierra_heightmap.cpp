@@ -1,4 +1,4 @@
-#include "editor_heightmap.h"
+#include "sierra_heightmap.h"
 
 #define SMOOTH_EFFECT_ITERATIONS 1
 

@@ -1,13 +1,13 @@
-#ifndef EDITOR_H
-#define EDITOR_H
+#ifndef SIERRA_H
+#define SIERRA_H
 
-#include "engine_platform.h"
-#include "engine_math.h"
-#include "engine_renderer_common.h"
-#include "engine_renderer.h"
-#include "engine_assets.h"
-#include "editor_transactions.h"
-#include "editor_heightmap.h"
+#include "sierra_platform.h"
+#include "sierra_math.h"
+#include "sierra_renderer_common.h"
+#include "sierra_renderer.h"
+#include "sierra_assets.h"
+#include "sierra_transactions.h"
+#include "sierra_heightmap.h"
 
 // feature flags
 #define FEATURE_TERRAIN_USE_SPLIT_TILES 1

@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_COMMON_H
-#define ENGINE_RENDERER_COMMON_H
+#ifndef SIERRA_RENDERER_COMMON_H
+#define SIERRA_RENDERER_COMMON_H
 
 #include <glm/gtc/type_ptr.hpp>
 

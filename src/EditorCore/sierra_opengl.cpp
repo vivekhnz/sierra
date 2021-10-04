@@ -1,7 +1,7 @@
-#include "engine_render_backend.h"
+#include "sierra_render_backend.h"
 
 #include "../../deps/glad/glad.c"
-#include "engine_render_backend_opengl_shaders.cpp"
+#include "sierra_opengl_shaders.cpp"
 
 extern EditorPlatformApi Platform;
 global_variable bool WasRendererReloaded = true;

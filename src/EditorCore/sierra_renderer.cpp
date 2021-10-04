@@ -1,5 +1,5 @@
-#include "engine_renderer.h"
-#include "engine_render_backend.h"
+#include "sierra_renderer.h"
+#include "sierra_render_backend.h"
 
 LoadedAsset *assetsGetShader(AssetHandle assetHandle);
 LoadedAsset *assetsGetTexture(AssetHandle assetHandle);

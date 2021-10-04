@@ -83,10 +83,8 @@ namespace Terrain.Editor.Platform
             buildLockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build.lock");
             editorCode = new ReloadableCode
             {
-                DllPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.dll"),
-                DllShadowCopyPath = Path.Combine(
-                    AppDomain.CurrentDomain.BaseDirectory, "terrain_editor.copy_editor.dll")
+                DllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra.dll"),
+                DllShadowCopyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra.shadow.dll")
             };
 
             int appMemorySizeInBytes = 500 * 1024 * 1024;

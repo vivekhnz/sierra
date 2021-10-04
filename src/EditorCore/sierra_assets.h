@@ -1,5 +1,5 @@
-#ifndef ENGINE_ASSETS_H
-#define ENGINE_ASSETS_H
+#ifndef SIERRA_ASSETS_H
+#define SIERRA_ASSETS_H
 
 enum AssetType
 {

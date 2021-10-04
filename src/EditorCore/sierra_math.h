@@ -1,5 +1,5 @@
-#ifndef ENGINE_MATH_H
-#define ENGINE_MATH_H
+#ifndef SIERRA_MATH_H
+#define SIERRA_MATH_H
 
 #include <glm/gtc/type_ptr.hpp>
 

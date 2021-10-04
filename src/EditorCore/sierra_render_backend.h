@@ -1,8 +1,8 @@
-#ifndef ENGINE_RENDER_BACKEND_H
-#define ENGINE_RENDER_BACKEND_H
+#ifndef SIERRA_RENDER_BACKEND_H
+#define SIERRA_RENDER_BACKEND_H
 
-#include "engine_platform.h"
-#include "engine_renderer_common.h"
+#include "sierra_platform.h"
+#include "sierra_renderer_common.h"
 
 struct RenderBackendContext
 {

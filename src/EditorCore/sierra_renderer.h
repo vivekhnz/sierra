@@ -1,5 +1,5 @@
-#ifndef ENGINE_RENDERER_H
-#define ENGINE_RENDERER_H
+#ifndef SIERRA_RENDERER_H
+#define SIERRA_RENDERER_H
 
 struct RenderContext;
 struct RenderEffect;

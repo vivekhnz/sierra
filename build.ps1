@@ -152,7 +152,7 @@ $LockFilePath = "$OutputPath\build.lock"
 
 $builds = @()
 $builds += Invoke-Msvc `
-    -SourceFile 'src\EditorCore\editor.cpp' -OutputName 'terrain_editor' `
+    -SourceFile 'src\EditorCore\sierra.cpp' -OutputName 'sierra' `
     -IntermediateOutputDirName 'EditorCore' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
     -IncludePaths @(

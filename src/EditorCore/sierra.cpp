@@ -1,13 +1,13 @@
-#include "editor.h"
+#include "sierra.h"
 
 global_variable bool WasAssemblyReloaded = true;
 global_variable EditorPlatformApi Platform;
 
-#include "engine_renderer.cpp"
-#include "engine_render_backend_opengl.cpp"
-#include "engine_assets.cpp"
-#include "editor_transactions.cpp"
-#include "editor_heightmap.cpp"
+#include "sierra_renderer.cpp"
+#include "sierra_opengl.cpp"
+#include "sierra_assets.cpp"
+#include "sierra_transactions.cpp"
+#include "sierra_heightmap.cpp"
 
 #include "../../deps/stb/stb_image.c"
 #include "../../deps/fast_obj/fast_obj.c"
