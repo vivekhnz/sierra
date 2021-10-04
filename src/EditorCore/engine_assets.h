@@ -79,15 +79,4 @@ struct AssetRegistration
 
 struct Assets;
 
-#define ASSETS_INITIALIZE(name) Assets *name(MemoryArena *arena, RenderContext *rctx)
-#define ASSETS_REGISTER_TEXTURE(name)                                                                             \
-    AssetHandle name(Assets *assets, const char *relativePath, TextureFormat format)
-#define ASSETS_REGISTER_SHADER(name) AssetHandle name(Assets *assets, const char *relativePath, ShaderType type)
-#define ASSETS_REGISTER_MESH(name) AssetHandle name(Assets *assets, const char *relativePath)
-#define ASSETS_GET_SHADER(name) LoadedAsset *name(AssetHandle assetHandle)
-#define ASSETS_GET_TEXTURE(name) LoadedAsset *name(AssetHandle assetHandle)
-#define ASSETS_GET_MESH(name) LoadedAsset *name(AssetHandle assetHandle)
-#define ASSETS_LOAD_QUEUED_ASSETS(name) void name(Assets *assets)
-#define ASSETS_WATCH_FOR_CHANGES(name) void name(Assets *assets)
-
 #endif

@@ -75,7 +75,7 @@ AssetRegistration *registerAsset(Assets *assets, AssetType type, const char *rel
     return reg;
 }
 
-ASSETS_INITIALIZE(assetsInitialize)
+Assets *assetsInitialize(MemoryArena *arena, RenderContext *rctx)
 {
     Assets *result = pushStruct(arena, Assets);
     *result = {};
@@ -85,21 +85,21 @@ ASSETS_INITIALIZE(assetsInitialize)
     return result;
 }
 
-ASSETS_REGISTER_TEXTURE(assetsRegisterTexture)
+AssetHandle assetsRegisterTexture(Assets *assets, const char *relativePath, TextureFormat format)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_TEXTURE, relativePath);
     reg->metadata.texture = pushStruct(assets->arena, TextureAssetMetadata);
     reg->metadata.texture->format = format;
     return reg->handle;
 }
-ASSETS_REGISTER_SHADER(assetsRegisterShader)
+AssetHandle assetsRegisterShader(Assets *assets, const char *relativePath, ShaderType type)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_SHADER, relativePath);
     reg->metadata.shader = pushStruct(assets->arena, ShaderAssetMetadata);
     reg->metadata.shader->type = type;
     return reg->handle;
 }
-ASSETS_REGISTER_MESH(assetsRegisterMesh)
+AssetHandle assetsRegisterMesh(Assets *assets, const char *relativePath)
 {
     AssetRegistration *reg = registerAsset(assets, ASSET_TYPE_MESH, relativePath);
     return reg->handle;
@@ -157,19 +157,19 @@ LoadedAsset *getAsset(Assets *assets, uint32 assetId)
     return &reg->asset;
 }
 
-ASSETS_GET_SHADER(assetsGetShader)
+LoadedAsset *assetsGetShader(AssetHandle assetHandle)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_SHADER);
     return getAsset(handle->assets, handle->id);
 }
-ASSETS_GET_TEXTURE(assetsGetTexture)
+LoadedAsset *assetsGetTexture(AssetHandle assetHandle)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_TEXTURE);
     return getAsset(handle->assets, handle->id);
 }
-ASSETS_GET_MESH(assetsGetMesh)
+LoadedAsset *assetsGetMesh(AssetHandle assetHandle)
 {
     AssetHandleInternal *handle = (AssetHandleInternal *)assetHandle;
     assert(ASSET_GET_TYPE(handle->id) == ASSET_TYPE_MESH);
@@ -248,7 +248,7 @@ void fastObjLoadMesh(MemoryArena *memory, const char *path, void *data, uint64 s
     fast_obj_destroy(mesh);
 }
 
-ASSETS_LOAD_QUEUED_ASSETS(assetsLoadQueuedAssets)
+void assetsLoadQueuedAssets(Assets *assets)
 {
     for (uint32 i = 0; i < assets->queuedAssetLoadCount; i++)
     {
@@ -351,7 +351,7 @@ ASSETS_LOAD_QUEUED_ASSETS(assetsLoadQueuedAssets)
     assets->queuedAssetLoadCount = 0;
 }
 
-ASSETS_WATCH_FOR_CHANGES(assetsWatchForChanges)
+void assetsWatchForChanges(Assets *assets)
 {
     for (uint32 i = 0; i < assets->registeredAssetCount; i++)
     {

@@ -1,9 +1,9 @@
 #include "engine_renderer.h"
 #include "engine_render_backend.h"
 
-ASSETS_GET_SHADER(assetsGetShader);
-ASSETS_GET_TEXTURE(assetsGetTexture);
-ASSETS_GET_MESH(assetsGetMesh);
+LoadedAsset *assetsGetShader(AssetHandle assetHandle);
+LoadedAsset *assetsGetTexture(AssetHandle assetHandle);
+LoadedAsset *assetsGetMesh(AssetHandle assetHandle);
 
 struct RenderContext
 {
@@ -45,7 +45,7 @@ struct RenderQueue
     } currentLine;
 };
 
-RENDERER_INITIALIZE(rendererInitialize)
+RenderContext *rendererInitialize(MemoryArena *arena)
 {
     RenderContext *ctx = pushStruct(arena, RenderContext);
     *ctx = {};
@@ -57,30 +57,32 @@ RENDERER_INITIALIZE(rendererInitialize)
 
 // textures
 
-RENDERER_CREATE_TEXTURE(rendererCreateTexture)
+TextureHandle rendererCreateTexture(uint32 width, uint32 height, TextureFormat format)
 {
     return createTexture(width, height, format);
 }
-RENDERER_UPDATE_TEXTURE(rendererUpdateTexture)
+void rendererUpdateTexture(TextureHandle handle, uint32 width, uint32 height, void *pixels)
 {
     updateTexture(handle, width, height, pixels);
 }
-RENDERER_GET_PIXELS(rendererGetPixels)
+GetPixelsResult rendererGetPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height)
 {
     return getPixels(arena, handle, width, height);
 }
-RENDERER_GET_PIXELS_IN_REGION(rendererGetPixelsInRegion)
+GetPixelsResult rendererGetPixelsInRegion(
+    MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height)
 {
     return getPixelsInRegion(arena, handle, x, y, width, height);
 }
 
 // render targets
 
-RENDERER_CREATE_RENDER_TARGET(rendererCreateRenderTarget)
+RenderTarget *rendererCreateRenderTarget(
+    MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer)
 {
     return createRenderTarget(arena, width, height, format, createDepthBuffer);
 }
-RENDERER_RESIZE_RENDER_TARGET(rendererResizeRenderTarget)
+void rendererResizeRenderTarget(RenderTarget *target, uint32 width, uint32 height)
 {
     target->width = width;
     target->height = height;
@@ -102,7 +104,7 @@ RenderEffect *createEffect(MemoryArena *arena, ShaderHandle shaderHandle, Render
     return result;
 }
 
-RENDERER_CREATE_EFFECT(rendererCreateEffect)
+RenderEffect *rendererCreateEffect(MemoryArena *arena, AssetHandle shaderAsset, RenderEffectBlendMode blendMode)
 {
     ShaderHandle shaderHandle = {0};
     if (shaderAsset)
@@ -118,7 +120,7 @@ RENDERER_CREATE_EFFECT(rendererCreateEffect)
     return result;
 }
 
-RENDERER_CREATE_EFFECT_OVERRIDE(rendererCreateEffectOverride)
+RenderEffect *rendererCreateEffectOverride(RenderEffect *baseEffect)
 {
     MemoryArena *arena = baseEffect->arena;
     RenderEffect *result = pushStruct(arena, RenderEffect);
@@ -205,38 +207,38 @@ inline RenderEffectParameter *pushEffectParameter(RenderEffect *effect, char *pa
     return param;
 }
 
-RENDERER_SET_EFFECT_FLOAT(rendererSetEffectFloat)
+void rendererSetEffectFloat(RenderEffect *effect, char *paramName, float value)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_FLOAT;
     param->value.f = value;
 }
-RENDERER_SET_EFFECT_VEC2(rendererSetEffectVec2)
+void rendererSetEffectVec2(RenderEffect *effect, char *paramName, glm::vec2 value)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_VEC2;
     param->value.v2 = value;
 }
-RENDERER_SET_EFFECT_VEC3(rendererSetEffectVec3)
+void rendererSetEffectVec3(RenderEffect *effect, char *paramName, glm::vec3 value)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_VEC3;
     param->value.v3 = value;
 }
-RENDERER_SET_EFFECT_INT(rendererSetEffectInt)
+void rendererSetEffectInt(RenderEffect *effect, char *paramName, int32 value)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_INT;
     param->value.i = value;
 }
-RENDERER_SET_EFFECT_UINT(rendererSetEffectUint)
+void rendererSetEffectUint(RenderEffect *effect, char *paramName, uint32 value)
 {
     RenderEffectParameter *param = pushEffectParameter(effect, paramName);
     param->type = EFFECT_PARAM_TYPE_UINT;
     param->value.u = value;
 }
 
-RENDERER_SET_EFFECT_TEXTURE(rendererSetEffectTexture)
+void rendererSetEffectTexture(RenderEffect *effect, uint32 slot, TextureHandle handle)
 {
     RenderEffectTexture *texture = pushStruct(effect->arena, RenderEffectTexture);
     *texture = {};
@@ -260,7 +262,7 @@ RENDERER_SET_EFFECT_TEXTURE(rendererSetEffectTexture)
 
 // render queue
 
-RENDERER_CREATE_QUEUE(rendererCreateQueue)
+RenderQueue *rendererCreateQueue(RenderContext *ctx, MemoryArena *arena, RenderOutput output)
 {
     RenderQueue *result = pushStruct(arena, RenderQueue);
     *result = {};
@@ -312,21 +314,21 @@ glm::mat4 getOrthoTransform(RenderOutput *output, glm::vec2 cameraPos)
 
     return result;
 }
-RENDERER_SET_CAMERA_ORTHO(rendererSetCameraOrtho)
+glm::mat4 rendererSetCameraOrtho(RenderQueue *rq)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     cmd->transform = getOrthoTransform(&rq->output, glm::vec2(0, 0));
 
     return cmd->transform;
 }
-RENDERER_SET_CAMERA_ORTHO_OFFSET(rendererSetCameraOrthoOffset)
+glm::mat4 rendererSetCameraOrthoOffset(RenderQueue *rq, glm::vec2 cameraPos)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     cmd->transform = getOrthoTransform(&rq->output, cameraPos);
 
     return cmd->transform;
 }
-RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
+glm::mat4 rendererSetCameraPersp(RenderQueue *rq, glm::vec3 cameraPos, glm::vec3 lookAt, float fov)
 {
     SetCameraCommand *cmd = pushRenderCommand(rq, SetCameraCommand);
     float nearPlane = 0.1f;
@@ -339,7 +341,13 @@ RENDERER_SET_CAMERA_PERSP(rendererSetCameraPersp)
     return cmd->transform;
 }
 
-RENDERER_SET_LIGHTING(rendererSetLighting)
+void rendererSetLighting(RenderQueue *rq,
+    glm::vec4 *lightDir,
+    bool isLightingEnabled,
+    bool isTextureEnabled,
+    bool isNormalMapEnabled,
+    bool isAOMapEnabled,
+    bool isDisplacementMapEnabled)
 {
     SetLightingCommand *cmd = pushRenderCommand(rq, SetLightingCommand);
     cmd->lightDir = *lightDir;
@@ -350,7 +358,7 @@ RENDERER_SET_LIGHTING(rendererSetLighting)
     cmd->isDisplacementMapEnabled = isDisplacementMapEnabled;
 }
 
-RENDERER_CLEAR(rendererClear)
+void rendererClear(RenderQueue *rq, float r, float g, float b, float a)
 {
     ClearCommand *cmd = pushRenderCommand(rq, ClearCommand);
     cmd->color.r = r;
@@ -376,7 +384,7 @@ void pushQuads(RenderQueue *rq, rect2 *quads, uint32 quadCount, RenderEffect *ef
     }
 }
 
-RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
+void rendererPushTexturedQuad(RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown)
 {
     RenderEffect *effect =
         createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
@@ -385,7 +393,8 @@ RENDERER_PUSH_TEXTURED_QUAD(rendererPushTexturedQuad)
     rendererSetEffectVec2(effect, "uvOffset", glm::vec2(0, 0));
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
-RENDERER_PUSH_TEXTURED_QUAD_REGION(rendererPushTexturedQuadRegion)
+void rendererPushTexturedQuadRegion(
+    RenderQueue *rq, rect2 quad, TextureHandle textureHandle, bool isTopDown, rect2 uvRect)
 {
     RenderEffect *effect =
         createEffect(rq->arena, getTexturedQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
@@ -395,7 +404,7 @@ RENDERER_PUSH_TEXTURED_QUAD_REGION(rendererPushTexturedQuadRegion)
 
     pushQuads(rq, &quad, 1, effect, isTopDown);
 }
-RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
+void rendererPushColoredQuad(RenderQueue *rq, rect2 quad, glm::vec3 color)
 {
     RenderEffect *effect =
         createEffect(rq->arena, getColoredQuadShader(rq->ctx->internalCtx), EFFECT_BLEND_ALPHA_BLEND);
@@ -403,15 +412,15 @@ RENDERER_PUSH_COLORED_QUAD(rendererPushColoredQuad)
     pushQuads(rq, &quad, 1, effect, true);
 }
 
-RENDERER_PUSH_QUAD(rendererPushQuad)
+void rendererPushQuad(RenderQueue *rq, rect2 quad, RenderEffect *effect)
 {
     pushQuads(rq, &quad, 1, effect, true);
 }
-RENDERER_PUSH_QUAD_BOTTOM_UP(rendererPushQuadBottomUp)
+void rendererPushQuadBottomUp(RenderQueue *rq, rect2 quad, RenderEffect *effect)
 {
     pushQuads(rq, &quad, 1, effect, false);
 }
-RENDERER_PUSH_QUADS(rendererPushQuads)
+void rendererPushQuads(RenderQueue *rq, rect2 *quads, uint32 quadCount, RenderEffect *effect)
 {
     pushQuads(rq, quads, quadCount, effect, true);
 }
@@ -421,7 +430,7 @@ inline void addPrimitiveVertex(RenderQueue *rq, glm::vec3 point)
     assert(rq->primitiveVertexCount < rq->maxPrimitiveVertices + 1);
     rq->primitiveVertices[rq->primitiveVertexCount++] = point;
 }
-RENDERER_PUSH_LINE(rendererPushLine)
+void rendererPushLine(RenderQueue *rq, glm::vec3 start, glm::vec3 end, glm::vec3 color)
 {
     DrawLineCommand *cmd = pushRenderCommand(rq, DrawLineCommand);
     cmd->vertexIndex = rq->primitiveVertexCount;
@@ -431,7 +440,7 @@ RENDERER_PUSH_LINE(rendererPushLine)
     addPrimitiveVertex(rq, start);
     addPrimitiveVertex(rq, end);
 }
-RENDERER_BEGIN_LINE(rendererBeginLine)
+void rendererBeginLine(RenderQueue *rq, glm::vec3 start, glm::vec3 color)
 {
     assert(!rq->currentLine.isActive);
     rq->currentLine.isActive = true;
@@ -442,7 +451,7 @@ RENDERER_BEGIN_LINE(rendererBeginLine)
     rq->currentLine.firstVertex->next = 0;
     rq->currentLine.lastVertex = rq->currentLine.firstVertex;
 }
-RENDERER_EXTEND_LINE(rendererExtendLine)
+void rendererExtendLine(RenderQueue *rq, glm::vec3 point)
 {
     assert(rq->currentLine.isActive);
 
@@ -453,7 +462,7 @@ RENDERER_EXTEND_LINE(rendererExtendLine)
     rq->currentLine.lastVertex->next = newLink;
     rq->currentLine.lastVertex = newLink;
 }
-RENDERER_END_LINE(rendererEndLine)
+void rendererEndLine(RenderQueue *rq, glm::vec3 end)
 {
     assert(rq->currentLine.isActive);
     rq->currentLine.isActive = false;
@@ -470,13 +479,13 @@ RENDERER_END_LINE(rendererEndLine)
     }
     addPrimitiveVertex(rq, end);
 }
-RENDERER_END_LINE_LOOP(rendererEndLineLoop)
+void rendererEndLineLoop(RenderQueue *rq)
 {
     assert(rq->currentLine.isActive);
     rendererEndLine(rq, rq->currentLine.firstVertex->point);
 }
 
-RENDERER_PUSH_QUAD_OUTLINE_XY(rendererPushQuadOutlineXy)
+void rendererPushQuadOutlineXy(RenderQueue *rq, rect2 quad, glm::vec3 color)
 {
     rendererBeginLine(rq, glm::vec3(quad.x, quad.y, 0), color);
     rendererExtendLine(rq, glm::vec3(quad.x + quad.width, quad.y, 0));
@@ -484,7 +493,7 @@ RENDERER_PUSH_QUAD_OUTLINE_XY(rendererPushQuadOutlineXy)
     rendererExtendLine(rq, glm::vec3(quad.x, quad.y + quad.height, 0));
     rendererEndLineLoop(rq);
 }
-RENDERER_PUSH_QUAD_OUTLINE_XZ(rendererPushQuadOutlineXz)
+void rendererPushQuadOutlineXz(RenderQueue *rq, rect2 quad, glm::vec3 color)
 {
     rendererBeginLine(rq, glm::vec3(quad.x, 0, quad.y), color);
     rendererExtendLine(rq, glm::vec3(quad.x + quad.width, 0, quad.y));
@@ -493,7 +502,8 @@ RENDERER_PUSH_QUAD_OUTLINE_XZ(rendererPushQuadOutlineXz)
     rendererEndLineLoop(rq);
 }
 
-RENDERER_PUSH_MESHES(rendererPushMeshes)
+void rendererPushMeshes(
+    RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances, uint32 instanceCount, RenderEffect *effect)
 {
     assert(rq->meshInstanceCount + instanceCount < rq->maxMeshInstances + 1);
 
@@ -526,7 +536,21 @@ TextureAsset *getTexture(AssetHandle assetHandle)
     }
     return result;
 }
-RENDERER_PUSH_TERRAIN(rendererPushTerrain)
+void rendererPushTerrain(RenderQueue *rq,
+    glm::vec2 heightfieldCenter,
+    float heightfieldMaxHeight,
+    glm::vec2 heightmapSize,
+    float heightmapOverlapInTexels,
+    AssetHandle terrainShader,
+    TextureHandle heightmapTexture,
+    TextureHandle referenceHeightmapTexture,
+    uint32 materialCount,
+    RenderTerrainMaterial *materials,
+    bool isWireframe,
+    uint32 visualizationMode,
+    glm::vec2 cursorPos,
+    float cursorRadius,
+    float cursorFalloff)
 {
     DrawTerrainCommand *cmd = pushRenderCommand(rq, DrawTerrainCommand);
 
@@ -574,7 +598,7 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
     cmd->cursorFalloff = cursorFalloff;
 }
 
-RENDERER_DRAW(rendererDraw)
+bool rendererDraw(RenderQueue *rq)
 {
     DispatchedRenderQueue dispatched;
     dispatched.ctx = rq->ctx->internalCtx;
