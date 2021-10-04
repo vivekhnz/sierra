@@ -608,7 +608,14 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
 {
     if (!Engine)
     {
-        Engine = engineGetApi(0, memory->enginePlatformApi);
+        EnginePlatformApi enginePlatformApi = {};
+        enginePlatformApi.logMessage = memory->platformApi.logMessage;
+        enginePlatformApi.getFileLastWriteTime = memory->platformApi.getFileLastWriteTime;
+        enginePlatformApi.getFileSize = memory->platformApi.getFileSize;
+        enginePlatformApi.readEntireFile = memory->platformApi.readEntireFile;
+        enginePlatformApi.notifyAssetRegistered = memory->platformApi.notifyAssetRegistered;
+
+        Engine = engineGetApi(0, enginePlatformApi);
     }
 
     EditorState *state = (EditorState *)memory->arena.baseAddress;
@@ -628,7 +635,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
          tx = getNextCommittedTransaction(&tx))
     {
         applyTransaction(&tx, &state->docState);
-        memory->platformPublishTransaction(tx.commandBufferBaseAddress);
+        memory->platformApi.publishTransaction(tx.commandBufferBaseAddress);
     }
     state->transactions.committedUsed = 0;
 
@@ -638,7 +645,7 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
          tx = getNextActiveTransaction(&tx))
     {
         applyTransaction(&tx, &state->previewDocState);
-        memory->platformPublishTransaction(tx.commandBufferBaseAddress);
+        memory->platformApi.publishTransaction(tx.commandBufferBaseAddress);
     }
     updateFromDocumentState(memory, &state->previewDocState);
 
@@ -853,7 +860,7 @@ void sceneViewContinueInteraction(
             viewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
         }
 
-        memory->platformCaptureMouse();
+        memory->platformApi.captureMouse();
     }
     break;
     case INTERACTION_TARGET_TERRAIN:
@@ -874,7 +881,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushRadius =
                     glm::clamp(uiState->terrainBrushRadius + radiusIncrease, 2.0f, 128.0f);
 
-                memory->platformCaptureMouse();
+                memory->platformApi.captureMouse();
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
@@ -884,7 +891,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushFalloff =
                     glm::clamp(uiState->terrainBrushFalloff + falloffIncrease, 0.0f, 0.99f);
 
-                memory->platformCaptureMouse();
+                memory->platformApi.captureMouse();
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
@@ -894,7 +901,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushStrength =
                     glm::clamp(uiState->terrainBrushStrength + strengthIncrease, 0.01f, 1.0f);
 
-                memory->platformCaptureMouse();
+                memory->platformApi.captureMouse();
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))

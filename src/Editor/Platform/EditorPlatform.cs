@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
 using Terrain.Editor.Core;
-using Terrain.Editor.Engine;
 
 namespace Terrain.Editor.Platform
 {

@@ -1,21 +1,42 @@
 ﻿using System;
 using System.IO;
 using System.Runtime.InteropServices;
-using Terrain.Editor.Engine;
 
 namespace Terrain.Editor.Core
 {
     internal delegate void PlatformCaptureMouse();
+    internal delegate void PlatformLogMessage(string message);
+    internal delegate long PlatformGetFileLastWriteTime(string relativePath);
+    internal delegate long PlatformGetFileSize(string path);
+    internal delegate void PlatformReadEntireFile(string path, ref byte bufferBaseAddress);
+
     internal delegate void PlatformPublishTransaction(ref byte commandBufferBaseAddress);
+    internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
+
+    internal struct EditorPlatformApi
+    {
+        public IntPtr CaptureMouse;
+        public IntPtr LogMessage;
+        public IntPtr GetFileLastWriteTime;
+        public IntPtr GetFileSize;
+        public IntPtr ReadEntireFile;
+        public IntPtr NotifyAssetRegistered;
+        public IntPtr PublishTransaction;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    struct MemoryArena
+    {
+        public IntPtr BaseAddress;
+        public ulong Size;
+        public ulong Used;
+    }
 
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorMemory
     {
         public MemoryArena Data;
-
-        public IntPtr PlatformCaptureMouse;
-        public IntPtr PlatformPublishTransaction;
-        public EnginePlatformApi EnginePlatformApi;
+        public EditorPlatformApi PlatformApi;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -359,13 +380,13 @@ namespace Terrain.Editor.Core
             memory.Data.BaseAddress = appMemoryDataPtr + Marshal.SizeOf<EditorMemory>();
             memory.Data.Size = (ulong)(appMemorySizeInBytes - Marshal.SizeOf<EditorMemory>());
             memory.Data.Used = 0;
-            memory.PlatformCaptureMouse = Marshal.GetFunctionPointerForDelegate(captureMouse);
-            memory.PlatformPublishTransaction = Marshal.GetFunctionPointerForDelegate(onTransactionPublished);
-            memory.EnginePlatformApi.LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage);
-            memory.EnginePlatformApi.GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime);
-            memory.EnginePlatformApi.GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize);
-            memory.EnginePlatformApi.ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile);
-            memory.EnginePlatformApi.NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered);
+            memory.PlatformApi.CaptureMouse = Marshal.GetFunctionPointerForDelegate(captureMouse);
+            memory.PlatformApi.LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage);
+            memory.PlatformApi.GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime);
+            memory.PlatformApi.GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize);
+            memory.PlatformApi.ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile);
+            memory.PlatformApi.NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered);
+            memory.PlatformApi.PublishTransaction = Marshal.GetFunctionPointerForDelegate(onTransactionPublished);
         }
 
         internal static bool ReloadCode(string dllPath, string dllShadowCopyPath)

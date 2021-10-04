@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace Terrain.Editor.Engine
+namespace Terrain.Editor.Core
 {
     [StructLayout(LayoutKind.Sequential)]
     internal struct Vector2

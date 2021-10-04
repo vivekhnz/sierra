@@ -229,13 +229,20 @@ struct EditorState
     SceneState sceneState;
 };
 
+struct EditorPlatformApi
+{
+    PlatformCaptureMouse *captureMouse;
+    PlatformLogMessage *logMessage;
+    PlatformGetFileLastWriteTime *getFileLastWriteTime;
+    PlatformGetFileSize *getFileSize;
+    PlatformReadEntireFile *readEntireFile;
+    PlatformNotifyAssetRegistered *notifyAssetRegistered;
+    PlatformPublishTransaction *publishTransaction;
+};
 struct EditorMemory
 {
     MemoryArena arena;
-
-    PlatformCaptureMouse *platformCaptureMouse;
-    PlatformPublishTransaction *platformPublishTransaction;
-    EnginePlatformApi enginePlatformApi;
+    EditorPlatformApi platformApi;
 };
 
 struct EditorInput

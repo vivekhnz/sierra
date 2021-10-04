@@ -1,5 +1,5 @@
 using System;
-using Terrain.Editor.Engine;
+using Terrain.Editor.Core;
 
 namespace Terrain.Editor.ViewModels
 {
