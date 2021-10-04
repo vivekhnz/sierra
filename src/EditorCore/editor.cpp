@@ -179,16 +179,11 @@ void initializeEditor(EditorMemory *memory)
         for (uint32 x = 0; x < tileColumns; x++)
         {
             TerrainTile *tile = currentTile++;
-            tile->heightfield = pushStruct(arena, Heightfield);
-            tile->heightfield->heightSamplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
-            tile->heightfield->spaceBetweenHeightSamples =
-                tileLengthInWorldUnits / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
-            tile->heightfield->maxHeight = 200;
+            tile->maxHeight = 200;
 
-            uint32 heightSampleCount =
-                tile->heightfield->heightSamplesPerEdge * tile->heightfield->heightSamplesPerEdge;
-            tile->heightfield->heights = pushArray(arena, float, heightSampleCount);
-            memset(tile->heightfield->heights, 0, heightSampleCount);
+            uint32 heightSampleCount = HEIGHTFIELD_SAMPLES_PER_EDGE * HEIGHTFIELD_SAMPLES_PER_EDGE;
+            tile->heights = pushArray(arena, float, heightSampleCount);
+            memset(tile->heights, 0, heightSampleCount);
 
             tile->committedHeightmap =
                 rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
@@ -201,8 +196,7 @@ void initializeEditor(EditorMemory *memory)
             tile->previewHeightmap =
                 rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
 
-            tile->heightfield->center =
-                topLeftTileCenter + glm::vec2(x * tileLengthInWorldUnits, y * tileLengthInWorldUnits);
+            tile->center = topLeftTileCenter + glm::vec2(x * tileLengthInWorldUnits, y * tileLengthInWorldUnits);
             tile->tileToLeft = tileToLeft;
             tile->tileToRight = x == tileColumns - 1 ? 0 : &sceneState->terrainTiles[(y * tileColumns) + x + 1];
             tile->tileBelow = y == tileRows - 1 ? 0 : &sceneState->terrainTiles[((y + 1) * tileRows) + x];
@@ -311,15 +305,14 @@ void initializeEditor(EditorMemory *memory)
 #endif
 }
 
-void updateHeightfieldHeights(
-    Heightfield *heightfield, uint32 heightmapWidth, uint32 heightmapHeight, uint16 *pixels)
+void updateHeightfieldHeights(TerrainTile *tile, uint32 heightmapWidth, uint32 heightmapHeight, uint16 *pixels)
 {
     assert(heightmapWidth == heightmapHeight);
-    uint32 samplesPerEdge = heightfield->heightSamplesPerEdge;
+    uint32 samplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
     uint32 heightmapLengthWithoutOverlap = heightmapWidth - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
     float texelsPerSample = (float)heightmapLengthWithoutOverlap / (samplesPerEdge - 1);
-    float heightScalar = heightfield->maxHeight / (float)UINT16_MAX;
-    float *dst = (float *)heightfield->heights;
+    float heightScalar = tile->maxHeight / (float)UINT16_MAX;
+    float *dst = (float *)tile->heights;
     for (uint32 y = 0; y < samplesPerEdge; y++)
     {
         float ty = HEIGHTMAP_OVERLAP_IN_TEXELS + (y * texelsPerSample);
@@ -345,11 +338,12 @@ void updateHeightfieldHeights(
     }
 }
 
-void updateHeightfieldHeightsFromRenderTarget(MemoryArena *arena, Heightfield *heightfield, RenderTarget *target)
+void updateTileHeightsFromHeightmap(MemoryArena *arena, TerrainTile *tile)
 {
+    RenderTarget *target = tile->workingHeightmap;
     TemporaryMemory heightMemory = beginTemporaryMemory(arena);
     GetPixelsResult heightPixels = rendererGetPixels(arena, target->textureHandle, target->width, target->height);
-    updateHeightfieldHeights(heightfield, target->width, target->height, (uint16 *)heightPixels.pixels);
+    updateHeightfieldHeights(tile, target->width, target->height, (uint16 *)heightPixels.pixels);
     endTemporaryMemory(&heightMemory);
 }
 
@@ -383,7 +377,7 @@ bool commitChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::ve
         for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
         {
             TerrainTile *tile = &state->sceneState.terrainTiles[i];
-            updateHeightfieldHeightsFromRenderTarget(&memory->arena, tile->heightfield, tile->workingHeightmap);
+            updateTileHeightsFromHeightmap(&memory->arena, tile);
         }
     }
     return committed;
@@ -399,7 +393,7 @@ void discardChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::v
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
         TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        updateHeightfieldHeightsFromRenderTarget(arena, tile->heightfield, tile->workingHeightmap);
+        updateTileHeightsFromHeightmap(arena, tile);
     }
 }
 
@@ -931,8 +925,7 @@ void sceneViewContinueInteraction(
             for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
             {
                 TerrainTile *tile = &state->sceneState.terrainTiles[i];
-                updateHeightfieldHeightsFromRenderTarget(
-                    &memory->arena, tile->heightfield, tile->workingHeightmap);
+                updateTileHeightsFromHeightmap(&memory->arena, tile);
             }
         }
         else
@@ -1052,7 +1045,7 @@ void sceneViewBeginInteraction(
         TerrainTile *firstTile = &state->sceneState.terrainTiles[0];
         interactionState->hasUncommittedChanges = false;
         interactionState->isAdjustingBrushParameters = false;
-        interactionState->activeBrushStroke.startingHeight = mouseWorldPos->y / firstTile->heightfield->maxHeight;
+        interactionState->activeBrushStroke.startingHeight = mouseWorldPos->y / firstTile->maxHeight;
         interactionState->activeBrushStroke.instanceCount = 0;
     }
     break;
@@ -1362,20 +1355,20 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
     {
         TerrainTile *firstTile = &sceneState->terrainTiles[0];
-        uint32 samplesPerEdge = firstTile->heightfield->heightSamplesPerEdge;
-        float spacing = firstTile->heightfield->spaceBetweenHeightSamples;
+        uint32 samplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
+        float spacing = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
         float closestRayHitDist = FLT_MAX;
 
         for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
         {
             TerrainTile *tile = &sceneState->terrainTiles[i];
-            glm::vec2 origin = tile->heightfield->center - (TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * 0.5f);
+            glm::vec2 origin = tile->center - (TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * 0.5f);
             for (uint32 y = 0; y < samplesPerEdge - 1; y++)
             {
                 uint32 yOffset = y * samplesPerEdge;
                 for (uint32 x = 0; x < samplesPerEdge - 1; x++)
                 {
-                    float *topLeftSample = tile->heightfield->heights + yOffset + x;
+                    float *topLeftSample = tile->heights + yOffset + x;
                     float *topRightSample = topLeftSample + 1;
                     float *bottomRightSample = topLeftSample + samplesPerEdge + 1;
                     float *bottomLeftSample = topLeftSample + samplesPerEdge;
@@ -1427,7 +1420,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             }
 
 #if DEBUG_TERRAIN_VIS_TILE_BOUNDS
-            rect2 tileBounds = rectCenterDim(tile->heightfield->center, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
+            rect2 tileBounds = rectCenterDim(tile->center, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
             rendererPushQuadOutlineXz(sceneRq, tileBounds, glm::vec3(0, 0.5, 1));
 #endif
         }
@@ -1446,10 +1439,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
             float heightmapLengthWithoutOverlap = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
             float extendedTileLength = tileLength * (HEIGHTMAP_DIM / heightmapLengthWithoutOverlap);
 
-            rect2 extendedTileBounds = rectCenterDim(hitTile->heightfield->center, extendedTileLength);
+            rect2 extendedTileBounds = rectCenterDim(hitTile->center, extendedTileLength);
             rendererPushQuadOutlineXz(sceneRq, extendedTileBounds, glm::vec3(0, 1, 1));
 
-            rect2 tileBounds = rectCenterDim(hitTile->heightfield->center, tileLength);
+            rect2 tileBounds = rectCenterDim(hitTile->center, tileLength);
             rendererPushQuadOutlineXz(sceneRq, tileBounds, glm::vec3(1, 1, 0));
 #endif
 
@@ -1493,7 +1486,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
         glm::vec2 heightmapSize = glm::vec2(activeHeightmap->width, activeHeightmap->height);
         glm::vec2 brushCursorPos = glm::vec2(mouseWorldPos.x, mouseWorldPos.z);
-        rendererPushTerrain(sceneRq, tile->heightfield, heightmapSize, HEIGHTMAP_OVERLAP_IN_TEXELS,
+        rendererPushTerrain(sceneRq, tile->center, tile->maxHeight, heightmapSize, HEIGHTMAP_OVERLAP_IN_TEXELS,
             editorAssets->terrainShaderTextured, activeHeightmap->textureHandle, refHeightmap->textureHandle,
             state->previewDocState.materialCount, state->previewDocState.materials, false, visualizationMode,
             brushCursorPos, state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
@@ -1596,8 +1589,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                 heightmapLengthWithoutOverlap * (heightmapDisplayDim / HEIGHTMAP_DIM));
             rendererPushQuadOutlineXy(sceneRq, heightmapBounds, glm::vec3(1, 1, 0));
 
-            Heightfield *heightfield = hitTile->heightfield;
-            glm::vec2 tileOrigin = heightfield->center - (TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * 0.5f);
+            glm::vec2 tileOrigin = hitTile->center - (TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * 0.5f);
             glm::vec3 tileRelativeCursorWorldPos = mouseWorldPos - glm::vec3(tileOrigin.x, 0, tileOrigin.y);
             glm::vec2 normalisedCursorPos = glm::vec2(tileRelativeCursorWorldPos.x, tileRelativeCursorWorldPos.z)
                 / TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;

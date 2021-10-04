@@ -3,7 +3,6 @@
 
 #include "engine_platform.h"
 #include "engine_renderer_common.h"
-#include "engine_heightfield.h"
 
 struct RenderBackendContext
 {
@@ -131,7 +130,9 @@ struct ResolvedTerrainMaterial
 };
 struct DrawTerrainCommand
 {
-    Heightfield *heightfield;
+    glm::vec2 heightfieldCenter;
+    float heightfieldMaxHeight;
+
     glm::vec2 heightmapSize;
     float heightmapOverlapInTexels;
 

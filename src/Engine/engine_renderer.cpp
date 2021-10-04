@@ -530,7 +530,8 @@ RENDERER_PUSH_TERRAIN(rendererPushTerrain)
 {
     DrawTerrainCommand *cmd = pushRenderCommand(rq, DrawTerrainCommand);
 
-    cmd->heightfield = heightfield;
+    cmd->heightfieldCenter = heightfieldCenter;
+    cmd->heightfieldMaxHeight = heightfieldMaxHeight;
     cmd->heightmapSize = heightmapSize;
     cmd->heightmapOverlapInTexels = heightmapOverlapInTexels;
 

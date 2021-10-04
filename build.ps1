@@ -61,7 +61,6 @@ function Write-GeneratedCode {
     # extract engine APIs
     $engineHeaderFiles = @(
         'src\Engine\engine_assets.h',
-        'src\Engine\engine_heightfield.h',
         'src\Engine\engine_renderer.h'
     )
     $apiDefineMacro = [regex]::new('^#define (?<macro>([A-Z]|\d|_)+)\(name\)')

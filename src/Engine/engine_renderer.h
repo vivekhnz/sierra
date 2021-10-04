@@ -81,10 +81,10 @@ struct RenderOutput
     void name(RenderQueue *rq, AssetHandle mesh, RenderMeshInstance *instances, uint32 instanceCount,             \
         RenderEffect *effect)
 #define RENDERER_PUSH_TERRAIN(name)                                                                               \
-    void name(RenderQueue *rq, Heightfield *heightfield, glm::vec2 heightmapSize, float heightmapOverlapInTexels, \
-        AssetHandle terrainShader, TextureHandle heightmapTexture, TextureHandle referenceHeightmapTexture,       \
-        uint32 materialCount, RenderTerrainMaterial *materials, bool isWireframe, uint32 visualizationMode,       \
-        glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
+    void name(RenderQueue *rq, glm::vec2 heightfieldCenter, float heightfieldMaxHeight, glm::vec2 heightmapSize,  \
+        float heightmapOverlapInTexels, AssetHandle terrainShader, TextureHandle heightmapTexture,                \
+        TextureHandle referenceHeightmapTexture, uint32 materialCount, RenderTerrainMaterial *materials,          \
+        bool isWireframe, uint32 visualizationMode, glm::vec2 cursorPos, float cursorRadius, float cursorFalloff)
 #define RENDERER_DRAW(name) bool name(RenderQueue *rq)
 
 #endif

@@ -131,7 +131,10 @@ struct SceneViewState
 
 struct TerrainTile
 {
-    Heightfield *heightfield;
+    glm::vec2 center;
+    float maxHeight;
+    float *heights;
+
     RenderTarget *committedHeightmap;
     RenderTarget *workingBrushInfluenceMask;
     RenderTarget *workingHeightmap;

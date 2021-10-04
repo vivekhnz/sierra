@@ -178,7 +178,7 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
     for (uint32 i = 0; i < sceneState->terrainTileCount; i++)
     {
         TerrainTile *tile = &sceneState->terrainTiles[i];
-        glm::vec2 minCornerWorldSpace = tile->heightfield->center - (extendedTileDim * 0.5f);
+        glm::vec2 minCornerWorldSpace = tile->center - (extendedTileDim * 0.5f);
         glm::vec2 offset = minCornerWorldSpace * worldToHeightmapSpace;
 
         TemporaryMemory tileRenderMemory = beginTemporaryMemory(&memory->arena);

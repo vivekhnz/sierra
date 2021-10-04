@@ -1111,12 +1111,11 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                     aoTextureArrayId = getTextureArrayId(firstMaterial->aoTexture);
                 }
 
-                Heightfield *heightfield = cmd->heightfield;
                 uint32 vertsPerEdge = ctx->terrain.vertsPerEdge;
                 uint32 meshEdgeCount = ((vertsPerEdge * vertsPerEdge) - vertsPerEdge) * 2;
                 float tileLengthInWorldUnits = ctx->terrain.tileLengthInWorldUnits;
                 glm::vec3 terrainDimensions =
-                    glm::vec3(tileLengthInWorldUnits, heightfield->maxHeight, tileLengthInWorldUnits);
+                    glm::vec3(tileLengthInWorldUnits, cmd->heightfieldMaxHeight, tileLengthInWorldUnits);
 
                 uint32 calcTessLevelShaderProgramId = shaders->shaderProgramTerrainCalcTessLevel;
                 uint32 terrainShaderProgramId = getShaderProgramId(cmd->terrainShader);
@@ -1132,10 +1131,11 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                 glProgramUniform1i(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "vertsPerEdge"), vertsPerEdge);
                 glProgramUniform1f(calcTessLevelShaderProgramId,
-                    glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"), heightfield->maxHeight);
+                    glGetUniformLocation(calcTessLevelShaderProgramId, "terrainHeight"),
+                    cmd->heightfieldMaxHeight);
                 glProgramUniform2fv(calcTessLevelShaderProgramId,
                     glGetUniformLocation(calcTessLevelShaderProgramId, "terrainOrigin"), 1,
-                    glm::value_ptr(heightfield->center));
+                    glm::value_ptr(cmd->heightfieldCenter));
                 glActiveTexture(GL_TEXTURE0);
                 glBindTexture(GL_TEXTURE_2D, getTextureId(cmd->heightmapTexture));
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ctx->terrain.tessLevelBufferId);
@@ -1161,7 +1161,7 @@ bool drawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
                 glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, ctx->terrain.materialPropsBufferId);
                 glProgramUniform2fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "terrainOrigin"), 1,
-                    glm::value_ptr(heightfield->center));
+                    glm::value_ptr(cmd->heightfieldCenter));
                 glProgramUniform2fv(terrainShaderProgramId,
                     glGetUniformLocation(terrainShaderProgramId, "heightmapSize"), 1,
                     glm::value_ptr(cmd->heightmapSize));
