@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 
-namespace Terrain.Editor.Platform
+namespace Sierra.Platform
 {
     internal static class Win32
     {

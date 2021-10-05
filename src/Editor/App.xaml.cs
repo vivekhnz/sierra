@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Windows;
 using System.Windows.Threading;
-using Terrain.Editor.Core;
-using Terrain.Editor.Platform;
-using Terrain.Editor.Utilities.Binding;
-using Terrain.Editor.ViewModels;
+using Sierra.Core;
+using Sierra.Platform;
+using Sierra.Utilities.Binding;
+using Sierra.ViewModels;
 
-namespace Terrain.Editor
+namespace Sierra
 {
     /// <summary>
     /// Interaction logic for App.xaml

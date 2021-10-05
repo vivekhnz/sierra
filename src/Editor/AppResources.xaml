@@ -1,7 +1,7 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:vm="clr-namespace:Terrain.Editor.ViewModels"
-    xmlns:utils="clr-namespace:Terrain.Editor.Utilities">
+    xmlns:vm="clr-namespace:Sierra.ViewModels"
+    xmlns:utils="clr-namespace:Sierra.Utilities">
 
   <!-- Feature flags -->
   <Visibility x:Key="FeatureFlagVisibility_TerrainMaterials">Collapsed</Visibility>

@@ -2,7 +2,7 @@ using System;
 using System.Globalization;
 using System.Windows.Data;
 
-namespace Terrain.Editor.Utilities
+namespace Sierra.Utilities
 {
     // based on: https://stackoverflow.com/questions/397556/how-to-bind-radiobuttons-to-an-enum/2908885#2908885
 

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Windows;
-using Terrain.Editor.Core;
+using Sierra.Core;
 
-namespace Terrain.Editor.Utilities.Binding
+namespace Sierra.Utilities.Binding
 {
     internal static class EditorBindingEngine
     {

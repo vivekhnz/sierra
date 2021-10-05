@@ -1,10 +1,10 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Linq;
-using Terrain.Editor.Core;
-using Terrain.Editor.Utilities;
+using Sierra.Core;
+using Sierra.Utilities;
 
-namespace Terrain.Editor.ViewModels
+namespace Sierra.ViewModels
 {
     public class EditorDocumentViewModel : ViewModelBase
     {

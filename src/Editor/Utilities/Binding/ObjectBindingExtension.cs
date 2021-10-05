@@ -1,9 +1,9 @@
 using System;
 using System.Windows;
 using System.Windows.Markup;
-using Terrain.Editor.Core;
+using Sierra.Core;
 
-namespace Terrain.Editor.Utilities.Binding
+namespace Sierra.Utilities.Binding
 {
     [MarkupExtensionReturnType(typeof(object))]
     internal class ObjectBindingExtension : MarkupExtension

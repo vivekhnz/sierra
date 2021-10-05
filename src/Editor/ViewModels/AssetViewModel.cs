@@ -1,7 +1,7 @@
 using System;
-using Terrain.Editor.Core;
+using Sierra.Core;
 
-namespace Terrain.Editor.ViewModels
+namespace Sierra.ViewModels
 {
     public class AssetViewModel : ViewModelBase
     {

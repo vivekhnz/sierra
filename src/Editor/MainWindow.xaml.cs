@@ -1,11 +1,11 @@
 ﻿using System.Linq;
 using System.Windows;
 using System.Windows.Data;
-using Terrain.Editor.Core;
-using Terrain.Editor.Platform;
-using Terrain.Editor.ViewModels;
+using Sierra.Core;
+using Sierra.Platform;
+using Sierra.ViewModels;
 
-namespace Terrain.Editor
+namespace Sierra
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml

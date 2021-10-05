@@ -1,8 +1,8 @@
-using Terrain.Editor.Core;
-using Terrain.Editor.Utilities;
-using Terrain.Editor.ViewModels;
+using Sierra.Core;
+using Sierra.Utilities;
+using Sierra.ViewModels;
 
-namespace Terrain.Editor
+namespace Sierra
 {
     public static class EditorCommands
     {

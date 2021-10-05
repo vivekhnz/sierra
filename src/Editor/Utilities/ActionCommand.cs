@@ -1,7 +1,7 @@
 using System;
 using System.Windows.Input;
 
-namespace Terrain.Editor.Utilities
+namespace Sierra.Utilities
 {
     public class ActionCommand : ICommand
     {

@@ -6,7 +6,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Markup;
 
-namespace Terrain.Editor.Controls
+namespace Sierra.Controls
 {
     /// <summary>
     /// Interaction logic for ToggleButtonStrip.xaml

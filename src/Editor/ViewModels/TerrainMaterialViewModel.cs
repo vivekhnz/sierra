@@ -1,8 +1,8 @@
 using System.Collections.ObjectModel;
-using Terrain.Editor.Core;
-using Terrain.Editor.Utilities;
+using Sierra.Core;
+using Sierra.Utilities;
 
-namespace Terrain.Editor.ViewModels
+namespace Sierra.ViewModels
 {
     public class TerrainMaterialViewModel : ViewModelBase
     {

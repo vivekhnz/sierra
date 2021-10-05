@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace Terrain.Editor.Utilities.Binding
+namespace Sierra.Utilities.Binding
 {
     public class ObjectReference
     {

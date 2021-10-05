@@ -1,7 +1,7 @@
 using System.Windows;
 using System.Windows.Media;
 
-namespace Terrain.Editor.Controls
+namespace Sierra.Controls
 {
     public class ToggleButtonStripItem : DependencyObject
     {

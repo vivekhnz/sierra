@@ -28,7 +28,7 @@ $CommonLinkerFlags = @(
 )
 
 function Initialize-Environment([string] $Platform) {
-    $envVarCacheFile = "C:\temp\terrain_build.$Platform.env"
+    $envVarCacheFile = "C:\temp\sierra_build.$Platform.env"
     $envVars = ''
 
     $useCacheFile = $false
@@ -161,15 +161,15 @@ $builds += Invoke-Msvc `
     )
 
 # don't try build the editor executable if it is currently running
-if (!(Get-Process "Terrain.Editor" -ErrorAction SilentlyContinue)) {
-    $builds += Invoke-Dotnet -SolutionFile 'Terrain.sln' -OutputName 'Editor'
+if (!(Get-Process 'win32_sierra' -ErrorAction SilentlyContinue)) {
+    $builds += Invoke-Dotnet -SolutionFile 'Sierra.sln' -OutputName 'win32_sierra'
 }
 
 $builds.Process | Wait-Process
 
 # create a junction of the repo into 'C:\temp' so hardcoded executable paths in solution
 # files can point there
-$MirrorPath = 'C:\temp\terrain_mirror'
+$MirrorPath = 'C:\temp\sierra_mirror'
 if (!(Test-Path $MirrorPath)) {
     New-Item -ItemType Junction -Path $MirrorPath -Value '.' | Out-Null
 }

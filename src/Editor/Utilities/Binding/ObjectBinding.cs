@@ -3,9 +3,9 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
 using System.Windows;
-using Terrain.Editor.Core;
+using Sierra.Core;
 
-namespace Terrain.Editor.Utilities.Binding
+namespace Sierra.Utilities.Binding
 {
     internal class ObjectBinding : DependencyObject
     {

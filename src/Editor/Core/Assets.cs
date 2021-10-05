@@ -1,7 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 
-namespace Terrain.Editor.Core
+namespace Sierra.Core
 {
     public enum AssetType
     {

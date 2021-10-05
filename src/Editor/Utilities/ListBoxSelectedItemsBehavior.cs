@@ -4,7 +4,7 @@ using System.Windows;
 using System.Windows.Controls;
 using Microsoft.Xaml.Behaviors;
 
-namespace Terrain.Editor.Utilities
+namespace Sierra.Utilities
 {
     public class ListBoxSelectedItemsBehavior : Behavior<ListBox>
     {

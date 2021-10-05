@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows.Data;
-using Terrain.Editor.Core;
+using Sierra.Core;
 
-namespace Terrain.Editor.ViewModels
+namespace Sierra.ViewModels
 {
     public class EditorAssetsViewModel : ViewModelBase
     {

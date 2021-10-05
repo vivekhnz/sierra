@@ -1,7 +1,7 @@
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 
-namespace Terrain.Editor.ViewModels
+namespace Sierra.ViewModels
 {
     public class ViewModelBase : INotifyPropertyChanged
     {

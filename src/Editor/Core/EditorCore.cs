@@ -2,7 +2,7 @@
 using System.IO;
 using System.Runtime.InteropServices;
 
-namespace Terrain.Editor.Core
+namespace Sierra.Core
 {
     internal delegate void PlatformCaptureMouse();
     internal delegate void PlatformLogMessage(string message);

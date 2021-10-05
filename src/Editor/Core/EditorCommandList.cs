@@ -2,7 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 
-namespace Terrain.Editor.Core
+namespace Sierra.Core
 {
     internal ref struct EditorCommandEntry
     {

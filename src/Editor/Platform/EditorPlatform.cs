@@ -6,9 +6,9 @@ using System.Runtime.InteropServices;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
-using Terrain.Editor.Core;
+using Sierra.Core;
 
-namespace Terrain.Editor.Platform
+namespace Sierra.Platform
 {
     public enum EditorView
     {
@@ -39,7 +39,7 @@ namespace Terrain.Editor.Platform
             public EditorInput InputState;
         }
 
-        private static readonly string ViewportWindowClassName = "TerrainOpenGLViewportWindowClass";
+        private static readonly string ViewportWindowClassName = "SierraOpenGLViewportWindowClass";
 
         private static IntPtr appInstance = Win32.GetModuleHandle(null);
         private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
@@ -100,11 +100,11 @@ namespace Terrain.Editor.Platform
             {
                 lpfnWndProc = Marshal.GetFunctionPointerForDelegate(defWndProc),
                 hInstance = appInstance,
-                lpszClassName = "TerrainOpenGLDummyWindowClass"
+                lpszClassName = "SierraOpenGLDummyWindowClass"
             };
             Win32.RegisterClass(ref dummyWindowClass);
             dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
-                "TerrainOpenGLDummyWindow", 0, 0, 0, 100, 100, IntPtr.Zero, IntPtr.Zero, appInstance,
+                "SierraOpenGLDummyWindow", 0, 0, 0, 100, 100, IntPtr.Zero, IntPtr.Zero, appInstance,
                 IntPtr.Zero);
 
             IntPtr dummyDeviceContext = Win32.GetDC(dummyWindowHwnd);
@@ -471,7 +471,7 @@ namespace Terrain.Editor.Platform
             uint x, uint y, uint width, uint height, EditorView view)
         {
             IntPtr hwnd = Win32.CreateWindowEx(0, ViewportWindowClassName,
-                "TerrainOpenGLViewportWindow",
+                "SierraOpenGLViewportWindow",
                 Win32.WindowStyles.Child | Win32.WindowStyles.Visible, 0, 0, 1, 1, parentHwnd,
                 IntPtr.Zero, appInstance, IntPtr.Zero);
             IntPtr deviceContext = Win32.GetDC(hwnd);
