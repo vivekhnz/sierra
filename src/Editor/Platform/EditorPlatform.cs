@@ -83,8 +83,8 @@ namespace Sierra.Platform
             buildLockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build.lock");
             editorCode = new ReloadableCode
             {
-                DllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra.dll"),
-                DllShadowCopyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra.shadow.dll")
+                DllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra_core.dll"),
+                DllShadowCopyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra_core.shadow.dll")
             };
 
             int appMemorySizeInBytes = 500 * 1024 * 1024;

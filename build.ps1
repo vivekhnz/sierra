@@ -1,4 +1,3 @@
-
 $ProgressPreference = 'SilentlyContinue'
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
@@ -152,7 +151,7 @@ $LockFilePath = "$OutputPath\build.lock"
 
 $builds = @()
 $builds += Invoke-Msvc `
-    -SourceFile 'src\EditorCore\sierra.cpp' -OutputName 'sierra' `
+    -SourceFile 'src\EditorCore\sierra.cpp' -OutputName 'sierra_core' `
     -IntermediateOutputDirName 'EditorCore' `
     -BuildDll -RandomizePdbFilename -NoImportLib `
     -IncludePaths @(
@@ -161,8 +160,8 @@ $builds += Invoke-Msvc `
     )
 
 # don't try build the editor executable if it is currently running
-if (!(Get-Process 'win32_sierra' -ErrorAction SilentlyContinue)) {
-    $builds += Invoke-Dotnet -SolutionFile 'Sierra.sln' -OutputName 'win32_sierra'
+if (!(Get-Process 'sierra' -ErrorAction SilentlyContinue)) {
+    $builds += Invoke-Dotnet -SolutionFile 'Sierra.sln' -OutputName 'sierra'
 }
 
 $builds.Process | Wait-Process
