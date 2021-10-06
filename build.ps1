@@ -165,14 +165,6 @@ if (!(Get-Process 'sierra' -ErrorAction SilentlyContinue)) {
 }
 
 $builds.Process | Wait-Process
-
-# create a junction of the repo into 'C:\temp' so hardcoded executable paths in solution
-# files can point there
-$MirrorPath = 'C:\temp\sierra_mirror'
-if (!(Test-Path $MirrorPath)) {
-    New-Item -ItemType Junction -Path $MirrorPath -Value '.' | Out-Null
-}
-
 Remove-Item $LockFilePath -Force
 
 $sw.Stop();
