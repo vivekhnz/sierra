@@ -1,4 +1,6 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
+using System.Text;
 using System.Windows;
 using System.Windows.Data;
 using Sierra.Core;
@@ -24,6 +26,7 @@ namespace Sierra
             };
 
             EditorCore.TransactionPublished += OnTransactionPublished;
+            App.PerformanceCountersUpdated += OnPerfCountersUpdated;
 
             var cvsTextureFileAssets = (CollectionViewSource)FindResource("TextureFileAssets");
             cvsTextureFileAssets.Filter += EditorAssetsViewModel.BuildAssetFilter(
@@ -76,6 +79,33 @@ namespace Sierra
                     state.SelectedObjectIds[0] = cmd.ObjectId;
                 }
             }
+        }
+
+        private void OnPerfCountersUpdated(EditorPerformanceCounters perfCounters)
+        {
+            var perfCounterSummaryBuilder = new StringBuilder();
+            int fps = (int)(1000.0 / perfCounters.FrameTime.TotalMilliseconds);
+            perfCounterSummaryBuilder.AppendLine($" Total Frame Time: {perfCounters.FrameTime.TotalMilliseconds:#0.00}ms ({fps}fps)");
+            perfCounterSummaryBuilder.AppendLine();
+
+            double pct;
+
+            pct = (double)perfCounters.GetInputState.Ticks / perfCounters.FrameTime.Ticks;
+            perfCounterSummaryBuilder.AppendLine($"  Get Input State: {pct:0.00%}");
+
+            pct = (double)perfCounters.CoreUpdate.Ticks / perfCounters.FrameTime.Ticks;
+            perfCounterSummaryBuilder.AppendLine($"      Core Update: {pct:0.00%}");
+
+            pct = (double)perfCounters.RenderViewports.Ticks / perfCounters.FrameTime.Ticks;
+            perfCounterSummaryBuilder.AppendLine($" Render Viewports: {pct:0.00%}");
+
+            pct = (double)perfCounters.RenderSceneView.Ticks / perfCounters.FrameTime.Ticks;
+            perfCounterSummaryBuilder.AppendLine($"Render Scene View: {pct:0.00%}");
+
+            pct = (double)perfCounters.UpdateBindings.Ticks / perfCounters.FrameTime.Ticks;
+            perfCounterSummaryBuilder.AppendLine($"  Update Bindings: {pct:0.00%}");
+
+            tbPerfCounters.Text = perfCounterSummaryBuilder.ToString();
         }
     }
 }

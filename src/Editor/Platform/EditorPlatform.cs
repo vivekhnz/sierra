@@ -25,6 +25,50 @@ namespace Sierra.Platform
         public EditorViewContext ViewContext;
     }
 
+    internal class TimedBlock : IDisposable
+    {
+        Stopwatch stopwatch;
+        Action<TimeSpan> updateCounter;
+
+        public TimedBlock(Action<TimeSpan> updateCounter)
+        {
+            stopwatch = Stopwatch.StartNew();
+            this.updateCounter = updateCounter;
+        }
+
+        public void Dispose()
+        {
+            stopwatch.Stop();
+            updateCounter(stopwatch.Elapsed);
+        }
+    }
+    internal class EditorPerformanceCounters
+    {
+        public TimeSpan FrameTime;
+
+        public TimeSpan GetInputState;
+        public TimeSpan CoreUpdate;
+        public TimeSpan RenderViewports;
+        public TimeSpan RenderSceneView;
+        public TimeSpan UpdateBindings;
+
+        public void Reset()
+        {
+            FrameTime = TimeSpan.Zero;
+            GetInputState = TimeSpan.Zero;
+            CoreUpdate = TimeSpan.Zero;
+            RenderViewports = TimeSpan.Zero;
+            RenderSceneView = TimeSpan.Zero;
+            UpdateBindings = TimeSpan.Zero;
+        }
+
+        public TimedBlock Measure_GetInputState() => new TimedBlock(elapsed => GetInputState += elapsed);
+        public TimedBlock Measure_CoreUpdate() => new TimedBlock(elapsed => CoreUpdate += elapsed);
+        public TimedBlock Measure_RenderViewports() => new TimedBlock(elapsed => RenderViewports += elapsed);
+        public TimedBlock Measure_RenderSceneView() => new TimedBlock(elapsed => RenderSceneView += elapsed);
+        public TimedBlock Measure_UpdateBindings() => new TimedBlock(elapsed => UpdateBindings += elapsed);
+    }
+
     internal static class EditorPlatform
     {
         private class ReloadableCode
@@ -415,7 +459,7 @@ namespace Sierra.Platform
             return result;
         }
 
-        internal static void Tick()
+        internal static void Tick(EditorPerformanceCounters perfCounters)
         {
             if (!File.Exists(buildLockFilePath))
             {
@@ -432,32 +476,47 @@ namespace Sierra.Platform
             DateTime now = DateTime.UtcNow;
             float deltaTime = (float)((now - lastTickTime).TotalSeconds);
             lastTickTime = now;
-            ViewportInput input = GetInputState();
+
+            ViewportInput input;
+            using (perfCounters.Measure_GetInputState())
+            {
+                input = GetInputState();
+            }
 
             IsViewportHovered = input.ViewportWindow != null;
-            EditorCore.Update(deltaTime);
 
-            for (int i = 0; i < viewportWindows.Count; i++)
+            using (perfCounters.Measure_CoreUpdate())
             {
-                var viewportWindow = viewportWindows[i];
-                if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
-                    continue;
+                EditorCore.Update(deltaTime);
+            }
 
-                Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
-
-                input.InputState.IsActive = viewportWindow == input.ViewportWindow;
-                switch (viewportWindow.View)
+            using (perfCounters.Measure_RenderViewports())
+            {
+                for (int i = 0; i < viewportWindows.Count; i++)
                 {
-                    case EditorView.Scene:
-                        EditorCore.RenderSceneView(ref viewportWindow.ViewContext,
-                            deltaTime, ref input.InputState);
-                        break;
-                    case EditorView.HeightmapPreview:
-                        EditorCore.RenderHeightmapPreview(ref viewportWindow.ViewContext,
-                            deltaTime, ref input.InputState);
-                        break;
+                    var viewportWindow = viewportWindows[i];
+                    if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
+                        continue;
+
+                    Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
+
+                    input.InputState.IsActive = viewportWindow == input.ViewportWindow;
+                    switch (viewportWindow.View)
+                    {
+                        case EditorView.Scene:
+                            using (perfCounters.Measure_RenderSceneView())
+                            {
+                                EditorCore.RenderSceneView(ref viewportWindow.ViewContext,
+                                    deltaTime, ref input.InputState);
+                            }
+                            break;
+                        case EditorView.HeightmapPreview:
+                            EditorCore.RenderHeightmapPreview(ref viewportWindow.ViewContext,
+                                deltaTime, ref input.InputState);
+                            break;
+                    }
+                    Win32.SwapBuffers(viewportWindow.DeviceContext);
                 }
-                Win32.SwapBuffers(viewportWindow.DeviceContext);
             }
         }
 

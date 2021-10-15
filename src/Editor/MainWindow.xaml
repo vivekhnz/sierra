@@ -497,6 +497,10 @@
             IsChecked="{b:UiBinding Debug_ShowTerrainTileBounds}" />
         <CheckBox Content="Terrain Heightmap" Foreground="#888"
             IsChecked="{b:UiBinding Debug_ShowTerrainTileHeightmap}" />
+
+        <TextBlock Text="Performance Counters" Foreground="#888" FontWeight="Bold"
+            Margin="0 12 0 4" />
+        <TextBlock x:Name="tbPerfCounters" Foreground="#CCC" FontFamily="Consolas" />
       </StackPanel>
     </Grid>
   </Grid>
