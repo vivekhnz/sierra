@@ -59,6 +59,13 @@ struct TerrainMaterialProperties
     float altitudeEnd;
 };
 
+struct EditorDebugState
+{
+    bool showTerrainRaycastVis;
+    bool showTerrainTileBounds;
+    bool showTerrainTileHeightmap;
+};
+
 struct EditorUiState
 {
     EditorContext currentContext;
@@ -72,6 +79,8 @@ struct EditorUiState
     float terrainBrushStrength;
 
     float sceneLightDirection;
+
+    EditorDebugState debugState;
 };
 
 struct ObjectTransform

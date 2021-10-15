@@ -163,6 +163,10 @@ void initializeEditor(EditorMemory *memory)
     state->uiState.terrainBrushStrength = 0.12f;
     state->uiState.sceneLightDirection = 0.5f;
 
+    state->uiState.debugState.showTerrainRaycastVis = false;
+    state->uiState.debugState.showTerrainTileBounds = false;
+    state->uiState.debugState.showTerrainTileHeightmap = false;
+
     SceneState *sceneState = &state->sceneState;
 
     state->importedHeightmapTexture = rendererCreateTexture(HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16);
@@ -1276,6 +1280,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     SceneState *sceneState = &state->sceneState;
     EditorUiState *uiState = &state->uiState;
     SceneViewState *viewState = (SceneViewState *)view->viewState;
+    EditorDebugState *debugState = &state->uiState.debugState;
     if (!viewState)
     {
         viewState = pushStruct(arena, SceneViewState);
@@ -1351,17 +1356,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     Interaction editTerrainInteraction = {};
     editTerrainInteraction.target.type = INTERACTION_TARGET_TERRAIN;
 
-#define DEBUG_TERRAIN_VIS 0
-#if DEBUG_TERRAIN_VIS
-#define DEBUG_TERRAIN_VIS_RAYCAST 0
-#define DEBUG_TERRAIN_VIS_TILE_BOUNDS 0
-#define DEBUG_TERRAIN_VIS_HEIGHTMAP 0
-
     glm::vec3 hitTriA;
     glm::vec3 hitTriB;
     glm::vec3 hitTriC;
     TerrainTile *hitTile = 0;
-#endif
 
     if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
     {
@@ -1396,66 +1394,66 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
                         && rayHitDist < closestRayHitDist)
                     {
                         closestRayHitDist = rayHitDist;
-#if DEBUG_TERRAIN_VIS
+
                         hitTriA = topLeft;
                         hitTriB = topRight;
                         hitTriC = bottomRight;
                         hitTile = tile;
-#endif
                     }
                     if (isRayIntersectingTriangle(
                             viewState->cameraPos, mouseRayDir, topLeft, bottomLeft, bottomRight, &rayHitDist)
                         && rayHitDist < closestRayHitDist)
                     {
                         closestRayHitDist = rayHitDist;
-#if DEBUG_TERRAIN_VIS
+
                         hitTriA = topLeft;
                         hitTriB = bottomLeft;
                         hitTriC = bottomRight;
                         hitTile = tile;
-#endif
                     }
 
-#if DEBUG_TERRAIN_VIS_RAYCAST
-                    glm::vec3 color = glm::vec3(1, 0, 0.5);
-                    rendererBeginLine(sceneRq, topLeft, color);
-                    rendererExtendLine(sceneRq, topRight);
-                    rendererExtendLine(sceneRq, bottomRight);
-                    rendererEndLineLoop(sceneRq);
-                    rendererBeginLine(sceneRq, topLeft, color);
-                    rendererExtendLine(sceneRq, bottomRight);
-                    rendererExtendLine(sceneRq, bottomLeft);
-                    rendererEndLineLoop(sceneRq);
-#endif
+                    if (debugState->showTerrainRaycastVis)
+                    {
+                        glm::vec3 color = glm::vec3(1, 0, 0.5);
+                        rendererBeginLine(sceneRq, topLeft, color);
+                        rendererExtendLine(sceneRq, topRight);
+                        rendererExtendLine(sceneRq, bottomRight);
+                        rendererEndLineLoop(sceneRq);
+                        rendererBeginLine(sceneRq, topLeft, color);
+                        rendererExtendLine(sceneRq, bottomRight);
+                        rendererExtendLine(sceneRq, bottomLeft);
+                        rendererEndLineLoop(sceneRq);
+                    }
                 }
             }
-
-#if DEBUG_TERRAIN_VIS_TILE_BOUNDS
-            rect2 tileBounds = rectCenterDim(tile->center, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
-            rendererPushQuadOutlineXz(sceneRq, tileBounds, glm::vec3(0, 0.5, 1));
-#endif
+            if (debugState->showTerrainTileBounds)
+            {
+                rect2 tileBounds = rectCenterDim(tile->center, TERRAIN_TILE_LENGTH_IN_WORLD_UNITS);
+                rendererPushQuadOutlineXz(sceneRq, tileBounds, glm::vec3(0, 0.5, 1));
+            }
         }
 
         if (closestRayHitDist < FLT_MAX)
         {
-#if DEBUG_TERRAIN_VIS_RAYCAST
-            rendererBeginLine(sceneRq, hitTriA, glm::vec3(1, 1, 0));
-            rendererExtendLine(sceneRq, hitTriB);
-            rendererExtendLine(sceneRq, hitTriC);
-            rendererEndLineLoop(sceneRq);
-#endif
+            if (debugState->showTerrainRaycastVis)
+            {
+                rendererBeginLine(sceneRq, hitTriA, glm::vec3(1, 1, 0));
+                rendererExtendLine(sceneRq, hitTriB);
+                rendererExtendLine(sceneRq, hitTriC);
+                rendererEndLineLoop(sceneRq);
+            }
+            if (debugState->showTerrainTileBounds)
+            {
+                float tileLength = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
+                float heightmapLengthWithoutOverlap = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
+                float extendedTileLength = tileLength * (HEIGHTMAP_DIM / heightmapLengthWithoutOverlap);
 
-#if DEBUG_TERRAIN_VIS_TILE_BOUNDS
-            float tileLength = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
-            float heightmapLengthWithoutOverlap = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
-            float extendedTileLength = tileLength * (HEIGHTMAP_DIM / heightmapLengthWithoutOverlap);
+                rect2 extendedTileBounds = rectCenterDim(hitTile->center, extendedTileLength);
+                rendererPushQuadOutlineXz(sceneRq, extendedTileBounds, glm::vec3(0, 1, 1));
 
-            rect2 extendedTileBounds = rectCenterDim(hitTile->center, extendedTileLength);
-            rendererPushQuadOutlineXz(sceneRq, extendedTileBounds, glm::vec3(0, 1, 1));
-
-            rect2 tileBounds = rectCenterDim(hitTile->center, tileLength);
-            rendererPushQuadOutlineXz(sceneRq, tileBounds, glm::vec3(1, 1, 0));
-#endif
+                rect2 tileBounds = rectCenterDim(hitTile->center, tileLength);
+                rendererPushQuadOutlineXz(sceneRq, tileBounds, glm::vec3(1, 1, 0));
+            }
 
             mouseWorldPos = viewState->cameraPos + (mouseRayDir * closestRayHitDist);
             viewState->interactionState.nextHot = editTerrainInteraction;
@@ -1574,43 +1572,43 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     if (uiState->currentContext == EDITOR_CTX_TERRAIN)
     {
-#if DEBUG_TERRAIN_VIS
         if (hitTile)
         {
-#if DEBUG_TERRAIN_VIS_RAYCAST
-            glm::vec2 mouseRayHitPosScreen = worldToScreen(viewState, mouseWorldPos);
-            rendererPushColoredQuad(sceneRq, rectCenterDim(mouseRayHitPosScreen, 4), glm::vec3(1, 1, 1));
-#endif
+            if (debugState->showTerrainRaycastVis)
+            {
+                glm::vec2 mouseRayHitPosScreen = worldToScreen(viewState, mouseWorldPos);
+                rendererPushColoredQuad(sceneRq, rectCenterDim(mouseRayHitPosScreen, 4), glm::vec3(1, 1, 1));
+            }
+            if (debugState->showTerrainTileHeightmap)
+            {
+                float heightmapDisplayDim = 300.0f;
 
-#if DEBUG_TERRAIN_VIS_HEIGHTMAP
-            float heightmapDisplayDim = 300.0f;
+                RenderEffect *effect = rendererCreateEffect(
+                    arena, editorAssets->quadShaderTextureMultiplied, EFFECT_BLEND_ALPHA_BLEND);
+                rendererSetEffectTexture(effect, 0, hitTile->workingHeightmap->textureHandle);
+                rendererSetEffectFloat(effect, "multiplier", 4);
+                rect2 extendedHeightmapBounds =
+                    rectMaxDim(glm::vec2(view->width - 10, view->height - 10), heightmapDisplayDim);
+                rendererPushQuadBottomUp(sceneRq, extendedHeightmapBounds, effect);
 
-            RenderEffect *effect =
-                rendererCreateEffect(arena, editorAssets->quadShaderTextureMultiplied, EFFECT_BLEND_ALPHA_BLEND);
-            rendererSetEffectTexture(effect, 0, hitTile->workingHeightmap->textureHandle);
-            rendererSetEffectFloat(effect, "multiplier", 4);
-            rect2 extendedHeightmapBounds =
-                rectMaxDim(glm::vec2(view->width - 10, view->height - 10), heightmapDisplayDim);
-            rendererPushQuadBottomUp(sceneRq, extendedHeightmapBounds, effect);
+                rendererPushQuadOutlineXy(sceneRq, extendedHeightmapBounds, glm::vec3(0, 1, 1));
 
-            rendererPushQuadOutlineXy(sceneRq, extendedHeightmapBounds, glm::vec3(0, 1, 1));
+                float heightmapLengthWithoutOverlap = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
+                rect2 heightmapBounds = rectCenterDim(getCenter(extendedHeightmapBounds),
+                    heightmapLengthWithoutOverlap * (heightmapDisplayDim / HEIGHTMAP_DIM));
+                rendererPushQuadOutlineXy(sceneRq, heightmapBounds, glm::vec3(1, 1, 0));
 
-            float heightmapLengthWithoutOverlap = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
-            rect2 heightmapBounds = rectCenterDim(getCenter(extendedHeightmapBounds),
-                heightmapLengthWithoutOverlap * (heightmapDisplayDim / HEIGHTMAP_DIM));
-            rendererPushQuadOutlineXy(sceneRq, heightmapBounds, glm::vec3(1, 1, 0));
-
-            glm::vec2 tileOrigin = hitTile->center - (TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * 0.5f);
-            glm::vec3 tileRelativeCursorWorldPos = mouseWorldPos - glm::vec3(tileOrigin.x, 0, tileOrigin.y);
-            glm::vec2 normalisedCursorPos = glm::vec2(tileRelativeCursorWorldPos.x, tileRelativeCursorWorldPos.z)
-                / TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
-            glm::vec2 cursorPos = getMin(heightmapBounds)
-                + glm::vec2(normalisedCursorPos.x * heightmapBounds.width,
-                    (1 - normalisedCursorPos.y) * heightmapBounds.height);
-            rendererPushColoredQuad(sceneRq, rectCenterDim(cursorPos, 2), glm::vec3(1, 1, 1));
-#endif
+                glm::vec2 tileOrigin = hitTile->center - (TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * 0.5f);
+                glm::vec3 tileRelativeCursorWorldPos = mouseWorldPos - glm::vec3(tileOrigin.x, 0, tileOrigin.y);
+                glm::vec2 normalisedCursorPos =
+                    glm::vec2(tileRelativeCursorWorldPos.x, tileRelativeCursorWorldPos.z)
+                    / TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
+                glm::vec2 cursorPos = getMin(heightmapBounds)
+                    + glm::vec2(normalisedCursorPos.x * heightmapBounds.width,
+                        (1 - normalisedCursorPos.y) * heightmapBounds.height);
+                rendererPushColoredQuad(sceneRq, rectCenterDim(cursorPos, 2), glm::vec3(1, 1, 1));
+            }
         }
-#endif
     }
     else if (uiState->currentContext == EDITOR_CTX_OBJECTS)
     {

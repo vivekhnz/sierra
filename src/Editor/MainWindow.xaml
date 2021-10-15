@@ -4,10 +4,8 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
     xmlns:sys="clr-namespace:System;assembly=System.Runtime"
-    xmlns:editor="clr-namespace:Sierra"
-    xmlns:controls="clr-namespace:Sierra.Controls"
-    xmlns:core="clr-namespace:Sierra.Core"
-    xmlns:utils="clr-namespace:Sierra.Utilities"
+    xmlns:editor="clr-namespace:Sierra" xmlns:controls="clr-namespace:Sierra.Controls"
+    xmlns:core="clr-namespace:Sierra.Core" xmlns:utils="clr-namespace:Sierra.Utilities"
     xmlns:b="clr-namespace:Sierra.Utilities.Binding"
     xmlns:behaviors="http://schemas.microsoft.com/xaml/behaviors" mc:Ignorable="d"
     Title="Sierra" Width="1280" Height="720">
@@ -52,6 +50,11 @@
     </Border>
     <controls:Viewport Grid.Row="1" View="Scene" />
     <Grid Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Width="360" Background="#282828">
+      <Grid.RowDefinitions>
+        <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
+        <RowDefinition Height="Auto" />
+      </Grid.RowDefinitions>
       <TabControl SelectedIndex="{b:UiBinding CurrentContext}">
         <TabItem Header="TERRAIN">
           <StackPanel Orientation="Vertical">
@@ -158,7 +161,8 @@
               </StackPanel>
             </Grid>
             <Expander Style="{StaticResource SidebarExpanderStyle}" Header="MATERIAL DETAILS"
-                IsExpanded="True" Visibility="{StaticResource FeatureFlagVisibility_TerrainMaterials}">
+                IsExpanded="True"
+                Visibility="{StaticResource FeatureFlagVisibility_TerrainMaterials}">
               <StackPanel Orientation="Vertical" Margin="12">
                 <Grid Margin="0 0 0 8">
                   <Grid.ColumnDefinitions>
@@ -481,6 +485,19 @@
           </Expander>
         </TabItem>
       </TabControl>
+      <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" Background="#444"
+          BorderBrush="#999" BorderThickness="0 1 0 0" />
+      <StackPanel Orientation="Vertical" Margin="12 6 12 12" Grid.Row="2">
+        <TextBlock Text="DEBUG" Foreground="#AAA" FontWeight="Bold" FontSize="11"
+            Margin="0 0 0 8" />
+        <TextBlock Text="Visualisations" Foreground="#888" FontWeight="Bold" Margin="0 0 0 4" />
+        <CheckBox Content="Terrain Raycast" Foreground="#888"
+            IsChecked="{b:UiBinding Debug_ShowTerrainRaycastVis}" />
+        <CheckBox Content="Terrain Tile Bounds" Foreground="#888"
+            IsChecked="{b:UiBinding Debug_ShowTerrainTileBounds}" />
+        <CheckBox Content="Terrain Heightmap" Foreground="#888"
+            IsChecked="{b:UiBinding Debug_ShowTerrainTileHeightmap}" />
+      </StackPanel>
     </Grid>
   </Grid>
 </Window>

@@ -160,6 +160,16 @@ namespace Sierra.Core
         public float TerrainBrushStrength;
 
         public float SceneLightDirection;
+
+        public EditorDebugState DebugState;
+    }
+
+    [StructLayout(LayoutKind.Sequential)]
+    internal struct EditorDebugState
+    {
+        public byte ShowTerrainRaycastVis;
+        public byte ShowTerrainTileBounds;
+        public byte ShowTerrainTileHeightmap;
     }
 
     [StructLayout(LayoutKind.Sequential)]

@@ -12,6 +12,7 @@ namespace Sierra.Utilities.Binding
     {
         DependencyObject targetObject;
         DependencyProperty targetProperty;
+        Type targetPropertyType;
         UiProperty sourceProperty;
 
         bool isTargetUpdatingFromBinding;
@@ -27,6 +28,9 @@ namespace Sierra.Utilities.Binding
             this.targetObject = targetObject;
             this.targetProperty = targetProperty;
             this.sourceProperty = sourceProperty;
+
+            targetPropertyType = Nullable.GetUnderlyingType(targetProperty.PropertyType)
+                ?? targetProperty.PropertyType;
 
             var targetPropMetadata = targetProperty.GetMetadata(targetProperty.OwnerType);
             if (targetPropMetadata is FrameworkPropertyMetadata frameworkPropertyMetadata &&
@@ -113,6 +117,16 @@ namespace Sierra.Utilities.Binding
                     case UiProperty.SceneLightDirection:
                         SetSourceProperty(ref state.SceneLightDirection);
                         break;
+
+                    case UiProperty.Debug_ShowTerrainRaycastVis:
+                        SetSourceProperty(ref state.DebugState.ShowTerrainRaycastVis);
+                        break;
+                    case UiProperty.Debug_ShowTerrainTileBounds:
+                        SetSourceProperty(ref state.DebugState.ShowTerrainTileBounds);
+                        break;
+                    case UiProperty.Debug_ShowTerrainTileHeightmap:
+                        SetSourceProperty(ref state.DebugState.ShowTerrainTileHeightmap);
+                        break;
                 }
 
                 newValueFromUi = null;
@@ -140,6 +154,11 @@ namespace Sierra.Utilities.Binding
                     UiProperty.TerrainBrushFalloff => state.TerrainBrushFalloff,
                     UiProperty.TerrainBrushStrength => state.TerrainBrushStrength,
                     UiProperty.SceneLightDirection => state.SceneLightDirection,
+
+                    UiProperty.Debug_ShowTerrainRaycastVis => state.DebugState.ShowTerrainRaycastVis,
+                    UiProperty.Debug_ShowTerrainTileBounds => state.DebugState.ShowTerrainTileBounds,
+                    UiProperty.Debug_ShowTerrainTileHeightmap => state.DebugState.ShowTerrainTileHeightmap,
+
                     _ => null
                 };
                 if (value == null)
@@ -148,7 +167,7 @@ namespace Sierra.Utilities.Binding
                     return;
                 }
 
-                object convertedValue = Convert.ChangeType(value, targetProperty.PropertyType);
+                object convertedValue = Convert.ChangeType(value, targetPropertyType);
                 SetTargetPropertyValue(convertedValue);
             }
         }
@@ -170,5 +189,9 @@ namespace Sierra.Utilities.Binding
         TerrainBrushStrength,
         SelectedObjectIds,
         SceneLightDirection,
+
+        Debug_ShowTerrainRaycastVis,
+        Debug_ShowTerrainTileBounds,
+        Debug_ShowTerrainTileHeightmap
     }
 }
