@@ -75,9 +75,6 @@ inline void endTemporaryMemory(TemporaryMemory *temp)
     temp->arena->used = temp->used;
 }
 
-#define PLATFORM_CAPTURE_MOUSE(name) void name()
-typedef PLATFORM_CAPTURE_MOUSE(PlatformCaptureMouse);
-
 #define PLATFORM_LOG_MESSAGE(name) void name(const char *message)
 typedef PLATFORM_LOG_MESSAGE(PlatformLogMessage);
 
@@ -99,7 +96,6 @@ typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
 
 struct EditorPlatformApi
 {
-    PlatformCaptureMouse *captureMouse;
     PlatformLogMessage *logMessage;
     PlatformGetFileLastWriteTime *getFileLastWriteTime;
     PlatformGetFileSize *getFileSize;

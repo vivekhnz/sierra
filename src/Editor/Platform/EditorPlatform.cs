@@ -112,7 +112,6 @@ namespace Sierra.Platform
 
         private static string assetsDirectoryPath;
 
-        private static PlatformCaptureMouse editorPlatformCaptureMouse = CaptureMouse;
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
         private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
@@ -136,9 +135,8 @@ namespace Sierra.Platform
                 Win32.AllocationType.Reserve | Win32.AllocationType.Commit,
                 Win32.MemoryProtection.ReadWrite);
             EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
-                editorPlatformCaptureMouse, editorPlatformLogMessage, editorPlatformGetFileLastWriteTime,
-                editorPlatformGetFileSize, editorPlatformReadEntireFile, Win32.LoadLibrary,
-                Win32.GetProcAddress, Win32.FreeLibrary);
+                editorPlatformLogMessage, editorPlatformGetFileLastWriteTime, editorPlatformGetFileSize,
+                editorPlatformReadEntireFile, Win32.LoadLibrary, Win32.GetProcAddress, Win32.FreeLibrary);
 
             var dummyWindowClass = new Win32.WindowClass
             {
@@ -227,11 +225,6 @@ namespace Sierra.Platform
                     return resultHandled;
             }
             return Win32.DefWindowProc(hwnd, message, wParam, lParam);
-        }
-
-        private static void CaptureMouse()
-        {
-            shouldCaptureMouse = true;
         }
 
         private static void LogMessage(string message)
@@ -516,6 +509,8 @@ namespace Sierra.Platform
                     Win32.SwapBuffers(viewportWindow.DeviceContext);
                 }
             }
+
+            shouldCaptureMouse = input.InputState.IsMouseCaptured;
         }
 
         internal static void Shutdown()

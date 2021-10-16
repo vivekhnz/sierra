@@ -4,7 +4,6 @@ using System.Runtime.InteropServices;
 
 namespace Sierra.Core
 {
-    internal delegate void PlatformCaptureMouse();
     internal delegate void PlatformLogMessage(string message);
     internal delegate long PlatformGetFileLastWriteTime(string relativePath);
     internal delegate long PlatformGetFileSize(string path);
@@ -15,7 +14,6 @@ namespace Sierra.Core
 
     internal struct EditorPlatformApi
     {
-        public IntPtr CaptureMouse;
         public IntPtr LogMessage;
         public IntPtr GetFileLastWriteTime;
         public IntPtr GetFileSize;
@@ -48,6 +46,7 @@ namespace Sierra.Core
         public Vector2 CursorOffset;
         public ulong PressedButtons;
         public ulong PreviousPressedButtons;
+        public bool IsMouseCaptured;
     }
 
     [Flags]
@@ -375,10 +374,10 @@ namespace Sierra.Core
         }
 
         internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
-            PlatformCaptureMouse captureMouse, PlatformLogMessage logMessage,
-            PlatformGetFileLastWriteTime getFileLastWriteTime, PlatformGetFileSize getFileSize,
-            PlatformReadEntireFile readEntireFile, Func<string, IntPtr> loadLibrary,
-            Func<IntPtr, string, IntPtr> getProcAddress, Func<IntPtr, bool> freeLibrary)
+            PlatformLogMessage logMessage, PlatformGetFileLastWriteTime getFileLastWriteTime,
+            PlatformGetFileSize getFileSize, PlatformReadEntireFile readEntireFile,
+            Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
+            Func<IntPtr, bool> freeLibrary)
         {
             EditorCore.loadLibrary = loadLibrary;
             EditorCore.getProcAddress = getProcAddress;
@@ -390,7 +389,6 @@ namespace Sierra.Core
             memory.Data.BaseAddress = appMemoryDataPtr + Marshal.SizeOf<EditorMemory>();
             memory.Data.Size = (ulong)(appMemorySizeInBytes - Marshal.SizeOf<EditorMemory>());
             memory.Data.Used = 0;
-            memory.PlatformApi.CaptureMouse = Marshal.GetFunctionPointerForDelegate(captureMouse);
             memory.PlatformApi.LogMessage = Marshal.GetFunctionPointerForDelegate(logMessage);
             memory.PlatformApi.GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime);
             memory.PlatformApi.GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize);

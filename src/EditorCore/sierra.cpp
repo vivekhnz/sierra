@@ -869,7 +869,7 @@ void sceneViewContinueInteraction(
             viewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
         }
 
-        Platform.captureMouse();
+        input->isMouseCaptured = true;
     }
     break;
     case INTERACTION_TARGET_TERRAIN:
@@ -890,7 +890,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushRadius =
                     glm::clamp(uiState->terrainBrushRadius + radiusIncrease, 2.0f, 128.0f);
 
-                Platform.captureMouse();
+                input->isMouseCaptured = true;
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
@@ -900,7 +900,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushFalloff =
                     glm::clamp(uiState->terrainBrushFalloff + falloffIncrease, 0.0f, 0.99f);
 
-                Platform.captureMouse();
+                input->isMouseCaptured = true;
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
@@ -910,7 +910,7 @@ void sceneViewContinueInteraction(
                 uiState->terrainBrushStrength =
                     glm::clamp(uiState->terrainBrushStrength + strengthIncrease, 0.01f, 1.0f);
 
-                Platform.captureMouse();
+                input->isMouseCaptured = true;
                 interactionState->isAdjustingBrushParameters = true;
             }
             else if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))

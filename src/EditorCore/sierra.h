@@ -250,6 +250,7 @@ struct EditorInput
     glm::vec2 cursorOffset;
     uint64 pressedButtons;
     uint64 prevPressedButtons;
+    bool isMouseCaptured;
 };
 
 #define BUTTON(name, idx) EDITOR_INPUT_##name## = 1ULL << idx
