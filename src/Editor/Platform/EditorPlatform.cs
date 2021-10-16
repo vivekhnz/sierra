@@ -396,10 +396,8 @@ namespace Sierra.Platform
                         result.ViewportWindow = viewportWindow;
                         result.InputState.PreviousPressedButtons = (ulong)prevPressedButtons;
                         result.InputState.PressedButtons = (ulong)pressedButtons;
-                        result.InputState.NormalizedCursorPos.X =
-                            (float)(virtualMousePosWindowSpace.X - vctx.X) / (float)vctx.Width;
-                        result.InputState.NormalizedCursorPos.Y =
-                            (float)(virtualMousePosWindowSpace.Y - vctx.Y) / (float)vctx.Height;
+                        result.InputState.CursorPos.X = (float)virtualMousePosWindowSpace.X - vctx.X;
+                        result.InputState.CursorPos.Y = vctx.Height - ((float)virtualMousePosWindowSpace.Y - vctx.Y);
                         result.InputState.ScrollOffset = nextMouseScrollOffsetY;
 
                         if (shouldCaptureMouse)

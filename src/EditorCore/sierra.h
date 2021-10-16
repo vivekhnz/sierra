@@ -246,7 +246,7 @@ struct EditorInput
 {
     bool isActive;
     float scrollOffset;
-    glm::vec2 normalizedCursorPos;
+    glm::vec2 cursorPos;
     glm::vec2 cursorOffset;
     uint64 pressedButtons;
     uint64 prevPressedButtons;

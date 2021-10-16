@@ -31,7 +31,7 @@ struct ManipulatorInteractionState
 {
     glm::vec3 initialWorldPos;
     float initialDistance;
-    glm::vec2 mousePosOffset;
+    glm::vec2 mousePosOffsetNdc;
 
     Transaction *tx;
     uint32 objectCount;
@@ -714,6 +714,12 @@ glm::vec2 ndcToScreen(SceneViewState *viewState, glm::vec2 ndc)
         * glm::vec2(viewState->sceneRenderTarget->width * 0.5f, viewState->sceneRenderTarget->height * 0.5f);
     return result;
 }
+glm::vec2 screenToNdc(SceneViewState *viewState, glm::vec2 screen)
+{
+    glm::vec2 result = glm::vec2(((screen.x / viewState->sceneRenderTarget->width) * 2) - 1,
+        ((screen.y / viewState->sceneRenderTarget->height) * 2) - 1);
+    return result;
+}
 glm::vec2 worldToScreen(SceneViewState *viewState, glm::vec3 world)
 {
     glm::vec2 ndcPos = worldToNdc(viewState, world);
@@ -954,9 +960,8 @@ void sceneViewContinueInteraction(
         ManipulatorInteractionState *interactionState =
             (ManipulatorInteractionState *)viewState->interactionState.active.state;
 
-        glm::vec2 mousePosNdc =
-            glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
-        mousePosNdc += interactionState->mousePosOffset;
+        glm::vec2 mousePosNdc = screenToNdc(viewState, input->cursorPos);
+        mousePosNdc += interactionState->mousePosOffsetNdc;
 
         glm::vec3 delta = glm::vec3(0);
 
@@ -1139,10 +1144,9 @@ void sceneViewBeginInteraction(
         interactionState->initialDistance = glm::distance(viewState->cameraPos, interactionState->initialWorldPos);
 
         // calculate the mouse offset in NDC-space from the center of the manipulator handle
-        glm::vec2 mousePosNdc =
-            glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
+        glm::vec2 mousePosNdc = screenToNdc(viewState, input->cursorPos);
         glm::vec2 handlePosNdc = worldToNdc(viewState, interactionState->initialWorldPos);
-        interactionState->mousePosOffset = handlePosNdc - mousePosNdc;
+        interactionState->mousePosOffsetNdc = handlePosNdc - mousePosNdc;
     }
     break;
     }
@@ -1345,9 +1349,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     rendererSetCameraPersp(selectionRq, viewState->cameraPos, viewState->cameraLookAt, fov);
     rendererSetCameraPersp(compositeRq, viewState->cameraPos, viewState->cameraLookAt, fov);
 
-    glm::vec2 mousePosNdc =
-        glm::vec2((input->normalizedCursorPos.x * 2) - 1, 1 - (input->normalizedCursorPos.y * 2));
-    glm::vec2 mousePosScreen = ndcToScreen(viewState, mousePosNdc);
+    glm::vec2 mousePosScreen = input->cursorPos;
+    glm::vec2 mousePosNdc = screenToNdc(viewState, mousePosScreen);
     glm::vec3 mouseRayDir = ndcToWorld(viewState, mousePosNdc, 1) - viewState->cameraPos;
     glm::vec3 mouseWorldPos = glm::vec3(-10000, -10000, -10000);
     bool wasMouseWorldPosFound = false;

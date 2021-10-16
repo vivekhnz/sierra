@@ -44,7 +44,7 @@ namespace Sierra.Core
     {
         public bool IsActive;
         public float ScrollOffset;
-        public Vector2 NormalizedCursorPos;
+        public Vector2 CursorPos;
         public Vector2 CursorOffset;
         public ulong PressedButtons;
         public ulong PreviousPressedButtons;
