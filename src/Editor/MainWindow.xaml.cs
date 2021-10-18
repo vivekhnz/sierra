@@ -90,9 +90,6 @@ namespace Sierra
 
             double pct;
 
-            pct = (double)perfCounters.GetInputState.Ticks / perfCounters.FrameTime.Ticks;
-            perfCounterSummaryBuilder.AppendLine($"  Get Input State: {pct:0.00%}");
-
             pct = (double)perfCounters.CoreUpdate.Ticks / perfCounters.FrameTime.Ticks;
             perfCounterSummaryBuilder.AppendLine($"      Core Update: {pct:0.00%}");
 

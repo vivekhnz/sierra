@@ -856,7 +856,7 @@ void sceneViewContinueInteraction(
             glm::vec3 lookDir = glm::normalize(viewState->cameraLookAt - viewState->cameraPos);
             glm::vec3 xDir = cross(lookDir, glm::vec3(0, -1, 0));
             glm::vec3 yDir = cross(lookDir, xDir);
-            glm::vec3 pan = (xDir * input->cursorOffset.x) + (yDir * input->cursorOffset.y);
+            glm::vec3 pan = (xDir * input->capturedCursorDelta.x) + (yDir * input->capturedCursorDelta.y);
             float panMagnitude = glm::clamp(viewState->orbitCameraDistance, 2.5f, 300.0f);
             viewState->cameraLookAt += pan * panMagnitude * 0.000333f;
         }
@@ -865,8 +865,8 @@ void sceneViewContinueInteraction(
             // orbit
             float rotateMagnitude = glm::clamp(viewState->orbitCameraDistance, 14.0f, 70.0f);
             float rotateSensitivity = rotateMagnitude * 0.000833f;
-            viewState->orbitCameraYaw += glm::radians(input->cursorOffset.x * rotateSensitivity);
-            viewState->orbitCameraPitch += glm::radians(input->cursorOffset.y * rotateSensitivity);
+            viewState->orbitCameraYaw += glm::radians(input->capturedCursorDelta.x * rotateSensitivity);
+            viewState->orbitCameraPitch += glm::radians(input->capturedCursorDelta.y * rotateSensitivity);
         }
 
         input->isMouseCaptured = true;
@@ -883,10 +883,11 @@ void sceneViewContinueInteraction(
             BrushStroke *activeBrushStroke = &interactionState->activeBrushStroke;
 
             glm::vec2 brushCursorPos = glm::vec2(mouseWorldPos->x, mouseWorldPos->z);
+            float capturedCursorDelta = input->capturedCursorDelta.x + input->capturedCursorDelta.y;
             if (isButtonDown(input, EDITOR_INPUT_KEY_R))
             {
                 // adjust brush radius
-                float radiusIncrease = 0.0625f * (input->cursorOffset.x + input->cursorOffset.y);
+                float radiusIncrease = capturedCursorDelta * 0.0625f;
                 uiState->terrainBrushRadius =
                     glm::clamp(uiState->terrainBrushRadius + radiusIncrease, 2.0f, 128.0f);
 
@@ -896,7 +897,7 @@ void sceneViewContinueInteraction(
             else if (isButtonDown(input, EDITOR_INPUT_KEY_F))
             {
                 // adjust brush falloff
-                float falloffIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                float falloffIncrease = capturedCursorDelta * 0.001f;
                 uiState->terrainBrushFalloff =
                     glm::clamp(uiState->terrainBrushFalloff + falloffIncrease, 0.0f, 0.99f);
 
@@ -906,7 +907,7 @@ void sceneViewContinueInteraction(
             else if (isButtonDown(input, EDITOR_INPUT_KEY_S))
             {
                 // adjust brush strength
-                float strengthIncrease = (input->cursorOffset.x + input->cursorOffset.y) * 0.001f;
+                float strengthIncrease = capturedCursorDelta * 0.001f;
                 uiState->terrainBrushStrength =
                     glm::clamp(uiState->terrainBrushStrength + strengthIncrease, 0.01f, 1.0f);
 

@@ -40,12 +40,15 @@ namespace Sierra.Core
     [StructLayout(LayoutKind.Sequential)]
     internal struct EditorInput
     {
+        public static readonly EditorInput Disabled = new EditorInput();
+
         public bool IsActive;
         public float ScrollOffset;
         public Vector2 CursorPos;
-        public Vector2 CursorOffset;
         public ulong PressedButtons;
         public ulong PreviousPressedButtons;
+        public Vector2 CapturedCursorDelta;
+
         public bool IsMouseCaptured;
     }
 
@@ -120,8 +123,6 @@ namespace Sierra.Core
     internal struct EditorViewContext
     {
         public IntPtr ViewState;
-        public uint X;
-        public uint Y;
         public uint Width;
         public uint Height;
     }

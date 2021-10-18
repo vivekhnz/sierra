@@ -247,9 +247,10 @@ struct EditorInput
     bool isActive;
     float scrollOffset;
     glm::vec2 cursorPos;
-    glm::vec2 cursorOffset;
     uint64 pressedButtons;
     uint64 prevPressedButtons;
+    glm::vec2 capturedCursorDelta;
+
     bool isMouseCaptured;
 };
 
@@ -323,8 +324,6 @@ enum EditorInputButtons : uint64
 struct EditorViewContext
 {
     void *viewState;
-    uint32 x;
-    uint32 y;
     uint32 width;
     uint32 height;
 };

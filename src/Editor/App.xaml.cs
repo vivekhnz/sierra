@@ -99,14 +99,12 @@ namespace Sierra
                 foreach (var framePerfCounters in perfCountersByFrame)
                 {
                     averagedPerfCounters.FrameTime += framePerfCounters.FrameTime;
-                    averagedPerfCounters.GetInputState += framePerfCounters.GetInputState;
                     averagedPerfCounters.CoreUpdate += framePerfCounters.CoreUpdate;
                     averagedPerfCounters.RenderViewports += framePerfCounters.RenderViewports;
                     averagedPerfCounters.RenderSceneView += framePerfCounters.RenderSceneView;
                     averagedPerfCounters.UpdateBindings += framePerfCounters.UpdateBindings;
                 }
                 averagedPerfCounters.FrameTime /= (double)PerfCounterHistoryFrameCount;
-                averagedPerfCounters.GetInputState /= (double)PerfCounterHistoryFrameCount;
                 averagedPerfCounters.CoreUpdate /= (double)PerfCounterHistoryFrameCount;
                 averagedPerfCounters.RenderViewports /= (double)PerfCounterHistoryFrameCount;
                 averagedPerfCounters.RenderSceneView /= (double)PerfCounterHistoryFrameCount;

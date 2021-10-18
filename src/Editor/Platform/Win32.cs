@@ -163,6 +163,15 @@ namespace Sierra.Platform
             public int Y;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        internal struct Rect
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern IntPtr DefWindowProc(IntPtr hwnd, WindowMessage message,
             IntPtr wParam, IntPtr lParam);
@@ -195,6 +204,9 @@ namespace Sierra.Platform
 
         [DllImport("user32.dll", SetLastError = true)]
         internal static extern bool SetCursorPos(int X, int Y);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool GetWindowRect(IntPtr hwnd, out Rect lpRect);
 
         // gdi32.dll
 

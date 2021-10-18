@@ -46,7 +46,6 @@ namespace Sierra.Platform
     {
         public TimeSpan FrameTime;
 
-        public TimeSpan GetInputState;
         public TimeSpan CoreUpdate;
         public TimeSpan RenderViewports;
         public TimeSpan RenderSceneView;
@@ -55,14 +54,12 @@ namespace Sierra.Platform
         public void Reset()
         {
             FrameTime = TimeSpan.Zero;
-            GetInputState = TimeSpan.Zero;
             CoreUpdate = TimeSpan.Zero;
             RenderViewports = TimeSpan.Zero;
             RenderSceneView = TimeSpan.Zero;
             UpdateBindings = TimeSpan.Zero;
         }
 
-        public TimedBlock Measure_GetInputState() => new TimedBlock(elapsed => GetInputState += elapsed);
         public TimedBlock Measure_CoreUpdate() => new TimedBlock(elapsed => CoreUpdate += elapsed);
         public TimedBlock Measure_RenderViewports() => new TimedBlock(elapsed => RenderViewports += elapsed);
         public TimedBlock Measure_RenderSceneView() => new TimedBlock(elapsed => RenderSceneView += elapsed);
@@ -98,10 +95,9 @@ namespace Sierra.Platform
 
         private static DateTime lastTickTime;
 
-        private static Point prevMousePosWindowSpace;
-        private static bool shouldCaptureMouse;
         private static bool wasMouseCaptured;
-        private static Point capturedMousePosWindowSpace;
+        private static Win32.Point capturedCursorPosScreenSpace;
+
         private static float nextMouseScrollOffsetY;
         private static bool isMouseLeftDown;
         private static bool isMouseMiddleDown;
@@ -193,10 +189,12 @@ namespace Sierra.Platform
             switch (message)
             {
                 case Win32.WindowMessage.SetCursor:
-                    bool hideCursor = shouldCaptureMouse || wasMouseCaptured;
-                    Win32.SetCursor(hideCursor
-                        ? IntPtr.Zero
-                        : Win32.LoadCursor(IntPtr.Zero, Win32.Cursor.Arrow));
+                    IntPtr cursor = IntPtr.Zero;
+                    if (!wasMouseCaptured)
+                    {
+                        cursor = Win32.LoadCursor(IntPtr.Zero, Win32.Cursor.Arrow);
+                    }
+                    Win32.SetCursor(cursor);
                     return resultHandled;
 
                 case Win32.WindowMessage.MouseWheel:
@@ -261,11 +259,8 @@ namespace Sierra.Platform
             }
         }
 
-        private static ViewportInput GetInputState()
+        internal static EditorInputButtons GetPressedButtons()
         {
-            ViewportInput result = new ViewportInput();
-
-            // query button state
             EditorInputButtons pressedButtons = 0;
             pressedButtons |= isMouseLeftDown ? EditorInputButtons.MouseLeft : 0;
             pressedButtons |= isMouseMiddleDown ? EditorInputButtons.MouseMiddle : 0;
@@ -330,122 +325,37 @@ namespace Sierra.Platform
             pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
             pressedButtons |= Keyboard.IsKeyDown(Key.Delete) ? EditorInputButtons.KeyDelete : 0;
 
-            // get mouse cursor position
-            Win32.GetCursorPos(out var mousePosScreenSpaceWin32Point);
-            Point mousePosScreenSpaceWpfPoint = new Point(
-                mousePosScreenSpaceWin32Point.X, mousePosScreenSpaceWin32Point.Y);
-            Point actualMousePosWindowSpace = new Point();
-            Point virtualMousePosWindowSpace = actualMousePosWindowSpace;
+            return pressedButtons;
+        }
 
-            var appWindow = App.Current.MainWindow;
-            if (appWindow != null)
+        internal static EditorInput GetInputStateForViewport(
+            Win32.Rect viewportRect, Win32.Point cursorPosScreenSpace,
+            float scrollOffset, EditorInputButtons pressedButtons, EditorInputButtons prevPressedButtons)
+        {
+            EditorInput result = EditorInput.Disabled;
+
+            if (cursorPosScreenSpace.X >= viewportRect.Left
+                && cursorPosScreenSpace.X < viewportRect.Right
+                && cursorPosScreenSpace.Y >= viewportRect.Top
+                && cursorPosScreenSpace.Y < viewportRect.Bottom)
             {
-                actualMousePosWindowSpace = appWindow.PointFromScreen(mousePosScreenSpaceWpfPoint);
-                virtualMousePosWindowSpace = actualMousePosWindowSpace;
+                result.IsActive = true;
+                result.ScrollOffset = scrollOffset;
+                result.PressedButtons = (ulong)pressedButtons;
+                result.PreviousPressedButtons = (ulong)prevPressedButtons;
 
-                if (mainWindowHwnd == IntPtr.Zero)
+                Win32.Point virtualCursorPosScreenSpace = cursorPosScreenSpace;
+                if (wasMouseCaptured)
                 {
-                    var interopHelper = new WindowInteropHelper(appWindow);
-                    mainWindowHwnd = interopHelper.EnsureHandle();
+                    virtualCursorPosScreenSpace = capturedCursorPosScreenSpace;
+                    result.CapturedCursorDelta.X
+                        = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
+                    result.CapturedCursorDelta.Y
+                        = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
                 }
-                if (mainWindowHwnd != IntPtr.Zero && Win32.GetForegroundWindow() == mainWindowHwnd)
-                {
-                    if (wasMouseCaptured)
-                    {
-                        /*
-                         * If we are capturing the mouse, we need to keep both the actual mouse position
-                         * and a simulated 'virtual' mouse position. The actual mouse position is used for
-                         * cursor offset calculations and the virtual mouse position is used when the
-                         * cursor position is queried.
-                         */
-                        virtualMousePosWindowSpace = capturedMousePosWindowSpace;
-
-                        if (!shouldCaptureMouse)
-                        {
-                            // move the cursor back to its original position when the mouse is released
-                            Point capturedMousePosScreenSpace =
-                                appWindow.PointToScreen(capturedMousePosWindowSpace);
-                            Win32.SetCursorPos(
-                                (int)capturedMousePosScreenSpace.X,
-                                (int)capturedMousePosScreenSpace.Y);
-
-                            actualMousePosWindowSpace = capturedMousePosWindowSpace;
-                        }
-                    }
-
-                    for (int i = 0; i < viewportWindows.Count; i++)
-                    {
-                        var viewportWindow = viewportWindows[i];
-                        var vctx = viewportWindow.ViewContext;
-
-                        if (actualMousePosWindowSpace.X < vctx.X
-                            || actualMousePosWindowSpace.X >= vctx.X + vctx.Width
-                            || actualMousePosWindowSpace.Y < vctx.Y
-                            || actualMousePosWindowSpace.Y >= vctx.Y + vctx.Height)
-                        {
-                            continue;
-                        }
-
-                        result.ViewportWindow = viewportWindow;
-                        result.InputState.PreviousPressedButtons = (ulong)prevPressedButtons;
-                        result.InputState.PressedButtons = (ulong)pressedButtons;
-                        result.InputState.CursorPos.X = (float)virtualMousePosWindowSpace.X - vctx.X;
-                        result.InputState.CursorPos.Y = vctx.Height - ((float)virtualMousePosWindowSpace.Y - vctx.Y);
-                        result.InputState.ScrollOffset = nextMouseScrollOffsetY;
-
-                        if (shouldCaptureMouse)
-                        {
-                            if (!wasMouseCaptured)
-                            {
-                                // store the cursor position so we can move the cursor back to it when
-                                // the mouse is released
-                                capturedMousePosWindowSpace = actualMousePosWindowSpace;
-                            }
-
-                            // calculate the center of the hovered viewport relative to the window
-                            Point viewportCenterWindowSpace = new Point(
-                                Math.Ceiling(vctx.X + (vctx.Width * 0.5)),
-                                Math.Ceiling(vctx.Y + (vctx.Height * 0.5)));
-
-                            // convert the viewport center to screen space and move the cursor to it
-                            Point viewportCenterScreenSpace =
-                                appWindow.PointToScreen(viewportCenterWindowSpace);
-                            Win32.SetCursorPos(
-                                (int)viewportCenterScreenSpace.X, (int)viewportCenterScreenSpace.Y);
-
-                            if (wasMouseCaptured)
-                            {
-                                result.InputState.CursorOffset.X = (float)actualMousePosWindowSpace.X
-                                    - (float)viewportCenterWindowSpace.X;
-                                result.InputState.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
-                                    - (float)viewportCenterWindowSpace.Y;
-                            }
-                            else
-                            {
-                                // don't set the mouse offset on the first frame after we capture the mouse
-                                // or there will be a big jump from the initial cursor position to the
-                                // center of the viewport
-                                result.InputState.CursorOffset = new Vector2(0, 0);
-                                Win32.SetCursor(IntPtr.Zero);
-                            }
-                        }
-                        else
-                        {
-                            result.InputState.CursorOffset.X = (float)actualMousePosWindowSpace.X
-                                - (float)prevMousePosWindowSpace.X;
-                            result.InputState.CursorOffset.Y = (float)actualMousePosWindowSpace.Y
-                                - (float)prevMousePosWindowSpace.Y;
-                        }
-                        break;
-                    }
-                }
+                result.CursorPos.X = virtualCursorPosScreenSpace.X - viewportRect.Left;
+                result.CursorPos.Y = viewportRect.Bottom - virtualCursorPosScreenSpace.Y;
             }
-
-            prevMousePosWindowSpace = actualMousePosWindowSpace;
-            wasMouseCaptured = shouldCaptureMouse;
-            shouldCaptureMouse = false;
-            nextMouseScrollOffsetY = 0;
-            prevPressedButtons = pressedButtons;
 
             return result;
         }
@@ -468,14 +378,6 @@ namespace Sierra.Platform
             float deltaTime = (float)((now - lastTickTime).TotalSeconds);
             lastTickTime = now;
 
-            ViewportInput input;
-            using (perfCounters.Measure_GetInputState())
-            {
-                input = GetInputState();
-            }
-
-            IsViewportHovered = input.ViewportWindow != null;
-
             using (perfCounters.Measure_CoreUpdate())
             {
                 EditorCore.Update(deltaTime);
@@ -483,6 +385,28 @@ namespace Sierra.Platform
 
             using (perfCounters.Measure_RenderViewports())
             {
+                var appWindow = App.Current.MainWindow;
+                bool isWindowActive = false;
+                Win32.Point cursorPosScreenSpace = new Win32.Point();
+                EditorInputButtons pressedButtons = 0;
+                if (appWindow != null)
+                {
+                    if (mainWindowHwnd == IntPtr.Zero)
+                    {
+                        var interopHelper = new WindowInteropHelper(appWindow);
+                        mainWindowHwnd = interopHelper.EnsureHandle();
+                    }
+                    if (mainWindowHwnd != IntPtr.Zero
+                        && Win32.GetForegroundWindow() == mainWindowHwnd
+                        && Win32.GetCursorPos(out cursorPosScreenSpace))
+                    {
+                        isWindowActive = true;
+                        pressedButtons = GetPressedButtons();
+                    }
+                }
+
+                bool isMouseCaptured = false;
+                bool isViewportHovered = false;
                 for (int i = 0; i < viewportWindows.Count; i++)
                 {
                     var viewportWindow = viewportWindows[i];
@@ -491,26 +415,62 @@ namespace Sierra.Platform
 
                     Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
 
-                    input.InputState.IsActive = viewportWindow == input.ViewportWindow;
+                    var input = EditorInput.Disabled;
+                    Win32.Rect viewportRect = new Win32.Rect();
+                    if (isWindowActive && Win32.GetWindowRect(viewportWindow.Hwnd, out viewportRect))
+                    {
+                        input = GetInputStateForViewport(viewportRect, cursorPosScreenSpace,
+                            nextMouseScrollOffsetY, pressedButtons, prevPressedButtons);
+                        if (input.IsActive)
+                        {
+                            isViewportHovered = true;
+                        }
+                    }
+
                     switch (viewportWindow.View)
                     {
                         case EditorView.Scene:
                             using (perfCounters.Measure_RenderSceneView())
                             {
                                 EditorCore.RenderSceneView(ref viewportWindow.ViewContext,
-                                    deltaTime, ref input.InputState);
+                                    deltaTime, ref input);
                             }
                             break;
                         case EditorView.HeightmapPreview:
                             EditorCore.RenderHeightmapPreview(ref viewportWindow.ViewContext,
-                                deltaTime, ref input.InputState);
+                                deltaTime, ref input);
                             break;
                     }
+
+                    if (input.IsMouseCaptured)
+                    {
+                        if (!wasMouseCaptured)
+                        {
+                            capturedCursorPosScreenSpace = cursorPosScreenSpace;
+                            wasMouseCaptured = true;
+                            Win32.SetCursor(IntPtr.Zero);
+                        }
+
+                        int dx = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
+                        int dy = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
+                        Win32.GetCursorPos(out cursorPosScreenSpace);
+                        Win32.SetCursorPos(cursorPosScreenSpace.X - dx, cursorPosScreenSpace.Y - dy);
+
+                        isMouseCaptured = true;
+                    }
+
                     Win32.SwapBuffers(viewportWindow.DeviceContext);
                 }
-            }
+                nextMouseScrollOffsetY = 0;
+                prevPressedButtons = pressedButtons;
 
-            shouldCaptureMouse = input.InputState.IsMouseCaptured;
+                IsViewportHovered = isViewportHovered;
+                if (!isMouseCaptured && wasMouseCaptured)
+                {
+                    Win32.SetCursorPos(capturedCursorPosScreenSpace.X, capturedCursorPosScreenSpace.Y);
+                    wasMouseCaptured = false;
+                }
+            }
         }
 
         internal static void Shutdown()
@@ -519,8 +479,8 @@ namespace Sierra.Platform
             Win32.DestroyWindow(dummyWindowHwnd);
         }
 
-        internal static EditorViewportWindow CreateViewportWindow(IntPtr parentHwnd,
-            uint x, uint y, uint width, uint height, EditorView view)
+        internal static EditorViewportWindow CreateViewportWindow(
+            IntPtr parentHwnd, uint width, uint height, EditorView view)
         {
             IntPtr hwnd = Win32.CreateWindowEx(0, ViewportWindowClassName,
                 "SierraOpenGLViewportWindow",
@@ -537,8 +497,6 @@ namespace Sierra.Platform
                 ViewContext = new EditorViewContext
                 {
                     ViewState = IntPtr.Zero,
-                    X = x,
-                    Y = y,
                     Width = width,
                     Height = height
                 }
