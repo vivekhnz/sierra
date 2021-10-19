@@ -74,11 +74,6 @@ namespace Sierra.Platform
             public string DllShadowCopyPath;
             public DateTime DllLastWriteTimeUtc;
         }
-        private struct ViewportInput
-        {
-            public EditorViewportWindow ViewportWindow;
-            public EditorInput InputState;
-        }
 
         private static readonly string ViewportWindowClassName = "SierraOpenGLViewportWindowClass";
 
@@ -98,10 +93,9 @@ namespace Sierra.Platform
         private static bool wasMouseCaptured;
         private static Win32.Point capturedCursorPosScreenSpace;
 
+        private static bool isViewportHovered;
         private static float nextMouseScrollOffsetY;
-        private static bool isMouseLeftDown;
-        private static bool isMouseMiddleDown;
-        private static bool isMouseRightDown;
+        private static EditorInputButtons nextPressedButtons;
         private static EditorInputButtons prevPressedButtons;
 
         private static List<EditorViewportWindow> viewportWindows = new List<EditorViewportWindow>();
@@ -112,8 +106,6 @@ namespace Sierra.Platform
         private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
         private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
         private static PlatformReadEntireFile editorPlatformReadEntireFile = ReadEntireFile;
-
-        public static bool IsViewportHovered { get; private set; } = false;
 
         internal static void Initialize()
         {
@@ -197,29 +189,29 @@ namespace Sierra.Platform
                     Win32.SetCursor(cursor);
                     return resultHandled;
 
+                case Win32.WindowMessage.MouseLeftButtonDown:
+                    nextPressedButtons |= EditorInputButtons.MouseLeft;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseLeftButtonUp:
+                    nextPressedButtons &= ~EditorInputButtons.MouseLeft;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseMiddleButtonDown:
+                    nextPressedButtons |= EditorInputButtons.MouseMiddle;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseMiddleButtonUp:
+                    nextPressedButtons &= ~EditorInputButtons.MouseMiddle;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseRightButtonDown:
+                    nextPressedButtons |= EditorInputButtons.MouseRight;
+                    return resultHandled;
+                case Win32.WindowMessage.MouseRightButtonUp:
+                    nextPressedButtons &= ~EditorInputButtons.MouseRight;
+                    return resultHandled;
+
                 case Win32.WindowMessage.MouseWheel:
                     short delta = (short)(wParam.ToInt64() >> 16);
                     short direction = (short)(lParam.ToInt64() >> 16);
                     nextMouseScrollOffsetY += delta * direction;
-                    return resultHandled;
-
-                case Win32.WindowMessage.MouseLeftButtonDown:
-                    isMouseLeftDown = true;
-                    return resultHandled;
-                case Win32.WindowMessage.MouseLeftButtonUp:
-                    isMouseLeftDown = false;
-                    return resultHandled;
-                case Win32.WindowMessage.MouseMiddleButtonDown:
-                    isMouseMiddleDown = true;
-                    return resultHandled;
-                case Win32.WindowMessage.MouseMiddleButtonUp:
-                    isMouseMiddleDown = false;
-                    return resultHandled;
-                case Win32.WindowMessage.MouseRightButtonDown:
-                    isMouseRightDown = true;
-                    return resultHandled;
-                case Win32.WindowMessage.MouseRightButtonUp:
-                    isMouseRightDown = false;
                     return resultHandled;
             }
             return Win32.DefWindowProc(hwnd, message, wParam, lParam);
@@ -257,75 +249,6 @@ namespace Sierra.Platform
                 int readBytes = stream.Read(span);
                 Debug.Assert(readBytes == fileSize);
             }
-        }
-
-        internal static EditorInputButtons GetPressedButtons()
-        {
-            EditorInputButtons pressedButtons = 0;
-            pressedButtons |= isMouseLeftDown ? EditorInputButtons.MouseLeft : 0;
-            pressedButtons |= isMouseMiddleDown ? EditorInputButtons.MouseMiddle : 0;
-            pressedButtons |= isMouseRightDown ? EditorInputButtons.MouseRight : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Space) ? EditorInputButtons.KeySpace : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D0) ? EditorInputButtons.Key0 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D1) ? EditorInputButtons.Key1 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D2) ? EditorInputButtons.Key2 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D3) ? EditorInputButtons.Key3 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D4) ? EditorInputButtons.Key4 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D5) ? EditorInputButtons.Key5 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D6) ? EditorInputButtons.Key6 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D7) ? EditorInputButtons.Key7 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D8) ? EditorInputButtons.Key8 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D9) ? EditorInputButtons.Key9 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.A) ? EditorInputButtons.KeyA : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.B) ? EditorInputButtons.KeyB : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.C) ? EditorInputButtons.KeyC : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.D) ? EditorInputButtons.KeyD : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.E) ? EditorInputButtons.KeyE : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F) ? EditorInputButtons.KeyF : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.G) ? EditorInputButtons.KeyG : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.H) ? EditorInputButtons.KeyH : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.I) ? EditorInputButtons.KeyI : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.J) ? EditorInputButtons.KeyJ : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.K) ? EditorInputButtons.KeyK : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.L) ? EditorInputButtons.KeyL : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.M) ? EditorInputButtons.KeyM : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.N) ? EditorInputButtons.KeyN : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.O) ? EditorInputButtons.KeyO : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.P) ? EditorInputButtons.KeyP : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Q) ? EditorInputButtons.KeyQ : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.R) ? EditorInputButtons.KeyR : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.S) ? EditorInputButtons.KeyS : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.T) ? EditorInputButtons.KeyT : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.U) ? EditorInputButtons.KeyU : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.V) ? EditorInputButtons.KeyV : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.W) ? EditorInputButtons.KeyW : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.X) ? EditorInputButtons.KeyX : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Y) ? EditorInputButtons.KeyY : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Z) ? EditorInputButtons.KeyZ : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Escape) ? EditorInputButtons.KeyEscape : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Enter) ? EditorInputButtons.KeyEnter : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Right) ? EditorInputButtons.KeyRight : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Left) ? EditorInputButtons.KeyLeft : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Down) ? EditorInputButtons.KeyDown : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Up) ? EditorInputButtons.KeyUp : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F1) ? EditorInputButtons.KeyF1 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F2) ? EditorInputButtons.KeyF2 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F3) ? EditorInputButtons.KeyF3 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F4) ? EditorInputButtons.KeyF4 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F5) ? EditorInputButtons.KeyF5 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F6) ? EditorInputButtons.KeyF6 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F7) ? EditorInputButtons.KeyF7 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F8) ? EditorInputButtons.KeyF8 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F9) ? EditorInputButtons.KeyF9 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F10) ? EditorInputButtons.KeyF10 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F11) ? EditorInputButtons.KeyF11 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.F12) ? EditorInputButtons.KeyF12 : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.LeftShift) ? EditorInputButtons.KeyLeftShift : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.LeftCtrl) ? EditorInputButtons.KeyLeftControl : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.LeftAlt) ? EditorInputButtons.KeyAlt : 0;
-            pressedButtons |= Keyboard.IsKeyDown(Key.Delete) ? EditorInputButtons.KeyDelete : 0;
-
-            return pressedButtons;
         }
 
         internal static EditorInput GetInputStateForViewport(
@@ -401,12 +324,12 @@ namespace Sierra.Platform
                         && Win32.GetCursorPos(out cursorPosScreenSpace))
                     {
                         isWindowActive = true;
-                        pressedButtons = GetPressedButtons();
+                        pressedButtons = nextPressedButtons;
                     }
                 }
 
                 bool isMouseCaptured = false;
-                bool isViewportHovered = false;
+                isViewportHovered = false;
                 for (int i = 0; i < viewportWindows.Count; i++)
                 {
                     var viewportWindow = viewportWindows[i];
@@ -464,7 +387,6 @@ namespace Sierra.Platform
                 nextMouseScrollOffsetY = 0;
                 prevPressedButtons = pressedButtons;
 
-                IsViewportHovered = isViewportHovered;
                 if (!isMouseCaptured && wasMouseCaptured)
                 {
                     Win32.SetCursorPos(capturedCursorPosScreenSpace.X, capturedCursorPosScreenSpace.Y);
@@ -509,6 +431,91 @@ namespace Sierra.Platform
         internal static void DestroyViewportWindow(IntPtr hwnd)
         {
             Win32.DestroyWindow(hwnd);
+        }
+
+        private static EditorInputButtons GetInputButtonFromKey(Key key)
+        {
+            return (key) switch
+            {
+                Key.Space => EditorInputButtons.KeySpace,
+                Key.D0 => EditorInputButtons.Key0,
+                Key.D1 => EditorInputButtons.Key1,
+                Key.D2 => EditorInputButtons.Key2,
+                Key.D3 => EditorInputButtons.Key3,
+                Key.D4 => EditorInputButtons.Key4,
+                Key.D5 => EditorInputButtons.Key5,
+                Key.D6 => EditorInputButtons.Key6,
+                Key.D7 => EditorInputButtons.Key7,
+                Key.D8 => EditorInputButtons.Key8,
+                Key.D9 => EditorInputButtons.Key9,
+                Key.A => EditorInputButtons.KeyA,
+                Key.B => EditorInputButtons.KeyB,
+                Key.C => EditorInputButtons.KeyC,
+                Key.D => EditorInputButtons.KeyD,
+                Key.E => EditorInputButtons.KeyE,
+                Key.F => EditorInputButtons.KeyF,
+                Key.G => EditorInputButtons.KeyG,
+                Key.H => EditorInputButtons.KeyH,
+                Key.I => EditorInputButtons.KeyI,
+                Key.J => EditorInputButtons.KeyJ,
+                Key.K => EditorInputButtons.KeyK,
+                Key.L => EditorInputButtons.KeyL,
+                Key.M => EditorInputButtons.KeyM,
+                Key.N => EditorInputButtons.KeyN,
+                Key.O => EditorInputButtons.KeyO,
+                Key.P => EditorInputButtons.KeyP,
+                Key.Q => EditorInputButtons.KeyQ,
+                Key.R => EditorInputButtons.KeyR,
+                Key.S => EditorInputButtons.KeyS,
+                Key.T => EditorInputButtons.KeyT,
+                Key.U => EditorInputButtons.KeyU,
+                Key.V => EditorInputButtons.KeyV,
+                Key.W => EditorInputButtons.KeyW,
+                Key.X => EditorInputButtons.KeyX,
+                Key.Y => EditorInputButtons.KeyY,
+                Key.Z => EditorInputButtons.KeyZ,
+                Key.Escape => EditorInputButtons.KeyEscape,
+                Key.Enter => EditorInputButtons.KeyEnter,
+                Key.Right => EditorInputButtons.KeyRight,
+                Key.Left => EditorInputButtons.KeyLeft,
+                Key.Down => EditorInputButtons.KeyDown,
+                Key.Up => EditorInputButtons.KeyUp,
+                Key.F1 => EditorInputButtons.KeyF1,
+                Key.F2 => EditorInputButtons.KeyF2,
+                Key.F3 => EditorInputButtons.KeyF3,
+                Key.F4 => EditorInputButtons.KeyF4,
+                Key.F5 => EditorInputButtons.KeyF5,
+                Key.F6 => EditorInputButtons.KeyF6,
+                Key.F7 => EditorInputButtons.KeyF7,
+                Key.F8 => EditorInputButtons.KeyF8,
+                Key.F9 => EditorInputButtons.KeyF9,
+                Key.F10 => EditorInputButtons.KeyF10,
+                Key.F11 => EditorInputButtons.KeyF11,
+                Key.F12 => EditorInputButtons.KeyF12,
+                Key.LeftShift => EditorInputButtons.KeyLeftShift,
+                Key.LeftCtrl => EditorInputButtons.KeyLeftControl,
+                Key.LeftAlt => EditorInputButtons.KeyAlt,
+                Key.Delete => EditorInputButtons.KeyDelete,
+                _ => 0
+            };
+        }
+
+        internal static void HandleWindowKeyDown(object sender, KeyEventArgs e)
+        {
+            if (isViewportHovered)
+            {
+                nextPressedButtons |= GetInputButtonFromKey(e.Key);
+                e.Handled = true;
+            }
+        }
+
+        internal static void HandleWindowKeyUp(object sender, KeyEventArgs e)
+        {
+            if (isViewportHovered)
+            {
+                nextPressedButtons &= ~GetInputButtonFromKey(e.Key);
+                e.Handled = true;
+            }
         }
     }
 }

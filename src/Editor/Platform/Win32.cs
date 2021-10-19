@@ -120,13 +120,13 @@ namespace Sierra.Platform
         internal enum WindowMessage : uint
         {
             SetCursor = 0x0020,
-            MouseWheel = 0x020A,
             MouseLeftButtonDown = 0x0201,
             MouseLeftButtonUp = 0x0202,
             MouseRightButtonDown = 0x0204,
             MouseRightButtonUp = 0x0205,
             MouseMiddleButtonDown = 0x0207,
-            MouseMiddleButtonUp = 0x0208
+            MouseMiddleButtonUp = 0x0208,
+            MouseWheel = 0x020A,
         }
 
         internal enum Cursor
@@ -147,13 +147,6 @@ namespace Sierra.Platform
             Hand = 32649,
             AppStarting = 32650,
             Help = 32651
-        }
-
-        internal enum VirtualKey
-        {
-            MouseLeft = 0x01,
-            MouseRight = 0x02,
-            MouseMiddle = 0x04,
         }
 
         [StructLayout(LayoutKind.Sequential)]

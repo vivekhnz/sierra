@@ -1,5 +1,4 @@
-﻿using System;
-using System.Linq;
+﻿using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
@@ -20,10 +19,8 @@ namespace Sierra
         {
             InitializeComponent();
 
-            PreviewKeyDown += (sender, e) =>
-            {
-                e.Handled = EditorPlatform.IsViewportHovered;
-            };
+            PreviewKeyDown += EditorPlatform.HandleWindowKeyDown;
+            PreviewKeyUp += EditorPlatform.HandleWindowKeyUp;
 
             EditorCore.TransactionPublished += OnTransactionPublished;
             App.PerformanceCountersUpdated += OnPerfCountersUpdated;
