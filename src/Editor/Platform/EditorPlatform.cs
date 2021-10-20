@@ -393,7 +393,10 @@ namespace Sierra.Platform
         {
             if (isViewportHovered)
             {
-                nextPressedButtons |= GetInputButtonFromKey(e.Key);
+                if (!e.IsRepeat)
+                {
+                    nextPressedButtons |= GetInputButtonFromKey(e.Key);
+                }
                 e.Handled = true;
             }
         }
@@ -402,7 +405,10 @@ namespace Sierra.Platform
         {
             if (isViewportHovered)
             {
-                nextPressedButtons &= ~GetInputButtonFromKey(e.Key);
+                if (!e.IsRepeat)
+                {
+                    nextPressedButtons &= ~GetInputButtonFromKey(e.Key);
+                }
                 e.Handled = true;
             }
         }
