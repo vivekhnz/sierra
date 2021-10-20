@@ -25,7 +25,10 @@ namespace Sierra.ViewModels
                 var fileState = assetReg.GetFileState();
                 assetVm.FileRelativePath = fileState.RelativePath;
             }
-            RegisteredAssets.Add(assetVm);
+            App.Current.Dispatcher.Invoke(() =>
+            {
+                RegisteredAssets.Add(assetVm);
+            });
         }
 
         internal static FilterEventHandler BuildAssetFilter(

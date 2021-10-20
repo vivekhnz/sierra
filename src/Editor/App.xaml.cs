@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
 using Sierra.Core;
@@ -13,16 +14,8 @@ namespace Sierra
     /// </summary>
     public partial class App : Application
     {
-        private const int PerfCounterHistoryFrameCount = 30;
-        private const int TicksBetweenUiUpdates = 4;
-
-        private EditorPerformanceCounters[] perfCountersByFrame;
-        private int currentPerfCounterIndex;
         private EditorPerformanceCounters averagedPerfCounters;
-        private int ticksUntilUiUpdate;
-
-        private DateTime lastFrameTime;
-        private DispatcherTimer renderTimer;
+        private DispatcherTimer updateUiTimer;
 
         public EditorAssetsViewModel Assets { get; private set; }
         public EditorDocumentViewModel Document { get; private set; }
@@ -40,80 +33,48 @@ namespace Sierra
             EditorCore.AssetRegistered += Assets.OnAssetRegistered;
             EditorCore.TransactionPublished += Document.OnTransactionPublished;
 
-            EditorPlatform.Initialize();
-
-            perfCountersByFrame = new EditorPerformanceCounters[PerfCounterHistoryFrameCount];
-            for (int i = 0; i < PerfCounterHistoryFrameCount; i++)
-            {
-                perfCountersByFrame[i] = new EditorPerformanceCounters();
-            }
             averagedPerfCounters = new EditorPerformanceCounters();
-            currentPerfCounterIndex = 0;
-            ticksUntilUiUpdate = TicksBetweenUiUpdates;
-
-            renderTimer = new DispatcherTimer(DispatcherPriority.Send)
+            updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
-                Interval = TimeSpan.FromMilliseconds(0.5)
+                Interval = TimeSpan.FromMilliseconds(1)
             };
-            renderTimer.Tick += OnTick;
-            renderTimer.Start();
+            updateUiTimer.Tick += UpdateUiTick;
+            updateUiTimer.Start();
+
+            var coreThread = new Thread(() => EditorPlatform.Tick());
+            coreThread.Start();
 
             base.OnStartup(e);
         }
 
         protected override void OnExit(ExitEventArgs e)
         {
-            renderTimer.Stop();
+            updateUiTimer.Stop();
             EditorPlatform.Shutdown();
 
             base.OnExit(e);
         }
 
-        private void OnTick(object sender, EventArgs e)
+        private void UpdateUiTick(object sender, EventArgs e)
         {
-            EditorPerformanceCounters thisFramePerfCounters = perfCountersByFrame[currentPerfCounterIndex];
-            currentPerfCounterIndex++;
-            if (currentPerfCounterIndex == PerfCounterHistoryFrameCount)
+            ref EditorUiState uiState = ref EditorCore.GetUiState();
+            EditorBindingEngine.UpdateBindings(ref uiState);
+            EditorCommands.Update(Document, ref uiState);
+
+            averagedPerfCounters.Reset();
+            foreach (var framePerfCounters in EditorPlatform.PerfCountersByFrame)
             {
-                currentPerfCounterIndex = 0;
+                averagedPerfCounters.FrameTime += framePerfCounters.FrameTime;
+                averagedPerfCounters.CoreUpdate += framePerfCounters.CoreUpdate;
+                averagedPerfCounters.RenderViewports += framePerfCounters.RenderViewports;
+                averagedPerfCounters.RenderSceneView += framePerfCounters.RenderSceneView;
             }
-            thisFramePerfCounters.Reset();
+            averagedPerfCounters.FrameTime /= (double)EditorPlatform.PerfCountersByFrame.Length;
+            averagedPerfCounters.CoreUpdate /= (double)EditorPlatform.PerfCountersByFrame.Length;
+            averagedPerfCounters.RenderViewports /= (double)EditorPlatform.PerfCountersByFrame.Length;
+            averagedPerfCounters.RenderSceneView /= (double)EditorPlatform.PerfCountersByFrame.Length;
 
-            DateTime now = DateTime.UtcNow;
-            thisFramePerfCounters.FrameTime = now - lastFrameTime;
-            lastFrameTime = now;
-
-            EditorPlatform.Tick(thisFramePerfCounters);
-
-            ticksUntilUiUpdate--;
-            if (ticksUntilUiUpdate < 0)
-            {
-                ref EditorUiState uiState = ref EditorCore.GetUiState();
-                using (thisFramePerfCounters.Measure_UpdateBindings())
-                {
-                    EditorBindingEngine.UpdateBindings(ref uiState);
-                }
-                EditorCommands.Update(Document, ref uiState);
-
-                averagedPerfCounters.Reset();
-                foreach (var framePerfCounters in perfCountersByFrame)
-                {
-                    averagedPerfCounters.FrameTime += framePerfCounters.FrameTime;
-                    averagedPerfCounters.CoreUpdate += framePerfCounters.CoreUpdate;
-                    averagedPerfCounters.RenderViewports += framePerfCounters.RenderViewports;
-                    averagedPerfCounters.RenderSceneView += framePerfCounters.RenderSceneView;
-                    averagedPerfCounters.UpdateBindings += framePerfCounters.UpdateBindings;
-                }
-                averagedPerfCounters.FrameTime /= (double)PerfCounterHistoryFrameCount;
-                averagedPerfCounters.CoreUpdate /= (double)PerfCounterHistoryFrameCount;
-                averagedPerfCounters.RenderViewports /= (double)PerfCounterHistoryFrameCount;
-                averagedPerfCounters.RenderSceneView /= (double)PerfCounterHistoryFrameCount;
-                averagedPerfCounters.UpdateBindings /= (double)PerfCounterHistoryFrameCount;
-
-                PerformanceCountersUpdated?.Invoke(averagedPerfCounters);
-
-                ticksUntilUiUpdate = TicksBetweenUiUpdates;
-            }
+            PerformanceCountersUpdated?.Invoke(averagedPerfCounters);
         }
     }
 }

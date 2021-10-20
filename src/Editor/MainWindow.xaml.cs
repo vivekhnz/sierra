@@ -95,9 +95,6 @@ namespace Sierra
             pct = (double)perfCounters.RenderSceneView.Ticks / perfCounters.FrameTime.Ticks;
             perfCounterSummaryBuilder.AppendLine($"Render Scene View: {pct:0.00%}");
 
-            pct = (double)perfCounters.UpdateBindings.Ticks / perfCounters.FrameTime.Ticks;
-            perfCounterSummaryBuilder.AppendLine($"  Update Bindings: {pct:0.00%}");
-
             tbPerfCounters.Text = perfCounterSummaryBuilder.ToString();
         }
     }

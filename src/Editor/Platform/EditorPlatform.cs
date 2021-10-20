@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
+using System.Threading;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Interop;
@@ -49,7 +50,6 @@ namespace Sierra.Platform
         public TimeSpan CoreUpdate;
         public TimeSpan RenderViewports;
         public TimeSpan RenderSceneView;
-        public TimeSpan UpdateBindings;
 
         public void Reset()
         {
@@ -57,48 +57,33 @@ namespace Sierra.Platform
             CoreUpdate = TimeSpan.Zero;
             RenderViewports = TimeSpan.Zero;
             RenderSceneView = TimeSpan.Zero;
-            UpdateBindings = TimeSpan.Zero;
         }
 
         public TimedBlock Measure_CoreUpdate() => new TimedBlock(elapsed => CoreUpdate += elapsed);
         public TimedBlock Measure_RenderViewports() => new TimedBlock(elapsed => RenderViewports += elapsed);
         public TimedBlock Measure_RenderSceneView() => new TimedBlock(elapsed => RenderSceneView += elapsed);
-        public TimedBlock Measure_UpdateBindings() => new TimedBlock(elapsed => UpdateBindings += elapsed);
     }
 
     internal static class EditorPlatform
     {
-        private class ReloadableCode
-        {
-            public string DllPath;
-            public string DllShadowCopyPath;
-            public DateTime DllLastWriteTimeUtc;
-        }
-
         private static readonly string ViewportWindowClassName = "SierraOpenGLViewportWindowClass";
 
         private static IntPtr appInstance = Win32.GetModuleHandle(null);
         private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
         private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
 
-        private static string buildLockFilePath;
-        private static ReloadableCode editorCode;
-
         private static IntPtr mainWindowHwnd;
-        private static IntPtr dummyWindowHwnd;
-        private static IntPtr glRenderingContext;
+        private static bool isRunning;
 
-        private static DateTime lastTickTime;
-
-        private static bool wasMouseCaptured;
-        private static Win32.Point capturedCursorPosScreenSpace;
-
-        private static bool isViewportHovered;
-        private static float nextMouseScrollOffsetY;
-        private static EditorInputButtons nextPressedButtons;
-        private static EditorInputButtons prevPressedButtons;
+        const int PerfCounterHistoryFrameCount = 30;
+        public static EditorPerformanceCounters[] PerfCountersByFrame;
 
         private static List<EditorViewportWindow> viewportWindows = new List<EditorViewportWindow>();
+
+        private static bool isViewportHovered;
+        private static bool wasMouseCaptured;
+        private static long nextMouseScrollOffsetY;
+        private static EditorInputButtons nextPressedButtons;
 
         private static string assetsDirectoryPath;
 
@@ -107,16 +92,14 @@ namespace Sierra.Platform
         private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
         private static PlatformReadEntireFile editorPlatformReadEntireFile = ReadEntireFile;
 
-        internal static void Initialize()
+        internal static void Tick()
         {
             assetsDirectoryPath = Path.Combine(
                 AppDomain.CurrentDomain.BaseDirectory, "../../../data");
-            buildLockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build.lock");
-            editorCode = new ReloadableCode
-            {
-                DllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra_core.dll"),
-                DllShadowCopyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra_core.shadow.dll")
-            };
+            string buildLockFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "build.lock");
+            string coreDllPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra_core.dll");
+            string coreDllShadowCopyPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "sierra_core.shadow.dll");
+            DateTime coreDllLastWriteTime = DateTime.MinValue;
 
             int appMemorySizeInBytes = 500 * 1024 * 1024;
             IntPtr appMemoryPtr = Win32.VirtualAlloc(IntPtr.Zero, (uint)appMemorySizeInBytes,
@@ -133,13 +116,13 @@ namespace Sierra.Platform
                 lpszClassName = "SierraOpenGLDummyWindowClass"
             };
             Win32.RegisterClass(ref dummyWindowClass);
-            dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
+            IntPtr dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
                 "SierraOpenGLDummyWindow", 0, 0, 0, 100, 100, IntPtr.Zero, IntPtr.Zero, appInstance,
                 IntPtr.Zero);
 
             IntPtr dummyDeviceContext = Win32.GetDC(dummyWindowHwnd);
             ConfigureDeviceContextForOpenGL(dummyDeviceContext);
-            glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
+            IntPtr glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
             Win32.MakeGLContextCurrent(dummyDeviceContext, glRenderingContext);
 
             var viewportWindowClass = new Win32.WindowClass
@@ -153,7 +136,151 @@ namespace Sierra.Platform
             };
             Win32.RegisterClass(ref viewportWindowClass);
 
-            lastTickTime = DateTime.UtcNow;
+            PerfCountersByFrame = new EditorPerformanceCounters[PerfCounterHistoryFrameCount];
+            for (int i = 0; i < PerfCounterHistoryFrameCount; i++)
+            {
+                PerfCountersByFrame[i] = new EditorPerformanceCounters();
+            }
+            int currentPerfCounterIndex = 0;
+            DateTime lastTickTime = DateTime.UtcNow;
+
+            Win32.Point capturedCursorPosScreenSpace = new Win32.Point();
+            EditorInputButtons prevPressedButtons = 0;
+
+            isRunning = true;
+            while (isRunning)
+            {
+                EditorPerformanceCounters perfCounters = PerfCountersByFrame[currentPerfCounterIndex];
+                currentPerfCounterIndex++;
+                if (currentPerfCounterIndex == PerfCounterHistoryFrameCount)
+                {
+                    currentPerfCounterIndex = 0;
+                }
+                perfCounters.Reset();
+
+                DateTime now = DateTime.UtcNow;
+                perfCounters.FrameTime = now - lastTickTime;
+                float deltaTime = (float)(perfCounters.FrameTime.TotalSeconds);
+                lastTickTime = now;
+
+                if (!File.Exists(buildLockFilePath))
+                {
+                    DateTime dllFileLastWriteTime = File.GetLastWriteTimeUtc(coreDllPath);
+                    if (dllFileLastWriteTime > coreDllLastWriteTime)
+                    {
+                        if (EditorCore.ReloadCode(coreDllPath, coreDllShadowCopyPath))
+                        {
+                            coreDllLastWriteTime = dllFileLastWriteTime;
+                        }
+                    }
+                }
+
+                using (perfCounters.Measure_CoreUpdate())
+                {
+                    EditorCore.Update(deltaTime);
+                }
+
+                using (perfCounters.Measure_RenderViewports())
+                {
+                    bool isWindowActive = false;
+                    Win32.Point cursorPosScreenSpace = new Win32.Point();
+                    EditorInputButtons pressedButtons = 0;
+                    if (mainWindowHwnd != IntPtr.Zero
+                        && Win32.GetForegroundWindow() == mainWindowHwnd
+                        && Win32.GetCursorPos(out cursorPosScreenSpace))
+                    {
+                        isWindowActive = true;
+                        pressedButtons = nextPressedButtons;
+                    }
+
+                    bool isMouseCaptured = false;
+                    bool isAnyViewportHovered = false;
+                    long scrollOffsetY = nextMouseScrollOffsetY;
+                    for (int i = 0; i < viewportWindows.Count; i++)
+                    {
+                        var viewportWindow = viewportWindows[i];
+                        if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
+                            continue;
+
+                        Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
+
+                        var input = EditorInput.Disabled;
+                        Win32.Rect viewportRect = new Win32.Rect();
+                        if (isWindowActive && Win32.GetWindowRect(viewportWindow.Hwnd, out viewportRect)
+                            && cursorPosScreenSpace.X >= viewportRect.Left
+                            && cursorPosScreenSpace.X < viewportRect.Right
+                            && cursorPosScreenSpace.Y >= viewportRect.Top
+                            && cursorPosScreenSpace.Y < viewportRect.Bottom)
+                        {
+                            input.IsActive = true;
+                            input.ScrollOffset = (float)scrollOffsetY;
+                            input.PressedButtons = (ulong)pressedButtons;
+                            input.PreviousPressedButtons = (ulong)prevPressedButtons;
+
+                            Win32.Point virtualCursorPosScreenSpace = cursorPosScreenSpace;
+                            if (wasMouseCaptured)
+                            {
+                                virtualCursorPosScreenSpace = capturedCursorPosScreenSpace;
+                                input.CapturedCursorDelta.X
+                                    = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
+                                input.CapturedCursorDelta.Y
+                                    = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
+                            }
+                            input.CursorPos.X = virtualCursorPosScreenSpace.X - viewportRect.Left;
+                            input.CursorPos.Y = viewportRect.Bottom - virtualCursorPosScreenSpace.Y;
+
+                            isAnyViewportHovered = true;
+                        }
+
+                        switch (viewportWindow.View)
+                        {
+                            case EditorView.Scene:
+                                using (perfCounters.Measure_RenderSceneView())
+                                {
+                                    EditorCore.RenderSceneView(ref viewportWindow.ViewContext,
+                                        deltaTime, ref input);
+                                }
+                                break;
+                            case EditorView.HeightmapPreview:
+                                EditorCore.RenderHeightmapPreview(ref viewportWindow.ViewContext,
+                                    deltaTime, ref input);
+                                break;
+                        }
+
+                        if (input.IsMouseCaptured)
+                        {
+                            if (!wasMouseCaptured)
+                            {
+                                capturedCursorPosScreenSpace = cursorPosScreenSpace;
+                                wasMouseCaptured = true;
+                                Win32.SetCursor(IntPtr.Zero);
+                            }
+
+                            int dx = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
+                            int dy = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
+                            Win32.GetCursorPos(out cursorPosScreenSpace);
+                            Win32.SetCursorPos(cursorPosScreenSpace.X - dx, cursorPosScreenSpace.Y - dy);
+
+                            isMouseCaptured = true;
+                        }
+
+                        Win32.SwapBuffers(viewportWindow.DeviceContext);
+                    }
+
+                    isViewportHovered = isAnyViewportHovered;
+                    Interlocked.Add(ref nextMouseScrollOffsetY, -scrollOffsetY);
+                    prevPressedButtons = pressedButtons;
+
+                    if (!isMouseCaptured && wasMouseCaptured)
+                    {
+                        Win32.SetCursorPos(capturedCursorPosScreenSpace.X, capturedCursorPosScreenSpace.Y);
+                        wasMouseCaptured = false;
+                    }
+                }
+            }
+
+            Win32.DestroyGLContext(glRenderingContext);
+            Win32.DestroyWindow(dummyWindowHwnd);
         }
 
         private static void ConfigureDeviceContextForOpenGL(IntPtr deviceContext)
@@ -209,9 +336,9 @@ namespace Sierra.Platform
                     return resultHandled;
 
                 case Win32.WindowMessage.MouseWheel:
-                    short delta = (short)(wParam.ToInt64() >> 16);
-                    short direction = (short)(lParam.ToInt64() >> 16);
-                    nextMouseScrollOffsetY += delta * direction;
+                    byte[] bytes = BitConverter.GetBytes(wParam.ToInt64());
+                    short delta = BitConverter.ToInt16(bytes, 2);
+                    Interlocked.Add(ref nextMouseScrollOffsetY, delta);
                     return resultHandled;
             }
             return Win32.DefWindowProc(hwnd, message, wParam, lParam);
@@ -251,6 +378,11 @@ namespace Sierra.Platform
             }
         }
 
+        internal static void Shutdown()
+        {
+            isRunning = false;
+        }
+
         internal static void AttachToWindow(Window window)
         {
             var interopHelper = new WindowInteropHelper(window);
@@ -258,147 +390,6 @@ namespace Sierra.Platform
 
             window.PreviewKeyDown += HandleWindowKeyDown;
             window.PreviewKeyUp += HandleWindowKeyUp;
-        }
-
-        internal static void Tick(EditorPerformanceCounters perfCounters)
-        {
-            if (!File.Exists(buildLockFilePath))
-            {
-                DateTime editorCodeDllLastWriteTime = File.GetLastWriteTimeUtc(editorCode.DllPath);
-                if (editorCodeDllLastWriteTime > editorCode.DllLastWriteTimeUtc)
-                {
-                    if (EditorCore.ReloadCode(editorCode.DllPath, editorCode.DllShadowCopyPath))
-                    {
-                        editorCode.DllLastWriteTimeUtc = editorCodeDllLastWriteTime;
-                    }
-                }
-            }
-
-            DateTime now = DateTime.UtcNow;
-            float deltaTime = (float)((now - lastTickTime).TotalSeconds);
-            lastTickTime = now;
-
-            using (perfCounters.Measure_CoreUpdate())
-            {
-                EditorCore.Update(deltaTime);
-            }
-
-            using (perfCounters.Measure_RenderViewports())
-            {
-                bool isWindowActive = false;
-                Win32.Point cursorPosScreenSpace = new Win32.Point();
-                EditorInputButtons pressedButtons = 0;
-                if (mainWindowHwnd != IntPtr.Zero
-                    && Win32.GetForegroundWindow() == mainWindowHwnd
-                    && Win32.GetCursorPos(out cursorPosScreenSpace))
-                {
-                    isWindowActive = true;
-                    pressedButtons = nextPressedButtons;
-                }
-
-                bool isMouseCaptured = false;
-                isViewportHovered = false;
-                for (int i = 0; i < viewportWindows.Count; i++)
-                {
-                    var viewportWindow = viewportWindows[i];
-                    if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
-                        continue;
-
-                    Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
-
-                    var input = EditorInput.Disabled;
-                    Win32.Rect viewportRect = new Win32.Rect();
-                    if (isWindowActive && Win32.GetWindowRect(viewportWindow.Hwnd, out viewportRect))
-                    {
-                        input = GetInputStateForViewport(viewportRect, cursorPosScreenSpace,
-                            nextMouseScrollOffsetY, pressedButtons, prevPressedButtons);
-                        if (input.IsActive)
-                        {
-                            isViewportHovered = true;
-                        }
-                    }
-
-                    switch (viewportWindow.View)
-                    {
-                        case EditorView.Scene:
-                            using (perfCounters.Measure_RenderSceneView())
-                            {
-                                EditorCore.RenderSceneView(ref viewportWindow.ViewContext,
-                                    deltaTime, ref input);
-                            }
-                            break;
-                        case EditorView.HeightmapPreview:
-                            EditorCore.RenderHeightmapPreview(ref viewportWindow.ViewContext,
-                                deltaTime, ref input);
-                            break;
-                    }
-
-                    if (input.IsMouseCaptured)
-                    {
-                        if (!wasMouseCaptured)
-                        {
-                            capturedCursorPosScreenSpace = cursorPosScreenSpace;
-                            wasMouseCaptured = true;
-                            Win32.SetCursor(IntPtr.Zero);
-                        }
-
-                        int dx = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
-                        int dy = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
-                        Win32.GetCursorPos(out cursorPosScreenSpace);
-                        Win32.SetCursorPos(cursorPosScreenSpace.X - dx, cursorPosScreenSpace.Y - dy);
-
-                        isMouseCaptured = true;
-                    }
-
-                    Win32.SwapBuffers(viewportWindow.DeviceContext);
-                }
-                nextMouseScrollOffsetY = 0;
-                prevPressedButtons = pressedButtons;
-
-                if (!isMouseCaptured && wasMouseCaptured)
-                {
-                    Win32.SetCursorPos(capturedCursorPosScreenSpace.X, capturedCursorPosScreenSpace.Y);
-                    wasMouseCaptured = false;
-                }
-            }
-        }
-
-        private static EditorInput GetInputStateForViewport(
-            Win32.Rect viewportRect, Win32.Point cursorPosScreenSpace,
-            float scrollOffset, EditorInputButtons pressedButtons, EditorInputButtons prevPressedButtons)
-        {
-            EditorInput result = EditorInput.Disabled;
-
-            if (cursorPosScreenSpace.X >= viewportRect.Left
-                && cursorPosScreenSpace.X < viewportRect.Right
-                && cursorPosScreenSpace.Y >= viewportRect.Top
-                && cursorPosScreenSpace.Y < viewportRect.Bottom)
-            {
-                result.IsActive = true;
-                result.ScrollOffset = scrollOffset;
-                result.PressedButtons = (ulong)pressedButtons;
-                result.PreviousPressedButtons = (ulong)prevPressedButtons;
-
-                Win32.Point virtualCursorPosScreenSpace = cursorPosScreenSpace;
-                if (wasMouseCaptured)
-                {
-                    virtualCursorPosScreenSpace = capturedCursorPosScreenSpace;
-                    result.CapturedCursorDelta.X
-                        = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
-                    result.CapturedCursorDelta.Y
-                        = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
-                }
-                result.CursorPos.X = virtualCursorPosScreenSpace.X - viewportRect.Left;
-                result.CursorPos.Y = viewportRect.Bottom - virtualCursorPosScreenSpace.Y;
-            }
-
-            return result;
-        }
-
-        internal static void Shutdown()
-        {
-            Win32.DestroyGLContext(glRenderingContext);
-            Win32.DestroyWindow(dummyWindowHwnd);
         }
 
         internal static EditorViewportWindow CreateViewportWindow(
