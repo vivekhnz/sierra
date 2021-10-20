@@ -19,8 +19,7 @@ namespace Sierra
         {
             InitializeComponent();
 
-            PreviewKeyDown += EditorPlatform.HandleWindowKeyDown;
-            PreviewKeyUp += EditorPlatform.HandleWindowKeyUp;
+            EditorPlatform.AttachToWindow(this);
 
             EditorCore.TransactionPublished += OnTransactionPublished;
             App.PerformanceCountersUpdated += OnPerfCountersUpdated;

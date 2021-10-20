@@ -251,36 +251,13 @@ namespace Sierra.Platform
             }
         }
 
-        internal static EditorInput GetInputStateForViewport(
-            Win32.Rect viewportRect, Win32.Point cursorPosScreenSpace,
-            float scrollOffset, EditorInputButtons pressedButtons, EditorInputButtons prevPressedButtons)
+        internal static void AttachToWindow(Window window)
         {
-            EditorInput result = EditorInput.Disabled;
+            var interopHelper = new WindowInteropHelper(window);
+            mainWindowHwnd = interopHelper.EnsureHandle();
 
-            if (cursorPosScreenSpace.X >= viewportRect.Left
-                && cursorPosScreenSpace.X < viewportRect.Right
-                && cursorPosScreenSpace.Y >= viewportRect.Top
-                && cursorPosScreenSpace.Y < viewportRect.Bottom)
-            {
-                result.IsActive = true;
-                result.ScrollOffset = scrollOffset;
-                result.PressedButtons = (ulong)pressedButtons;
-                result.PreviousPressedButtons = (ulong)prevPressedButtons;
-
-                Win32.Point virtualCursorPosScreenSpace = cursorPosScreenSpace;
-                if (wasMouseCaptured)
-                {
-                    virtualCursorPosScreenSpace = capturedCursorPosScreenSpace;
-                    result.CapturedCursorDelta.X
-                        = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
-                    result.CapturedCursorDelta.Y
-                        = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
-                }
-                result.CursorPos.X = virtualCursorPosScreenSpace.X - viewportRect.Left;
-                result.CursorPos.Y = viewportRect.Bottom - virtualCursorPosScreenSpace.Y;
-            }
-
-            return result;
+            window.PreviewKeyDown += HandleWindowKeyDown;
+            window.PreviewKeyUp += HandleWindowKeyUp;
         }
 
         internal static void Tick(EditorPerformanceCounters perfCounters)
@@ -308,24 +285,15 @@ namespace Sierra.Platform
 
             using (perfCounters.Measure_RenderViewports())
             {
-                var appWindow = App.Current.MainWindow;
                 bool isWindowActive = false;
                 Win32.Point cursorPosScreenSpace = new Win32.Point();
                 EditorInputButtons pressedButtons = 0;
-                if (appWindow != null)
+                if (mainWindowHwnd != IntPtr.Zero
+                    && Win32.GetForegroundWindow() == mainWindowHwnd
+                    && Win32.GetCursorPos(out cursorPosScreenSpace))
                 {
-                    if (mainWindowHwnd == IntPtr.Zero)
-                    {
-                        var interopHelper = new WindowInteropHelper(appWindow);
-                        mainWindowHwnd = interopHelper.EnsureHandle();
-                    }
-                    if (mainWindowHwnd != IntPtr.Zero
-                        && Win32.GetForegroundWindow() == mainWindowHwnd
-                        && Win32.GetCursorPos(out cursorPosScreenSpace))
-                    {
-                        isWindowActive = true;
-                        pressedButtons = nextPressedButtons;
-                    }
+                    isWindowActive = true;
+                    pressedButtons = nextPressedButtons;
                 }
 
                 bool isMouseCaptured = false;
@@ -395,6 +363,38 @@ namespace Sierra.Platform
             }
         }
 
+        private static EditorInput GetInputStateForViewport(
+            Win32.Rect viewportRect, Win32.Point cursorPosScreenSpace,
+            float scrollOffset, EditorInputButtons pressedButtons, EditorInputButtons prevPressedButtons)
+        {
+            EditorInput result = EditorInput.Disabled;
+
+            if (cursorPosScreenSpace.X >= viewportRect.Left
+                && cursorPosScreenSpace.X < viewportRect.Right
+                && cursorPosScreenSpace.Y >= viewportRect.Top
+                && cursorPosScreenSpace.Y < viewportRect.Bottom)
+            {
+                result.IsActive = true;
+                result.ScrollOffset = scrollOffset;
+                result.PressedButtons = (ulong)pressedButtons;
+                result.PreviousPressedButtons = (ulong)prevPressedButtons;
+
+                Win32.Point virtualCursorPosScreenSpace = cursorPosScreenSpace;
+                if (wasMouseCaptured)
+                {
+                    virtualCursorPosScreenSpace = capturedCursorPosScreenSpace;
+                    result.CapturedCursorDelta.X
+                        = cursorPosScreenSpace.X - ((viewportRect.Left + viewportRect.Right) / 2);
+                    result.CapturedCursorDelta.Y
+                        = cursorPosScreenSpace.Y - ((viewportRect.Top + viewportRect.Bottom) / 2);
+                }
+                result.CursorPos.X = virtualCursorPosScreenSpace.X - viewportRect.Left;
+                result.CursorPos.Y = viewportRect.Bottom - virtualCursorPosScreenSpace.Y;
+            }
+
+            return result;
+        }
+
         internal static void Shutdown()
         {
             Win32.DestroyGLContext(glRenderingContext);
@@ -431,6 +431,24 @@ namespace Sierra.Platform
         internal static void DestroyViewportWindow(IntPtr hwnd)
         {
             Win32.DestroyWindow(hwnd);
+        }
+
+        private static void HandleWindowKeyDown(object sender, KeyEventArgs e)
+        {
+            if (isViewportHovered)
+            {
+                nextPressedButtons |= GetInputButtonFromKey(e.Key);
+                e.Handled = true;
+            }
+        }
+
+        private static void HandleWindowKeyUp(object sender, KeyEventArgs e)
+        {
+            if (isViewportHovered)
+            {
+                nextPressedButtons &= ~GetInputButtonFromKey(e.Key);
+                e.Handled = true;
+            }
         }
 
         private static EditorInputButtons GetInputButtonFromKey(Key key)
@@ -498,24 +516,6 @@ namespace Sierra.Platform
                 Key.Delete => EditorInputButtons.KeyDelete,
                 _ => 0
             };
-        }
-
-        internal static void HandleWindowKeyDown(object sender, KeyEventArgs e)
-        {
-            if (isViewportHovered)
-            {
-                nextPressedButtons |= GetInputButtonFromKey(e.Key);
-                e.Handled = true;
-            }
-        }
-
-        internal static void HandleWindowKeyUp(object sender, KeyEventArgs e)
-        {
-            if (isViewportHovered)
-            {
-                nextPressedButtons &= ~GetInputButtonFromKey(e.Key);
-                e.Handled = true;
-            }
         }
     }
 }
