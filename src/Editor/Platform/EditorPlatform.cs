@@ -66,10 +66,9 @@ namespace Sierra.Platform
 
     internal static class EditorPlatform
     {
-        private static readonly string ViewportWindowClassName = "SierraOpenGLViewportWindowClass";
+        private static readonly string ViewportWindowClassName = "SierraViewportWindowClass";
 
         private static IntPtr appInstance = Win32.GetModuleHandle(null);
-        private static Win32.WndProc defWndProc = new Win32.WndProc(Win32.DefWindowProc);
         private static Win32.WndProc viewportWndProc = new Win32.WndProc(ViewportWindowProc);
 
         private static IntPtr mainWindowHwnd;
@@ -109,21 +108,7 @@ namespace Sierra.Platform
                 editorPlatformLogMessage, editorPlatformGetFileLastWriteTime, editorPlatformGetFileSize,
                 editorPlatformReadEntireFile, Win32.LoadLibrary, Win32.GetProcAddress, Win32.FreeLibrary);
 
-            var dummyWindowClass = new Win32.WindowClass
-            {
-                lpfnWndProc = Marshal.GetFunctionPointerForDelegate(defWndProc),
-                hInstance = appInstance,
-                lpszClassName = "SierraOpenGLDummyWindowClass"
-            };
-            Win32.RegisterClass(ref dummyWindowClass);
-            IntPtr dummyWindowHwnd = Win32.CreateWindowEx(0, dummyWindowClass.lpszClassName,
-                "SierraOpenGLDummyWindow", 0, 0, 0, 100, 100, IntPtr.Zero, IntPtr.Zero, appInstance,
-                IntPtr.Zero);
-
-            IntPtr dummyDeviceContext = Win32.GetDC(dummyWindowHwnd);
-            ConfigureDeviceContextForOpenGL(dummyDeviceContext);
-            IntPtr glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
-            Win32.MakeGLContextCurrent(dummyDeviceContext, glRenderingContext);
+            OpenGL.Initialize();
 
             var viewportWindowClass = new Win32.WindowClass
             {
@@ -202,7 +187,7 @@ namespace Sierra.Platform
                         if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
                             continue;
 
-                        Win32.MakeGLContextCurrent(viewportWindow.DeviceContext, glRenderingContext);
+                        OpenGL.MakeDeviceCurrent(viewportWindow.DeviceContext);
 
                         var input = EditorInput.Disabled;
                         Win32.Rect viewportRect = new Win32.Rect();
@@ -279,26 +264,7 @@ namespace Sierra.Platform
                 }
             }
 
-            Win32.DestroyGLContext(glRenderingContext);
-            Win32.DestroyWindow(dummyWindowHwnd);
-        }
-
-        private static void ConfigureDeviceContextForOpenGL(IntPtr deviceContext)
-        {
-            var pfd = new Win32.PixelFormatDescriptor
-            {
-                Size = (ushort)Marshal.SizeOf<Win32.PixelFormatDescriptor>(),
-                Version = 1,
-                Flags = Win32.PixelFormatDescriptorFlags.DrawToWindow |
-                    Win32.PixelFormatDescriptorFlags.SupportOpenGL |
-                    Win32.PixelFormatDescriptorFlags.DoubleBuffer,
-                PixelType = Win32.PixelFormatDescriptorPixelType.RGBA,
-                ColorBits = 32,
-                DepthBits = 16,
-                LayerType = Win32.PixelFormatDescriptorLayerType.MainPlane
-            };
-            int pixelFormat = Win32.ChoosePixelFormat(deviceContext, ref pfd);
-            Win32.SetPixelFormat(deviceContext, pixelFormat, ref pfd);
+            OpenGL.Shutdown();
         }
 
         private static IntPtr ViewportWindowProc(
@@ -396,11 +362,10 @@ namespace Sierra.Platform
             IntPtr parentHwnd, uint width, uint height, EditorView view)
         {
             IntPtr hwnd = Win32.CreateWindowEx(0, ViewportWindowClassName,
-                "SierraOpenGLViewportWindow",
-                Win32.WindowStyles.Child | Win32.WindowStyles.Visible, 0, 0, 1, 1, parentHwnd,
-                IntPtr.Zero, appInstance, IntPtr.Zero);
+                "SierraViewportWindow", Win32.WindowStyles.Child | Win32.WindowStyles.Visible,
+                0, 0, 1, 1, parentHwnd, IntPtr.Zero, appInstance, IntPtr.Zero);
             IntPtr deviceContext = Win32.GetDC(hwnd);
-            ConfigureDeviceContextForOpenGL(deviceContext);
+            OpenGL.ConfigureDevice(deviceContext);
 
             var viewportWindow = new EditorViewportWindow
             {
