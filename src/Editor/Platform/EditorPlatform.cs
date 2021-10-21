@@ -46,22 +46,28 @@ namespace Sierra.Platform
     internal class EditorPerformanceCounters
     {
         public TimeSpan FrameTime;
-
-        public TimeSpan CoreUpdate;
-        public TimeSpan RenderViewports;
-        public TimeSpan RenderSceneView;
+        public Dictionary<string, TimeSpan> Counters = new Dictionary<string, TimeSpan>();
 
         public void Reset()
         {
             FrameTime = TimeSpan.Zero;
-            CoreUpdate = TimeSpan.Zero;
-            RenderViewports = TimeSpan.Zero;
-            RenderSceneView = TimeSpan.Zero;
+            Counters.Clear();
         }
 
-        public TimedBlock Measure_CoreUpdate() => new TimedBlock(elapsed => CoreUpdate += elapsed);
-        public TimedBlock Measure_RenderViewports() => new TimedBlock(elapsed => RenderViewports += elapsed);
-        public TimedBlock Measure_RenderSceneView() => new TimedBlock(elapsed => RenderSceneView += elapsed);
+        public void AddToCounter(string name, TimeSpan elapsed)
+        {
+            TimeSpan current = TimeSpan.Zero;
+            if (Counters.TryGetValue(name, out var existing))
+            {
+                current = existing;
+            }
+            Counters[name] = current + elapsed;
+        }
+
+        public TimedBlock Measure(string name)
+        {
+            return new TimedBlock(elapsed => AddToCounter(name, elapsed));
+        }
     }
 
     internal static class EditorPlatform
@@ -148,24 +154,27 @@ namespace Sierra.Platform
                 float deltaTime = (float)(perfCounters.FrameTime.TotalSeconds);
                 lastTickTime = now;
 
-                if (!File.Exists(buildLockFilePath))
+                using (perfCounters.Measure("Core Hot Reload"))
                 {
-                    DateTime dllFileLastWriteTime = File.GetLastWriteTimeUtc(coreDllPath);
-                    if (dllFileLastWriteTime > coreDllLastWriteTime)
+                    if (!File.Exists(buildLockFilePath))
                     {
-                        if (EditorCore.ReloadCode(coreDllPath, coreDllShadowCopyPath))
+                        DateTime dllFileLastWriteTime = File.GetLastWriteTimeUtc(coreDllPath);
+                        if (dllFileLastWriteTime > coreDllLastWriteTime)
                         {
-                            coreDllLastWriteTime = dllFileLastWriteTime;
+                            if (EditorCore.ReloadCode(coreDllPath, coreDllShadowCopyPath))
+                            {
+                                coreDllLastWriteTime = dllFileLastWriteTime;
+                            }
                         }
                     }
                 }
 
-                using (perfCounters.Measure_CoreUpdate())
+                using (perfCounters.Measure("Core Update"))
                 {
                     EditorCore.Update(deltaTime);
                 }
 
-                using (perfCounters.Measure_RenderViewports())
+                using (perfCounters.Measure("Render Viewports"))
                 {
                     bool isWindowActive = false;
                     Win32.Point cursorPosScreenSpace = new Win32.Point();
@@ -187,7 +196,10 @@ namespace Sierra.Platform
                         if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
                             continue;
 
-                        OpenGL.MakeDeviceCurrent(viewportWindow.DeviceContext);
+                        using (perfCounters.Measure("OpenGL Make Context Current"))
+                        {
+                            OpenGL.MakeDeviceCurrent(viewportWindow.DeviceContext);
+                        }
 
                         var input = EditorInput.Disabled;
                         Win32.Rect viewportRect = new Win32.Rect();
@@ -220,7 +232,7 @@ namespace Sierra.Platform
                         switch (viewportWindow.View)
                         {
                             case EditorView.Scene:
-                                using (perfCounters.Measure_RenderSceneView())
+                                using (perfCounters.Measure("Render Scene View"))
                                 {
                                     EditorCore.RenderSceneView(ref viewportWindow.ViewContext,
                                         deltaTime, ref input);
@@ -249,7 +261,10 @@ namespace Sierra.Platform
                             isMouseCaptured = true;
                         }
 
-                        Win32.SwapBuffers(viewportWindow.DeviceContext);
+                        using (perfCounters.Measure("Win32 Swap Buffers"))
+                        {
+                            Win32.SwapBuffers(viewportWindow.DeviceContext);
+                        }
                     }
 
                     isViewportHovered = isAnyViewportHovered;

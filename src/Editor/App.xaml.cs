@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -36,7 +37,7 @@ namespace Sierra
             averagedPerfCounters = new EditorPerformanceCounters();
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
-                Interval = TimeSpan.FromMilliseconds(1)
+                Interval = TimeSpan.FromMilliseconds(100)
             };
             updateUiTimer.Tick += UpdateUiTick;
             updateUiTimer.Start();
@@ -62,17 +63,30 @@ namespace Sierra
             EditorCommands.Update(Document, ref uiState);
 
             averagedPerfCounters.Reset();
+            int frameCount = 0;
             foreach (var framePerfCounters in EditorPlatform.PerfCountersByFrame)
             {
-                averagedPerfCounters.FrameTime += framePerfCounters.FrameTime;
-                averagedPerfCounters.CoreUpdate += framePerfCounters.CoreUpdate;
-                averagedPerfCounters.RenderViewports += framePerfCounters.RenderViewports;
-                averagedPerfCounters.RenderSceneView += framePerfCounters.RenderSceneView;
+                try
+                {
+                    foreach (var counter in framePerfCounters.Counters)
+                    {
+                        averagedPerfCounters.AddToCounter(counter.Key, counter.Value);
+                    }
+                    averagedPerfCounters.FrameTime += framePerfCounters.FrameTime;
+                    frameCount++;
+                }
+                catch (InvalidOperationException)
+                {
+                    // Typically this exception occurs when the counter collection is modified by the core
+                    // tick thread. We can ignore it.
+                }
             }
-            averagedPerfCounters.FrameTime /= (double)EditorPlatform.PerfCountersByFrame.Length;
-            averagedPerfCounters.CoreUpdate /= (double)EditorPlatform.PerfCountersByFrame.Length;
-            averagedPerfCounters.RenderViewports /= (double)EditorPlatform.PerfCountersByFrame.Length;
-            averagedPerfCounters.RenderSceneView /= (double)EditorPlatform.PerfCountersByFrame.Length;
+            averagedPerfCounters.FrameTime /= (double)frameCount;
+            for (int i = 0; i < averagedPerfCounters.Counters.Count; i++)
+            {
+                var counter = averagedPerfCounters.Counters.ElementAt(i);
+                averagedPerfCounters.Counters[counter.Key] /= (double)frameCount;
+            }
 
             PerformanceCountersUpdated?.Invoke(averagedPerfCounters);
         }

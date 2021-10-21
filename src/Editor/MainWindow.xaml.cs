@@ -79,21 +79,24 @@ namespace Sierra
 
         private void OnPerfCountersUpdated(EditorPerformanceCounters perfCounters)
         {
+            const int lineLength = 51;
+            int counterNameLength = lineLength - 17;
+
             var perfCounterSummaryBuilder = new StringBuilder();
+
+            double frameMs = perfCounters.FrameTime.TotalMilliseconds;
             int fps = (int)(1000.0 / perfCounters.FrameTime.TotalMilliseconds);
-            perfCounterSummaryBuilder.AppendLine($" Total Frame Time: {perfCounters.FrameTime.TotalMilliseconds:#0.00}ms ({fps}fps)");
-            perfCounterSummaryBuilder.AppendLine();
+            perfCounterSummaryBuilder.AppendLine(
+                $"{"Total Frame Time".PadRight(counterNameLength).Substring(0, counterNameLength)}{frameMs,7:#0.00}ms{fps,5:##0}fps");
+            perfCounterSummaryBuilder.AppendLine(new string('-', lineLength));
 
-            double pct;
-
-            pct = (double)perfCounters.CoreUpdate.Ticks / perfCounters.FrameTime.Ticks;
-            perfCounterSummaryBuilder.AppendLine($"      Core Update: {pct:0.00%}");
-
-            pct = (double)perfCounters.RenderViewports.Ticks / perfCounters.FrameTime.Ticks;
-            perfCounterSummaryBuilder.AppendLine($" Render Viewports: {pct:0.00%}");
-
-            pct = (double)perfCounters.RenderSceneView.Ticks / perfCounters.FrameTime.Ticks;
-            perfCounterSummaryBuilder.AppendLine($"Render Scene View: {pct:0.00%}");
+            foreach (var counter in perfCounters.Counters)
+            {
+                string counterName = counter.Key.PadRight(counterNameLength).Substring(0, counterNameLength);
+                double ms = counter.Value.TotalMilliseconds;
+                double pct = (counter.Value.Ticks * 100.0) / perfCounters.FrameTime.Ticks;
+                perfCounterSummaryBuilder.AppendLine($"{counterName}{ms,7:#0.00}ms{pct,7:#0.0}%");
+            }
 
             tbPerfCounters.Text = perfCounterSummaryBuilder.ToString();
         }
