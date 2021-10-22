@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -16,7 +17,6 @@ namespace Sierra
     /// </summary>
     public partial class App : Application
     {
-        private EditorPerformanceCounters averagedPerfCounters;
         private DispatcherTimer updateUiTimer;
 
         public EditorAssetsViewModel Assets { get; private set; }
@@ -35,7 +35,6 @@ namespace Sierra
             EditorCore.AssetRegistered += Assets.OnAssetRegistered;
             EditorCore.TransactionPublished += Document.OnTransactionPublished;
 
-            averagedPerfCounters = new EditorPerformanceCounters();
             updateUiTimer = new DispatcherTimer(DispatcherPriority.Send)
             {
                 Interval = TimeSpan.FromMilliseconds(100)
@@ -63,9 +62,9 @@ namespace Sierra
             EditorBindingEngine.UpdateBindings(ref uiState);
             EditorCommands.Update(Document, ref uiState);
 
-            averagedPerfCounters.Reset();
-            var logStack = new Stack<(string, DateTime)>();
-            var counterHistory = new Dictionary<string, List<TimeSpan>>();
+            var averagedPerfCounters = new EditorPerformanceCounters();
+            var counterStack = new Stack<(EditorPerformanceCounter, DateTime)>();
+            var counterHistory = new Dictionary<EditorPerformanceCounter, List<TimeSpan>>();
             int frameCount = 0;
             foreach (var frameLog in EditorPlatform.PerfCounterLogsByFrame)
             {
@@ -73,33 +72,54 @@ namespace Sierra
 
                 try
                 {
-                    var counters = new Dictionary<string, TimeSpan>();
-                    logStack.Clear();
+                    var parentCounter = averagedPerfCounters.RootCounter;
+                    var thisFrameCounters = new Dictionary<EditorPerformanceCounter, TimeSpan>();
+                    counterStack.Clear();
                     foreach (var entry in frameLog.Entries)
                     {
                         if (entry.IsEnd)
                         {
-                            var (startName, startDt) = logStack.Pop();
-                            Debug.Assert(entry.CounterName == startName);
-                            var elapsed = entry.LogDt - startDt;
+                            var (counter, startDt) = counterStack.Pop();
+                            Debug.Assert(entry.CounterName == counter.Name);
+                            TimeSpan elapsed = entry.LogDt - startDt;
 
-                            if (counters.TryGetValue(entry.CounterName, out var alreadyElapsed))
+                            if (thisFrameCounters.TryGetValue(counter, out var elapsedThisFrame))
                             {
-                                counters[entry.CounterName] = alreadyElapsed + elapsed;
+                                thisFrameCounters[counter] = elapsedThisFrame + elapsed;
                             }
                             else
                             {
-                                counters.Add(entry.CounterName, elapsed);
+                                thisFrameCounters.Add(counter, elapsed);
+                            }
+
+                            if (counterStack.TryPeek(out var topOfStack))
+                            {
+                                (parentCounter, _) = topOfStack;
+                            }
+                            else
+                            {
+                                parentCounter = averagedPerfCounters.RootCounter;
                             }
                         }
                         else
                         {
-                            logStack.Push((entry.CounterName, entry.LogDt));
+                            var counter = parentCounter.Children.FirstOrDefault(c => c.Name == entry.CounterName);
+                            if (counter == null)
+                            {
+                                counter = new EditorPerformanceCounter
+                                {
+                                    Name = entry.CounterName,
+                                    Elapsed = TimeSpan.Zero
+                                };
+                                parentCounter.Children.Add(counter);
+                            }
+                            counterStack.Push((counter, entry.LogDt));
+                            parentCounter = counter;
                         }
                     }
-                    Debug.Assert(logStack.Count == 0);
+                    Debug.Assert(counterStack.Count == 0);
 
-                    foreach (var counter in counters)
+                    foreach (var counter in thisFrameCounters)
                     {
                         List<TimeSpan> history;
                         if (!counterHistory.TryGetValue(counter.Key, out history))
@@ -121,16 +141,17 @@ namespace Sierra
             if (frameCount > 0)
             {
                 averagedPerfCounters.FrameTime /= frameCount;
-                foreach (var counter in counterHistory)
+                foreach (var kvp in counterHistory)
                 {
-                    var avg = TimeSpan.Zero;
-                    foreach (var elapsed in counter.Value)
-                    {
-                        avg += elapsed;
-                    }
-                    avg /= counter.Value.Count;
+                    var counter = kvp.Key;
+                    var history = kvp.Value;
 
-                    averagedPerfCounters.Counters.Add(counter.Key, avg);
+                    TimeSpan sum = TimeSpan.Zero;
+                    foreach (var elapsed in history)
+                    {
+                        sum += elapsed;
+                    }
+                    counter.Elapsed = sum / history.Count;
                 }
             }
 

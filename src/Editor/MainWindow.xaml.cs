@@ -80,6 +80,7 @@ namespace Sierra
         private void OnPerfCountersUpdated(EditorPerformanceCounters perfCounters)
         {
             const int lineLength = 51;
+            const int indentWidth = 2;
             int counterNameLength = lineLength - 17;
 
             var perfCounterSummaryBuilder = new StringBuilder();
@@ -90,12 +91,24 @@ namespace Sierra
                 $"{"Total Frame Time".PadRight(counterNameLength).Substring(0, counterNameLength)}{frameMs,7:#0.00}ms{fps,5:##0}fps");
             perfCounterSummaryBuilder.AppendLine(new string('-', lineLength));
 
-            foreach (var counter in perfCounters.Counters)
+            void PrintCounter(EditorPerformanceCounter counter, int indent)
             {
-                string counterName = counter.Key.PadRight(counterNameLength).Substring(0, counterNameLength);
-                double ms = counter.Value.TotalMilliseconds;
-                double pct = (counter.Value.Ticks * 100.0) / perfCounters.FrameTime.Ticks;
-                perfCounterSummaryBuilder.AppendLine($"{counterName}{ms,7:#0.00}ms{pct,7:#0.0}%");
+                int length = counterNameLength - (indent * indentWidth);
+                string padding = new string(' ', indent * indentWidth);
+                string counterName = counter.Name.PadRight(length).Substring(0, length);
+                double ms = counter.Elapsed.TotalMilliseconds;
+                double pct = (counter.Elapsed.Ticks * 100.0) / perfCounters.FrameTime.Ticks;
+                perfCounterSummaryBuilder.AppendLine($"{padding}{counterName}{ms,7:#0.00}ms{pct,7:#0.0}%");
+
+                foreach (var childCounter in counter.Children)
+                {
+                    PrintCounter(childCounter, indent + 1);
+                }
+            }
+
+            foreach (var counter in perfCounters.RootCounter.Children)
+            {
+                PrintCounter(counter, 0);
             }
 
             tbPerfCounters.Text = perfCounterSummaryBuilder.ToString();

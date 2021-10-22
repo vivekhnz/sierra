@@ -89,16 +89,16 @@ namespace Sierra.Platform
             });
         }
     }
+    internal class EditorPerformanceCounter
+    {
+        public string Name;
+        public TimeSpan Elapsed;
+        public List<EditorPerformanceCounter> Children = new List<EditorPerformanceCounter>();
+    }
     internal class EditorPerformanceCounters
     {
         public TimeSpan FrameTime;
-        public Dictionary<string, TimeSpan> Counters = new Dictionary<string, TimeSpan>();
-
-        public void Reset()
-        {
-            FrameTime = TimeSpan.Zero;
-            Counters.Clear();
-        }
+        public EditorPerformanceCounter RootCounter = new EditorPerformanceCounter();
     }
 
     internal static class EditorPlatform

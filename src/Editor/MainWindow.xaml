@@ -487,7 +487,7 @@
       </TabControl>
       <GridSplitter Grid.Row="1" Height="4" HorizontalAlignment="Stretch" Background="#444"
           BorderBrush="#999" BorderThickness="0 1 0 0" />
-      <StackPanel Orientation="Vertical" Margin="12 6 12 12" Grid.Row="2">
+      <StackPanel Orientation="Vertical" Margin="12 6 12 0" Grid.Row="2">
         <TextBlock Text="DEBUG" Foreground="#AAA" FontWeight="Bold" FontSize="11"
             Margin="0 0 0 8" />
         <TextBlock Text="Visualisations" Foreground="#888" FontWeight="Bold" Margin="0 0 0 4" />
