@@ -67,6 +67,7 @@ void rendererUpdateTexture(TextureHandle handle, uint32 width, uint32 height, vo
 }
 GetPixelsResult rendererGetPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height)
 {
+    TIMED_BLOCK("Get Pixels");
     return renderBackendGetPixels(arena, handle, width, height);
 }
 GetPixelsResult rendererGetPixelsInRegion(

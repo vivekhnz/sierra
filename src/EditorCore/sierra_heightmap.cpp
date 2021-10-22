@@ -17,6 +17,8 @@ void blitToTarget(RenderContext *rctx,
     RenderTarget *target,
     rect2 dstQuad)
 {
+    TIMED_BLOCK("Blit To Target");
+
     RenderQueue *rq = rendererCreateQueue(rctx, arena, getRenderOutput(target));
     rendererSetCameraOrtho(rq);
     rendererPushTexturedQuadRegion(rq, dstQuad, srcTexture, true, srcUvRect);
@@ -122,6 +124,8 @@ void applySmoothEffectToTarget(MemoryArena *arena,
 
 void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::vec2 *brushCursorPos)
 {
+    TIMED_BLOCK("Composite Heightmaps");
+
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     SceneState *sceneState = &state->sceneState;
 
@@ -184,16 +188,22 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         TemporaryMemory tileRenderMemory = beginTemporaryMemory(&memory->arena);
 
         // render brush influence mask
-        drawInfluenceMask(state->renderCtx, &memory->arena, activeBrushStrokeQuads,
-            activeBrushStroke->instanceCount, offset, influenceMaskEffect, tile->workingBrushInfluenceMask);
-        drawInfluenceMask(state->renderCtx, &memory->arena, previewBrushStrokeQuadPtr, 1, offset,
-            influenceMaskEffect, tile->previewBrushInfluenceMask);
+        {
+            TIMED_BLOCK("Draw Influence Masks");
+
+            drawInfluenceMask(state->renderCtx, &memory->arena, activeBrushStrokeQuads,
+                activeBrushStroke->instanceCount, offset, influenceMaskEffect, tile->workingBrushInfluenceMask);
+            drawInfluenceMask(state->renderCtx, &memory->arena, previewBrushStrokeQuadPtr, 1, offset,
+                influenceMaskEffect, tile->previewBrushInfluenceMask);
+        }
 
         // render heightmap
         switch (tool)
         {
         case TERRAIN_BRUSH_TOOL_RAISE:
         {
+            TIMED_BLOCK("Apply Raise Effect");
+
             RenderEffect *workingEffect = createAddSubEffect(&memory->arena, &state->editorAssets,
                 tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask->textureHandle, 1);
             drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, workingEffect, tile->workingHeightmap);
@@ -205,6 +215,8 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         break;
         case TERRAIN_BRUSH_TOOL_LOWER:
         {
+            TIMED_BLOCK("Apply Lower Effect");
+
             RenderEffect *workingEffect = createAddSubEffect(&memory->arena, &state->editorAssets,
                 tile->committedHeightmap->textureHandle, tile->workingBrushInfluenceMask->textureHandle, -1);
             drawFullSizeQuadToTarget(state->renderCtx, &memory->arena, workingEffect, tile->workingHeightmap);
@@ -216,6 +228,8 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         break;
         case TERRAIN_BRUSH_TOOL_FLATTEN:
         {
+            TIMED_BLOCK("Apply Flatten Effect");
+
             RenderEffect *workingEffect =
                 createFlattenEffect(&memory->arena, &state->editorAssets, tile->committedHeightmap->textureHandle,
                     tile->workingBrushInfluenceMask->textureHandle, activeBrushStroke->startingHeight);
@@ -229,6 +243,8 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         break;
         case TERRAIN_BRUSH_TOOL_SMOOTH:
         {
+            TIMED_BLOCK("Apply Smooth Effect");
+
             applySmoothEffectToTarget(&memory->arena, state->renderCtx, &state->editorAssets,
                 tile->committedHeightmap, tile->workingBrushInfluenceMask, state->temporaryHeightmap,
                 tile->workingHeightmap);
@@ -244,6 +260,8 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
 
     if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
     {
+        TIMED_BLOCK("Smooth Tool Fix-up");
+
         float overlapInTexels = HEIGHTMAP_OVERLAP_IN_TEXELS;
         float overlapInUvSpace = overlapInTexels / HEIGHTMAP_DIM;
         float heightmapDimWithoutOverlapInUvSpace = heightmapDimWithoutOverlap / HEIGHTMAP_DIM;

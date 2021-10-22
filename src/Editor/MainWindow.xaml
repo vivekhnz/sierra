@@ -53,7 +53,7 @@
       <Grid.RowDefinitions>
         <RowDefinition Height="*" />
         <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
+        <RowDefinition Height="*" />
       </Grid.RowDefinitions>
       <TabControl SelectedIndex="{b:UiBinding CurrentContext}">
         <TabItem Header="TERRAIN">

@@ -250,6 +250,7 @@ void fastObjLoadMesh(MemoryArena *memory, const char *path, void *data, uint64 s
 
 void assetsLoadQueuedAssets(Assets *assets)
 {
+    TIMED_BLOCK("Load Assets");
     for (uint32 i = 0; i < assets->queuedAssetLoadCount; i++)
     {
         AssetRegistration *reg = assets->queuedAssetsToLoad[i];
@@ -353,6 +354,7 @@ void assetsLoadQueuedAssets(Assets *assets)
 
 void assetsWatchForChanges(Assets *assets)
 {
+    TIMED_BLOCK("Watch For Asset Changes");
     for (uint32 i = 0; i < assets->registeredAssetCount; i++)
     {
         AssetRegistration *reg = &assets->registeredAssets[i];

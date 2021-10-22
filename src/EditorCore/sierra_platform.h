@@ -94,6 +94,12 @@ typedef PLATFORM_NOTIFY_ASSET_REGISTERED(PlatformNotifyAssetRegistered);
 #define PLATFORM_PUBLISH_TRANSACTION(name) void name(void *commandBufferBaseAddress)
 typedef PLATFORM_PUBLISH_TRANSACTION(PlatformPublishTransaction);
 
+#define PLATFORM_START_PERF_COUNTER(name) void name(const char *counterName)
+typedef PLATFORM_START_PERF_COUNTER(PlatformStartPerfCounter);
+
+#define PLATFORM_END_PERF_COUNTER(name) void name(const char *counterName)
+typedef PLATFORM_END_PERF_COUNTER(PlatformEndPerfCounter);
+
 struct EditorPlatformApi
 {
     PlatformLogMessage *logMessage;
@@ -102,6 +108,8 @@ struct EditorPlatformApi
     PlatformReadEntireFile *readEntireFile;
     PlatformNotifyAssetRegistered *notifyAssetRegistered;
     PlatformPublishTransaction *publishTransaction;
+    PlatformStartPerfCounter *startPerfCounter;
+    PlatformEndPerfCounter *endPerfCounter;
 };
 
 #endif

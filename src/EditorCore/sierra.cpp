@@ -3,6 +3,26 @@
 global_variable bool WasAssemblyReloaded = true;
 global_variable EditorPlatformApi Platform;
 
+struct TimedBlock
+{
+    const char *counterName;
+
+    TimedBlock(const char *counterName);
+    ~TimedBlock();
+};
+TimedBlock::TimedBlock(const char *counterName)
+{
+    Platform.startPerfCounter(counterName);
+    this->counterName = counterName;
+}
+TimedBlock::~TimedBlock()
+{
+    Platform.endPerfCounter(this->counterName);
+}
+#define TIMED_BLOCK__(counterName, x) TimedBlock __timer##x(counterName);
+#define TIMED_BLOCK_(counterName, x) TIMED_BLOCK__(counterName, x)
+#define TIMED_BLOCK(counterName) TIMED_BLOCK_(counterName, __COUNTER__)
+
 #include "sierra_renderer.cpp"
 #include "sierra_opengl.cpp"
 #include "sierra_assets.cpp"
@@ -350,6 +370,8 @@ void updateHeightfieldHeights(TerrainTile *tile, uint32 heightmapWidth, uint32 h
 
 void updateTileHeightsFromHeightmap(MemoryArena *arena, TerrainTile *tile)
 {
+    TIMED_BLOCK("Update Tile Heights");
+
     RenderTarget *target = tile->workingHeightmap;
     TemporaryMemory heightMemory = beginTemporaryMemory(arena);
     GetPixelsResult heightPixels = rendererGetPixels(arena, target->textureHandle, target->width, target->height);
@@ -633,24 +655,28 @@ API_EXPORT EDITOR_UPDATE(editorUpdate)
     assetsWatchForChanges(state->assetCtx);
     assetsLoadQueuedAssets(state->assetCtx);
 
-    // apply committed transactions
-    for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions); isTransactionValid(&tx);
-         tx = getNextCommittedTransaction(&tx))
     {
-        applyTransaction(&tx, &state->docState);
-        Platform.publishTransaction(tx.commandBufferBaseAddress);
-    }
-    state->transactions.committedUsed = 0;
+        TIMED_BLOCK("Apply Transactions");
 
-    // apply active transactions
-    state->previewDocState = state->docState;
-    for (TransactionEntry tx = getFirstActiveTransaction(&state->transactions); isTransactionValid(&tx);
-         tx = getNextActiveTransaction(&tx))
-    {
-        applyTransaction(&tx, &state->previewDocState);
-        Platform.publishTransaction(tx.commandBufferBaseAddress);
+        // apply committed transactions
+        for (TransactionEntry tx = getFirstCommittedTransaction(&state->transactions); isTransactionValid(&tx);
+             tx = getNextCommittedTransaction(&tx))
+        {
+            applyTransaction(&tx, &state->docState);
+            Platform.publishTransaction(tx.commandBufferBaseAddress);
+        }
+        state->transactions.committedUsed = 0;
+
+        // apply active transactions
+        state->previewDocState = state->docState;
+        for (TransactionEntry tx = getFirstActiveTransaction(&state->transactions); isTransactionValid(&tx);
+             tx = getNextActiveTransaction(&tx))
+        {
+            applyTransaction(&tx, &state->previewDocState);
+            Platform.publishTransaction(tx.commandBufferBaseAddress);
+        }
+        updateFromDocumentState(memory, &state->previewDocState);
     }
-    updateFromDocumentState(memory, &state->previewDocState);
 
     EditorAssets *editorAssets = &state->editorAssets;
     RenderContext *rctx = state->renderCtx;
@@ -794,11 +820,15 @@ void sceneViewEndInteraction(EditorMemory *memory,
     glm::vec3 *mouseWorldPos,
     bool wasCancelled)
 {
+    TIMED_BLOCK("End Interaction");
+
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     switch (viewState->interactionState.active.target.type)
     {
     case INTERACTION_TARGET_TERRAIN:
     {
+        TIMED_BLOCK("End Terrain Interaction");
+
         TerrainInteractionState *interactionState =
             (TerrainInteractionState *)viewState->interactionState.active.state;
         glm::vec2 brushCursorPos;
@@ -821,6 +851,8 @@ void sceneViewEndInteraction(EditorMemory *memory,
     break;
     case INTERACTION_TARGET_MANIPULATOR:
     {
+        TIMED_BLOCK("End Manipulator Interaction");
+
         ManipulatorInteractionState *interactionState =
             (ManipulatorInteractionState *)viewState->interactionState.active.state;
         if (wasCancelled)
@@ -840,6 +872,8 @@ void sceneViewEndInteraction(EditorMemory *memory,
 void sceneViewContinueInteraction(
     EditorMemory *memory, SceneViewState *viewState, EditorInput *input, glm::vec3 *mouseWorldPos)
 {
+    TIMED_BLOCK("Continue Interaction");
+
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     EditorUiState *uiState = &state->uiState;
 
@@ -847,6 +881,8 @@ void sceneViewContinueInteraction(
     {
     case INTERACTION_TARGET_CAMERA:
     {
+        TIMED_BLOCK("Continue Camera Interaction");
+
         // dolly
         viewState->orbitCameraDistance *= 1.0f - (glm::sign(input->scrollOffset) * 0.05f);
 
@@ -874,6 +910,8 @@ void sceneViewContinueInteraction(
     break;
     case INTERACTION_TARGET_TERRAIN:
     {
+        TIMED_BLOCK("Continue Terrain Interaction");
+
         if (mouseWorldPos)
         {
             TerrainInteractionState *interactionState =
@@ -958,6 +996,8 @@ void sceneViewContinueInteraction(
     break;
     case INTERACTION_TARGET_MANIPULATOR:
     {
+        TIMED_BLOCK("Continue Manipulator Interaction");
+
         ManipulatorInteractionState *interactionState =
             (ManipulatorInteractionState *)viewState->interactionState.active.state;
 
@@ -1050,6 +1090,8 @@ void sceneViewContinueInteraction(
 void sceneViewBeginInteraction(
     EditorMemory *memory, SceneViewState *viewState, EditorInput *input, glm::vec3 *mouseWorldPos)
 {
+    TIMED_BLOCK("Begin Interaction");
+
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     EditorUiState *uiState = &state->uiState;
 
@@ -1057,6 +1099,8 @@ void sceneViewBeginInteraction(
     {
     case INTERACTION_TARGET_TERRAIN:
     {
+        TIMED_BLOCK("Begin Terrain Interaction");
+
         assert(mouseWorldPos);
 
         TerrainInteractionState *interactionState =
@@ -1072,6 +1116,8 @@ void sceneViewBeginInteraction(
     break;
     case INTERACTION_TARGET_OBJECT:
     {
+        TIMED_BLOCK("Begin Object Interaction");
+
         uint64 pickedId64 = (uint64)viewState->interactionState.hot.target.id;
         assert(pickedId64 <= UINT32_MAX);
         uint32 pickedId = (uint32)pickedId64;
@@ -1114,6 +1160,8 @@ void sceneViewBeginInteraction(
     break;
     case INTERACTION_TARGET_MANIPULATOR:
     {
+        TIMED_BLOCK("Begin Manipulator Interaction");
+
         ManipulatorInteractionState *interactionState =
             pushStruct(&viewState->interactionState.activeArena, ManipulatorInteractionState);
         viewState->interactionState.hot.state = interactionState;
@@ -1159,6 +1207,8 @@ void sceneViewBeginInteraction(
 void sceneViewInteract(
     EditorMemory *memory, SceneViewState *viewState, EditorInput *input, glm::vec3 *mouseWorldPos)
 {
+    TIMED_BLOCK("Interact");
+
     EditorState *state = (EditorState *)memory->arena.baseAddress;
     EditorUiState *uiState = &state->uiState;
 
@@ -1279,6 +1329,8 @@ inline bool isInteractionHot(InteractionState *state, Interaction *interaction)
 }
 API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 {
+    TIMED_BLOCK("Render Scene View");
+
     MemoryArena *arena = &memory->arena;
     EditorState *state = (EditorState *)arena->baseAddress;
     EditorAssets *editorAssets = &state->editorAssets;
@@ -1367,6 +1419,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
     if (input->isActive && uiState->currentContext == EDITOR_CTX_TERRAIN)
     {
+        TIMED_BLOCK("Raycast Terrain");
+
         TerrainTile *firstTile = &sceneState->terrainTiles[0];
         uint32 samplesPerEdge = HEIGHTFIELD_SAMPLES_PER_EDGE;
         float spacing = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS / (HEIGHTFIELD_SAMPLES_PER_EDGE - 1);
@@ -1418,6 +1472,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
                     if (debugState->showTerrainRaycastVis)
                     {
+                        TIMED_BLOCK("Push Raycast Vis");
+
                         glm::vec3 color = glm::vec3(1, 0, 0.5);
                         rendererBeginLine(sceneRq, topLeft, color);
                         rendererExtendLine(sceneRq, topRight);
@@ -1499,22 +1555,31 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
 
         glm::vec2 heightmapSize = glm::vec2(activeHeightmap->width, activeHeightmap->height);
         glm::vec2 brushCursorPos = glm::vec2(mouseWorldPos.x, mouseWorldPos.z);
-        rendererPushTerrain(sceneRq, tile->center, tile->maxHeight, heightmapSize, HEIGHTMAP_OVERLAP_IN_TEXELS,
-            editorAssets->terrainShaderTextured, activeHeightmap->textureHandle, refHeightmap->textureHandle,
-            state->previewDocState.materialCount, state->previewDocState.materials, false, visualizationMode,
-            brushCursorPos, state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
+        {
+            TIMED_BLOCK("Push Terrain");
+            rendererPushTerrain(sceneRq, tile->center, tile->maxHeight, heightmapSize, HEIGHTMAP_OVERLAP_IN_TEXELS,
+                editorAssets->terrainShaderTextured, activeHeightmap->textureHandle, refHeightmap->textureHandle,
+                state->previewDocState.materialCount, state->previewDocState.materials, false, visualizationMode,
+                brushCursorPos, state->uiState.terrainBrushRadius, state->uiState.terrainBrushFalloff);
+        }
     }
 
     // draw all object instances
-    RenderEffect *rockEffect = rendererCreateEffect(arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
-    rendererPushMeshes(sceneRq, editorAssets->meshRock, sceneState->objectInstanceData,
-        sceneState->objectInstanceCount, rockEffect);
+    RenderEffect *meshIdEffect;
+    {
+        TIMED_BLOCK("Push Objects");
 
-    RenderEffect *meshIdEffect = rendererCreateEffect(arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
-    RenderEffect *mesh32BitIdEffect = rendererCreateEffectOverride(meshIdEffect);
-    rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
-    rendererPushMeshes(pickingRq, editorAssets->meshRock, sceneState->objectInstanceData,
-        sceneState->objectInstanceCount, mesh32BitIdEffect);
+        RenderEffect *rockEffect =
+            rendererCreateEffect(arena, editorAssets->meshShaderRock, EFFECT_BLEND_ALPHA_BLEND);
+        rendererPushMeshes(sceneRq, editorAssets->meshRock, sceneState->objectInstanceData,
+            sceneState->objectInstanceCount, rockEffect);
+
+        meshIdEffect = rendererCreateEffect(arena, editorAssets->meshShaderId, EFFECT_BLEND_ALPHA_BLEND);
+        RenderEffect *mesh32BitIdEffect = rendererCreateEffectOverride(meshIdEffect);
+        rendererSetEffectUint(mesh32BitIdEffect, "idMask", 0xFFFFFFFF);
+        rendererPushMeshes(pickingRq, editorAssets->meshRock, sceneState->objectInstanceData,
+            sceneState->objectInstanceCount, mesh32BitIdEffect);
+    }
 
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
     {
@@ -1578,6 +1643,7 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     {
         if (hitTile)
         {
+            TIMED_BLOCK("Push Terrain Debug UI");
             if (debugState->showTerrainRaycastVis)
             {
                 glm::vec2 mouseRayHitPosScreen = worldToScreen(viewState, mouseWorldPos);
@@ -1619,6 +1685,8 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
         // draw manipulator
         if (state->uiState.selectedObjectCount > 0)
         {
+            TIMED_BLOCK("Push Object Manipulators");
+
             // calculate manipulator handle position
             glm::vec3 manipulatorHandlePos = glm::vec3(0);
             uint32 foundObjects = 0;
@@ -1774,7 +1842,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     }
 
     // composite final scene
-    rendererDraw(sceneRq);
+    {
+        TIMED_BLOCK("Draw Scene");
+        rendererDraw(sceneRq);
+    }
     RenderEffect *compositeEffect = 0;
     if (state->uiState.currentContext == EDITOR_CTX_OBJECTS)
     {
@@ -1802,7 +1873,10 @@ API_EXPORT EDITOR_RENDER_SCENE_VIEW(editorRenderSceneView)
     {
         rendererPushTexturedQuad(compositeRq, screenQuad, sceneRenderTarget->textureHandle, true);
     }
-    rendererDraw(compositeRq);
+    {
+        TIMED_BLOCK("Draw Composite");
+        rendererDraw(compositeRq);
+    }
 
     endTemporaryMemory(&renderQueueMemory);
 

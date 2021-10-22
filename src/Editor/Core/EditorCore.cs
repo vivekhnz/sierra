@@ -8,9 +8,10 @@ namespace Sierra.Core
     internal delegate long PlatformGetFileLastWriteTime(string relativePath);
     internal delegate long PlatformGetFileSize(string path);
     internal delegate void PlatformReadEntireFile(string path, ref byte bufferBaseAddress);
-
     internal delegate void PlatformPublishTransaction(ref byte commandBufferBaseAddress);
     internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
+    internal delegate void PlatformStartPerfCounter(string counterName);
+    internal delegate void PlatformEndPerfCounter(string counterName);
 
     internal struct EditorPlatformApi
     {
@@ -20,6 +21,8 @@ namespace Sierra.Core
         public IntPtr ReadEntireFile;
         public IntPtr NotifyAssetRegistered;
         public IntPtr PublishTransaction;
+        public IntPtr StartPerfCounter;
+        public IntPtr EndPerfCounter;
     }
 
     [StructLayout(LayoutKind.Sequential)]
@@ -381,6 +384,7 @@ namespace Sierra.Core
         internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
             PlatformLogMessage logMessage, PlatformGetFileLastWriteTime getFileLastWriteTime,
             PlatformGetFileSize getFileSize, PlatformReadEntireFile readEntireFile,
+            PlatformStartPerfCounter startPerfCounter, PlatformEndPerfCounter endPerfCounter,
             Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
             Func<IntPtr, bool> freeLibrary)
         {
@@ -400,6 +404,8 @@ namespace Sierra.Core
             memory.PlatformApi.ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile);
             memory.PlatformApi.NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered);
             memory.PlatformApi.PublishTransaction = Marshal.GetFunctionPointerForDelegate(onTransactionPublished);
+            memory.PlatformApi.StartPerfCounter = Marshal.GetFunctionPointerForDelegate(startPerfCounter);
+            memory.PlatformApi.EndPerfCounter = Marshal.GetFunctionPointerForDelegate(endPerfCounter);
         }
 
         internal static bool ReloadCode(string dllPath, string dllShadowCopyPath)
@@ -500,7 +506,8 @@ namespace Sierra.Core
             }
             else
             {
-                return ref editorGetUiState(ref GetEditorMemory());
+                ref EditorMemory memory = ref GetEditorMemory();
+                return ref editorGetUiState(ref memory);
             }
         }
 

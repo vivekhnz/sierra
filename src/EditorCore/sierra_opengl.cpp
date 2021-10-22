@@ -601,7 +601,10 @@ GetPixelsResult renderBackendGetPixels(MemoryArena *arena, TextureHandle handle,
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, id);
-    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, result.pixels);
+    {
+        TIMED_BLOCK("glGetTexImage");
+        glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, result.pixels);
+    }
 
     return result;
 }
