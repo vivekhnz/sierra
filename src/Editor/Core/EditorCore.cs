@@ -297,6 +297,7 @@ namespace Sierra.Core
 
     internal static class EditorCore
     {
+        private static object reloadLock = new object();
         private static IntPtr appMemoryDataPtr;
         private static IntPtr moduleHandle;
 
@@ -364,14 +365,17 @@ namespace Sierra.Core
 
         private static ref EditorMemory GetEditorMemory()
         {
-            Span<EditorMemory> memorySpan;
-            unsafe
+            lock (reloadLock)
             {
-                void* ptr = appMemoryDataPtr.ToPointer();
-                int size = Marshal.SizeOf<EditorMemory>();
-                memorySpan = new Span<EditorMemory>(ptr, size);
+                Span<EditorMemory> memorySpan;
+                unsafe
+                {
+                    void* ptr = appMemoryDataPtr.ToPointer();
+                    int size = Marshal.SizeOf<EditorMemory>();
+                    memorySpan = new Span<EditorMemory>(ptr, size);
+                }
+                return ref memorySpan[0];
             }
-            return ref memorySpan[0];
         }
 
         internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
@@ -400,58 +404,61 @@ namespace Sierra.Core
 
         internal static bool ReloadCode(string dllPath, string dllShadowCopyPath)
         {
-            if (moduleHandle != IntPtr.Zero)
+            lock (reloadLock)
             {
-                freeLibrary(moduleHandle);
-                moduleHandle = IntPtr.Zero;
+                if (moduleHandle != IntPtr.Zero)
+                {
+                    freeLibrary(moduleHandle);
+                    moduleHandle = IntPtr.Zero;
+                }
+
+                bool didShadowCopySucceed = false;
+                try
+                {
+                    File.Copy(dllPath, dllShadowCopyPath, true);
+                    didShadowCopySucceed = true;
+                }
+                catch
+                {
+                    // ignore - we will return false and retry the load again the next tick
+                }
+
+                if (didShadowCopySucceed)
+                {
+                    moduleHandle = loadLibrary(dllShadowCopyPath);
+                }
+
+                T GetApi<T>(string procName) where T : Delegate
+                {
+                    if (moduleHandle == IntPtr.Zero) return null;
+
+                    IntPtr functionPtr = getProcAddress(moduleHandle, procName);
+                    return functionPtr == IntPtr.Zero
+                        ? null
+                        : Marshal.GetDelegateForFunctionPointer<T>(functionPtr);
+                }
+
+                editorUpdate = GetApi<EditorUpdate>("editorUpdate");
+                editorRenderSceneView = GetApi<EditorRenderSceneView>("editorRenderSceneView");
+                editorRenderHeightmapPreview = GetApi<EditorRenderHeightmapPreview>("editorRenderHeightmapPreview");
+                editorGetImportedHeightmapAssetHandle = GetApi<EditorGetImportedHeightmapAssetHandle>("editorGetImportedHeightmapAssetHandle");
+                editorGetUiState = GetApi<EditorGetUiState>("editorGetUiState");
+                editorAddMaterial = GetApi<EditorAddMaterial>("editorAddMaterial");
+                editorDeleteMaterial = GetApi<EditorDeleteMaterial>("editorDeleteMaterial");
+                editorSwapMaterial = GetApi<EditorSwapMaterial>("editorSwapMaterial");
+                editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
+                editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
+                editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
+                editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
+                editorClearTransaction = GetApi<EditorClearTransaction>("editorClearTransaction");
+                editorCommitTransaction = GetApi<EditorCommitTransaction>("editorCommitTransaction");
+                editorDiscardTransaction = GetApi<EditorDiscardTransaction>("editorDiscardTransaction");
+                editorAddObject = GetApi<EditorAddObject>("editorAddObject");
+                editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
+                editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
+
+                return moduleHandle != IntPtr.Zero;
             }
-
-            bool didShadowCopySucceed = false;
-            try
-            {
-                File.Copy(dllPath, dllShadowCopyPath, true);
-                didShadowCopySucceed = true;
-            }
-            catch
-            {
-                // ignore - we will return false and retry the load again the next tick
-            }
-
-            if (didShadowCopySucceed)
-            {
-                moduleHandle = loadLibrary(dllShadowCopyPath);
-            }
-
-            T GetApi<T>(string procName) where T : Delegate
-            {
-                if (moduleHandle == IntPtr.Zero) return null;
-
-                IntPtr functionPtr = getProcAddress(moduleHandle, procName);
-                return functionPtr == IntPtr.Zero
-                    ? null
-                    : Marshal.GetDelegateForFunctionPointer<T>(functionPtr);
-            }
-
-            editorUpdate = GetApi<EditorUpdate>("editorUpdate");
-            editorRenderSceneView = GetApi<EditorRenderSceneView>("editorRenderSceneView");
-            editorRenderHeightmapPreview = GetApi<EditorRenderHeightmapPreview>("editorRenderHeightmapPreview");
-            editorGetImportedHeightmapAssetHandle = GetApi<EditorGetImportedHeightmapAssetHandle>("editorGetImportedHeightmapAssetHandle");
-            editorGetUiState = GetApi<EditorGetUiState>("editorGetUiState");
-            editorAddMaterial = GetApi<EditorAddMaterial>("editorAddMaterial");
-            editorDeleteMaterial = GetApi<EditorDeleteMaterial>("editorDeleteMaterial");
-            editorSwapMaterial = GetApi<EditorSwapMaterial>("editorSwapMaterial");
-            editorSetMaterialTexture = GetApi<EditorSetMaterialTexture>("editorSetMaterialTexture");
-            editorSetMaterialProperties = GetApi<EditorSetMaterialProperties>("editorSetMaterialProperties");
-            editorGetObjectProperty = GetApi<EditorGetObjectProperty>("editorGetObjectProperty");
-            editorBeginTransaction = GetApi<EditorBeginTransaction>("editorBeginTransaction");
-            editorClearTransaction = GetApi<EditorClearTransaction>("editorClearTransaction");
-            editorCommitTransaction = GetApi<EditorCommitTransaction>("editorCommitTransaction");
-            editorDiscardTransaction = GetApi<EditorDiscardTransaction>("editorDiscardTransaction");
-            editorAddObject = GetApi<EditorAddObject>("editorAddObject");
-            editorDeleteObject = GetApi<EditorDeleteObject>("editorDeleteObject");
-            editorSetObjectProperty = GetApi<EditorSetObjectProperty>("editorSetObjectProperty");
-
-            return moduleHandle != IntPtr.Zero;
         }
 
         private static void OnTransactionPublished(ref byte commandBufferBaseAddress)
