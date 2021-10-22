@@ -1,5 +1,6 @@
 ﻿using System;
-using System.Linq;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 using System.Windows;
 using System.Windows.Threading;
@@ -63,16 +64,52 @@ namespace Sierra
             EditorCommands.Update(Document, ref uiState);
 
             averagedPerfCounters.Reset();
+            var logStack = new Stack<(string, DateTime)>();
+            var counterHistory = new Dictionary<string, List<TimeSpan>>();
             int frameCount = 0;
-            foreach (var framePerfCounters in EditorPlatform.PerfCountersByFrame)
+            foreach (var frameLog in EditorPlatform.PerfCounterLogsByFrame)
             {
+                if (!frameLog.IsCompleted) continue;
+
                 try
                 {
-                    foreach (var counter in framePerfCounters.Counters)
+                    var counters = new Dictionary<string, TimeSpan>();
+                    logStack.Clear();
+                    foreach (var entry in frameLog.Entries)
                     {
-                        averagedPerfCounters.AddToCounter(counter.Key, counter.Value);
+                        if (entry.IsEnd)
+                        {
+                            var (startName, startDt) = logStack.Pop();
+                            Debug.Assert(entry.CounterName == startName);
+                            var elapsed = entry.LogDt - startDt;
+
+                            if (counters.TryGetValue(entry.CounterName, out var alreadyElapsed))
+                            {
+                                counters[entry.CounterName] = alreadyElapsed + elapsed;
+                            }
+                            else
+                            {
+                                counters.Add(entry.CounterName, elapsed);
+                            }
+                        }
+                        else
+                        {
+                            logStack.Push((entry.CounterName, entry.LogDt));
+                        }
                     }
-                    averagedPerfCounters.FrameTime += framePerfCounters.FrameTime;
+                    Debug.Assert(logStack.Count == 0);
+
+                    foreach (var counter in counters)
+                    {
+                        List<TimeSpan> history;
+                        if (!counterHistory.TryGetValue(counter.Key, out history))
+                        {
+                            history = new List<TimeSpan>();
+                            counterHistory.Add(counter.Key, history);
+                        }
+                        history.Add(counter.Value);
+                    }
+                    averagedPerfCounters.FrameTime += frameLog.FrameTime;
                     frameCount++;
                 }
                 catch (InvalidOperationException)
@@ -81,11 +118,20 @@ namespace Sierra
                     // tick thread. We can ignore it.
                 }
             }
-            averagedPerfCounters.FrameTime /= (double)frameCount;
-            for (int i = 0; i < averagedPerfCounters.Counters.Count; i++)
+            if (frameCount > 0)
             {
-                var counter = averagedPerfCounters.Counters.ElementAt(i);
-                averagedPerfCounters.Counters[counter.Key] /= (double)frameCount;
+                averagedPerfCounters.FrameTime /= frameCount;
+                foreach (var counter in counterHistory)
+                {
+                    var avg = TimeSpan.Zero;
+                    foreach (var elapsed in counter.Value)
+                    {
+                        avg += elapsed;
+                    }
+                    avg /= counter.Value.Count;
+
+                    averagedPerfCounters.Counters.Add(counter.Key, avg);
+                }
             }
 
             PerformanceCountersUpdated?.Invoke(averagedPerfCounters);
