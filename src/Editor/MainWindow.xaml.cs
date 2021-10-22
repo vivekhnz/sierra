@@ -82,6 +82,7 @@ namespace Sierra
             const int lineLength = 51;
             const int indentWidth = 2;
             int counterNameLength = lineLength - 17;
+            const double minMsThreshold = 0.01;
 
             var perfCounterSummaryBuilder = new StringBuilder();
 
@@ -97,8 +98,11 @@ namespace Sierra
                 string padding = new string(' ', indent * indentWidth);
                 string counterName = counter.Name.PadRight(length).Substring(0, length);
                 double ms = counter.Elapsed.TotalMilliseconds;
-                double pct = (counter.Elapsed.Ticks * 100.0) / perfCounters.FrameTime.Ticks;
-                perfCounterSummaryBuilder.AppendLine($"{padding}{counterName}{ms,7:#0.00}ms{pct,7:#0.0}%");
+                if (ms >= minMsThreshold)
+                {
+                    double pct = (counter.Elapsed.Ticks * 100.0) / perfCounters.FrameTime.Ticks;
+                    perfCounterSummaryBuilder.AppendLine($"{padding}{counterName}{ms,7:#0.00}ms{pct,7:#0.0}%");
+                }
 
                 foreach (var childCounter in counter.Children)
                 {
