@@ -77,7 +77,7 @@ namespace Sierra
             }
         }
 
-        private void OnPerfCountersUpdated(EditorPerformanceCounters perfCounters)
+        private void OnPerfCountersUpdated(CollatedPerfCounters perfCounters)
         {
             const int lineLength = 51;
             const int indentWidth = 2;
@@ -92,7 +92,7 @@ namespace Sierra
                 $"{"Total Frame Time".PadRight(counterNameLength).Substring(0, counterNameLength)}{frameMs,7:#0.00}ms{fps,5:##0}fps");
             perfCounterSummaryBuilder.AppendLine(new string('-', lineLength));
 
-            void PrintCounter(EditorPerformanceCounter counter, int indent)
+            void PrintCounter(CollatedPerfCounter counter, int indent)
             {
                 int length = counterNameLength - (indent * indentWidth);
                 string padding = new string(' ', indent * indentWidth);

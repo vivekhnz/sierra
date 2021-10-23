@@ -26,84 +26,6 @@ namespace Sierra.Platform
         public EditorViewContext ViewContext;
     }
 
-    [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    internal class EditorPerformanceCounterLogEntry
-    {
-        private string DebuggerDisplay => $"[{LogDt:hh:mm:ss.fff}] {(IsEnd ? "END" : "START")} {CounterName}";
-
-        public string CounterName;
-        public DateTime LogDt;
-        public bool IsEnd;
-    }
-    internal class EditorPerformanceCounterLog
-    {
-        public TimeSpan FrameTime;
-        public List<EditorPerformanceCounterLogEntry> Entries = new List<EditorPerformanceCounterLogEntry>();
-        public bool IsCompleted;
-
-        public void Reset()
-        {
-            FrameTime = TimeSpan.Zero;
-            Entries.Clear();
-            IsCompleted = false;
-        }
-
-        public void AddEntry(EditorPerformanceCounterLogEntry entry)
-        {
-            Debug.Assert(!IsCompleted);
-            Entries.Add(entry);
-        }
-
-        public void MarkCompleted()
-        {
-            IsCompleted = true;
-        }
-
-        public TimedBlock Measure(string name)
-        {
-            return new TimedBlock(this, name);
-        }
-    }
-    internal class TimedBlock : IDisposable
-    {
-        private readonly string name;
-        private readonly EditorPerformanceCounterLog log;
-
-        public TimedBlock(EditorPerformanceCounterLog log, string name)
-        {
-            log.AddEntry(new EditorPerformanceCounterLogEntry
-            {
-                CounterName = name,
-                LogDt = DateTime.UtcNow,
-                IsEnd = false
-            });
-
-            this.log = log;
-            this.name = name;
-        }
-
-        public void Dispose()
-        {
-            log.Entries.Add(new EditorPerformanceCounterLogEntry
-            {
-                CounterName = name,
-                LogDt = DateTime.UtcNow,
-                IsEnd = true
-            });
-        }
-    }
-    internal class EditorPerformanceCounter
-    {
-        public string Name;
-        public TimeSpan Elapsed;
-        public List<EditorPerformanceCounter> Children = new List<EditorPerformanceCounter>();
-    }
-    internal class EditorPerformanceCounters
-    {
-        public TimeSpan FrameTime;
-        public EditorPerformanceCounter RootCounter = new EditorPerformanceCounter();
-    }
-
     internal static class EditorPlatform
     {
         private static readonly string ViewportWindowClassName = "SierraViewportWindowClass";
@@ -113,10 +35,6 @@ namespace Sierra.Platform
 
         private static IntPtr mainWindowHwnd;
         private static bool isRunning;
-
-        const int PerfCounterHistoryFrameCount = 30;
-        public static EditorPerformanceCounterLog[] PerfCounterLogsByFrame;
-        private static EditorPerformanceCounterLog currentPerfCounterLog;
 
         private static List<EditorViewportWindow> viewportWindows = new List<EditorViewportWindow>();
 
@@ -131,8 +49,8 @@ namespace Sierra.Platform
         private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
         private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
         private static PlatformReadEntireFile editorPlatformReadEntireFile = ReadEntireFile;
-        private static PlatformStartPerfCounter editorPlatformStartPerfCounter = StartPerfCounter;
-        private static PlatformEndPerfCounter editorPlatformEndPerfCounter = EndPerfCounter;
+        private static PlatformStartPerfCounter editorPlatformStartPerfCounter = PerfCounters.StartPerfCounter;
+        private static PlatformEndPerfCounter editorPlatformEndPerfCounter = PerfCounters.EndPerfCounter;
 
         internal static void Tick()
         {
@@ -165,12 +83,6 @@ namespace Sierra.Platform
             };
             Win32.RegisterClass(ref viewportWindowClass);
 
-            PerfCounterLogsByFrame = new EditorPerformanceCounterLog[PerfCounterHistoryFrameCount];
-            for (int i = 0; i < PerfCounterHistoryFrameCount; i++)
-            {
-                PerfCounterLogsByFrame[i] = new EditorPerformanceCounterLog();
-            }
-            int currentPerfCounterIndex = 0;
             DateTime lastTickTime = DateTime.UtcNow;
 
             Win32.Point capturedCursorPosScreenSpace = new Win32.Point();
@@ -179,20 +91,14 @@ namespace Sierra.Platform
             isRunning = true;
             while (isRunning)
             {
-                currentPerfCounterLog = PerfCounterLogsByFrame[currentPerfCounterIndex];
-                currentPerfCounterIndex++;
-                if (currentPerfCounterIndex == PerfCounterHistoryFrameCount)
-                {
-                    currentPerfCounterIndex = 0;
-                }
-                currentPerfCounterLog.Reset();
-
                 DateTime now = DateTime.UtcNow;
-                currentPerfCounterLog.FrameTime = now - lastTickTime;
-                float deltaTime = (float)(currentPerfCounterLog.FrameTime.TotalSeconds);
+                TimeSpan elapsedFrameTime = now - lastTickTime;
+                float deltaTime = (float)(elapsedFrameTime.TotalSeconds);
                 lastTickTime = now;
 
-                using (currentPerfCounterLog.Measure("Core Hot Reload"))
+                PerfCounters.StartFrame(elapsedFrameTime);
+
+                using (PerfCounters.Measure("Core Hot Reload"))
                 {
                     if (!File.Exists(buildLockFilePath))
                     {
@@ -207,12 +113,12 @@ namespace Sierra.Platform
                     }
                 }
 
-                using (currentPerfCounterLog.Measure("Core Update"))
+                using (PerfCounters.Measure("Core Update"))
                 {
                     EditorCore.Update(deltaTime);
                 }
 
-                using (currentPerfCounterLog.Measure("Render Viewports"))
+                using (PerfCounters.Measure("Render Viewports"))
                 {
                     bool isWindowActive = false;
                     Win32.Point cursorPosScreenSpace = new Win32.Point();
@@ -234,7 +140,7 @@ namespace Sierra.Platform
                         if (viewportWindow.ViewContext.Width == 0 || viewportWindow.ViewContext.Height == 0)
                             continue;
 
-                        using (currentPerfCounterLog.Measure("OpenGL Make Context Current"))
+                        using (PerfCounters.Measure("OpenGL Make Context Current"))
                         {
                             OpenGL.MakeDeviceCurrent(viewportWindow.DeviceContext);
                         }
@@ -295,7 +201,7 @@ namespace Sierra.Platform
                             isMouseCaptured = true;
                         }
 
-                        using (currentPerfCounterLog.Measure("Win32 Swap Buffers"))
+                        using (PerfCounters.Measure("Win32 Swap Buffers"))
                         {
                             Win32.SwapBuffers(viewportWindow.DeviceContext);
                         }
@@ -312,7 +218,7 @@ namespace Sierra.Platform
                     }
                 }
 
-                currentPerfCounterLog.MarkCompleted();
+                PerfCounters.EndFrame();
             }
 
             OpenGL.Shutdown();
@@ -393,24 +299,6 @@ namespace Sierra.Platform
                 int readBytes = stream.Read(span);
                 Debug.Assert(readBytes == fileSize);
             }
-        }
-        private static void StartPerfCounter(string counterName)
-        {
-            currentPerfCounterLog.AddEntry(new EditorPerformanceCounterLogEntry
-            {
-                CounterName = counterName,
-                LogDt = DateTime.UtcNow,
-                IsEnd = false
-            });
-        }
-        private static void EndPerfCounter(string counterName)
-        {
-            currentPerfCounterLog.AddEntry(new EditorPerformanceCounterLogEntry
-            {
-                CounterName = counterName,
-                LogDt = DateTime.UtcNow,
-                IsEnd = true
-            });
         }
 
         internal static void Shutdown()
