@@ -17,8 +17,6 @@ void blitToTarget(RenderContext *rctx,
     RenderTarget *target,
     rect2 dstQuad)
 {
-    TIMED_BLOCK("Blit To Target");
-
     RenderQueue *rq = rendererCreateQueue(rctx, arena, getRenderOutput(target));
     rendererSetCameraOrtho(rq);
     rendererPushTexturedQuadRegion(rq, dstQuad, srcTexture, true, srcUvRect);

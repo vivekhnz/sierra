@@ -1,4 +1,5 @@
-﻿using System.Linq;
+﻿using System;
+using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
@@ -79,7 +80,21 @@ namespace Sierra
 
         private void OnPerfCountersUpdated(CollatedPerfCounters perfCounters)
         {
-            const int lineLength = 51;
+            // try calculate the line length based on the current width of the text block
+            int lineLength = 51;
+            double availableWidth = (tbPerfCounters.Parent as FrameworkElement).ActualWidth;
+            if (availableWidth > 0)
+            {
+                // this is the character advance width of Consolas (which is a monospace font)
+                const double advanceWidth = 0.5498046875;
+                double advanceWidthForFontSize = advanceWidth * tbPerfCounters.FontSize;
+                lineLength = (int)Math.Floor(availableWidth / advanceWidthForFontSize);
+            }
+            if (lineLength < 25)
+            {
+                lineLength = 25;
+            }
+
             const int indentWidth = 2;
             int counterNameLength = lineLength - 17;
             const double minMsThreshold = 0.01;
