@@ -45,10 +45,14 @@ namespace Sierra.Platform
 
         private static string assetsDirectoryPath;
 
+        private static bool isSavingHeightmap;
+        private static string heightmapFilePath;
+
         private static PlatformLogMessage editorPlatformLogMessage = LogMessage;
         private static PlatformGetFileLastWriteTime editorPlatformGetFileLastWriteTime = GetFileLastWriteTime;
         private static PlatformGetFileSize editorPlatformGetFileSize = GetFileSize;
         private static PlatformReadEntireFile editorPlatformReadEntireFile = ReadEntireFile;
+        private static PlatformWriteEntireFile editorPlatformWriteEntireFile = WriteEntireFile;
         private static PlatformStartPerfCounter editorPlatformStartPerfCounter = PerfCounters.StartPerfCounter;
         private static PlatformEndPerfCounter editorPlatformEndPerfCounter = PerfCounters.EndPerfCounter;
 
@@ -67,7 +71,8 @@ namespace Sierra.Platform
                 Win32.MemoryProtection.ReadWrite);
             EditorCore.Initialize(appMemoryPtr, appMemorySizeInBytes,
                 editorPlatformLogMessage, editorPlatformGetFileLastWriteTime, editorPlatformGetFileSize,
-                editorPlatformReadEntireFile, editorPlatformStartPerfCounter, editorPlatformEndPerfCounter,
+                editorPlatformReadEntireFile, editorPlatformWriteEntireFile,
+                editorPlatformStartPerfCounter, editorPlatformEndPerfCounter,
                 Win32.LoadLibrary, Win32.GetProcAddress, Win32.FreeLibrary);
 
             OpenGL.Initialize();
@@ -111,6 +116,12 @@ namespace Sierra.Platform
                             }
                         }
                     }
+                }
+
+                if (isSavingHeightmap)
+                {
+                    EditorCore.SaveHeightmap(heightmapFilePath);
+                    isSavingHeightmap = false;
                 }
 
                 using (PerfCounters.Measure("Core Update"))
@@ -224,6 +235,12 @@ namespace Sierra.Platform
             OpenGL.Shutdown();
         }
 
+        internal static void QueueSaveHeightmap(string filePath)
+        {
+            heightmapFilePath = filePath;
+            isSavingHeightmap = true;
+        }
+
         private static IntPtr ViewportWindowProc(
             IntPtr hwnd, Win32.WindowMessage message, IntPtr wParam, IntPtr lParam)
         {
@@ -298,6 +315,20 @@ namespace Sierra.Platform
             {
                 int readBytes = stream.Read(span);
                 Debug.Assert(readBytes == fileSize);
+            }
+        }
+        private static void WriteEntireFile(string absolutePath, ref byte bufferBaseAddress, ulong size)
+        {
+            Debug.Assert(size < int.MaxValue);
+            var span = MemoryMarshal.CreateSpan(ref bufferBaseAddress, (int)size);
+
+            if (File.Exists(absolutePath))
+            {
+                File.Delete(absolutePath);
+            }
+            using (var stream = File.OpenWrite(absolutePath))
+            {
+                stream.Write(span);
             }
         }
 

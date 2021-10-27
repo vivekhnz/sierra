@@ -1914,6 +1914,76 @@ API_EXPORT EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(editorGetImportedHeightmap
     return state->editorAssets.textureVirtualImportedHeightmap;
 }
 
+API_EXPORT EDITOR_SAVE_HEIGHTMAP(editorSaveHeightmap)
+{
+    MemoryArena *arena = &memory->arena;
+    EditorState *state = (EditorState *)arena->baseAddress;
+
+    TemporaryMemory heightMemory = beginTemporaryMemory(arena);
+
+    // todo: make this work with more than 4 tiles
+    assert(state->sceneState.terrainTileCount == 4);
+    TerrainTile *tile;
+    RenderTarget *target;
+    GetPixelsResult getPixelsResult;
+    uint64 pixelCount;
+
+    uint32 dim = HEIGHTMAP_DIM - (2 * HEIGHTMAP_OVERLAP_IN_TEXELS);
+    uint32 overlap = HEIGHTMAP_OVERLAP_IN_TEXELS;
+
+    tile = &state->sceneState.terrainTiles[0];
+    target = tile->committedHeightmap;
+    getPixelsResult = rendererGetPixelsInRegion(arena, target->textureHandle, overlap, overlap, dim, dim);
+    uint16 *topLeftPixels = (uint16 *)getPixelsResult.pixels;
+    pixelCount = getPixelsResult.count;
+
+    tile = tile->tileToRight;
+    target = tile->committedHeightmap;
+    getPixelsResult = rendererGetPixelsInRegion(arena, target->textureHandle, overlap, overlap, dim, dim);
+    uint16 *topRightPixels = (uint16 *)getPixelsResult.pixels;
+    assert(getPixelsResult.count == pixelCount);
+
+    tile = tile->tileBelow;
+    target = tile->committedHeightmap;
+    getPixelsResult = rendererGetPixelsInRegion(arena, target->textureHandle, overlap, overlap, dim, dim);
+    uint16 *bottomRightPixels = (uint16 *)getPixelsResult.pixels;
+    assert(getPixelsResult.count == pixelCount);
+
+    tile = tile->tileToLeft;
+    target = tile->committedHeightmap;
+    getPixelsResult = rendererGetPixelsInRegion(arena, target->textureHandle, overlap, overlap, dim, dim);
+    uint16 *bottomLeftPixels = (uint16 *)getPixelsResult.pixels;
+    assert(getPixelsResult.count == pixelCount);
+
+    uint64 outputPixelCount = pixelCount * 4;
+    uint16 *outputPixels = pushArray(arena, uint16, outputPixelCount);
+    uint16 *dstRow = outputPixels;
+    for (uint32 y = 0; y < dim; y++)
+    {
+        memcpy(dstRow, topLeftPixels, dim * sizeof(uint16));
+        dstRow += dim;
+        topLeftPixels += dim;
+
+        memcpy(dstRow, topRightPixels, dim * sizeof(uint16));
+        dstRow += dim;
+        topRightPixels += dim;
+    }
+    for (uint32 y = 0; y < dim; y++)
+    {
+        memcpy(dstRow, bottomLeftPixels, dim * sizeof(uint16));
+        dstRow += dim;
+        bottomLeftPixels += dim;
+
+        memcpy(dstRow, bottomRightPixels, dim * sizeof(uint16));
+        dstRow += dim;
+        bottomRightPixels += dim;
+    }
+
+    Platform.writeEntireFile(filePath, outputPixels, outputPixelCount * sizeof(uint16));
+
+    endTemporaryMemory(&heightMemory);
+}
+
 API_EXPORT EDITOR_ADD_MATERIAL(editorAddMaterial)
 {
     EditorState *state = (EditorState *)memory->arena.baseAddress;

@@ -45,7 +45,8 @@
     <Border Background="#282828" BorderBrush="#333" BorderThickness="0 0 1 0">
       <Menu VerticalAlignment="Center" Background="Transparent" Foreground="#888">
         <MenuItem Header="File">
-          <MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />
+          <!--<MenuItem x:Name="miOpen" Header="Open" Click="miOpen_Click" />-->
+          <MenuItem x:Name="miSave" Header="Save" Click="miSave_Click" />
         </MenuItem>
       </Menu>
     </Border>

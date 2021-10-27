@@ -87,6 +87,9 @@ typedef PLATFORM_GET_FILE_SIZE(PlatformGetFileSize);
 #define PLATFORM_READ_ENTIRE_FILE(name) void name(const char *path, void *buffer)
 typedef PLATFORM_READ_ENTIRE_FILE(PlatformReadEntireFile);
 
+#define PLATFORM_WRITE_ENTIRE_FILE(name) void name(const char *path, void *buffer, uint64 size)
+typedef PLATFORM_WRITE_ENTIRE_FILE(PlatformWriteEntireFile);
+
 struct AssetRegistration;
 #define PLATFORM_NOTIFY_ASSET_REGISTERED(name) void name(AssetRegistration *assetReg)
 typedef PLATFORM_NOTIFY_ASSET_REGISTERED(PlatformNotifyAssetRegistered);
@@ -106,6 +109,7 @@ struct EditorPlatformApi
     PlatformGetFileLastWriteTime *getFileLastWriteTime;
     PlatformGetFileSize *getFileSize;
     PlatformReadEntireFile *readEntireFile;
+    PlatformWriteEntireFile *writeEntireFile;
     PlatformNotifyAssetRegistered *notifyAssetRegistered;
     PlatformPublishTransaction *publishTransaction;
     PlatformStartPerfCounter *startPerfCounter;

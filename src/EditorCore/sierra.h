@@ -342,6 +342,9 @@ typedef EDITOR_RENDER_HEIGHTMAP_PREVIEW(EditorRenderHeightmapPreview);
 #define EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(name) AssetHandle name(EditorMemory *memory)
 typedef EDITOR_GET_IMPORTED_HEIGHTMAP_ASSET_HANDLE(EditorGetImportedHeightmapAssetHandle);
 
+#define EDITOR_SAVE_HEIGHTMAP(name) void name(EditorMemory *memory, char *filePath)
+typedef EDITOR_SAVE_HEIGHTMAP(EditorSaveHeightmap);
+
 #define EDITOR_GET_UI_STATE(name) EditorUiState *name(EditorMemory *memory)
 typedef EDITOR_GET_UI_STATE(EditorGetUiState);
 

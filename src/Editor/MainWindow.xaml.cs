@@ -3,6 +3,7 @@ using System.Linq;
 using System.Text;
 using System.Windows;
 using System.Windows.Data;
+using Microsoft.Win32;
 using Sierra.Core;
 using Sierra.Platform;
 using Sierra.ViewModels;
@@ -50,6 +51,19 @@ namespace Sierra
                 }
             }
 #endif
+        }
+
+        private void miSave_Click(object sender, RoutedEventArgs e)
+        {
+            var sfd = new SaveFileDialog
+            {
+                Filter = "16-bit raw heightmap (*.r16)|*.r16",
+                Title = "Save heightmap file"
+            };
+            if (sfd.ShowDialog() == true)
+            {
+                EditorPlatform.QueueSaveHeightmap(sfd.FileName);
+            }
         }
 
         private void OnTransactionPublished(EditorCommandList commands)

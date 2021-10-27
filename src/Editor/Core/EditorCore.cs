@@ -8,6 +8,7 @@ namespace Sierra.Core
     internal delegate long PlatformGetFileLastWriteTime(string relativePath);
     internal delegate long PlatformGetFileSize(string path);
     internal delegate void PlatformReadEntireFile(string path, ref byte bufferBaseAddress);
+    internal delegate void PlatformWriteEntireFile(string path, ref byte bufferBaseAddress, ulong size);
     internal delegate void PlatformPublishTransaction(ref byte commandBufferBaseAddress);
     internal delegate void PlatformNotifyAssetRegistered(in AssetRegistration assetReg);
     internal delegate void PlatformStartPerfCounter(string counterName);
@@ -19,6 +20,7 @@ namespace Sierra.Core
         public IntPtr GetFileLastWriteTime;
         public IntPtr GetFileSize;
         public IntPtr ReadEntireFile;
+        public IntPtr WriteEntireFile;
         public IntPtr NotifyAssetRegistered;
         public IntPtr PublishTransaction;
         public IntPtr StartPerfCounter;
@@ -325,6 +327,7 @@ namespace Sierra.Core
         delegate void EditorRenderHeightmapPreview(ref EditorMemory memory, ref EditorViewContext view,
             float deltaTime, ref EditorInput input);
         delegate IntPtr EditorGetImportedHeightmapAssetHandle(ref EditorMemory memory);
+        delegate void EditorSaveHeightmap(ref EditorMemory memory, string filePath);
         delegate ref EditorUiState EditorGetUiState(ref EditorMemory memory);
         delegate void EditorAddMaterial(ref EditorMemory memory, TerrainMaterialProperties props);
         delegate void EditorDeleteMaterial(ref EditorMemory memory, uint index);
@@ -348,6 +351,7 @@ namespace Sierra.Core
         private static EditorRenderSceneView editorRenderSceneView;
         private static EditorRenderHeightmapPreview editorRenderHeightmapPreview;
         private static EditorGetImportedHeightmapAssetHandle editorGetImportedHeightmapAssetHandle;
+        private static EditorSaveHeightmap editorSaveHeightmap;
         private static EditorGetUiState editorGetUiState;
         private static EditorAddMaterial editorAddMaterial;
         private static EditorDeleteMaterial editorDeleteMaterial;
@@ -384,6 +388,7 @@ namespace Sierra.Core
         internal static void Initialize(IntPtr appMemoryDataPtr, int appMemorySizeInBytes,
             PlatformLogMessage logMessage, PlatformGetFileLastWriteTime getFileLastWriteTime,
             PlatformGetFileSize getFileSize, PlatformReadEntireFile readEntireFile,
+            PlatformWriteEntireFile writeEntireFile,
             PlatformStartPerfCounter startPerfCounter, PlatformEndPerfCounter endPerfCounter,
             Func<string, IntPtr> loadLibrary, Func<IntPtr, string, IntPtr> getProcAddress,
             Func<IntPtr, bool> freeLibrary)
@@ -402,6 +407,7 @@ namespace Sierra.Core
             memory.PlatformApi.GetFileLastWriteTime = Marshal.GetFunctionPointerForDelegate(getFileLastWriteTime);
             memory.PlatformApi.GetFileSize = Marshal.GetFunctionPointerForDelegate(getFileSize);
             memory.PlatformApi.ReadEntireFile = Marshal.GetFunctionPointerForDelegate(readEntireFile);
+            memory.PlatformApi.WriteEntireFile = Marshal.GetFunctionPointerForDelegate(writeEntireFile);
             memory.PlatformApi.NotifyAssetRegistered = Marshal.GetFunctionPointerForDelegate(onAssetRegistered);
             memory.PlatformApi.PublishTransaction = Marshal.GetFunctionPointerForDelegate(onTransactionPublished);
             memory.PlatformApi.StartPerfCounter = Marshal.GetFunctionPointerForDelegate(startPerfCounter);
@@ -448,6 +454,7 @@ namespace Sierra.Core
                 editorRenderSceneView = GetApi<EditorRenderSceneView>("editorRenderSceneView");
                 editorRenderHeightmapPreview = GetApi<EditorRenderHeightmapPreview>("editorRenderHeightmapPreview");
                 editorGetImportedHeightmapAssetHandle = GetApi<EditorGetImportedHeightmapAssetHandle>("editorGetImportedHeightmapAssetHandle");
+                editorSaveHeightmap = GetApi<EditorSaveHeightmap>("editorSaveHeightmap");
                 editorGetUiState = GetApi<EditorGetUiState>("editorGetUiState");
                 editorAddMaterial = GetApi<EditorAddMaterial>("editorAddMaterial");
                 editorDeleteMaterial = GetApi<EditorDeleteMaterial>("editorDeleteMaterial");
@@ -497,6 +504,9 @@ namespace Sierra.Core
 
         internal static IntPtr GetImportedHeightmapAssetHandle()
             => editorGetImportedHeightmapAssetHandle?.Invoke(ref GetEditorMemory()) ?? IntPtr.Zero;
+
+        internal static void SaveHeightmap(string filePath)
+            => editorSaveHeightmap?.Invoke(ref GetEditorMemory(), filePath);
 
         internal static ref EditorUiState GetUiState()
         {
