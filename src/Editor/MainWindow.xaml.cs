@@ -16,6 +16,7 @@ namespace Sierra
     public partial class MainWindow : Window
     {
         private readonly CollectionViewSource cvsTerrainMaterials;
+        private string heightmapFilePath;
 
         public MainWindow()
         {
@@ -55,14 +56,21 @@ namespace Sierra
 
         private void miSave_Click(object sender, RoutedEventArgs e)
         {
-            var sfd = new SaveFileDialog
+            if (string.IsNullOrWhiteSpace(heightmapFilePath))
             {
-                Filter = "16-bit raw heightmap (*.r16)|*.r16",
-                Title = "Save heightmap file"
-            };
-            if (sfd.ShowDialog() == true)
+                var sfd = new SaveFileDialog
+                {
+                    Filter = "16-bit raw heightmap (*.r16)|*.r16",
+                    Title = "Save heightmap file"
+                };
+                if (sfd.ShowDialog() == true)
+                {
+                    heightmapFilePath = sfd.FileName;
+                }
+            }
+            if (!string.IsNullOrWhiteSpace(heightmapFilePath))
             {
-                EditorPlatform.QueueSaveHeightmap(sfd.FileName);
+                EditorPlatform.QueueSaveHeightmap(heightmapFilePath);
             }
         }
 
