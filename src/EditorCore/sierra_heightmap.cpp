@@ -37,6 +37,7 @@ void blitTileRegion(RenderContext *rctx,
 
 void drawInfluenceMask(RenderContext *rctx,
     MemoryArena *arena,
+    TextureHandle baseTexture,
     rect2 *quads,
     uint32 quadCount,
     glm::vec2 offset,
@@ -45,6 +46,11 @@ void drawInfluenceMask(RenderContext *rctx,
 {
     RenderQueue *rq = rendererCreateQueue(rctx, arena, getRenderOutput(target));
     rendererClear(rq, 0, 0, 0, 1);
+    if (baseTexture.ptr)
+    {
+        rendererSetCameraOrtho(rq);
+        rendererPushTexturedQuad(rq, getBounds(target), baseTexture, true);
+    }
     if (quads)
     {
         rendererSetCameraOrthoOffset(rq, offset);
@@ -132,11 +138,12 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
     float worldToHeightmapSpace = heightmapDimWithoutOverlap / TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
     float extendedTileDim = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS * (HEIGHTMAP_DIM / heightmapDimWithoutOverlap);
     float brushStrokeQuadDim = state->uiState.terrainBrushRadius * worldToHeightmapSpace;
-    rect2 *activeBrushStrokeQuads = pushArray(&memory->arena, rect2, activeBrushStroke->instanceCount);
-    for (uint32 i = 0; i < activeBrushStroke->instanceCount; i++)
+    uint32 instancesToRender = activeBrushStroke->totalInstanceCount - activeBrushStroke->renderedInstanceCount;
+    rect2 *activeBrushStrokeQuads = pushArray(&memory->arena, rect2, instancesToRender);
+    glm::vec2 *instancePos = &activeBrushStroke->positions[activeBrushStroke->renderedInstanceCount];
+    for (uint32 i = 0; i < instancesToRender; i++)
     {
-        glm::vec2 pos = activeBrushStroke->positions[i];
-        glm::vec2 posHeightmapSpace = pos * worldToHeightmapSpace;
+        glm::vec2 posHeightmapSpace = *instancePos++ * worldToHeightmapSpace;
         activeBrushStrokeQuads[i] = rectCenterDim(posHeightmapSpace, brushStrokeQuadDim);
     }
     rect2 previewBrushStrokeQuad;
@@ -189,9 +196,14 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         {
             TIMED_BLOCK("Draw Influence Masks");
 
-            drawInfluenceMask(state->renderCtx, &memory->arena, activeBrushStrokeQuads,
-                activeBrushStroke->instanceCount, offset, influenceMaskEffect, tile->workingBrushInfluenceMask);
-            drawInfluenceMask(state->renderCtx, &memory->arena, previewBrushStrokeQuadPtr, 1, offset,
+            TextureHandle baseInfluenceTexture = {0};
+            if (activeBrushStroke->renderedInstanceCount > 0)
+            {
+                baseInfluenceTexture = tile->workingPrevBrushInfluenceMask->textureHandle;
+            }
+            drawInfluenceMask(state->renderCtx, &memory->arena, baseInfluenceTexture, activeBrushStrokeQuads,
+                instancesToRender, offset, influenceMaskEffect, tile->workingBrushInfluenceMask);
+            drawInfluenceMask(state->renderCtx, &memory->arena, {0}, previewBrushStrokeQuadPtr, 1, offset,
                 influenceMaskEffect, tile->previewBrushInfluenceMask);
         }
 
@@ -254,6 +266,10 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
         }
 
         endTemporaryMemory(&tileRenderMemory);
+
+        RenderTarget *swapTarget = tile->workingPrevBrushInfluenceMask;
+        tile->workingPrevBrushInfluenceMask = tile->workingBrushInfluenceMask;
+        tile->workingBrushInfluenceMask = swapTarget;
     }
 
     if (tool == TERRAIN_BRUSH_TOOL_SMOOTH)
@@ -317,4 +333,6 @@ void compositeHeightmaps(EditorMemory *memory, BrushStroke *activeBrushStroke, g
     }
 
     endTemporaryMemory(&renderMemory);
+
+    activeBrushStroke->renderedInstanceCount = activeBrushStroke->totalInstanceCount;
 }

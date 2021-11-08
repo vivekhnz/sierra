@@ -143,6 +143,7 @@ struct TerrainTile
 
     RenderTarget *committedHeightmap;
     RenderTarget *workingBrushInfluenceMask;
+    RenderTarget *workingPrevBrushInfluenceMask;
     RenderTarget *workingHeightmap;
     RenderTarget *previewBrushInfluenceMask;
     RenderTarget *previewHeightmap;

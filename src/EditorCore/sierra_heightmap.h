@@ -6,7 +6,8 @@
 struct BrushStroke
 {
     glm::vec2 positions[MAX_BRUSH_QUADS];
-    uint32 instanceCount;
+    uint32 totalInstanceCount;
+    uint32 renderedInstanceCount;
     float startingHeight;
 };
 

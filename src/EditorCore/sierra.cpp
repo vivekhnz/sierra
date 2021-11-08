@@ -219,6 +219,8 @@ void initializeEditor(EditorMemory *memory)
                 rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
             tile->workingBrushInfluenceMask =
                 rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
+            tile->workingPrevBrushInfluenceMask =
+                rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
             tile->workingHeightmap =
                 rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
             tile->previewBrushInfluenceMask =
@@ -404,7 +406,8 @@ bool commitChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::ve
 
     if (committed)
     {
-        activeBrushStroke->instanceCount = 0;
+        activeBrushStroke->totalInstanceCount = 0;
+        activeBrushStroke->renderedInstanceCount = 0;
         compositeHeightmaps(memory, activeBrushStroke, brushCursorPos);
         for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
         {
@@ -420,7 +423,8 @@ void discardChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::v
     MemoryArena *arena = &memory->arena;
     EditorState *state = (EditorState *)arena->baseAddress;
 
-    activeBrushStroke->instanceCount = 0;
+    activeBrushStroke->totalInstanceCount = 0;
+    activeBrushStroke->renderedInstanceCount = 0;
     compositeHeightmaps(memory, activeBrushStroke, brushCursorPos);
     for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
     {
@@ -955,14 +959,15 @@ void sceneViewContinueInteraction(
             else if (isButtonDown(input, EDITOR_INPUT_MOUSE_LEFT))
             {
                 // add brush instances
-                if (activeBrushStroke->instanceCount == 0)
+                if (activeBrushStroke->totalInstanceCount == 0)
                 {
                     activeBrushStroke->positions[0] = brushCursorPos;
-                    activeBrushStroke->instanceCount = 1;
+                    activeBrushStroke->totalInstanceCount = 1;
                 }
-                else if (activeBrushStroke->instanceCount < MAX_BRUSH_QUADS - 1)
+                else if (activeBrushStroke->totalInstanceCount < MAX_BRUSH_QUADS - 1)
                 {
-                    glm::vec2 *nextBrushInstance = &activeBrushStroke->positions[activeBrushStroke->instanceCount];
+                    glm::vec2 *nextBrushInstance =
+                        &activeBrushStroke->positions[activeBrushStroke->totalInstanceCount];
                     glm::vec2 *prevBrushInstance = nextBrushInstance - 1;
 
                     glm::vec2 diff = brushCursorPos - *prevBrushInstance;
@@ -971,21 +976,28 @@ void sceneViewContinueInteraction(
 
                     const float BRUSH_INSTANCE_SPACING = 0.64f;
                     while (distanceRemaining > BRUSH_INSTANCE_SPACING
-                        && activeBrushStroke->instanceCount < MAX_BRUSH_QUADS - 1)
+                        && activeBrushStroke->totalInstanceCount < MAX_BRUSH_QUADS - 1)
                     {
                         *nextBrushInstance++ = *prevBrushInstance++ + (direction * BRUSH_INSTANCE_SPACING);
-                        activeBrushStroke->instanceCount++;
+                        activeBrushStroke->totalInstanceCount++;
 
                         distanceRemaining -= BRUSH_INSTANCE_SPACING;
                     }
                 }
             }
-            interactionState->hasUncommittedChanges = activeBrushStroke->instanceCount > 0;
-            compositeHeightmaps(memory, activeBrushStroke, &brushCursorPos);
-            for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
+            interactionState->hasUncommittedChanges = activeBrushStroke->totalInstanceCount > 0;
+            if (interactionState->isAdjustingBrushParameters)
             {
-                TerrainTile *tile = &state->sceneState.terrainTiles[i];
-                updateTileHeightsFromHeightmap(&memory->arena, tile);
+                activeBrushStroke->renderedInstanceCount = 0;
+            }
+            compositeHeightmaps(memory, activeBrushStroke, &brushCursorPos);
+            if (!interactionState->isAdjustingBrushParameters)
+            {
+                for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
+                {
+                    TerrainTile *tile = &state->sceneState.terrainTiles[i];
+                    updateTileHeightsFromHeightmap(&memory->arena, tile);
+                }
             }
         }
         else
@@ -1111,7 +1123,7 @@ void sceneViewBeginInteraction(
         interactionState->hasUncommittedChanges = false;
         interactionState->isAdjustingBrushParameters = false;
         interactionState->activeBrushStroke.startingHeight = mouseWorldPos->y / firstTile->maxHeight;
-        interactionState->activeBrushStroke.instanceCount = 0;
+        interactionState->activeBrushStroke.totalInstanceCount = 0;
     }
     break;
     case INTERACTION_TARGET_OBJECT:
