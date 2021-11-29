@@ -194,7 +194,6 @@ void initializeEditor(EditorMemory *memory)
         rendererCreateRenderTarget(arena, HEIGHTMAP_DIM, HEIGHTMAP_DIM, TEXTURE_FORMAT_R16, false);
 
     // initialize scene world
-#if FEATURE_TERRAIN_USE_SPLIT_TILES
     int32 tileColumns = 2;
     int32 tileRows = 2;
     float tileLengthInWorldUnits = TERRAIN_TILE_LENGTH_IN_WORLD_UNITS;
@@ -236,9 +235,6 @@ void initializeEditor(EditorMemory *memory)
             tileToLeft = tile;
         }
     }
-#else
-    sceneState->terrainTileCount = 1;
-#endif
 
     sceneState->nextMaterialId = 1;
 
