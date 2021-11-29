@@ -204,6 +204,7 @@ struct EditorState
 {
     bool isInitialized;
 
+    MemoryArena rendererArena;
     MemoryArena assetsArena;
 
     EditorAssets editorAssets;

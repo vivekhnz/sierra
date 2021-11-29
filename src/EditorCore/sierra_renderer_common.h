@@ -40,6 +40,11 @@ struct MeshHandle
 
 // textures
 
+struct GetPixelsRequest
+{
+    void *handle;
+    uint32 pixelCount;
+};
 struct GetPixelsResult
 {
     void *pixels;

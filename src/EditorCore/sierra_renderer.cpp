@@ -75,6 +75,18 @@ GetPixelsResult rendererGetPixelsInRegion(
 {
     return renderBackendGetPixelsInRegion(arena, handle, x, y, width, height);
 }
+GetPixelsRequest rendererQueueGetPixels(RenderContext *ctx, TextureHandle handle, uint32 width, uint32 height)
+{
+    return renderBackendQueueGetPixels(ctx->internalCtx, handle, width, height);
+}
+GetPixelsResult rendererBeginReadPixels(GetPixelsRequest *request)
+{
+    return renderBackendBeginReadPixels(request);
+}
+void rendererEndReadPixels(GetPixelsRequest *request)
+{
+    return renderBackendEndReadPixels(request);
+}
 
 // render targets
 

@@ -183,6 +183,10 @@ void renderBackendUpdateTexture(TextureHandle handle, uint32 width, uint32 heigh
 GetPixelsResult renderBackendGetPixels(MemoryArena *arena, TextureHandle handle, uint32 width, uint32 height);
 GetPixelsResult renderBackendGetPixelsInRegion(
     MemoryArena *arena, TextureHandle handle, uint32 x, uint32 y, uint32 width, uint32 height);
+GetPixelsRequest renderBackendQueueGetPixels(
+    RenderBackendContext rctx, TextureHandle handle, uint32 width, uint32 height);
+GetPixelsResult renderBackendBeginReadPixels(GetPixelsRequest *request);
+void renderBackendEndReadPixels(GetPixelsRequest *request);
 
 RenderTarget *renderBackendCreateRenderTarget(
     MemoryArena *arena, uint32 width, uint32 height, TextureFormat format, bool createDepthBuffer);

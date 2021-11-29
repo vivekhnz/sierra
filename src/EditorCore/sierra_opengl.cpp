@@ -103,6 +103,15 @@ struct OpenGlRenderTarget
     uint32 framebufferId;
 };
 
+struct OpenGlRenderContext;
+struct OpenGlPixelBuffer
+{
+    uint32 id;
+
+    OpenGlRenderContext *ctx;
+    OpenGlPixelBuffer *next;
+};
+
 struct OpenGlRenderContext
 {
     MemoryArena *arena;
@@ -125,6 +134,8 @@ struct OpenGlRenderContext
 
     OpenGlTextureArrayEntry *firstTextureArray;
     OpenGlTextureArrayEntry *lastTextureArray;
+
+    OpenGlPixelBuffer *firstFreePixelBuffer;
 
     struct
     {
@@ -625,6 +636,69 @@ GetPixelsResult renderBackendGetPixelsInRegion(
         id, 0, x, y, 0, width, height, 1, descriptor.gpuFormat, descriptor.elementType, bufferSize, result.pixels);
 
     return result;
+}
+GetPixelsRequest renderBackendQueueGetPixels(
+    RenderBackendContext rctx, TextureHandle handle, uint32 width, uint32 height)
+{
+    GetPixelsRequest request = {};
+    OpenGlRenderContext *ctx = (OpenGlRenderContext *)rctx.ptr;
+
+    uint32 id = getTextureId(handle);
+    TextureFormat format = getTextureFormat(handle);
+    OpenGlTextureDescriptor descriptor = getTextureDescriptor(format);
+
+    OpenGlPixelBuffer *pbo;
+    if (ctx->firstFreePixelBuffer)
+    {
+        pbo = ctx->firstFreePixelBuffer;
+        ctx->firstFreePixelBuffer = ctx->firstFreePixelBuffer->next;
+        pbo->next = 0;
+    }
+    else
+    {
+        pbo = pushStruct(ctx->arena, OpenGlPixelBuffer);
+        glGenBuffers(1, &pbo->id);
+        pbo->ctx = ctx;
+        pbo->next = 0;
+    }
+
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo->id);
+    request.pixelCount = width * height;
+    uint32 bufferSize = request.pixelCount * descriptor.elementSize;
+    glBufferData(GL_PIXEL_PACK_BUFFER, bufferSize, 0, GL_STREAM_READ);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, id);
+    glGetTexImage(GL_TEXTURE_2D, 0, descriptor.gpuFormat, descriptor.elementType, 0);
+
+    request.handle = pbo;
+    return request;
+}
+GetPixelsResult renderBackendBeginReadPixels(GetPixelsRequest *request)
+{
+    GetPixelsResult result;
+
+    OpenGlPixelBuffer *pbo = (OpenGlPixelBuffer *)request->handle;
+    glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo->id);
+    result.pixels = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    result.count = request->pixelCount;
+
+    return result;
+}
+void renderBackendEndReadPixels(GetPixelsRequest *request)
+{
+    glUnmapBuffer(GL_PIXEL_PACK_BUFFER);
+
+    OpenGlPixelBuffer *pbo = (OpenGlPixelBuffer *)request->handle;
+    OpenGlRenderContext *ctx = pbo->ctx;
+    if (ctx->firstFreePixelBuffer)
+    {
+        pbo->next = ctx->firstFreePixelBuffer;
+        ctx->firstFreePixelBuffer = pbo;
+    }
+    else
+    {
+        ctx->firstFreePixelBuffer = pbo;
+    }
 }
 
 RenderTarget *renderBackendCreateRenderTarget(

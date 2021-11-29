@@ -132,7 +132,8 @@ void initializeEditor(EditorMemory *memory)
 
     EditorState *state = pushStruct(arena, EditorState);
 
-    state->renderCtx = rendererInitialize(arena);
+    state->rendererArena = pushSubArena(arena, 1 * 1024 * 1024);
+    state->renderCtx = rendererInitialize(&state->rendererArena);
 
     state->assetsArena = pushSubArena(arena, 200 * 1024 * 1024);
     state->assetCtx = assetsInitialize(&state->assetsArena, state->renderCtx);
@@ -366,15 +367,35 @@ void updateHeightfieldHeights(TerrainTile *tile, uint32 heightmapWidth, uint32 h
     }
 }
 
-void updateTileHeightsFromHeightmap(MemoryArena *arena, TerrainTile *tile)
+void updateTileHeightsFromHeightmap(EditorState *state, MemoryArena *arena)
 {
     TIMED_BLOCK("Update Tile Heights");
 
-    RenderTarget *target = tile->workingHeightmap;
-    TemporaryMemory heightMemory = beginTemporaryMemory(arena);
-    GetPixelsResult heightPixels = rendererGetPixels(arena, target->textureHandle, target->width, target->height);
-    updateHeightfieldHeights(tile, target->width, target->height, (uint16 *)heightPixels.pixels);
-    endTemporaryMemory(&heightMemory);
+    TemporaryMemory tempMemory = beginTemporaryMemory(arena);
+    GetPixelsRequest *requests = pushArray(arena, GetPixelsRequest, state->sceneState.terrainTileCount);
+
+    // queue async texture reads for all tiles
+    for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
+    {
+        TerrainTile *tile = &state->sceneState.terrainTiles[i];
+        RenderTarget *target = tile->workingHeightmap;
+        requests[i] =
+            rendererQueueGetPixels(state->renderCtx, target->textureHandle, target->width, target->height);
+    }
+
+    // read tile heightmaps
+    for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
+    {
+        GetPixelsRequest *request = &requests[i];
+        TerrainTile *tile = &state->sceneState.terrainTiles[i];
+        RenderTarget *target = tile->workingHeightmap;
+
+        GetPixelsResult result = rendererBeginReadPixels(request);
+        updateHeightfieldHeights(tile, target->width, target->height, (uint16 *)result.pixels);
+        rendererEndReadPixels(request);
+    }
+
+    endTemporaryMemory(&tempMemory);
 }
 
 bool commitChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::vec2 *brushCursorPos)
@@ -405,11 +426,7 @@ bool commitChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::ve
         activeBrushStroke->totalInstanceCount = 0;
         activeBrushStroke->renderedInstanceCount = 0;
         compositeHeightmaps(memory, activeBrushStroke, brushCursorPos);
-        for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
-        {
-            TerrainTile *tile = &state->sceneState.terrainTiles[i];
-            updateTileHeightsFromHeightmap(&memory->arena, tile);
-        }
+        updateTileHeightsFromHeightmap(state, &memory->arena);
     }
     return committed;
 }
@@ -422,11 +439,7 @@ void discardChanges(EditorMemory *memory, BrushStroke *activeBrushStroke, glm::v
     activeBrushStroke->totalInstanceCount = 0;
     activeBrushStroke->renderedInstanceCount = 0;
     compositeHeightmaps(memory, activeBrushStroke, brushCursorPos);
-    for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
-    {
-        TerrainTile *tile = &state->sceneState.terrainTiles[i];
-        updateTileHeightsFromHeightmap(arena, tile);
-    }
+    updateTileHeightsFromHeightmap(state, arena);
 }
 
 void applyTransaction(TransactionEntry *tx, EditorDocumentState *docState)
@@ -989,11 +1002,7 @@ void sceneViewContinueInteraction(
             compositeHeightmaps(memory, activeBrushStroke, &brushCursorPos);
             if (!interactionState->isAdjustingBrushParameters)
             {
-                for (uint32 i = 0; i < state->sceneState.terrainTileCount; i++)
-                {
-                    TerrainTile *tile = &state->sceneState.terrainTiles[i];
-                    updateTileHeightsFromHeightmap(&memory->arena, tile);
-                }
+                updateTileHeightsFromHeightmap(state, &memory->arena);
             }
         }
         else
