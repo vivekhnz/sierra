@@ -679,7 +679,10 @@ GetPixelsResult renderBackendBeginReadPixels(GetPixelsRequest *request)
 
     OpenGlPixelBuffer *pbo = (OpenGlPixelBuffer *)request->handle;
     glBindBuffer(GL_PIXEL_PACK_BUFFER, pbo->id);
-    result.pixels = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    {
+        TIMED_BLOCK("glMapBuffer");
+        result.pixels = glMapBuffer(GL_PIXEL_PACK_BUFFER, GL_READ_ONLY);
+    }
     result.count = request->pixelCount;
 
     return result;
@@ -1287,7 +1290,6 @@ bool renderBackendDrawToOutput(DispatchedRenderQueue *rq, RenderOutput *output)
     if (target)
     {
         glBindTexture(GL_TEXTURE_2D, getTextureId(target->textureHandle));
-        glGenerateMipmap(GL_TEXTURE_2D);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
