@@ -9,6 +9,7 @@ namespace Sierra.Platform
 
         private static IntPtr dummyWindowHwnd;
         private static IntPtr glRenderingContext;
+        private static IntPtr currentDeviceContext;
 
         internal static void Initialize()
         {
@@ -27,7 +28,7 @@ namespace Sierra.Platform
             IntPtr dummyDeviceContext = Win32.GetDC(dummyWindowHwnd);
             ConfigureDeviceContextForOpenGL(dummyDeviceContext);
             glRenderingContext = Win32.CreateGLContext(dummyDeviceContext);
-            Win32.MakeGLContextCurrent(dummyDeviceContext, glRenderingContext);
+            MakeDeviceCurrent(dummyDeviceContext);
         }
 
         internal static void ConfigureDevice(IntPtr deviceContext)
@@ -37,7 +38,10 @@ namespace Sierra.Platform
 
         internal static void MakeDeviceCurrent(IntPtr deviceContext)
         {
+            if (currentDeviceContext == deviceContext) return;
+
             Win32.MakeGLContextCurrent(deviceContext, glRenderingContext);
+            currentDeviceContext = deviceContext;
         }
 
         internal static void Shutdown()
